@@ -109,8 +109,13 @@
 
 <div id="qrOverlay" style="position:fixed; inset:0; z-index:900; background:rgba(0,0,0,.55); display:none; align-items:center; justify-content:center; padding:16px;">
   <div style="background:#fff; border-radius:16px; padding:20px; max-width:360px; width:100%; text-align:center;">
-    <div id="qrNome" style="font-weight:700; color:var(--castanho); margin-bottom:4px; font-size:1.05rem;"></div>
-    <div id="qrUrl" style="font-size:.72rem; color:#9a8b6f; margin-bottom:12px; word-break:break-all;"></div>
+    <div id="qrNome" style="font-weight:700; color:var(--castanho); margin-bottom:8px; font-size:1.05rem;"></div>
+    <div style="display:flex; gap:8px; align-items:center; margin-bottom:6px;">
+      <input type="text" id="qrTexto" placeholder="Texto ao centro (vazio = sem nada)" style="flex:1; margin:0;">
+      <label style="cursor:pointer; white-space:nowrap; border:1px solid var(--linha); border-radius:8px; padding:8px 10px; font-size:.82rem;">🖼 Logo<input type="file" id="qrLogo" accept="image/*" style="display:none;"></label>
+    </div>
+    <div style="font-size:.72rem; color:#9a8b6f; margin-bottom:10px;">Escreve o que queres ao centro, ou escolhe um logótipo. Deixa em branco para um QR limpo.</div>
+    <div id="qrUrl" style="font-size:.68rem; color:#b3a68a; margin-bottom:10px; word-break:break-all;"></div>
     <div id="qrBox" style="display:flex; justify-content:center; min-height:200px; align-items:center;"></div>
     <div style="display:flex; gap:8px; margin-top:14px;">
       <button class="acao" id="qrBaixar" style="flex:1;">Descarregar PNG</button>
@@ -350,29 +355,51 @@
     ctx.font='700 '+size+"px -apple-system,'Segoe UI',sans-serif"; ctx.fillStyle='#3a2c18'; ctx.textAlign='center'; ctx.textBaseline='middle';
     let y=cy-(lines.length*lh)/2+lh/2; lines.forEach(function(l){ ctx.fillText(l,cx,y); y+=lh; });
   }
+  let qrUrlAtual = '', qrLogoImg = null;
   function abrirQR(n){
-    const url = QR_BASE + 'cardapio.html?n=' + n.slug;
+    qrUrlAtual = QR_BASE + 'cardapio.html?n=' + n.slug;
     qrNomeFich = 'qr-' + n.slug;
+    qrLogoImg = null;
     $('qrNome').textContent = n.nome;
-    $('qrUrl').textContent = url;
-    $('qrBox').innerHTML = '<span style="color:#9a8b6f;font-size:.85rem;">A gerar…</span>';
+    $('qrUrl').textContent = qrUrlAtual;
+    $('qrTexto').value = n.nome;
+    $('qrLogo').value = '';
     $('qrOverlay').style.display = 'flex';
+    gerarQR();
+  }
+  function gerarQR(){
+    if(!qrUrlAtual) return;
+    $('qrBox').innerHTML = '<span style="color:#9a8b6f;font-size:.85rem;">A gerar…</span>';
     const tmp = document.createElement('div');
-    try{ new QRCode(tmp, { text:url, width:300, height:300, colorDark:'#3a2c18', colorLight:'#ffffff', correctLevel:QRCode.CorrectLevel.H }); }catch(e){ $('qrBox').textContent='Erro a gerar.'; return; }
+    try{ new QRCode(tmp, { text:qrUrlAtual, width:300, height:300, colorDark:'#3a2c18', colorLight:'#ffffff', correctLevel:QRCode.CorrectLevel.H }); }catch(e){ $('qrBox').textContent='Erro a gerar.'; return; }
     setTimeout(function(){
       const src = tmp.querySelector('canvas') || tmp.querySelector('img'); if(!src) return;
       const pintar = function(img){
         const S=300, cv=document.createElement('canvas'); cv.width=S; cv.height=S; const ctx=cv.getContext('2d');
         ctx.fillStyle='#fff'; ctx.fillRect(0,0,S,S); ctx.drawImage(img,0,0,S,S);
-        const bw=S*0.5, bh=S*0.2, bx=(S-bw)/2, by=(S-bh)/2;
-        _rr(ctx,bx,by,bw,bh,12); ctx.fillStyle='#fff'; ctx.fill(); ctx.lineWidth=4; ctx.strokeStyle='#3a2c18'; ctx.stroke();
-        _nome(ctx, n.nome, S/2, S/2, bw-16, bh-10);
+        const texto = ($('qrTexto').value || '').trim();
+        if(qrLogoImg){
+          const d = S*0.24, x=(S-d)/2, y=(S-d)/2, pad=8;
+          _rr(ctx, x-pad, y-pad, d+pad*2, d+pad*2, 12); ctx.fillStyle='#fff'; ctx.fill();
+          const iw=qrLogoImg.width, ih=qrLogoImg.height, esc=Math.min(d/iw, d/ih);
+          const w=iw*esc, h=ih*esc;
+          ctx.drawImage(qrLogoImg, (S-w)/2, (S-h)/2, w, h);
+        } else if(texto){
+          const bw=S*0.5, bh=S*0.2, bx=(S-bw)/2, by=(S-bh)/2;
+          _rr(ctx,bx,by,bw,bh,12); ctx.fillStyle='#fff'; ctx.fill(); ctx.lineWidth=4; ctx.strokeStyle='#3a2c18'; ctx.stroke();
+          _nome(ctx, texto, S/2, S/2, bw-16, bh-10);
+        }
         cv.style.width='260px'; cv.style.height='260px'; cv.style.borderRadius='6px';
         $('qrBox').innerHTML=''; $('qrBox').appendChild(cv); qrCanvasAtual = cv;
       };
       if(src.tagName==='CANVAS') pintar(src); else { const im=new Image(); im.onload=function(){pintar(im);}; im.src=src.src; }
-    }, 90);
+    }, 80);
   }
+  let _qrT; $('qrTexto').oninput = function(){ clearTimeout(_qrT); _qrT = setTimeout(gerarQR, 300); };
+  $('qrLogo').onchange = function(e){
+    const f = e.target.files && e.target.files[0]; if(!f) return;
+    const r = new FileReader(); r.onload = function(ev){ const im = new Image(); im.onload = function(){ qrLogoImg = im; gerarQR(); }; im.src = ev.target.result; }; r.readAsDataURL(f);
+  };
   $('qrFechar').onclick = function(){ $('qrOverlay').style.display='none'; };
   $('qrOverlay').onclick = function(e){ if(e.target===$('qrOverlay')) $('qrOverlay').style.display='none'; };
   $('qrBaixar').onclick = function(){ if(!qrCanvasAtual){ alert('O QR ainda está a gerar.'); return; } const a=document.createElement('a'); a.href=qrCanvasAtual.toDataURL('image/png'); a.download=qrNomeFich+'.png'; document.body.appendChild(a); a.click(); a.remove(); };
