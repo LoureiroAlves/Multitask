@@ -1,1 +1,158 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reservas</title>
+<style>
+  :root{ --castanho:#3a2c18; --dourado:#a8712f; --dourado-escuro:#6b4a1f; --bege:#f5efe2; --bege-claro:#fbf8f2; --linha:#e3d9c4; --verde:#2e9b57; --vermelho:#c0392b; --azul:#2a5aa8; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; background:var(--bege-claro); color:var(--castanho); }
+  header.top{ background:var(--castanho); color:#fff; padding:14px 18px; display:flex; align-items:center; justify-content:space-between; }
+  header.top h1{ font-size:1.1rem; margin:0; }
+  header.top button{ background:rgba(255,255,255,.15); color:#fff; border:none; border-radius:8px; padding:8px 12px; cursor:pointer; font-size:.82rem; }
+  .wrap{ max-width:760px; margin:0 auto; padding:16px; }
+  .card{ background:#fff; border:1px solid var(--linha); border-radius:14px; padding:16px; margin-bottom:14px; }
+  input, select{ width:100%; padding:10px 12px; border:1.5px solid var(--linha); border-radius:9px; font-family:inherit; font-size:.95rem; margin-bottom:9px; }
+  label{ font-size:.82rem; font-weight:600; color:var(--dourado-escuro); display:block; margin:6px 0 4px; }
+  button.acao{ background:var(--dourado); color:#fff; border:none; border-radius:10px; padding:11px 16px; font-weight:700; cursor:pointer; }
+  .r{ border:1px solid var(--linha); border-radius:12px; padding:12px 14px; margin-bottom:10px; }
+  .r.confirmada{ border-left:4px solid var(--verde); }
+  .r.pendente{ border-left:4px solid var(--dourado); }
+  .r.cancelada{ border-left:4px solid var(--vermelho); opacity:.6; }
+  .r-top{ display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; align-items:baseline; }
+  .r-quando{ font-weight:700; font-size:1.02rem; }
+  .r-nome{ font-size:.95rem; }
+  .r-meta{ font-size:.82rem; color:#8a7a5c; margin-top:3px; }
+  .r-acoes{ display:flex; gap:6px; flex-wrap:wrap; margin-top:10px; }
+  .r-acoes button{ border:1px solid var(--linha); background:#fff; border-radius:8px; padding:6px 10px; cursor:pointer; font-size:.8rem; }
+  .r-acoes button.ok{ color:var(--verde); border-color:#bfe3cd; }
+  .r-acoes button.no{ color:var(--vermelho); border-color:#e8c4bf; }
+  .pill{ font-size:.7rem; font-weight:700; padding:2px 8px; border-radius:20px; }
+  .pill.pendente{ background:#f6ecd6; color:var(--dourado-escuro); }
+  .pill.confirmada{ background:#e6f4ea; color:var(--verde); }
+  .pill.cancelada{ background:#fbe7e4; color:var(--vermelho); }
+  .pill.pago{ background:#dfeaf7; color:var(--azul); }
+  .filtros{ display:flex; gap:8px; margin-bottom:10px; }
+  .filtros button{ flex:1; border:1px solid var(--linha); background:#fff; border-radius:8px; padding:8px; cursor:pointer; font-size:.85rem; }
+  .filtros button.on{ background:var(--dourado); color:#fff; border-color:var(--dourado); }
+  .msg{ font-size:.85rem; margin-top:8px; } .msg.erro{ color:var(--vermelho); }
+  .hide{ display:none; }
+</style>
+</head>
+<body>
+<header class="top">
+  <h1 id="topTit">Reservas</h1>
+  <button class="hide" id="btnSair">Sair</button>
+</header>
+<div class="wrap">
+  <div class="card" id="loginCard">
+    <h2 style="margin:0 0 8px; font-size:1.05rem;">Entrar</h2>
+    <label for="email">Email</label>
+    <input type="email" id="email" autocomplete="username">
+    <label for="pass">Password</label>
+    <input type="password" id="pass" autocomplete="current-password">
+    <button class="acao" id="btnEntrar">Entrar</button>
+    <div id="loginMsg" class="msg"></div>
+  </div>
 
+  <div id="painel" class="hide">
+    <div class="filtros">
+      <button data-f="proximas" class="on">Próximas</button>
+      <button data-f="pendentes">Pendentes</button>
+      <button data-f="todas">Todas</button>
+    </div>
+    <div id="lista"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const SUPA_URL = 'https://zewiijcrkyxjkhudlplk.supabase.co';
+  const SUPA_KEY = 'sb_publishable_6LP7x2v5c-c9DQkQslnUmA_g13SEjp3';
+  const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
+  const SLUG = ((new URLSearchParams(location.search)).get('n') || '').toLowerCase().replace(/[^a-z0-9]/g,'');
+  const MESES = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+  const $ = id => document.getElementById(id);
+  let negocio = null, filtro = 'proximas', reservas = [];
+
+  $('btnEntrar').onclick = entrar;
+  $('pass').addEventListener('keydown', e => { if(e.key==='Enter') entrar(); });
+  $('btnSair').onclick = async () => { await sb.auth.signOut(); location.reload(); };
+  document.querySelectorAll('.filtros button').forEach(b => b.onclick = () => {
+    filtro = b.dataset.f;
+    document.querySelectorAll('.filtros button').forEach(x => x.classList.toggle('on', x===b));
+    render();
+  });
+
+  async function entrar(){
+    const email = $('email').value.trim(), pass = $('pass').value;
+    if(!email || !pass){ $('loginMsg').textContent='Preenche email e password.'; $('loginMsg').className='msg erro'; return; }
+    $('btnEntrar').disabled = true;
+    const { error } = await sb.auth.signInWithPassword({ email, password:pass });
+    $('btnEntrar').disabled = false;
+    if(error){ $('loginMsg').textContent='Erro: '+error.message; $('loginMsg').className='msg erro'; return; }
+    iniciar();
+  }
+
+  async function iniciar(){
+    const { data:{ session } } = await sb.auth.getSession();
+    if(!session) return;
+    if(!SLUG){ $('loginMsg').textContent='Falta ?n=slug no endereço.'; $('loginMsg').className='msg erro'; return; }
+    const { data:neg } = await sb.from('negocios').select('id,nome,slug').eq('slug', SLUG).maybeSingle();
+    if(!neg){ $('loginMsg').textContent='Negócio não encontrado.'; $('loginMsg').className='msg erro'; return; }
+    negocio = neg;
+    $('topTit').textContent = 'Reservas · ' + neg.nome;
+    $('loginCard').classList.add('hide'); $('painel').classList.remove('hide'); $('btnSair').classList.remove('hide');
+    carregar();
+  }
+
+  async function carregar(){
+    $('lista').innerHTML = '<p style="color:#8a7a5c;font-size:.9rem;">A carregar…</p>';
+    const { data, error } = await sb.from('reservas').select('*').eq('negocio_id', negocio.id).order('data').order('hora');
+    if(error){ $('lista').innerHTML = '<div class="msg erro">Erro: '+error.message+'</div>'; return; }
+    reservas = data || [];
+    render();
+  }
+
+  function render(){
+    const hojeIso = new Date().toISOString().slice(0,10);
+    let arr = reservas.slice();
+    if(filtro==='proximas') arr = arr.filter(r => r.data >= hojeIso && r.estado!=='cancelada');
+    else if(filtro==='pendentes') arr = arr.filter(r => r.estado==='pendente');
+    if(!arr.length){ $('lista').innerHTML = '<p style="color:#8a7a5c;font-size:.9rem;">Sem reservas.</p>'; return; }
+    $('lista').innerHTML = '';
+    arr.forEach(r => {
+      const d = new Date(r.data + 'T00:00:00');
+      const div = document.createElement('div'); div.className = 'r ' + r.estado;
+      let acoes = '';
+      if(r.estado!=='confirmada') acoes += '<button class="ok" data-a="confirmar">✔ Confirmar</button>';
+      if(r.estado!=='cancelada') acoes += '<button class="no" data-a="cancelar">✕ Cancelar</button>';
+      acoes += '<button data-a="sinal">' + (r.sinal_pago ? 'Sinal: pago ✓' : 'Marcar sinal pago') + '</button>';
+      acoes += '<a href="tel:'+r.telefone+'"><button>📞 Ligar</button></a>';
+      div.innerHTML =
+        '<div class="r-top"><span class="r-quando">'+d.getDate()+' '+MESES[d.getMonth()]+' · '+r.hora+'</span>'+
+        '<span><span class="pill '+r.estado+'">'+r.estado+'</span>'+(r.sinal_pago?' <span class="pill pago">sinal pago</span>':'')+'</span></div>'+
+        '<div class="r-nome">'+r.nome+' · '+r.pessoas+' pessoa(s)</div>'+
+        '<div class="r-meta">📱 '+r.telefone+(r.obs?(' · '+r.obs):'')+(r.sinal>0?(' · sinal '+Number(r.sinal).toFixed(2)+'€'):'')+'</div>'+
+        '<div class="r-acoes">'+acoes+'</div>';
+      div.querySelectorAll('[data-a]').forEach(btn => btn.onclick = () => accao(r, btn.dataset.a));
+      $('lista').appendChild(div);
+    });
+  }
+
+  async function accao(r, a){
+    let patch = null;
+    if(a==='confirmar') patch = { estado:'confirmada' };
+    else if(a==='cancelar'){ if(!confirm('Cancelar esta reserva?')) return; patch = { estado:'cancelada' }; }
+    else if(a==='sinal') patch = { sinal_pago: !r.sinal_pago };
+    if(!patch) return;
+    const { error } = await sb.from('reservas').update(patch).eq('id', r.id);
+    if(error){ alert('Erro: '+error.message); return; }
+    carregar();
+  }
+
+  iniciar();
+</script>
+</body>
+</html>
