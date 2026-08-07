@@ -113,6 +113,7 @@
     background:var(--bege-claro);
     color:var(--castanho);
     min-height:100vh;
+    min-height:100dvh;
     padding-bottom:calc(112px + env(safe-area-inset-bottom));
   }
   html{ background:var(--intro-bg,#1f2530); }
@@ -510,7 +511,7 @@
   .info-fixa.azbg-classico .linha-negrito, .info-fixa.azbg-floral .linha-negrito, .info-fixa.azbg-geometrico .linha-negrito{ color:var(--az-texto); }
 
   /* Texturas de fundo (usam as cores do tema; com luz+sombra para efeito 3D) */
-  body[class*="textura-"]{ background-attachment:fixed; }
+  body[class*="textura-"]{ background-attachment:scroll; }
   /* Azulejo como fundo geral da página (usa a cor personalizável) */
   body.textura-azulejo-classico{ background-color:var(--az-bg);
     background-image:
@@ -2879,9 +2880,9 @@
         const bg = (cs.getPropertyValue('--bege')||'#f5efe2').trim();
         if(config.fundo.tipo === 'gradiente'){
           document.body.style.background = 'linear-gradient(180deg, ' + bgClaro + ' 0%, ' + bg + ' 100%)';
-          document.body.style.backgroundAttachment = 'fixed';
+          document.body.style.backgroundAttachment = 'scroll';
         } else if(config.fundo.tipo === 'imagem' && config.fundo.imagem){
-          document.body.style.background = "linear-gradient(rgba(255,255,255,0.82),rgba(255,255,255,0.82)), url('" + RAW_BASE + config.fundo.imagem + "') center/cover fixed";
+          document.body.style.background = "linear-gradient(rgba(255,255,255,0.82),rgba(255,255,255,0.82)), url('" + RAW_BASE + config.fundo.imagem + "') center/cover";
         } else if(config.fundo.tipo === 'textura'){
           document.body.style.background = '';
           const _tex = config.fundo.textura || 'pontos';
@@ -3356,6 +3357,7 @@
       if(!Array.isArray(menu.categorias)) menu.categorias = [];
       window._menu = menu;
       try{ construirMenu(menu); }catch(e){ console.warn('menu', e); }
+      try{ if(window.__ajustarCapa){ setTimeout(window.__ajustarCapa, 60); setTimeout(window.__ajustarCapa, 500); } }catch(e){}
     }catch(err){
       console.log('[INFO] Erro ao carregar do Supabase:', err.message);
     }
@@ -5452,13 +5454,15 @@
       var grid = document.getElementById('categoriaGrid');
       var footer = document.getElementById('rodapeFinal');
       if(!grid || !footer) return;
-      // só na capa (quando não há secção aberta em ecrã inteiro)
       grid.style.minHeight = '';
-      var faltam = window.innerHeight - footer.getBoundingClientRect().top;
+      // posição do topo do rodapé no documento (independente do scroll — evita saltos)
+      var footerTopDoc = footer.getBoundingClientRect().top + (window.scrollY || window.pageYOffset || 0);
+      var faltam = window.innerHeight - footerTopDoc;
       if(faltam > 0){ grid.style.minHeight = (grid.offsetHeight + faltam + 2) + 'px'; }
     }
     window.__ajustarCapa = ajustarCapa;
-    window.addEventListener('resize', ajustarCapa);
+    // Só reajusta em mudanças reais (rotação/carregamento), nunca durante o scroll
+    window.addEventListener('orientationchange', function(){ setTimeout(ajustarCapa, 250); });
     window.addEventListener('load', ajustarCapa);
     document.addEventListener('DOMContentLoaded', ajustarCapa);
     // o menu e as imagens carregam de forma assíncrona — reajusta algumas vezes
