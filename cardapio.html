@@ -469,6 +469,11 @@
   /* O painel abre a deslizar de baixo para cima; cabeçalho na cor da categoria */
   body.modelo-carteira .categoria-painel{ transform:translateY(100%) !important; transition:transform .42s cubic-bezier(.3,.85,.25,1), visibility 0s linear .42s !important; }
   body.modelo-carteira .categoria-painel.aberto{ transform:translateY(0) !important; transition:transform .42s cubic-bezier(.3,.85,.25,1), visibility 0s !important; }
+  /* Se o dono escolher um efeito de abertura (flip/cortina), esse manda sobre o deslizar da carteira; com "Normal (zoom)" fica o deslizar de baixo. */
+  body.modelo-carteira.abrir-flip .categoria-painel{ transform:perspective(1500px) rotateY(-90deg) !important; transform-origin:50% 50%; transition:transform .5s cubic-bezier(.3,.7,.25,1), opacity .3s ease, visibility 0s linear .5s !important; }
+  body.modelo-carteira.abrir-flip .categoria-painel.aberto{ transform:perspective(1500px) rotateY(0deg) !important; transition:transform .5s cubic-bezier(.3,.7,.25,1), opacity .3s ease, visibility 0s !important; }
+  body.modelo-carteira.abrir-cortina-v .categoria-painel{ transform:none !important; opacity:1; clip-path:inset(0 50% 0 50%); transition:clip-path .55s cubic-bezier(.45,.15,.2,1), visibility 0s linear .55s !important; }
+  body.modelo-carteira.abrir-cortina-v .categoria-painel.aberto{ transform:none !important; clip-path:inset(0 0 0 0); transition:clip-path .55s cubic-bezier(.45,.15,.2,1), visibility 0s !important; }
   body.modelo-carteira .categoria-painel-header{ background:var(--cat-cor, var(--castanho)); }
   body.modelo-carteira .categoria-painel-header .voltar, body.modelo-carteira #painelTitulo{ color:#fff !important; }
 
