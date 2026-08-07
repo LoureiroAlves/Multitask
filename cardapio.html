@@ -466,14 +466,10 @@
   body.modelo-carteira .tile .tile-emoji{ display:inline-block; font-size:1.5rem; line-height:1; margin:0; }
   body.modelo-carteira .tile .tile-label{ flex:1; font-weight:700; font-size:1.08rem; color:#fff !important; text-transform:none !important; letter-spacing:0; text-shadow:none !important; }
   body.modelo-carteira .tile::after{ content:'›'; position:absolute; right:18px; top:50%; transform:translateY(-50%); opacity:.75; font-size:1.3rem; }
-  /* O painel abre a deslizar de baixo para cima; cabeçalho na cor da categoria */
-  body.modelo-carteira .categoria-painel{ transform:translateY(100%) !important; transition:transform .42s cubic-bezier(.3,.85,.25,1), visibility 0s linear .42s !important; }
-  body.modelo-carteira .categoria-painel.aberto{ transform:translateY(0) !important; transition:transform .42s cubic-bezier(.3,.85,.25,1), visibility 0s !important; }
-  /* Se o dono escolher um efeito de abertura (flip/cortina), esse manda sobre o deslizar da carteira; com "Normal (zoom)" fica o deslizar de baixo. */
-  body.modelo-carteira.abrir-flip .categoria-painel{ transform:perspective(1500px) rotateY(-90deg) !important; transform-origin:50% 50%; transition:transform .5s cubic-bezier(.3,.7,.25,1), opacity .3s ease, visibility 0s linear .5s !important; }
-  body.modelo-carteira.abrir-flip .categoria-painel.aberto{ transform:perspective(1500px) rotateY(0deg) !important; transition:transform .5s cubic-bezier(.3,.7,.25,1), opacity .3s ease, visibility 0s !important; }
-  body.modelo-carteira.abrir-cortina-v .categoria-painel{ transform:none !important; opacity:1; clip-path:inset(0 50% 0 50%); transition:clip-path .55s cubic-bezier(.45,.15,.2,1), visibility 0s linear .55s !important; }
-  body.modelo-carteira.abrir-cortina-v .categoria-painel.aberto{ transform:none !important; clip-path:inset(0 0 0 0); transition:clip-path .55s cubic-bezier(.45,.15,.2,1), visibility 0s !important; }
+  /* Modelo carteira: no efeito "Normal (zoom)" o painel desliza de baixo (assinatura Wallet).
+     Se o dono escolher outro efeito, esse manda (as regras body.abrir-* aplicam-se). */
+  body.modelo-carteira.abrir-zoom .categoria-painel{ transform:translateY(100%) !important; transition:transform .42s cubic-bezier(.3,.85,.25,1), visibility 0s linear .42s !important; }
+  body.modelo-carteira.abrir-zoom .categoria-painel.aberto{ transform:translateY(0) !important; transition:transform .42s cubic-bezier(.3,.85,.25,1), visibility 0s !important; }
   body.modelo-carteira .categoria-painel-header{ background:var(--cat-cor, var(--castanho)); }
   body.modelo-carteira .categoria-painel-header .voltar, body.modelo-carteira #painelTitulo{ color:#fff !important; }
 
@@ -613,12 +609,35 @@
     pointer-events:auto;
     transition:transform .38s cubic-bezier(.22,.8,.25,1), opacity .28s ease, visibility 0s;
   }
-  /* Efeito de abertura "Flip 3D" (config.abrirEfeito === 'flip') */
+  /* ===== Efeitos de abertura das secções (config.abrirEfeito → classe body.abrir-*) ===== */
+  /* "zoom" é o comportamento base (scale a partir do separador tocado) — sem classe própria */
+  /* Flip 3D — vira na vertical */
   body.abrir-flip .categoria-painel{ transform:perspective(1500px) rotateY(-90deg); transform-origin:50% 50%; transition:transform .5s cubic-bezier(.3,.7,.25,1), opacity .3s ease, visibility 0s linear .5s; }
   body.abrir-flip .categoria-painel.aberto{ transform:perspective(1500px) rotateY(0deg); transition:transform .5s cubic-bezier(.3,.7,.25,1), opacity .3s ease, visibility 0s; }
-  /* Efeito de abertura "Cortina vertical" (config.abrirEfeito === 'cortina-v'): abre/fecha ao meio na vertical */
+  /* Livro — vira a partir da margem esquerda */
+  body.abrir-livro .categoria-painel{ transform:perspective(1700px) rotateY(-105deg); transform-origin:0% 50%; opacity:1; transition:transform .55s cubic-bezier(.3,.7,.25,1), opacity .3s ease, visibility 0s linear .55s; }
+  body.abrir-livro .categoria-painel.aberto{ transform:perspective(1700px) rotateY(0deg); transition:transform .55s cubic-bezier(.3,.7,.25,1), opacity .3s ease, visibility 0s; }
+  /* Tombar — vira na horizontal (roda em X, de cima) */
+  body.abrir-tombar .categoria-painel{ transform:perspective(1500px) rotateX(90deg); transform-origin:50% 0%; transition:transform .5s cubic-bezier(.3,.7,.25,1), opacity .3s ease, visibility 0s linear .5s; }
+  body.abrir-tombar .categoria-painel.aberto{ transform:perspective(1500px) rotateX(0deg); transition:transform .5s cubic-bezier(.3,.7,.25,1), opacity .3s ease, visibility 0s; }
+  /* Cortina vertical — abre ao meio (esquerda/direita) */
   body.abrir-cortina-v .categoria-painel{ transform:none; opacity:1; clip-path:inset(0 50% 0 50%); transition:clip-path .55s cubic-bezier(.45,.15,.2,1), visibility 0s linear .55s; }
   body.abrir-cortina-v .categoria-painel.aberto{ clip-path:inset(0 0 0 0); transition:clip-path .55s cubic-bezier(.45,.15,.2,1), visibility 0s; }
+  /* Cortina horizontal — abre ao meio (cima/baixo) */
+  body.abrir-cortina-h .categoria-painel{ transform:none; opacity:1; clip-path:inset(50% 0 50% 0); transition:clip-path .55s cubic-bezier(.45,.15,.2,1), visibility 0s linear .55s; }
+  body.abrir-cortina-h .categoria-painel.aberto{ clip-path:inset(0 0 0 0); transition:clip-path .55s cubic-bezier(.45,.15,.2,1), visibility 0s; }
+  /* Deslizar de baixo para cima */
+  body.abrir-deslizar .categoria-painel{ transform:translateY(100%); opacity:1; transition:transform .42s cubic-bezier(.3,.85,.25,1), visibility 0s linear .42s; }
+  body.abrir-deslizar .categoria-painel.aberto{ transform:translateY(0); transition:transform .42s cubic-bezier(.3,.85,.25,1), visibility 0s; }
+  /* Deslizar do lado (da direita) */
+  body.abrir-deslizar-lado .categoria-painel{ transform:translateX(100%); opacity:1; transition:transform .42s cubic-bezier(.3,.85,.25,1), visibility 0s linear .42s; }
+  body.abrir-deslizar-lado .categoria-painel.aberto{ transform:translateX(0); transition:transform .42s cubic-bezier(.3,.85,.25,1), visibility 0s; }
+  /* Desvanecer — aparece a esbater (só opacidade) */
+  body.abrir-desvanecer .categoria-painel{ transform:none; opacity:0; transition:opacity .4s ease, visibility 0s linear .4s; }
+  body.abrir-desvanecer .categoria-painel.aberto{ opacity:1; transition:opacity .4s ease, visibility 0s; }
+  /* Elástico — zoom com ressalto */
+  body.abrir-elastico .categoria-painel{ transform:scale(.4); opacity:0; transform-origin:var(--origin-x,50%) var(--origin-y,50%); transition:transform .5s cubic-bezier(.2,1.3,.4,1), opacity .3s ease, visibility 0s linear .5s; }
+  body.abrir-elastico .categoria-painel.aberto{ transform:scale(1); opacity:1; transition:transform .5s cubic-bezier(.2,1.3,.4,1), opacity .28s ease, visibility 0s; }
   .categoria-painel-header{
     position:sticky; top:0; z-index:2;
     display:flex; align-items:center; gap:10px;
@@ -2896,8 +2915,8 @@
         rs.setProperty('--cad-linha', cad.corLinha || '#d9d2bf');
         if(cad.corLetra) rs.setProperty('--cad-letra', cad.corLetra); else rs.removeProperty('--cad-letra');
       }
-      document.body.classList.toggle('abrir-flip', config.abrirEfeito === 'flip');
-      document.body.classList.toggle('abrir-cortina-v', config.abrirEfeito === 'cortina-v');
+      ['abrir-zoom','abrir-flip','abrir-livro','abrir-tombar','abrir-cortina-v','abrir-cortina-h','abrir-deslizar','abrir-deslizar-lado','abrir-desvanecer','abrir-elastico'].forEach(function(c){ document.body.classList.remove(c); });
+      document.body.classList.add('abrir-' + (config.abrirEfeito || 'zoom'));
       document.body.classList.toggle('cabecalho-fixo', !!(config.header && (config.header.fixo || config.header.encolher)));
       // Tamanho dos tiles (estrutura)
       document.body.classList.remove('tiles-pequeno','tiles-grande');
