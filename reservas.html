@@ -74,7 +74,10 @@
   const SLUG = ((new URLSearchParams(location.search)).get('n') || '').toLowerCase().replace(/[^a-z0-9]/g,'');
   const MESES = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
   const $ = id => document.getElementById(id);
-  let negocio = null, filtro = 'proximas', reservas = [];
+  let negocio = null, filtro = 'proximas', reservas = [], mesas = [];
+  function mesasExpandido(){ const arr=[]; (mesas||[]).forEach(function(m){ const q=parseInt(m.quantidade,10)||0, l=parseInt(m.lugares,10)||0; for(var i=0;i<q;i++) if(l>0) arr.push(l); }); arr.sort(function(x,y){return x-y;}); return arr; }
+  function alocar(mesasArr, parties){ const livres=mesasArr.slice(); const ps=parties.slice().sort(function(x,y){return y-x;}); for(var i=0;i<ps.length;i++){ var idx=-1; for(var j=0;j<livres.length;j++){ if(livres[j]>=ps[i]){ idx=j; break; } } if(idx<0) return null; livres.splice(idx,1); } return livres; }
+  function contar(arr){ const c={}; arr.forEach(function(v){ c[v]=(c[v]||0)+1; }); return Object.keys(c).sort(function(a,b){return a-b;}).map(function(k){ return c[k]+'×'+k+'p'; }).join(', '); }
 
   $('btnEntrar').onclick = entrar;
   $('pass').addEventListener('keydown', e => { if(e.key==='Enter') entrar(); });
@@ -99,9 +102,10 @@
     const { data:{ session } } = await sb.auth.getSession();
     if(!session) return;
     if(!SLUG){ $('loginMsg').textContent='Falta ?n=slug no endereço.'; $('loginMsg').className='msg erro'; return; }
-    const { data:neg } = await sb.from('negocios').select('id,nome,slug').eq('slug', SLUG).maybeSingle();
+    const { data:neg } = await sb.from('negocios').select('id,nome,slug,config').eq('slug', SLUG).maybeSingle();
     if(!neg){ $('loginMsg').textContent='Negócio não encontrado.'; $('loginMsg').className='msg erro'; return; }
     negocio = neg;
+    mesas = (neg.config && neg.config.agenda && Array.isArray(neg.config.agenda.mesas)) ? neg.config.agenda.mesas : [];
     $('topTit').textContent = 'Reservas · ' + neg.nome;
     $('loginCard').classList.add('hide'); $('painel').classList.remove('hide'); $('btnSair').classList.remove('hide');
     carregar();
@@ -122,6 +126,24 @@
     else if(filtro==='pendentes') arr = arr.filter(r => r.estado==='pendente');
     if(!arr.length){ $('lista').innerHTML = '<p style="color:#8a7a5c;font-size:.9rem;">Sem reservas.</p>'; return; }
     $('lista').innerHTML = '';
+    // Resumo de capacidade por horário (se houver mesas definidas)
+    const mesasArr = mesasExpandido();
+    if(mesasArr.length){
+      const grupos = {};
+      arr.filter(function(r){ return r.estado!=='cancelada'; }).forEach(function(r){ const k=r.data+' '+r.hora; (grupos[k]=grupos[k]||[]).push(Number(r.pessoas)||1); });
+      const chaves = Object.keys(grupos).sort();
+      if(chaves.length){
+        let hs = '<div class="card" style="padding:12px 14px;"><div style="font-weight:700; margin-bottom:6px;">Capacidade por horário</div>';
+        chaves.forEach(function(k){
+          const parties = grupos[k]; const livres = alocar(mesasArr, parties);
+          const d = new Date(k.slice(0,10)+'T00:00:00'); const hora = k.slice(11);
+          let livreTxt = (livres===null) ? '<span style="color:var(--vermelho);">excedido</span>' : (livres.length ? ('livres: '+contar(livres)) : '<span style="color:var(--vermelho);">esgotado</span>');
+          hs += '<div style="font-size:.85rem; padding:5px 0; border-top:1px solid #efe7d6;"><strong>'+d.getDate()+' '+MESES[d.getMonth()]+' · '+hora+'</strong> — '+contar(parties)+' · '+livreTxt+'</div>';
+        });
+        hs += '</div>';
+        $('lista').innerHTML = hs;
+      }
+    }
     arr.forEach(r => {
       const d = new Date(r.data + 'T00:00:00');
       const div = document.createElement('div'); div.className = 'r ' + r.estado;

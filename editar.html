@@ -875,7 +875,12 @@
 
         <label for="agLugares" style="margin-top:12px;">Reservas por horário (0 = sem limite)</label>
         <input type="number" id="agLugares" min="0" max="200" value="0" placeholder="Ex: 4 mesas por hora">
-        <div class="subtitulo" style="margin-top:2px;">Quando um horário atinge este número, deixa de aparecer disponível.</div>
+        <div class="subtitulo" style="margin-top:2px;">Limite simples por horário. Se definires mesas em baixo, as mesas mandam.</div>
+
+        <label style="margin-top:14px;">Mesas (gestão por capacidade — opcional)</label>
+        <div class="subtitulo" style="margin-top:0; margin-bottom:6px;">Define quantas mesas tens de cada lotação. A app aloca cada reserva à mesa mais pequena que caiba e bloqueia quando esgotam.</div>
+        <div id="agMesas"></div>
+        <button type="button" id="btnAddMesa" style="margin-top:6px; background:var(--castanho); color:#fff; border:none; border-radius:8px; padding:7px 12px; cursor:pointer; font-family:inherit; font-size:0.85rem;">＋ tipo de mesa</button>
 
         <label for="agWhatsapp" style="margin-top:12px;">WhatsApp (opcional — recebes aviso se não usares o painel de reservas)</label>
         <input type="text" id="agWhatsapp" placeholder="Ex: 351912345678">
@@ -1522,6 +1527,8 @@
       document.getElementById('agAntecedencia').value = (ag.antecedencia != null ? ag.antecedencia : 1);
       document.getElementById('agMaxDias').value = ag.maxDias || 30;
       document.getElementById('agLugares').value = (ag.lugares != null ? ag.lugares : 0);
+      agMesasState = Array.isArray(ag.mesas) ? JSON.parse(JSON.stringify(ag.mesas)) : [];
+      renderAgMesas();
       document.getElementById('agWhatsapp').value = ag.whatsapp || '';
       document.getElementById('agValor').value = ag.valor || 0;
       document.getElementById('agSinal').value = (ag.sinalPercent != null ? ag.sinalPercent : 50);
@@ -1941,6 +1948,7 @@
           antecedencia: parseInt(document.getElementById('agAntecedencia').value, 10) || 0,
           maxDias: parseInt(document.getElementById('agMaxDias').value, 10) || 30,
           lugares: parseInt(document.getElementById('agLugares').value, 10) || 0,
+          mesas: agMesasState.filter(function(m){ return (parseInt(m.lugares,10)||0) > 0 && (parseInt(m.quantidade,10)||0) > 0; }).map(function(m){ return { lugares:parseInt(m.lugares,10), quantidade:parseInt(m.quantidade,10) }; }),
           whatsapp: document.getElementById('agWhatsapp').value.trim(),
           valor: parseFloat(document.getElementById('agValor').value) || 0,
           porPessoa: document.getElementById('agPorPessoa').checked,
@@ -2060,6 +2068,27 @@
   }
   { const _aa = document.getElementById('agAtivo');
     if(_aa) _aa.addEventListener('change', e => { document.getElementById('agBox').style.display = e.target.checked ? 'block' : 'none'; }); }
+
+  // Mesas (gestão por capacidade)
+  let agMesasState = [];
+  function renderAgMesas(){
+    const box = document.getElementById('agMesas'); if(!box) return; box.innerHTML = '';
+    agMesasState.forEach(function(m, i){
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex; align-items:center; gap:8px; margin:5px 0; flex-wrap:wrap;';
+      const inL = document.createElement('input'); inL.type='number'; inL.min='1'; inL.max='50'; inL.value=(m.lugares||2); inL.style.width='72px';
+      const inQ = document.createElement('input'); inQ.type='number'; inQ.min='1'; inQ.max='200'; inQ.value=(m.quantidade||1); inQ.style.width='72px';
+      const rm = document.createElement('button'); rm.type='button'; rm.textContent='✕'; rm.style.cssText='background:var(--vermelho); color:#fff; border:none; border-radius:6px; width:26px; height:26px; cursor:pointer;';
+      inL.oninput=function(){ m.lugares=parseInt(inL.value,10)||1; };
+      inQ.oninput=function(){ m.quantidade=parseInt(inQ.value,10)||1; };
+      rm.onclick=function(){ agMesasState.splice(i,1); renderAgMesas(); };
+      const s1=document.createElement('span'); s1.textContent='lugares ×'; s1.style.cssText='font-size:.85rem; color:var(--castanho-suave);';
+      const s2=document.createElement('span'); s2.textContent='mesas'; s2.style.cssText='font-size:.85rem; color:var(--castanho-suave);';
+      row.appendChild(inL); row.appendChild(s1); row.appendChild(inQ); row.appendChild(s2); row.appendChild(rm);
+      box.appendChild(row);
+    });
+  }
+  { const _bm = document.getElementById('btnAddMesa'); if(_bm) _bm.onclick = function(){ agMesasState.push({ lugares:2, quantidade:1 }); renderAgMesas(); }; }
 
   document.getElementById('introAtivo').addEventListener('change', e => {
     document.getElementById('blocoIntro').style.display = e.target.checked ? 'block' : 'none';

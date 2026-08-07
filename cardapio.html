@@ -3686,11 +3686,22 @@
 
     const MESES = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
     const DOW = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
-    let estado = { mes:null, ano:null, diaSel:null, slotSel:null, ocupadas:{} };
+    let estado = { mes:null, ano:null, diaSel:null, slotSel:null, ocupadas:{}, reservasDia:{}, pessoas:2 };
 
     function cfg(){ return window._agenda || {}; }
+    function mesasExpandido(){ const a = cfg(); const arr = []; (a.mesas || []).forEach(function(m){ const q = parseInt(m.quantidade,10)||0, l = parseInt(m.lugares,10)||0; for(let i=0;i<q;i++) if(l>0) arr.push(l); }); arr.sort(function(x,y){ return x-y; }); return arr; }
+    function _alocar(mesasArr, parties){ const livres = mesasArr.slice(); const ps = parties.slice().sort(function(x,y){ return y-x; }); for(let i=0;i<ps.length;i++){ let idx=-1; for(let j=0;j<livres.length;j++){ if(livres[j]>=ps[i]){ idx=j; break; } } if(idx<0) return null; livres.splice(idx,1); } return livres; }
+    function cabeMesa(hora, pessoas){ const mesasArr = mesasExpandido(); if(!mesasArr.length) return null; const parties = (estado.reservasDia && estado.reservasDia[hora]) || []; const livres = _alocar(mesasArr, parties); if(livres === null) return false; return livres.some(function(c){ return c >= pessoas; }); }
     async function carregarOcupadas(iso){
-      estado.ocupadas = {};
+      estado.ocupadas = {}; estado.reservasDia = {};
+      try{
+        if(typeof sbC !== 'undefined' && sbC && window.__negocioId){
+          const { data, error } = await sbC.rpc('reservas_ocupacao', { negocio: window.__negocioId, dia: iso });
+          if(error) throw error;
+          (data || []).forEach(function(r){ estado.ocupadas[r.hora] = (estado.ocupadas[r.hora]||0)+1; (estado.reservasDia[r.hora] = estado.reservasDia[r.hora] || []).push(Number(r.pessoas)||1); });
+          return;
+        }
+      }catch(e){}
       try{
         if(typeof sbC !== 'undefined' && sbC && window.__negocioId){
           const { data } = await sbC.rpc('horas_ocupadas', { negocio: window.__negocioId, dia: iso });
@@ -3739,11 +3750,15 @@
       }
       html += '</div>';
       if(estado.diaSel){
+        html += '<div class="ag-passo-tit">Quantas pessoas?</div>';
+        html += '<input type="number" id="agPessoas" min="1" max="50" value="' + (estado.pessoas || 2) + '" style="width:100%; padding:11px 12px; border:1.5px solid var(--linha); border-radius:10px; font-family:inherit; font-size:0.95rem; color:var(--castanho); background:var(--branco);">';
         html += '<div class="ag-passo-tit">Horários disponíveis</div><div class="ag-slots">';
+        const usaMesas = !!(a.mesas && a.mesas.length);
         const lug = parseInt(a.lugares, 10) || 0;
         (a.horarios || []).forEach(function(hh){
-          const ocup = (estado.ocupadas && estado.ocupadas[hh]) || 0;
-          const cheio = lug > 0 && ocup >= lug;
+          let cheio;
+          if(usaMesas){ cheio = (cabeMesa(hh, estado.pessoas || 1) === false); }
+          else { const ocup = (estado.ocupadas && estado.ocupadas[hh]) || 0; cheio = lug > 0 && ocup >= lug; }
           html += '<button type="button" class="ag-slot' + (estado.slotSel === hh ? ' sel' : '') + (cheio ? ' cheio' : '') + '"' + (cheio ? ' disabled' : (' data-slot="' + hh + '"')) + '>' + hh + (cheio ? ' ✕' : '') + '</button>';
         });
         html += '</div>';
@@ -3752,7 +3767,6 @@
         html += '<div class="ag-passo-tit">Os teus dados</div><div class="ag-form">';
         html += '<input type="text" id="agNome" placeholder="Nome">';
         html += '<input type="tel" id="agTel" placeholder="Telemóvel">';
-        html += '<input type="number" id="agPessoas" min="1" max="50" value="2" placeholder="Nº de pessoas">';
         html += '<textarea id="agObs" placeholder="Observações (opcional)"></textarea></div>';
         html += '<div class="ag-resumo" id="agResumo"></div>';
         html += '<button type="button" class="ag-btn" id="agEnviar">Confirmar reserva</button>';
@@ -3765,10 +3779,10 @@
     }
     function atualizarResumo(){
       const a = cfg();
-      const pessoas = parseInt((document.getElementById('agPessoas') || {}).value, 10) || 1;
+      const pessoas = estado.pessoas || 1;
       const total = valorTotal(pessoas); const pct = a.sinalPercent || 50; const sinal = total * pct / 100;
       const d = new Date(estado.diaSel + 'T00:00:00');
-      let txt = '<strong>' + d.getDate() + ' de ' + MESES[d.getMonth()] + ' ' + d.getFullYear() + '</strong> às <strong>' + estado.slotSel + '</strong>';
+      let txt = '<strong>' + d.getDate() + ' de ' + MESES[d.getMonth()] + ' ' + d.getFullYear() + '</strong> às <strong>' + estado.slotSel + '</strong> · ' + pessoas + ' pessoa(s)';
       if(total > 0){ txt += '<br>Valor: ' + total.toFixed(2) + '€<br>Sinal (' + pct + '%): <strong>' + sinal.toFixed(2) + '€</strong>'; }
       const r = document.getElementById('agResumo'); if(r) r.innerHTML = txt;
     }
@@ -3777,7 +3791,7 @@
       const n = document.getElementById('agNext'); if(n) n.onclick = function(){ estado.mes++; if(estado.mes>11){estado.mes=0;estado.ano++;} estado.diaSel=null; estado.slotSel=null; render(); };
       document.querySelectorAll('#agCard [data-dia]').forEach(function(b){ b.onclick = async function(){ estado.diaSel = b.getAttribute('data-dia'); estado.slotSel=null; await carregarOcupadas(estado.diaSel); render(); }; });
       document.querySelectorAll('#agCard [data-slot]').forEach(function(b){ b.onclick = function(){ estado.slotSel = b.getAttribute('data-slot'); render(); }; });
-      const pe = document.getElementById('agPessoas'); if(pe) pe.oninput = atualizarResumo;
+      const pe = document.getElementById('agPessoas'); if(pe) pe.onchange = function(){ estado.pessoas = Math.max(1, parseInt(pe.value,10)||1); estado.slotSel = null; render(); };
       const f = document.getElementById('agFechar'); if(f) f.onclick = function(){ ov.classList.remove('aberto'); };
       const env = document.getElementById('agEnviar'); if(env) env.onclick = enviar;
     }
@@ -3785,9 +3799,14 @@
       const a = cfg();
       const nome = ((document.getElementById('agNome') || {}).value || '').trim();
       const tel = ((document.getElementById('agTel') || {}).value || '').trim();
-      const pessoas = parseInt((document.getElementById('agPessoas') || {}).value, 10) || 1;
+      const pessoas = estado.pessoas || 1;
       const obs = ((document.getElementById('agObs') || {}).value || '').trim();
       if(!nome || !tel){ alert('Preenche o nome e o telemóvel.'); return; }
+      // Revalidar disponibilidade de mesa (evita corridas)
+      if(a.mesas && a.mesas.length){
+        await carregarOcupadas(estado.diaSel);
+        if(cabeMesa(estado.slotSel, pessoas) === false){ alert('Esse horário já ficou sem mesa para ' + pessoas + ' pessoa(s). Escolhe outro.'); estado.slotSel = null; render(); return; }
+      }
       const d = new Date(estado.diaSel + 'T00:00:00');
       const total = valorTotal(pessoas); const pct = a.sinalPercent || 50; const sinal = total * pct / 100;
       const env = document.getElementById('agEnviar');
