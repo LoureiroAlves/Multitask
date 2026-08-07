@@ -2057,13 +2057,17 @@
     const sombra = realce !== false ? '0 1px 3px rgba(0,0,0,0.55), 0 0 8px rgba(0,0,0,0.35)' : 'none';
     let idx = 0;
 
+    const _car = (window._rodapeCfg && window._rodapeCfg.carrossel) || {};
     function render(i){
       const s = ativos[i];
       const el = document.getElementById('carrosselSlide');
       if(!el) return;
+      // Tamanho: por cartão (s.tamTitulo/s.tamLinhas) tem prioridade; senão o do slideshow (car.tamTitulo/tamLinhas)
+      const tTit = (s.tamTitulo || _car.tamTitulo) ? (';font-size:' + (s.tamTitulo || _car.tamTitulo) + 'rem') : '';
+      const tLin = (s.tamLinhas || _car.tamLinhas) ? (';font-size:' + (s.tamLinhas || _car.tamLinhas) + 'rem') : '';
       let html = '';
-      if(s.titulo) html += '<div class="carr-titulo" style="color:' + corTxt + ';text-shadow:' + sombra + ';">' + s.titulo + '</div>';
-      (s.linhas || []).forEach(l => { if(l && l.trim()) html += '<div class="carr-linha" style="color:' + corTxt + ';text-shadow:' + sombra + ';">' + l + '</div>'; });
+      if(s.titulo) html += '<div class="carr-titulo" style="color:' + corTxt + ';text-shadow:' + sombra + tTit + ';">' + s.titulo + '</div>';
+      (s.linhas || []).forEach(l => { if(l && l.trim()) html += '<div class="carr-linha" style="color:' + corTxt + ';text-shadow:' + sombra + tLin + ';">' + l + '</div>'; });
       el.innerHTML = html;
       el.style.transition = 'none';
       el.classList.remove('sai-esq');
