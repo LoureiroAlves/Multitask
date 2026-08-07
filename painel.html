@@ -69,6 +69,8 @@
         <div><label for="nNome">Nome</label><input type="text" id="nNome" placeholder="Ex: Parada 95"></div>
         <div><label for="nSlug">Slug (endereço curto)</label><input type="text" id="nSlug" placeholder="ex: parada95"></div>
       </div>
+      <label for="nEmailDono">Email do dono (para ele entrar no editor)</label>
+      <input type="email" id="nEmailDono" placeholder="dono@exemplo.com (podes deixar em branco e definir depois)">
       <label for="nPlano">Plano</label>
       <select id="nPlano">
         <option value="basico">Básico</option>
@@ -178,7 +180,8 @@
         '</div>' +
       '</div>' +
       '<div class="det-corpo hide" data-corpo>' +
-        '<label>Plano</label><select data-plano>' +
+        '<label>Email do dono</label><input type="email" data-email value="' + (n.dono_email || '') + '" placeholder="dono@exemplo.com">' +
+        '<label style="margin-top:12px;">Plano</label><select data-plano>' +
           '<option value="basico">Básico</option><option value="intermedio">Intermédio</option><option value="pro">Pro</option>' +
         '</select>' +
         '<label style="margin-top:12px;">Funções ativas</label>' +
@@ -217,16 +220,17 @@
     const nome = $('nNome').value.trim();
     let slug = $('nSlug').value.trim().toLowerCase().replace(/[^a-z0-9]+/g,'');
     const plano = $('nPlano').value;
+    const emailDono = $('nEmailDono').value.trim().toLowerCase();
     if(!nome || !slug){ msg($('criarMsg'),'Preenche o nome e o slug.','erro'); return; }
     $('btnCriar').disabled = true;
-    const { data:neg, error } = await sb.from('negocios').insert({ nome:nome, slug:slug, config:{}, menu:{} }).select().single();
+    const { data:neg, error } = await sb.from('negocios').insert({ nome:nome, slug:slug, dono_email:emailDono || null, config:{}, menu:{} }).select().single();
     if(error){ $('btnCriar').disabled = false; msg($('criarMsg'), 'Erro: ' + error.message, 'erro'); return; }
     const funcoes = Object.assign({}, PLANOS[plano] || {});
     const publicidade = { ativo: plano === 'basico' };
     const { error:e2 } = await sb.from('entitlements').insert({ negocio_id:neg.id, plano:plano, funcoes:funcoes, publicidade:publicidade });
     $('btnCriar').disabled = false;
     if(e2){ msg($('criarMsg'), 'Negócio criado, mas erro nas permissões: ' + e2.message, 'erro'); }
-    else { msg($('criarMsg'), 'Negócio "' + nome + '" criado ✓', 'ok'); $('nNome').value=''; $('nSlug').value=''; }
+    else { msg($('criarMsg'), 'Negócio "' + nome + '" criado ✓', 'ok'); $('nNome').value=''; $('nSlug').value=''; $('nEmailDono').value=''; }
     carregar();
   }
 
@@ -235,9 +239,11 @@
     const funcoes = {};
     div.querySelectorAll('[data-fn]').forEach(function(c){ if(c.checked) funcoes[c.getAttribute('data-fn')] = true; });
     const publicidade = { ativo: div.querySelector('[data-pub]').checked };
+    const emailDono = (div.querySelector('[data-email]').value || '').trim().toLowerCase();
     const box = div.querySelector('[data-msg]');
+    const { error:eN } = await sb.from('negocios').update({ dono_email: emailDono || null }).eq('id', n.id);
     const { error } = await sb.from('entitlements').update({ plano:plano, funcoes:funcoes, publicidade:publicidade, atualizado_em:new Date().toISOString() }).eq('negocio_id', n.id);
-    if(error){ msg(box, 'Erro: ' + error.message, 'erro'); } else { msg(box, 'Guardado ✓', 'ok'); carregar(); }
+    if(error || eN){ msg(box, 'Erro: ' + ((error||eN).message), 'erro'); } else { msg(box, 'Guardado ✓', 'ok'); carregar(); }
   }
 
   async function toggleAtivo(n){
