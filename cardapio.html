@@ -1134,6 +1134,9 @@
     transition:transform .38s cubic-bezier(.22,1,.36,1);
   }
   #cartOverlay.aberto .cart-painel{ transform:translateY(0); }
+  /* Carrinho sempre legível: paleta neutra fixa dentro do painel, independente das cores do layout
+     (evita texto sem contraste quando o "bege" do tema é escuro ou o "castanho" é claro). */
+  .cart-painel, .esc-painel{ --castanho:#3a2c18; --castanho-suave:#7a6a52; --bege:#f4efe6; --branco:#ffffff; --linha:#e3d9c4; --dourado:#a8712f; }
   @keyframes cartSobe{ from{ transform:translateY(30px); opacity:0; } to{ transform:translateY(0); opacity:1; } }
   .cart-painel h3{ font-family:var(--fonte-titulo); color:var(--castanho); margin-bottom:8px; font-size:1.2rem; }
   .cart-vazio{ text-align:center; color:var(--castanho-suave); padding:24px 0; font-size:0.9rem; }
