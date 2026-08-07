@@ -969,9 +969,11 @@
     const arr = new Uint8Array(bin.length);
     for(let i=0;i<bin.length;i++) arr[i] = bin.charCodeAt(i);
     const nome = (SLUG || 'geral') + '/' + Date.now() + '-' + Math.random().toString(36).slice(2,7) + '.' + dados.ext;
-    // Enviar o token do utilizador explicitamente (para o Storage reconhecer o login)
-    const { data:{ session } } = await sbc.auth.getSession();
-    const token = (session && session.access_token) ? session.access_token : SUPA_KEY;
+    // Garantir uma sessão válida (renova o token se estiver a expirar)
+    let session = (await sbc.auth.getSession()).data.session;
+    if(session){ try{ const rr = await sbc.auth.refreshSession(); if(rr.data && rr.data.session) session = rr.data.session; }catch(e){} }
+    if(!session || !session.access_token){ throw new Error('A tua sessão expirou. Sai (botão no topo) e volta a entrar, depois grava outra vez.'); }
+    const token = session.access_token;
     const resp = await fetch(SUPA_URL + '/storage/v1/object/imagens/' + nome, {
       method: 'POST',
       headers: {
