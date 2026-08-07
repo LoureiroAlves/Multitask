@@ -107,6 +107,19 @@
   </div>
 </div>
 
+<div id="qrOverlay" style="position:fixed; inset:0; z-index:900; background:rgba(0,0,0,.55); display:none; align-items:center; justify-content:center; padding:16px;">
+  <div style="background:#fff; border-radius:16px; padding:20px; max-width:360px; width:100%; text-align:center;">
+    <div id="qrNome" style="font-weight:700; color:var(--castanho); margin-bottom:4px; font-size:1.05rem;"></div>
+    <div id="qrUrl" style="font-size:.72rem; color:#9a8b6f; margin-bottom:12px; word-break:break-all;"></div>
+    <div id="qrBox" style="display:flex; justify-content:center; min-height:200px; align-items:center;"></div>
+    <div style="display:flex; gap:8px; margin-top:14px;">
+      <button class="acao" id="qrBaixar" style="flex:1;">Descarregar PNG</button>
+      <button class="mini" id="qrFechar">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
   const SUPABASE_URL = 'https://zewiijcrkyxjkhudlplk.supabase.co';
@@ -241,6 +254,7 @@
         '<div><div class="neg-nome">' + n.nome + ' ' + planoBadge + estadoBadge + '</div><div class="neg-slug">/' + n.slug + '</div></div>' +
         '<div style="display:flex; gap:6px; flex-wrap:wrap;">' +
           '<button class="mini" data-act="editar">⚙️ Gerir</button>' +
+          '<button class="mini" data-act="qr">📱 QR</button>' +
           '<button class="mini" data-act="ativo">' + (n.ativo ? 'Suspender' : 'Ativar') + '</button>' +
           '<button class="mini perigo" data-act="apagar">🗑</button>' +
         '</div>' +
@@ -277,6 +291,7 @@
     };
 
     div.querySelector('[data-act="editar"]').onclick = function(){ div.querySelector('[data-corpo]').classList.toggle('hide'); };
+    div.querySelector('[data-act="qr"]').onclick = function(){ abrirQR(n); };
     div.querySelector('[data-act="ativo"]').onclick = function(){ toggleAtivo(n); };
     div.querySelector('[data-act="apagar"]').onclick = function(){ apagar(n); };
     div.querySelector('[data-act="guardar"]').onclick = function(){ guardarEnt(n, div); };
@@ -323,6 +338,44 @@
     const { error } = await sb.from('negocios').delete().eq('id', n.id);
     if(error){ alert('Erro: ' + error.message); } else { carregar(); }
   }
+
+  // ---- QR code com o nome do negócio ao centro ----
+  let qrCanvasAtual = null, qrNomeFich = 'qr';
+  const QR_BASE = location.href.replace(/[?#].*$/, '').replace(/[^/]*$/, '');
+  function _rr(ctx,x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+  function _wrap(ctx,text,maxW){ const words=String(text).split(/\s+/); const lines=[]; let cur=''; words.forEach(function(w){ const t=cur?cur+' '+w:w; if(ctx.measureText(t).width<=maxW||!cur){cur=t;} else {lines.push(cur);cur=w;} }); if(cur) lines.push(cur); return lines; }
+  function _nome(ctx,texto,cx,cy,maxW,maxH){
+    let size=26, lines=[texto], lh=size*1.16;
+    for(; size>=10; size--){ ctx.font='700 '+size+"px -apple-system,'Segoe UI',sans-serif"; lines=_wrap(ctx,texto,maxW); if(lines.length>2) continue; lh=size*1.16; const w=Math.max.apply(null,lines.map(function(l){return ctx.measureText(l).width;})); if(w<=maxW && lines.length*lh<=maxH) break; }
+    ctx.font='700 '+size+"px -apple-system,'Segoe UI',sans-serif"; ctx.fillStyle='#3a2c18'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    let y=cy-(lines.length*lh)/2+lh/2; lines.forEach(function(l){ ctx.fillText(l,cx,y); y+=lh; });
+  }
+  function abrirQR(n){
+    const url = QR_BASE + 'cardapio.html?n=' + n.slug;
+    qrNomeFich = 'qr-' + n.slug;
+    $('qrNome').textContent = n.nome;
+    $('qrUrl').textContent = url;
+    $('qrBox').innerHTML = '<span style="color:#9a8b6f;font-size:.85rem;">A gerar…</span>';
+    $('qrOverlay').style.display = 'flex';
+    const tmp = document.createElement('div');
+    try{ new QRCode(tmp, { text:url, width:300, height:300, colorDark:'#3a2c18', colorLight:'#ffffff', correctLevel:QRCode.CorrectLevel.H }); }catch(e){ $('qrBox').textContent='Erro a gerar.'; return; }
+    setTimeout(function(){
+      const src = tmp.querySelector('canvas') || tmp.querySelector('img'); if(!src) return;
+      const pintar = function(img){
+        const S=300, cv=document.createElement('canvas'); cv.width=S; cv.height=S; const ctx=cv.getContext('2d');
+        ctx.fillStyle='#fff'; ctx.fillRect(0,0,S,S); ctx.drawImage(img,0,0,S,S);
+        const bw=S*0.5, bh=S*0.2, bx=(S-bw)/2, by=(S-bh)/2;
+        _rr(ctx,bx,by,bw,bh,12); ctx.fillStyle='#fff'; ctx.fill(); ctx.lineWidth=4; ctx.strokeStyle='#3a2c18'; ctx.stroke();
+        _nome(ctx, n.nome, S/2, S/2, bw-16, bh-10);
+        cv.style.width='260px'; cv.style.height='260px'; cv.style.borderRadius='6px';
+        $('qrBox').innerHTML=''; $('qrBox').appendChild(cv); qrCanvasAtual = cv;
+      };
+      if(src.tagName==='CANVAS') pintar(src); else { const im=new Image(); im.onload=function(){pintar(im);}; im.src=src.src; }
+    }, 90);
+  }
+  $('qrFechar').onclick = function(){ $('qrOverlay').style.display='none'; };
+  $('qrOverlay').onclick = function(e){ if(e.target===$('qrOverlay')) $('qrOverlay').style.display='none'; };
+  $('qrBaixar').onclick = function(){ if(!qrCanvasAtual){ alert('O QR ainda está a gerar.'); return; } const a=document.createElement('a'); a.href=qrCanvasAtual.toDataURL('image/png'); a.download=qrNomeFich+'.png'; document.body.appendChild(a); a.click(); a.remove(); };
 
   // arranque
   verificar();
