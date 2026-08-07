@@ -82,6 +82,22 @@
     </div>
 
     <div class="card">
+      <h2 style="margin:0 0 10px; font-size:1.05rem;">📥 Importar do editor antigo (GitHub)</h2>
+      <div class="row2">
+        <div><label for="impNome">Nome</label><input type="text" id="impNome" placeholder="Ex: Parada 95"></div>
+        <div><label for="impSlug">Slug</label><input type="text" id="impSlug" placeholder="parada95"></div>
+      </div>
+      <label for="impRepo">Repositório GitHub (dono/repo)</label>
+      <input type="text" id="impRepo" placeholder="Ex: LoureiroAlves/parada95">
+      <label for="impEmail">Email do dono (opcional)</label>
+      <input type="email" id="impEmail" placeholder="dono@exemplo.com">
+      <label for="impPlano">Plano</label>
+      <select id="impPlano"><option value="pro">Pro</option><option value="intermedio">Intermédio</option><option value="basico">Básico</option></select>
+      <div style="margin-top:12px;"><button class="acao" id="btnImportar">Importar</button></div>
+      <div id="impMsg"></div>
+    </div>
+
+    <div class="card">
       <div style="display:flex; align-items:center; justify-content:space-between;">
         <h2 style="margin:0; font-size:1.05rem;">Negócios</h2>
         <button class="mini" id="btnRecarregar">↻ Recarregar</button>
@@ -152,6 +168,56 @@
   // ---- Negócios ----
   $('btnRecarregar').onclick = carregar;
   $('btnCriar').onclick = criar;
+  $('btnImportar').onclick = importar;
+
+  function reescreverImgs(obj, base){
+    if(Array.isArray(obj)) return obj.map(function(x){ return reescreverImgs(x, base); });
+    if(obj && typeof obj === 'object'){ const o = {}; for(const k in obj) o[k] = reescreverImgs(obj[k], base); return o; }
+    if(typeof obj === 'string' && /^imagens\//.test(obj)) return base + obj;
+    return obj;
+  }
+  async function _buscarJson(base, ficheiro){
+    for(const br of ['main','master']){
+      try{
+        const b = base.replace('/main/', '/' + br + '/');
+        const r = await fetch(b + ficheiro + '?t=' + Date.now());
+        if(r.ok) return { dados: await r.json(), base: b };
+      }catch(e){}
+    }
+    return null;
+  }
+  async function importar(){
+    const nome = $('impNome').value.trim();
+    let slug = $('impSlug').value.trim().toLowerCase().replace(/[^a-z0-9]+/g,'');
+    let repo = $('impRepo').value.trim().replace(/^https?:\/\/github\.com\//,'').replace(/\/$/,'');
+    const plano = $('impPlano').value;
+    const emailDono = $('impEmail').value.trim().toLowerCase();
+    if(!nome || !slug || !repo){ msg($('impMsg'),'Preenche nome, slug e repositório.','erro'); return; }
+    $('btnImportar').disabled = true; msg($('impMsg'),'A importar…','ok');
+    const base = 'https://raw.githubusercontent.com/' + repo + '/main/';
+    const cfgR = await _buscarJson(base, 'config.json');
+    if(!cfgR){ $('btnImportar').disabled = false; msg($('impMsg'),'Não encontrei config.json em '+repo+' (verifica o dono/repo).','erro'); return; }
+    const menuR = await _buscarJson(cfgR.base ? cfgR.base : base, 'menu.json');
+    const config = reescreverImgs(cfgR.dados || {}, cfgR.base || base);
+    const menu = reescreverImgs((menuR && menuR.dados) || { restaurante:'', categorias:[] }, (menuR && menuR.base) || base);
+    // criar ou atualizar
+    const { data:existente } = await sb.from('negocios').select('id').eq('slug', slug).maybeSingle();
+    let negId;
+    if(existente){
+      const { error } = await sb.from('negocios').update({ nome:nome, config:config, menu:menu, dono_email: emailDono || null }).eq('id', existente.id);
+      if(error){ $('btnImportar').disabled = false; msg($('impMsg'),'Erro: '+error.message,'erro'); return; }
+      negId = existente.id;
+    } else {
+      const { data:neg, error } = await sb.from('negocios').insert({ nome:nome, slug:slug, config:config, menu:menu, dono_email: emailDono || null }).select().single();
+      if(error){ $('btnImportar').disabled = false; msg($('impMsg'),'Erro: '+error.message,'erro'); return; }
+      negId = neg.id;
+      await sb.from('entitlements').insert({ negocio_id:negId, plano:plano, funcoes:Object.assign({},PLANOS[plano]||{}), publicidade:{ ativo: plano==='basico' } });
+    }
+    $('btnImportar').disabled = false;
+    msg($('impMsg'),'Importado ✓ — abre o menu para confirmar.','ok');
+    $('impNome').value=''; $('impSlug').value=''; $('impRepo').value=''; $('impEmail').value='';
+    carregar();
+  }
 
   async function carregar(){
     $('lista').innerHTML = '<p style="color:#9a8b6f; font-size:.9rem;">A carregar…</p>';
