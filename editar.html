@@ -878,6 +878,14 @@
         <label for="agTitulo">Título</label>
         <input type="text" id="agTitulo" placeholder="Reservas" value="Reservas">
 
+        <label style="display:flex; align-items:center; gap:8px; margin-top:12px;">
+          <input type="checkbox" id="agCorAtiva" style="width:auto;"> Definir a cor dos números do calendário
+        </label>
+        <div id="agCorBox" style="display:none; align-items:center; gap:10px; margin-top:4px;">
+          <input type="color" id="agCorTexto" value="#4a3820" style="width:52px; height:38px; padding:2px; border:1.5px solid var(--linha); border-radius:8px; cursor:pointer;">
+          <span class="subtitulo" style="margin:0;">Útil quando o layout deixa os números pouco legíveis no calendário.</span>
+        </div>
+
         <label style="margin-top:12px;">Dias da semana disponíveis</label>
         <div id="agDias" style="display:flex; flex-wrap:wrap; gap:6px;"></div>
 
@@ -1552,6 +1560,10 @@
       document.getElementById('agAtivo').checked = !!ag.ativo;
       document.getElementById('agBox').style.display = ag.ativo ? 'block' : 'none';
       document.getElementById('agTitulo').value = ag.titulo || 'Reservas';
+      { const temCor = !!(ag.corTexto && String(ag.corTexto).trim());
+        document.getElementById('agCorAtiva').checked = temCor;
+        document.getElementById('agCorBox').style.display = temCor ? 'flex' : 'none';
+        document.getElementById('agCorTexto').value = temCor ? ag.corTexto : '#4a3820'; }
       renderAgDias(Array.isArray(ag.dias) ? ag.dias : [true,true,true,true,true,true,true]);
       document.getElementById('agHorarios').value = (Array.isArray(ag.horarios) ? ag.horarios : []).join(', ');
       document.getElementById('agAntecedencia').value = (ag.antecedencia != null ? ag.antecedencia : 1);
@@ -1682,6 +1694,9 @@
   });
   document.getElementById('corMenuAtiva').addEventListener('change', e => {
     document.getElementById('corMenuBox').style.display = e.target.checked ? 'flex' : 'none';
+  });
+  document.getElementById('agCorAtiva').addEventListener('change', e => {
+    document.getElementById('agCorBox').style.display = e.target.checked ? 'flex' : 'none';
   });
   document.getElementById('fundoTipoSel').addEventListener('change', e => {
     document.getElementById('fundoImagemBox').style.display = (e.target.value === 'imagem') ? 'block' : 'none';
@@ -1990,7 +2005,8 @@
           porPessoa: document.getElementById('agPorPessoa').checked,
           sinalPercent: parseInt(document.getElementById('agSinal').value, 10),
           pagamentoLink: document.getElementById('agPagLink').value.trim(),
-          pagamentoNota: document.getElementById('agPagNota').value.trim()
+          pagamentoNota: document.getElementById('agPagNota').value.trim(),
+          corTexto: document.getElementById('agCorAtiva').checked ? document.getElementById('agCorTexto').value : ''
         };
         if(isNaN(config.agenda.sinalPercent)) config.agenda.sinalPercent = 50;
       }

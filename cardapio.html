@@ -1180,10 +1180,10 @@
   .ag-cal-top{ display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
   .ag-cal-top button{ background:var(--bege); border:1px solid var(--linha); border-radius:8px; width:36px; height:36px; font-size:1.1rem; cursor:pointer; color:var(--castanho); }
   .ag-cal-top button:disabled{ opacity:.35; cursor:default; }
-  .ag-mes{ font-weight:700; color:var(--castanho); font-size:1rem; text-transform:capitalize; }
+  .ag-mes{ font-weight:700; color:var(--ag-cor-num, var(--castanho)); font-size:1rem; text-transform:capitalize; }
   .ag-grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
-  .ag-dow{ text-align:center; font-size:0.68rem; color:var(--castanho-suave); padding:2px 0; font-weight:700; }
-  .ag-dia{ aspect-ratio:1/1; border:none; background:transparent; border-radius:9px; font-size:0.9rem; color:var(--castanho); cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .ag-dow{ text-align:center; font-size:0.68rem; color:var(--ag-cor-num, var(--castanho-suave)); opacity:.75; padding:2px 0; font-weight:700; }
+  .ag-dia{ aspect-ratio:1/1; border:none; background:transparent; border-radius:9px; font-size:0.9rem; color:var(--ag-cor-num, var(--castanho)); cursor:pointer; display:flex; align-items:center; justify-content:center; }
   .ag-dia.vazio{ visibility:hidden; }
   .ag-dia.indisp{ color:var(--linha); cursor:default; }
   .ag-dia.disp{ background:var(--bege); font-weight:700; }
@@ -3356,6 +3356,9 @@
       window._agenda = (config.agenda && config.agenda.ativo) ? config.agenda : null;
       const agb = document.getElementById('linkAgenda');
       if(agb) agb.style.display = window._agenda ? 'flex' : 'none';
+      // Cor dos números do calendário (legibilidade conforme o layout)
+      if(config.agenda && config.agenda.corTexto){ document.documentElement.style.setProperty('--ag-cor-num', config.agenda.corTexto); }
+      else { document.documentElement.style.removeProperty('--ag-cor-num'); }
     }catch(err){
       console.log('[INFO] Erro ao aplicar config:', err.message);
     }
