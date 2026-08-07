@@ -450,6 +450,21 @@
   body.modelo-azulejo .item .preco{ color:#22314a !important; font-weight:700; }
   body.modelo-azulejo .tabela-doses .preco-dose{ color:#2a5aa8 !important; }
 
+  /* ===== Modelo "Carteira" (cartões empilhados, estilo Wallet) ===== */
+  body.modelo-carteira .categoria-grid{ display:flex !important; flex-direction:column; gap:0; background:transparent; border:none; padding:14px 12px 44px; }
+  body.modelo-carteira .tile{ display:flex; align-items:center; gap:10px; position:relative; text-align:left; width:100%; min-height:0; aspect-ratio:auto; background:var(--cat-cor, var(--dourado)) !important; color:#fff; border:none !important; border-radius:18px; padding:16px 40px 16px 18px; box-shadow:0 -4px 14px rgba(0,0,0,.22); }
+  body.modelo-carteira .tile:not(:first-child){ margin-top:-40px; }
+  body.modelo-carteira .tile:active{ transform:translateY(-2px); }
+  body.modelo-carteira .tile:hover{ filter:brightness(1.03); }
+  body.modelo-carteira .tile .tile-emoji{ display:inline-block; font-size:1.5rem; line-height:1; margin:0; }
+  body.modelo-carteira .tile .tile-label{ flex:1; font-weight:700; font-size:1.08rem; color:#fff !important; text-transform:none !important; letter-spacing:0; text-shadow:none !important; }
+  body.modelo-carteira .tile::after{ content:'›'; position:absolute; right:18px; top:50%; transform:translateY(-50%); opacity:.75; font-size:1.3rem; }
+  /* O painel abre a deslizar de baixo para cima; cabeçalho na cor da categoria */
+  body.modelo-carteira .categoria-painel{ transform:translateY(100%) !important; transition:transform .42s cubic-bezier(.3,.85,.25,1), visibility 0s linear .42s !important; }
+  body.modelo-carteira .categoria-painel.aberto{ transform:translateY(0) !important; transition:transform .42s cubic-bezier(.3,.85,.25,1), visibility 0s !important; }
+  body.modelo-carteira .categoria-painel-header{ background:var(--cat-cor, var(--castanho)); }
+  body.modelo-carteira .categoria-painel-header .voltar, body.modelo-carteira #painelTitulo{ color:#fff !important; }
+
   /* ===== Bases de azulejo para o cabeçalho e a barra fixa ===== */
   .azbg-classico{ background-color:var(--az-bg) !important;
     background-image:
@@ -2250,6 +2265,7 @@
       const emoji = document.createElement('span'); emoji.className='tile-emoji'; emoji.textContent = cat.emoji || '';
       const label = document.createElement('span'); label.className='tile-label'; _mLang(label, cat.tile);
       btn.appendChild(emoji); btn.appendChild(label);
+      if(cat.cor){ btn.style.setProperty('--cat-cor', cat.cor); btn.dataset.cor = cat.cor; }
       grid.appendChild(btn);
       const sec = document.createElement('section');
       sec.className = 'categoria'; sec.id = cat.id;
@@ -2366,6 +2382,10 @@
 
     const label = tile.querySelector('.tile-label');
     painelTitulo.textContent = label ? label.textContent : '';
+
+    // Modelo Carteira: cabeçalho do painel na cor da categoria
+    if(tile.dataset.cor) painel.style.setProperty('--cat-cor', tile.dataset.cor);
+    else painel.style.removeProperty('--cat-cor');
 
     categoriaAtual = target;
     categoriaPaiOriginal = target.parentNode;
@@ -2801,6 +2821,7 @@
       document.body.classList.toggle('modelo-ardosia', (config.modelo || 'lista') === 'ardosia');
       document.body.classList.toggle('modelo-elegante', (config.modelo || 'lista') === 'elegante');
       document.body.classList.toggle('modelo-azulejo', (config.modelo || 'lista') === 'azulejo');
+      document.body.classList.toggle('modelo-carteira', (config.modelo || 'lista') === 'carteira');
       // Cor dos azulejos (personalizável) — recalcula as variáveis CSS
       (function(){
         let hex = (config.azulejoCor || '#2a5aa8').replace('#','');

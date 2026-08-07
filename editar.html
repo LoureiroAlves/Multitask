@@ -238,6 +238,7 @@
         <option value="ardosia">Ardósia (quadro de giz, escuro)</option>
         <option value="elegante">Elegante (fine dining, serif)</option>
         <option value="azulejo">Azulejo português (azul e branco)</option>
+        <option value="carteira">Carteira (cartões empilhados, estilo Wallet)</option>
       </select>
       <div id="cadernoBox" style="display:none; margin-top:10px; padding:12px; border:1.5px solid var(--linha); border-radius:10px;">
         <label for="cadFolha" style="margin-top:0;">Tipo de folha</label>
@@ -2747,6 +2748,15 @@
       barra.appendChild(mkBtn('↓ descer','var(--castanho-suave)',()=>{ mover(menuData.categorias,ci,1); abertaCi=Math.min(menuData.categorias.length-1,ci+1); renderEditor(); }));
       barra.appendChild(mkBtn('🗑 apagar secção','var(--vermelho)',()=>{ if(confirm('Apagar a secção "'+(tituloObj.pt||'')+'"?')){ menuData.categorias.splice(ci,1); abertaCi=null; renderEditor(); } }));
       p.appendChild(barra);
+
+      const corRow=document.createElement('div'); corRow.style.cssText='display:flex; align-items:center; gap:8px; margin:0 0 10px; font-size:0.82rem; color:var(--castanho-suave); flex-wrap:wrap;';
+      corRow.appendChild(document.createTextNode('Cor do cartão (modelo Carteira):'));
+      const corIn=document.createElement('input'); corIn.type='color'; corIn.value=cat.cor||'#a8712f'; corIn.style.cssText='width:44px; height:30px; padding:0; border:none; background:none; cursor:pointer;';
+      corIn.addEventListener('input',()=>{ cat.cor=corIn.value; });
+      const corLimpar=document.createElement('button'); corLimpar.type='button'; corLimpar.className='mv-mini'; corLimpar.textContent='sem cor'; corLimpar.title='Usar a cor do tema';
+      corLimpar.addEventListener('click',()=>{ delete cat.cor; renderEditor(); });
+      corRow.appendChild(corIn); corRow.appendChild(corLimpar);
+      p.appendChild(corRow);
 
       const trd=document.createElement('details'); trd.style.cssText='border:none;background:transparent;margin-bottom:4px;';
       const trs=document.createElement('summary'); trs.textContent='traduções do título'; trs.style.cssText='font-size:0.75rem;color:var(--castanho-suave);';
