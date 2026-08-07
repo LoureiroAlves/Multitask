@@ -1158,6 +1158,7 @@
   .ag-slots{ display:grid; grid-template-columns:repeat(auto-fill,minmax(72px,1fr)); gap:8px; margin-top:12px; }
   .ag-slot{ padding:9px 6px; border:1.5px solid var(--linha); border-radius:10px; background:var(--branco); color:var(--castanho); font-size:0.9rem; cursor:pointer; font-family:inherit; }
   .ag-slot.sel{ background:var(--dourado); color:#fff; border-color:var(--dourado); }
+  .ag-slot.cheio{ opacity:.4; text-decoration:line-through; cursor:default; }
   .ag-form{ margin-top:14px; display:flex; flex-direction:column; gap:9px; }
   .ag-form input, .ag-form textarea{ padding:11px 12px; border:1.5px solid var(--linha); border-radius:10px; font-family:inherit; font-size:0.95rem; color:var(--castanho); background:var(--branco); }
   .ag-form textarea{ min-height:56px; resize:vertical; }
@@ -3324,6 +3325,7 @@
       const { data:ent } = await sbC.from('entitlements').select('*').eq('negocio_id', neg.id).maybeSingle();
       const funcoes = (ent && ent.funcoes) || {};
       const pub = (ent && ent.publicidade) || {};
+      window.__negocioId = neg.id;
       const config = neg.config || {};
       aplicarPlano(config, funcoes, pub);
       aplicarConfig(config);
@@ -3662,9 +3664,18 @@
 
     const MESES = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
     const DOW = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
-    let estado = { mes:null, ano:null, diaSel:null, slotSel:null };
+    let estado = { mes:null, ano:null, diaSel:null, slotSel:null, ocupadas:{} };
 
     function cfg(){ return window._agenda || {}; }
+    async function carregarOcupadas(iso){
+      estado.ocupadas = {};
+      try{
+        if(typeof sbC !== 'undefined' && sbC && window.__negocioId){
+          const { data } = await sbC.rpc('horas_ocupadas', { negocio: window.__negocioId, dia: iso });
+          (data || []).forEach(function(r){ estado.ocupadas[r.hora] = Number(r.total) || 0; });
+        }
+      }catch(e){}
+    }
     function fmt(d){ return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
     function hoje0(){ const d = new Date(); d.setHours(0,0,0,0); return d; }
     function diaDisponivel(d){
@@ -3707,7 +3718,12 @@
       html += '</div>';
       if(estado.diaSel){
         html += '<div class="ag-passo-tit">Horários disponíveis</div><div class="ag-slots">';
-        (a.horarios || []).forEach(function(hh){ html += '<button type="button" class="ag-slot' + (estado.slotSel === hh ? ' sel' : '') + '" data-slot="' + hh + '">' + hh + '</button>'; });
+        const lug = parseInt(a.lugares, 10) || 0;
+        (a.horarios || []).forEach(function(hh){
+          const ocup = (estado.ocupadas && estado.ocupadas[hh]) || 0;
+          const cheio = lug > 0 && ocup >= lug;
+          html += '<button type="button" class="ag-slot' + (estado.slotSel === hh ? ' sel' : '') + (cheio ? ' cheio' : '') + '"' + (cheio ? ' disabled' : (' data-slot="' + hh + '"')) + '>' + hh + (cheio ? ' ✕' : '') + '</button>';
+        });
         html += '</div>';
       }
       if(estado.diaSel && estado.slotSel){
@@ -3717,7 +3733,7 @@
         html += '<input type="number" id="agPessoas" min="1" max="50" value="2" placeholder="Nº de pessoas">';
         html += '<textarea id="agObs" placeholder="Observações (opcional)"></textarea></div>';
         html += '<div class="ag-resumo" id="agResumo"></div>';
-        html += '<button type="button" class="ag-btn' + (a.whatsapp ? ' wa' : '') + '" id="agEnviar">' + (a.whatsapp ? '📲 Enviar reserva por WhatsApp' : 'Confirmar reserva') + '</button>';
+        html += '<button type="button" class="ag-btn" id="agEnviar">Confirmar reserva</button>';
         html += '<div id="agPagamento"></div>';
       }
       html += '<button type="button" class="ag-fechar" id="agFechar">Fechar</button>';
@@ -3737,13 +3753,13 @@
     function ligar(){
       const p = document.getElementById('agPrev'); if(p) p.onclick = function(){ estado.mes--; if(estado.mes<0){estado.mes=11;estado.ano--;} estado.diaSel=null; estado.slotSel=null; render(); };
       const n = document.getElementById('agNext'); if(n) n.onclick = function(){ estado.mes++; if(estado.mes>11){estado.mes=0;estado.ano++;} estado.diaSel=null; estado.slotSel=null; render(); };
-      document.querySelectorAll('#agCard [data-dia]').forEach(function(b){ b.onclick = function(){ estado.diaSel = b.getAttribute('data-dia'); estado.slotSel=null; render(); }; });
+      document.querySelectorAll('#agCard [data-dia]').forEach(function(b){ b.onclick = async function(){ estado.diaSel = b.getAttribute('data-dia'); estado.slotSel=null; await carregarOcupadas(estado.diaSel); render(); }; });
       document.querySelectorAll('#agCard [data-slot]').forEach(function(b){ b.onclick = function(){ estado.slotSel = b.getAttribute('data-slot'); render(); }; });
       const pe = document.getElementById('agPessoas'); if(pe) pe.oninput = atualizarResumo;
       const f = document.getElementById('agFechar'); if(f) f.onclick = function(){ ov.classList.remove('aberto'); };
       const env = document.getElementById('agEnviar'); if(env) env.onclick = enviar;
     }
-    function enviar(){
+    async function enviar(){
       const a = cfg();
       const nome = ((document.getElementById('agNome') || {}).value || '').trim();
       const tel = ((document.getElementById('agTel') || {}).value || '').trim();
@@ -3752,23 +3768,34 @@
       if(!nome || !tel){ alert('Preenche o nome e o telemóvel.'); return; }
       const d = new Date(estado.diaSel + 'T00:00:00');
       const total = valorTotal(pessoas); const pct = a.sinalPercent || 50; const sinal = total * pct / 100;
-      let msg = 'Olá! Quero fazer uma reserva' + (window.__nomeRestaurante ? (' no ' + window.__nomeRestaurante) : '') + ':%0A';
-      msg += 'Nome: ' + nome + '%0A' + 'Telemóvel: ' + tel + '%0A';
-      msg += 'Data: ' + d.getDate() + '/' + (d.getMonth()+1) + '/' + d.getFullYear() + '%0A';
-      msg += 'Hora: ' + estado.slotSel + '%0A' + 'Pessoas: ' + pessoas + '%0A';
-      if(obs) msg += 'Obs: ' + obs + '%0A';
-      if(total > 0) msg += 'Sinal (' + pct + '%): ' + sinal.toFixed(2) + '€%0A';
-      msg = encodeURIComponent(decodeURIComponent(msg));
-      if(a.whatsapp){ const num = String(a.whatsapp).replace(/[^0-9]/g,''); window.open('https://wa.me/' + num + '?text=' + msg, '_blank'); }
-      else { alert('Reserva registada. Combina os detalhes com o restaurante.'); }
-      const pag = document.getElementById('agPagamento');
-      if(pag){
-        let ph = '';
-        if(a.pagamentoLink){ ph += '<div class="ag-passo-tit">Pagar o sinal</div><button type="button" class="ag-btn pay" id="agPagar">💳 Pagar sinal' + (sinal > 0 ? (' (' + sinal.toFixed(2) + '€)') : '') + '</button>'; }
-        if(a.pagamentoNota) ph += '<div class="ag-sub" style="margin-top:8px;">' + a.pagamentoNota + '</div>';
-        pag.innerHTML = ph;
-        const pb = document.getElementById('agPagar'); if(pb) pb.onclick = function(){ window.open(a.pagamentoLink, '_blank'); };
+      const env = document.getElementById('agEnviar');
+      if(typeof sbC !== 'undefined' && sbC && window.__negocioId){
+        if(env){ env.disabled = true; env.textContent = 'A registar…'; }
+        try{
+          const { error } = await sbC.from('reservas').insert({
+            negocio_id: window.__negocioId, data: estado.diaSel, hora: estado.slotSel,
+            nome: nome, telefone: tel, pessoas: pessoas, obs: obs || null,
+            valor: total, sinal: sinal, estado: 'pendente'
+          });
+          if(error) throw error;
+        }catch(e){ alert('Não consegui registar a reserva: ' + e.message); if(env){ env.disabled=false; env.textContent = 'Confirmar reserva'; } return; }
+      } else if(a.whatsapp){
+        let msg = 'Olá! Quero reservar:%0ANome: ' + nome + '%0ATelemóvel: ' + tel + '%0AData: ' + d.getDate() + '/' + (d.getMonth()+1) + '/' + d.getFullYear() + '%0AHora: ' + estado.slotSel + '%0APessoas: ' + pessoas + '%0A';
+        if(obs) msg += 'Obs: ' + obs + '%0A';
+        window.open('https://wa.me/' + String(a.whatsapp).replace(/[^0-9]/g,'') + '?text=' + encodeURIComponent(decodeURIComponent(msg)), '_blank');
       }
+      // Ecrã de confirmação
+      const card = document.getElementById('agCard');
+      let ok = '<h3>Reserva enviada ✓</h3>';
+      ok += '<div class="ag-resumo"><strong>' + d.getDate() + ' de ' + MESES[d.getMonth()] + '</strong> às <strong>' + estado.slotSel + '</strong> · ' + pessoas + ' pessoa(s)<br>Vamos confirmar a tua reserva em breve.';
+      if(total > 0) ok += '<br>Sinal (' + pct + '%): <strong>' + sinal.toFixed(2) + '€</strong>';
+      ok += '</div>';
+      if(a.pagamentoLink){ ok += '<div class="ag-passo-tit">Garante a tua reserva</div><button type="button" class="ag-btn pay" id="agPagar">💳 Pagar sinal' + (sinal > 0 ? (' (' + sinal.toFixed(2) + '€)') : '') + '</button>'; }
+      if(a.pagamentoNota) ok += '<div class="ag-sub" style="margin-top:8px;">' + a.pagamentoNota + '</div>';
+      ok += '<button type="button" class="ag-fechar" id="agFechar">Fechar</button>';
+      card.innerHTML = ok;
+      const pb = document.getElementById('agPagar'); if(pb) pb.onclick = function(){ window.open(a.pagamentoLink, '_blank'); };
+      const fb = document.getElementById('agFechar'); if(fb) fb.onclick = function(){ ov.classList.remove('aberto'); estado.diaSel=null; estado.slotSel=null; };
     }
   })();
 
