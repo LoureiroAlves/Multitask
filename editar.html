@@ -1971,6 +1971,7 @@
       window.__negocio.config = JSON.parse(JSON.stringify(config));
       renderListaFotos('header');
       renderListaFotos('rodape');
+      try{ if(window.__agendarPreview) window.__agendarPreview(); }catch(e){}
       setEstado('✅ Guardado! As alterações já estão no teu menu.', 'ok');
   }
 
