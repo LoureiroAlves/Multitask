@@ -182,6 +182,27 @@
   <a class="voltar" href="cardapio.html">← Voltar ao cardápio</a>
   <h1>Editar Cardápio</h1>
   <div class="subtitulo" id="editorSub">Edita o teu cardápio. As alterações são guardadas na tua conta.</div>
+
+  <!-- ✨ ASSISTENTE: criar layout + menu a partir de uma descrição (extra por plano) -->
+  <div id="secAssistente" style="display:none; margin:14px 0 4px; padding:16px; border-radius:14px; background:linear-gradient(135deg,#2b2140,#3a2c5e); color:#fff; box-shadow:0 6px 20px rgba(58,44,94,.3);">
+    <div style="font-weight:800; font-size:1.05rem; display:flex; align-items:center; gap:8px;">✨ Criar a partir de uma descrição</div>
+    <div style="font-size:0.85rem; opacity:.9; margin:4px 0 12px;">Escreve o tipo de negócio e o estilo que queres. Eu escolho o modelo, as cores, os tipos de letra, as secções e um menu de exemplo — depois é só rever e guardar.</div>
+    <button type="button" id="btnAssistente" style="width:100%; padding:13px; border:none; border-radius:11px; background:#fff; color:#3a2c5e; font-family:inherit; font-weight:800; font-size:1rem; cursor:pointer;">Começar ✨</button>
+    <div id="assistentePainel" style="display:none; margin-top:12px;">
+      <textarea id="assistenteTexto" rows="4" placeholder="Ex: Padaria tradicional portuguesa, acolhedora, com pão quente, bolos caseiros e cafés. Cores quentes." style="width:100%; padding:12px; border-radius:11px; border:none; font-family:inherit; font-size:0.95rem; resize:vertical; color:#2b2140;"></textarea>
+      <div id="assistenteChips" style="display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;"></div>
+      <label style="display:flex; align-items:center; gap:8px; margin-top:12px; font-weight:500; color:#fff; font-size:0.88rem; cursor:pointer;">
+        <input type="checkbox" id="assistenteMenu" checked style="width:auto;"> Criar também um menu de exemplo
+      </label>
+      <label style="display:flex; align-items:center; gap:8px; margin-top:6px; font-weight:500; color:#fff; font-size:0.88rem; cursor:pointer;">
+        <input type="checkbox" id="assistenteSubstituir" style="width:auto;"> Substituir o menu atual (senão acrescenta ao que já existe)
+      </label>
+      <button type="button" id="assistenteGerar" style="width:100%; margin-top:12px; padding:13px; border:none; border-radius:11px; background:#ffd75e; color:#3a2c5e; font-family:inherit; font-weight:800; font-size:1rem; cursor:pointer;">Gerar layout ✨</button>
+      <div id="assistenteMsg" style="margin-top:10px; font-size:0.88rem; min-height:1em;"></div>
+      <div style="font-size:0.76rem; opacity:.75; margin-top:8px;">Nada é guardado automaticamente — revês tudo na pré-visualização e carregas em <strong>Guardar</strong> quando gostares.</div>
+    </div>
+  </div>
+
   <div style="display:none;" aria-hidden="true">
     <input type="password" id="token" value="supabase">
     <button type="button" id="mostrarToken">Ver</button>
@@ -1311,6 +1332,7 @@
     ent = ent || {}; const f = ent.funcoes || {};
     function esconderSec(id){ const e = document.getElementById(id); if(e){ const d = e.closest('details') || e; d.style.display = 'none'; } }
     if(!f.agenda) esconderSec('secAgenda');
+    { const a = document.getElementById('secAssistente'); if(a) a.style.display = (f.assistente || window.__admin) ? 'block' : 'none'; }
     // Publicidade é controlada pelo administrador — esconder do dono
     const fl = document.getElementById('footerLink'); if(fl){ fl.style.display='none'; const lab = document.querySelector('label[for="footerLink"]'); if(lab) lab.style.display='none'; }
   }
@@ -1368,6 +1390,184 @@
       setEstado('Erro: ' + err.message, 'erro');
     }
   }
+
+  // ============================================================
+  //  ✨ ASSISTENTE — cria layout + menu a partir de uma descrição
+  //  (gerador local: sem chaves nem custos; reconhece o tipo de
+  //   negócio e o estilo e escolhe modelo, paleta, secções e menu)
+  // ============================================================
+  function asstNorm(s){ return (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
+  function asstSlug(s){ return asstNorm(s).replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,24); }
+  const ASST_CORES = ['#b5651d','#2fa763','#c0392b','#2a5aa8','#8e44ad','#d97a34','#1f8a86','#c9a227','#d64f7c','#546073'];
+  // Cada preset: modelo (separadores), layout (paleta 1-12), sub (subtítulo), cats [tile, emoji, [[nome,desc,preço]]]
+  const ASST_PRESETS = [
+    { nome:'Padaria / Pastelaria', chaves:['padaria','pastelaria','confeitaria','pao','pães','paes','bolos','doçaria','docaria'], modelo:'grelha', layout:'6', sub:'Pão quente e doçaria caseira', cats:[
+      ['Pães','🥖',[['Pão da avó','',''],['Broa de milho','',''],['Baguete','','']]],
+      ['Bolos & Doces','🧁',[['Bolo de bolacha','',''],['Pastel de nata','',''],['Bola de Berlim','','']]],
+      ['Salgados','🥟',[['Rissol de camarão','',''],['Croquete','',''],['Empada de frango','','']]],
+      ['Cafetaria','☕',[['Café','',''],['Galão','',''],['Torrada','','']]] ] },
+    { nome:'Café / Brunch', chaves:['cafe','café','cafetaria','brunch','pequeno-almoço','pequeno almoco','snack'], modelo:'grelha', layout:'1', sub:'Cafés, brunch e petiscos', cats:[
+      ['Cafés','☕',[['Espresso','',''],['Cappuccino','',''],['Galão','','']]],
+      ['Brunch','🥐',[['Ovos mexidos','',''],['Panqueca','',''],['Croissant misto','','']]],
+      ['Tostas & Sandes','🥪',[['Tosta mista','',''],['Sandes de frango','','']]],
+      ['Sumos & Batidos','🥤',[['Sumo natural','',''],['Batido de fruta','','']]],
+      ['Doces','🍰',[['Cheesecake','',''],['Brownie','','']]] ] },
+    { nome:'Restaurante', chaves:['restaurante','cozinha','bistro','ementa'], modelo:'elegante', layout:'1', sub:'Cozinha de sempre', cats:[
+      ['Entradas','🥗',[['Sopa do dia','',''],['Queijo & enchidos','','']]],
+      ['Carne','🥩',[['Bife à casa','',''],['Vitela assada','','']]],
+      ['Peixe','🐟',[['Bacalhau à lagareiro','',''],['Robalo grelhado','','']]],
+      ['Sobremesas','🍮',[['Leite-creme','',''],['Mousse de chocolate','','']]],
+      ['Bebidas','🍷',[['Vinho da casa','',''],['Água','','']]] ] },
+    { nome:'Pizzaria', chaves:['pizza','pizzaria','italiano','italiana','massas','pasta'], modelo:'grelha', layout:'3', sub:'Pizzas e massas', cats:[
+      ['Pizzas','🍕',[['Margherita','Tomate e mozzarella',''],['Diavola','Picante',''],['Quatro queijos','','']]],
+      ['Massas','🍝',[['Carbonara','',''],['Bolonhesa','','']]],
+      ['Entradas','🧄',[['Pão de alho','',''],['Bruschetta','','']]],
+      ['Sobremesas','🍰',[['Tiramisù','',''],['Panna cotta','','']]],
+      ['Bebidas','🥤',[['Refrigerante','',''],['Cerveja','','']]] ] },
+    { nome:'Hamburgueria', chaves:['hamburguer','hambúrguer','burger','hamburgueria','fast food','street food'], modelo:'carteira', layout:'9', sub:'Burgers e street food', cats:[
+      ['Hambúrgueres','🍔',[['Clássico','Carne, queijo, alface',''],['Bacon','',''],['Veggie','','']]],
+      ['Acompanhamentos','🍟',[['Batata frita','',''],['Onion rings','','']]],
+      ['Menus','🍽️',[['Menu duplo','Burger + batata + bebida','']]],
+      ['Bebidas','🥤',[['Refrigerante','',''],['Batido','','']]],
+      ['Sobremesas','🍨',[['Brownie','',''],['Gelado','','']]] ] },
+    { nome:'Sushi / Japonês', chaves:['sushi','japones','japonês','nikkei','ramen','poke'], modelo:'elegante', layout:'5', sub:'Cozinha japonesa', cats:[
+      ['Entradas','🍢',[['Edamame','',''],['Gyoza','','']]],
+      ['Sushi','🍣',[['Niguiri salmão','',''],['California roll','','']]],
+      ['Sashimi','🐟',[['Sashimi salmão','',''],['Sashimi atum','','']]],
+      ['Quentes','🍜',[['Ramen','',''],['Yakisoba','','']]],
+      ['Sobremesas','🍡',[['Mochi','',''],['Cheesecake yuzu','','']]] ] },
+    { nome:'Marisqueira', chaves:['marisqueira','marisco','mariscos','cervejaria marisco','frutos do mar'], modelo:'azulejo', layout:'4', sub:'Marisco fresco', cats:[
+      ['Entradas','🍤',[['Camarão cozido','',''],['Amêijoas à Bulhão Pato','','']]],
+      ['Mariscos','🦞',[['Sapateira','',''],['Lavagante','',''],['Percebes','','']]],
+      ['Peixe','🐟',[['Bacalhau','',''],['Robalo','','']]],
+      ['Arroz & Cataplanas','🥘',[['Arroz de marisco','',''],['Cataplana','','']]],
+      ['Sobremesas','🍮',[['Pudim','',''],['Fruta','','']]] ] },
+    { nome:'Churrascaria / Grelhados', chaves:['churrasco','churrascaria','grelhados','grelhador','brasa','frango','churrasqueira'], modelo:'ardosia', layout:'1', sub:'Na brasa', cats:[
+      ['Entradas','🥗',[['Salada mista','',''],['Chouriço assado','','']]],
+      ['Frango no Churrasco','🍗',[['Meio frango','',''],['Frango inteiro','','']]],
+      ['Carnes na Brasa','🥩',[['Costela','',''],['Espetada','','']]],
+      ['Acompanhamentos','🍟',[['Batata frita','',''],['Arroz','',''],['Feijão','','']]],
+      ['Sobremesas','🍨',[['Gelado','',''],['Salada de fruta','','']]] ] },
+    { nome:'Tasca / Petiscos', chaves:['tasca','petiscos','petisqueira','petisco','taberna'], modelo:'caderno', layout:'1', sub:'Petiscos e vinho', cats:[
+      ['Petiscos','🧀',[['Pica-pau','',''],['Moelas','',''],['Peixinhos da horta','','']]],
+      ['Pratos do Dia','🍲',[['Bitoque','',''],['Bacalhau à Brás','','']]],
+      ['Tábuas','🍖',[['Tábua de enchidos','',''],['Tábua de queijos','','']]],
+      ['Sobremesas','🍮',[['Toucinho do céu','',''],['Aletria','','']]],
+      ['Vinhos','🍷',[['Tinto da casa','',''],['Branco da casa','','']]] ] },
+    { nome:'Gelataria', chaves:['gelataria','gelados','gelado','sorvete','geladaria'], modelo:'grelha', layout:'11', sub:'Gelados artesanais', cats:[
+      ['Gelados','🍦',[['Baunilha','',''],['Chocolate','',''],['Morango','','']]],
+      ['Taças','🍨',[['Taça da casa','',''],['Banana split','','']]],
+      ['Crepes & Waffles','🧇',[['Crepe Nutella','',''],['Waffle com gelado','','']]],
+      ['Bebidas','🥤',[['Milkshake','',''],['Sumo','','']]] ] },
+    { nome:'Bar / Cervejaria', chaves:['bar','cervejaria','pub','cocktail','cocktails','drinks','tapas bar'], modelo:'ardosia', layout:'5', sub:'Bebidas e petiscos', cats:[
+      ['Cervejas','🍺',[['Imperial','',''],['Caneca','',''],['Artesanal','','']]],
+      ['Cocktails','🍸',[['Mojito','',''],['Caipirinha','',''],['Gin tónico','','']]],
+      ['Shots','🥃',[['Shot da casa','','']]],
+      ['Petiscos','🍢',[['Tábua mista','',''],['Tremoços','','']]],
+      ['Sem álcool','🧃',[['Refrigerante','',''],['Água','','']]] ] },
+    { nome:'Garrafeira / Vinhos', chaves:['garrafeira','vinhos','vinho','wine','enoteca'], modelo:'elegante', layout:'3', sub:'Seleção de vinhos', cats:[
+      ['Tintos','🍷',[['Douro','',''],['Alentejo','','']]],
+      ['Brancos','🥂',[['Vinho Verde','',''],['Dão','','']]],
+      ['Rosés','🌸',[['Rosé da casa','','']]],
+      ['Espumantes','🍾',[['Bairrada','','']]],
+      ['Petiscos','🧀',[['Queijos','',''],['Enchidos','','']]] ] },
+    { nome:'Saudável / Vegetariano', chaves:['vegetariano','vegan','vegano','saudavel','saudável','healthy','poke','bowl','fit'], modelo:'elegante', layout:'2', sub:'Comida fresca e saudável', cats:[
+      ['Entradas','🥗',[['Húmus','',''],['Sopa de legumes','','']]],
+      ['Bowls','🥙',[['Poke bowl','',''],['Buddha bowl','','']]],
+      ['Pratos','🌱',[['Caril de grão','',''],['Lasanha de legumes','','']]],
+      ['Sumos Detox','🥤',[['Verde detox','',''],['Laranja & cenoura','','']]],
+      ['Sobremesas','🍓',[['Taça de fruta','',''],['Bolo vegan','','']]] ] },
+    { nome:'Barbearia / Cabeleireiro', chaves:['barbearia','barbeiro','cabeleireiro','salao','salão','estetica','estética','unhas','spa'], modelo:'carteira', layout:'10', sub:'Serviços e preços', cats:[
+      ['Cortes','✂️',[['Corte de cabelo','',''],['Corte + barba','','']]],
+      ['Barba','🧔',[['Aparar barba','',''],['Barba completa','','']]],
+      ['Coloração','🎨',[['Pintura','',''],['Madeixas','','']]],
+      ['Tratamentos','💆',[['Lavagem','',''],['Hidratação','','']]],
+      ['Extras','⭐',[['Sobrancelhas','','']]] ] }
+  ];
+  const ASST_GENERICO = ASST_PRESETS[2]; // Restaurante como recurso
+  function asstAcharPreset(n){
+    // palavras inteiras (evita "bar" dentro de "barbearia"); frases com espaço = substring
+    const toks = {}; n.replace(/[^a-z0-9]+/g,' ').split(' ').forEach(function(t){ if(t) toks[t] = true; });
+    function bate(k){ k = asstNorm(k); return k.indexOf(' ') >= 0 ? (n.indexOf(k) >= 0) : !!toks[k]; }
+    let melhor = null, pontos = 0;
+    ASST_PRESETS.forEach(function(p){
+      let c = 0; p.chaves.forEach(function(k){ if(bate(k)) c++; });
+      if(c > pontos){ pontos = c; melhor = p; }
+    });
+    return melhor || ASST_GENERICO;
+  }
+  function asstCorHint(n){
+    const M = [ [['azul','oceano','maritimo','praia'],'4'], [['verde','natural','bio'],'2'], [['vermelho','vinho tinto','bordeaux'],'3'],
+      [['preto','dourado','luxo','ouro','elegante','requintad','sofisticad'],'5'], [['laranja'],'9'], [['roxo','lilas','violeta'],'8'],
+      [['rosa','fofo'],'11'], [['cinza','cinzento','moderno','minimalista','industrial'],'10'], [['castanho','rustico','quente','acolhedor','madeira'],'1'],
+      [['terracota','barro'],'6'], [['petroleo','petróleo','teal','turquesa'],'7'], [['azeitona','oliva'],'12'] ];
+    const toks = {}; n.replace(/[^a-z0-9]+/g,' ').split(' ').forEach(function(t){ if(t) toks[t] = true; });
+    function bate(k){ k = asstNorm(k); return k.indexOf(' ') >= 0 ? (n.indexOf(k) >= 0) : !!toks[k]; }
+    for(let i=0;i<M.length;i++){ for(let j=0;j<M[i][0].length;j++){ if(bate(M[i][0][j])) return M[i][1]; } }
+    return null;
+  }
+  function asstEstiloHint(n){
+    if(/\bardosia|quadro|giz\b/.test(n)) return 'ardosia';
+    if(n.indexOf('azulejo') >= 0) return 'azulejo';
+    if(/caderno|manuscrit|a mao|à mao|escrito/.test(n)) return 'caderno';
+    if(/carteira|wallet|cartoes empilhad|cartões empilhad/.test(n)) return 'carteira';
+    if(/elegante|fino|luxo|requintad|sofisticad|fine dining|chique|gourmet/.test(n)) return 'elegante';
+    if(/grelha|emoji|colorid|divertid|casual/.test(n)) return 'grelha';
+    if(/\blista\b|\bsimples\b/.test(n)) return 'lista';
+    return null;
+  }
+  function asstConstruirMenu(preset){
+    const cats = (preset.cats || []).map(function(c, i){
+      return {
+        id: (asstSlug(c[0]) || ('cat' + i)),
+        cor: ASST_CORES[i % ASST_CORES.length],
+        tile: { pt: c[0] },
+        tipo: 'comida',
+        emoji: c[1] || '',
+        grupos: [ { summary: { pt: c[0] }, itens: (c[2] || []).map(function(it){
+          const o = { nome: { pt: it[0] } };
+          if(it[1]) o.desc = { pt: it[1] };
+          if(it[2]) o.preco = it[2];
+          return o;
+        }) } ]
+      };
+    });
+    return { restaurante:'', categorias: cats };
+  }
+  function asstMsg(t, erro){ const e = document.getElementById('assistenteMsg'); if(e){ e.textContent = t; e.style.color = erro ? '#ffd0d0' : '#d7ffe0'; } }
+  function asstGerar(){
+    const texto = (document.getElementById('assistenteTexto').value || '');
+    if(!texto.trim()){ asstMsg('Escreve primeiro uma descrição do negócio.', true); return; }
+    const n = asstNorm(texto);
+    const preset = asstAcharPreset(n);
+    const modelo = asstEstiloHint(n) || preset.modelo || 'lista';
+    const layout = asstCorHint(n) || preset.layout || '1';
+    config.modelo = modelo;
+    config.layout = layout; config.cores = null;
+    layoutSelecionado = layout; if(typeof renderLayoutCards === 'function') renderLayoutCards();
+    config.fonte = 'auto'; config.fonteTexto = 'auto';
+    if(preset.sub && !(config.header.subtitulo || '').trim()) config.header.subtitulo = preset.sub;
+    preencherFormulario();
+    let criouMenu = false;
+    if(document.getElementById('assistenteMenu').checked && window.__setMenu){
+      window.__setMenu(asstConstruirMenu(preset), document.getElementById('assistenteSubstituir').checked);
+      criouMenu = true;
+    }
+    if(window.__agendarPreview) window.__agendarPreview();
+    asstMsg('Pronto! Estilo "' + preset.nome + '" — modelo ' + modelo + ', paleta ' + layout + (criouMenu ? ', com menu de exemplo' : '') + '. Revê na pré-visualização. Para ficar publicado: carrega em Guardar (definições)' + (criouMenu ? ' e em Guardar menu' : '') + '.');
+  }
+  (function asstWire(){
+    const bA = document.getElementById('btnAssistente');
+    if(bA) bA.addEventListener('click', function(){ const p = document.getElementById('assistentePainel'); if(p) p.style.display = (p.style.display === 'none' || !p.style.display) ? 'block' : 'none'; });
+    const bG = document.getElementById('assistenteGerar'); if(bG) bG.addEventListener('click', asstGerar);
+    const cont = document.getElementById('assistenteChips');
+    if(cont){ ['Padaria acolhedora','Restaurante elegante','Pizzaria moderna','Hamburgueria','Sushi minimalista','Café / brunch','Marisqueira','Churrascaria','Bar / cervejaria','Gelataria','Vinhos','Barbearia'].forEach(function(c){
+      const b = document.createElement('button'); b.type = 'button'; b.textContent = c;
+      b.style.cssText = 'background:rgba(255,255,255,.16);color:#fff;border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:5px 11px;font-family:inherit;font-size:0.8rem;cursor:pointer;';
+      b.addEventListener('click', function(){ const t = document.getElementById('assistenteTexto'); t.value = (t.value.trim() ? t.value.trim() + ' ' : '') + c + '.'; t.focus(); });
+      cont.appendChild(b);
+    }); }
+  })();
 
   function preencherFormulario(){
     document.getElementById('titulo').value = config.header.titulo || '';
@@ -2978,6 +3178,21 @@
     window.__carregarMenu = carregarMenu;
     // Exposto para a pré-visualização ao vivo
     window.__getMenuPreview = function(){ try{ return menuData || null; }catch(e){ return null; } };
+    // Exposto para o assistente: define/acrescenta categorias e re-renderiza o editor de menu
+    window.__setMenu = function(m, substituir){
+      try{
+        if(!menuData || !Array.isArray(menuData.categorias)) menuData = { restaurante:'', categorias:[] };
+        var novas = (m && Array.isArray(m.categorias)) ? JSON.parse(JSON.stringify(m.categorias)) : [];
+        if(substituir){ menuData.categorias = novas; }
+        else {
+          var ids = {}; menuData.categorias.forEach(function(c){ if(c && c.id) ids[c.id]=true; });
+          novas.forEach(function(c){ var id=c.id||('cat'+Math.random().toString(36).slice(2,7)); while(ids[id]){ id=id+'-'+Math.floor(Math.random()*9); } c.id=id; ids[id]=true; menuData.categorias.push(c); });
+        }
+        menuSha = null;
+        renderEditor();
+        if(acoesEl) acoesEl.style.display = 'block';
+      }catch(e){}
+    };
 
     // ==========================================================
     //  TRADUÇÃO AUTOMÁTICA  (PT → EN/FR/ES)
@@ -3312,6 +3527,7 @@
       if(!admin && (!dono || dono !== email)){ setMsg('Esta conta não tem acesso a este negócio. Fala com o administrador.'); await sbc.auth.signOut(); return; }
       const { data:ent } = await sbc.from('entitlements').select('*').eq('negocio_id', neg.id).maybeSingle();
       window.__negocio = neg; window.__ent = ent || { plano:'basico', funcoes:{}, publicidade:{} };
+      window.__admin = admin;
       ov.style.display = 'none';
       const es = document.getElementById('editorSub'); if(es) es.textContent = 'A editar: ' + neg.nome;
       try{ aplicarGating(window.__ent); }catch(e){}
