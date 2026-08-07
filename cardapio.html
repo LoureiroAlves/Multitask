@@ -502,6 +502,9 @@
   body.modelo-slider .deck-dots{ display:flex; justify-content:center; flex-wrap:wrap; gap:6px; margin:12px 0 2px; }
   body.modelo-slider .deck-dots i{ width:7px; height:7px; border-radius:50%; background:var(--linha); transition:background .2s ease, transform .2s ease; }
   body.modelo-slider .deck-dots i.on{ background:var(--dourado); transform:scale(1.35); }
+  /* Cor das páginas escolhida pelo dono (com texto a contrastar automaticamente) */
+  body.modelo-slider .deck-page{ background:var(--slider-bg, var(--branco)); }
+  body.modelo-slider.slider-cor .deck-page{ --castanho:var(--slider-fg); --castanho-suave:var(--slider-fg); --dourado:var(--slider-fg); --linha:var(--slider-linha); color:var(--slider-fg); }
 
   /* Cor do texto do menu escolhida à mão (manda sobre o modelo) */
   body.cor-menu-custom .categoria-painel-conteudo .nome,
@@ -2953,6 +2956,20 @@
       document.body.classList.toggle('modelo-azulejo', (config.modelo || 'lista') === 'azulejo');
       document.body.classList.toggle('modelo-carteira', (config.modelo || 'lista') === 'carteira');
       document.body.classList.toggle('modelo-slider', (config.modelo || 'lista') === 'slider');
+      // Cor das páginas do modelo "Deslizar" (texto a contrastar automaticamente)
+      if((config.modelo || 'lista') === 'slider' && config.sliderCor){
+        const _bg = config.sliderCor; const _c = _bg.replace('#','');
+        let _L = 0.5; if(_c.length >= 6){ const _r=parseInt(_c.slice(0,2),16), _g=parseInt(_c.slice(2,4),16), _b=parseInt(_c.slice(4,6),16); _L = (0.299*_r + 0.587*_g + 0.114*_b)/255; }
+        const _fg = _L > 0.6 ? '#2a2018' : '#ffffff';
+        const _rs = document.documentElement.style;
+        _rs.setProperty('--slider-bg', _bg);
+        _rs.setProperty('--slider-fg', _fg);
+        _rs.setProperty('--slider-linha', _fg === '#ffffff' ? 'rgba(255,255,255,.28)' : 'rgba(0,0,0,.14)');
+        document.body.classList.add('slider-cor');
+      } else {
+        document.body.classList.remove('slider-cor');
+        document.documentElement.style.removeProperty('--slider-bg');
+      }
       if(config.corMenuTexto){ document.body.classList.add('cor-menu-custom'); document.documentElement.style.setProperty('--cor-menu-texto', config.corMenuTexto); }
       else { document.body.classList.remove('cor-menu-custom'); }
       // Cor dos azulejos (personalizável) — recalcula as variáveis CSS

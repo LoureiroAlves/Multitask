@@ -265,6 +265,16 @@
         </div>
       </div>
 
+      <div id="sliderCorBox" style="display:none; margin-top:10px; padding:12px; border:1.5px solid var(--linha); border-radius:10px;">
+        <label style="display:flex; align-items:center; gap:8px; margin:0;">
+          <input type="checkbox" id="sliderCorAtiva" style="width:auto;"> Definir a cor das páginas (modelo Deslizar)
+        </label>
+        <div id="sliderCorLinha" style="display:none; align-items:center; gap:10px; margin-top:8px;">
+          <input type="color" id="sliderCor" value="#8a3d0a" style="width:52px; height:38px; padding:2px; border:1.5px solid var(--linha); border-radius:8px; cursor:pointer;">
+          <span class="subtitulo" style="margin:0;">O texto ajusta-se sozinho (claro ou escuro) para se ler bem. Deixa desligado para páginas brancas.</span>
+        </div>
+      </div>
+
       <label for="abrirEfeitoSel" style="margin-top:16px;">Efeito ao abrir os separadores</label>
       <select id="abrirEfeitoSel" style="width:100%; padding:10px 12px; border-radius:10px; border:1.5px solid var(--linha); background:var(--branco); font-family:inherit; color:var(--castanho); font-size:0.95rem;">
         <option value="zoom">Normal (zoom)</option>
@@ -1526,6 +1536,11 @@
     document.getElementById('jogosAtivo').checked = config.jogos !== false;
     document.getElementById('modeloSel').value = config.modelo || 'lista';
     document.getElementById('cadernoBox').style.display = (config.modelo === 'caderno') ? 'block' : 'none';
+    { const temSc = !!(config.sliderCor && String(config.sliderCor).trim());
+      document.getElementById('sliderCorBox').style.display = (config.modelo === 'slider') ? 'block' : 'none';
+      document.getElementById('sliderCorAtiva').checked = temSc;
+      document.getElementById('sliderCorLinha').style.display = temSc ? 'flex' : 'none';
+      document.getElementById('sliderCor').value = temSc ? config.sliderCor : '#8a3d0a'; }
     { const cad = config.caderno || {};
       document.getElementById('cadFolha').value = cad.folha || 'quadriculado';
       document.getElementById('cadCorLetra').value = cad.corLetra || '#4a3820';
@@ -1712,6 +1727,10 @@
   });
   document.getElementById('modeloSel').addEventListener('change', e => {
     document.getElementById('cadernoBox').style.display = (e.target.value === 'caderno') ? 'block' : 'none';
+    document.getElementById('sliderCorBox').style.display = (e.target.value === 'slider') ? 'block' : 'none';
+  });
+  document.getElementById('sliderCorAtiva').addEventListener('change', e => {
+    document.getElementById('sliderCorLinha').style.display = e.target.checked ? 'flex' : 'none';
   });
 
   // Texto livre: mostradores dos sliders + cor
@@ -1922,6 +1941,7 @@
       }
       config.jogos = document.getElementById('jogosAtivo').checked;
       config.modelo = document.getElementById('modeloSel').value;
+      config.sliderCor = document.getElementById('sliderCorAtiva').checked ? document.getElementById('sliderCor').value : '';
       config.caderno = {
         folha: document.getElementById('cadFolha').value,
         corLetra: document.getElementById('cadCorLetra').value,
