@@ -473,6 +473,36 @@
   body.modelo-carteira .categoria-painel-header{ background:var(--cat-cor, var(--castanho)); }
   body.modelo-carteira .categoria-painel-header .voltar, body.modelo-carteira #painelTitulo{ color:#fff !important; }
 
+  /* ===== Modelo "Deslizar" (secções lado a lado, página inteira) — config.modelo === 'slider' ===== */
+  body.modelo-slider #categoriaGrid{ display:none !important; }           /* sem separadores */
+  body.modelo-slider .menu-deck{
+    display:flex; gap:14px; overflow-x:auto; overflow-y:hidden;
+    scroll-snap-type:x mandatory; scroll-behavior:smooth;
+    -webkit-overflow-scrolling:touch; scrollbar-width:none;
+    padding:6px 2px 8px;
+  }
+  body.modelo-slider .menu-deck::-webkit-scrollbar{ display:none; }
+  body.modelo-slider .deck-page{
+    flex:0 0 100%; scroll-snap-align:center;
+    min-height:64vh; max-height:80vh; overflow-y:auto; -webkit-overflow-scrolling:touch;
+    background:var(--branco); border:1px solid var(--linha); border-radius:24px;
+    box-shadow:0 8px 22px rgba(0,0,0,.10);
+    padding:22px 18px 26px;
+  }
+  body.modelo-slider .deck-page::-webkit-scrollbar{ width:0; }
+  body.modelo-slider .deck-page section.categoria{ display:block !important; margin-top:0; }
+  body.modelo-slider .deck-page-tit{ font-family:var(--fonte-titulo); text-transform:uppercase; letter-spacing:.6px; font-size:1.45rem; font-weight:800; color:var(--castanho); text-align:center; margin:0 0 12px; padding-bottom:10px; border-bottom:2px solid var(--dourado); }
+  /* Capa inicial */
+  body.modelo-slider .deck-capa{ display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:14px; }
+  body.modelo-slider .deck-capa .deck-capa-tit{ font-family:var(--fonte-titulo); font-size:2.8rem; font-weight:800; letter-spacing:2px; color:var(--castanho); }
+  body.modelo-slider .deck-capa .deck-capa-sub{ display:inline-flex; align-items:center; gap:10px; color:var(--castanho-suave); font-size:1.05rem; font-weight:600; }
+  body.modelo-slider .deck-capa .deck-seta{ font-size:1.7rem; color:var(--dourado); animation:deckSeta 1.1s ease-in-out infinite; }
+  @keyframes deckSeta{ 0%,100%{ transform:translateX(0); opacity:.55; } 50%{ transform:translateX(7px); opacity:1; } }
+  /* Indicadores (bolinhas) */
+  body.modelo-slider .deck-dots{ display:flex; justify-content:center; flex-wrap:wrap; gap:6px; margin:12px 0 2px; }
+  body.modelo-slider .deck-dots i{ width:7px; height:7px; border-radius:50%; background:var(--linha); transition:background .2s ease, transform .2s ease; }
+  body.modelo-slider .deck-dots i.on{ background:var(--dourado); transform:scale(1.35); }
+
   /* Cor do texto do menu escolhida à mão (manda sobre o modelo) */
   body.cor-menu-custom .categoria-painel-conteudo .nome,
   body.cor-menu-custom .categoria-painel-conteudo .desc,
@@ -2307,6 +2337,8 @@
     const jogosSec = document.getElementById('jogos');
     if(!grid || !main) return;
     grid.innerHTML = '';
+    // limpa um deck (modelo "slider") anterior, se existir — as secções são reconstruídas a seguir
+    { const _od = document.getElementById('menuDeck'); if(_od) _od.remove(); const _odd = main.querySelector(':scope > .deck-dots'); if(_odd) _odd.remove(); }
     main.querySelectorAll(':scope > section.categoria').forEach(s => { if(s.id !== 'jogos') s.remove(); });
     menu.categorias.forEach(cat => {
       const btn = document.createElement('button');
@@ -2358,8 +2390,49 @@
     } else if(!document.body.classList.contains('carregando') && window.__animarEntrada){
       setTimeout(window.__animarEntrada, 60);
     }
+    if(document.body.classList.contains('modelo-slider')){ try{ montarDeck(); }catch(e){ console.warn('deck', e); } }
     window.__menuOk = true; window.__tryReveal();
     if(window.__ajustarCapa){ setTimeout(window.__ajustarCapa, 60); setTimeout(window.__ajustarCapa, 400); }
+  }
+
+  // Modelo "Deslizar": monta um deck horizontal (capa + uma página por secção, já aberta)
+  function montarDeck(){
+    const main = document.querySelector('main'); if(!main) return;
+    const grid = document.getElementById('categoriaGrid');
+    const secs = Array.prototype.slice.call(main.querySelectorAll(':scope > section.categoria')).filter(function(s){ return s.id !== 'jogos'; });
+    if(!secs.length) return;
+    const deck = document.createElement('div'); deck.id = 'menuDeck'; deck.className = 'menu-deck';
+    // Capa
+    const capa = document.createElement('div'); capa.className = 'deck-page deck-capa';
+    const ct = document.createElement('div'); ct.className = 'deck-capa-tit'; ct.textContent = 'MENU';
+    const cs = document.createElement('div'); cs.className = 'deck-capa-sub';
+    cs.setAttribute('data-en','Swipe'); cs.setAttribute('data-fr','Glisser'); cs.setAttribute('data-es','Desliza');
+    cs.textContent = 'Desliza'; const seta = document.createElement('span'); seta.className = 'deck-seta'; seta.textContent = '→'; cs.appendChild(seta);
+    capa.appendChild(ct); capa.appendChild(cs); deck.appendChild(capa);
+    // Uma página por secção (move a secção, mantendo elementos e cliques)
+    secs.forEach(function(s){
+      const page = document.createElement('div'); page.className = 'deck-page';
+      const tl = grid ? grid.querySelector('.tile[data-target="' + s.id.replace(/"/g,'\\"') + '"] .tile-label') : null;
+      const titTxt = tl ? tl.textContent : '';
+      if(titTxt){ const h = document.createElement('div'); h.className = 'deck-page-tit'; h.textContent = titTxt; page.appendChild(h); }
+      page.appendChild(s);
+      // secções já abertas: expande os grupos (details) dentro desta página
+      s.querySelectorAll('details').forEach(function(d){ d.open = true; });
+      deck.appendChild(page);
+    });
+    // Bolinhas indicadoras
+    const dots = document.createElement('div'); dots.className = 'deck-dots';
+    const nPag = deck.querySelectorAll('.deck-page').length;
+    for(let i=0;i<nPag;i++){ const d = document.createElement('i'); if(i===0) d.className = 'on'; dots.appendChild(d); }
+    // Inserir a seguir à grelha (escondida)
+    if(grid && grid.parentNode){ grid.parentNode.insertBefore(deck, grid.nextSibling); deck.parentNode.insertBefore(dots, deck.nextSibling); }
+    else { main.appendChild(deck); main.appendChild(dots); }
+    // Atualizar as bolinhas ao deslizar
+    deck.addEventListener('scroll', function(){
+      const stride = deck.clientWidth + 14; // largura da página + gap
+      const idx = Math.max(0, Math.min(nPag - 1, Math.round(deck.scrollLeft / Math.max(1, stride))));
+      dots.querySelectorAll('i').forEach(function(el, j){ el.classList.toggle('on', j === idx); });
+    }, { passive:true });
   }
 
   // Entrada em cascata dos separadores (corre quando o menu fica visível)
@@ -2879,6 +2952,7 @@
       document.body.classList.toggle('modelo-elegante', (config.modelo || 'lista') === 'elegante');
       document.body.classList.toggle('modelo-azulejo', (config.modelo || 'lista') === 'azulejo');
       document.body.classList.toggle('modelo-carteira', (config.modelo || 'lista') === 'carteira');
+      document.body.classList.toggle('modelo-slider', (config.modelo || 'lista') === 'slider');
       if(config.corMenuTexto){ document.body.classList.add('cor-menu-custom'); document.documentElement.style.setProperty('--cor-menu-texto', config.corMenuTexto); }
       else { document.body.classList.remove('cor-menu-custom'); }
       // Cor dos azulejos (personalizável) — recalcula as variáveis CSS
