@@ -949,6 +949,7 @@
   const RAW_BASE = '';               // as fotos passam a ser URLs completos do Supabase Storage
   const REPO = '', CONFIG_PATH = 'config.json', CONFIG_API = '';
   window.__negocio = null; window.__ent = null;
+  try{ const _v = document.querySelector('a.voltar'); if(_v && SLUG) _v.href = 'cardapio.html?n=' + encodeURIComponent(SLUG); }catch(e){}
   // sobe uma foto para o Supabase Storage e devolve o URL público
   async function _uploadFoto(file){
     const dados = await comprimirImagem(file);
@@ -965,7 +966,8 @@
   // ---- Partilhar / QR code do cardápio ----
   (function(){
     let base = location.href.split('#')[0].split('?')[0];
-    const CARDAPIO_URL = /editar\.html$/i.test(base) ? base.replace(/editar\.html$/i, 'cardapio.html') : base.replace(/\/[^\/]*$/, '/') + 'cardapio.html';
+    let CARDAPIO_URL = /editar\.html$/i.test(base) ? base.replace(/editar\.html$/i, 'cardapio.html') : base.replace(/\/[^\/]*$/, '/') + 'cardapio.html';
+    if(SLUG) CARDAPIO_URL += '?n=' + encodeURIComponent(SLUG);
     const linkEl = document.getElementById('linkCardapio');
     if(linkEl) linkEl.value = CARDAPIO_URL;
     const qrBox = document.getElementById('qrCardapio');

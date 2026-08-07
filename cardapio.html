@@ -91,6 +91,7 @@
 <title>Rest & Bar Parque São Caetano — Cardápio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&family=Poppins:wght@500;600;700&family=Playfair+Display:wght@600;700&family=Quicksand:wght@500;600;700&family=Montserrat:wght@500;600;700&family=Bebas+Neue&family=Lobster&family=Pacifico&family=Caveat:wght@600;700&family=Baloo+2:wght@700;800&family=Chewy&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root{
     --branco: #ffffff;
@@ -2315,17 +2316,7 @@
       t.addEventListener('pointercancel', repor);
     });
   };
-  if(!window.__PREVIEW) fetch('menu.json?t=' + Date.now())
-    .then(r => r.ok ? r.json() : Promise.reject(r.status))
-    .then(menu => { window._menu = menu; construirMenu(menu); })
-    .catch(err => {
-      // Se o menu.json falhar, limpar o conteúdo estático para nunca mostrar dados de outro restaurante
-      var grid = document.getElementById('categoriaGrid'); if(grid) grid.innerHTML = '';
-      var main = document.querySelector('main');
-      if(main) main.querySelectorAll(':scope > section.categoria').forEach(function(s){ if(s.id !== 'jogos') s.remove(); });
-      window.__menuOk = true; window.__tryReveal();
-      console.warn('menu.json não carregado.', err);
-    });
+  // O menu é carregado do Supabase em carregarConfig() (junto do config), por ?n=slug.
 
   const tiles = document.querySelectorAll('.tile');
   const painel = document.getElementById('categoriaPainel');
@@ -2504,10 +2495,30 @@
   const fotoPlaceholder = document.getElementById('fotoPlaceholder');
   const modalFotoNome = document.getElementById('modalFotoNome');
 
-  // ---- Carrega definições do config.json (gerido pelo editar.html) ----
-  // Vazio = carrega config.json, menu.json e imagens do próprio site (relativo).
-  // Assim este ficheiro é igual em todos os restaurantes.
+  // ---- Carrega definições do Supabase (por ?n=slug) ----
+  // As fotos são URLs completos do Supabase Storage; RAW_BASE vazio deixa-os passar tal e qual.
   const RAW_BASE = '';
+  const SLUG = ((new URLSearchParams(location.search)).get('n') || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  const SUPA_URL = 'https://zewiijcrkyxjkhudlplk.supabase.co';
+  const SUPA_KEY = 'sb_publishable_6LP7x2v5c-c9DQkQslnUmA_g13SEjp3';
+  const sbC = (window.supabase && SLUG) ? window.supabase.createClient(SUPA_URL, SUPA_KEY) : null;
+  function aplicarPlano(config, f, pub){
+    f = f || {}; config = config || {};
+    if(!f.intro && config.intro) config.intro.ativo = false;
+    if(!f.jogos) config.jogos = false;
+    if(!f.fidelidade && config.fidelidade) config.fidelidade.ativo = false;
+    if(!f.agenda && config.agenda) config.agenda.ativo = false;
+    if(!f.decoracoes && config.decor) config.decor.tema = 'nenhum';
+    if(!f.modelosPremium && ['ardosia','elegante','azulejo'].indexOf(config.modelo) >= 0) config.modelo = 'lista';
+    if(!f.azulejos){
+      if(config.header) config.header.padrao = 'nenhum';
+      if(config.rodape) config.rodape.padrao = 'nenhum';
+      if(config.fundo && String(config.fundo.textura || '').indexOf('azulejo') === 0) config.fundo.textura = 'pontos';
+      if(config.caderno && String(config.caderno.folha || '').indexOf('azulejo') === 0) config.caderno.folha = 'quadriculado';
+    }
+    if(!pub || !pub.ativo){ if(config.adJogos) config.adJogos.ativo = false; if(config.footer) config.footer.link = ''; }
+    window.__semTraducoes = !f.traducoes;
+  }
 
   function preencherFotos(container, fotos){
     if(!container || !Array.isArray(fotos) || fotos.length === 0) return;
@@ -3296,19 +3307,37 @@
     }
   }
 
+  function _limparEstatico(){
+    try{
+      const grid = document.getElementById('categoriaGrid'); if(grid) grid.innerHTML = '';
+      const main = document.querySelector('main');
+      if(main) main.querySelectorAll(':scope > section.categoria').forEach(function(s){ if(s.id !== 'jogos') s.remove(); });
+    }catch(e){}
+  }
   async function carregarConfig(){
     if(window.__PREVIEW) return; // em pré-visualização, os dados vêm do editor
+    if(!sbC || !SLUG){ _limparEstatico(); console.log('[INFO] Sem negócio (?n=slug).'); return; }
     try{
-      const resp = await fetch(RAW_BASE + 'config.json?t=' + Date.now());
-      if(!resp.ok) return;
-      const config = await resp.json();
-      if(config) aplicarConfig(config);
+      const { data:neg } = await sbC.from('negocios').select('*').eq('slug', SLUG).maybeSingle();
+      if(!neg){ _limparEstatico(); console.log('[INFO] Negócio não encontrado:', SLUG); return; }
+      if(neg.ativo === false){ document.body.innerHTML = '<div style="font-family:sans-serif;padding:40px;text-align:center;color:#4a3820;">Este menu está temporariamente indisponível.</div>'; return; }
+      const { data:ent } = await sbC.from('entitlements').select('*').eq('negocio_id', neg.id).maybeSingle();
+      const funcoes = (ent && ent.funcoes) || {};
+      const pub = (ent && ent.publicidade) || {};
+      const config = neg.config || {};
+      aplicarPlano(config, funcoes, pub);
+      aplicarConfig(config);
+      if(window.__semTraducoes){ const ls = document.getElementById('langSwitch'); if(ls) ls.style.display = 'none'; }
+      const menu = neg.menu || {};
+      if(!Array.isArray(menu.categorias)) menu.categorias = [];
+      window._menu = menu;
+      try{ construirMenu(menu); }catch(e){ console.warn('menu', e); }
     }catch(err){
-      console.log('[INFO] Sem config.json ou erro ao carregar:', err.message);
+      console.log('[INFO] Erro ao carregar do Supabase:', err.message);
     }
   }
 
-  carregarConfig().finally(function(){ window.__cfgOk = true; window.__tryReveal(); });
+  carregarConfig().finally(function(){ window.__cfgOk = true; window.__menuOk = true; window.__tryReveal(); });
 
   // ---- Pré-visualização ao vivo (dentro do editar, via postMessage) ----
   // Mostra a abertura na pré-visualização (estática, sem temporizadores; clicar fecha)
