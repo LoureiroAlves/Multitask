@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Painel — Multitask</title>
+<style>
+  :root{ --castanho:#3a2c18; --dourado:#a8712f; --dourado-escuro:#6b4a1f; --bege:#f5efe2; --bege-claro:#fbf8f2; --linha:#e3d9c4; --verde:#2e9b57; --vermelho:#c0392b; --azul:#2a5aa8; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; background:var(--bege-claro); color:var(--castanho); }
+  header.top{ background:var(--castanho); color:#fff; padding:14px 18px; display:flex; align-items:center; justify-content:space-between; }
+  header.top h1{ font-size:1.15rem; margin:0; font-weight:700; }
+  header.top .sair{ background:rgba(255,255,255,.15); color:#fff; border:none; border-radius:8px; padding:8px 12px; cursor:pointer; font-size:.85rem; }
+  .wrap{ max-width:920px; margin:0 auto; padding:18px 16px 60px; }
+  .card{ background:#fff; border:1px solid var(--linha); border-radius:14px; padding:16px; margin-bottom:14px; }
+  input, select{ width:100%; padding:10px 12px; border:1.5px solid var(--linha); border-radius:9px; font-family:inherit; font-size:.95rem; color:var(--castanho); background:#fff; }
+  label{ font-size:.82rem; font-weight:600; color:var(--dourado-escuro); display:block; margin:10px 0 4px; }
+  button.acao{ background:var(--dourado); color:#fff; border:none; border-radius:10px; padding:11px 16px; font-weight:700; cursor:pointer; font-size:.95rem; }
+  button.acao:disabled{ opacity:.5; cursor:default; }
+  button.mini{ border:1px solid var(--linha); background:#fff; color:var(--castanho); border-radius:8px; padding:6px 10px; cursor:pointer; font-size:.82rem; }
+  button.mini.perigo{ color:var(--vermelho); border-color:#e8c4bf; }
+  .neg{ border:1px solid var(--linha); border-radius:12px; padding:14px; margin-bottom:12px; background:#fff; }
+  .neg-top{ display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+  .neg-nome{ font-weight:700; font-size:1.05rem; }
+  .neg-slug{ font-size:.8rem; color:#9a8b6f; }
+  .badge{ display:inline-block; font-size:.72rem; font-weight:700; padding:3px 9px; border-radius:20px; }
+  .b-basico{ background:#eee; color:#555; }
+  .b-intermedio{ background:#dfeaf7; color:var(--azul); }
+  .b-pro{ background:#e6f4ea; color:var(--verde); }
+  .b-off{ background:#fbe7e4; color:var(--vermelho); }
+  .funcoes{ display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:6px 14px; margin-top:10px; }
+  .funcoes label{ display:flex; align-items:center; gap:7px; margin:0; font-weight:500; color:var(--castanho); font-size:.88rem; cursor:pointer; }
+  .funcoes input{ width:auto; }
+  .linha-pub{ display:flex; align-items:center; gap:8px; margin-top:12px; padding-top:10px; border-top:1px dashed var(--linha); }
+  .msg{ font-size:.85rem; padding:8px 10px; border-radius:8px; margin-top:8px; }
+  .msg.ok{ background:#e6f4ea; color:var(--verde); }
+  .msg.erro{ background:#fbe7e4; color:var(--vermelho); }
+  .hide{ display:none; }
+  .det-corpo{ margin-top:12px; border-top:1px solid var(--linha); padding-top:12px; }
+  .row2{ display:flex; gap:10px; }
+  .row2 > div{ flex:1; }
+  a.link{ color:var(--azul); text-decoration:none; font-size:.85rem; }
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>🍀 Multitask — Painel</h1>
+  <button class="sair hide" id="btnSair">Sair</button>
+</header>
+
+<div class="wrap">
+  <!-- LOGIN -->
+  <div class="card" id="loginCard">
+    <h2 style="margin:0 0 4px; font-size:1.1rem;">Entrar</h2>
+    <p style="margin:0 0 8px; font-size:.85rem; color:#9a8b6f;">Acesso de administrador.</p>
+    <label for="email">Email</label>
+    <input type="email" id="email" placeholder="o-teu-email@exemplo.com" autocomplete="username">
+    <label for="pass">Password</label>
+    <input type="password" id="pass" placeholder="••••••••" autocomplete="current-password">
+    <div style="margin-top:14px;"><button class="acao" id="btnEntrar">Entrar</button></div>
+    <div id="loginMsg"></div>
+  </div>
+
+  <!-- PAINEL -->
+  <div id="painel" class="hide">
+    <div class="card">
+      <h2 style="margin:0 0 10px; font-size:1.05rem;">➕ Novo negócio</h2>
+      <div class="row2">
+        <div><label for="nNome">Nome</label><input type="text" id="nNome" placeholder="Ex: Parada 95"></div>
+        <div><label for="nSlug">Slug (endereço curto)</label><input type="text" id="nSlug" placeholder="ex: parada95"></div>
+      </div>
+      <label for="nPlano">Plano</label>
+      <select id="nPlano">
+        <option value="basico">Básico</option>
+        <option value="intermedio">Intermédio</option>
+        <option value="pro">Pro</option>
+      </select>
+      <div style="margin-top:12px;"><button class="acao" id="btnCriar">Criar negócio</button></div>
+      <div id="criarMsg"></div>
+    </div>
+
+    <div class="card">
+      <div style="display:flex; align-items:center; justify-content:space-between;">
+        <h2 style="margin:0; font-size:1.05rem;">Negócios</h2>
+        <button class="mini" id="btnRecarregar">↻ Recarregar</button>
+      </div>
+      <div id="lista" style="margin-top:12px;"><p style="color:#9a8b6f; font-size:.9rem;">A carregar…</p></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const SUPABASE_URL = 'https://zewiijcrkyxjkhudlplk.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_6LP7x2v5c-c9DQkQslnUmA_g13SEjp3';
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  const FUNCOES = [
+    ['traducoes','Traduções (EN/FR/ES)'],
+    ['modelosPremium','Modelos premium (Ardósia/Elegante/Azulejo)'],
+    ['azulejos','Azulejos (cabeçalho/barra/fundo)'],
+    ['decoracoes','Decorações por época'],
+    ['intro','Ecrã de abertura (intro)'],
+    ['jogos','Jogos'],
+    ['fidelidade','Cartão de fidelidade'],
+    ['photobooth','Foto com moldura'],
+    ['agenda','Agenda / Reservas'],
+    ['pagamentos','Pagamento de sinal']
+  ];
+  const PLANOS = {
+    basico: {},
+    intermedio: { traducoes:true, modelosPremium:true, azulejos:true, decoracoes:true, intro:true, jogos:true, fidelidade:true, photobooth:true },
+    pro: { traducoes:true, modelosPremium:true, azulejos:true, decoracoes:true, intro:true, jogos:true, fidelidade:true, photobooth:true, agenda:true, pagamentos:true }
+  };
+
+  const $ = function(id){ return document.getElementById(id); };
+  function msg(el, txt, tipo){ el.innerHTML = '<div class="msg ' + (tipo||'ok') + '">' + txt + '</div>'; }
+
+  // ---- Autenticação ----
+  $('btnEntrar').onclick = entrar;
+  $('pass').addEventListener('keydown', function(e){ if(e.key==='Enter') entrar(); });
+  $('btnSair').onclick = async function(){ await sb.auth.signOut(); location.reload(); };
+
+  async function entrar(){
+    const email = $('email').value.trim(), pass = $('pass').value;
+    if(!email || !pass){ msg($('loginMsg'),'Preenche o email e a password.','erro'); return; }
+    $('btnEntrar').disabled = true;
+    const { error } = await sb.auth.signInWithPassword({ email:email, password:pass });
+    $('btnEntrar').disabled = false;
+    if(error){ msg($('loginMsg'), 'Erro: ' + error.message, 'erro'); return; }
+    verificar();
+  }
+
+  async function verificar(){
+    const { data:{ session } } = await sb.auth.getSession();
+    if(!session){ return; }
+    // é admin?
+    const { data:adminRows, error } = await sb.from('admins').select('user_id').eq('user_id', session.user.id);
+    if(error || !adminRows || !adminRows.length){
+      msg($('loginMsg'), 'Esta conta não é administrador.', 'erro');
+      await sb.auth.signOut();
+      return;
+    }
+    $('loginCard').classList.add('hide');
+    $('painel').classList.remove('hide');
+    $('btnSair').classList.remove('hide');
+    carregar();
+  }
+
+  // ---- Negócios ----
+  $('btnRecarregar').onclick = carregar;
+  $('btnCriar').onclick = criar;
+
+  async function carregar(){
+    $('lista').innerHTML = '<p style="color:#9a8b6f; font-size:.9rem;">A carregar…</p>';
+    const { data:negs, error } = await sb.from('negocios').select('*').order('criado_em', { ascending:false });
+    if(error){ $('lista').innerHTML = '<div class="msg erro">Erro a carregar: ' + error.message + '</div>'; return; }
+    const { data:ents } = await sb.from('entitlements').select('*');
+    const mapaEnt = {}; (ents||[]).forEach(function(e){ mapaEnt[e.negocio_id] = e; });
+    if(!negs.length){ $('lista').innerHTML = '<p style="color:#9a8b6f; font-size:.9rem;">Ainda não há negócios. Cria o primeiro acima.</p>'; return; }
+    $('lista').innerHTML = '';
+    negs.forEach(function(n){ $('lista').appendChild(renderNeg(n, mapaEnt[n.id] || { plano:'basico', funcoes:{}, publicidade:{} })); });
+  }
+
+  function renderNeg(n, ent){
+    const funcoes = ent.funcoes || {};
+    const pub = ent.publicidade || {};
+    const div = document.createElement('div'); div.className = 'neg';
+    const planoBadge = '<span class="badge b-' + (ent.plano||'basico') + '">' + (ent.plano||'basico') + '</span>';
+    const estadoBadge = n.ativo ? '' : ' <span class="badge b-off">suspenso</span>';
+    div.innerHTML =
+      '<div class="neg-top">' +
+        '<div><div class="neg-nome">' + n.nome + ' ' + planoBadge + estadoBadge + '</div><div class="neg-slug">/' + n.slug + '</div></div>' +
+        '<div style="display:flex; gap:6px; flex-wrap:wrap;">' +
+          '<button class="mini" data-act="editar">⚙️ Gerir</button>' +
+          '<button class="mini" data-act="ativo">' + (n.ativo ? 'Suspender' : 'Ativar') + '</button>' +
+          '<button class="mini perigo" data-act="apagar">🗑</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="det-corpo hide" data-corpo>' +
+        '<label>Plano</label><select data-plano>' +
+          '<option value="basico">Básico</option><option value="intermedio">Intermédio</option><option value="pro">Pro</option>' +
+        '</select>' +
+        '<label style="margin-top:12px;">Funções ativas</label>' +
+        '<div class="funcoes" data-funcoes></div>' +
+        '<div class="linha-pub"><input type="checkbox" data-pub' + (pub.ativo ? ' checked' : '') + '> <label style="margin:0; color:var(--castanho); font-weight:600;">Mostrar publicidade neste negócio</label></div>' +
+        '<div style="margin-top:12px; display:flex; gap:8px; align-items:center;">' +
+          '<button class="acao" data-act="guardar">Guardar</button>' +
+          '<a class="link" href="editar.html?n=' + n.slug + '" target="_blank">Abrir editor ↗</a>' +
+          '<a class="link" href="cardapio.html?n=' + n.slug + '" target="_blank">Ver menu ↗</a>' +
+        '</div>' +
+        '<div data-msg></div>' +
+      '</div>';
+
+    // preencher plano + funções
+    div.querySelector('[data-plano]').value = ent.plano || 'basico';
+    const fbox = div.querySelector('[data-funcoes]');
+    FUNCOES.forEach(function(f){
+      const lab = document.createElement('label');
+      lab.innerHTML = '<input type="checkbox" data-fn="' + f[0] + '"' + (funcoes[f[0]] ? ' checked' : '') + '> ' + f[1];
+      fbox.appendChild(lab);
+    });
+    // mudar plano preenche as funções sugeridas
+    div.querySelector('[data-plano]').onchange = function(e){
+      const def = PLANOS[e.target.value] || {};
+      div.querySelectorAll('[data-fn]').forEach(function(c){ c.checked = !!def[c.getAttribute('data-fn')]; });
+    };
+
+    div.querySelector('[data-act="editar"]').onclick = function(){ div.querySelector('[data-corpo]').classList.toggle('hide'); };
+    div.querySelector('[data-act="ativo"]').onclick = function(){ toggleAtivo(n); };
+    div.querySelector('[data-act="apagar"]').onclick = function(){ apagar(n); };
+    div.querySelector('[data-act="guardar"]').onclick = function(){ guardarEnt(n, div); };
+    return div;
+  }
+
+  async function criar(){
+    const nome = $('nNome').value.trim();
+    let slug = $('nSlug').value.trim().toLowerCase().replace(/[^a-z0-9]+/g,'');
+    const plano = $('nPlano').value;
+    if(!nome || !slug){ msg($('criarMsg'),'Preenche o nome e o slug.','erro'); return; }
+    $('btnCriar').disabled = true;
+    const { data:neg, error } = await sb.from('negocios').insert({ nome:nome, slug:slug, config:{}, menu:{} }).select().single();
+    if(error){ $('btnCriar').disabled = false; msg($('criarMsg'), 'Erro: ' + error.message, 'erro'); return; }
+    const funcoes = Object.assign({}, PLANOS[plano] || {});
+    const publicidade = { ativo: plano === 'basico' };
+    const { error:e2 } = await sb.from('entitlements').insert({ negocio_id:neg.id, plano:plano, funcoes:funcoes, publicidade:publicidade });
+    $('btnCriar').disabled = false;
+    if(e2){ msg($('criarMsg'), 'Negócio criado, mas erro nas permissões: ' + e2.message, 'erro'); }
+    else { msg($('criarMsg'), 'Negócio "' + nome + '" criado ✓', 'ok'); $('nNome').value=''; $('nSlug').value=''; }
+    carregar();
+  }
+
+  async function guardarEnt(n, div){
+    const plano = div.querySelector('[data-plano]').value;
+    const funcoes = {};
+    div.querySelectorAll('[data-fn]').forEach(function(c){ if(c.checked) funcoes[c.getAttribute('data-fn')] = true; });
+    const publicidade = { ativo: div.querySelector('[data-pub]').checked };
+    const box = div.querySelector('[data-msg]');
+    const { error } = await sb.from('entitlements').update({ plano:plano, funcoes:funcoes, publicidade:publicidade, atualizado_em:new Date().toISOString() }).eq('negocio_id', n.id);
+    if(error){ msg(box, 'Erro: ' + error.message, 'erro'); } else { msg(box, 'Guardado ✓', 'ok'); carregar(); }
+  }
+
+  async function toggleAtivo(n){
+    const { error } = await sb.from('negocios').update({ ativo: !n.ativo }).eq('id', n.id);
+    if(error){ alert('Erro: ' + error.message); } else { carregar(); }
+  }
+
+  async function apagar(n){
+    if(!confirm('Apagar "' + n.nome + '"? Isto remove o negócio, as permissões e as reservas dele. Não há recuperação.')) return;
+    const { error } = await sb.from('negocios').delete().eq('id', n.id);
+    if(error){ alert('Erro: ' + error.message); } else { carregar(); }
+  }
+
+  // arranque
+  verificar();
+</script>
+</body>
+</html>
