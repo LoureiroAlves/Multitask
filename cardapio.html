@@ -797,8 +797,8 @@
     font-size:0.8rem;
     margin-top:10px;
     padding:240px 16px 310px;
-    border-top:1px solid var(--linha);
-    background:var(--branco);
+    border-top:none;
+    background:transparent;   /* deixa o fundo do menu continuar por baixo da publicidade */
   }
   footer .nome-rest{font-family:var(--fonte-titulo); color:var(--castanho); font-size:1rem; margin-bottom:8px; font-weight:600;}
   footer a{color:var(--castanho-suave);}
@@ -818,7 +818,7 @@
     content:''; position:absolute; inset:0;
     background:rgba(0,0,0,0); pointer-events:none;
   }
-  footer.tem-foto{ background:var(--branco); }
+  footer.tem-foto{ background:transparent; }
   footer .footer-texto{ position:relative; z-index:1; }
 
   .item.vinho-clicavel{
