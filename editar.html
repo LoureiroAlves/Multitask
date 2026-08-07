@@ -2941,6 +2941,7 @@
 
     document.getElementById('btnCarregarMenu').addEventListener('click', carregarMenu);
     document.getElementById('btnGuardarMenu').addEventListener('click', guardarMenu);
+    window.__carregarMenu = carregarMenu;
     // Exposto para a pré-visualização ao vivo
     window.__getMenuPreview = function(){ try{ return menuData || null; }catch(e){ return null; } };
 
@@ -3280,7 +3281,9 @@
       ov.style.display = 'none';
       const es = document.getElementById('editorSub'); if(es) es.textContent = 'A editar: ' + neg.nome;
       try{ aplicarGating(window.__ent); }catch(e){}
-      carregarConfig();
+      await carregarConfig();
+      if(window.__carregarMenu){ try{ await window.__carregarMenu(); }catch(e){} }
+      try{ if(window.__agendarPreview) window.__agendarPreview(); }catch(e){}
     }
     iniciarSessao();
   })();

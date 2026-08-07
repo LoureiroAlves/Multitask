@@ -3420,6 +3420,7 @@
   if(window.__PREVIEW){
     window.__cfgOk = true; window.__menuOk = true;
     document.body.classList.remove('carregando');
+    try{ _limparEstatico(); }catch(e){}   // não mostrar o menu estático antigo enquanto o editor não envia
     const _ov = document.getElementById('introOverlay'); if(_ov) _ov.style.display = 'none';
     window.addEventListener('message', function(e){
       const d = e.data || {};
