@@ -2314,7 +2314,13 @@
     if(window.montarBotoesLista) window.montarBotoesLista();
     if(window.ligarTilt) window.ligarTilt();
     // Se o menu já está visível (intro fechada), corre já a cascata; senão corre ao revelar
-    if(!document.body.classList.contains('carregando') && window.__animarEntrada) setTimeout(window.__animarEntrada, 60);
+    if(window.__entradaFeita){
+      // Já houve animação de entrada uma vez (ex.: re-render na pré-visualização ao editar):
+      // mostra já os separadores novos, senão ficariam invisíveis (opacity 0) e o menu parecia vazio.
+      document.querySelectorAll('#categoriaGrid .tile.tile-espera').forEach(function(t){ t.classList.remove('tile-espera'); });
+    } else if(!document.body.classList.contains('carregando') && window.__animarEntrada){
+      setTimeout(window.__animarEntrada, 60);
+    }
     window.__menuOk = true; window.__tryReveal();
   }
 
