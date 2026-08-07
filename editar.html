@@ -319,6 +319,15 @@
         <button type="button" id="corRepor" style="margin-top:10px; width:100%; padding:8px; border-radius:8px; border:1.5px solid var(--linha); background:var(--branco); color:var(--castanho); cursor:pointer; font-size:0.85rem;">↺ Repor cores do tema escolhido</button>
       </div>
 
+      <label for="corMenuAtiva" style="margin-top:16px; display:flex; align-items:center; gap:8px; cursor:pointer;">
+        <input type="checkbox" id="corMenuAtiva" style="width:auto;"> Definir a cor do texto do menu (manda sobre o modelo)
+      </label>
+      <div id="corMenuBox" style="display:none; align-items:center; justify-content:space-between; margin-top:8px; padding:12px; border:1.5px solid var(--linha); border-radius:10px;">
+        <span style="font-size:0.9rem; color:var(--castanho);">Cor do texto dos pratos/submenus</span>
+        <input type="color" id="corMenuTexto" value="#4a3820" style="width:52px; height:34px; padding:0; border:none; background:none; cursor:pointer;">
+      </div>
+      <div class="subtitulo" style="margin-top:4px;">Útil quando o modelo deixa a letra clara demais. Deixa desligado para usar a cor automática do modelo.</div>
+
       <label for="fundoTipoSel" style="margin-top:16px;">Fundo do cardápio</label>
       <select id="fundoTipoSel" style="width:100%; padding:10px 12px; border-radius:10px; border:1.5px solid var(--linha); background:var(--branco); font-family:inherit; color:var(--castanho); font-size:0.95rem;">
         <option value="liso">Liso (cor clara do tema)</option>
@@ -1503,6 +1512,10 @@
     document.getElementById('corCastanho').value = (temCores && config.cores.castanho) || baseC.castanho;
     document.getElementById('corDourado').value = (temCores && config.cores.dourado) || baseC.dourado;
     document.getElementById('corBege').value = (temCores && config.cores.bege) || baseC.bege;
+    { const cm = config.corMenuTexto || '';
+      document.getElementById('corMenuAtiva').checked = !!cm;
+      document.getElementById('corMenuBox').style.display = cm ? 'flex' : 'none';
+      if(cm) document.getElementById('corMenuTexto').value = cm; }
     // Fundo
     const fundo = config.fundo || { tipo:'liso', imagem:'', textura:'pontos' };
     document.getElementById('fundoTipoSel').value = fundo.tipo || 'liso';
@@ -1651,6 +1664,9 @@
     document.getElementById('corCastanho').value = b.castanho;
     document.getElementById('corDourado').value = b.dourado;
     document.getElementById('corBege').value = b.bege;
+  });
+  document.getElementById('corMenuAtiva').addEventListener('change', e => {
+    document.getElementById('corMenuBox').style.display = e.target.checked ? 'flex' : 'none';
   });
   document.getElementById('fundoTipoSel').addEventListener('change', e => {
     document.getElementById('fundoImagemBox').style.display = (e.target.value === 'imagem') ? 'block' : 'none';
@@ -1885,6 +1901,7 @@
       } else {
         config.cores = null;
       }
+      config.corMenuTexto = document.getElementById('corMenuAtiva').checked ? document.getElementById('corMenuTexto').value : '';
       config.fundo = {
         tipo: document.getElementById('fundoTipoSel').value,
         imagem: (config.fundo && config.fundo.imagem) || '',

@@ -113,7 +113,7 @@
     background:var(--bege-claro);
     color:var(--castanho);
     min-height:100vh;
-    min-height:100dvh;
+    min-height:100svh;
     padding-bottom:calc(112px + env(safe-area-inset-bottom));
   }
   html{ background:var(--intro-bg,#1f2530); }
@@ -465,6 +465,18 @@
   body.modelo-carteira .categoria-painel.aberto{ transform:translateY(0) !important; transition:transform .42s cubic-bezier(.3,.85,.25,1), visibility 0s !important; }
   body.modelo-carteira .categoria-painel-header{ background:var(--cat-cor, var(--castanho)); }
   body.modelo-carteira .categoria-painel-header .voltar, body.modelo-carteira #painelTitulo{ color:#fff !important; }
+
+  /* Cor do texto do menu escolhida à mão (manda sobre o modelo) */
+  body.cor-menu-custom .categoria-painel-conteudo .nome,
+  body.cor-menu-custom .categoria-painel-conteudo .desc,
+  body.cor-menu-custom .categoria-painel-conteudo .preco,
+  body.cor-menu-custom .categoria-painel-conteudo h2,
+  body.cor-menu-custom .categoria-painel-conteudo summary,
+  body.cor-menu-custom .categoria-painel-conteudo .subtitulo,
+  body.cor-menu-custom .categoria-painel-conteudo .menu-desc,
+  body.cor-menu-custom .categoria-painel-conteudo .menu-preco,
+  body.cor-menu-custom .categoria-painel-conteudo .dose,
+  body.cor-menu-custom .categoria-painel-conteudo .preco-dose{ color:var(--cor-menu-texto) !important; }
 
   /* ===== Bases de azulejo para o cabeçalho e a barra fixa ===== */
   .azbg-classico{ background-color:var(--az-bg) !important;
@@ -2823,6 +2835,8 @@
       document.body.classList.toggle('modelo-elegante', (config.modelo || 'lista') === 'elegante');
       document.body.classList.toggle('modelo-azulejo', (config.modelo || 'lista') === 'azulejo');
       document.body.classList.toggle('modelo-carteira', (config.modelo || 'lista') === 'carteira');
+      if(config.corMenuTexto){ document.body.classList.add('cor-menu-custom'); document.documentElement.style.setProperty('--cor-menu-texto', config.corMenuTexto); }
+      else { document.body.classList.remove('cor-menu-custom'); }
       // Cor dos azulejos (personalizável) — recalcula as variáveis CSS
       (function(){
         let hex = (config.azulejoCor || '#2a5aa8').replace('#','');
@@ -5454,6 +5468,8 @@
       var grid = document.getElementById('categoriaGrid');
       var footer = document.getElementById('rodapeFinal');
       if(!grid || !footer) return;
+      // Nunca reajustar enquanto o utilizador está a fazer scroll (evita saltos)
+      if((window.scrollY || window.pageYOffset || 0) > 4) return;
       grid.style.minHeight = '';
       // posição do topo do rodapé no documento (independente do scroll — evita saltos)
       var footerTopDoc = footer.getBoundingClientRect().top + (window.scrollY || window.pageYOffset || 0);
