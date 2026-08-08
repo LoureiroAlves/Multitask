@@ -2369,7 +2369,13 @@
       btn.appendChild(emoji); btn.appendChild(label);
       if(cat.cor){ btn.style.setProperty('--cat-cor', cat.cor); btn.dataset.cor = cat.cor; }
       if(cat.foto){ btn.classList.add('tile-tem-foto'); btn.dataset.foto = cat.foto; const fim = document.createElement('img'); fim.className = 'tile-foto-img'; fim.src = cat.foto; fim.alt = ''; fim.decoding = 'async'; btn.insertBefore(fim, btn.firstChild); }
-      if(cat.corTile){ btn.classList.add('tile-cor-txt'); btn.style.setProperty('--tile-txt', cat.corTile); }
+      { const et = cat.estiloTile || (cat.corTile ? { cor: cat.corTile } : null);
+        if(et){
+          if(et.cor){ btn.classList.add('tile-cor-txt'); btn.style.setProperty('--tile-txt', et.cor); label.style.color = et.cor; }
+          if(et.tamanho){ label.style.fontSize = et.tamanho + 'rem'; }
+          if(et.negrito){ label.style.fontWeight = '800'; }
+          if(et.italico){ label.style.fontStyle = 'italic'; }
+        } }
       grid.appendChild(btn);
       const sec = document.createElement('section');
       sec.className = 'categoria'; sec.id = cat.id;

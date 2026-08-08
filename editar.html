@@ -2926,14 +2926,43 @@
       if(cat.foto){ const fRm=document.createElement('button'); fRm.type='button'; fRm.className='mv-mini'; fRm.textContent='sem foto'; fRm.addEventListener('click',()=>{ delete cat.foto; renderEditor(); if(window.__agendarPreview) window.__agendarPreview(); }); fotoRow.appendChild(fRm); }
       p.appendChild(fotoRow);
 
-      // Cor do texto do separador (modelo Grelha)
-      const txtRow=document.createElement('div'); txtRow.style.cssText='display:flex; align-items:center; gap:8px; margin:0 0 10px; font-size:0.82rem; color:var(--castanho-suave); flex-wrap:wrap;';
-      txtRow.appendChild(document.createTextNode('Cor do texto do separador (Grelha):'));
-      const txtIn=document.createElement('input'); txtIn.type='color'; txtIn.value=cat.corTile||'#ffffff'; txtIn.style.cssText='width:44px; height:30px; padding:0; border:none; background:none; cursor:pointer;';
-      txtIn.addEventListener('input',()=>{ cat.corTile=txtIn.value; if(window.__agendarPreview) window.__agendarPreview(); });
-      const txtLimpar=document.createElement('button'); txtLimpar.type='button'; txtLimpar.className='mv-mini'; txtLimpar.textContent='sem cor'; txtLimpar.title='Usar a cor automática'; txtLimpar.addEventListener('click',()=>{ delete cat.corTile; renderEditor(); if(window.__agendarPreview) window.__agendarPreview(); });
-      txtRow.appendChild(txtIn); txtRow.appendChild(txtLimpar);
-      p.appendChild(txtRow);
+      // Estilo do texto do separador (modelo Grelha): cor, tamanho, negrito, itálico
+      if(!cat.estiloTile) cat.estiloTile = cat.corTile ? { cor: cat.corTile } : {};
+      if(cat.corTile) delete cat.corTile;
+      const est = cat.estiloTile;
+      const prevAsst = function(){ if(window.__agendarPreview) window.__agendarPreview(); };
+      const estWrap=document.createElement('div'); estWrap.style.cssText='margin:0 0 10px; padding:9px 10px; border:1px solid var(--linha); border-radius:8px;';
+      const estTit=document.createElement('div'); estTit.className='subtitulo'; estTit.style.cssText='margin:0 0 7px;'; estTit.textContent='Estilo do texto do separador (modelo Grelha)';
+      estWrap.appendChild(estTit);
+      const row=document.createElement('div'); row.style.cssText='display:flex; align-items:center; gap:12px; flex-wrap:wrap; font-size:0.8rem; color:var(--castanho-suave);';
+      // Cor (com visto para ativar)
+      const cWrap=document.createElement('label'); cWrap.style.cssText='display:flex; align-items:center; gap:5px; cursor:pointer;';
+      const cChk=document.createElement('input'); cChk.type='checkbox'; cChk.style.width='auto'; cChk.checked=!!est.cor;
+      const cIn=document.createElement('input'); cIn.type='color'; cIn.value=est.cor||'#ffffff'; cIn.style.cssText='width:40px; height:28px; padding:0; border:none; background:none; cursor:pointer;';
+      cChk.addEventListener('change',()=>{ if(cChk.checked){ est.cor=cIn.value; } else { delete est.cor; } prevAsst(); });
+      cIn.addEventListener('input',()=>{ est.cor=cIn.value; cChk.checked=true; prevAsst(); });
+      cWrap.appendChild(cChk); cWrap.appendChild(document.createTextNode('Cor')); cWrap.appendChild(cIn); row.appendChild(cWrap);
+      // Tamanho
+      const tWrap=document.createElement('label'); tWrap.style.cssText='display:flex; align-items:center; gap:5px;';
+      const tIn=document.createElement('input'); tIn.type='number'; tIn.min='0.6'; tIn.max='3'; tIn.step='0.05'; tIn.placeholder='auto'; tIn.value=(est.tamanho!=null?est.tamanho:''); tIn.style.cssText='width:66px; padding:5px 6px; border:1.5px solid var(--linha); border-radius:6px; font-family:inherit;';
+      tIn.addEventListener('input',()=>{ const v=parseFloat(tIn.value); if(v) est.tamanho=v; else delete est.tamanho; prevAsst(); });
+      tWrap.appendChild(document.createTextNode('Tamanho')); tWrap.appendChild(tIn); row.appendChild(tWrap);
+      // Negrito
+      const bBtn=document.createElement('button'); bBtn.type='button'; bBtn.textContent='B'; bBtn.style.cssText='font-weight:800; width:32px; height:30px; border-radius:6px; border:1.5px solid var(--linha); cursor:pointer;';
+      const pintaB=function(){ bBtn.style.background=est.negrito?'var(--dourado)':'var(--branco)'; bBtn.style.color=est.negrito?'#fff':'var(--castanho)'; }; pintaB();
+      bBtn.addEventListener('click',()=>{ est.negrito=!est.negrito; if(!est.negrito) delete est.negrito; pintaB(); prevAsst(); });
+      row.appendChild(bBtn);
+      // Itálico
+      const iBtn=document.createElement('button'); iBtn.type='button'; iBtn.textContent='I'; iBtn.style.cssText='font-style:italic; width:32px; height:30px; border-radius:6px; border:1.5px solid var(--linha); cursor:pointer;';
+      const pintaI=function(){ iBtn.style.background=est.italico?'var(--dourado)':'var(--branco)'; iBtn.style.color=est.italico?'#fff':'var(--castanho)'; }; pintaI();
+      iBtn.addEventListener('click',()=>{ est.italico=!est.italico; if(!est.italico) delete est.italico; pintaI(); prevAsst(); });
+      row.appendChild(iBtn);
+      // Repor
+      const rBtn=document.createElement('button'); rBtn.type='button'; rBtn.className='mv-mini'; rBtn.textContent='repor'; rBtn.title='Voltar ao estilo automático';
+      rBtn.addEventListener('click',()=>{ cat.estiloTile={}; renderEditor(); prevAsst(); });
+      row.appendChild(rBtn);
+      estWrap.appendChild(row);
+      p.appendChild(estWrap);
 
       const trd=document.createElement('details'); trd.style.cssText='border:none;background:transparent;margin-bottom:4px;';
       const trs=document.createElement('summary'); trs.textContent='traduções do título'; trs.style.cssText='font-size:0.75rem;color:var(--castanho-suave);';
