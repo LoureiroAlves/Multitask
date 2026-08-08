@@ -605,6 +605,12 @@
   <details id="secRodape">
     <summary>Barra fixa (fundo da página)</summary>
     <div class="bloco-conteudo">
+      <div class="lembrar" style="margin-bottom:12px;">
+        <input type="checkbox" id="rodapeMostrar" checked>
+        <label for="rodapeMostrar" style="margin:0; font-weight:700; color:var(--dourado-escuro); display:inline;">Mostrar barra fixa (fundo da página)</label>
+      </div>
+      <div class="subtitulo" style="margin:-6px 0 10px;">Desliga para não mostrar a barra fixa no fundo do ecrã.</div>
+
       <label for="linha1">Linha 1</label>
       <input type="text" id="linha1" placeholder="Ex: Contamos contigo!">
       <div id="estiloLinha1"></div>
@@ -1464,6 +1470,7 @@
     introBotoes = (config.intro && Array.isArray(config.intro.botoes)) ? JSON.parse(JSON.stringify(config.intro.botoes)) : [];
     renderIntroBotoes();
     document.getElementById('blocoIntro').style.display = (config.intro && config.intro.ativo) ? 'block' : 'none';
+    document.getElementById('rodapeMostrar').checked = config.rodape.mostrar !== false;
     document.getElementById('linha1').value = config.rodape.linha1 || '';
     { const _bp = document.getElementById('barraPadrao'); if(_bp) _bp.value = config.rodape.padrao || 'nenhum'; }
     document.getElementById('linha2').value = config.rodape.linha2 || '';
@@ -1888,6 +1895,7 @@
         if(_et.tamanho) config.header.tituloTamanho = _et.tamanho;
         if(_es.tamanho) config.header.subtituloTamanho = _es.tamanho; }
       config.rodape.linha1 = document.getElementById('linha1').value.trim();
+      config.rodape.mostrar = document.getElementById('rodapeMostrar').checked;
       { const _bp = document.getElementById('barraPadrao'); if(_bp) config.rodape.padrao = _bp.value; }
       config.rodape.linha2 = document.getElementById('linha2').value.trim();
       config.rodape.linha3 = document.getElementById('linha3').value.trim();
@@ -2917,6 +2925,15 @@
       fLbl.appendChild(fInp); fotoRow.appendChild(fLbl);
       if(cat.foto){ const fRm=document.createElement('button'); fRm.type='button'; fRm.className='mv-mini'; fRm.textContent='sem foto'; fRm.addEventListener('click',()=>{ delete cat.foto; renderEditor(); if(window.__agendarPreview) window.__agendarPreview(); }); fotoRow.appendChild(fRm); }
       p.appendChild(fotoRow);
+
+      // Cor do texto do separador (modelo Grelha)
+      const txtRow=document.createElement('div'); txtRow.style.cssText='display:flex; align-items:center; gap:8px; margin:0 0 10px; font-size:0.82rem; color:var(--castanho-suave); flex-wrap:wrap;';
+      txtRow.appendChild(document.createTextNode('Cor do texto do separador (Grelha):'));
+      const txtIn=document.createElement('input'); txtIn.type='color'; txtIn.value=cat.corTile||'#ffffff'; txtIn.style.cssText='width:44px; height:30px; padding:0; border:none; background:none; cursor:pointer;';
+      txtIn.addEventListener('input',()=>{ cat.corTile=txtIn.value; if(window.__agendarPreview) window.__agendarPreview(); });
+      const txtLimpar=document.createElement('button'); txtLimpar.type='button'; txtLimpar.className='mv-mini'; txtLimpar.textContent='sem cor'; txtLimpar.title='Usar a cor automática'; txtLimpar.addEventListener('click',()=>{ delete cat.corTile; renderEditor(); if(window.__agendarPreview) window.__agendarPreview(); });
+      txtRow.appendChild(txtIn); txtRow.appendChild(txtLimpar);
+      p.appendChild(txtRow);
 
       const trd=document.createElement('details'); trd.style.cssText='border:none;background:transparent;margin-bottom:4px;';
       const trs=document.createElement('summary'); trs.textContent='traduções do título'; trs.style.cssText='font-size:0.75rem;color:var(--castanho-suave);';

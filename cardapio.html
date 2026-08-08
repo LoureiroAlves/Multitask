@@ -117,6 +117,7 @@
     padding-bottom:calc(112px + env(safe-area-inset-bottom));
   }
   html{ background:var(--intro-bg,#1f2530); }
+  body.barra-oculta{ padding-bottom:env(safe-area-inset-bottom); }
   header{
     position:relative; z-index:50;
     background:var(--castanho);
@@ -519,6 +520,8 @@
   body.modelo-grelha .tile.tile-tem-foto::after{ content:''; position:absolute; inset:0; background:linear-gradient(to top, rgba(0,0,0,.62), rgba(0,0,0,.05) 58%); z-index:1; pointer-events:none; }
   body.modelo-grelha .tile.tile-tem-foto .tile-emoji{ display:none !important; }
   body.modelo-grelha .tile.tile-tem-foto .tile-label{ position:relative; z-index:2; color:#fff !important; text-shadow:0 1px 4px rgba(0,0,0,.85); }
+  /* Cor do texto do separador escolhida por categoria (modelo Grelha) — vence o branco da foto */
+  body.modelo-grelha .tile.tile-cor-txt .tile-label{ color:var(--tile-txt) !important; }
 
   /* Cor do texto do menu escolhida à mão (manda sobre o modelo) */
   body.cor-menu-custom .categoria-painel-conteudo .nome,
@@ -2366,6 +2369,7 @@
       btn.appendChild(emoji); btn.appendChild(label);
       if(cat.cor){ btn.style.setProperty('--cat-cor', cat.cor); btn.dataset.cor = cat.cor; }
       if(cat.foto){ btn.classList.add('tile-tem-foto'); btn.dataset.foto = cat.foto; const fim = document.createElement('img'); fim.className = 'tile-foto-img'; fim.src = cat.foto; fim.alt = ''; fim.decoding = 'async'; btn.insertBefore(fim, btn.firstChild); }
+      if(cat.corTile){ btn.classList.add('tile-cor-txt'); btn.style.setProperty('--tile-txt', cat.corTile); }
       grid.appendChild(btn);
       const sec = document.createElement('section');
       sec.className = 'categoria'; sec.id = cat.id;
@@ -3073,7 +3077,9 @@
         if(_grid) _grid.style.display = _mostrarMenu ? '' : 'none';
         document.querySelectorAll('main > section.categoria').forEach(function(s){ if(s.id !== 'jogos') s.style.display = _mostrarMenu ? '' : 'none'; });
         const _bf = document.querySelector('.info-fixa');
-        if(_bf) _bf.style.display = (config.rodape && config.rodape.mostrar === false) ? 'none' : '';
+        const _barraOff = !!(config.rodape && config.rodape.mostrar === false);
+        if(_bf) _bf.style.display = _barraOff ? 'none' : '';
+        document.body.classList.toggle('barra-oculta', _barraOff);
         const _rf = document.getElementById('rodapeFinal');
         if(_rf) _rf.style.display = (config.footer && config.footer.mostrar === false) ? 'none' : '';
       }
