@@ -523,8 +523,8 @@
   body.modelo-grelha .tile.tile-tem-foto::after{ content:''; position:absolute; inset:0; background:linear-gradient(to top, rgba(0,0,0,.62), rgba(0,0,0,.05) 58%); z-index:1; pointer-events:none; }
   body.modelo-grelha .tile.tile-tem-foto .tile-emoji{ display:none !important; }
   body.modelo-grelha .tile.tile-tem-foto .tile-label{ position:relative; z-index:2; color:#fff !important; text-shadow:0 1px 4px rgba(0,0,0,.85); }
-  /* Cor do texto do separador escolhida por categoria (modelo Grelha) — vence o branco da foto */
-  body.modelo-grelha .tile.tile-cor-txt .tile-label{ color:var(--tile-txt) !important; }
+  /* Cor do texto do separador escolhida por categoria — vale em qualquer modelo (menu principal) e vence o branco forçado */
+  body .tile.tile-cor-txt .tile-label{ color:var(--tile-txt) !important; }
 
   /* Cor do texto do menu escolhida à mão (manda sobre o modelo) */
   /* "Cor do texto do menu" — só o conteúdo dos pratos (nomes, preços, descrições) */
@@ -541,6 +541,12 @@
   body.cor-cab-custom .categoria-painel-conteudo h2,
   body.cor-cab-custom .categoria-painel-conteudo summary,
   body.cor-cab-custom .categoria-painel-conteudo .subtitulo{ color:var(--cor-cab-texto) !important; }
+  /* Fonte dos pratos escolhida pelo dono — manda sobre a fonte forçada dos modelos (Ardósia/Elegante/Caderno…) */
+  body.fonte-texto-custom .categoria-painel-conteudo .nome,
+  body.fonte-texto-custom .categoria-painel-conteudo .desc,
+  body.fonte-texto-custom .categoria-painel-conteudo .menu-desc,
+  body.fonte-texto-custom .item .nome,
+  body.fonte-texto-custom .item .desc{ font-family:var(--fonte-texto) !important; }
 
   /* ===== Bases de azulejo para o cabeçalho e a barra fixa ===== */
   .azbg-classico{ background-color:var(--az-bg) !important;
@@ -3001,7 +3007,8 @@
 
       aplicarTema(config.layout || '1', config.cores);
       if(config.fonte && config.fonte !== 'auto') aplicarFonte(config.fonte);
-      if(config.fonteTexto && FONTES_TITULO[config.fonteTexto]) document.documentElement.style.setProperty('--fonte-texto', FONTES_TITULO[config.fonteTexto]);
+      if(config.fonteTexto && FONTES_TITULO[config.fonteTexto]){ document.documentElement.style.setProperty('--fonte-texto', FONTES_TITULO[config.fonteTexto]); document.body.classList.add('fonte-texto-custom'); }
+      else { document.body.classList.remove('fonte-texto-custom'); document.documentElement.style.setProperty('--fonte-texto', "'Nunito', sans-serif"); }
       document.body.classList.toggle('modelo-grelha', (config.modelo || 'lista') === 'grelha');
       document.body.classList.toggle('modelo-caderno', (config.modelo || 'lista') === 'caderno');
       document.body.classList.toggle('modelo-ardosia', (config.modelo || 'lista') === 'ardosia');
