@@ -93,19 +93,18 @@
     </div>
 
     <div class="card">
-      <h2 style="margin:0 0 10px; font-size:1.05rem;">📥 Importar do editor antigo (GitHub)</h2>
-      <div class="row2">
-        <div><label for="impNome">Nome</label><input type="text" id="impNome" placeholder="Ex: Parada 95"></div>
-        <div><label for="impSlug">Slug</label><input type="text" id="impSlug" placeholder="parada95"></div>
+      <h2 style="margin:0 0 10px; font-size:1.05rem;">📋 Duplicar negócio</h2>
+      <div style="font-size:.82rem; color:#9a8b6f; margin-bottom:8px;">Copia <strong>tudo</strong> (layout, cores, secções, menu e permissões) de um negócio para um novo. Depois mudas o nome e editas o que quiseres.</div>
+      <label for="dupOrigem">Negócio a copiar</label>
+      <select id="dupOrigem"><option value="">— escolher —</option></select>
+      <div class="row2" style="margin-top:6px;">
+        <div><label for="dupNome">Nome do novo</label><input type="text" id="dupNome" placeholder="Ex: Parada 95 (cópia)"></div>
+        <div><label for="dupSlug">Slug do novo</label><input type="text" id="dupSlug" placeholder="ex: parada95b"></div>
       </div>
-      <label for="impRepo">Repositório GitHub (dono/repo)</label>
-      <input type="text" id="impRepo" placeholder="Ex: LoureiroAlves/parada95">
-      <label for="impEmail">Email do dono (opcional)</label>
-      <input type="email" id="impEmail" placeholder="dono@exemplo.com">
-      <label for="impPlano">Plano</label>
-      <select id="impPlano"><option value="pro">Pro</option><option value="intermedio">Intermédio</option><option value="basico">Básico</option></select>
-      <div style="margin-top:12px;"><button class="acao" id="btnImportar">Importar</button></div>
-      <div id="impMsg"></div>
+      <label for="dupEmail">Email do dono (opcional)</label>
+      <input type="email" id="dupEmail" placeholder="dono@exemplo.com">
+      <div style="margin-top:12px;"><button class="acao" id="btnDuplicar">Duplicar</button></div>
+      <div id="dupMsg"></div>
     </div>
 
     <div class="card">
@@ -197,54 +196,35 @@
   // ---- Negócios ----
   $('btnRecarregar').onclick = carregar;
   $('btnCriar').onclick = criar;
-  $('btnImportar').onclick = importar;
+  $('btnDuplicar').onclick = duplicar;
 
-  function reescreverImgs(obj, base){
-    if(Array.isArray(obj)) return obj.map(function(x){ return reescreverImgs(x, base); });
-    if(obj && typeof obj === 'object'){ const o = {}; for(const k in obj) o[k] = reescreverImgs(obj[k], base); return o; }
-    if(typeof obj === 'string' && /^imagens\//.test(obj)) return base + obj;
-    return obj;
-  }
-  async function _buscarJson(base, ficheiro){
-    for(const br of ['main','master']){
-      try{
-        const b = base.replace('/main/', '/' + br + '/');
-        const r = await fetch(b + ficheiro + '?t=' + Date.now());
-        if(r.ok) return { dados: await r.json(), base: b };
-      }catch(e){}
-    }
-    return null;
-  }
-  async function importar(){
-    const nome = $('impNome').value.trim();
-    let slug = $('impSlug').value.trim().toLowerCase().replace(/[^a-z0-9]+/g,'');
-    let repo = $('impRepo').value.trim().replace(/^https?:\/\/github\.com\//,'').replace(/\/$/,'');
-    const plano = $('impPlano').value;
-    const emailDono = $('impEmail').value.trim().toLowerCase();
-    if(!nome || !slug || !repo){ msg($('impMsg'),'Preenche nome, slug e repositório.','erro'); return; }
-    $('btnImportar').disabled = true; msg($('impMsg'),'A importar…','ok');
-    const base = 'https://raw.githubusercontent.com/' + repo + '/main/';
-    const cfgR = await _buscarJson(base, 'config.json');
-    if(!cfgR){ $('btnImportar').disabled = false; msg($('impMsg'),'Não encontrei config.json em '+repo+' (verifica o dono/repo).','erro'); return; }
-    const menuR = await _buscarJson(cfgR.base ? cfgR.base : base, 'menu.json');
-    const config = reescreverImgs(cfgR.dados || {}, cfgR.base || base);
-    const menu = reescreverImgs((menuR && menuR.dados) || { restaurante:'', categorias:[] }, (menuR && menuR.base) || base);
-    // criar ou atualizar
-    const { data:existente } = await sb.from('negocios').select('id').eq('slug', slug).maybeSingle();
-    let negId;
-    if(existente){
-      const { error } = await sb.from('negocios').update({ nome:nome, config:config, menu:menu, dono_email: emailDono || null }).eq('id', existente.id);
-      if(error){ $('btnImportar').disabled = false; msg($('impMsg'),'Erro: '+error.message,'erro'); return; }
-      negId = existente.id;
-    } else {
-      const { data:neg, error } = await sb.from('negocios').insert({ nome:nome, slug:slug, config:config, menu:menu, dono_email: emailDono || null }).select().single();
-      if(error){ $('btnImportar').disabled = false; msg($('impMsg'),'Erro: '+error.message,'erro'); return; }
-      negId = neg.id;
-      await sb.from('entitlements').insert({ negocio_id:negId, plano:plano, funcoes:Object.assign({},PLANOS[plano]||{}), publicidade:{ ativo: plano==='basico' } });
-    }
-    $('btnImportar').disabled = false;
-    msg($('impMsg'),'Importado ✓ — abre o menu para confirmar.','ok');
-    $('impNome').value=''; $('impSlug').value=''; $('impRepo').value=''; $('impEmail').value='';
+  // Duplica um negócio: copia config + menu + permissões para um novo slug
+  async function duplicar(){
+    const origem = $('dupOrigem').value;
+    const nome = $('dupNome').value.trim();
+    let slug = $('dupSlug').value.trim().toLowerCase().replace(/[^a-z0-9]+/g,'');
+    const emailDono = $('dupEmail').value.trim().toLowerCase();
+    if(!origem){ msg($('dupMsg'),'Escolhe o negócio a copiar.','erro'); return; }
+    if(!nome || !slug){ msg($('dupMsg'),'Preenche o nome e o slug do novo negócio.','erro'); return; }
+    $('btnDuplicar').disabled = true; msg($('dupMsg'),'A duplicar…','ok');
+    const { data:orig, error:eO } = await sb.from('negocios').select('id,config,menu').eq('slug', origem).maybeSingle();
+    if(eO || !orig){ $('btnDuplicar').disabled = false; msg($('dupMsg'),'Não encontrei o negócio a copiar.','erro'); return; }
+    const { data:existe } = await sb.from('negocios').select('id').eq('slug', slug).maybeSingle();
+    if(existe){ $('btnDuplicar').disabled = false; msg($('dupMsg'),'Já existe um negócio com esse slug — escolhe outro.','erro'); return; }
+    const config = JSON.parse(JSON.stringify(orig.config || {}));
+    const menu = JSON.parse(JSON.stringify(orig.menu || {}));
+    try{ config.header = config.header || {}; config.header.titulo = nome; }catch(e){}
+    const { data:neg, error } = await sb.from('negocios').insert({ nome:nome, slug:slug, dono_email: emailDono || null, config:config, menu:menu }).select().single();
+    if(error){ $('btnDuplicar').disabled = false; msg($('dupMsg'),'Erro: '+error.message,'erro'); return; }
+    // Copia as permissões da origem (plano + funções + publicidade)
+    const { data:entO } = await sb.from('entitlements').select('plano,funcoes,publicidade').eq('negocio_id', orig.id).maybeSingle();
+    const plano = (entO && entO.plano) || 'basico';
+    const funcoes = (entO && entO.funcoes) ? JSON.parse(JSON.stringify(entO.funcoes)) : Object.assign({}, PLANOS[plano]||{});
+    const publicidade = (entO && entO.publicidade) ? JSON.parse(JSON.stringify(entO.publicidade)) : { ativo: plano==='basico' };
+    const { error:e2 } = await sb.from('entitlements').insert({ negocio_id:neg.id, plano:plano, funcoes:funcoes, publicidade:publicidade });
+    $('btnDuplicar').disabled = false;
+    if(e2){ msg($('dupMsg'),'Duplicado, mas erro nas permissões: '+e2.message,'erro'); }
+    else { msg($('dupMsg'),'Duplicado ✓ — "'+nome+'". Abre o editor para mudar o que quiseres.','ok'); $('dupNome').value=''; $('dupSlug').value=''; $('dupEmail').value=''; $('dupOrigem').value=''; }
     carregar();
   }
 
@@ -252,6 +232,8 @@
     $('lista').innerHTML = '<p style="color:#9a8b6f; font-size:.9rem;">A carregar…</p>';
     const { data:negs, error } = await sb.from('negocios').select('*').order('criado_em', { ascending:false });
     if(error){ $('lista').innerHTML = '<div class="msg erro">Erro a carregar: ' + error.message + '</div>'; return; }
+    // preencher o seletor de "Duplicar negócio"
+    { const sel = $('dupOrigem'); if(sel){ const atual = sel.value; sel.innerHTML = '<option value="">— escolher —</option>'; (negs||[]).forEach(function(n){ const o = document.createElement('option'); o.value = n.slug; o.textContent = n.nome + ' (/' + n.slug + ')'; sel.appendChild(o); }); sel.value = atual; } }
     const { data:ents } = await sb.from('entitlements').select('*');
     const mapaEnt = {}; (ents||[]).forEach(function(e){ mapaEnt[e.negocio_id] = e; });
     if(!negs.length){ $('lista').innerHTML = '<p style="color:#9a8b6f; font-size:.9rem;">Ainda não há negócios. Cria o primeiro acima.</p>'; return; }
