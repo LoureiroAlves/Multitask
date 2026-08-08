@@ -527,19 +527,20 @@
   body.modelo-grelha .tile.tile-cor-txt .tile-label{ color:var(--tile-txt) !important; }
 
   /* Cor do texto do menu escolhida à mão (manda sobre o modelo) */
+  /* "Cor do texto do menu" — só o conteúdo dos pratos (nomes, preços, descrições) */
   body.cor-menu-custom .categoria-painel-conteudo .nome,
   body.cor-menu-custom .categoria-painel-conteudo .desc,
   body.cor-menu-custom .categoria-painel-conteudo .preco,
-  body.cor-menu-custom .categoria-painel-conteudo h2,
-  body.cor-menu-custom .categoria-painel-conteudo summary,
-  body.cor-menu-custom .categoria-painel-conteudo .subtitulo,
   body.cor-menu-custom .categoria-painel-conteudo .menu-desc,
   body.cor-menu-custom .categoria-painel-conteudo .menu-preco,
   body.cor-menu-custom .categoria-painel-conteudo .dose,
   body.cor-menu-custom .categoria-painel-conteudo .preco-dose{ color:var(--cor-menu-texto) !important; }
-  /* Cor do texto do cabeçalho da secção (título + botão voltar) — independente do texto do menu */
+  /* "Cor do texto do cabeçalho da secção" — título do painel, "voltar" e os títulos das secções/grupos */
   body.cor-cab-custom .categoria-painel-header #painelTitulo,
-  body.cor-cab-custom .categoria-painel-header .voltar{ color:var(--cor-cab-texto) !important; }
+  body.cor-cab-custom .categoria-painel-header .voltar,
+  body.cor-cab-custom .categoria-painel-conteudo h2,
+  body.cor-cab-custom .categoria-painel-conteudo summary,
+  body.cor-cab-custom .categoria-painel-conteudo .subtitulo{ color:var(--cor-cab-texto) !important; }
 
   /* ===== Bases de azulejo para o cabeçalho e a barra fixa ===== */
   .azbg-classico{ background-color:var(--az-bg) !important;
