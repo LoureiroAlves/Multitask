@@ -468,7 +468,7 @@
   body.modelo-carteira .tile:hover{ filter:brightness(1.03); }
   body.modelo-carteira .tile .tile-emoji{ display:inline-block; font-size:1.5rem; line-height:1; margin:0; }
   body.modelo-carteira .tile .tile-label{ flex:1; font-weight:700; font-size:1.08rem; color:#fff !important; text-transform:none !important; letter-spacing:0; text-shadow:none !important; }
-  body.modelo-carteira .tile::after{ content:'›'; position:absolute; right:18px; top:50%; transform:translateY(-50%); opacity:.75; font-size:1.3rem; }
+  body.modelo-carteira .tile::after{ content:'›'; position:absolute; right:18px; top:50%; transform:translateY(-50%) rotate(-90deg); opacity:.75; font-size:1.3rem; }
   /* Modelo carteira: no efeito "Normal (zoom)" o painel desliza de baixo (assinatura Wallet).
      Se o dono escolher outro efeito, esse manda (as regras body.abrir-* aplicam-se). */
   body.modelo-carteira.abrir-zoom .categoria-painel{ transform:translateY(100%) !important; transition:transform .42s cubic-bezier(.3,.85,.25,1), visibility 0s linear .42s !important; }
