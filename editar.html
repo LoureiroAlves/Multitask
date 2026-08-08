@@ -289,6 +289,14 @@
           <input type="color" id="sliderCorTitulo" value="#f2761b" style="width:52px; height:38px; padding:2px; border:1.5px solid var(--linha); border-radius:8px; cursor:pointer;">
           <span class="subtitulo" style="margin:0;">Cor do nome de cada secção (e do título "MENU" na capa).</span>
         </div>
+
+        <label style="display:block; margin-top:12px; font-weight:500; font-size:.85rem;">Foto da capa</label>
+        <div style="display:flex; align-items:center; gap:8px; margin-top:6px; flex-wrap:wrap;">
+          <img id="sliderCapaFotoPrev" src="" alt="" style="display:none; width:46px; height:46px; object-fit:cover; border-radius:8px; border:1px solid var(--linha);">
+          <label style="cursor:pointer; border:1px solid var(--linha); border-radius:8px; padding:7px 12px; font-size:.85rem; background:var(--branco); color:var(--castanho);">＋ foto<input type="file" id="sliderCapaFotoInput" accept="image/*" style="display:none;"></label>
+          <button type="button" id="sliderCapaFotoRemover" style="display:none; border:1px solid var(--linha); border-radius:8px; padding:7px 12px; font-size:.85rem; background:var(--branco); color:var(--castanho); cursor:pointer;">sem foto</button>
+          <span class="subtitulo" style="margin:0;">Foto de fundo da primeira página ("MENU"). O texto fica claro por cima.</span>
+        </div>
       </div>
 
       <label for="abrirEfeitoSel" style="margin-top:16px;">Efeito ao abrir os separadores</label>
@@ -1592,7 +1600,8 @@
       const temTit = !!(config.sliderCorTitulo && String(config.sliderCorTitulo).trim());
       document.getElementById('sliderTitAtiva').checked = temTit;
       document.getElementById('sliderTitLinha').style.display = temTit ? 'flex' : 'none';
-      document.getElementById('sliderCorTitulo').value = temTit ? config.sliderCorTitulo : '#f2761b'; }
+      document.getElementById('sliderCorTitulo').value = temTit ? config.sliderCorTitulo : '#f2761b';
+      if(typeof _sliderCapaFotoUI === 'function') _sliderCapaFotoUI(); }
     { const cad = config.caderno || {};
       document.getElementById('cadFolha').value = cad.folha || 'quadriculado';
       document.getElementById('cadCorLetra').value = cad.corLetra || '#4a3820';
@@ -1797,6 +1806,23 @@
   document.getElementById('sliderTitAtiva').addEventListener('change', e => {
     document.getElementById('sliderTitLinha').style.display = e.target.checked ? 'flex' : 'none';
   });
+  function _sliderCapaFotoUI(){
+    const u = config.sliderFotoCapa || '';
+    const p = document.getElementById('sliderCapaFotoPrev'), r = document.getElementById('sliderCapaFotoRemover');
+    if(p){ p.src = u; p.style.display = u ? 'inline-block' : 'none'; }
+    if(r) r.style.display = u ? 'inline-block' : 'none';
+  }
+  (function(){
+    const inp = document.getElementById('sliderCapaFotoInput');
+    if(inp) inp.addEventListener('change', async () => {
+      const f = inp.files && inp.files[0]; if(!f) return;
+      setEstado('A enviar foto da capa…', 'info');
+      try{ const url = await _uploadFoto(f); config.sliderFotoCapa = url; _sliderCapaFotoUI(); setEstado('Foto da capa adicionada ✓', 'ok'); if(window.__agendarPreview) window.__agendarPreview(); }
+      catch(e){ setEstado('Erro ao enviar foto: ' + (e && e.message ? e.message : e), 'erro'); }
+    });
+    const rm = document.getElementById('sliderCapaFotoRemover');
+    if(rm) rm.addEventListener('click', () => { config.sliderFotoCapa = ''; _sliderCapaFotoUI(); if(window.__agendarPreview) window.__agendarPreview(); });
+  })();
 
   // Texto livre: mostradores dos sliders + cor
   ['tlTamanho','tlAltura','tlX','tlY'].forEach(function(id){
@@ -2961,7 +2987,7 @@
       const est = cat.estiloTile;
       const prevAsst = function(){ if(window.__agendarPreview) window.__agendarPreview(); };
       const estWrap=document.createElement('div'); estWrap.style.cssText='margin:0 0 10px; padding:9px 10px; border:1px solid var(--linha); border-radius:8px;';
-      const estTit=document.createElement('div'); estTit.className='subtitulo'; estTit.style.cssText='margin:0 0 7px;'; estTit.textContent='Estilo do texto do separador (modelo Grelha)';
+      const estTit=document.createElement('div'); estTit.className='subtitulo'; estTit.style.cssText='margin:0 0 7px;'; estTit.textContent='Estilo do texto do separador (menu principal)';
       estWrap.appendChild(estTit);
       const row=document.createElement('div'); row.style.cssText='display:flex; align-items:center; gap:12px; flex-wrap:wrap; font-size:0.8rem; color:var(--castanho-suave);';
       // Cor (com visto para ativar)
