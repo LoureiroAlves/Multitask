@@ -2900,6 +2900,17 @@
       corRow.appendChild(corIn); corRow.appendChild(corLimpar);
       p.appendChild(corRow);
 
+      // Foto da secção (usada nos modelos "Deslizar" e "Grelha de cartões")
+      const fotoRow=document.createElement('div'); fotoRow.style.cssText='display:flex; align-items:center; gap:8px; margin:0 0 10px; font-size:0.82rem; color:var(--castanho-suave); flex-wrap:wrap;';
+      fotoRow.appendChild(document.createTextNode('Foto da secção (Deslizar / Grelha):'));
+      if(cat.foto){ const pv=document.createElement('img'); pv.src=cat.foto; pv.style.cssText='width:46px; height:46px; object-fit:cover; border-radius:8px; border:1px solid var(--linha);'; fotoRow.appendChild(pv); }
+      const fLbl=document.createElement('label'); fLbl.className='mv-mini'; fLbl.style.cursor='pointer'; fLbl.textContent = cat.foto ? 'trocar foto' : '＋ foto';
+      const fInp=document.createElement('input'); fInp.type='file'; fInp.accept='image/*'; fInp.style.display='none';
+      fInp.addEventListener('change', async ()=>{ const f=fInp.files&&fInp.files[0]; if(!f) return; setEstadoMenu('A enviar foto da secção…','info'); try{ const url=await _uploadFoto(f); cat.foto=url; setEstadoMenu('Foto adicionada ✓','ok'); renderEditor(); if(window.__agendarPreview) window.__agendarPreview(); }catch(e){ setEstadoMenu('Erro ao enviar foto: '+e.message,'erro'); } });
+      fLbl.appendChild(fInp); fotoRow.appendChild(fLbl);
+      if(cat.foto){ const fRm=document.createElement('button'); fRm.type='button'; fRm.className='mv-mini'; fRm.textContent='sem foto'; fRm.addEventListener('click',()=>{ delete cat.foto; renderEditor(); if(window.__agendarPreview) window.__agendarPreview(); }); fotoRow.appendChild(fRm); }
+      p.appendChild(fotoRow);
+
       const trd=document.createElement('details'); trd.style.cssText='border:none;background:transparent;margin-bottom:4px;';
       const trs=document.createElement('summary'); trs.textContent='traduções do título'; trs.style.cssText='font-size:0.75rem;color:var(--castanho-suave);';
       trd.appendChild(trs); trd.appendChild(campoTraducoes(tituloObj)); p.appendChild(trd);
