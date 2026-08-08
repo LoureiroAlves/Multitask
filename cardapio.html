@@ -516,13 +516,18 @@
   /* Banner de foto no cabeçalho de cada secção (todos os modelos) */
   .sec-foto-banner{ width:100%; height:170px; border-radius:14px; background-size:cover; background-position:center; margin:0 0 14px; box-shadow:0 3px 10px rgba(0,0,0,.15); }
   body.modelo-slider .deck-page > .sec-foto-banner{ margin-bottom:14px; }
-  /* Foto no separador (modelo Grelha) — foto como <img> (não pisca) a substituir o emoji */
-  .tile .tile-foto-img{ display:none; }
-  body.modelo-grelha .tile.tile-tem-foto{ position:relative; overflow:hidden; border:none !important; justify-content:flex-end !important; padding-bottom:10px; }
-  body.modelo-grelha .tile.tile-tem-foto .tile-foto-img{ display:block; position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:0; }
-  body.modelo-grelha .tile.tile-tem-foto::after{ content:''; position:absolute; inset:0; background:linear-gradient(to top, rgba(0,0,0,.62), rgba(0,0,0,.05) 58%); z-index:1; pointer-events:none; }
-  body.modelo-grelha .tile.tile-tem-foto .tile-emoji{ display:none !important; }
-  body.modelo-grelha .tile.tile-tem-foto .tile-label{ position:relative; z-index:2; color:#fff !important; text-shadow:0 1px 4px rgba(0,0,0,.85); }
+  /* Foto no separador (todos os modelos) — foto como <img> por trás do nome, com véu para legibilidade */
+  .tile-foto-img, .tile-foto-shade{ display:none; }
+  .tile.tile-tem-foto{ position:relative; overflow:hidden; }
+  .tile.tile-tem-foto .tile-foto-img{ display:block; position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:0; }
+  .tile.tile-tem-foto .tile-foto-shade{ display:block; position:absolute; inset:0; background:linear-gradient(to top, rgba(0,0,0,.62), rgba(0,0,0,.08) 60%); z-index:1; pointer-events:none; }
+  .tile.tile-tem-foto .tile-emoji{ display:none !important; }
+  body .tile.tile-tem-foto .tile-label{ position:relative; z-index:2; color:#fff !important; text-shadow:0 1px 4px rgba(0,0,0,.85); }
+  body.modelo-grelha .tile.tile-tem-foto{ justify-content:flex-end !important; padding-bottom:10px; border:none !important; }
+  /* Caderno é uma lista escrita à mão — não leva foto no separador */
+  body.modelo-caderno .tile.tile-tem-foto .tile-foto-img,
+  body.modelo-caderno .tile.tile-tem-foto .tile-foto-shade{ display:none !important; }
+  body.modelo-caderno .tile.tile-tem-foto .tile-label{ color:var(--cad-letra, var(--castanho)) !important; text-shadow:none; }
   /* Cor do texto do separador escolhida por categoria — vale em qualquer modelo (menu principal) e vence o branco forçado */
   body .tile.tile-cor-txt .tile-label{ color:var(--tile-txt) !important; }
 
@@ -2381,7 +2386,7 @@
       const label = document.createElement('span'); label.className='tile-label'; _mLang(label, cat.tile);
       btn.appendChild(emoji); btn.appendChild(label);
       if(cat.cor){ btn.style.setProperty('--cat-cor', cat.cor); btn.dataset.cor = cat.cor; }
-      if(cat.foto){ btn.classList.add('tile-tem-foto'); btn.dataset.foto = cat.foto; const fim = document.createElement('img'); fim.className = 'tile-foto-img'; fim.src = cat.foto; fim.alt = ''; fim.decoding = 'async'; btn.insertBefore(fim, btn.firstChild); }
+      if(cat.foto){ btn.classList.add('tile-tem-foto'); btn.dataset.foto = cat.foto; const fsh = document.createElement('span'); fsh.className = 'tile-foto-shade'; btn.insertBefore(fsh, btn.firstChild); const fim = document.createElement('img'); fim.className = 'tile-foto-img'; fim.src = cat.foto; fim.alt = ''; fim.decoding = 'async'; btn.insertBefore(fim, btn.firstChild); }
       { const et = cat.estiloTile || (cat.corTile ? { cor: cat.corTile } : null);
         if(et){
           if(et.cor){ btn.classList.add('tile-cor-txt'); btn.style.setProperty('--tile-txt', et.cor); label.style.color = et.cor; }
