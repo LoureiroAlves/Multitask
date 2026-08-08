@@ -512,10 +512,13 @@
   body.modelo-slider.slider-tit-cor .deck-capa .deck-capa-tit{ color:var(--slider-tit) !important; }
   /* Banner de foto no topo de cada página (modelo Deslizar) */
   body.modelo-slider .deck-foto{ width:100%; height:160px; border-radius:16px; background-size:cover; background-position:center; margin-bottom:14px; box-shadow:0 3px 10px rgba(0,0,0,.18); }
-  /* Foto no separador (modelo Grelha) — substitui o emoji */
-  body.modelo-grelha .tile.tile-tem-foto{ background-image:linear-gradient(to top, rgba(0,0,0,.62), rgba(0,0,0,.05) 58%), var(--tile-foto) !important; background-size:cover, cover; background-position:center, center; border:none !important; justify-content:flex-end !important; padding-bottom:10px; }
+  /* Foto no separador (modelo Grelha) — foto como <img> (não pisca) a substituir o emoji */
+  .tile .tile-foto-img{ display:none; }
+  body.modelo-grelha .tile.tile-tem-foto{ position:relative; overflow:hidden; border:none !important; justify-content:flex-end !important; padding-bottom:10px; }
+  body.modelo-grelha .tile.tile-tem-foto .tile-foto-img{ display:block; position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:0; }
+  body.modelo-grelha .tile.tile-tem-foto::after{ content:''; position:absolute; inset:0; background:linear-gradient(to top, rgba(0,0,0,.62), rgba(0,0,0,.05) 58%); z-index:1; pointer-events:none; }
   body.modelo-grelha .tile.tile-tem-foto .tile-emoji{ display:none !important; }
-  body.modelo-grelha .tile.tile-tem-foto .tile-label{ color:#fff !important; text-shadow:0 1px 4px rgba(0,0,0,.85); }
+  body.modelo-grelha .tile.tile-tem-foto .tile-label{ position:relative; z-index:2; color:#fff !important; text-shadow:0 1px 4px rgba(0,0,0,.85); }
 
   /* Cor do texto do menu escolhida à mão (manda sobre o modelo) */
   body.cor-menu-custom .categoria-painel-conteudo .nome,
@@ -2362,7 +2365,7 @@
       const label = document.createElement('span'); label.className='tile-label'; _mLang(label, cat.tile);
       btn.appendChild(emoji); btn.appendChild(label);
       if(cat.cor){ btn.style.setProperty('--cat-cor', cat.cor); btn.dataset.cor = cat.cor; }
-      if(cat.foto){ btn.classList.add('tile-tem-foto'); btn.style.setProperty('--tile-foto', "url('" + cat.foto + "')"); btn.dataset.foto = cat.foto; }
+      if(cat.foto){ btn.classList.add('tile-tem-foto'); btn.dataset.foto = cat.foto; const fim = document.createElement('img'); fim.className = 'tile-foto-img'; fim.src = cat.foto; fim.alt = ''; fim.decoding = 'async'; btn.insertBefore(fim, btn.firstChild); }
       grid.appendChild(btn);
       const sec = document.createElement('section');
       sec.className = 'categoria'; sec.id = cat.id;
@@ -2435,6 +2438,8 @@
       page.appendChild(s);
       // secções já abertas: expande os grupos (details) dentro desta página
       s.querySelectorAll('details').forEach(function(d){ d.open = true; });
+      // evita duplicar: se o título de um grupo repetir o nome da secção, esconde-o
+      if(titTxt){ const alvo = titTxt.trim().toLowerCase(); s.querySelectorAll('.grupo-prato > summary, .grupo-vinho > summary').forEach(function(sm){ if((sm.textContent||'').trim().toLowerCase() === alvo){ sm.style.display = 'none'; } }); }
       deck.appendChild(page);
     });
     // Bolinhas indicadoras
