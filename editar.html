@@ -741,6 +741,12 @@
   <details id="secFooter">
     <summary>Rodapé final (só aparece ao fazer scroll até ao fim)</summary>
     <div class="bloco-conteudo">
+      <div class="lembrar" style="margin-bottom:12px;">
+        <input type="checkbox" id="footerMostrar" checked>
+        <label for="footerMostrar" style="margin:0; font-weight:700; color:var(--dourado-escuro); display:inline;">Mostrar rodapé final (ao fazer scroll até ao fim)</label>
+      </div>
+      <div class="subtitulo" style="margin:-6px 0 10px;">Desliga para não mostrar o bloco do fim (nome, morada, telefone e publicidade).</div>
+
       <label for="footerNome">Nome do restaurante</label>
       <input type="text" id="footerNome" placeholder="Rest & Bar Parque São Caetano">
       <div id="estiloFNome"></div>
@@ -1528,6 +1534,7 @@
     document.getElementById('carrModo').value = car.modo || 'fixo';
     preencherDias(car.dias);
     aplicarModoCarr();
+    document.getElementById('footerMostrar').checked = config.footer.mostrar !== false;
     document.getElementById('footerNome').value = config.footer.nome || '';
     document.getElementById('footerMorada').value = config.footer.morada || '';
     document.getElementById('footerTelefone').value = config.footer.telefone || '';
@@ -1945,7 +1952,7 @@
         fotoPanY: config.footer.fotoPanY || 0,
         textoX: config.footer.textoX ?? 50,
         textoY: config.footer.textoY ?? 50,
-        mostrar: config.footer.mostrar,
+        mostrar: document.getElementById('footerMostrar').checked,
         linhaEstilos: [lerEstilo('fNom'), lerEstilo('fMor'), lerEstilo('fTel')]
       };
       config.adJogos = {

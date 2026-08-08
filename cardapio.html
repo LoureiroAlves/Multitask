@@ -5646,6 +5646,8 @@
       // Nunca reajustar enquanto o utilizador está a fazer scroll (evita saltos)
       if((window.scrollY || window.pageYOffset || 0) > 4) return;
       grid.style.minHeight = '';
+      // Se o rodapé final está desligado, não há nada para empurrar para baixo da dobra
+      if(getComputedStyle(footer).display === 'none') return;
       // posição do topo do rodapé no documento (independente do scroll — evita saltos)
       var footerTopDoc = footer.getBoundingClientRect().top + (window.scrollY || window.pageYOffset || 0);
       var faltam = window.innerHeight - footerTopDoc;
