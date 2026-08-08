@@ -2511,18 +2511,34 @@
 
   function restaurarCategoria(){
     painel.removeEventListener('transitionend', _restaurarPendente);
-    if(categoriaAtual){
-      categoriaAtual.classList.remove('ativa');
-      if(categoriaPaiOriginal){ categoriaPaiOriginal.insertBefore(categoriaAtual, categoriaProximoOriginal); }
-      categoriaAtual = null; categoriaPaiOriginal = null; categoriaProximoOriginal = null;
-    }
-    // Segurança: devolve ao menu qualquer secção que tenha ficado presa no painel
     var mainEl = document.querySelector('main');
     var jogosSec = document.getElementById('jogos');
-    painelConteudo.querySelectorAll(':scope > section.categoria').forEach(function(s){
-      s.classList.remove('ativa');
-      if(mainEl){ if(jogosSec) mainEl.insertBefore(s, jogosSec); else mainEl.appendChild(s); }
-    });
+    function devolver(sec){
+      if(!sec) return;
+      sec.classList.remove('ativa');
+      // Escolhe um pai válido (o original, se ainda estiver no documento; senão o main)
+      var pai = (categoriaPaiOriginal && document.contains(categoriaPaiOriginal)) ? categoriaPaiOriginal : mainEl;
+      if(!pai) return;
+      try{
+        if(categoriaProximoOriginal && categoriaProximoOriginal.parentNode === pai){
+          pai.insertBefore(sec, categoriaProximoOriginal);
+        } else if(pai === mainEl && jogosSec && jogosSec.parentNode === mainEl){
+          mainEl.insertBefore(sec, jogosSec);
+        } else {
+          pai.appendChild(sec);
+        }
+      }catch(e){
+        try{ if(mainEl){ if(jogosSec && jogosSec.parentNode === mainEl) mainEl.insertBefore(sec, jogosSec); else mainEl.appendChild(sec); } }catch(_){}
+      }
+    }
+    if(categoriaAtual){ devolver(categoriaAtual); categoriaAtual = null; categoriaPaiOriginal = null; categoriaProximoOriginal = null; }
+    // Segurança: devolve ao menu qualquer secção que tenha ficado presa no painel
+    try{
+      painelConteudo.querySelectorAll(':scope > section.categoria').forEach(function(s){
+        s.classList.remove('ativa');
+        if(mainEl){ if(jogosSec && jogosSec.parentNode === mainEl) mainEl.insertBefore(s, jogosSec); else mainEl.appendChild(s); }
+      });
+    }catch(e){}
   }
   function _restaurarPendente(e){
     if(e.target !== painel) return;
@@ -3658,7 +3674,11 @@
         var z = zona(e.target); desmarcar();
         var f = e.dataTransfer.files[0];
         if(!f || !/^image\//.test(f.type)){ try{ parent.postMessage({ type:'preview-drop-erro', msg:'Larga um ficheiro de imagem.' }, '*'); }catch(_){} return; }
-        try{ parent.postMessage({ type:'preview-drop', alvo:z.alvo, catId:z.catId||null, file:f, nome:f.name }, '*'); }catch(err){}
+        // Lê para texto (data URL) e envia — mais fiável que enviar o ficheiro entre janelas
+        var fr = new FileReader();
+        fr.onload = function(){ try{ parent.postMessage({ type:'preview-drop', alvo:z.alvo, catId:z.catId||null, dataUrl:fr.result, nome:f.name }, '*'); }catch(err){} };
+        fr.onerror = function(){ try{ parent.postMessage({ type:'preview-drop-erro', msg:'Não consegui ler a imagem.' }, '*'); }catch(_){} };
+        fr.readAsDataURL(f);
       });
     })();
 
@@ -4101,7 +4121,7 @@
       fotoImg.style.display = 'block';
       fotoPlaceholder.style.display = 'none';
     };
-    fotoImg.src = PASTA_IMAGENS + slug + '.jpg';
+    fotoImg.src = /^https?:\/\//i.test(slug) ? slug : (PASTA_IMAGENS + slug + '.jpg');
 
     modalFoto.classList.add('aberto');
   });

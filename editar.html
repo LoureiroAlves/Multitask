@@ -1312,12 +1312,18 @@
   // ---- Comprimir imagem antes do upload ----
   // PNG mantém-se PNG (preserva transparência); o resto vira JPEG.
   function comprimirImagem(file){
-    const ehPng = file.type === 'image/png';
+    const ehString = (typeof file === 'string');
+    const ehPng = ehString ? /^data:image\/png/i.test(file) : (file.type === 'image/png');
     return new Promise((resolve, reject) => {
+      const _nome = ehString ? '' : ((file && file.name) || '');
+      const _tipo = ehString ? '' : ((file && file.type) || '');
+      if(/heic|heif/i.test(_nome) || /heic|heif/i.test(_tipo)){
+        reject(new Error('Formato HEIC (foto do iPhone) não é suportado pelos navegadores. No iPhone: Definições → Câmara → Formatos → "Mais compatível" (guarda em JPG), ou converte a foto para JPG/PNG.'));
+        return;
+      }
       const img = new Image();
-      const reader = new FileReader();
-      reader.onload = e => { img.src = e.target.result; };
-      reader.onerror = reject;
+      if(ehString){ img.src = file; }
+      else { const reader = new FileReader(); reader.onload = e => { img.src = e.target.result; }; reader.onerror = function(){ reject(new Error('Não consegui ler o ficheiro.')); }; reader.readAsDataURL(file); }
       img.onload = () => {
         const maxLado = 1400;
         let { width, height } = img;
@@ -1346,8 +1352,7 @@
           }, 'image/jpeg', 0.82);
         }
       };
-      img.onerror = reject;
-      reader.readAsDataURL(file);
+      img.onerror = function(){ reject(new Error('Não consegui abrir a imagem. Usa JPG ou PNG (fotos HEIC do iPhone não são aceites pelos navegadores).')); };
     });
   }
 
@@ -2797,8 +2802,15 @@
       mais.appendChild(campoMulti(it.desc,'Descrição'));
       mais.appendChild(mkLabel('Chave do vinho (ⓘ, opcional)'));
       mais.appendChild(mkInput(it.vinho,'ex: monte-velho-tinto', v=>{ v=v.trim(); if(v) it.vinho=v; else delete it.vinho; }));
-      mais.appendChild(mkLabel('Foto (imagens/…, sem .jpg)'));
-      mais.appendChild(mkInput(it.foto,'ex: francesinha-forno-com-ovo', v=>{ v=v.trim(); if(v) it.foto=v; else delete it.foto; }));
+      mais.appendChild(mkLabel('Foto do prato'));
+      const fRow=document.createElement('div'); fRow.style.cssText='display:flex; align-items:center; gap:8px; flex-wrap:wrap;';
+      if(it.foto){ const pv=document.createElement('img'); pv.src=it.foto; pv.style.cssText='width:44px; height:44px; object-fit:cover; border-radius:6px; border:1px solid var(--linha);'; fRow.appendChild(pv); }
+      const fL=document.createElement('label'); fL.className='mv-mini'; fL.style.cursor='pointer'; fL.textContent = it.foto ? 'trocar foto' : '＋ foto';
+      const fI=document.createElement('input'); fI.type='file'; fI.accept='image/*'; fI.style.display='none';
+      fI.addEventListener('change', async ()=>{ const f=fI.files&&fI.files[0]; if(!f) return; setEstadoMenu('A enviar foto do prato…','info'); try{ const url=await _uploadFoto(f); it.foto=url; setEstadoMenu('Foto adicionada ✓','ok'); renderEditor(); if(window.__agendarPreview) window.__agendarPreview(); }catch(e){ setEstadoMenu('Erro ao enviar foto: '+(e&&e.message?e.message:e),'erro'); } });
+      fL.appendChild(fI); fRow.appendChild(fL);
+      if(it.foto){ const fR=document.createElement('button'); fR.type='button'; fR.className='mv-mini'; fR.textContent='sem foto'; fR.addEventListener('click',()=>{ delete it.foto; renderEditor(); if(window.__agendarPreview) window.__agendarPreview(); }); fRow.appendChild(fR); }
+      mais.appendChild(fRow);
       box.appendChild(mais);
       return box;
     }
