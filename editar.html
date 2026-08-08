@@ -3116,8 +3116,27 @@
     document.getElementById('btnCarregarMenu').addEventListener('click', carregarMenu);
     document.getElementById('btnGuardarMenu').addEventListener('click', guardarMenu);
     window.__carregarMenu = carregarMenu;
-    // Exposto para a pré-visualização ao vivo
-    window.__getMenuPreview = function(){ try{ return menuData || null; }catch(e){ return null; } };
+    // Exposto para a pré-visualização ao vivo (garante ids estáveis para o arrasto casar as secções)
+    window.__getMenuPreview = function(){ try{
+      if(menuData && Array.isArray(menuData.categorias)){
+        const usados = {};
+        menuData.categorias.forEach(function(c, i){
+          const base = (c.tile && c.tile.pt) || (c.grupos && c.grupos[0] && c.grupos[0].summary && c.grupos[0].summary.pt) || 'seccao';
+          if(!c.id || !String(c.id).trim()) c.id = slugMenu(base) || ('sec' + i);
+          let b = c.id, n = 2; while(usados[c.id]){ c.id = b + '-' + n; n++; } usados[c.id] = 1;
+        });
+      }
+      return menuData || null;
+    }catch(e){ return null; } };
+    // Exposto para o arrasto: define a foto de uma categoria pelo id
+    window.__setCatFoto = function(catId, url){ try{
+      if(!menuData || !Array.isArray(menuData.categorias)) return false;
+      const c = menuData.categorias.filter(function(x){ return x.id === catId; })[0];
+      if(!c) return false;
+      c.foto = url; renderEditor();
+      if(window.__agendarPreview) window.__agendarPreview();
+      return true;
+    }catch(e){ return false; } };
 
     // ==========================================================
     //  TRADUÇÃO AUTOMÁTICA  (PT → EN/FR/ES)
@@ -3335,6 +3354,33 @@
     }
     function agendarEnvio(){ clearTimeout(temporizador); temporizador = setTimeout(enviar, 400); }
     window.__agendarPreview = agendarEnvio;
+    async function tratarDropPreview(d){
+      if(!d || !d.file) return;
+      try{
+        setEstado('A enviar imagem…', 'info');
+        const url = await _uploadFoto(d.file);
+        if(d.alvo === 'header'){
+          if(!Array.isArray(config.header.fotos)) config.header.fotos = [];
+          config.header.fotos.push(url);
+          const c = document.getElementById('fotosHeaderAtivas'); if(c) c.checked = true;
+          try{ renderListaFotos('header'); }catch(_){}
+        } else if(d.alvo === 'footer'){
+          if(!Array.isArray(config.footer.fotos)) config.footer.fotos = [];
+          config.footer.fotos.push(url);
+          const c = document.getElementById('fotosFooterAtivas'); if(c) c.checked = true;
+          try{ renderListaFotos('footer'); }catch(_){}
+        } else if(d.alvo === 'fundo'){
+          config.fundo = config.fundo || { tipo:'imagem', imagem:'', textura:'pontos' };
+          config.fundo.imagem = url; config.fundo.tipo = 'imagem';
+          const s = document.getElementById('fundoTipoSel'); if(s){ s.value = 'imagem'; try{ s.dispatchEvent(new Event('change', { bubbles:true })); }catch(_){} }
+        } else if(d.alvo === 'categoria' && d.catId){
+          const ok = window.__setCatFoto && window.__setCatFoto(d.catId, url);
+          if(!ok){ setEstado('Não encontrei a secção. Guarda o menu e tenta de novo.', 'erro'); return; }
+        } else { setEstado('Larga a imagem sobre uma secção, o cabeçalho, o rodapé ou o fundo.', 'erro'); return; }
+        setEstado('Imagem colocada ✓ — não te esqueças de Guardar.', 'ok');
+        if(window.__agendarPreview) window.__agendarPreview();
+      }catch(err){ setEstado('Erro ao enviar imagem: ' + (err && err.message ? err.message : err), 'erro'); }
+    }
     window.addEventListener('message', function(e){
       const d = e.data || {};
       if(d.type === 'cardapio-preview-ready'){ pronto = true; ajustarEscalaPreview(); enviar(); }
@@ -3351,6 +3397,8 @@
         const et = document.getElementById('tlTamanho');
         if(et && d.tamanho!=null){ et.value = d.tamanho; const v=document.getElementById('tlTamanhoVal'); if(v) v.textContent = d.tamanho; }
       }
+      else if(d.type === 'preview-drop-erro'){ setEstado(d.msg || 'Ficheiro inválido.', 'erro'); }
+      else if(d.type === 'preview-drop'){ tratarDropPreview(d); }
     });
     document.addEventListener('input', agendarEnvio);
     document.addEventListener('change', agendarEnvio);

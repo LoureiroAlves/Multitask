@@ -118,6 +118,8 @@
   }
   html{ background:var(--intro-bg,#1f2530); }
   body.barra-oculta{ padding-bottom:env(safe-area-inset-bottom); }
+  /* Realce da zona ao arrastar uma imagem para a pré-visualização */
+  .drop-alvo{ outline:3px dashed #ffd75e !important; outline-offset:-3px; box-shadow:0 0 0 100vmax rgba(255,215,94,.10) inset !important; position:relative; }
   header{
     position:relative; z-index:50;
     background:var(--castanho);
@@ -3625,6 +3627,41 @@
       else if(ov){ ov.onclick=null; ov.classList.remove('animar'); ov.style.display = 'none'; }
     });
     try{ parent.postMessage({ type:'cardapio-preview-ready' }, '*'); }catch(err){}
+
+    // ---- Arrastar e largar imagens em zonas (cabeçalho, secção, rodapé, fundo) ----
+    (function(){
+      function zona(el){
+        if(!el || !el.closest) return { alvo:'fundo' };
+        if(el.closest('#rodapeFinal')) return { alvo:'footer' };
+        if(el.closest('header')) return { alvo:'header' };
+        var tile = el.closest('.tile'); if(tile && tile.dataset.target && tile.dataset.target !== 'jogos') return { alvo:'categoria', catId:tile.dataset.target };
+        var dp = el.closest('.deck-page'); if(dp){ var sd = dp.querySelector('section.categoria'); if(sd && sd.id !== 'jogos') return { alvo:'categoria', catId:sd.id }; }
+        var sc = el.closest('section.categoria'); if(sc && sc.id !== 'jogos') return { alvo:'categoria', catId:sc.id };
+        return { alvo:'fundo' };
+      }
+      function alvoEl(z, el){
+        if(!z) return null;
+        if(z.alvo==='footer') return document.getElementById('rodapeFinal');
+        if(z.alvo==='header') return document.querySelector('header');
+        if(z.alvo==='categoria') return (el.closest && (el.closest('.tile') || el.closest('.deck-page'))) || document.getElementById(z.catId);
+        return document.querySelector('main');
+      }
+      var marcado = null;
+      function marcar(el){ if(marcado === el) return; desmarcar(); if(el){ el.classList.add('drop-alvo'); marcado = el; } }
+      function desmarcar(){ if(marcado){ marcado.classList.remove('drop-alvo'); marcado = null; } }
+      function temFicheiro(e){ var t = e.dataTransfer && e.dataTransfer.types; return t && Array.prototype.indexOf.call(t, 'Files') >= 0; }
+      document.addEventListener('dragover', function(e){ if(!temFicheiro(e)) return; e.preventDefault(); var z = zona(e.target); marcar(alvoEl(z, e.target)); });
+      document.addEventListener('dragleave', function(e){ if(!e.relatedTarget) desmarcar(); });
+      document.addEventListener('drop', function(e){
+        if(!e.dataTransfer || !e.dataTransfer.files || !e.dataTransfer.files.length) return;
+        e.preventDefault();
+        var z = zona(e.target); desmarcar();
+        var f = e.dataTransfer.files[0];
+        if(!f || !/^image\//.test(f.type)){ try{ parent.postMessage({ type:'preview-drop-erro', msg:'Larga um ficheiro de imagem.' }, '*'); }catch(_){} return; }
+        try{ parent.postMessage({ type:'preview-drop', alvo:z.alvo, catId:z.catId||null, file:f, nome:f.name }, '*'); }catch(err){}
+      });
+    })();
+
     // Clicar num elemento salta para o seu controlo no editor
     document.addEventListener('click', function(e){
       if(window.__mostrarIntroPreview) return; // a abertura tem o seu próprio clique
