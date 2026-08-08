@@ -2929,7 +2929,7 @@
 
       // Foto da secção (usada nos modelos "Deslizar" e "Grelha de cartões")
       const fotoRow=document.createElement('div'); fotoRow.style.cssText='display:flex; align-items:center; gap:8px; margin:0 0 10px; font-size:0.82rem; color:var(--castanho-suave); flex-wrap:wrap;';
-      fotoRow.appendChild(document.createTextNode('Foto da secção (Deslizar / Grelha):'));
+      fotoRow.appendChild(document.createTextNode('Foto da secção (cabeçalho / separador):'));
       if(cat.foto){ const pv=document.createElement('img'); pv.src=cat.foto; pv.style.cssText='width:46px; height:46px; object-fit:cover; border-radius:8px; border:1px solid var(--linha);'; fotoRow.appendChild(pv); }
       const fLbl=document.createElement('label'); fLbl.className='mv-mini'; fLbl.style.cursor='pointer'; fLbl.textContent = cat.foto ? 'trocar foto' : '＋ foto';
       const fInp=document.createElement('input'); fInp.type='file'; fInp.accept='image/*'; fInp.style.display='none';
