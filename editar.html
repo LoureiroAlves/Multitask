@@ -362,6 +362,15 @@
       </div>
       <div class="subtitulo" style="margin-top:4px;">Útil quando o modelo deixa a letra clara demais. Deixa desligado para usar a cor automática do modelo.</div>
 
+      <label for="corCabAtiva" style="margin-top:14px; display:flex; align-items:center; gap:8px; cursor:pointer;">
+        <input type="checkbox" id="corCabAtiva" style="width:auto;"> Definir a cor do texto do cabeçalho da secção
+      </label>
+      <div id="corCabBox" style="display:none; align-items:center; justify-content:space-between; margin-top:8px; padding:12px; border:1.5px solid var(--linha); border-radius:10px;">
+        <span style="font-size:0.9rem; color:var(--castanho);">Cor do título e do "voltar" (topo da secção)</span>
+        <input type="color" id="corCabTexto" value="#ffffff" style="width:52px; height:34px; padding:0; border:none; background:none; cursor:pointer;">
+      </div>
+      <div class="subtitulo" style="margin-top:4px;">Separado do texto do menu — para quando o cabeçalho tem um fundo de cor diferente (ex.: verde) e a letra do conteúdo fica sobre bege/branco.</div>
+
       <label for="fundoTipoSel" style="margin-top:16px;">Fundo do cardápio</label>
       <select id="fundoTipoSel" style="width:100%; padding:10px 12px; border-radius:10px; border:1.5px solid var(--linha); background:var(--branco); font-family:inherit; color:var(--castanho); font-size:0.95rem;">
         <option value="liso">Liso (cor clara do tema)</option>
@@ -1605,6 +1614,10 @@
       document.getElementById('corMenuAtiva').checked = !!cm;
       document.getElementById('corMenuBox').style.display = cm ? 'flex' : 'none';
       if(cm) document.getElementById('corMenuTexto').value = cm; }
+    { const cc = config.corCabecalho || '';
+      document.getElementById('corCabAtiva').checked = !!cc;
+      document.getElementById('corCabBox').style.display = cc ? 'flex' : 'none';
+      document.getElementById('corCabTexto').value = cc || '#ffffff'; }
     // Fundo
     const fundo = config.fundo || { tipo:'liso', imagem:'', textura:'pontos' };
     document.getElementById('fundoTipoSel').value = fundo.tipo || 'liso';
@@ -1760,6 +1773,9 @@
   });
   document.getElementById('corMenuAtiva').addEventListener('change', e => {
     document.getElementById('corMenuBox').style.display = e.target.checked ? 'flex' : 'none';
+  });
+  document.getElementById('corCabAtiva').addEventListener('change', e => {
+    document.getElementById('corCabBox').style.display = e.target.checked ? 'flex' : 'none';
   });
   document.getElementById('agCorAtiva').addEventListener('change', e => {
     document.getElementById('agCorBox').style.display = e.target.checked ? 'flex' : 'none';
@@ -2014,6 +2030,7 @@
         config.cores = null;
       }
       config.corMenuTexto = document.getElementById('corMenuAtiva').checked ? document.getElementById('corMenuTexto').value : '';
+      config.corCabecalho = document.getElementById('corCabAtiva').checked ? document.getElementById('corCabTexto').value : '';
       config.fundo = {
         tipo: document.getElementById('fundoTipoSel').value,
         imagem: (config.fundo && config.fundo.imagem) || '',

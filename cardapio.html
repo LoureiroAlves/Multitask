@@ -537,6 +537,9 @@
   body.cor-menu-custom .categoria-painel-conteudo .menu-preco,
   body.cor-menu-custom .categoria-painel-conteudo .dose,
   body.cor-menu-custom .categoria-painel-conteudo .preco-dose{ color:var(--cor-menu-texto) !important; }
+  /* Cor do texto do cabeçalho da secção (título + botão voltar) — independente do texto do menu */
+  body.cor-cab-custom .categoria-painel-header #painelTitulo,
+  body.cor-cab-custom .categoria-painel-header .voltar{ color:var(--cor-cab-texto) !important; }
 
   /* ===== Bases de azulejo para o cabeçalho e a barra fixa ===== */
   .azbg-classico{ background-color:var(--az-bg) !important;
@@ -3022,6 +3025,8 @@
       })();
       if(config.corMenuTexto){ document.body.classList.add('cor-menu-custom'); document.documentElement.style.setProperty('--cor-menu-texto', config.corMenuTexto); }
       else { document.body.classList.remove('cor-menu-custom'); }
+      if(config.corCabecalho){ document.body.classList.add('cor-cab-custom'); document.documentElement.style.setProperty('--cor-cab-texto', config.corCabecalho); }
+      else { document.body.classList.remove('cor-cab-custom'); }
       // Cor dos azulejos (personalizável) — recalcula as variáveis CSS
       (function(){
         let hex = (config.azulejoCor || '#2a5aa8').replace('#','');
