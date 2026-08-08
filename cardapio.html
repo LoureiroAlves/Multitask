@@ -505,6 +505,11 @@
   /* Cor das páginas escolhida pelo dono (com texto a contrastar automaticamente) */
   body.modelo-slider .deck-page{ background:var(--slider-bg, var(--branco)); }
   body.modelo-slider.slider-cor .deck-page{ --castanho:var(--slider-fg); --castanho-suave:var(--slider-fg); --dourado:var(--slider-fg); --linha:var(--slider-linha); color:var(--slider-fg); }
+  /* Cor própria da capa (texto a contrastar automaticamente) */
+  body.modelo-slider.slider-capa-cor .deck-capa{ background:var(--slider-capa-bg) !important; --castanho:var(--slider-capa-fg); --castanho-suave:var(--slider-capa-fg); --dourado:var(--slider-capa-fg); color:var(--slider-capa-fg); }
+  /* Cor própria dos títulos (título de cada página + título da capa) */
+  body.modelo-slider.slider-tit-cor .deck-page-tit{ color:var(--slider-tit) !important; border-bottom-color:var(--slider-tit) !important; }
+  body.modelo-slider.slider-tit-cor .deck-capa .deck-capa-tit{ color:var(--slider-tit) !important; }
 
   /* Cor do texto do menu escolhida à mão (manda sobre o modelo) */
   body.cor-menu-custom .categoria-painel-conteudo .nome,
@@ -2956,20 +2961,21 @@
       document.body.classList.toggle('modelo-azulejo', (config.modelo || 'lista') === 'azulejo');
       document.body.classList.toggle('modelo-carteira', (config.modelo || 'lista') === 'carteira');
       document.body.classList.toggle('modelo-slider', (config.modelo || 'lista') === 'slider');
-      // Cor das páginas do modelo "Deslizar" (texto a contrastar automaticamente)
-      if((config.modelo || 'lista') === 'slider' && config.sliderCor){
-        const _bg = config.sliderCor; const _c = _bg.replace('#','');
-        let _L = 0.5; if(_c.length >= 6){ const _r=parseInt(_c.slice(0,2),16), _g=parseInt(_c.slice(2,4),16), _b=parseInt(_c.slice(4,6),16); _L = (0.299*_r + 0.587*_g + 0.114*_b)/255; }
-        const _fg = _L > 0.6 ? '#2a2018' : '#ffffff';
-        const _rs = document.documentElement.style;
-        _rs.setProperty('--slider-bg', _bg);
-        _rs.setProperty('--slider-fg', _fg);
-        _rs.setProperty('--slider-linha', _fg === '#ffffff' ? 'rgba(255,255,255,.28)' : 'rgba(0,0,0,.14)');
-        document.body.classList.add('slider-cor');
-      } else {
-        document.body.classList.remove('slider-cor');
-        document.documentElement.style.removeProperty('--slider-bg');
-      }
+      // Cores do modelo "Deslizar" (páginas, capa e títulos) — texto a contrastar automaticamente
+      (function(){
+        const eSlider = (config.modelo || 'lista') === 'slider';
+        const rs = document.documentElement.style;
+        function fgDe(bg){ const c = String(bg).replace('#',''); let L = 0.5; if(c.length >= 6){ const r=parseInt(c.slice(0,2),16), g=parseInt(c.slice(2,4),16), b=parseInt(c.slice(4,6),16); L = (0.299*r + 0.587*g + 0.114*b)/255; } return L > 0.6 ? '#2a2018' : '#ffffff'; }
+        // Páginas
+        if(eSlider && config.sliderCor){ const fg = fgDe(config.sliderCor); rs.setProperty('--slider-bg', config.sliderCor); rs.setProperty('--slider-fg', fg); rs.setProperty('--slider-linha', fg === '#ffffff' ? 'rgba(255,255,255,.28)' : 'rgba(0,0,0,.14)'); document.body.classList.add('slider-cor'); }
+        else { document.body.classList.remove('slider-cor'); rs.removeProperty('--slider-bg'); }
+        // Capa
+        if(eSlider && config.sliderCorCapa){ rs.setProperty('--slider-capa-bg', config.sliderCorCapa); rs.setProperty('--slider-capa-fg', fgDe(config.sliderCorCapa)); document.body.classList.add('slider-capa-cor'); }
+        else { document.body.classList.remove('slider-capa-cor'); }
+        // Títulos
+        if(eSlider && config.sliderCorTitulo){ rs.setProperty('--slider-tit', config.sliderCorTitulo); document.body.classList.add('slider-tit-cor'); }
+        else { document.body.classList.remove('slider-tit-cor'); }
+      })();
       if(config.corMenuTexto){ document.body.classList.add('cor-menu-custom'); document.documentElement.style.setProperty('--cor-menu-texto', config.corMenuTexto); }
       else { document.body.classList.remove('cor-menu-custom'); }
       // Cor dos azulejos (personalizável) — recalcula as variáveis CSS

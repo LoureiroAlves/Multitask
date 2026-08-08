@@ -273,6 +273,22 @@
           <input type="color" id="sliderCor" value="#8a3d0a" style="width:52px; height:38px; padding:2px; border:1.5px solid var(--linha); border-radius:8px; cursor:pointer;">
           <span class="subtitulo" style="margin:0;">O texto ajusta-se sozinho (claro ou escuro) para se ler bem. Deixa desligado para páginas brancas.</span>
         </div>
+
+        <label style="display:flex; align-items:center; gap:8px; margin-top:12px;">
+          <input type="checkbox" id="sliderCapaAtiva" style="width:auto;"> Cor própria para a capa
+        </label>
+        <div id="sliderCapaLinha" style="display:none; align-items:center; gap:10px; margin-top:6px;">
+          <input type="color" id="sliderCorCapa" value="#2a5aa8" style="width:52px; height:38px; padding:2px; border:1.5px solid var(--linha); border-radius:8px; cursor:pointer;">
+          <span class="subtitulo" style="margin:0;">Fundo da primeira página (a capa "MENU"). O texto contrasta sozinho.</span>
+        </div>
+
+        <label style="display:flex; align-items:center; gap:8px; margin-top:12px;">
+          <input type="checkbox" id="sliderTitAtiva" style="width:auto;"> Cor própria para os títulos
+        </label>
+        <div id="sliderTitLinha" style="display:none; align-items:center; gap:10px; margin-top:6px;">
+          <input type="color" id="sliderCorTitulo" value="#f2761b" style="width:52px; height:38px; padding:2px; border:1.5px solid var(--linha); border-radius:8px; cursor:pointer;">
+          <span class="subtitulo" style="margin:0;">Cor do nome de cada secção (e do título "MENU" na capa).</span>
+        </div>
       </div>
 
       <label for="abrirEfeitoSel" style="margin-top:16px;">Efeito ao abrir os separadores</label>
@@ -1540,7 +1556,15 @@
       document.getElementById('sliderCorBox').style.display = (config.modelo === 'slider') ? 'block' : 'none';
       document.getElementById('sliderCorAtiva').checked = temSc;
       document.getElementById('sliderCorLinha').style.display = temSc ? 'flex' : 'none';
-      document.getElementById('sliderCor').value = temSc ? config.sliderCor : '#8a3d0a'; }
+      document.getElementById('sliderCor').value = temSc ? config.sliderCor : '#8a3d0a';
+      const temCapa = !!(config.sliderCorCapa && String(config.sliderCorCapa).trim());
+      document.getElementById('sliderCapaAtiva').checked = temCapa;
+      document.getElementById('sliderCapaLinha').style.display = temCapa ? 'flex' : 'none';
+      document.getElementById('sliderCorCapa').value = temCapa ? config.sliderCorCapa : '#2a5aa8';
+      const temTit = !!(config.sliderCorTitulo && String(config.sliderCorTitulo).trim());
+      document.getElementById('sliderTitAtiva').checked = temTit;
+      document.getElementById('sliderTitLinha').style.display = temTit ? 'flex' : 'none';
+      document.getElementById('sliderCorTitulo').value = temTit ? config.sliderCorTitulo : '#f2761b'; }
     { const cad = config.caderno || {};
       document.getElementById('cadFolha').value = cad.folha || 'quadriculado';
       document.getElementById('cadCorLetra').value = cad.corLetra || '#4a3820';
@@ -1731,6 +1755,12 @@
   });
   document.getElementById('sliderCorAtiva').addEventListener('change', e => {
     document.getElementById('sliderCorLinha').style.display = e.target.checked ? 'flex' : 'none';
+  });
+  document.getElementById('sliderCapaAtiva').addEventListener('change', e => {
+    document.getElementById('sliderCapaLinha').style.display = e.target.checked ? 'flex' : 'none';
+  });
+  document.getElementById('sliderTitAtiva').addEventListener('change', e => {
+    document.getElementById('sliderTitLinha').style.display = e.target.checked ? 'flex' : 'none';
   });
 
   // Texto livre: mostradores dos sliders + cor
@@ -1942,6 +1972,8 @@
       config.jogos = document.getElementById('jogosAtivo').checked;
       config.modelo = document.getElementById('modeloSel').value;
       config.sliderCor = document.getElementById('sliderCorAtiva').checked ? document.getElementById('sliderCor').value : '';
+      config.sliderCorCapa = document.getElementById('sliderCapaAtiva').checked ? document.getElementById('sliderCorCapa').value : '';
+      config.sliderCorTitulo = document.getElementById('sliderTitAtiva').checked ? document.getElementById('sliderCorTitulo').value : '';
       config.caderno = {
         folha: document.getElementById('cadFolha').value,
         corLetra: document.getElementById('cadCorLetra').value,
