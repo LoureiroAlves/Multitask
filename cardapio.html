@@ -2449,6 +2449,18 @@
     if(window.__ajustarCapa){ setTimeout(window.__ajustarCapa, 60); setTimeout(window.__ajustarCapa, 400); }
   }
 
+  // Calcula as variáveis --az-* de azulejo (a partir de um hex) num elemento
+  function azSetVars(el, hex){
+    hex = (hex || '#2a5aa8').replace('#',''); if(!/^[0-9a-fA-F]{6}$/.test(hex)) hex = '2a5aa8';
+    var r = parseInt(hex.slice(0,2),16), g = parseInt(hex.slice(2,4),16), b = parseInt(hex.slice(4,6),16);
+    var st = el.style; var A = function(a){ return 'rgba(' + r + ',' + g + ',' + b + ',' + a + ')'; };
+    st.setProperty('--az-a50', A(.5)); st.setProperty('--az-a42', A(.42)); st.setProperty('--az-a36', A(.36));
+    st.setProperty('--az-a30', A(.3)); st.setProperty('--az-a22', A(.22)); st.setProperty('--az-a20', A(.2)); st.setProperty('--az-a14', A(.14));
+    var mix = function(c, p){ return Math.round(c * p + 255 * (1 - p)); };
+    st.setProperty('--az-bg', 'rgb(' + mix(r,.06) + ',' + mix(g,.06) + ',' + mix(b,.06) + ')');
+    st.setProperty('--az-borda', 'rgb(' + mix(r,.30) + ',' + mix(g,.30) + ',' + mix(b,.30) + ')');
+    st.setProperty('--az-texto', 'rgb(' + Math.round(r*.55) + ',' + Math.round(g*.55) + ',' + Math.round(b*.55) + ')');
+  }
   // Modelo "Deslizar": monta um deck horizontal (capa + uma página por secção, já aberta)
   function montarDeck(){
     const main = document.querySelector('main'); if(!main) return;
@@ -2459,6 +2471,7 @@
     // Capa
     const capa = document.createElement('div'); capa.className = 'deck-page deck-capa';
     if(window.__sliderCapaFoto){ capa.classList.add('tem-foto'); const cim = document.createElement('img'); cim.className = 'deck-capa-foto'; cim.src = window.__sliderCapaFoto; cim.alt = ''; cim.decoding = 'async'; capa.appendChild(cim); const csh = document.createElement('span'); csh.className = 'deck-capa-shade'; capa.appendChild(csh); }
+    else if(window.__sliderCapaAz && window.__sliderCapaAz.tipo){ capa.classList.add('azbg-' + window.__sliderCapaAz.tipo); azSetVars(capa, window.__sliderCapaAz.cor); }
     const ct = document.createElement('div'); ct.className = 'deck-capa-tit'; ct.textContent = 'MENU';
     const cs = document.createElement('div'); cs.className = 'deck-capa-sub';
     cs.setAttribute('data-en','Swipe'); cs.setAttribute('data-fr','Glisser'); cs.setAttribute('data-es','Desliza');
@@ -3045,6 +3058,8 @@
         else { document.body.classList.remove('slider-tit-cor'); }
         // Foto da capa (guardada para o montarDeck usar)
         window.__sliderCapaFoto = (eSlider && config.sliderFotoCapa) ? config.sliderFotoCapa : '';
+        // Azulejo da capa
+        window.__sliderCapaAz = (eSlider && config.sliderCapaAzTipo) ? { tipo: config.sliderCapaAzTipo, cor: config.sliderCapaAzCor || '#2a5aa8' } : null;
       })();
       if(config.corMenuTexto){ document.body.classList.add('cor-menu-custom'); document.documentElement.style.setProperty('--cor-menu-texto', config.corMenuTexto); }
       else { document.body.classList.remove('cor-menu-custom'); }
