@@ -3630,6 +3630,32 @@
 
   carregarConfig().finally(function(){ window.__cfgOk = true; window.__menuOk = true; window.__tryReveal(); });
 
+  // ---- Métricas: visitas ao menu e vistas à publicidade (1 por dispositivo/dia) ----
+  (function registarMetricas(){
+    if(window.__PREVIEW || !sbC || !SLUG) return;
+    var hoje; try{ hoje = new Date().toISOString().slice(0,10); }catch(e){ hoje = '0'; }
+    function jaContou(k){ try{ return localStorage.getItem(k) === '1'; }catch(e){ return false; } }
+    function marcar(k){ try{ localStorage.setItem(k, '1'); }catch(e){} }
+    function inc(tipo){ try{ sbC.rpc('inc_metrica', { p_slug: SLUG, p_tipo: tipo }); }catch(e){} }
+    // Visita ao menu
+    var kMenu = 'vm_' + SLUG + '_' + hoje;
+    if(!jaContou(kMenu)){ marcar(kMenu); inc('menu'); }
+    // Publicidade vista (rodapé final entra no ecrã)
+    var kAd = 'va_' + SLUG + '_' + hoje;
+    if(!jaContou(kAd) && ('IntersectionObserver' in window)){
+      function ligar(){
+        var alvo = document.getElementById('rodapeFinal');
+        if(!alvo) return;
+        var io = new IntersectionObserver(function(ents){
+          for(var i=0;i<ents.length;i++){ if(ents[i].isIntersecting){ if(!jaContou(kAd)){ marcar(kAd); inc('ad'); } io.disconnect(); break; } }
+        }, { threshold: 0.4 });
+        io.observe(alvo);
+      }
+      if(document.readyState === 'complete' || document.readyState === 'interactive') setTimeout(ligar, 800);
+      else window.addEventListener('load', function(){ setTimeout(ligar, 800); });
+    }
+  })();
+
   // ---- Pré-visualização ao vivo (dentro do editar, via postMessage) ----
   // Mostra a abertura na pré-visualização (estática, sem temporizadores; clicar fecha)
   // Torna o texto da abertura arrastável na pré-visualização (atualiza a posição e avisa o editor)

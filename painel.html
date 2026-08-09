@@ -236,20 +236,25 @@
     { const sel = $('dupOrigem'); if(sel){ const atual = sel.value; sel.innerHTML = '<option value="">— escolher —</option>'; (negs||[]).forEach(function(n){ const o = document.createElement('option'); o.value = n.slug; o.textContent = n.nome + ' (/' + n.slug + ')'; sel.appendChild(o); }); sel.value = atual; } }
     const { data:ents } = await sb.from('entitlements').select('*');
     const mapaEnt = {}; (ents||[]).forEach(function(e){ mapaEnt[e.negocio_id] = e; });
+    // métricas (visitas / publicidade) — pode não existir a tabela ainda
+    let mapaMet = {};
+    try{ const { data:mets } = await sb.from('metricas').select('slug,tipo,total'); (mets||[]).forEach(function(m){ if(!mapaMet[m.slug]) mapaMet[m.slug] = { menu:0, ad:0 }; mapaMet[m.slug][m.tipo] = (mapaMet[m.slug][m.tipo]||0) + (m.total||0); }); }catch(e){}
     if(!negs.length){ $('lista').innerHTML = '<p style="color:#9a8b6f; font-size:.9rem;">Ainda não há negócios. Cria o primeiro acima.</p>'; return; }
     $('lista').innerHTML = '';
-    negs.forEach(function(n){ $('lista').appendChild(renderNeg(n, mapaEnt[n.id] || { plano:'basico', funcoes:{}, publicidade:{} })); });
+    negs.forEach(function(n){ $('lista').appendChild(renderNeg(n, mapaEnt[n.id] || { plano:'basico', funcoes:{}, publicidade:{} }, mapaMet[n.slug] || { menu:0, ad:0 })); });
   }
 
-  function renderNeg(n, ent){
+  function renderNeg(n, ent, met){
     const funcoes = ent.funcoes || {};
     const pub = ent.publicidade || {};
+    met = met || { menu:0, ad:0 };
     const div = document.createElement('div'); div.className = 'neg';
     const planoBadge = '<span class="badge b-' + (ent.plano||'basico') + '">' + (ent.plano||'basico') + '</span>';
     const estadoBadge = n.ativo ? '' : ' <span class="badge b-off">suspenso</span>';
+    const metLinha = '<div style="font-size:.75rem; color:#8a9a6f; margin-top:3px;">👁 ' + (met.menu||0) + ' visitas · 📢 ' + (met.ad||0) + ' viram a publicidade</div>';
     div.innerHTML =
       '<div class="neg-top">' +
-        '<div><div class="neg-nome">' + n.nome + ' ' + planoBadge + estadoBadge + '</div><div class="neg-slug">/' + n.slug + '</div></div>' +
+        '<div><div class="neg-nome">' + n.nome + ' ' + planoBadge + estadoBadge + '</div><div class="neg-slug">/' + n.slug + '</div>' + metLinha + '</div>' +
         '<div style="display:flex; gap:6px; flex-wrap:wrap;">' +
           '<button class="mini" data-act="editar">⚙️ Gerir</button>' +
           '<button class="mini" data-act="qr">📱 QR</button>' +
