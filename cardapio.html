@@ -3640,6 +3640,12 @@
     // Visita ao menu
     var kMenu = 'vm_' + SLUG + '_' + hoje;
     if(!jaContou(kMenu)){ marcar(kMenu); inc('menu'); }
+    // Jogos abertos (toque no separador dos jogos)
+    var kJog = 'vj_' + SLUG + '_' + hoje;
+    document.addEventListener('click', function(e){
+      var t = e.target && e.target.closest ? e.target.closest('.tile[data-target="jogos"]') : null;
+      if(t && !jaContou(kJog)){ marcar(kJog); inc('jogos'); }
+    }, true);
     // Publicidade vista (rodapé final entra no ecrã)
     var kAd = 'va_' + SLUG + '_' + hoje;
     if(!jaContou(kAd) && ('IntersectionObserver' in window)){
