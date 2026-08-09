@@ -546,19 +546,36 @@
   body.cor-menu-custom .categoria-painel-conteudo .menu-desc,
   body.cor-menu-custom .categoria-painel-conteudo .menu-preco,
   body.cor-menu-custom .categoria-painel-conteudo .dose,
-  body.cor-menu-custom .categoria-painel-conteudo .preco-dose{ color:var(--cor-menu-texto) !important; }
+  body.cor-menu-custom .categoria-painel-conteudo .preco-dose,
+  body.cor-menu-custom .deck-page .nome,
+  body.cor-menu-custom .deck-page .desc,
+  body.cor-menu-custom .deck-page .preco,
+  body.cor-menu-custom .deck-page .menu-desc,
+  body.cor-menu-custom .deck-page .menu-preco,
+  body.cor-menu-custom .deck-page .dose,
+  body.cor-menu-custom .deck-page .preco-dose{ color:var(--cor-menu-texto) !important; }
   /* "Cor do texto do cabeçalho da secção" — título do painel, "voltar" e os títulos das secções/grupos */
   body.cor-cab-custom .categoria-painel-header #painelTitulo,
   body.cor-cab-custom .categoria-painel-header .voltar,
   body.cor-cab-custom .categoria-painel-conteudo h2,
   body.cor-cab-custom .categoria-painel-conteudo summary,
-  body.cor-cab-custom .categoria-painel-conteudo .subtitulo{ color:var(--cor-cab-texto) !important; }
+  body.cor-cab-custom .categoria-painel-conteudo .subtitulo,
+  body.cor-cab-custom .deck-page-tit,
+  body.cor-cab-custom .deck-page h2,
+  body.cor-cab-custom .deck-page summary,
+  body.cor-cab-custom .deck-page .subtitulo{ color:var(--cor-cab-texto) !important; }
   /* Fonte dos pratos escolhida pelo dono — manda sobre a fonte forçada dos modelos (Ardósia/Elegante/Caderno…) */
   body.fonte-texto-custom .categoria-painel-conteudo .nome,
   body.fonte-texto-custom .categoria-painel-conteudo .desc,
   body.fonte-texto-custom .categoria-painel-conteudo .menu-desc,
   body.fonte-texto-custom .item .nome,
-  body.fonte-texto-custom .item .desc{ font-family:var(--fonte-texto) !important; }
+  body.fonte-texto-custom .item .desc,
+  body.fonte-texto-custom .deck-page .nome,
+  body.fonte-texto-custom .deck-page .desc,
+  body.fonte-texto-custom .deck-page .menu-desc{ font-family:var(--fonte-texto) !important; }
+  /* Fonte dos títulos das secções (separadores) escolhida pelo dono — manda sobre a fonte forçada dos modelos */
+  body.fonte-titulo-custom .tile-label,
+  body.fonte-titulo-custom .deck-page-tit{ font-family:var(--fonte-titulo) !important; }
 
   /* ===== Bases de azulejo para o cabeçalho e a barra fixa ===== */
   .azbg-classico{ background-color:var(--az-bg) !important;
@@ -3032,7 +3049,8 @@
       if(!config) return;
 
       aplicarTema(config.layout || '1', config.cores);
-      if(config.fonte && config.fonte !== 'auto') aplicarFonte(config.fonte);
+      if(config.fonte && config.fonte !== 'auto'){ aplicarFonte(config.fonte); document.body.classList.add('fonte-titulo-custom'); }
+      else { document.body.classList.remove('fonte-titulo-custom'); document.documentElement.style.setProperty('--fonte-titulo', "'Fredoka', sans-serif"); }
       if(config.fonteTexto && FONTES_TITULO[config.fonteTexto]){ document.documentElement.style.setProperty('--fonte-texto', FONTES_TITULO[config.fonteTexto]); document.body.classList.add('fonte-texto-custom'); }
       else { document.body.classList.remove('fonte-texto-custom'); document.documentElement.style.setProperty('--fonte-texto', "'Nunito', sans-serif"); }
       document.body.classList.toggle('modelo-grelha', (config.modelo || 'lista') === 'grelha');
