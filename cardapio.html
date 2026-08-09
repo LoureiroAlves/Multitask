@@ -511,6 +511,11 @@
   body.neon-fx .item .preco{ text-shadow:0 0 var(--nfx1) var(--nfx-cor, var(--cat-cor, var(--dourado))); }
   /* Contorno néon à volta dos separadores (tubo de luz) */
   body.neon-fx.nfx-contorno:not(.modelo-caderno) .tile{ border:2px solid var(--nfx-cor, var(--cat-cor, var(--dourado))) !important; box-shadow:0 0 var(--nfx1) var(--nfx-cor, var(--cat-cor, var(--dourado))), 0 0 var(--nfx2) var(--nfx-cor, var(--cat-cor, var(--dourado))), inset 0 0 var(--nfx1) var(--nfx-cor, var(--cat-cor, var(--dourado))) !important; }
+  /* Efeito néon no modelo "Deslizar" (páginas do deck e títulos) */
+  body.neon-fx .deck-page{ box-shadow:0 0 var(--nfx1) var(--nfx-cor, var(--cat-cor, var(--dourado))), 0 0 var(--nfx2) var(--nfx-cor, var(--cat-cor, var(--dourado))); }
+  body.neon-fx.nfx-contorno .deck-page{ border:2px solid var(--nfx-cor, var(--cat-cor, var(--dourado))) !important; box-shadow:0 0 var(--nfx1) var(--nfx-cor, var(--cat-cor, var(--dourado))), 0 0 var(--nfx2) var(--nfx-cor, var(--cat-cor, var(--dourado))), inset 0 0 var(--nfx1) var(--nfx-cor, var(--cat-cor, var(--dourado))) !important; }
+  body.neon-fx .deck-page-tit,
+  body.neon-fx .deck-capa .deck-capa-tit{ text-shadow:0 0 2px #fff, 0 0 var(--nfx1) var(--nfx-cor, var(--cat-cor, var(--dourado))), 0 0 var(--nfx2) var(--nfx-cor, var(--cat-cor, var(--dourado))) !important; }
 
   /* ===== Modelo "Deslizar" (secções lado a lado, página inteira) — config.modelo === 'slider' ===== */
   body.modelo-slider #categoriaGrid{ display:none !important; }           /* sem separadores */
@@ -2533,7 +2538,9 @@
     // Uma página por secção (move a secção, mantendo elementos e cliques)
     secs.forEach(function(s){
       const page = document.createElement('div'); page.className = 'deck-page';
-      const tl = grid ? grid.querySelector('.tile[data-target="' + s.id.replace(/"/g,'\\"') + '"] .tile-label') : null;
+      const tileEl = grid ? grid.querySelector('.tile[data-target="' + s.id.replace(/"/g,'\\"') + '"]') : null;
+      if(tileEl && tileEl.dataset.cor) page.style.setProperty('--cat-cor', tileEl.dataset.cor);
+      const tl = tileEl ? tileEl.querySelector('.tile-label') : null;
       const titTxt = tl ? tl.textContent : '';
       if(titTxt){ const h = document.createElement('div'); h.className = 'deck-page-tit'; h.textContent = titTxt; page.appendChild(h); }
       page.appendChild(s);
