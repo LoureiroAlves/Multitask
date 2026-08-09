@@ -3636,7 +3636,7 @@
     var hoje; try{ hoje = new Date().toISOString().slice(0,10); }catch(e){ hoje = '0'; }
     function jaContou(k){ try{ return localStorage.getItem(k) === '1'; }catch(e){ return false; } }
     function marcar(k){ try{ localStorage.setItem(k, '1'); }catch(e){} }
-    function inc(tipo){ try{ sbC.rpc('inc_metrica', { p_slug: SLUG, p_tipo: tipo }); }catch(e){} }
+    function inc(tipo){ try{ sbC.rpc('inc_metrica', { p_slug: SLUG, p_tipo: tipo }).then(function(){}, function(){}); }catch(e){} }
     // Visita ao menu
     var kMenu = 'vm_' + SLUG + '_' + hoje;
     if(!jaContou(kMenu)){ marcar(kMenu); inc('menu'); }
