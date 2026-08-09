@@ -5858,8 +5858,24 @@
       grid.style.minHeight = Math.max(0, alvo) + 'px';
       return true;
     }
+    // Modelo "Deslizar": a grelha está escondida; quem enche o ecrã é o deck.
+    // Empurra a publicidade para baixo da dobra acrescentando espaço no fim do deck.
+    function ajustarSlider(){
+      if(!document.body.classList.contains('modelo-slider')) return false;
+      var deck = document.getElementById('menuDeck');
+      var footer = document.getElementById('rodapeFinal');
+      if(!deck) return true;
+      if((window.scrollY || window.pageYOffset || 0) > 4) return true;
+      deck.style.marginBottom = '';
+      if(!footer || getComputedStyle(footer).display === 'none') return true;
+      var footerTopDoc = footer.getBoundingClientRect().top + (window.scrollY || window.pageYOffset || 0);
+      var faltam = window.innerHeight - footerTopDoc;
+      if(faltam > 0){ deck.style.marginBottom = (faltam + 6) + 'px'; }
+      return true;
+    }
     function ajustarCapa(){
       if(ajustarCarteira()) return; // Carteira tem a sua própria medição
+      if(ajustarSlider()) return;   // Deslizar tem a sua própria medição
       var grid = document.getElementById('categoriaGrid');
       var footer = document.getElementById('rodapeFinal');
       if(!grid || !footer) return;
