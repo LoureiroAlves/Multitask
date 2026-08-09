@@ -392,6 +392,28 @@
       </div>
       <div class="subtitulo" style="margin-top:4px;">Separado do texto do menu — para quando o cabeçalho tem um fundo de cor diferente (ex.: verde) e a letra do conteúdo fica sobre bege/branco.</div>
 
+      <label for="neonFxAtivo" style="margin-top:16px; display:flex; align-items:center; gap:8px; cursor:pointer;">
+        <input type="checkbox" id="neonFxAtivo" style="width:auto;"> ✨ Efeito néon (brilho nos separadores, em qualquer modelo)
+      </label>
+      <div id="neonFxBox" style="display:none; margin-top:8px; padding:12px; border:1.5px solid var(--linha); border-radius:10px;">
+        <label for="neonFxIntensidade" style="margin-top:0;">Intensidade do brilho</label>
+        <select id="neonFxIntensidade" style="width:100%; padding:10px 12px; border-radius:10px; border:1.5px solid var(--linha); background:var(--branco); font-family:inherit; color:var(--castanho); font-size:0.95rem;">
+          <option value="subtil">Subtil</option>
+          <option value="medio">Médio</option>
+          <option value="forte">Forte</option>
+        </select>
+        <label style="display:flex; align-items:center; gap:8px; margin-top:10px; cursor:pointer;">
+          <input type="checkbox" id="neonFxContorno" style="width:auto;"> Contorno néon à volta dos separadores
+        </label>
+        <label style="display:flex; align-items:center; gap:8px; margin-top:10px; cursor:pointer;">
+          <input type="checkbox" id="neonFxCorAtiva" style="width:auto;"> Cor do brilho fixa
+        </label>
+        <div id="neonFxCorBox" style="display:none; align-items:center; gap:10px; margin-top:6px;">
+          <input type="color" id="neonFxCor" value="#19e9ff" style="width:52px; height:34px; padding:0; border:none; background:none; cursor:pointer;">
+          <span class="subtitulo" style="margin:0;">Deixa desligado para o brilho seguir a cor de cada secção (ou a cor de destaque do negócio).</span>
+        </div>
+      </div>
+
       <label for="fundoTipoSel" style="margin-top:16px;">Fundo do cardápio</label>
       <select id="fundoTipoSel" style="width:100%; padding:10px 12px; border-radius:10px; border:1.5px solid var(--linha); background:var(--branco); font-family:inherit; color:var(--castanho); font-size:0.95rem;">
         <option value="liso">Liso (cor clara do tema)</option>
@@ -1671,6 +1693,14 @@
       document.getElementById('corCabAtiva').checked = !!cc;
       document.getElementById('corCabBox').style.display = cc ? 'flex' : 'none';
       document.getElementById('corCabTexto').value = cc || '#ffffff'; }
+    { const nf = config.neonFx || {};
+      document.getElementById('neonFxAtivo').checked = !!nf.ativo;
+      document.getElementById('neonFxBox').style.display = nf.ativo ? 'block' : 'none';
+      document.getElementById('neonFxIntensidade').value = nf.intensidade || 'medio';
+      document.getElementById('neonFxContorno').checked = !!nf.contorno;
+      document.getElementById('neonFxCorAtiva').checked = !!nf.cor;
+      document.getElementById('neonFxCorBox').style.display = nf.cor ? 'flex' : 'none';
+      document.getElementById('neonFxCor').value = nf.cor || '#19e9ff'; }
     // Fundo
     const fundo = config.fundo || { tipo:'liso', imagem:'', textura:'pontos' };
     document.getElementById('fundoTipoSel').value = fundo.tipo || 'liso';
@@ -1829,6 +1859,12 @@
   });
   document.getElementById('corCabAtiva').addEventListener('change', e => {
     document.getElementById('corCabBox').style.display = e.target.checked ? 'flex' : 'none';
+  });
+  document.getElementById('neonFxAtivo').addEventListener('change', e => {
+    document.getElementById('neonFxBox').style.display = e.target.checked ? 'block' : 'none';
+  });
+  document.getElementById('neonFxCorAtiva').addEventListener('change', e => {
+    document.getElementById('neonFxCorBox').style.display = e.target.checked ? 'flex' : 'none';
   });
   document.getElementById('agCorAtiva').addEventListener('change', e => {
     document.getElementById('agCorBox').style.display = e.target.checked ? 'flex' : 'none';
@@ -2107,6 +2143,12 @@
       }
       config.corMenuTexto = document.getElementById('corMenuAtiva').checked ? document.getElementById('corMenuTexto').value : '';
       config.corCabecalho = document.getElementById('corCabAtiva').checked ? document.getElementById('corCabTexto').value : '';
+      config.neonFx = {
+        ativo: document.getElementById('neonFxAtivo').checked,
+        intensidade: document.getElementById('neonFxIntensidade').value,
+        contorno: document.getElementById('neonFxContorno').checked,
+        cor: document.getElementById('neonFxCorAtiva').checked ? document.getElementById('neonFxCor').value : ''
+      };
       config.fundo = {
         tipo: document.getElementById('fundoTipoSel').value,
         imagem: (config.fundo && config.fundo.imagem) || '',

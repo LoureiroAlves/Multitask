@@ -497,6 +497,21 @@
   body.modelo-neon .item .preco{ --neon:var(--cat-cor, #19e9ff); color:#fff !important; font-weight:800; text-shadow:0 0 4px #fff, 0 0 12px var(--neon), 0 0 22px var(--neon); }
   body.modelo-neon .tabela-doses .preco-dose{ --neon:var(--cat-cor, #19e9ff); color:#fff !important; text-shadow:0 0 4px #fff, 0 0 12px var(--neon); }
 
+  /* ===== Efeito Néon (ligável POR CIMA de qualquer modelo) — cor = fixa, ou a cor de cada secção ===== */
+  body.neon-fx{ --nfx1:8px; --nfx2:18px; }
+  body.neon-fx.nfx-subtil{ --nfx1:5px; --nfx2:11px; }
+  body.neon-fx.nfx-forte{ --nfx1:12px; --nfx2:30px; }
+  body.neon-fx:not(.modelo-caderno) .tile{ box-shadow:0 0 var(--nfx1) var(--nfx-cor, var(--cat-cor, var(--dourado))), 0 0 var(--nfx2) var(--nfx-cor, var(--cat-cor, var(--dourado))) !important; }
+  body.neon-fx .tile .tile-label{ text-shadow:0 0 2px #fff, 0 0 var(--nfx1) var(--nfx-cor, var(--cat-cor, var(--dourado))), 0 0 var(--nfx2) var(--nfx-cor, var(--cat-cor, var(--dourado))) !important; }
+  body.neon-fx #painelTitulo,
+  body.neon-fx section.categoria h2,
+  body.neon-fx .grupo-prato > summary,
+  body.neon-fx .grupo-vinho > summary{ text-shadow:0 0 2px #fff, 0 0 var(--nfx1) var(--nfx-cor, var(--cat-cor, var(--dourado))) !important; }
+  body.neon-fx .categoria-painel-header{ box-shadow:0 0 var(--nfx2) var(--nfx-cor, var(--cat-cor, var(--dourado))); }
+  body.neon-fx .item .preco{ text-shadow:0 0 var(--nfx1) var(--nfx-cor, var(--cat-cor, var(--dourado))); }
+  /* Contorno néon à volta dos separadores (tubo de luz) */
+  body.neon-fx.nfx-contorno:not(.modelo-caderno) .tile{ border:2px solid var(--nfx-cor, var(--cat-cor, var(--dourado))) !important; box-shadow:0 0 var(--nfx1) var(--nfx-cor, var(--cat-cor, var(--dourado))), 0 0 var(--nfx2) var(--nfx-cor, var(--cat-cor, var(--dourado))), inset 0 0 var(--nfx1) var(--nfx-cor, var(--cat-cor, var(--dourado))) !important; }
+
   /* ===== Modelo "Deslizar" (secções lado a lado, página inteira) — config.modelo === 'slider' ===== */
   body.modelo-slider #categoriaGrid{ display:none !important; }           /* sem separadores */
   body.modelo-slider .menu-deck{
@@ -3082,6 +3097,14 @@
       document.body.classList.toggle('modelo-carteira', (config.modelo || 'lista') === 'carteira');
       document.body.classList.toggle('modelo-slider', (config.modelo || 'lista') === 'slider');
       document.body.classList.toggle('modelo-neon', (config.modelo || 'lista') === 'neon');
+      // Efeito néon (por cima de qualquer modelo): intensidade + cor
+      { var _nf = config.neonFx || {};
+        document.body.classList.toggle('neon-fx', !!_nf.ativo);
+        document.body.classList.remove('nfx-subtil','nfx-medio','nfx-forte');
+        if(_nf.ativo) document.body.classList.add('nfx-' + (_nf.intensidade || 'medio'));
+        document.body.classList.toggle('nfx-contorno', !!(_nf.ativo && _nf.contorno));
+        if(_nf.ativo && _nf.cor) document.documentElement.style.setProperty('--nfx-cor', _nf.cor);
+        else document.documentElement.style.removeProperty('--nfx-cor'); }
       // Cores do modelo "Deslizar" (páginas, capa e títulos) — texto a contrastar automaticamente
       (function(){
         const eSlider = (config.modelo || 'lista') === 'slider';
