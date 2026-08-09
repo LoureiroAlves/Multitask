@@ -461,6 +461,7 @@
         <input type="checkbox" id="fotosHeaderAtivas" checked>
         <label for="fotosHeaderAtivas" style="margin:0; font-weight:700; color:var(--dourado-escuro); display:inline;">Mostrar fotos no cabeçalho</label>
       </div>
+      <div class="subtitulo" style="margin-top:2px;">Desliga para ficar só com o <strong>nome</strong> (sem foto de fundo). Para tirar o cabeçalho por completo, usa "Mostrar cabeçalho" acima.</div>
 
       <div class="lembrar" style="margin-top:16px;">
         <input type="checkbox" id="headerEncolher">
@@ -831,6 +832,30 @@
   </details>
 
   <details class="grupo"><summary class="grupo-sum">⚙️ Avançado</summary>
+
+  <!-- ÍCONES DO TOPO -->
+  <details id="secIconesTopo">
+    <summary>Ícones do topo (o que aparece no canto)</summary>
+    <div class="bloco-conteudo">
+      <div class="subtitulo" style="margin-top:6px;">Liga/desliga cada ícone que aparece no topo do cardápio. (Alguns só aparecem se o plano/negócio os tiver ativos.)</div>
+      <div class="lembrar" style="margin-top:12px;">
+        <input type="checkbox" id="mostrarTraducoes" checked>
+        <label for="mostrarTraducoes" style="margin:0; font-weight:600; color:var(--castanho); display:inline;">🌐 Traduções (bandeiras de idioma)</label>
+      </div>
+      <div class="lembrar" style="margin-top:8px;">
+        <input type="checkbox" id="mostrarCamera" checked>
+        <label for="mostrarCamera" style="margin:0; font-weight:600; color:var(--castanho); display:inline;">📷 Câmara (foto com moldura)</label>
+      </div>
+      <div class="lembrar" style="margin-top:8px;">
+        <input type="checkbox" id="mostrarAgendaIcon" checked>
+        <label for="mostrarAgendaIcon" style="margin:0; font-weight:600; color:var(--castanho); display:inline;">📅 Agenda (ícone de reservas)</label>
+      </div>
+      <div class="lembrar" style="margin-top:8px;">
+        <input type="checkbox" id="mostrarRedes" checked>
+        <label for="mostrarRedes" style="margin:0; font-weight:600; color:var(--castanho); display:inline;">📱 Redes sociais (Instagram/Facebook)</label>
+      </div>
+    </div>
+  </details>
 
   <!-- PUBLICIDADE NOS JOGOS -->
   <details id="secAdJogos">
@@ -1516,6 +1541,10 @@
     const ch = config.header.cor || '#ffffff';
     const cr = config.rodape.cor || '#ffffff';
     document.getElementById('headerMostrar').checked = config.header.mostrar !== false;
+    document.getElementById('mostrarTraducoes').checked = config.mostrarTraducoes !== false;
+    document.getElementById('mostrarCamera').checked = config.mostrarCamera !== false;
+    document.getElementById('mostrarAgendaIcon').checked = config.mostrarAgendaIcon !== false;
+    document.getElementById('mostrarRedes').checked = config.mostrarRedes !== false;
     // Cabeçalho: estilo do título e do subtítulo (individuais)
     preencherEstilo('hTit', config.header.estiloTitulo || { cor: ch, negrito: (config.header.realce !== false), tamanho: config.header.tituloTamanho || 1.7 });
     preencherEstilo('hSub', config.header.estiloSub || { cor: ch, italico: true, tamanho: config.header.subtituloTamanho || 0.82 });
@@ -1969,6 +1998,10 @@
       config.header.estiloSub = lerEstilo('hSub');
       config.header.realce = false;
       config.header.mostrar = document.getElementById('headerMostrar').checked;
+      config.mostrarTraducoes = document.getElementById('mostrarTraducoes').checked;
+      config.mostrarCamera = document.getElementById('mostrarCamera').checked;
+      config.mostrarAgendaIcon = document.getElementById('mostrarAgendaIcon').checked;
+      config.mostrarRedes = document.getElementById('mostrarRedes').checked;
       config.textoLivre = {
         ativo: document.getElementById('tlAtivo').checked,
         titulo: document.getElementById('tlTitulo').value.trim(),
