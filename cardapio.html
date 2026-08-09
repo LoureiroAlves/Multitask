@@ -476,6 +476,23 @@
   body.modelo-carteira .categoria-painel-header{ background:var(--cat-cor, var(--castanho)); }
   body.modelo-carteira .categoria-painel-header .voltar, body.modelo-carteira #painelTitulo{ color:#fff !important; }
 
+  /* ===== Modelo "Néon" (fundo escuro + brilho; cor do brilho = cor da secção ou o destaque do negócio) ===== */
+  body.modelo-neon{ background-color:#0a0a14; background-image:radial-gradient(circle at 50% -8%, rgba(140,90,220,.18), transparent 55%), radial-gradient(circle at 50% 108%, rgba(20,240,208,.10), transparent 55%); }
+  body.modelo-neon .categoria-grid{ background:transparent; border:none; }
+  body.modelo-neon .tile{ background:rgba(255,255,255,.03) !important; border:2px solid var(--cat-cor, var(--dourado)) !important; box-shadow:0 0 9px var(--cat-cor, var(--dourado)), inset 0 0 12px rgba(255,255,255,.04) !important; border-radius:12px; }
+  body.modelo-neon .tile:hover, body.modelo-neon .tile:active{ box-shadow:0 0 16px var(--cat-cor, var(--dourado)), inset 0 0 14px rgba(255,255,255,.06) !important; filter:none; }
+  body.modelo-neon .tile .tile-label{ color:#fff !important; font-weight:700; letter-spacing:.6px; text-shadow:0 0 6px var(--cat-cor, var(--dourado)), 0 0 14px var(--cat-cor, var(--dourado)) !important; }
+  body.modelo-neon .categoria-painel{ background-color:#0a0a14; background-image:radial-gradient(circle at 50% -8%, rgba(140,90,220,.16), transparent 55%); }
+  body.modelo-neon .categoria-painel-header{ background:rgba(10,10,20,.9); border-bottom:1px solid var(--cat-cor, var(--dourado)); box-shadow:0 0 14px var(--cat-cor, var(--dourado)); }
+  body.modelo-neon .categoria-painel-header .voltar{ color:#fff !important; text-shadow:0 0 6px var(--cat-cor, var(--dourado)); }
+  body.modelo-neon #painelTitulo{ color:#fff; text-shadow:0 0 8px var(--cat-cor, var(--dourado)), 0 0 16px var(--cat-cor, var(--dourado)); }
+  body.modelo-neon section.categoria h2, body.modelo-neon .grupo-prato > summary, body.modelo-neon .grupo-vinho > summary{ color:#fff !important; background:transparent !important; text-shadow:0 0 6px var(--cat-cor, var(--dourado)); }
+  body.modelo-neon .categoria-painel-conteudo .item{ border-bottom:1px solid rgba(255,255,255,.12) !important; }
+  body.modelo-neon .item .nome{ color:#f3f2ff !important; }
+  body.modelo-neon .item .desc{ color:#aaa9cc !important; }
+  body.modelo-neon .item .preco{ color:#fff !important; font-weight:700; text-shadow:0 0 6px var(--cat-cor, var(--dourado)); }
+  body.modelo-neon .tabela-doses .preco-dose{ color:#fff !important; text-shadow:0 0 6px var(--cat-cor, var(--dourado)); }
+
   /* ===== Modelo "Deslizar" (secções lado a lado, página inteira) — config.modelo === 'slider' ===== */
   body.modelo-slider #categoriaGrid{ display:none !important; }           /* sem separadores */
   body.modelo-slider .menu-deck{
@@ -3060,6 +3077,7 @@
       document.body.classList.toggle('modelo-azulejo', (config.modelo || 'lista') === 'azulejo');
       document.body.classList.toggle('modelo-carteira', (config.modelo || 'lista') === 'carteira');
       document.body.classList.toggle('modelo-slider', (config.modelo || 'lista') === 'slider');
+      document.body.classList.toggle('modelo-neon', (config.modelo || 'lista') === 'neon');
       // Cores do modelo "Deslizar" (páginas, capa e títulos) — texto a contrastar automaticamente
       (function(){
         const eSlider = (config.modelo || 'lista') === 'slider';
