@@ -519,7 +519,6 @@
 
   /* ===== Modelo "Deslizar" (secções lado a lado, página inteira) — config.modelo === 'slider' ===== */
   body.modelo-slider #categoriaGrid{ display:none !important; }           /* sem separadores */
-  body.modelo-slider main{ display:flex; flex-direction:column; justify-content:center; }  /* deck centrado (distância igual em cima e em baixo) */
   body.modelo-slider .menu-deck{
     display:flex; gap:14px; overflow-x:auto; overflow-y:hidden;
     scroll-snap-type:x mandatory; scroll-behavior:smooth;
@@ -5864,18 +5863,24 @@
     function ajustarSlider(){
       if(!document.body.classList.contains('modelo-slider')) return false;
       var main = document.querySelector('main');
-      if(!main) return true;
+      var deck = document.getElementById('menuDeck');
+      if(!main || !deck) return true;
       if((window.scrollY || window.pageYOffset || 0) > 4) return true;
+      main.style.paddingTop = ''; main.style.paddingBottom = '';
       var bar = document.querySelector('.info-fixa');
-      var barTop = window.innerHeight;
-      if(bar){ var cs = getComputedStyle(bar); if(cs.display !== 'none' && cs.visibility !== 'hidden'){ barTop = bar.getBoundingClientRect().top; } }
-      var mainTop = main.getBoundingClientRect().top + (window.scrollY || window.pageYOffset || 0);
-      var alvo = barTop - mainTop - 8; // altura livre até à barra fixa (ou fundo do ecrã)
-      main.style.minHeight = Math.max(0, alvo) + 'px';
+      var barSpace = 0;
+      if(bar){ var cs = getComputedStyle(bar); if(cs.display !== 'none' && cs.visibility !== 'hidden'){ barSpace = bar.offsetHeight; } }
+      var mainTop = main.getBoundingClientRect().top + (window.scrollY || window.pageYOffset || 0); // espaço acima (cabeçalho)
+      var dots = main.querySelector(':scope > .deck-dots');
+      var conteudo = deck.offsetHeight + (dots ? dots.offsetHeight : 0);
+      var livre = window.innerHeight - mainTop - barSpace;   // espaço vertical disponível
+      var folga = Math.max(0, Math.round((livre - conteudo) / 2)); // metade em cima, metade em baixo
+      main.style.paddingTop = folga + 'px';
+      main.style.paddingBottom = folga + 'px';
       return true;
     }
     function ajustarCapa(){
-      { var _m = document.querySelector('main'); if(_m && !document.body.classList.contains('modelo-slider')) _m.style.minHeight = ''; }
+      { var _m = document.querySelector('main'); if(_m && !document.body.classList.contains('modelo-slider')){ _m.style.minHeight = ''; _m.style.paddingTop = ''; _m.style.paddingBottom = ''; } }
       if(ajustarCarteira()) return; // Carteira tem a sua própria medição
       if(ajustarSlider()) return;   // Deslizar tem a sua própria medição
       var grid = document.getElementById('categoriaGrid');
