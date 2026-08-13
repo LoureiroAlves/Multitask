@@ -129,6 +129,8 @@
   }
   /* Cabeçalho fixo no topo (o menu passa por baixo) */
   body.cabecalho-fixo header{ position:sticky; top:0; box-shadow:0 4px 14px rgba(0,0,0,0.16); }
+  /* Botão voltar: quando o menu clássico está oculto, mostra só a seta (maior) */
+  body.menu-oculto .categoria-painel-header .voltar{ font-size:1.5rem; line-height:1; padding:7px 15px; }
   /* Sem foto: garante fundo sólido para o nome se ler sempre */
   header.sem-foto{ background:var(--castanho); }
   header.sem-foto #headerFotos{ display:none; }
@@ -3356,7 +3358,8 @@
       try{ if(window.renderMosaico) window.renderMosaico(config.mosaico); }catch(e){}
       { var _menuOff = (config.menuAtivo === false);
         var _cg = document.getElementById('categoriaGrid'); if(_cg) _cg.style.display = _menuOff ? 'none' : '';
-        document.body.classList.toggle('menu-oculto', _menuOff); }
+        document.body.classList.toggle('menu-oculto', _menuOff);
+        var _fp = document.getElementById('fecharPainel'); if(_fp) _fp.textContent = _menuOff ? '‹' : '‹ menu'; }
       window._jogosAtivos = config.jogos !== false;
       if(window.aplicarJogos) window.aplicarJogos(window._jogosAtivos);
 
