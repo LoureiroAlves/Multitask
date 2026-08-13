@@ -566,6 +566,33 @@
   body.modelo-slider.slider-tit-cor .deck-capa .deck-capa-tit{ color:var(--slider-tit) !important; }
   /* Banner de foto no cabeçalho de cada secção (todos os modelos) */
   .sec-foto-banner{ width:100%; height:170px; border-radius:14px; background-size:cover; background-position:center; margin:0 0 14px; box-shadow:0 3px 10px rgba(0,0,0,.15); }
+
+  /* ===== Mosaico (bento, estilo widgets do iPhone) ===== */
+  #mosaicoGrid{ display:none; }
+  body.mosaico-on #mosaicoGrid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; max-width:640px; margin:0 auto; padding:14px 14px 6px; }
+  .mos-box{ position:relative; display:flex; overflow:hidden; border-radius:22px; background:var(--cat-cor, #3a3a44); min-height:120px; padding:14px; text-align:left; border:none; box-shadow:0 4px 14px rgba(0,0,0,.14); -webkit-tap-highlight-color:transparent; }
+  .mos-box[data-target]{ cursor:pointer; }
+  .mos-box[data-target]:active{ transform:scale(.985); }
+  .mos-box.tam-p{ grid-column:span 1; aspect-ratio:1/1; }          /* pequeno: 1 coluna, quadrado */
+  .mos-box.tam-l{ grid-column:span 2; min-height:130px; }          /* largo: 2 colunas, meia altura */
+  .mos-box.tam-g{ grid-column:span 2; aspect-ratio:1/1; }          /* grande: 2 colunas, quadrado */
+  .mos-box .mos-foto{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:0; }
+  .mos-box .mos-shade{ position:absolute; inset:0; z-index:1; background:linear-gradient(to top, rgba(0,0,0,.55), rgba(0,0,0,.05) 55%); pointer-events:none; }
+  .mos-box .mos-txt{ position:relative; z-index:2; display:flex; flex-direction:column; gap:2px; max-width:94%; }
+  .mos-box .mos-tit{ font-family:var(--fonte-titulo); font-weight:800; font-size:1.15rem; line-height:1.1; }
+  .mos-box .mos-sub{ font-size:.86rem; line-height:1.15; opacity:.95; }
+  /* Posição do texto dentro da caixa (9 posições) */
+  .mos-box.pos-tl{ align-items:flex-start; justify-content:flex-start; }
+  .mos-box.pos-tc{ align-items:flex-start; justify-content:center; text-align:center; }
+  .mos-box.pos-tr{ align-items:flex-start; justify-content:flex-end; text-align:right; }
+  .mos-box.pos-ml{ align-items:center; justify-content:flex-start; }
+  .mos-box.pos-mc{ align-items:center; justify-content:center; text-align:center; }
+  .mos-box.pos-mr{ align-items:center; justify-content:flex-end; text-align:right; }
+  .mos-box.pos-bl{ align-items:flex-end; justify-content:flex-start; }
+  .mos-box.pos-bc{ align-items:flex-end; justify-content:center; text-align:center; }
+  .mos-box.pos-br{ align-items:flex-end; justify-content:flex-end; text-align:right; }
+  .mos-box.pos-tc .mos-txt, .mos-box.pos-mc .mos-txt, .mos-box.pos-bc .mos-txt{ align-items:center; }
+  .mos-box.pos-tr .mos-txt, .mos-box.pos-mr .mos-txt, .mos-box.pos-br .mos-txt{ align-items:flex-end; }
   body.modelo-slider .deck-page > .sec-foto-banner{ margin-bottom:14px; }
   /* Foto no separador (todos os modelos) — foto como <img> por trás do nome, com véu para legibilidade */
   .tile-foto-img, .tile-foto-shade{ display:none; }
@@ -1662,6 +1689,9 @@
   </div>
 </header>
 
+<!-- Mosaico (bento) — módulo à parte, ativado por config.mosaico.ativo -->
+<div id="mosaicoGrid"></div>
+
 <div class="categoria-grid" id="categoriaGrid">
   <button class="tile" data-target="entradas" type="button">
     <span class="tile-emoji">🥖</span>
@@ -2401,6 +2431,40 @@
     return det;
   }
   // Renderiza os blocos de conteúdo da página (construtor): título, parágrafo, imagem, botão, separador, espaço
+  // ===== Mosaico (bento) — módulo à parte =====
+  window.renderMosaico = function(mos){
+    const grid = document.getElementById('mosaicoGrid');
+    if(!grid) return;
+    grid.innerHTML = '';
+    const on = !!(mos && mos.ativo && Array.isArray(mos.caixas) && mos.caixas.length);
+    document.body.classList.toggle('mosaico-on', on);
+    if(!on) return;
+    mos.caixas.forEach(function(c){
+      if(!c) return;
+      const b = document.createElement(c.link ? 'button' : 'div');
+      b.className = 'mos-box tam-' + (c.tam || 'p') + ' pos-' + (c.pos || 'bl');
+      if(c.link){ b.type = 'button'; b.setAttribute('data-target', c.link); }
+      if(c.cor) b.style.background = c.cor;
+      if(c.foto){
+        const im = document.createElement('img'); im.className = 'mos-foto'; im.src = c.foto; im.alt = ''; im.decoding = 'async'; b.appendChild(im);
+        const sh = document.createElement('span'); sh.className = 'mos-shade'; b.appendChild(sh);
+      }
+      const tx = document.createElement('div'); tx.className = 'mos-txt'; tx.style.color = c.corTexto || '#ffffff';
+      if(c.titulo){ const t = document.createElement('div'); t.className = 'mos-tit'; t.textContent = c.titulo; tx.appendChild(t); }
+      if(c.subtitulo){ const s = document.createElement('div'); s.className = 'mos-sub'; s.textContent = c.subtitulo; tx.appendChild(s); }
+      b.appendChild(tx);
+      grid.appendChild(b);
+    });
+  };
+  // Tocar numa caixa que aponta para uma secção abre essa secção (reutiliza o menu)
+  document.addEventListener('click', function(e){
+    const mb = e.target && e.target.closest ? e.target.closest('.mos-box[data-target]') : null;
+    if(!mb) return;
+    const alvo = mb.getAttribute('data-target');
+    const tile = document.querySelector('.tile[data-target="' + (alvo || '').replace(/"/g,'\\"') + '"]');
+    if(tile && typeof abrirCategoria === 'function') abrirCategoria(tile);
+  });
+
   window.construirBlocos = function(blocos){
     const main = document.querySelector('main');
     let cont = document.getElementById('blocosPagina');
@@ -3288,6 +3352,11 @@
       })();
       // Blocos de conteúdo da página (construtor)
       if(window.construirBlocos) window.construirBlocos(config.blocos);
+      // Mosaico (bento) — módulo à parte — e mostrar/esconder o menu clássico
+      try{ if(window.renderMosaico) window.renderMosaico(config.mosaico); }catch(e){}
+      { var _menuOff = (config.menuAtivo === false);
+        var _cg = document.getElementById('categoriaGrid'); if(_cg) _cg.style.display = _menuOff ? 'none' : '';
+        document.body.classList.toggle('menu-oculto', _menuOff); }
       window._jogosAtivos = config.jogos !== false;
       if(window.aplicarJogos) window.aplicarJogos(window._jogosAtivos);
 

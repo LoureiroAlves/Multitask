@@ -1071,6 +1071,11 @@
   <details id="secMenu" style="margin-top:22px;">
     <summary>🍽️ Menu — pratos, preços e traduções</summary>
     <div class="bloco-conteudo">
+      <div class="lembrar" style="margin-top:6px;">
+        <input type="checkbox" id="menuAtivoChk" checked>
+        <label for="menuAtivoChk" style="margin:0; font-weight:700; color:var(--dourado-escuro); display:inline;">Mostrar menu clássico (separadores por secção)</label>
+      </div>
+      <div class="subtitulo" style="margin:2px 0 10px;">Desliga se este negócio vai usar só o Mosaico (caixas) em baixo.</div>
       <div class="subtitulo" style="margin-top:6px;">Edita o menu do cardápio (o <code>menu.json</code>). Usa o mesmo token lá em cima. Carrega, altera e guarda — as alterações aparecem no cardápio dentro de 1-2 minutos.</div>
       <button type="button" class="acao" id="btnCarregarMenu" style="background:var(--castanho); margin-top:6px;">📥 Carregar menu</button>
       <input type="file" id="fileImportMenu" accept=".json,application/json" style="display:none;">
@@ -1085,6 +1090,26 @@
         <button type="button" class="acao" id="btnGuardarMenu">💾 Guardar menu</button>
       </div>
       <div class="estado" id="estadoMenu"></div>
+    </div>
+  </details>
+
+  <!-- MOSAICO (BENTO) -->
+  <details id="secMosaico" style="margin-top:20px;">
+    <summary>🧩 Mosaico (caixas com foto — estilo widgets)</summary>
+    <div class="bloco-conteudo">
+      <div class="lembrar" style="margin-top:6px;">
+        <input type="checkbox" id="mosaicoAtivoChk">
+        <label for="mosaicoAtivoChk" style="margin:0; font-weight:700; color:var(--dourado-escuro); display:inline;">Mostrar mosaico (caixas)</label>
+      </div>
+      <div class="subtitulo" style="margin:2px 0 10px;">Caixas de vários tamanhos com foto e texto por cima — ótimo para serviços (unhas, estética, etc.). Podes usar só o mosaico, só o menu, ou os dois.</div>
+      <div id="mosaicoBox" style="display:none;">
+        <div id="mosLista"></div>
+        <button type="button" class="acao" id="btnAddCaixa" style="background:var(--dourado); margin-top:8px;">＋ Adicionar caixa</button>
+        <div style="margin-top:12px; display:flex; gap:8px; align-items:center;">
+          <button type="button" class="acao" id="btnGuardarMosaico">💾 Guardar mosaico</button>
+        </div>
+        <div class="estado" id="estadoMosaico" style="margin-top:6px;"></div>
+      </div>
     </div>
   </details>
 
@@ -1252,7 +1277,9 @@
     textoLivre: { ativo:false, titulo:'', subtitulo:'', cor:'#4a3820', tamanho:2.4, altura:42, x:50, y:50 },
     jogos: true,
     redes: { instagram:'', facebook:'' },
-    intro: { ativo:false, duracao:7, fundo:'foto', tamanho:2.7, subTamanho:1.08, titulo:'', subtitulo:'', botao:'', reveal:'slide', foto:'', cor:'#ffffff' }
+    intro: { ativo:false, duracao:7, fundo:'foto', tamanho:2.7, subTamanho:1.08, titulo:'', subtitulo:'', botao:'', reveal:'slide', foto:'', cor:'#ffffff' },
+    menuAtivo: true,
+    mosaico: { ativo:false, caixas:[] }
   };
 
   // Pré-visualização dos layouts (cores principais para o seletor)
@@ -1495,6 +1522,9 @@
         config.jogos = parsed.jogos !== false;
         config.redes = Object.assign({ instagram:'', facebook:'' }, parsed.redes || {});
         config.intro = Object.assign({ ativo:false, duracao:7, fundo:'foto', tamanho:2.7, subTamanho:1.08, titulo:'', subtitulo:'', botao:'', reveal:'slide', foto:'', cor:'#ffffff' }, parsed.intro || {});
+        config.menuAtivo = parsed.menuAtivo !== false;
+        config.mosaico = Object.assign({ ativo:false, caixas:[] }, parsed.mosaico || {});
+        if(!Array.isArray(config.mosaico.caixas)) config.mosaico.caixas = [];
         setEstado('Definições carregadas ✓', 'ok');
       }
       preencherFormulario();
@@ -1567,6 +1597,11 @@
     document.getElementById('mostrarCamera').checked = config.mostrarCamera !== false;
     document.getElementById('mostrarAgendaIcon').checked = config.mostrarAgendaIcon !== false;
     document.getElementById('mostrarRedes').checked = config.mostrarRedes !== false;
+    { document.getElementById('menuAtivoChk').checked = config.menuAtivo !== false;
+      const mos = config.mosaico || { ativo:false, caixas:[] };
+      document.getElementById('mosaicoAtivoChk').checked = !!mos.ativo;
+      document.getElementById('mosaicoBox').style.display = mos.ativo ? 'block' : 'none';
+      if(typeof renderMosaicoEditor === 'function') renderMosaicoEditor(); }
     // Cabeçalho: estilo do título e do subtítulo (individuais)
     preencherEstilo('hTit', config.header.estiloTitulo || { cor: ch, negrito: (config.header.realce !== false), tamanho: config.header.tituloTamanho || 1.7 });
     preencherEstilo('hSub', config.header.estiloSub || { cor: ch, italico: true, tamanho: config.header.subtituloTamanho || 0.82 });
@@ -1904,6 +1939,90 @@
     if(rm) rm.addEventListener('click', () => { config.sliderFotoCapa = ''; _sliderCapaFotoUI(); if(window.__agendarPreview) window.__agendarPreview(); });
   })();
 
+  // ===== MOSAICO (caixas) — editor =====
+  function _mosPrev(){ if(window.__agendarPreview) window.__agendarPreview(); }
+  function _mosMover(arr, i, d){ const j = i + d; if(j < 0 || j >= arr.length) return; const t = arr[i]; arr[i] = arr[j]; arr[j] = t; }
+  function _mosBtn(txt, fn, perigo){ const b = document.createElement('button'); b.type = 'button'; b.className = 'mv-mini' + (perigo ? ' del' : ''); b.textContent = txt; b.addEventListener('click', fn); return b; }
+  function _mosLbl(txt){ const l = document.createElement('div'); l.style.cssText = 'font-size:.78rem; color:var(--castanho-suave); margin:8px 0 3px;'; l.textContent = txt; return l; }
+  const _mosSel = 'width:100%; padding:8px 10px; border-radius:8px; border:1.5px solid var(--linha); background:var(--branco); font-family:inherit; color:var(--castanho); font-size:.9rem;';
+  const _mosIn = 'width:100%; padding:8px 10px; border-radius:8px; border:1.5px solid var(--linha); font-family:inherit; font-size:.9rem;';
+  function renderMosaicoEditor(){
+    const lista = document.getElementById('mosLista'); if(!lista) return;
+    const mos = config.mosaico = config.mosaico || { ativo:false, caixas:[] };
+    if(!Array.isArray(mos.caixas)) mos.caixas = [];
+    lista.innerHTML = '';
+    let cats = [];
+    try{ const md = window.__getMenuPreview && window.__getMenuPreview(); if(md && Array.isArray(md.categorias)) cats = md.categorias.map(function(c){ return { id:c.id, nome:(c.tile && c.tile.pt) || (c.grupos && c.grupos[0] && c.grupos[0].summary && c.grupos[0].summary.pt) || c.id }; }); }catch(e){}
+    if(!mos.caixas.length){ const p = document.createElement('div'); p.className = 'subtitulo'; p.textContent = 'Ainda não há caixas — clica em "Adicionar caixa".'; lista.appendChild(p); return; }
+    mos.caixas.forEach(function(c, i){
+      const card = document.createElement('div'); card.style.cssText = 'border:1.5px solid var(--linha); border-radius:10px; padding:10px; margin-bottom:10px; background:var(--branco);';
+      const top = document.createElement('div'); top.style.cssText = 'display:flex; align-items:center; gap:6px; margin-bottom:6px;';
+      const lbl = document.createElement('strong'); lbl.style.cssText = 'flex:1; font-size:.9rem; color:var(--castanho);'; lbl.textContent = 'Caixa ' + (i + 1);
+      top.appendChild(lbl);
+      top.appendChild(_mosBtn('↑', function(){ _mosMover(mos.caixas, i, -1); renderMosaicoEditor(); _mosPrev(); }));
+      top.appendChild(_mosBtn('↓', function(){ _mosMover(mos.caixas, i, 1); renderMosaicoEditor(); _mosPrev(); }));
+      top.appendChild(_mosBtn('🗑', function(){ mos.caixas.splice(i, 1); renderMosaicoEditor(); _mosPrev(); }, true));
+      card.appendChild(top);
+      card.appendChild(_mosLbl('Tamanho'));
+      const selT = document.createElement('select'); selT.style.cssText = _mosSel;
+      [['p','Pequeno (quadrado)'],['l','Largo (2 colunas)'],['g','Grande (2 colunas, alto)']].forEach(function(o){ const op = document.createElement('option'); op.value = o[0]; op.textContent = o[1]; if((c.tam || 'p') === o[0]) op.selected = true; selT.appendChild(op); });
+      selT.addEventListener('change', function(){ c.tam = selT.value; _mosPrev(); });
+      card.appendChild(selT);
+      card.appendChild(_mosLbl('Foto (opcional)'));
+      const fr = document.createElement('div'); fr.style.cssText = 'display:flex; align-items:center; gap:8px; flex-wrap:wrap;';
+      if(c.foto){ const pv = document.createElement('img'); pv.src = c.foto; pv.style.cssText = 'width:46px;height:46px;object-fit:cover;border-radius:8px;border:1px solid var(--linha);'; fr.appendChild(pv); }
+      const fl = document.createElement('label'); fl.className = 'mv-mini'; fl.style.cursor = 'pointer'; fl.textContent = c.foto ? 'trocar foto' : '＋ foto';
+      const fi = document.createElement('input'); fi.type = 'file'; fi.accept = 'image/*'; fi.style.display = 'none';
+      fi.addEventListener('change', async function(){ const f = fi.files && fi.files[0]; if(!f) return; setEstado('A enviar foto da caixa…', 'info'); try{ const url = await _uploadFoto(f); c.foto = url; setEstado('Foto ✓', 'ok'); renderMosaicoEditor(); _mosPrev(); }catch(e){ setEstado('Erro ao enviar foto: ' + (e && e.message ? e.message : e), 'erro'); } });
+      fl.appendChild(fi); fr.appendChild(fl);
+      if(c.foto) fr.appendChild(_mosBtn('sem foto', function(){ delete c.foto; renderMosaicoEditor(); _mosPrev(); }));
+      card.appendChild(fr);
+      const corRow = document.createElement('div'); corRow.style.cssText = 'display:flex; align-items:center; gap:8px; margin-top:8px; font-size:.82rem; color:var(--castanho-suave);';
+      corRow.appendChild(document.createTextNode('Cor de fundo (sem foto):'));
+      const corIn = document.createElement('input'); corIn.type = 'color'; corIn.value = c.cor || '#3a3a44'; corIn.style.cssText = 'width:40px;height:28px;padding:0;border:none;background:none;cursor:pointer;';
+      corIn.addEventListener('input', function(){ c.cor = corIn.value; _mosPrev(); });
+      corRow.appendChild(corIn); card.appendChild(corRow);
+      card.appendChild(_mosLbl('Título'));
+      const ti = document.createElement('input'); ti.type = 'text'; ti.value = c.titulo || ''; ti.placeholder = 'Ex: Unhas de gel'; ti.style.cssText = _mosIn; ti.addEventListener('input', function(){ c.titulo = ti.value; _mosPrev(); }); card.appendChild(ti);
+      card.appendChild(_mosLbl('Subtítulo (opcional)'));
+      const su = document.createElement('input'); su.type = 'text'; su.value = c.subtitulo || ''; su.placeholder = 'Ex: a partir de 15€'; su.style.cssText = _mosIn; su.addEventListener('input', function(){ c.subtitulo = su.value; _mosPrev(); }); card.appendChild(su);
+      const ctRow = document.createElement('div'); ctRow.style.cssText = 'display:flex; align-items:center; gap:8px; margin-top:8px; font-size:.82rem; color:var(--castanho-suave);';
+      ctRow.appendChild(document.createTextNode('Cor do texto:'));
+      const ctIn = document.createElement('input'); ctIn.type = 'color'; ctIn.value = c.corTexto || '#ffffff'; ctIn.style.cssText = 'width:40px;height:28px;padding:0;border:none;background:none;cursor:pointer;';
+      ctIn.addEventListener('input', function(){ c.corTexto = ctIn.value; _mosPrev(); });
+      ctRow.appendChild(ctIn); card.appendChild(ctRow);
+      card.appendChild(_mosLbl('Posição do texto na caixa'));
+      const pg = document.createElement('div'); pg.style.cssText = 'display:grid; grid-template-columns:repeat(3,34px); gap:4px;';
+      [['tl','↖'],['tc','↑'],['tr','↗'],['ml','←'],['mc','◼'],['mr','→'],['bl','↙'],['bc','↓'],['br','↘']].forEach(function(o){
+        const bt = document.createElement('button'); bt.type = 'button'; bt.textContent = o[1];
+        const on = (c.pos || 'bl') === o[0];
+        bt.style.cssText = 'width:34px;height:30px;border-radius:6px;border:1.5px solid var(--linha);cursor:pointer;background:' + (on ? 'var(--dourado)' : 'var(--branco)') + ';color:' + (on ? '#fff' : 'var(--castanho)') + ';';
+        bt.addEventListener('click', function(){ c.pos = o[0]; renderMosaicoEditor(); _mosPrev(); });
+        pg.appendChild(bt);
+      });
+      card.appendChild(pg);
+      if(cats.length){
+        card.appendChild(_mosLbl('Ao tocar, abrir a secção (opcional)'));
+        const selL = document.createElement('select'); selL.style.cssText = _mosSel;
+        const o0 = document.createElement('option'); o0.value = ''; o0.textContent = '— não abre nada —'; selL.appendChild(o0);
+        cats.forEach(function(ct){ const op = document.createElement('option'); op.value = ct.id; op.textContent = ct.nome; if(c.link === ct.id) op.selected = true; selL.appendChild(op); });
+        selL.addEventListener('change', function(){ if(selL.value) c.link = selL.value; else delete c.link; _mosPrev(); });
+        card.appendChild(selL);
+      }
+      lista.appendChild(card);
+    });
+  }
+  (function(){
+    const chk = document.getElementById('mosaicoAtivoChk');
+    if(chk) chk.addEventListener('change', function(e){ config.mosaico = config.mosaico || { ativo:false, caixas:[] }; config.mosaico.ativo = e.target.checked; document.getElementById('mosaicoBox').style.display = e.target.checked ? 'block' : 'none'; renderMosaicoEditor(); _mosPrev(); });
+    const mc = document.getElementById('menuAtivoChk');
+    if(mc) mc.addEventListener('change', _mosPrev);
+    const add = document.getElementById('btnAddCaixa');
+    if(add) add.addEventListener('click', function(){ config.mosaico = config.mosaico || { ativo:false, caixas:[] }; config.mosaico.caixas.push({ tam:'l', pos:'bl', cor:'#3a3a44', corTexto:'#ffffff', titulo:'' }); renderMosaicoEditor(); _mosPrev(); });
+    const gm = document.getElementById('btnGuardarMosaico');
+    if(gm) gm.addEventListener('click', function(){ if(typeof guardarTudo === 'function') guardarTudo(); });
+  })();
+
   // Texto livre: mostradores dos sliders + cor
   ['tlTamanho','tlAltura','tlX','tlY'].forEach(function(id){
     const el = document.getElementById(id); if(!el) return;
@@ -2038,6 +2157,8 @@
       config.mostrarCamera = document.getElementById('mostrarCamera').checked;
       config.mostrarAgendaIcon = document.getElementById('mostrarAgendaIcon').checked;
       config.mostrarRedes = document.getElementById('mostrarRedes').checked;
+      config.menuAtivo = document.getElementById('menuAtivoChk').checked;
+      { const _mc = document.getElementById('mosaicoAtivoChk'); config.mosaico = config.mosaico || { ativo:false, caixas:[] }; config.mosaico.ativo = _mc ? _mc.checked : false; }
       config.textoLivre = {
         ativo: document.getElementById('tlAtivo').checked,
         titulo: document.getElementById('tlTitulo').value.trim(),
