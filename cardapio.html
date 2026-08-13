@@ -129,6 +129,9 @@
   }
   /* Cabeçalho fixo no topo (o menu passa por baixo) */
   body.cabecalho-fixo header{ position:sticky; top:0; box-shadow:0 4px 14px rgba(0,0,0,0.16); }
+  /* Sem foto: garante fundo sólido para o nome se ler sempre */
+  header.sem-foto{ background:var(--castanho); }
+  header.sem-foto #headerFotos{ display:none; }
   header .brand-mark{
     font-family:var(--fonte-titulo);
     color:var(--branco);
@@ -3326,8 +3329,14 @@
           aplicarEstiloTexto([t], config.header.estiloTitulo || config.header.estilo);
           aplicarEstiloTexto([s], config.header.estiloSub || config.header.estilo);
         }
-        if(config.header.fotosAtivas !== false){
-          preencherFotos(document.querySelector('#headerFotos'), config.header.fotos);
+        const _hf = document.querySelector('#headerFotos');
+        if(config.header.fotosAtivas !== false && Array.isArray(config.header.fotos) && config.header.fotos.length){
+          preencherFotos(_hf, config.header.fotos);
+          const _hdEl = document.querySelector('header'); if(_hdEl) _hdEl.classList.remove('sem-foto');
+        } else {
+          // Sem foto: limpa fotos antigas e marca o cabeçalho para manter o fundo sólido + texto legível
+          if(_hf) _hf.innerHTML = '';
+          const _hdEl = document.querySelector('header'); if(_hdEl) _hdEl.classList.add('sem-foto');
         }
       }
 
