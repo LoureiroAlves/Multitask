@@ -2441,7 +2441,7 @@
     const on = !!(mos && mos.ativo && Array.isArray(mos.caixas) && mos.caixas.length);
     document.body.classList.toggle('mosaico-on', on);
     if(!on) return;
-    mos.caixas.forEach(function(c){
+    mos.caixas.forEach(function(c, i){
       if(!c) return;
       const b = document.createElement(c.link ? 'button' : 'div');
       b.className = 'mos-box tam-' + (c.tam || 'p');
