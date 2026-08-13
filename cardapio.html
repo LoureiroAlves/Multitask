@@ -129,6 +129,8 @@
   }
   /* Cabeçalho fixo no topo (o menu passa por baixo) */
   body.cabecalho-fixo header{ position:sticky; top:0; box-shadow:0 4px 14px rgba(0,0,0,0.16); }
+  /* Secção escondida do menu principal (só abre pelo mosaico) */
+  .tile.tile-oculto{ display:none !important; }
   /* Botão voltar: quando o menu clássico está oculto, mostra só a seta (maior) */
   body.menu-oculto .categoria-painel-header .voltar{ font-size:1.5rem; line-height:1; padding:7px 15px; }
   /* Sem foto: garante fundo sólido para o nome se ler sempre */
@@ -2531,6 +2533,7 @@
           if(et.negrito){ label.style.fontWeight = '800'; }
           if(et.italico){ label.style.fontStyle = 'italic'; }
         } }
+      if(cat.ocultarMenu){ btn.classList.add('tile-oculto'); }
       grid.appendChild(btn);
       const sec = document.createElement('section');
       sec.className = 'categoria'; sec.id = cat.id;

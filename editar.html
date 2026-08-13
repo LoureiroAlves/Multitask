@@ -3238,6 +3238,13 @@
       estWrap.appendChild(row);
       p.appendChild(estWrap);
 
+      // Esconder esta secção do menu principal (fica só acessível pelo mosaico)
+      const ocWrap=document.createElement('label'); ocWrap.style.cssText='display:flex; align-items:center; gap:8px; margin:2px 0 10px; font-size:0.82rem; color:var(--castanho-suave); cursor:pointer;';
+      const ocChk=document.createElement('input'); ocChk.type='checkbox'; ocChk.style.width='auto'; ocChk.checked=!!cat.ocultarMenu;
+      ocChk.addEventListener('change',()=>{ if(ocChk.checked) cat.ocultarMenu=true; else delete cat.ocultarMenu; if(window.__agendarPreview) window.__agendarPreview(); });
+      ocWrap.appendChild(ocChk); ocWrap.appendChild(document.createTextNode('Esconder do menu principal (só abre pelo mosaico)'));
+      p.appendChild(ocWrap);
+
       const trd=document.createElement('details'); trd.style.cssText='border:none;background:transparent;margin-bottom:4px;';
       const trs=document.createElement('summary'); trs.textContent='traduções do título'; trs.style.cssText='font-size:0.75rem;color:var(--castanho-suave);';
       trd.appendChild(trs); trd.appendChild(campoTraducoes(tituloObj)); p.appendChild(trd);
