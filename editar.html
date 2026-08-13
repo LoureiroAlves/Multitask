@@ -1986,21 +1986,27 @@
       const ti = document.createElement('input'); ti.type = 'text'; ti.value = c.titulo || ''; ti.placeholder = 'Ex: Unhas de gel'; ti.style.cssText = _mosIn; ti.addEventListener('input', function(){ c.titulo = ti.value; _mosPrev(); }); card.appendChild(ti);
       card.appendChild(_mosLbl('Subtítulo (opcional)'));
       const su = document.createElement('input'); su.type = 'text'; su.value = c.subtitulo || ''; su.placeholder = 'Ex: a partir de 15€'; su.style.cssText = _mosIn; su.addEventListener('input', function(){ c.subtitulo = su.value; _mosPrev(); }); card.appendChild(su);
-      const ctRow = document.createElement('div'); ctRow.style.cssText = 'display:flex; align-items:center; gap:8px; margin-top:8px; font-size:.82rem; color:var(--castanho-suave);';
-      ctRow.appendChild(document.createTextNode('Cor do texto:'));
-      const ctIn = document.createElement('input'); ctIn.type = 'color'; ctIn.value = c.corTexto || '#ffffff'; ctIn.style.cssText = 'width:40px;height:28px;padding:0;border:none;background:none;cursor:pointer;';
-      ctIn.addEventListener('input', function(){ c.corTexto = ctIn.value; _mosPrev(); });
-      ctRow.appendChild(ctIn); card.appendChild(ctRow);
-      card.appendChild(_mosLbl('Posição do texto na caixa'));
-      const pg = document.createElement('div'); pg.style.cssText = 'display:grid; grid-template-columns:repeat(3,34px); gap:4px;';
-      [['tl','↖'],['tc','↑'],['tr','↗'],['ml','←'],['mc','◼'],['mr','→'],['bl','↙'],['bc','↓'],['br','↘']].forEach(function(o){
-        const bt = document.createElement('button'); bt.type = 'button'; bt.textContent = o[1];
-        const on = (c.pos || 'bl') === o[0];
-        bt.style.cssText = 'width:34px;height:30px;border-radius:6px;border:1.5px solid var(--linha);cursor:pointer;background:' + (on ? 'var(--dourado)' : 'var(--branco)') + ';color:' + (on ? '#fff' : 'var(--castanho)') + ';';
-        bt.addEventListener('click', function(){ c.pos = o[0]; renderMosaicoEditor(); _mosPrev(); });
-        pg.appendChild(bt);
-      });
-      card.appendChild(pg);
+      card.appendChild(_mosLbl('Estilo do texto — arrasta o texto na pré-visualização para o posicionar'));
+      c.estilo = c.estilo || (c.corTexto ? { cor:c.corTexto } : {});
+      const est = c.estilo;
+      const estRow = document.createElement('div'); estRow.style.cssText = 'display:flex; align-items:center; gap:12px; flex-wrap:wrap; font-size:.8rem; color:var(--castanho-suave);';
+      const cl = document.createElement('label'); cl.style.cssText = 'display:flex; align-items:center; gap:5px;';
+      const ci = document.createElement('input'); ci.type = 'color'; ci.value = est.cor || '#ffffff'; ci.style.cssText = 'width:40px;height:28px;padding:0;border:none;background:none;cursor:pointer;';
+      ci.addEventListener('input', function(){ est.cor = ci.value; _mosPrev(); });
+      cl.appendChild(document.createTextNode('Cor')); cl.appendChild(ci); estRow.appendChild(cl);
+      const tl2 = document.createElement('label'); tl2.style.cssText = 'display:flex; align-items:center; gap:5px;';
+      const ti2 = document.createElement('input'); ti2.type = 'number'; ti2.min = '0.6'; ti2.max = '3'; ti2.step = '0.05'; ti2.placeholder = 'auto'; ti2.value = (est.tamanho != null ? est.tamanho : ''); ti2.style.cssText = 'width:64px; padding:5px 6px; border:1.5px solid var(--linha); border-radius:6px; font-family:inherit;';
+      ti2.addEventListener('input', function(){ const v = parseFloat(ti2.value); if(v) est.tamanho = v; else delete est.tamanho; _mosPrev(); });
+      tl2.appendChild(document.createTextNode('Tamanho')); tl2.appendChild(ti2); estRow.appendChild(tl2);
+      const bB = document.createElement('button'); bB.type = 'button'; bB.textContent = 'B'; bB.style.cssText = 'font-weight:800; width:32px; height:30px; border-radius:6px; border:1.5px solid var(--linha); cursor:pointer;';
+      const pB = function(){ bB.style.background = est.negrito ? 'var(--dourado)' : 'var(--branco)'; bB.style.color = est.negrito ? '#fff' : 'var(--castanho)'; }; pB();
+      bB.addEventListener('click', function(){ est.negrito = !est.negrito; if(!est.negrito) delete est.negrito; pB(); _mosPrev(); });
+      estRow.appendChild(bB);
+      const iB = document.createElement('button'); iB.type = 'button'; iB.textContent = 'I'; iB.style.cssText = 'font-style:italic; width:32px; height:30px; border-radius:6px; border:1.5px solid var(--linha); cursor:pointer;';
+      const pI = function(){ iB.style.background = est.italico ? 'var(--dourado)' : 'var(--branco)'; iB.style.color = est.italico ? '#fff' : 'var(--castanho)'; }; pI();
+      iB.addEventListener('click', function(){ est.italico = !est.italico; if(!est.italico) delete est.italico; pI(); _mosPrev(); });
+      estRow.appendChild(iB);
+      card.appendChild(estRow);
       if(cats.length){
         card.appendChild(_mosLbl('Ao tocar, abrir a secção (opcional)'));
         const selL = document.createElement('select'); selL.style.cssText = _mosSel;
@@ -2018,7 +2024,7 @@
     const mc = document.getElementById('menuAtivoChk');
     if(mc) mc.addEventListener('change', _mosPrev);
     const add = document.getElementById('btnAddCaixa');
-    if(add) add.addEventListener('click', function(){ config.mosaico = config.mosaico || { ativo:false, caixas:[] }; config.mosaico.caixas.push({ tam:'l', pos:'bl', cor:'#3a3a44', corTexto:'#ffffff', titulo:'' }); renderMosaicoEditor(); _mosPrev(); });
+    if(add) add.addEventListener('click', function(){ config.mosaico = config.mosaico || { ativo:false, caixas:[] }; config.mosaico.caixas.push({ tam:'l', tx:6, ty:72, cor:'#3a3a44', estilo:{ cor:'#ffffff' }, titulo:'' }); renderMosaicoEditor(); _mosPrev(); });
     const gm = document.getElementById('btnGuardarMosaico');
     if(gm) gm.addEventListener('click', function(){ if(typeof guardarTudo === 'function') guardarTudo(); });
   })();
@@ -3667,6 +3673,7 @@
       }
       else if(d.type === 'preview-drop-erro'){ setEstado(d.msg || 'Ficheiro inválido.', 'erro'); }
       else if(d.type === 'preview-drop'){ tratarDropPreview(d); }
+      else if(d.type === 'mosaico-pos'){ const _m = config.mosaico; if(_m && Array.isArray(_m.caixas) && _m.caixas[d.idx]){ _m.caixas[d.idx].tx = d.x; _m.caixas[d.idx].ty = d.y; } }
     });
     document.addEventListener('input', agendarEnvio);
     document.addEventListener('change', agendarEnvio);
