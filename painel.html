@@ -263,7 +263,8 @@
         '</div>' +
       '</div>' +
       '<div class="det-corpo hide" data-corpo>' +
-        '<label>Email do dono</label><input type="email" data-email value="' + (n.dono_email || '') + '" placeholder="dono@exemplo.com">' +
+        '<label>Nome do negócio</label><input type="text" data-nome value="' + (n.nome || '').replace(/"/g, '&quot;') + '" placeholder="Nome do negócio">' +
+        '<label style="margin-top:12px;">Email do dono</label><input type="email" data-email value="' + (n.dono_email || '') + '" placeholder="dono@exemplo.com">' +
         '<label style="margin-top:12px;">Plano</label><select data-plano>' +
           '<option value="basico">Básico</option><option value="intermedio">Intermédio</option><option value="pro">Pro</option>' +
         '</select>' +
@@ -493,8 +494,11 @@
     div.querySelectorAll('[data-fn]').forEach(function(c){ if(c.checked) funcoes[c.getAttribute('data-fn')] = true; });
     const publicidade = { ativo: div.querySelector('[data-pub]').checked };
     const emailDono = (div.querySelector('[data-email]').value || '').trim().toLowerCase();
+    const nomeNovo = (div.querySelector('[data-nome]').value || '').trim();
     const box = div.querySelector('[data-msg]');
-    const { error:eN } = await sb.from('negocios').update({ dono_email: emailDono || null }).eq('id', n.id);
+    const _upNeg = { dono_email: emailDono || null };
+    if(nomeNovo) _upNeg.nome = nomeNovo;
+    const { error:eN } = await sb.from('negocios').update(_upNeg).eq('id', n.id);
     const { error } = await sb.from('entitlements').update({ plano:plano, funcoes:funcoes, publicidade:publicidade, atualizado_em:new Date().toISOString() }).eq('negocio_id', n.id);
     if(error || eN){ msg(box, 'Erro: ' + ((error||eN).message), 'erro'); } else { msg(box, 'Guardado ✓', 'ok'); carregar(); }
   }
