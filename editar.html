@@ -528,6 +528,8 @@
         <div class="subtitulo">Escolhe uma imagem de fundo (fica esbatida por trás dos pratos).</div>
         <input type="file" id="novaFotoFundo" accept="image/*" style="margin-top:8px;">
         <div id="fundoImagemAtual" style="font-size:0.82rem; color:var(--castanho-suave); margin-top:6px;"></div>
+        <label for="fundoOpac" style="font-size:0.85rem; margin-top:10px; display:block;">Opacidade da foto: <span id="fundoOpacVal">100</span>%</label>
+        <input type="range" id="fundoOpac" min="10" max="100" step="1" value="100" style="width:100%;">
         <label style="display:flex; align-items:center; gap:8px; margin-top:12px; cursor:pointer; font-weight:600;">
           <input type="checkbox" id="fundoAnimAtivo" style="width:auto; margin:0;">
           Dar movimento à foto (zoom lento)
@@ -583,6 +585,8 @@
       <label>Fotos do cabeçalho (rodam automaticamente)</label>
       <div class="lista-fotos" id="listaFotosHeader"></div>
       <input type="file" id="novaFotoHeader" accept="image/*" multiple>
+      <label for="headerFotoOpac" style="font-size:0.85rem; margin-top:10px; display:block;">Opacidade das fotos: <span id="headerFotoOpacVal">100</span>%</label>
+      <input type="range" id="headerFotoOpac" min="10" max="100" step="1" value="100" style="width:100%;">
     </div>
   </details>
 
@@ -921,6 +925,8 @@
       <label>Fotos do rodapé (rodam automaticamente)</label>
       <div class="lista-fotos" id="listaFotosFooter"></div>
       <input type="file" id="novaFotoFooter" accept="image/*" multiple>
+      <label for="footerFotoOpac" style="font-size:0.85rem; margin-top:10px; display:block;">Opacidade das fotos: <span id="footerFotoOpacVal">100</span>%</label>
+      <input type="range" id="footerFotoOpac" min="10" max="100" step="1" value="100" style="width:100%;">
 
       <label style="margin-top:16px;">Posição da foto e do texto</label>
       <div id="footerPreview" style="position:relative; width:100%; max-width:320px; margin:6px auto; aspect-ratio:3/4; border-radius:12px; overflow:hidden; background:#4a3820; touch-action:none; user-select:none; -webkit-user-select:none;">
@@ -1893,6 +1899,9 @@
       const _ci = document.getElementById('fundoAnimInt'), _civ = document.getElementById('fundoAnimIntVal');
       if(_ci){ _ci.value = _fa.intensidade || 12; if(_civ) _civ.textContent = _ci.value; } }
     document.getElementById('fundoTexturaSel').value = fundo.textura || 'pontos';
+    { const _o = document.getElementById('fundoOpac'), _ov = document.getElementById('fundoOpacVal'); const _v = (fundo.opacidade != null) ? fundo.opacidade : 100; if(_o){ _o.value = _v; } if(_ov) _ov.textContent = _v; }
+    { const _o = document.getElementById('headerFotoOpac'), _ov = document.getElementById('headerFotoOpacVal'); const _v = (config.header && config.header.fotoOpacidade != null) ? config.header.fotoOpacidade : 100; if(_o){ _o.value = _v; } if(_ov) _ov.textContent = _v; }
+    { const _o = document.getElementById('footerFotoOpac'), _ov = document.getElementById('footerFotoOpacVal'); const _v = (config.footer && config.footer.fotoOpacidade != null) ? config.footer.fotoOpacidade : 100; if(_o){ _o.value = _v; } if(_ov) _ov.textContent = _v; }
     { const _ac = document.getElementById('azulejoCor'); if(_ac) _ac.value = config.azulejoCor || '#2a5aa8'; }
     document.getElementById('fundoImagemAtual').textContent = fundo.imagem ? ('Imagem atual: ' + fundo.imagem) : 'Sem imagem escolhida.';
     document.getElementById('redeInstagram').value = (config.redes && config.redes.instagram) || '';
@@ -2066,6 +2075,10 @@
     if(_cd) _cd.addEventListener('input', () => { if(_cdv) _cdv.textContent = _cd.value; });
     const _ci = document.getElementById('fundoAnimInt'), _civ = document.getElementById('fundoAnimIntVal');
     if(_ci) _ci.addEventListener('input', () => { if(_civ) _civ.textContent = _ci.value; }); }
+  [['fundoOpac','fundoOpacVal'],['headerFotoOpac','headerFotoOpacVal'],['footerFotoOpac','footerFotoOpacVal']].forEach(function(p){
+    const _s = document.getElementById(p[0]), _v = document.getElementById(p[1]);
+    if(_s) _s.addEventListener('input', () => { if(_v) _v.textContent = _s.value; });
+  });
   document.getElementById('modeloSel').addEventListener('change', e => {
     document.getElementById('cadernoBox').style.display = (e.target.value === 'caderno') ? 'block' : 'none';
     document.getElementById('sliderCorBox').style.display = (e.target.value === 'slider') ? 'block' : 'none';
@@ -2334,6 +2347,7 @@
       config.rodape.linha3 = document.getElementById('linha3').value.trim();
       config.rodape.linha4 = document.getElementById('linha4').value.trim();
       config.header.fotosAtivas = document.getElementById('fotosHeaderAtivas').checked;
+      config.header.fotoOpacidade = parseInt((document.getElementById('headerFotoOpac') || {}).value, 10) || 100;
       config.rodape.fotosAtivas = document.getElementById('fotosRodapeAtivas').checked;
       config.header.cor = (document.getElementById('hTitCor') ? document.getElementById('hTitCor').value : (config.header.cor || '#ffffff'));
       config.header.estiloTitulo = lerEstilo('hTit');
@@ -2393,6 +2407,7 @@
         link: document.getElementById('footerLink').value.trim(),
         cor: (document.getElementById('fNomCor') ? document.getElementById('fNomCor').value : (config.footer.cor || '#ffffff')),
         fotosAtivas: document.getElementById('fotosFooterAtivas').checked,
+        fotoOpacidade: parseInt((document.getElementById('footerFotoOpac') || {}).value, 10) || 100,
         fotos: config.footer.fotos,
         fotoZoom: config.footer.fotoZoom || 100,
         fotoPanX: config.footer.fotoPanX || 0,
@@ -2480,7 +2495,8 @@
       config.fundo = {
         tipo: document.getElementById('fundoTipoSel').value,
         imagem: (config.fundo && config.fundo.imagem) || '',
-        textura: document.getElementById('fundoTexturaSel').value
+        textura: document.getElementById('fundoTexturaSel').value,
+        opacidade: parseInt((document.getElementById('fundoOpac') || {}).value, 10) || 100
       };
       { const _ca = document.getElementById('fundoAnimAtivo'), _cd = document.getElementById('fundoAnimDur'), _ci = document.getElementById('fundoAnimInt');
         config.fundoAnim = {
