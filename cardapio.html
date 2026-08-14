@@ -323,6 +323,26 @@
   body.tiles-grande.modelo-grelha .tile-emoji{ font-size:2.6rem; }
   body.tiles-grande.modelo-grelha .tile-label{ font-size:clamp(0.72rem, 3.3vw, 1.02rem); }
 
+  /* ===== Modelo "grelha redonda" (círculos — opaco a cor ou com foto) ===== */
+  body.modelo-grelha-redonda .categoria-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(104px, 1fr)); gap:16px 12px; align-content:start; justify-items:center; background:transparent; border:none; padding:16px 14px 26px; }
+  body.modelo-grelha-redonda .tile{ flex-direction:column; align-items:center; justify-content:center; aspect-ratio:1 / 1; width:100%; max-width:132px; min-height:0; gap:5px; padding:12px; border-radius:50% !important; overflow:hidden; text-align:center; box-shadow:0 5px 16px rgba(0,0,0,.18) !important; }
+  body.modelo-grelha-redonda .tile:active{ transform:translateY(2px); box-shadow:0 3px 8px rgba(0,0,0,.2) !important; }
+  body.modelo-grelha-redonda .tile-emoji{ display:block; font-size:2rem; line-height:1; }
+  body.modelo-grelha-redonda .tile-label{ font-size:clamp(0.54rem, 2.5vw, 0.8rem); letter-spacing:.2px; max-width:94%; overflow-wrap:anywhere; word-break:break-word; line-height:1.12; }
+  /* tile com cor escolhida = círculo opaco a essa cor, texto branco */
+  body.modelo-grelha-redonda .tile[data-cor]{ background:var(--cat-cor) !important; }
+  body.modelo-grelha-redonda .tile[data-cor] .tile-label{ color:#fff !important; text-shadow:0 1px 3px rgba(0,0,0,.4); }
+  /* tile com foto = foto a preencher o círculo + véu + nome branco centrado */
+  body.modelo-grelha-redonda .tile.tile-tem-foto{ justify-content:center !important; padding:12px; border:none !important; }
+  body.modelo-grelha-redonda .tile.tile-tem-foto .tile-foto-shade{ background:linear-gradient(to top, rgba(0,0,0,.5), rgba(0,0,0,.15)); }
+  /* acompanha o tamanho dos separadores */
+  body.tiles-pequeno.modelo-grelha-redonda .categoria-grid{ grid-template-columns:repeat(auto-fill, minmax(84px, 1fr)); }
+  body.tiles-pequeno.modelo-grelha-redonda .tile-emoji{ font-size:1.6rem; }
+  body.tiles-pequeno.modelo-grelha-redonda .tile-label{ font-size:clamp(0.5rem, 2.3vw, 0.72rem); }
+  body.tiles-grande.modelo-grelha-redonda .categoria-grid{ grid-template-columns:repeat(auto-fill, minmax(132px, 1fr)); }
+  body.tiles-grande.modelo-grelha-redonda .tile-emoji{ font-size:2.5rem; }
+  body.tiles-grande.modelo-grelha-redonda .tile-label{ font-size:clamp(0.7rem, 3.2vw, 1rem); }
+
   /* ===== Cartões de vidro (transparentes com pequeno blur à volta) ===== */
   body.tiles-vidro .tile,
   body.tiles-vidro .tile:nth-child(odd),
@@ -2847,6 +2867,7 @@
       if(config.fonteTexto && FONTES_TITULO[config.fonteTexto]){ document.documentElement.style.setProperty('--fonte-texto', FONTES_TITULO[config.fonteTexto]); document.body.classList.add('fonte-texto-custom'); }
       else { document.body.classList.remove('fonte-texto-custom'); document.documentElement.style.setProperty('--fonte-texto', "'Nunito', sans-serif"); }
       document.body.classList.toggle('modelo-grelha', (config.modelo || 'lista') === 'grelha');
+      document.body.classList.toggle('modelo-grelha-redonda', (config.modelo || 'lista') === 'grelha-redonda');
       document.body.classList.toggle('modelo-caderno', (config.modelo || 'lista') === 'caderno');
       document.body.classList.toggle('modelo-ardosia', (config.modelo || 'lista') === 'ardosia');
       document.body.classList.toggle('modelo-elegante', (config.modelo || 'lista') === 'elegante');
