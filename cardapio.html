@@ -207,7 +207,10 @@
   body.fundo-visivel{ background-color:var(--bege-claro); }
   body.fundo-visivel .categoria-grid{ background:transparent; border-bottom:none; }
   /* Imagem de fundo: camada fixa ao ecrã (não estica com a página) + véu por cima */
-  body.fundo-imagem::before{ content:''; position:fixed; inset:0; z-index:-2; background-image:var(--fundo-img); background-size:cover; background-position:center; background-repeat:no-repeat; }
+  body.fundo-imagem::before{ content:''; position:fixed; inset:0; z-index:-2; background-image:var(--fundo-img); background-size:cover; background-position:center; background-repeat:no-repeat; transform-origin:center; will-change:transform; animation:fundoZoom 28s ease-in-out infinite alternate; }
+  /* Movimento lento da foto de fundo: zoom out e volta a aproximar, sem cortes */
+  @keyframes fundoZoom{ from{ transform:scale(1.12); } to{ transform:scale(1); } }
+  @media (prefers-reduced-motion: reduce){ body.fundo-imagem::before{ animation:none; } }
   body.fundo-imagem::after{ content:''; position:fixed; inset:0; z-index:-1; background:var(--fundo-veil, rgba(255,255,255,0.72)); pointer-events:none; }
   .tile{
     width:100%;
