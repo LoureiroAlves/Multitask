@@ -880,10 +880,11 @@
   #wipeFx .wf-stripes b{ display:block; height:100%; background:var(--wipe-cor,#a8712f); transform:translateY(var(--fy,-115%)); }
   #wipeFx.play.wf-stripes .wf-stripes b{ animation:wfStripe var(--wipe-dur,1.1s) cubic-bezier(.6,0,.4,1) forwards; }
   @keyframes wfStripe{ 0%{transform:translateY(var(--fy,-115%))} 46%{transform:translateY(0)} 54%{transform:translateY(0)} 100%{transform:translateY(var(--fy,-115%))} }
-  /* Losangos em movimento diagonal (tapete de losangos a atravessar) */
-  #wipeFx .wf-losangos{ inset:-30%; background-color:var(--wipe-cor,#a8712f); background-image:repeating-linear-gradient(45deg, rgba(255,255,255,.12) 0 2px, transparent 2px 46px), repeating-linear-gradient(-45deg, rgba(255,255,255,.12) 0 2px, transparent 2px 46px); transform:translate(-155%,-155%); }
-  #wipeFx.play.wf-losangos .wf-losangos{ animation:wfLosSlide var(--wipe-dur,1.1s) cubic-bezier(.6,0,.4,1) forwards; }
-  @keyframes wfLosSlide{ 0%{transform:translate(-155%,-155%)} 46%{transform:translate(0,0)} 54%{transform:translate(0,0)} 100%{transform:translate(155%,155%)} }
+  /* Losangos individuais em 3D — voam em direção ao ecrã, desfasados na diagonal */
+  #wipeFx .wf-losangos{ inset:0; perspective:900px; }
+  #wipeFx .wf-losangos i{ position:absolute; width:27vmax; height:27vmax; margin:-13.5vmax 0 0 -13.5vmax; background:var(--wipe-cor,#a8712f); }
+  #wipeFx.play.wf-losangos .wf-losangos i{ animation:wfLos3d var(--wipe-dur,1.1s) cubic-bezier(.5,0,.3,1) both; }
+  @keyframes wfLos3d{ 0%{ transform:translateZ(-640px) rotate(45deg) scale(.5); opacity:0; } 22%{ opacity:1; } 30%{ transform:translateZ(0) rotate(45deg) scale(1); opacity:1; } 72%{ transform:translateZ(0) rotate(45deg) scale(1); opacity:1; } 100%{ transform:translateZ(460px) rotate(45deg) scale(1.25); opacity:0; } }
 
   /* ===== Efeitos de abertura das secções (config.abrirEfeito → classe body.abrir-*) ===== */
   /* "zoom" é o comportamento base (scale a partir do separador tocado) — sem classe própria */
@@ -2528,11 +2529,22 @@
       if(estilo === 'stripes'){
         const cont = fx.querySelector('.wf-stripes'); cont.innerHTML = '';
         [9,15,7,18,11,16,8,16].forEach(function(w, i){ const b = document.createElement('b'); b.style.width = w + '%'; b.style.setProperty('--fy', (i % 2 ? '115%' : '-115%')); cont.appendChild(b); });
+      } else if(estilo === 'losangos'){
+        const cont = fx.querySelector('.wf-losangos'); cont.innerHTML = '';
+        const cols = 4, rows = 5;
+        for(let r = 0; r < rows; r++){ for(let c = 0; c < cols; c++){
+          const i = document.createElement('i');
+          i.style.left = ((c + 0.5) / cols * 100) + '%';
+          i.style.top = ((r + 0.5) / rows * 100) + '%';
+          i.style.animationDelay = ((r + c) * dur * 0.02).toFixed(3) + 's';
+          cont.appendChild(i);
+        } }
+        coverFrac = 0.60;
       }
       fx.classList.add('play', 'wf-' + estilo);
     }
     if(onCover) setTimeout(onCover, Math.round(dur * 1000 * coverFrac));
-    setTimeout(function(){ fx.className = ''; }, Math.round(dur * 1000) + 80);
+    setTimeout(function(){ fx.className = ''; }, Math.round(dur * 1000 * 1.25) + 80);
   };
 
   function abrirCategoria(tile){
