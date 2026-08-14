@@ -309,6 +309,25 @@
   body.tiles-grande.modelo-grelha .tile-emoji{ font-size:2.6rem; }
   body.tiles-grande.modelo-grelha .tile-label{ font-size:clamp(0.72rem, 3.3vw, 1.02rem); }
 
+  /* ===== Cartões de vidro (transparentes com pequeno blur à volta) ===== */
+  body.tiles-vidro .tile,
+  body.tiles-vidro .tile:nth-child(odd),
+  body.tiles-vidro .tile:nth-child(even){
+    background:rgba(255,255,255,0.10) !important;
+    -webkit-backdrop-filter:blur(7px) saturate(1.25);
+    backdrop-filter:blur(7px) saturate(1.25);
+    border:1px solid rgba(255,255,255,0.28) !important;
+    box-shadow:0 4px 20px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.35) !important;
+  }
+  body.tiles-vidro .tile:active{ transform:translateY(2px); box-shadow:0 2px 8px rgba(0,0,0,0.16) !important; }
+  body.tiles-vidro .tile .tile-label,
+  body.tiles-vidro .tile:nth-child(odd) .tile-label,
+  body.tiles-vidro .tile:nth-child(even) .tile-label{
+    color:#fff;
+    text-shadow:0 1px 3px rgba(0,0,0,0.45);
+  }
+  body.tiles-vidro .tile.tile-cor-txt .tile-label{ color:var(--tile-txt) !important; text-shadow:0 1px 2px rgba(0,0,0,0.30); }
+
   /* Entrada em cascata dos separadores */
   @keyframes tileEntrar{ from{ opacity:0; transform:translateY(18px); } to{ opacity:1; transform:translateY(0); } }
   .tile.tile-espera{ opacity:0; }
@@ -3254,6 +3273,7 @@
       document.body.classList.remove('tiles-pequeno','tiles-grande');
       if(config.tileTamanho === 'pequeno') document.body.classList.add('tiles-pequeno');
       else if(config.tileTamanho === 'grande') document.body.classList.add('tiles-grande');
+      document.body.classList.toggle('tiles-vidro', config.tilesVidro === true);
       // Fundo do cardápio (liso / gradiente / imagem / textura)
       document.body.classList.remove('textura-pontos','textura-grelha','textura-diagonal','textura-linho','textura-xadrez','textura-favo','textura-relevo','textura-almofada','textura-azulejo-classico','textura-azulejo-floral','textura-azulejo-geometrico');
       const _tipoFundo = (config.fundo && config.fundo.tipo) || 'liso';
