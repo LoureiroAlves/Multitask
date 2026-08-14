@@ -1134,8 +1134,8 @@
     <summary>🧹 Limpeza de fotos (avançado)</summary>
     <div class="bloco-conteudo">
       <div style="font-size:0.82rem; color:var(--castanho-suave); margin-bottom:8px;">
-        Mostra as fotos da pasta <code>imagens/</code> que já <strong>não são usadas</strong> em lado nenhum, para as poderes apagar e libertar espaço.
-        <br><br>⚠️ As fotos que abrem ao <strong>clicar num prato</strong> não aparecem no config — para segurança, só ficam pré-selecionadas as fotos carregadas por este editor.
+        Mostra as fotos guardadas deste negócio que já <strong>não são usadas</strong> em lado nenhum (nem no layout nem no menu), para as poderes apagar e libertar espaço.
+        <br><br>✅ A verificação é segura: analisa <strong>todas</strong> as fotos usadas — cabeçalho, fundo, secções, pratos, mosaico, publicidade — por isso só marca como "livre" as que mesmo não estão em uso. Ainda assim, confere a lista antes de apagar (a remoção é definitiva).
       </div>
       <button type="button" class="acao" id="btnVerLimpeza" style="background:var(--castanho); margin-top:0;">🔍 Verificar fotos não usadas</button>
       <div id="limpezaResultado" style="margin-top:12px;"></div>
@@ -2908,75 +2908,104 @@
   // ---- Limpeza de fotos não usadas ----
   document.getElementById('btnVerLimpeza').addEventListener('click', verificarFotosNaoUsadas);
 
+  // Recolhe recursivamente TODOS os caminhos de foto ('pasta/ficheiro') referenciados,
+  // esteja a foto onde estiver no config/menu — assim nunca marca como "livre" uma que esteja em uso.
+  function _coletarFotosUsadas(obj, set){
+    if(obj == null) return;
+    if(typeof obj === 'string'){
+      const i = obj.indexOf('/imagens/');
+      if(i >= 0){ set.add(obj.slice(i + '/imagens/'.length).split('?')[0]); }
+      return;
+    }
+    if(Array.isArray(obj)){ obj.forEach(function(x){ _coletarFotosUsadas(x, set); }); return; }
+    if(typeof obj === 'object'){ for(const k in obj){ if(Object.prototype.hasOwnProperty.call(obj, k)) _coletarFotosUsadas(obj[k], set); } }
+  }
+
+  async function _sessaoToken(){
+    let session = (await sbc.auth.getSession()).data.session;
+    if(session){ try{ const rr = await sbc.auth.refreshSession(); if(rr.data && rr.data.session) session = rr.data.session; }catch(e){} }
+    return (session && session.access_token) ? session.access_token : null;
+  }
+
   async function verificarFotosNaoUsadas(){
     const out = document.getElementById('limpezaResultado');
-    if(out) out.innerHTML = '<div style="font-size:0.85rem;color:var(--castanho-suave);">Neste modo, as fotos ficam no teu armazenamento e não é preciso limpeza manual.</div>';
-    return;
-    const token = tokenInput.value.trim();
+    if(!out) return;
+    out.innerHTML = '<div style="font-size:0.85rem;color:var(--castanho-suave);">A verificar as fotos…</div>';
     try{
-      // Fotos usadas (config atual, fresco via API)
-      let usados = [];
-      const cResp = await fetch(CONFIG_API + '?t=' + Date.now(), { headers:{ 'Authorization':'Bearer '+token, 'Accept':'application/vnd.github+json' } });
-      if(cResp.ok){
-        const cData = await cResp.json();
-        const cfg = JSON.parse(base64ParaUtf8(cData.content));
-        const grp = o => (o && Array.isArray(o.fotos)) ? o.fotos : [];
-        usados = [].concat(grp(cfg.header), grp(cfg.rodape), grp(cfg.footer));
-        if(cfg.adJogos && cfg.adJogos.foto) usados.push(cfg.adJogos.foto);
-      }
-      // Listagem da pasta imagens/
-      const lResp = await fetch('https://api.github.com/repos/' + REPO + '/contents/imagens?t=' + Date.now(), { headers:{ 'Authorization':'Bearer '+token, 'Accept':'application/vnd.github+json' } });
-      if(!lResp.ok){ out.innerHTML = '<div style="color:var(--vermelho);">Não consegui listar a pasta imagens/ (verifica o token).</div>'; return; }
-      const ficheiros = (await lResp.json()).filter(f => f.type === 'file');
+      // 1) Fotos USADAS — varre o config e o menu, tanto a versão em memória como a gravada
+      const usadas = new Set();
+      try{ _coletarFotosUsadas(config, usadas); }catch(e){}
+      try{ _coletarFotosUsadas(window.__getMenuPreview && window.__getMenuPreview(), usadas); }catch(e){}
+      try{ if(window.__negocio){ _coletarFotosUsadas(window.__negocio.config, usadas); _coletarFotosUsadas(window.__negocio.menu, usadas); } }catch(e){}
 
-      const naoUsadas = ficheiros.filter(f => !usados.includes('imagens/' + f.name));
+      // 2) Pastas deste negócio (slug atual + as pastas referenciadas nas fotos usadas)
+      const pastas = new Set();
+      if(SLUG) pastas.add(SLUG);
+      usadas.forEach(function(p){ const s = p.indexOf('/'); if(s > 0) pastas.add(p.slice(0, s)); });
+
+      // 3) Sessão
+      const token = await _sessaoToken();
+      if(!token){ out.innerHTML = '<div style="color:var(--vermelho);">A tua sessão expirou. Sai e volta a entrar, depois tenta outra vez.</div>'; return; }
+      const H = { 'Authorization':'Bearer '+token, 'apikey':SUPA_KEY, 'Content-Type':'application/json' };
+
+      // 4) Lista os ficheiros de cada pasta deste negócio
+      let ficheiros = [];
+      for(const pasta of pastas){
+        const r = await fetch(SUPA_URL + '/storage/v1/object/list/imagens', {
+          method:'POST', headers:H,
+          body: JSON.stringify({ prefix: pasta + '/', limit: 1000, sortBy:{ column:'name', order:'asc' } })
+        });
+        if(!r.ok) continue;
+        const items = await r.json();
+        (items || []).forEach(function(it){ if(it && it.name && it.id) ficheiros.push({ path: pasta + '/' + it.name, nome: it.name }); });
+      }
+
+      // 5) Cruza: livre = está no armazenamento mas não é referenciada em lado nenhum
+      const naoUsadas = ficheiros.filter(function(f){ return !usadas.has(f.path); });
       const emUso = ficheiros.length - naoUsadas.length;
 
-      if(naoUsadas.length === 0){
-        out.innerHTML = '<div style="color:var(--verde);font-size:0.9rem;">✓ Não há fotos por limpar. ' + emUso + ' em uso.</div>';
-        return;
-      }
+      if(ficheiros.length === 0){ out.innerHTML = '<div style="color:var(--castanho-suave);">Não encontrei fotos no armazenamento deste negócio.</div>'; return; }
+      if(naoUsadas.length === 0){ out.innerHTML = '<div style="color:var(--verde);font-size:0.9rem;">✓ Não há fotos por limpar. ' + emUso + ' em uso.</div>'; return; }
 
-      let html = '<div style="font-size:0.85rem;margin-bottom:8px;">' + ficheiros.length + ' fotos na pasta · <strong>' + emUso + '</strong> em uso · <strong style="color:var(--vermelho);">' + naoUsadas.length + '</strong> não usadas</div>';
+      let html = '<div style="font-size:0.85rem;margin-bottom:8px;">' + ficheiros.length + ' fotos · <strong>' + emUso + '</strong> em uso · <strong style="color:var(--vermelho);">' + naoUsadas.length + '</strong> não usadas</div>';
       html += '<div class="limpeza-linha" style="background:var(--bege);border-radius:8px;"><input type="checkbox" id="limpezaTodas" checked><span class="nome" style="font-weight:700;color:var(--castanho);">Selecionar todas</span></div>';
-      naoUsadas.forEach(f => {
+      naoUsadas.forEach(function(f){
         html += '<div class="limpeza-linha">' +
-          '<input type="checkbox" class="limpeza-check" data-path="' + f.path + '" data-sha="' + f.sha + '" checked>' +
-          '<img src="' + RAW_BASE + f.path + '" alt="" loading="lazy">' +
-          '<span class="nome">' + f.name + '</span>' +
+          '<input type="checkbox" class="limpeza-check" data-path="' + f.path + '" checked>' +
+          '<img src="' + SUPA_URL + '/storage/v1/object/public/imagens/' + f.path + '" alt="" loading="lazy">' +
+          '<span class="nome">' + f.nome + '</span>' +
           '<span class="limpeza-tag livre">livre</span>' +
           '</div>';
       });
-      html += '<button type="button" class="btn-apagar" id="btnApagarFotos">🗑️ Apagar selecionadas</button>';
+      html += '<button type="button" class="btn-apagar" id="btnApagarFotos" style="margin-top:10px;">🗑️ Apagar selecionadas</button>';
       out.innerHTML = html;
       document.getElementById('btnApagarFotos').addEventListener('click', apagarFotosSelecionadas);
-      document.getElementById('limpezaTodas').addEventListener('change', e => {
-        document.querySelectorAll('.limpeza-check').forEach(c => { c.checked = e.target.checked; });
+      document.getElementById('limpezaTodas').addEventListener('change', function(e){
+        document.querySelectorAll('.limpeza-check').forEach(function(c){ c.checked = e.target.checked; });
       });
     }catch(err){
-      out.innerHTML = '<div style="color:var(--vermelho);">Erro: ' + err.message + '</div>';
+      out.innerHTML = '<div style="color:var(--vermelho);">Erro: ' + (err && err.message ? err.message : err) + '</div>';
     }
   }
 
   async function apagarFotosSelecionadas(){
-    const token = tokenInput.value.trim();
     const checks = Array.from(document.querySelectorAll('.limpeza-check:checked'));
     if(checks.length === 0){ alert('Não selecionaste nenhuma foto.'); return; }
-    if(!confirm('Apagar ' + checks.length + ' foto(s) do GitHub?\n\nElas ficam no histórico do Git, mas deixam de estar na pasta.')) return;
-    const btn = document.getElementById('btnApagarFotos');
-    btn.disabled = true;
-    let apagadas = 0;
+    if(!confirm('Apagar ' + checks.length + ' foto(s) do armazenamento?\n\nEsta ação é definitiva e não pode ser desfeita.')) return;
+    const token = await _sessaoToken();
+    if(!token){ setEstado('A tua sessão expirou. Sai e volta a entrar.', 'erro'); return; }
+    const btn = document.getElementById('btnApagarFotos'); if(btn) btn.disabled = true;
+    let apagadas = 0, falhas = 0;
     for(const ch of checks){
       try{
-        const r = await fetch('https://api.github.com/repos/' + REPO + '/contents/' + ch.dataset.path, {
+        const r = await fetch(SUPA_URL + '/storage/v1/object/imagens/' + ch.dataset.path, {
           method:'DELETE',
-          headers:{ 'Authorization':'Bearer '+token, 'Accept':'application/vnd.github+json', 'Content-Type':'application/json' },
-          body: JSON.stringify({ message:'Apagar foto não usada: ' + ch.dataset.path, sha: ch.dataset.sha })
+          headers:{ 'Authorization':'Bearer '+token, 'apikey':SUPA_KEY }
         });
-        if(r.ok) apagadas++;
-      }catch(e){ /* continua */ }
+        if(r.ok) apagadas++; else falhas++;
+      }catch(e){ falhas++; }
     }
-    setEstado('🧹 ' + apagadas + ' foto(s) apagada(s).', 'ok');
+    setEstado('🧹 ' + apagadas + ' foto(s) apagada(s)' + (falhas ? ' · ' + falhas + ' falharam' : '') + '.', falhas ? 'erro' : 'ok');
     verificarFotosNaoUsadas();
   }
 
