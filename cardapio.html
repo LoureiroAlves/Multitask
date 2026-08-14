@@ -630,6 +630,7 @@
   /* ===== Mosaico (bento, estilo widgets do iPhone) ===== */
   #mosaicoGrid{ display:none; }
   body.mosaico-on #mosaicoGrid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; max-width:640px; margin:0 auto; padding:14px 14px 6px; }
+  .mos-grid-sec{ display:grid; grid-template-columns:1fr 1fr; gap:12px; max-width:640px; margin:12px auto 6px; padding:0 4px; }
   .mos-box{ position:relative; display:block; overflow:hidden; border-radius:22px; background:var(--cat-cor, #3a3a44); min-height:120px; padding:14px; text-align:left; border:none; box-shadow:0 4px 14px rgba(0,0,0,.14); -webkit-tap-highlight-color:transparent; }
   .mos-box[data-target]{ cursor:pointer; }
   .mos-box[data-target]:active{ transform:scale(.985); }
@@ -2214,23 +2215,19 @@
   // Renderiza os blocos de conteúdo da página (construtor): título, parágrafo, imagem, botão, separador, espaço
   // ===== Mosaico (bento) — módulo à parte =====
   // Arrastar o texto dentro da caixa (só na pré-visualização); avisa o editor da nova posição
-  function _mosDragText(box, el, idx){
+  function _mosDragText(box, el, idx, sec){
     el.style.cursor = 'move'; el.style.touchAction = 'none';
     var drag = false, moveu = false, nx = 0, ny = 0;
     el.addEventListener('click', function(ev){ if(moveu){ ev.preventDefault(); ev.stopPropagation(); } });
     el.addEventListener('pointerdown', function(ev){ ev.preventDefault(); ev.stopPropagation(); drag = true; moveu = false; try{ el.setPointerCapture(ev.pointerId); }catch(e){} });
     el.addEventListener('pointermove', function(ev){ if(!drag) return; moveu = true; var r = box.getBoundingClientRect(); nx = Math.max(1, Math.min(90, ((ev.clientX - r.left) / r.width) * 100)); ny = Math.max(1, Math.min(92, ((ev.clientY - r.top) / r.height) * 100)); el.style.left = nx + '%'; el.style.top = ny + '%'; });
-    el.addEventListener('pointerup', function(ev){ if(!drag) return; drag = false; if(moveu){ try{ parent.postMessage({ type:'mosaico-pos', idx:idx, x:Math.round(nx), y:Math.round(ny) }, '*'); }catch(e){} } });
+    el.addEventListener('pointerup', function(ev){ if(!drag) return; drag = false; if(moveu){ try{ parent.postMessage({ type:'mosaico-pos', sec:(sec || null), idx:idx, x:Math.round(nx), y:Math.round(ny) }, '*'); }catch(e){} } });
     el.addEventListener('pointercancel', function(){ drag = false; });
   }
-  window.renderMosaico = function(mos){
-    const grid = document.getElementById('mosaicoGrid');
-    if(!grid) return;
+  // Constrói as caixas do mosaico dentro de um grid qualquer (mosaico principal ou de uma secção)
+  function _mosBuildInto(grid, caixas, sec){
     grid.innerHTML = '';
-    const on = !!(mos && mos.ativo && Array.isArray(mos.caixas) && mos.caixas.length);
-    document.body.classList.toggle('mosaico-on', on);
-    if(!on) return;
-    mos.caixas.forEach(function(c, i){
+    (caixas || []).forEach(function(c, i){
       if(!c) return;
       const b = document.createElement(c.link ? 'button' : 'div');
       b.className = 'mos-box tam-' + (c.tam || 'p');
@@ -2248,10 +2245,20 @@
       if(c.titulo){ const t = document.createElement('div'); t.className = 'mos-tit'; t.textContent = c.titulo; if(est.tamanho) t.style.fontSize = est.tamanho + 'rem'; if(est.negrito) t.style.fontWeight = '800'; if(est.italico) t.style.fontStyle = 'italic'; tx.appendChild(t); }
       if(c.subtitulo){ const s = document.createElement('div'); s.className = 'mos-sub'; s.textContent = c.subtitulo; if(est.italico) s.style.fontStyle = 'italic'; tx.appendChild(s); }
       b.appendChild(tx);
-      if(window.__PREVIEW){ _mosDragText(b, tx, i); }
+      if(window.__PREVIEW){ _mosDragText(b, tx, i, sec); }
       grid.appendChild(b);
     });
+  }
+  window.renderMosaico = function(mos){
+    const grid = document.getElementById('mosaicoGrid');
+    if(!grid) return;
+    const on = !!(mos && mos.ativo && Array.isArray(mos.caixas) && mos.caixas.length);
+    document.body.classList.toggle('mosaico-on', on);
+    if(!on){ grid.innerHTML = ''; return; }
+    _mosBuildInto(grid, mos.caixas, null);
   };
+  // Mosaico dentro de uma secção (usa o id da secção para o arrasto no editor)
+  window.renderMosaicoSeccao = function(grid, caixas, catId){ _mosBuildInto(grid, caixas, catId); };
   // Tocar numa caixa que aponta para uma secção abre essa secção (reutiliza o menu)
   document.addEventListener('click', function(e){
     const mb = e.target && e.target.closest ? e.target.closest('.mos-box[data-target]') : null;
@@ -2336,7 +2343,12 @@
         if(_bg) sec.dataset.pdBg = _bg;
         const _bt = document.createElement('div'); _bt.className = 'pratodia-tit'; _mLang(_bt, cat.tile); sec.appendChild(_bt);
       }
-      if(cat.tipo === 'vinhos'){
+      const _temMosSec = cat.mosaicoAtivo && cat.mosaico && Array.isArray(cat.mosaico.caixas) && cat.mosaico.caixas.length;
+      if(_temMosSec){
+        const _mg = document.createElement('div'); _mg.className = 'mos-grid-sec';
+        sec.appendChild(_mg);
+        try{ if(window.renderMosaicoSeccao) window.renderMosaicoSeccao(_mg, cat.mosaico.caixas, cat.id); }catch(e){}
+      } else if(cat.tipo === 'vinhos'){
         if(cat.h2){ const h2=document.createElement('h2'); _mLang(h2, cat.h2); sec.appendChild(h2); }
         if(cat.subtitulo){ const s=document.createElement('div'); s.className='subtitulo'; _mLang(s, cat.subtitulo); sec.appendChild(s); }
         (cat.grupos||[]).forEach(g => sec.appendChild(_mGrupo(g, 'grupo-vinho')));
