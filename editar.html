@@ -1241,6 +1241,7 @@
       }, 70);
     }
     renderQR();
+    window.__renderQR = renderQR;
     const _tit = document.getElementById('titulo');
     if(_tit){ let _qt; _tit.addEventListener('input', function(){ clearTimeout(_qt); _qt = setTimeout(renderQR, 400); }); }
     const btnCopiar = document.getElementById('btnCopiarLink');
@@ -3866,6 +3867,7 @@
       const es = document.getElementById('editorSub'); if(es) es.textContent = 'A editar: ' + neg.nome;
       try{ aplicarGating(window.__ent); }catch(e){}
       await carregarConfig();
+      try{ if(window.__renderQR) window.__renderQR(); }catch(e){}
       if(window.__carregarMenu){ try{ await window.__carregarMenu(); }catch(e){} }
       try{ if(window.__agendarPreview) window.__agendarPreview(); }catch(e){}
     }
