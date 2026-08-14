@@ -180,6 +180,7 @@
 </div>
 <div class="wrap">
   <a class="voltar" href="cardapio.html">← Voltar ao cardápio</a>
+  <button type="button" id="btnSair" style="display:none; float:right; background:none; border:1px solid var(--linha); color:var(--castanho-suave); padding:6px 12px; border-radius:8px; font-size:0.8rem; cursor:pointer;">Sair da conta</button>
   <h1>Editar Cardápio</h1>
   <div class="subtitulo" id="editorSub">Edita o teu cardápio. As alterações são guardadas na tua conta.</div>
   <div style="display:none;" aria-hidden="true">
@@ -3860,6 +3861,8 @@
       window.__negocio = neg; window.__ent = ent || { plano:'basico', funcoes:{}, publicidade:{} };
       window.__admin = admin;
       ov.style.display = 'none';
+      { const bs = document.getElementById('btnSair');
+        if(bs){ bs.style.display = 'inline-block'; bs.onclick = async function(){ if(!confirm('Terminar sessão?')) return; try{ await sbc.auth.signOut(); }catch(e){} location.reload(); }; } }
       const es = document.getElementById('editorSub'); if(es) es.textContent = 'A editar: ' + neg.nome;
       try{ aplicarGating(window.__ent); }catch(e){}
       await carregarConfig();
