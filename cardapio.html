@@ -813,6 +813,11 @@
     pointer-events:none;
     transition:transform .38s cubic-bezier(.22,.8,.25,1), opacity .28s ease, visibility 0s linear .4s;
   }
+  /* Secção "Prato do Dia": título grande + fundo próprio no painel */
+  .pratodia-tit{ font-family:var(--fonte-titulo); font-weight:800; font-size:clamp(2rem, 8vw, 2.8rem); line-height:1.02; text-align:center; text-transform:uppercase; letter-spacing:1px; margin:8px 0 20px; color:var(--castanho); }
+  .painel-pratodia .pratodia-tit{ color:#fff; text-shadow:0 2px 10px rgba(0,0,0,.35); }
+  .painel-pratodia .categoria-painel-header{ background:transparent !important; box-shadow:none !important; border:none !important; }
+  .painel-pratodia .categoria-painel-header .voltar, .painel-pratodia #painelTitulo{ color:#fff !important; }
   .categoria-painel.aberto{
     transform:scale(1);
     opacity:1;
@@ -2322,6 +2327,15 @@
       const sec = document.createElement('section');
       sec.className = 'categoria'; sec.id = cat.id;
       if(cat.foto){ sec.dataset.foto = cat.foto; const _b = document.createElement('div'); _b.className = 'sec-foto-banner'; _b.style.backgroundImage = "url('" + cat.foto + "')"; sec.appendChild(_b); }
+      if(cat.pratoDia){
+        sec.classList.add('sec-pratodia');
+        const f = cat.fundo || {};
+        let _bg = '';
+        if(f.tipo === 'gradiente') _bg = 'linear-gradient(160deg, ' + (f.cor || '#a8712f') + ', ' + (f.cor2 || '#5a4629') + ')';
+        else if(f.tipo === 'cor') _bg = (f.cor || '#a8712f');
+        if(_bg) sec.dataset.pdBg = _bg;
+        const _bt = document.createElement('div'); _bt.className = 'pratodia-tit'; _mLang(_bt, cat.tile); sec.appendChild(_bt);
+      }
       if(cat.tipo === 'vinhos'){
         if(cat.h2){ const h2=document.createElement('h2'); _mLang(h2, cat.h2); sec.appendChild(h2); }
         if(cat.subtitulo){ const s=document.createElement('div'); s.className='subtitulo'; _mLang(s, cat.subtitulo); sec.appendChild(s); }
@@ -2468,6 +2482,7 @@
 
   function restaurarCategoria(){
     painel.removeEventListener('transitionend', _restaurarPendente);
+    painel.style.background = ''; painel.classList.remove('painel-pratodia');
     var mainEl = document.querySelector('main');
     var jogosSec = document.getElementById('jogos');
     function devolver(sec){
@@ -2602,6 +2617,8 @@
 
     target.classList.add('ativa');
     painelConteudo.appendChild(target);
+    if(target.classList.contains('sec-pratodia') && target.dataset.pdBg){ painel.style.background = target.dataset.pdBg; painel.classList.add('painel-pratodia'); }
+    else { painel.style.background = ''; painel.classList.remove('painel-pratodia'); }
 
     document.querySelectorAll('.grupo-prato, .grupo-vinho').forEach(det => { det.open = false; });
     const grupo = target.querySelector('.grupo-prato');
@@ -5700,6 +5717,7 @@
       const _ativo = _cartCfg().ativo;
       document.querySelectorAll('main .item').forEach(item => {
         if(item.closest('#jogos')) return;
+        if(item.closest('.sec-pratodia')){ const _e = item.querySelector('.btn-add-lista'); if(_e) _e.remove(); return; }
         const _existe = item.querySelector('.btn-add-lista');
         if(!_ativo){ if(_existe) _existe.remove(); return; }
         if(_existe) return;

@@ -3504,6 +3504,30 @@
       ocWrap.appendChild(ocChk); ocWrap.appendChild(document.createTextNode('Esconder do menu principal (só abre pelo mosaico)'));
       p.appendChild(ocWrap);
 
+      // Prato do Dia — secção especial (título grande, sem carrinho, fundo próprio)
+      { const pdWrap=document.createElement('label'); pdWrap.style.cssText='display:flex; align-items:center; gap:8px; margin:2px 0 8px; font-size:0.82rem; color:var(--castanho-suave); cursor:pointer;';
+        const pdChk=document.createElement('input'); pdChk.type='checkbox'; pdChk.style.width='auto'; pdChk.checked=!!cat.pratoDia;
+        pdWrap.appendChild(pdChk); pdWrap.appendChild(document.createTextNode('Secção "Prato do Dia" (título grande, sem carrinho, fundo próprio)'));
+        p.appendChild(pdWrap);
+        const pdBox=document.createElement('div'); pdBox.style.cssText='margin:0 0 10px; padding:10px; border:1.5px solid var(--linha); border-radius:9px; display:'+(cat.pratoDia?'block':'none')+';';
+        cat.fundo=cat.fundo||{ tipo:'gradiente', cor:'#a8712f', cor2:'#5a4629' };
+        const tSel=document.createElement('select'); tSel.style.cssText='width:100%; padding:8px; border-radius:8px; border:1.5px solid var(--linha); font-family:inherit; font-size:0.88rem;';
+        [['gradiente','Degradê (duas cores)'],['cor','Cor sólida']].forEach(function(o){ const op=document.createElement('option'); op.value=o[0]; op.textContent=o[1]; if((cat.fundo.tipo||'gradiente')===o[0]) op.selected=true; tSel.appendChild(op); });
+        const cRow=document.createElement('div'); cRow.style.cssText='display:flex; align-items:center; gap:10px; margin-top:8px; font-size:0.85rem;';
+        const c1=document.createElement('input'); c1.type='color'; c1.value=cat.fundo.cor||'#a8712f';
+        const c2lab=document.createElement('span'); c2lab.textContent='→';
+        const c2=document.createElement('input'); c2.type='color'; c2.value=cat.fundo.cor2||'#5a4629';
+        cRow.appendChild(document.createTextNode('Cor')); cRow.appendChild(c1); cRow.appendChild(c2lab); cRow.appendChild(c2);
+        function _pdSync(){ const g=(tSel.value==='gradiente'); c2.style.display=g?'':'none'; c2lab.style.display=g?'':'none'; }
+        _pdSync();
+        tSel.addEventListener('change',()=>{ cat.fundo.tipo=tSel.value; _pdSync(); if(window.__agendarPreview) window.__agendarPreview(); });
+        c1.addEventListener('input',()=>{ cat.fundo.cor=c1.value; if(window.__agendarPreview) window.__agendarPreview(); });
+        c2.addEventListener('input',()=>{ cat.fundo.cor2=c2.value; if(window.__agendarPreview) window.__agendarPreview(); });
+        pdBox.appendChild(tSel); pdBox.appendChild(cRow);
+        p.appendChild(pdBox);
+        pdChk.addEventListener('change',()=>{ if(pdChk.checked){ cat.pratoDia=true; pdBox.style.display='block'; } else { delete cat.pratoDia; pdBox.style.display='none'; } if(window.__agendarPreview) window.__agendarPreview(); });
+      }
+
       const trd=document.createElement('details'); trd.style.cssText='border:none;background:transparent;margin-bottom:4px;';
       const trs=document.createElement('summary'); trs.textContent='traduções do título'; trs.style.cssText='font-size:0.75rem;color:var(--castanho-suave);';
       trd.appendChild(trs); trd.appendChild(campoTraducoes(tituloObj)); p.appendChild(trd);
