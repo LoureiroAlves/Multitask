@@ -454,6 +454,16 @@
         <div class="subtitulo">Escolhe uma imagem de fundo (fica esbatida por trás dos pratos).</div>
         <input type="file" id="novaFotoFundo" accept="image/*" style="margin-top:8px;">
         <div id="fundoImagemAtual" style="font-size:0.82rem; color:var(--castanho-suave); margin-top:6px;"></div>
+        <label style="display:flex; align-items:center; gap:8px; margin-top:12px; cursor:pointer; font-weight:600;">
+          <input type="checkbox" id="fundoAnimAtivo" style="width:auto; margin:0;">
+          Dar movimento à foto (zoom lento)
+        </label>
+        <div id="fundoAnimBox" style="display:none; margin-top:8px;">
+          <label for="fundoAnimDur" style="font-size:0.85rem;">Duração de cada zoom: <span id="fundoAnimDurVal">28</span>s <span style="color:var(--castanho-suave);">(maior = mais lento)</span></label>
+          <input type="range" id="fundoAnimDur" min="5" max="90" step="1" value="28" style="width:100%;">
+          <label for="fundoAnimInt" style="font-size:0.85rem; margin-top:6px; display:block;">Intensidade do zoom: <span id="fundoAnimIntVal">12</span>%</label>
+          <input type="range" id="fundoAnimInt" min="2" max="40" step="1" value="12" style="width:100%;">
+        </div>
       </div>
     </div>
   </details>
@@ -1281,6 +1291,7 @@
     tilesVidro: false,
     cores: null,
     fundo: { tipo:'liso', imagem:'', textura:'pontos' },
+    fundoAnim: { ativo:true, duracao:28, intensidade:12 },
     textoLivre: { ativo:false, titulo:'', subtitulo:'', cor:'#4a3820', tamanho:2.4, altura:42, x:50, y:50 },
     jogos: true,
     redes: { instagram:'', facebook:'' },
@@ -1526,6 +1537,7 @@
         config.tilesVidro = parsed.tilesVidro === true;
         config.cores = (parsed.cores && typeof parsed.cores === 'object') ? parsed.cores : null;
         config.fundo = Object.assign({ tipo:'liso', imagem:'', textura:'pontos' }, parsed.fundo || {});
+        config.fundoAnim = Object.assign({ ativo:true, duracao:28, intensidade:12 }, parsed.fundoAnim || {});
         config.textoLivre = Object.assign({ ativo:false, titulo:'', subtitulo:'', cor:'#4a3820', tamanho:2.4, altura:42, x:50, y:50 }, parsed.textoLivre || {});
         config.jogos = parsed.jogos !== false;
         config.redes = Object.assign({ instagram:'', facebook:'' }, parsed.redes || {});
@@ -1750,6 +1762,13 @@
     document.getElementById('fundoTipoSel').value = fundo.tipo || 'liso';
     document.getElementById('fundoImagemBox').style.display = (fundo.tipo === 'imagem') ? 'block' : 'none';
     document.getElementById('fundoTexturaBox').style.display = (fundo.tipo === 'textura') ? 'block' : 'none';
+    { const _fa = config.fundoAnim || { ativo:true, duracao:28, intensidade:12 };
+      const _ca = document.getElementById('fundoAnimAtivo'); if(_ca) _ca.checked = _fa.ativo !== false;
+      const _cb = document.getElementById('fundoAnimBox'); if(_cb) _cb.style.display = (_fa.ativo !== false) ? 'block' : 'none';
+      const _cd = document.getElementById('fundoAnimDur'), _cdv = document.getElementById('fundoAnimDurVal');
+      if(_cd){ _cd.value = _fa.duracao || 28; if(_cdv) _cdv.textContent = _cd.value; }
+      const _ci = document.getElementById('fundoAnimInt'), _civ = document.getElementById('fundoAnimIntVal');
+      if(_ci){ _ci.value = _fa.intensidade || 12; if(_civ) _civ.textContent = _ci.value; } }
     document.getElementById('fundoTexturaSel').value = fundo.textura || 'pontos';
     { const _ac = document.getElementById('azulejoCor'); if(_ac) _ac.value = config.azulejoCor || '#2a5aa8'; }
     document.getElementById('fundoImagemAtual').textContent = fundo.imagem ? ('Imagem atual: ' + fundo.imagem) : 'Sem imagem escolhida.';
@@ -1917,6 +1936,12 @@
     document.getElementById('fundoImagemBox').style.display = (e.target.value === 'imagem') ? 'block' : 'none';
     document.getElementById('fundoTexturaBox').style.display = (e.target.value === 'textura') ? 'block' : 'none';
   });
+  { const _ca = document.getElementById('fundoAnimAtivo');
+    if(_ca) _ca.addEventListener('change', e => { document.getElementById('fundoAnimBox').style.display = e.target.checked ? 'block' : 'none'; });
+    const _cd = document.getElementById('fundoAnimDur'), _cdv = document.getElementById('fundoAnimDurVal');
+    if(_cd) _cd.addEventListener('input', () => { if(_cdv) _cdv.textContent = _cd.value; });
+    const _ci = document.getElementById('fundoAnimInt'), _civ = document.getElementById('fundoAnimIntVal');
+    if(_ci) _ci.addEventListener('input', () => { if(_civ) _civ.textContent = _ci.value; }); }
   document.getElementById('modeloSel').addEventListener('change', e => {
     document.getElementById('cadernoBox').style.display = (e.target.value === 'caderno') ? 'block' : 'none';
     document.getElementById('sliderCorBox').style.display = (e.target.value === 'slider') ? 'block' : 'none';
@@ -2291,6 +2316,12 @@
         imagem: (config.fundo && config.fundo.imagem) || '',
         textura: document.getElementById('fundoTexturaSel').value
       };
+      { const _ca = document.getElementById('fundoAnimAtivo'), _cd = document.getElementById('fundoAnimDur'), _ci = document.getElementById('fundoAnimInt');
+        config.fundoAnim = {
+          ativo: _ca ? _ca.checked : true,
+          duracao: _cd ? (parseInt(_cd.value, 10) || 28) : 28,
+          intensidade: _ci ? (parseInt(_ci.value, 10) || 12) : 12
+        }; }
       { const _ac = document.getElementById('azulejoCor'); if(_ac) config.azulejoCor = _ac.value; }
       config.redes = {
         instagram: document.getElementById('redeInstagram').value.trim(),

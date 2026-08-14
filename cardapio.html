@@ -207,10 +207,11 @@
   body.fundo-visivel{ background-color:var(--bege-claro); }
   body.fundo-visivel .categoria-grid{ background:transparent; border-bottom:none; }
   /* Imagem de fundo: camada fixa ao ecrã (não estica com a página) + véu por cima */
-  body.fundo-imagem::before{ content:''; position:fixed; inset:0; z-index:-2; background-image:var(--fundo-img); background-size:cover; background-position:center; background-repeat:no-repeat; transform-origin:center; will-change:transform; animation:fundoZoom 28s ease-in-out infinite alternate; }
-  /* Movimento lento da foto de fundo: zoom out e volta a aproximar, sem cortes */
-  @keyframes fundoZoom{ from{ transform:scale(1.12); } to{ transform:scale(1); } }
-  @media (prefers-reduced-motion: reduce){ body.fundo-imagem::before{ animation:none; } }
+  body.fundo-imagem::before{ content:''; position:fixed; inset:0; z-index:-2; background-image:var(--fundo-img); background-size:cover; background-position:center; background-repeat:no-repeat; transform-origin:center; will-change:transform; }
+  /* Movimento lento da foto de fundo: zoom out e volta a aproximar, sem cortes. Duração e intensidade controladas pelo editor. */
+  body.fundo-imagem.fundo-anim::before{ animation:fundoZoom var(--fundo-anim-dur, 28s) ease-in-out infinite alternate; }
+  @keyframes fundoZoom{ from{ transform:scale(var(--fundo-anim-escala, 1.12)); } to{ transform:scale(1); } }
+  @media (prefers-reduced-motion: reduce){ body.fundo-imagem.fundo-anim::before{ animation:none; } }
   body.fundo-imagem::after{ content:''; position:fixed; inset:0; z-index:-1; background:var(--fundo-veil, rgba(255,255,255,0.72)); pointer-events:none; }
   .tile{
     width:100%;
@@ -2921,7 +2922,7 @@
       document.body.classList.toggle('tiles-vidro', config.tilesVidro === true);
       // Fundo do cardápio (liso / gradiente / imagem / textura)
       document.body.classList.remove('textura-pontos','textura-grelha','textura-diagonal','textura-linho','textura-xadrez','textura-favo','textura-relevo','textura-almofada','textura-azulejo-classico','textura-azulejo-floral','textura-azulejo-geometrico');
-      document.body.classList.remove('fundo-imagem');
+      document.body.classList.remove('fundo-imagem','fundo-anim');
       const _tipoFundo = (config.fundo && config.fundo.tipo) || 'liso';
       const _isCaderno = (config.modelo || 'lista') === 'caderno';
       const _fundoProprio = ['caderno','ardosia','elegante','azulejo'].indexOf(config.modelo || 'lista') >= 0;
@@ -2940,6 +2941,13 @@
           document.body.classList.add('fundo-imagem');
           document.documentElement.style.setProperty('--fundo-img', "url('" + RAW_BASE + config.fundo.imagem + "')");
           document.documentElement.style.setProperty('--fundo-veil', config.tilesVidro === true ? 'rgba(0,0,0,0.30)' : 'rgba(255,255,255,0.72)');
+          { const _fa = config.fundoAnim || {};
+            const _animOn = _fa.ativo !== false;
+            document.body.classList.toggle('fundo-anim', _animOn);
+            const _dur = Math.max(5, Math.min(90, parseFloat(_fa.duracao) || 28));
+            const _int = Math.max(2, Math.min(40, parseFloat(_fa.intensidade) || 12));
+            document.documentElement.style.setProperty('--fundo-anim-dur', _dur + 's');
+            document.documentElement.style.setProperty('--fundo-anim-escala', (1 + _int / 100).toFixed(3)); }
         } else if(config.fundo.tipo === 'textura'){
           document.body.style.background = '';
           const _tex = config.fundo.textura || 'pontos';
