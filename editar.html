@@ -351,6 +351,15 @@
           <span style="font-size:0.9rem;">Cor da faixa</span>
           <input type="color" id="wipeCor" value="#a8712f">
         </div>
+        <div style="margin-top:14px; border-top:1px dotted var(--linha); padding-top:12px;">
+          <span style="font-size:0.9rem; font-weight:600; display:block; margin-bottom:4px;">Imagem de patrocinador (opcional)</span>
+          <span style="font-size:0.82rem; color:var(--castanho-suave); display:block; margin-bottom:8px;">Se puseres uma imagem, é ela que varre o ecrã (em vez da faixa com o nome). Ideal para a arte de um patrocinador.</span>
+          <img id="wipeFotoPrev" src="" alt="" style="display:none; width:130px; height:74px; object-fit:cover; border-radius:8px; border:1px solid var(--linha); margin-bottom:8px;">
+          <div style="display:flex; gap:8px; align-items:center;">
+            <label style="cursor:pointer; border:1px solid var(--linha); border-radius:8px; padding:7px 12px; font-size:0.85rem; background:var(--branco); color:var(--castanho);">＋ imagem<input type="file" id="wipeFotoInput" accept="image/*" style="display:none;"></label>
+            <button type="button" id="wipeFotoRemover" style="display:none; border:1px solid var(--linha); border-radius:8px; padding:7px 12px; font-size:0.85rem; background:var(--branco); color:var(--castanho); cursor:pointer;">sem imagem</button>
+          </div>
+        </div>
       </div>
 
       <label for="tileTamanhoSel" style="margin-top:16px;">Tamanho dos separadores</label>
@@ -1334,7 +1343,7 @@
     layout: '1',
     modelo: 'lista',
     abrirEfeito: 'zoom',
-    wipe: { estilo:'diagonal', texto:'inicial', cor:'', corTexto:'#ffffff' },
+    wipe: { estilo:'diagonal', texto:'inicial', cor:'', corTexto:'#ffffff', foto:'' },
     fonte: 'auto',
     fonteTexto: 'auto',
     tileTamanho: 'normal',
@@ -1582,7 +1591,7 @@
         config.modelo = parsed.modelo || 'lista';
         config.caderno = Object.assign({ folha:'quadriculado', corLetra:'#4a3820', corFolha:'#fbf8f2', corLinha:'#d9d2bf' }, parsed.caderno || {});
         config.abrirEfeito = parsed.abrirEfeito || 'zoom';
-        config.wipe = Object.assign({ estilo:'diagonal', texto:'inicial', cor:'', corTexto:'#ffffff' }, parsed.wipe || {});
+        config.wipe = Object.assign({ estilo:'diagonal', texto:'inicial', cor:'', corTexto:'#ffffff', foto:'' }, parsed.wipe || {});
         config.fonte = parsed.fonte || 'auto';
         config.fonteTexto = parsed.fonteTexto || 'auto';
         config.tileTamanho = parsed.tileTamanho || 'normal';
@@ -1782,13 +1791,16 @@
       document.getElementById('cadCorFolha').value = cad.corFolha || '#fbf8f2';
       document.getElementById('cadCorLinha').value = cad.corLinha || '#d9d2bf'; }
     document.getElementById('abrirEfeitoSel').value = config.abrirEfeito || 'zoom';
-    { const _w = config.wipe || { estilo:'diagonal', texto:'inicial', cor:'', corTexto:'#ffffff' };
+    { const _w = config.wipe || { estilo:'diagonal', texto:'inicial', cor:'', corTexto:'#ffffff', foto:'' };
       const _e = document.getElementById('wipeEstilo'); if(_e) _e.value = _w.estilo || 'diagonal';
       const _t = document.getElementById('wipeTexto'); if(_t) _t.value = _w.texto || 'inicial';
       const _ct = document.getElementById('wipeCorTexto'); if(_ct) _ct.value = _w.corTexto || '#ffffff';
       const _ca = document.getElementById('wipeCorAtiva'); if(_ca) _ca.checked = !!(_w.cor);
       const _cc = document.getElementById('wipeCor'); if(_cc && _w.cor) _cc.value = _w.cor;
       const _cl = document.getElementById('wipeCorLinha'); if(_cl) _cl.style.display = _w.cor ? 'flex' : 'none';
+      const _fp = document.getElementById('wipeFotoPrev'), _fr = document.getElementById('wipeFotoRemover');
+      if(_fp){ _fp.src = _w.foto || ''; _fp.style.display = _w.foto ? 'block' : 'none'; }
+      if(_fr) _fr.style.display = _w.foto ? 'inline-block' : 'none';
       const _wb = document.getElementById('wipeBox'); if(_wb) _wb.style.display = (config.abrirEfeito === 'wipe') ? 'block' : 'none'; }
     document.getElementById('fonteSel').value = config.fonte || 'auto';
     document.getElementById('fonteTextoSel').value = config.fonteTexto || 'auto';
@@ -2016,6 +2028,16 @@
   });
   { const _wca = document.getElementById('wipeCorAtiva');
     if(_wca) _wca.addEventListener('change', e => { const l = document.getElementById('wipeCorLinha'); if(l) l.style.display = e.target.checked ? 'flex' : 'none'; }); }
+  { const _wfi = document.getElementById('wipeFotoInput'), _wfp = document.getElementById('wipeFotoPrev'), _wfr = document.getElementById('wipeFotoRemover');
+    function _wipeFotoUI(){ const u = (config.wipe && config.wipe.foto) || ''; if(_wfp){ _wfp.src = u; _wfp.style.display = u ? 'block' : 'none'; } if(_wfr) _wfr.style.display = u ? 'inline-block' : 'none'; }
+    if(_wfi) _wfi.addEventListener('change', async () => {
+      const f = _wfi.files && _wfi.files[0]; if(!f) return;
+      setEstado('A enviar imagem do wipe…', 'info');
+      try{ const url = await _uploadFoto(f); config.wipe = config.wipe || {}; config.wipe.foto = url; _wipeFotoUI(); setEstado('Imagem do wipe adicionada ✓', 'ok'); if(window.__agendarPreview) window.__agendarPreview(); }
+      catch(e){ setEstado('Erro ao enviar imagem: ' + (e && e.message ? e.message : e), 'erro'); }
+      _wfi.value = '';
+    });
+    if(_wfr) _wfr.addEventListener('click', () => { if(config.wipe) config.wipe.foto = ''; _wipeFotoUI(); if(window.__agendarPreview) window.__agendarPreview(); }); }
   document.getElementById('sliderCorAtiva').addEventListener('change', e => {
     document.getElementById('sliderCorLinha').style.display = e.target.checked ? 'flex' : 'none';
   });
@@ -2366,7 +2388,8 @@
           estilo: _e ? _e.value : 'diagonal',
           texto: _t ? _t.value : 'inicial',
           cor: (_ca && _ca.checked && _cc) ? _cc.value : '',
-          corTexto: _ct ? _ct.value : '#ffffff'
+          corTexto: _ct ? _ct.value : '#ffffff',
+          foto: (config.wipe && config.wipe.foto) || ''
         }; }
       config.fonte = document.getElementById('fonteSel').value;
       config.fonteTexto = document.getElementById('fonteTextoSel').value;
