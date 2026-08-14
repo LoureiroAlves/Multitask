@@ -339,6 +339,15 @@
         </select>
         <label for="wipeDur" style="font-size:0.85rem; margin-top:12px;">Velocidade: <span id="wipeDurVal">1.1</span>s <span style="color:var(--castanho-suave);">(máx. 3s)</span></label>
         <input type="range" id="wipeDur" min="0.4" max="3" step="0.1" value="1.1" style="width:100%;">
+        <label for="wipeTroca" style="margin-top:12px;">Troca do conteúdo</label>
+        <select id="wipeTroca" style="width:100%; padding:9px 12px; border-radius:9px; border:1.5px solid var(--linha); background:var(--branco); font-family:inherit; color:var(--castanho); font-size:0.92rem;">
+          <option value="corte">Corte (instantâneo)</option>
+          <option value="mix">Mix (dissolve suave)</option>
+        </select>
+        <label style="display:flex; align-items:center; gap:8px; margin-top:12px; cursor:pointer;">
+          <input type="checkbox" id="wipeSairNormal" style="width:auto; margin:0;">
+          Só entrar com o wipe <span style="font-weight:400; color:var(--castanho-suave);">— ao voltar atrás, sai com o efeito normal (zoom)</span>
+        </label>
         <label for="wipeTexto" style="margin-top:12px;">O que aparece na faixa</label>
         <select id="wipeTexto" style="width:100%; padding:9px 12px; border-radius:9px; border:1.5px solid var(--linha); background:var(--branco); font-family:inherit; color:var(--castanho); font-size:0.92rem;">
           <option value="inicial">Inicial do nome (ex: S)</option>
@@ -350,6 +359,17 @@
           <input type="checkbox" id="wipeAlpha" style="width:auto; margin:0;">
           Só a palavra (alpha) <span style="font-weight:400; color:var(--castanho-suave);">— só a palavra varre o ecrã, o resto fica transparente</span>
         </label>
+        <div id="wipeAlphaOpc" style="display:none; margin-top:8px;">
+          <label for="wipeMov" style="margin-top:0;">Movimento da palavra</label>
+          <select id="wipeMov" style="width:100%; padding:9px 12px; border-radius:9px; border:1.5px solid var(--linha); background:var(--branco); font-family:inherit; color:var(--castanho); font-size:0.92rem;">
+            <option value="varrer">Varrer (desliza)</option>
+            <option value="zoom">Aproximar + flash (esconde a troca)</option>
+          </select>
+          <div id="wipeFlashLinha" style="display:none; align-items:center; gap:10px; margin-top:8px;">
+            <span style="font-size:0.9rem;">Cor do flash</span>
+            <input type="color" id="wipeFlashCor" value="#ffffff">
+          </div>
+        </div>
         <div style="display:flex; align-items:center; gap:10px; margin-top:12px;">
           <span style="font-size:0.9rem;">Cor do texto na faixa</span>
           <input type="color" id="wipeCorTexto" value="#ffffff">
@@ -1354,7 +1374,7 @@
     layout: '1',
     modelo: 'lista',
     abrirEfeito: 'zoom',
-    wipe: { estilo:'diagonal', texto:'inicial', textoCustom:'', cor:'', corTexto:'#ffffff', foto:'', duracao:1.1, alpha:false },
+    wipe: { estilo:'diagonal', texto:'inicial', textoCustom:'', cor:'', corTexto:'#ffffff', foto:'', duracao:1.1, alpha:false, troca:'corte', sairNormal:false, movimento:'varrer', flashCor:'#ffffff' },
     fonte: 'auto',
     fonteTexto: 'auto',
     tileTamanho: 'normal',
@@ -1602,7 +1622,7 @@
         config.modelo = parsed.modelo || 'lista';
         config.caderno = Object.assign({ folha:'quadriculado', corLetra:'#4a3820', corFolha:'#fbf8f2', corLinha:'#d9d2bf' }, parsed.caderno || {});
         config.abrirEfeito = parsed.abrirEfeito || 'zoom';
-        config.wipe = Object.assign({ estilo:'diagonal', texto:'inicial', textoCustom:'', cor:'', corTexto:'#ffffff', foto:'', duracao:1.1, alpha:false }, parsed.wipe || {});
+        config.wipe = Object.assign({ estilo:'diagonal', texto:'inicial', textoCustom:'', cor:'', corTexto:'#ffffff', foto:'', duracao:1.1, alpha:false, troca:'corte', sairNormal:false, movimento:'varrer', flashCor:'#ffffff' }, parsed.wipe || {});
         config.fonte = parsed.fonte || 'auto';
         config.fonteTexto = parsed.fonteTexto || 'auto';
         config.tileTamanho = parsed.tileTamanho || 'normal';
@@ -1802,12 +1822,18 @@
       document.getElementById('cadCorFolha').value = cad.corFolha || '#fbf8f2';
       document.getElementById('cadCorLinha').value = cad.corLinha || '#d9d2bf'; }
     document.getElementById('abrirEfeitoSel').value = config.abrirEfeito || 'zoom';
-    { const _w = config.wipe || { estilo:'diagonal', texto:'inicial', textoCustom:'', cor:'', corTexto:'#ffffff', foto:'', duracao:1.1, alpha:false };
+    { const _w = config.wipe || { estilo:'diagonal', texto:'inicial', textoCustom:'', cor:'', corTexto:'#ffffff', foto:'', duracao:1.1, alpha:false, troca:'corte', sairNormal:false, movimento:'varrer', flashCor:'#ffffff' };
       const _e = document.getElementById('wipeEstilo'); if(_e) _e.value = _w.estilo || 'diagonal';
       const _t = document.getElementById('wipeTexto'); if(_t) _t.value = _w.texto || 'inicial';
       const _tcin = document.getElementById('wipeTextoCustom'); if(_tcin){ _tcin.value = _w.textoCustom || ''; _tcin.style.display = (_w.texto === 'custom') ? 'block' : 'none'; }
       const _dur = document.getElementById('wipeDur'), _durv = document.getElementById('wipeDurVal'); if(_dur){ _dur.value = _w.duracao || 1.1; if(_durv) _durv.textContent = _dur.value; }
       const _al = document.getElementById('wipeAlpha'); if(_al) _al.checked = _w.alpha === true;
+      const _mv = document.getElementById('wipeMov'); if(_mv) _mv.value = _w.movimento || 'varrer';
+      const _fc = document.getElementById('wipeFlashCor'); if(_fc) _fc.value = _w.flashCor || '#ffffff';
+      const _ao = document.getElementById('wipeAlphaOpc'); if(_ao) _ao.style.display = (_w.alpha === true) ? 'block' : 'none';
+      const _fl = document.getElementById('wipeFlashLinha'); if(_fl) _fl.style.display = (_w.movimento === 'zoom') ? 'flex' : 'none';
+      const _tr = document.getElementById('wipeTroca'); if(_tr) _tr.value = _w.troca || 'corte';
+      const _sn = document.getElementById('wipeSairNormal'); if(_sn) _sn.checked = _w.sairNormal === true;
       const _ct = document.getElementById('wipeCorTexto'); if(_ct) _ct.value = _w.corTexto || '#ffffff';
       const _ca = document.getElementById('wipeCorAtiva'); if(_ca) _ca.checked = !!(_w.cor);
       const _cc = document.getElementById('wipeCor'); if(_cc && _w.cor) _cc.value = _w.cor;
@@ -2046,6 +2072,10 @@
     if(_wt) _wt.addEventListener('change', e => { const c = document.getElementById('wipeTextoCustom'); if(c) c.style.display = (e.target.value === 'custom') ? 'block' : 'none'; }); }
   { const _wd = document.getElementById('wipeDur'), _wdv = document.getElementById('wipeDurVal');
     if(_wd) _wd.addEventListener('input', () => { if(_wdv) _wdv.textContent = _wd.value; }); }
+  { const _wal = document.getElementById('wipeAlpha');
+    if(_wal) _wal.addEventListener('change', e => { const o = document.getElementById('wipeAlphaOpc'); if(o) o.style.display = e.target.checked ? 'block' : 'none'; }); }
+  { const _wmv = document.getElementById('wipeMov');
+    if(_wmv) _wmv.addEventListener('change', e => { const l = document.getElementById('wipeFlashLinha'); if(l) l.style.display = (e.target.value === 'zoom') ? 'flex' : 'none'; }); }
   { const _wfi = document.getElementById('wipeFotoInput'), _wfp = document.getElementById('wipeFotoPrev'), _wfr = document.getElementById('wipeFotoRemover');
     function _wipeFotoUI(){ const u = (config.wipe && config.wipe.foto) || ''; if(_wfp){ _wfp.src = u; _wfp.style.display = u ? 'block' : 'none'; } if(_wfr) _wfr.style.display = u ? 'inline-block' : 'none'; }
     if(_wfi) _wfi.addEventListener('change', async () => {
@@ -2411,7 +2441,11 @@
           corTexto: _ct ? _ct.value : '#ffffff',
           foto: (config.wipe && config.wipe.foto) || '',
           duracao: _du ? (parseFloat(_du.value) || 1.1) : 1.1,
-          alpha: _al ? _al.checked : false
+          alpha: _al ? _al.checked : false,
+          troca: (document.getElementById('wipeTroca') || {}).value || 'corte',
+          sairNormal: !!(document.getElementById('wipeSairNormal') || {}).checked,
+          movimento: (document.getElementById('wipeMov') || {}).value || 'varrer',
+          flashCor: (document.getElementById('wipeFlashCor') || {}).value || '#ffffff'
         }; }
       config.fonte = document.getElementById('fonteSel').value;
       config.fonteTexto = document.getElementById('fonteTextoSel').value;
