@@ -217,6 +217,7 @@
         <button type="button" id="previewMin" title="Minimizar" class="preview-dock-btn">—</button>
       </span>
     </div>
+    <button type="button" id="btnGuardarDock" style="display:block; width:100%; border:none; background:var(--verde,#3b8a4f); color:#fff; padding:10px; font-weight:700; font-family:inherit; cursor:pointer; font-size:0.9rem;">💾 Guardar tudo</button>
     <div class="preview-dock-corpo">
       <iframe id="previewFrame" title="Pré-visualização do cardápio"></iframe>
     </div>
@@ -3844,6 +3845,13 @@
 
   document.getElementById('btnCarregar').addEventListener('click', carregarConfig);
   document.getElementById('btnGuardar').addEventListener('click', guardarTudo);
+  { const _bd = document.getElementById('btnGuardarDock');
+    if(_bd) _bd.addEventListener('click', function(){
+      const _old = _bd.textContent; _bd.textContent = 'A guardar…'; _bd.disabled = true;
+      const bm = document.getElementById('btnGuardarMenu'); if(bm) bm.click();
+      const bg = document.getElementById('btnGuardar'); if(bg) bg.click();
+      setTimeout(function(){ _bd.textContent = '✓ Guardado'; setTimeout(function(){ _bd.textContent = _old; _bd.disabled = false; }, 1400); }, 900);
+    }); }
 
   // ---- Pré-visualização ao vivo (painel fixo, sempre visível) ----
   (function(){
