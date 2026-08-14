@@ -373,7 +373,7 @@
           </select>
           <div id="wipeFlashLinha" style="display:none; align-items:center; gap:10px; margin-top:8px;">
             <span style="font-size:0.9rem;">Cor do flash</span>
-            <input type="color" id="wipeFlashCor" value="#ffffff">
+            <input type="color" id="wipeFlashCor" value="#b8b8b8">
           </div>
         </div>
         <div style="display:flex; align-items:center; gap:10px; margin-top:12px;">
@@ -1380,7 +1380,7 @@
     layout: '1',
     modelo: 'lista',
     abrirEfeito: 'zoom',
-    wipe: { estilo:'diagonal', texto:'inicial', textoCustom:'', cor:'', corTexto:'#ffffff', foto:'', duracao:1.1, alpha:false, troca:'corte', sairNormal:false, movimento:'varrer', flashCor:'#ffffff' },
+    wipe: { estilo:'diagonal', texto:'inicial', textoCustom:'', cor:'', corTexto:'#ffffff', foto:'', duracao:1.1, alpha:false, troca:'corte', sairNormal:false, movimento:'varrer', flashCor:'#b8b8b8' },
     fonte: 'auto',
     fonteTexto: 'auto',
     tileTamanho: 'normal',
@@ -1628,7 +1628,7 @@
         config.modelo = parsed.modelo || 'lista';
         config.caderno = Object.assign({ folha:'quadriculado', corLetra:'#4a3820', corFolha:'#fbf8f2', corLinha:'#d9d2bf' }, parsed.caderno || {});
         config.abrirEfeito = parsed.abrirEfeito || 'zoom';
-        config.wipe = Object.assign({ estilo:'diagonal', texto:'inicial', textoCustom:'', cor:'', corTexto:'#ffffff', foto:'', duracao:1.1, alpha:false, troca:'corte', sairNormal:false, movimento:'varrer', flashCor:'#ffffff' }, parsed.wipe || {});
+        config.wipe = Object.assign({ estilo:'diagonal', texto:'inicial', textoCustom:'', cor:'', corTexto:'#ffffff', foto:'', duracao:1.1, alpha:false, troca:'corte', sairNormal:false, movimento:'varrer', flashCor:'#b8b8b8' }, parsed.wipe || {});
         config.fonte = parsed.fonte || 'auto';
         config.fonteTexto = parsed.fonteTexto || 'auto';
         config.tileTamanho = parsed.tileTamanho || 'normal';
@@ -1828,14 +1828,14 @@
       document.getElementById('cadCorFolha').value = cad.corFolha || '#fbf8f2';
       document.getElementById('cadCorLinha').value = cad.corLinha || '#d9d2bf'; }
     document.getElementById('abrirEfeitoSel').value = config.abrirEfeito || 'zoom';
-    { const _w = config.wipe || { estilo:'diagonal', texto:'inicial', textoCustom:'', cor:'', corTexto:'#ffffff', foto:'', duracao:1.1, alpha:false, troca:'corte', sairNormal:false, movimento:'varrer', flashCor:'#ffffff' };
+    { const _w = config.wipe || { estilo:'diagonal', texto:'inicial', textoCustom:'', cor:'', corTexto:'#ffffff', foto:'', duracao:1.1, alpha:false, troca:'corte', sairNormal:false, movimento:'varrer', flashCor:'#b8b8b8' };
       const _e = document.getElementById('wipeEstilo'); if(_e) _e.value = _w.estilo || 'diagonal';
       const _t = document.getElementById('wipeTexto'); if(_t) _t.value = _w.texto || 'inicial';
       const _tcin = document.getElementById('wipeTextoCustom'); if(_tcin){ _tcin.value = _w.textoCustom || ''; _tcin.style.display = (_w.texto === 'custom') ? 'block' : 'none'; }
       const _dur = document.getElementById('wipeDur'), _durv = document.getElementById('wipeDurVal'); if(_dur){ _dur.value = _w.duracao || 1.1; if(_durv) _durv.textContent = _dur.value; }
       const _al = document.getElementById('wipeAlpha'); if(_al) _al.checked = _w.alpha === true;
       const _mv = document.getElementById('wipeMov'); if(_mv) _mv.value = _w.movimento || 'varrer';
-      const _fc = document.getElementById('wipeFlashCor'); if(_fc) _fc.value = _w.flashCor || '#ffffff';
+      const _fc = document.getElementById('wipeFlashCor'); if(_fc) _fc.value = _w.flashCor || '#b8b8b8';
       const _ao = document.getElementById('wipeAlphaOpc'); if(_ao) _ao.style.display = (_w.alpha === true) ? 'block' : 'none';
       const _fl = document.getElementById('wipeFlashLinha'); if(_fl) _fl.style.display = (_w.movimento === 'zoom') ? 'flex' : 'none';
       const _tr = document.getElementById('wipeTroca'); if(_tr) _tr.value = _w.troca || 'corte';

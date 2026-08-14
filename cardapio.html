@@ -842,11 +842,11 @@
   #wipeFx.play.wf-alpha > div:not(.wf-alpha):not(.wf-flash){ display:none !important; }
   #wipeFx.play.wf-foto > div:not(.wf-img){ display:none !important; }
   /* Palavra (alpha) a aproximar-se + flash curto no auge, onde se faz a troca */
-  #wipeFx .wf-flash{ inset:0; opacity:0; background:radial-gradient(circle at 50% 50%, var(--wipe-flash,#fff) 0%, var(--wipe-flash,#fff) 38%, transparent 74%); mix-blend-mode:screen; }
+  #wipeFx .wf-flash{ inset:0; opacity:0; background:radial-gradient(circle at 50% 48%, var(--wipe-flash,#b8b8b8) 0%, var(--wipe-flash,#b8b8b8) 28%, transparent 80%); filter:blur(7px); }
   #wipeFx.play.wf-alpha.wf-az .wf-alpha{ animation:wfZoom var(--wipe-dur,1.1s) cubic-bezier(.5,0,.25,1) forwards; transform-origin:50% 50%; }
   @keyframes wfZoom{ 0%{ transform:scale(.25); opacity:0; filter:blur(0); } 20%{ opacity:1; } 46%{ transform:scale(1); opacity:1; filter:blur(0); } 64%{ transform:scale(2.4); opacity:0; filter:blur(6px); } 100%{ transform:scale(2.9); opacity:0; filter:blur(6px); } }
   #wipeFx.play.wf-alpha.wf-az .wf-flash{ animation:wfFlash var(--wipe-dur,1.1s) ease-out forwards; }
-  @keyframes wfFlash{ 0%,43%{opacity:0} 49%{opacity:1} 52%{opacity:.9} 60%{opacity:0} 100%{opacity:0} }
+  @keyframes wfFlash{ 0%,43%{opacity:0} 49%{opacity:.55} 53%{opacity:.48} 62%{opacity:0} 100%{opacity:0} }
   #wipeFx.play.wf-diagonal .wf-band{ animation:wfFull var(--wipe-dur,1.1s) cubic-bezier(.6,0,.4,1) forwards; }
   @keyframes wfFull{ 0%{left:-200%} 46%{left:-40%} 54%{left:-40%} 100%{left:120%} }
   #wipeFx.play.wf-vertical .wf-vert{ animation:wfVert var(--wipe-dur,1.1s) cubic-bezier(.6,0,.4,1) forwards; }
@@ -2522,7 +2522,7 @@
         '<text x="50" y="50" text-anchor="middle" dominant-baseline="central" textLength="80" lengthAdjust="spacingAndGlyphs" ' +
         'style="font-family:var(--fonte-titulo); font-weight:800; font-size:26px; fill:#fff">' + esc + '</text></mask></defs>' +
         '<rect width="100" height="100" style="fill:' + (cor || '#a8712f') + '" mask="url(#wfMask)"/></svg>';
-      fx.style.setProperty('--wipe-flash', w.flashCor || '#ffffff');
+      fx.style.setProperty('--wipe-flash', w.flashCor || '#b8b8b8');
       fx.classList.add('play', 'wf-alpha');
       if(w.movimento === 'zoom'){ fx.classList.add('wf-az'); coverFrac = 0.50; }
     } else {
