@@ -332,13 +332,24 @@
         <label for="wipeEstilo" style="margin-top:0;">Estilo do wipe</label>
         <select id="wipeEstilo" style="width:100%; padding:9px 12px; border-radius:9px; border:1.5px solid var(--linha); background:var(--branco); font-family:inherit; color:var(--castanho); font-size:0.92rem;">
           <option value="diagonal">Faixa diagonal</option>
+          <option value="vertical">Faixa vertical (cima→baixo)</option>
+          <option value="cortina">Cortina (duas metades)</option>
+          <option value="circulo">Círculo (abre do centro)</option>
           <option value="suave">Suave (desvanece)</option>
         </select>
+        <label for="wipeDur" style="font-size:0.85rem; margin-top:12px;">Velocidade: <span id="wipeDurVal">1.1</span>s <span style="color:var(--castanho-suave);">(máx. 3s)</span></label>
+        <input type="range" id="wipeDur" min="0.4" max="3" step="0.1" value="1.1" style="width:100%;">
         <label for="wipeTexto" style="margin-top:12px;">O que aparece na faixa</label>
         <select id="wipeTexto" style="width:100%; padding:9px 12px; border-radius:9px; border:1.5px solid var(--linha); background:var(--branco); font-family:inherit; color:var(--castanho); font-size:0.92rem;">
           <option value="inicial">Inicial do nome (ex: S)</option>
           <option value="nome">Nome completo</option>
+          <option value="custom">Texto à escolha (ex: REMAX)</option>
         </select>
+        <input type="text" id="wipeTextoCustom" placeholder="Ex: REMAX" style="display:none; width:100%; margin-top:8px; padding:9px 12px; border-radius:9px; border:1.5px solid var(--linha); background:var(--branco); font-family:inherit; color:var(--castanho); font-size:0.92rem;">
+        <label style="display:flex; align-items:center; gap:8px; margin-top:12px; cursor:pointer;">
+          <input type="checkbox" id="wipeAlpha" style="width:auto; margin:0;">
+          Letras vazadas (alpha) <span style="font-weight:400; color:var(--castanho-suave);">— vê-se a cena por trás das letras</span>
+        </label>
         <div style="display:flex; align-items:center; gap:10px; margin-top:12px;">
           <span style="font-size:0.9rem;">Cor do texto na faixa</span>
           <input type="color" id="wipeCorTexto" value="#ffffff">
@@ -1343,7 +1354,7 @@
     layout: '1',
     modelo: 'lista',
     abrirEfeito: 'zoom',
-    wipe: { estilo:'diagonal', texto:'inicial', cor:'', corTexto:'#ffffff', foto:'' },
+    wipe: { estilo:'diagonal', texto:'inicial', textoCustom:'', cor:'', corTexto:'#ffffff', foto:'', duracao:1.1, alpha:false },
     fonte: 'auto',
     fonteTexto: 'auto',
     tileTamanho: 'normal',
@@ -1591,7 +1602,7 @@
         config.modelo = parsed.modelo || 'lista';
         config.caderno = Object.assign({ folha:'quadriculado', corLetra:'#4a3820', corFolha:'#fbf8f2', corLinha:'#d9d2bf' }, parsed.caderno || {});
         config.abrirEfeito = parsed.abrirEfeito || 'zoom';
-        config.wipe = Object.assign({ estilo:'diagonal', texto:'inicial', cor:'', corTexto:'#ffffff', foto:'' }, parsed.wipe || {});
+        config.wipe = Object.assign({ estilo:'diagonal', texto:'inicial', textoCustom:'', cor:'', corTexto:'#ffffff', foto:'', duracao:1.1, alpha:false }, parsed.wipe || {});
         config.fonte = parsed.fonte || 'auto';
         config.fonteTexto = parsed.fonteTexto || 'auto';
         config.tileTamanho = parsed.tileTamanho || 'normal';
@@ -1791,9 +1802,12 @@
       document.getElementById('cadCorFolha').value = cad.corFolha || '#fbf8f2';
       document.getElementById('cadCorLinha').value = cad.corLinha || '#d9d2bf'; }
     document.getElementById('abrirEfeitoSel').value = config.abrirEfeito || 'zoom';
-    { const _w = config.wipe || { estilo:'diagonal', texto:'inicial', cor:'', corTexto:'#ffffff', foto:'' };
+    { const _w = config.wipe || { estilo:'diagonal', texto:'inicial', textoCustom:'', cor:'', corTexto:'#ffffff', foto:'', duracao:1.1, alpha:false };
       const _e = document.getElementById('wipeEstilo'); if(_e) _e.value = _w.estilo || 'diagonal';
       const _t = document.getElementById('wipeTexto'); if(_t) _t.value = _w.texto || 'inicial';
+      const _tcin = document.getElementById('wipeTextoCustom'); if(_tcin){ _tcin.value = _w.textoCustom || ''; _tcin.style.display = (_w.texto === 'custom') ? 'block' : 'none'; }
+      const _dur = document.getElementById('wipeDur'), _durv = document.getElementById('wipeDurVal'); if(_dur){ _dur.value = _w.duracao || 1.1; if(_durv) _durv.textContent = _dur.value; }
+      const _al = document.getElementById('wipeAlpha'); if(_al) _al.checked = _w.alpha === true;
       const _ct = document.getElementById('wipeCorTexto'); if(_ct) _ct.value = _w.corTexto || '#ffffff';
       const _ca = document.getElementById('wipeCorAtiva'); if(_ca) _ca.checked = !!(_w.cor);
       const _cc = document.getElementById('wipeCor'); if(_cc && _w.cor) _cc.value = _w.cor;
@@ -2028,6 +2042,10 @@
   });
   { const _wca = document.getElementById('wipeCorAtiva');
     if(_wca) _wca.addEventListener('change', e => { const l = document.getElementById('wipeCorLinha'); if(l) l.style.display = e.target.checked ? 'flex' : 'none'; }); }
+  { const _wt = document.getElementById('wipeTexto');
+    if(_wt) _wt.addEventListener('change', e => { const c = document.getElementById('wipeTextoCustom'); if(c) c.style.display = (e.target.value === 'custom') ? 'block' : 'none'; }); }
+  { const _wd = document.getElementById('wipeDur'), _wdv = document.getElementById('wipeDurVal');
+    if(_wd) _wd.addEventListener('input', () => { if(_wdv) _wdv.textContent = _wd.value; }); }
   { const _wfi = document.getElementById('wipeFotoInput'), _wfp = document.getElementById('wipeFotoPrev'), _wfr = document.getElementById('wipeFotoRemover');
     function _wipeFotoUI(){ const u = (config.wipe && config.wipe.foto) || ''; if(_wfp){ _wfp.src = u; _wfp.style.display = u ? 'block' : 'none'; } if(_wfr) _wfr.style.display = u ? 'inline-block' : 'none'; }
     if(_wfi) _wfi.addEventListener('change', async () => {
@@ -2384,12 +2402,16 @@
       config.abrirEfeito = document.getElementById('abrirEfeitoSel').value;
       { const _e = document.getElementById('wipeEstilo'), _t = document.getElementById('wipeTexto'),
               _ca = document.getElementById('wipeCorAtiva'), _cc = document.getElementById('wipeCor'), _ct = document.getElementById('wipeCorTexto');
+        const _tc = document.getElementById('wipeTextoCustom'), _du = document.getElementById('wipeDur'), _al = document.getElementById('wipeAlpha');
         config.wipe = {
           estilo: _e ? _e.value : 'diagonal',
           texto: _t ? _t.value : 'inicial',
+          textoCustom: _tc ? _tc.value.trim() : '',
           cor: (_ca && _ca.checked && _cc) ? _cc.value : '',
           corTexto: _ct ? _ct.value : '#ffffff',
-          foto: (config.wipe && config.wipe.foto) || ''
+          foto: (config.wipe && config.wipe.foto) || '',
+          duracao: _du ? (parseFloat(_du.value) || 1.1) : 1.1,
+          alpha: _al ? _al.checked : false
         }; }
       config.fonte = document.getElementById('fonteSel').value;
       config.fonteTexto = document.getElementById('fonteTextoSel').value;
