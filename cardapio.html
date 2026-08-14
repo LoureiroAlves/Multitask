@@ -895,6 +895,8 @@
   #wipeFx .wf-losangos i{ position:absolute; width:27vmax; height:27vmax; margin:-13.5vmax 0 0 -13.5vmax; background:var(--wipe-cor,#a8712f); }
   #wipeFx.play.wf-losangos .wf-losangos i{ animation:wfLos3d var(--wipe-dur,1.1s) cubic-bezier(.5,0,.3,1) both; }
   @keyframes wfLos3d{ 0%{ transform:translateZ(-640px) rotate(45deg) scale(.5); opacity:0; } 22%{ opacity:1; } 30%{ transform:translateZ(0) rotate(45deg) scale(1); opacity:1; } 72%{ transform:translateZ(0) rotate(45deg) scale(1); opacity:1; } 100%{ transform:translateZ(460px) rotate(45deg) scale(1.25); opacity:0; } }
+  /* Foto de patrocinador aplicada a qualquer estilo: as formas levam a imagem */
+  #wipeFx.wf-temfoto .wf-band, #wipeFx.wf-temfoto .wf-vert, #wipeFx.wf-temfoto .wf-p1, #wipeFx.wf-temfoto .wf-p2, #wipeFx.wf-temfoto .wf-disc, #wipeFx.wf-temfoto .wf-cover, #wipeFx.wf-temfoto .wf-stripes b, #wipeFx.wf-temfoto .wf-losangos i{ background-image:var(--wipe-img); background-size:cover; background-position:center; background-repeat:no-repeat; }
 
   /* ===== Efeitos de abertura das secções (config.abrirEfeito → classe body.abrir-*) ===== */
   /* "zoom" é o comportamento base (scale a partir do separador tocado) — sem classe própria */
@@ -2520,22 +2522,8 @@
     if((w.texto || 'inicial') === 'inicial'){ ini.style.display = ''; nm.style.display = 'none'; ini.textContent = palavra; }
     else { ini.style.display = 'none'; nm.style.display = ''; nm.textContent = palavra; }
     fx.className = ''; void fx.offsetWidth;
-    if(w.foto){
-      fx.style.setProperty('--wipe-img', "url('" + w.foto + "')");
-      fx.classList.add('play', 'wf-foto');
-    } else if(w.alpha && palavra){
-      // Alpha: só a PALAVRA fica visível (na cor escolhida) e tudo à volta transparente — a palavra varre o ecrã
-      const esc = palavra.replace(/[&<>]/g, function(c){ return c === '&' ? '&amp;' : c === '<' ? '&lt;' : '&gt;'; });
-      const alpha = fx.querySelector('.wf-alpha');
-      alpha.innerHTML = '<svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet">' +
-        '<defs><mask id="wfMask"><rect width="100" height="100" fill="#000"/>' +
-        '<text x="50" y="50" text-anchor="middle" dominant-baseline="central" textLength="80" lengthAdjust="spacingAndGlyphs" ' +
-        'style="font-family:var(--fonte-titulo); font-weight:800; font-size:26px; fill:#fff">' + esc + '</text></mask></defs>' +
-        '<rect width="100" height="100" style="fill:' + (cor || '#a8712f') + '" mask="url(#wfMask)"/></svg>';
-      fx.style.setProperty('--wipe-flash', w.flashCor || '#b8b8b8');
-      fx.classList.add('play', 'wf-alpha');
-      if(w.movimento === 'zoom'){ fx.classList.add('wf-az'); coverFrac = 0.50; }
-    } else {
+    // Constrói as peças da forma escolhida (barras / losangos)
+    function _wfBuildForma(){
       if(estilo === 'stripes'){
         const cont = fx.querySelector('.wf-stripes'); cont.innerHTML = '';
         [9,15,7,18,11,16,8,16].forEach(function(w, i){ const b = document.createElement('b'); b.style.width = w + '%'; b.style.setProperty('--fy', (i % 2 ? '115%' : '-115%')); cont.appendChild(b); });
@@ -2551,6 +2539,27 @@
         } }
         coverFrac = 0.60;
       }
+    }
+    if(w.foto){
+      // Imagem de patrocinador COM o estilo escolhido — as formas levam a foto
+      fx.style.setProperty('--wipe-img', "url('" + w.foto + "')");
+      fx.classList.add('wf-temfoto');
+      _wfBuildForma();
+      fx.classList.add('play', 'wf-' + estilo);
+    } else if(w.alpha && palavra){
+      // Alpha: só a PALAVRA fica visível (na cor escolhida) e tudo à volta transparente — a palavra varre o ecrã
+      const esc = palavra.replace(/[&<>]/g, function(c){ return c === '&' ? '&amp;' : c === '<' ? '&lt;' : '&gt;'; });
+      const alpha = fx.querySelector('.wf-alpha');
+      alpha.innerHTML = '<svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet">' +
+        '<defs><mask id="wfMask"><rect width="100" height="100" fill="#000"/>' +
+        '<text x="50" y="50" text-anchor="middle" dominant-baseline="central" textLength="80" lengthAdjust="spacingAndGlyphs" ' +
+        'style="font-family:var(--fonte-titulo); font-weight:800; font-size:26px; fill:#fff">' + esc + '</text></mask></defs>' +
+        '<rect width="100" height="100" style="fill:' + (cor || '#a8712f') + '" mask="url(#wfMask)"/></svg>';
+      fx.style.setProperty('--wipe-flash', w.flashCor || '#b8b8b8');
+      fx.classList.add('play', 'wf-alpha');
+      if(w.movimento === 'zoom'){ fx.classList.add('wf-az'); coverFrac = 0.50; }
+    } else {
+      _wfBuildForma();
       fx.classList.add('play', 'wf-' + estilo);
     }
     if(onCover) setTimeout(onCover, Math.round(dur * 1000 * coverFrac));
