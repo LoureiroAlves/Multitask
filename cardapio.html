@@ -2217,28 +2217,30 @@
   // Renderiza os blocos de conteúdo da página (construtor): título, parágrafo, imagem, botão, separador, espaço
   // ===== Mosaico (bento) — módulo à parte =====
   // Arrastar o texto dentro da caixa (só na pré-visualização); avisa o editor da nova posição
-  function _mosDragText(box, el, idx, sec){
+  function _mosDragText(box, el, idx, sec, which){
     el.style.cursor = 'move'; el.style.touchAction = 'none';
     var drag = false, moveu = false, nx = 0, ny = 0;
     el.addEventListener('click', function(ev){ if(moveu){ ev.preventDefault(); ev.stopPropagation(); } });
     el.addEventListener('pointerdown', function(ev){ ev.preventDefault(); ev.stopPropagation(); drag = true; moveu = false; try{ el.setPointerCapture(ev.pointerId); }catch(e){} });
     el.addEventListener('pointermove', function(ev){ if(!drag) return; moveu = true; var r = box.getBoundingClientRect(); nx = Math.max(1, Math.min(90, ((ev.clientX - r.left) / r.width) * 100)); ny = Math.max(1, Math.min(92, ((ev.clientY - r.top) / r.height) * 100)); el.style.left = nx + '%'; el.style.top = ny + '%'; });
-    el.addEventListener('pointerup', function(ev){ if(!drag) return; drag = false; if(moveu){ try{ parent.postMessage({ type:'mosaico-pos', sec:(sec || null), idx:idx, x:Math.round(nx), y:Math.round(ny) }, '*'); }catch(e){} } });
+    el.addEventListener('pointerup', function(ev){ if(!drag) return; drag = false; if(moveu){ try{ parent.postMessage({ type:'mosaico-pos', sec:(sec || null), idx:idx, which:(which || 'tit'), x:Math.round(nx), y:Math.round(ny) }, '*'); }catch(e){} } });
     el.addEventListener('pointercancel', function(){ drag = false; });
   }
   const _MOS_FONTES = { fredoka:"'Fredoka', sans-serif", poppins:"'Poppins', sans-serif", quicksand:"'Quicksand', sans-serif", montserrat:"'Montserrat', sans-serif", playfair:"'Playfair Display', serif", bebas:"'Bebas Neue', sans-serif", lobster:"'Lobster', cursive", pacifico:"'Pacifico', cursive" };
-  // Rotação de TEXTO de uma caixa (várias mensagens a trocar, como o carrossel da barra fixa)
-  function _mosTextoRotacao(box, tx, slides, est, esSub, ms){
+  // Rotação de TEXTO (título e subtítulo em sincronia, cada um no seu sítio)
+  function _mosTextoRotacao(box, titEl, subEl, slides, ms){
     let i = 0;
-    function fill(sl){
-      tx.innerHTML = '';
-      if(sl.t){ const t = document.createElement('div'); t.className = 'mos-tit'; t.textContent = sl.t; if(est.tamanho) t.style.fontSize = est.tamanho + 'rem'; if(est.negrito) t.style.fontWeight = '800'; if(est.italico) t.style.fontStyle = 'italic'; tx.appendChild(t); }
-      if(sl.s){ const s = document.createElement('div'); s.className = 'mos-sub'; s.textContent = sl.s; s.style.whiteSpace = 'pre-line'; if(esSub.cor) s.style.color = esSub.cor; if(esSub.tamanho) s.style.fontSize = esSub.tamanho + 'rem'; if(esSub.negrito) s.style.fontWeight = '800'; if(esSub.italico) s.style.fontStyle = 'italic'; tx.appendChild(s); }
-    }
     const t = setInterval(function(){
       if(!document.body.contains(box)){ clearInterval(t); return; }
-      tx.style.transition = 'opacity .35s ease'; tx.style.opacity = '0';
-      setTimeout(function(){ i = (i + 1) % slides.length; fill(slides[i]); tx.style.opacity = ''; }, 360);
+      if(titEl){ titEl.style.transition = 'opacity .35s ease'; titEl.style.opacity = '0'; }
+      if(subEl){ subEl.style.transition = 'opacity .35s ease'; subEl.style.opacity = '0'; }
+      setTimeout(function(){
+        i = (i + 1) % slides.length;
+        if(titEl) titEl.textContent = slides[i].t || '';
+        if(subEl) subEl.textContent = slides[i].s || '';
+        if(titEl) titEl.style.opacity = '';
+        if(subEl) subEl.style.opacity = '';
+      }, 360);
     }, ms);
   }
   // Rotação das fotos de uma caixa (troca de X em X segundos, como a barra fixa). Auto-limpa quando a caixa sai do DOM.
@@ -2271,18 +2273,40 @@
       }
       const est = c.estilo || {};
       const esSub = c.estiloSub || {};
-      const tx = document.createElement('div'); tx.className = 'mos-txt';
-      tx.style.color = est.cor || c.corTexto || '#ffffff';
-      tx.style.left = (c.tx != null ? c.tx : 6) + '%';
-      tx.style.top = (c.ty != null ? c.ty : 72) + '%';
-      if(c.fonte && _MOS_FONTES[c.fonte]) tx.style.fontFamily = _MOS_FONTES[c.fonte];
-      if(c.titulo){ const t = document.createElement('div'); t.className = 'mos-tit'; t.textContent = c.titulo; if(est.tamanho) t.style.fontSize = est.tamanho + 'rem'; if(est.negrito) t.style.fontWeight = '800'; if(est.italico) t.style.fontStyle = 'italic'; tx.appendChild(t); }
-      if(c.subtitulo){ const s = document.createElement('div'); s.className = 'mos-sub'; s.textContent = c.subtitulo; s.style.whiteSpace = 'pre-line'; if(esSub.cor) s.style.color = esSub.cor; if(esSub.tamanho) s.style.fontSize = esSub.tamanho + 'rem'; if(esSub.negrito) s.style.fontWeight = '800'; if(esSub.italico) s.style.fontStyle = 'italic'; tx.appendChild(s); }
-      b.appendChild(tx);
-      { const _ex = Array.isArray(c.slidesExtra) ? c.slidesExtra : [];
-        const _sl = [{ t:c.titulo, s:c.subtitulo }].concat(_ex.map(function(x){ return { t:x.titulo, s:x.subtitulo }; })).filter(function(o){ return (o.t && String(o.t).trim()) || (o.s && String(o.s).trim()); });
-        if(_sl.length > 1){ _mosTextoRotacao(b, tx, _sl, est, esSub, Math.max(1, parseInt(c.textoSeg, 10) || 5) * 1000); } }
-      if(window.__PREVIEW){ _mosDragText(b, tx, i, sec); }
+      const _fam = (c.fonte && _MOS_FONTES[c.fonte]) ? _MOS_FONTES[c.fonte] : '';
+      const _ex = Array.isArray(c.slidesExtra) ? c.slidesExtra : [];
+      const _hasTit = !!(c.titulo) || _ex.some(function(x){ return x.titulo && String(x.titulo).trim(); });
+      const _hasSub = !!(c.subtitulo) || _ex.some(function(x){ return x.subtitulo && String(x.subtitulo).trim(); });
+      let titEl = null, subEl = null;
+      if(_hasTit){
+        titEl = document.createElement('div'); titEl.className = 'mos-txt mos-tit';
+        titEl.style.left = (c.tx != null ? c.tx : 6) + '%';
+        titEl.style.top = (c.ty != null ? c.ty : 62) + '%';
+        titEl.style.color = est.cor || c.corTexto || '#ffffff';
+        if(_fam) titEl.style.fontFamily = _fam;
+        if(est.tamanho) titEl.style.fontSize = est.tamanho + 'rem';
+        if(est.negrito) titEl.style.fontWeight = '800';
+        if(est.italico) titEl.style.fontStyle = 'italic';
+        titEl.textContent = c.titulo || '';
+        b.appendChild(titEl);
+        if(window.__PREVIEW){ _mosDragText(b, titEl, i, sec, 'tit'); }
+      }
+      if(_hasSub){
+        subEl = document.createElement('div'); subEl.className = 'mos-txt mos-sub';
+        subEl.style.left = (c.subX != null ? c.subX : (c.tx != null ? c.tx : 6)) + '%';
+        subEl.style.top = (c.subY != null ? c.subY : ((c.ty != null ? c.ty : 62) + 14)) + '%';
+        subEl.style.color = esSub.cor || c.corTexto || '#ffffff';
+        subEl.style.whiteSpace = 'pre-line';
+        if(_fam) subEl.style.fontFamily = _fam;
+        if(esSub.tamanho) subEl.style.fontSize = esSub.tamanho + 'rem';
+        if(esSub.negrito) subEl.style.fontWeight = '800';
+        if(esSub.italico) subEl.style.fontStyle = 'italic';
+        subEl.textContent = c.subtitulo || '';
+        b.appendChild(subEl);
+        if(window.__PREVIEW){ _mosDragText(b, subEl, i, sec, 'sub'); }
+      }
+      { const _sl = [{ t:c.titulo, s:c.subtitulo }].concat(_ex.map(function(x){ return { t:x.titulo, s:x.subtitulo }; })).filter(function(o){ return (o.t && String(o.t).trim()) || (o.s && String(o.s).trim()); });
+        if(_sl.length > 1){ _mosTextoRotacao(b, titEl, subEl, _sl, Math.max(1, parseInt(c.textoSeg, 10) || 5) * 1000); } }
       grid.appendChild(b);
     });
   }

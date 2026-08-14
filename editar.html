@@ -4033,7 +4033,7 @@
         let _m = null;
         if(d.sec){ try{ const _md = window.__getMenuPreview && window.__getMenuPreview(); if(_md && Array.isArray(_md.categorias)){ const _ct = _md.categorias.find(function(c){ return c.id === d.sec; }); if(_ct) _m = _ct.mosaico; } }catch(e){} }
         else { _m = config.mosaico; }
-        if(_m && Array.isArray(_m.caixas) && _m.caixas[d.idx]){ _m.caixas[d.idx].tx = d.x; _m.caixas[d.idx].ty = d.y; if(window.__agendarPreview) window.__agendarPreview(); }
+        if(_m && Array.isArray(_m.caixas) && _m.caixas[d.idx]){ const _cx = _m.caixas[d.idx]; if(d.which === 'sub'){ _cx.subX = d.x; _cx.subY = d.y; } else { _cx.tx = d.x; _cx.ty = d.y; } if(window.__agendarPreview) window.__agendarPreview(); }
       }
     });
     document.addEventListener('input', agendarEnvio);
