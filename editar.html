@@ -2179,7 +2179,7 @@
       card.appendChild(_mosLbl('Título'));
       const ti = document.createElement('input'); ti.type = 'text'; ti.value = c.titulo || ''; ti.placeholder = 'Ex: Unhas de gel'; ti.style.cssText = _mosIn; ti.addEventListener('input', function(){ c.titulo = ti.value; _mosPrev(); }); card.appendChild(ti);
       card.appendChild(_mosLbl('Subtítulo (opcional)'));
-      const su = document.createElement('input'); su.type = 'text'; su.value = c.subtitulo || ''; su.placeholder = 'Ex: a partir de 15€'; su.style.cssText = _mosIn; su.addEventListener('input', function(){ c.subtitulo = su.value; _mosPrev(); }); card.appendChild(su);
+      const su = document.createElement('textarea'); su.value = c.subtitulo || ''; su.placeholder = 'Ex: a partir de 15€ (Enter para nova linha)'; su.rows = 2; su.style.cssText = _mosIn + ' resize:vertical; min-height:46px; line-height:1.35;'; su.addEventListener('input', function(){ c.subtitulo = su.value; _mosPrev(); }); card.appendChild(su);
       card.appendChild(_mosLbl('Estilo do texto — arrasta o texto na pré-visualização para o posicionar'));
       c.estilo = c.estilo || (c.corTexto ? { cor:c.corTexto } : {});
       const est = c.estilo;

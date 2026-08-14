@@ -2243,7 +2243,7 @@
       tx.style.left = (c.tx != null ? c.tx : 6) + '%';
       tx.style.top = (c.ty != null ? c.ty : 72) + '%';
       if(c.titulo){ const t = document.createElement('div'); t.className = 'mos-tit'; t.textContent = c.titulo; if(est.tamanho) t.style.fontSize = est.tamanho + 'rem'; if(est.negrito) t.style.fontWeight = '800'; if(est.italico) t.style.fontStyle = 'italic'; tx.appendChild(t); }
-      if(c.subtitulo){ const s = document.createElement('div'); s.className = 'mos-sub'; s.textContent = c.subtitulo; if(est.italico) s.style.fontStyle = 'italic'; tx.appendChild(s); }
+      if(c.subtitulo){ const s = document.createElement('div'); s.className = 'mos-sub'; s.textContent = c.subtitulo; s.style.whiteSpace = 'pre-line'; if(est.italico) s.style.fontStyle = 'italic'; tx.appendChild(s); }
       b.appendChild(tx);
       if(window.__PREVIEW){ _mosDragText(b, tx, i, sec); }
       grid.appendChild(b);
