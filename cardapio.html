@@ -5708,8 +5708,17 @@
       // Nunca reajustar enquanto o utilizador está a fazer scroll (evita saltos)
       if((window.scrollY || window.pageYOffset || 0) > 4) return;
       grid.style.minHeight = '';
-      // Se o rodapé final está desligado, não há nada para empurrar para baixo da dobra
-      if(getComputedStyle(footer).display === 'none') return;
+      // Se o rodapé final está desligado, estica a grelha para encher o ecrã até à barra fixa
+      // (senão a página fica curta e vê-se o fundo do html por baixo da barra fixa)
+      if(getComputedStyle(footer).display === 'none'){
+        var bar = document.querySelector('.info-fixa');
+        var barTop = window.innerHeight;
+        if(bar){ var csb = getComputedStyle(bar); if(csb.display !== 'none' && csb.visibility !== 'hidden'){ barTop = bar.getBoundingClientRect().top; } }
+        var gridBottom = grid.getBoundingClientRect().bottom;
+        var faltam2 = barTop - gridBottom;
+        if(faltam2 > 0){ grid.style.minHeight = (grid.offsetHeight + faltam2) + 'px'; }
+        return;
+      }
       // posição do topo do rodapé no documento (independente do scroll — evita saltos)
       var footerTopDoc = footer.getBoundingClientRect().top + (window.scrollY || window.pageYOffset || 0);
       var faltam = window.innerHeight - footerTopDoc;
