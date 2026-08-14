@@ -326,7 +326,32 @@
         <option value="livro">Livro — vira a partir da margem</option>
         <option value="cortina-v">Cortina vertical — abre ao meio</option>
         <option value="cortina-h">Cortina horizontal — abre ao meio</option>
+        <option value="wipe">Wipe (desporto) — faixa varre o ecrã</option>
       </select>
+      <div id="wipeBox" style="display:none; margin-top:10px; padding:12px; border:1.5px solid var(--linha); border-radius:10px;">
+        <label for="wipeEstilo" style="margin-top:0;">Estilo do wipe</label>
+        <select id="wipeEstilo" style="width:100%; padding:9px 12px; border-radius:9px; border:1.5px solid var(--linha); background:var(--branco); font-family:inherit; color:var(--castanho); font-size:0.92rem;">
+          <option value="diagonal">Faixa diagonal</option>
+          <option value="suave">Suave (desvanece)</option>
+        </select>
+        <label for="wipeTexto" style="margin-top:12px;">O que aparece na faixa</label>
+        <select id="wipeTexto" style="width:100%; padding:9px 12px; border-radius:9px; border:1.5px solid var(--linha); background:var(--branco); font-family:inherit; color:var(--castanho); font-size:0.92rem;">
+          <option value="inicial">Inicial do nome (ex: S)</option>
+          <option value="nome">Nome completo</option>
+        </select>
+        <div style="display:flex; align-items:center; gap:10px; margin-top:12px;">
+          <span style="font-size:0.9rem;">Cor do texto na faixa</span>
+          <input type="color" id="wipeCorTexto" value="#ffffff">
+        </div>
+        <label style="display:flex; align-items:center; gap:8px; margin-top:12px; cursor:pointer;">
+          <input type="checkbox" id="wipeCorAtiva" style="width:auto; margin:0;">
+          Cor da faixa própria <span style="font-weight:400; color:var(--castanho-suave);">(senão segue a cor de cada secção)</span>
+        </label>
+        <div id="wipeCorLinha" style="display:none; align-items:center; gap:10px; margin-top:8px;">
+          <span style="font-size:0.9rem;">Cor da faixa</span>
+          <input type="color" id="wipeCor" value="#a8712f">
+        </div>
+      </div>
 
       <label for="tileTamanhoSel" style="margin-top:16px;">Tamanho dos separadores</label>
       <select id="tileTamanhoSel" style="width:100%; padding:10px 12px; border-radius:10px; border:1.5px solid var(--linha); background:var(--branco); font-family:inherit; color:var(--castanho); font-size:0.95rem;">
@@ -1309,6 +1334,7 @@
     layout: '1',
     modelo: 'lista',
     abrirEfeito: 'zoom',
+    wipe: { estilo:'diagonal', texto:'inicial', cor:'', corTexto:'#ffffff' },
     fonte: 'auto',
     fonteTexto: 'auto',
     tileTamanho: 'normal',
@@ -1556,6 +1582,7 @@
         config.modelo = parsed.modelo || 'lista';
         config.caderno = Object.assign({ folha:'quadriculado', corLetra:'#4a3820', corFolha:'#fbf8f2', corLinha:'#d9d2bf' }, parsed.caderno || {});
         config.abrirEfeito = parsed.abrirEfeito || 'zoom';
+        config.wipe = Object.assign({ estilo:'diagonal', texto:'inicial', cor:'', corTexto:'#ffffff' }, parsed.wipe || {});
         config.fonte = parsed.fonte || 'auto';
         config.fonteTexto = parsed.fonteTexto || 'auto';
         config.tileTamanho = parsed.tileTamanho || 'normal';
@@ -1755,6 +1782,14 @@
       document.getElementById('cadCorFolha').value = cad.corFolha || '#fbf8f2';
       document.getElementById('cadCorLinha').value = cad.corLinha || '#d9d2bf'; }
     document.getElementById('abrirEfeitoSel').value = config.abrirEfeito || 'zoom';
+    { const _w = config.wipe || { estilo:'diagonal', texto:'inicial', cor:'', corTexto:'#ffffff' };
+      const _e = document.getElementById('wipeEstilo'); if(_e) _e.value = _w.estilo || 'diagonal';
+      const _t = document.getElementById('wipeTexto'); if(_t) _t.value = _w.texto || 'inicial';
+      const _ct = document.getElementById('wipeCorTexto'); if(_ct) _ct.value = _w.corTexto || '#ffffff';
+      const _ca = document.getElementById('wipeCorAtiva'); if(_ca) _ca.checked = !!(_w.cor);
+      const _cc = document.getElementById('wipeCor'); if(_cc && _w.cor) _cc.value = _w.cor;
+      const _cl = document.getElementById('wipeCorLinha'); if(_cl) _cl.style.display = _w.cor ? 'flex' : 'none';
+      const _wb = document.getElementById('wipeBox'); if(_wb) _wb.style.display = (config.abrirEfeito === 'wipe') ? 'block' : 'none'; }
     document.getElementById('fonteSel').value = config.fonte || 'auto';
     document.getElementById('fonteTextoSel').value = config.fonteTexto || 'auto';
     document.getElementById('tileTamanhoSel').value = config.tileTamanho || 'normal';
@@ -1976,6 +2011,11 @@
     document.getElementById('cadernoBox').style.display = (e.target.value === 'caderno') ? 'block' : 'none';
     document.getElementById('sliderCorBox').style.display = (e.target.value === 'slider') ? 'block' : 'none';
   });
+  document.getElementById('abrirEfeitoSel').addEventListener('change', e => {
+    const wb = document.getElementById('wipeBox'); if(wb) wb.style.display = (e.target.value === 'wipe') ? 'block' : 'none';
+  });
+  { const _wca = document.getElementById('wipeCorAtiva');
+    if(_wca) _wca.addEventListener('change', e => { const l = document.getElementById('wipeCorLinha'); if(l) l.style.display = e.target.checked ? 'flex' : 'none'; }); }
   document.getElementById('sliderCorAtiva').addEventListener('change', e => {
     document.getElementById('sliderCorLinha').style.display = e.target.checked ? 'flex' : 'none';
   });
@@ -2320,6 +2360,14 @@
         corLinha: document.getElementById('cadCorLinha').value
       };
       config.abrirEfeito = document.getElementById('abrirEfeitoSel').value;
+      { const _e = document.getElementById('wipeEstilo'), _t = document.getElementById('wipeTexto'),
+              _ca = document.getElementById('wipeCorAtiva'), _cc = document.getElementById('wipeCor'), _ct = document.getElementById('wipeCorTexto');
+        config.wipe = {
+          estilo: _e ? _e.value : 'diagonal',
+          texto: _t ? _t.value : 'inicial',
+          cor: (_ca && _ca.checked && _cc) ? _cc.value : '',
+          corTexto: _ct ? _ct.value : '#ffffff'
+        }; }
       config.fonte = document.getElementById('fonteSel').value;
       config.fonteTexto = document.getElementById('fonteTextoSel').value;
       config.tileTamanho = document.getElementById('tileTamanhoSel').value;
