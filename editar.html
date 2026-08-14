@@ -2930,6 +2930,12 @@
   async function verificarFotosNaoUsadas(){
     const out = document.getElementById('limpezaResultado');
     if(!out) return;
+    // Garante que o menu está carregado antes de verificar, para a varredura incluir as fotos dos pratos
+    { let _mp = null; try{ _mp = window.__getMenuPreview && window.__getMenuPreview(); }catch(e){}
+      if((!_mp || !Array.isArray(_mp.categorias)) && window.__carregarMenu){
+        out.innerHTML = '<div style="font-size:0.85rem;color:var(--castanho-suave);">A carregar o menu primeiro…</div>';
+        try{ await window.__carregarMenu(); }catch(e){}
+      } }
     out.innerHTML = '<div style="font-size:0.85rem;color:var(--castanho-suave);">A verificar as fotos…</div>';
     try{
       // 1) Fotos USADAS — varre o config e o menu, tanto a versão em memória como a gravada
