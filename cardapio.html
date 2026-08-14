@@ -213,6 +213,8 @@
   #fundoFoto.pronto .ff-img{ opacity:1; }
   /* Movimento lento (zoom out e volta a aproximar, sem cortes). Duração e intensidade controladas pelo editor. */
   body.fundo-imagem.fundo-anim #fundoFoto.pronto .ff-img{ animation:fundoZoom var(--fundo-anim-dur, 28s) ease-in-out infinite alternate; }
+  /* Durante o scroll a animação pausa (evita o strobe do Safari quando a barra de endereço se move) */
+  body.fundo-scroll #fundoFoto .ff-img{ animation-play-state:paused; }
   @keyframes fundoZoom{ from{ transform:scale(var(--fundo-anim-escala, 1.12)) translateZ(0); } to{ transform:scale(1) translateZ(0); } }
   @media (prefers-reduced-motion: reduce){ body.fundo-imagem.fundo-anim #fundoFoto .ff-img{ animation:none; } }
   #fundoFoto .ff-veil{ position:absolute; inset:0; background:var(--fundo-veil, rgba(255,255,255,0.72)); }
@@ -5687,6 +5689,11 @@
     document.addEventListener('DOMContentLoaded', ajustarCapa);
     // o menu e as imagens carregam de forma assíncrona — reajusta algumas vezes
     [200, 700, 1500, 3000].forEach(function(t){ setTimeout(ajustarCapa, t); });
+    // Pausa a animação do fundo enquanto há scroll (evita o strobe do Safari com a barra de endereço a animar)
+    (function(){ var _st; window.addEventListener('scroll', function(){
+      document.body.classList.add('fundo-scroll');
+      clearTimeout(_st); _st = setTimeout(function(){ document.body.classList.remove('fundo-scroll'); }, 220);
+    }, { passive:true }); })();
   })();
 </script>
 
