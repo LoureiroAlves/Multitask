@@ -2162,15 +2162,29 @@
       [['p','Pequeno (quadrado)'],['l','Largo (2 colunas)'],['g','Grande (2 colunas, alto)']].forEach(function(o){ const op = document.createElement('option'); op.value = o[0]; op.textContent = o[1]; if((c.tam || 'p') === o[0]) op.selected = true; selT.appendChild(op); });
       selT.addEventListener('change', function(){ c.tam = selT.value; _mosPrev(); });
       card.appendChild(selT);
-      card.appendChild(_mosLbl('Foto (opcional)'));
-      const fr = document.createElement('div'); fr.style.cssText = 'display:flex; align-items:center; gap:8px; flex-wrap:wrap;';
-      if(c.foto){ const pv = document.createElement('img'); pv.src = c.foto; pv.style.cssText = 'width:46px;height:46px;object-fit:cover;border-radius:8px;border:1px solid var(--linha);'; fr.appendChild(pv); }
-      const fl = document.createElement('label'); fl.className = 'mv-mini'; fl.style.cursor = 'pointer'; fl.textContent = c.foto ? 'trocar foto' : '＋ foto';
+      card.appendChild(_mosLbl('Fotos (uma ou várias — trocam sozinhas)'));
+      c.fotos = (Array.isArray(c.fotos) && c.fotos.length) ? c.fotos : (c.foto ? [c.foto] : []); if(c.foto) delete c.foto;
+      const fr = document.createElement('div'); fr.style.cssText = 'display:flex; align-items:center; gap:10px; flex-wrap:wrap;';
+      c.fotos.forEach(function(fu, fi2){
+        const wrap = document.createElement('div'); wrap.style.cssText = 'position:relative;';
+        const pv = document.createElement('img'); pv.src = fu; pv.style.cssText = 'width:46px;height:46px;object-fit:cover;border-radius:8px;border:1px solid var(--linha);display:block;'; wrap.appendChild(pv);
+        const rm = document.createElement('button'); rm.type = 'button'; rm.textContent = '✕'; rm.title = 'remover'; rm.style.cssText = 'position:absolute;top:-7px;right:-7px;width:19px;height:19px;border-radius:50%;border:none;background:var(--vermelho,#c0392b);color:#fff;font-size:11px;line-height:1;cursor:pointer;';
+        rm.addEventListener('click', function(){ c.fotos.splice(fi2, 1); renderMosaicoEditor(mos, lista); _mosPrev(); });
+        wrap.appendChild(rm); fr.appendChild(wrap);
+      });
+      const fl = document.createElement('label'); fl.className = 'mv-mini'; fl.style.cursor = 'pointer'; fl.textContent = '＋ foto';
       const fi = document.createElement('input'); fi.type = 'file'; fi.accept = 'image/*'; fi.style.display = 'none';
-      fi.addEventListener('change', async function(){ const f = fi.files && fi.files[0]; if(!f) return; setEstado('A enviar foto da caixa…', 'info'); try{ const url = await _uploadFoto(f); c.foto = url; setEstado('Foto ✓', 'ok'); renderMosaicoEditor(mos, lista); _mosPrev(); }catch(e){ setEstado('Erro ao enviar foto: ' + (e && e.message ? e.message : e), 'erro'); } });
+      fi.addEventListener('change', async function(){ const f = fi.files && fi.files[0]; if(!f) return; setEstado('A enviar foto da caixa…', 'info'); try{ const url = await _uploadFoto(f); c.fotos.push(url); setEstado('Foto ✓', 'ok'); renderMosaicoEditor(mos, lista); _mosPrev(); }catch(e){ setEstado('Erro ao enviar foto: ' + (e && e.message ? e.message : e), 'erro'); } });
       fl.appendChild(fi); fr.appendChild(fl);
-      if(c.foto) fr.appendChild(_mosBtn('sem foto', function(){ delete c.foto; renderMosaicoEditor(mos, lista); _mosPrev(); }));
       card.appendChild(fr);
+      if(c.fotos.length > 1){
+        const ir = document.createElement('div'); ir.style.cssText = 'display:flex; align-items:center; gap:8px; margin-top:8px; font-size:.82rem; color:var(--castanho-suave);';
+        ir.appendChild(document.createTextNode('Trocar a cada'));
+        const iin = document.createElement('input'); iin.type = 'number'; iin.min = '1'; iin.max = '60'; iin.value = (c.fotoSeg || 5); iin.style.cssText = 'width:62px; padding:5px 6px; border:1.5px solid var(--linha); border-radius:6px; font-family:inherit;';
+        iin.addEventListener('input', function(){ const v = parseInt(iin.value, 10); if(v) c.fotoSeg = v; _mosPrev(); });
+        ir.appendChild(iin); ir.appendChild(document.createTextNode('segundos'));
+        card.appendChild(ir);
+      }
       const corRow = document.createElement('div'); corRow.style.cssText = 'display:flex; align-items:center; gap:8px; margin-top:8px; font-size:.82rem; color:var(--castanho-suave);';
       corRow.appendChild(document.createTextNode('Cor de fundo (sem foto):'));
       const corIn = document.createElement('input'); corIn.type = 'color'; corIn.value = c.cor || '#3a3a44'; corIn.style.cssText = 'width:40px;height:28px;padding:0;border:none;background:none;cursor:pointer;';
@@ -2180,27 +2194,57 @@
       const ti = document.createElement('input'); ti.type = 'text'; ti.value = c.titulo || ''; ti.placeholder = 'Ex: Unhas de gel'; ti.style.cssText = _mosIn; ti.addEventListener('input', function(){ c.titulo = ti.value; _mosPrev(); }); card.appendChild(ti);
       card.appendChild(_mosLbl('Subtítulo (opcional)'));
       const su = document.createElement('textarea'); su.value = c.subtitulo || ''; su.placeholder = 'Ex: a partir de 15€ (Enter para nova linha)'; su.rows = 2; su.style.cssText = _mosIn + ' resize:vertical; min-height:46px; line-height:1.35;'; su.addEventListener('input', function(){ c.subtitulo = su.value; _mosPrev(); }); card.appendChild(su);
-      card.appendChild(_mosLbl('Estilo do texto — arrasta o texto na pré-visualização para o posicionar'));
+      // Mensagens que vão trocando (texto rotativo, como o carrossel da barra fixa)
+      c.slidesExtra = Array.isArray(c.slidesExtra) ? c.slidesExtra : [];
+      if(c.slidesExtra.length) card.appendChild(_mosLbl('Mensagens que vão trocando com a de cima'));
+      c.slidesExtra.forEach(function(sl, si){
+        const wrap = document.createElement('div'); wrap.style.cssText = 'border-left:3px solid var(--linha); padding-left:8px; margin:6px 0;';
+        const ti3 = document.createElement('input'); ti3.type = 'text'; ti3.value = sl.titulo || ''; ti3.placeholder = 'Título'; ti3.style.cssText = _mosIn; ti3.addEventListener('input', function(){ sl.titulo = ti3.value; _mosPrev(); }); wrap.appendChild(ti3);
+        const su3 = document.createElement('textarea'); su3.value = sl.subtitulo || ''; su3.placeholder = 'Subtítulo (Enter para nova linha)'; su3.rows = 2; su3.style.cssText = _mosIn + ' resize:vertical; min-height:44px; line-height:1.35;'; su3.addEventListener('input', function(){ sl.subtitulo = su3.value; _mosPrev(); }); wrap.appendChild(su3);
+        wrap.appendChild(_mosBtn('🗑 remover mensagem', function(){ c.slidesExtra.splice(si, 1); renderMosaicoEditor(mos, lista); _mosPrev(); }, true));
+        card.appendChild(wrap);
+      });
+      card.appendChild(_mosBtn('＋ mensagem', function(){ c.slidesExtra.push({ titulo:'', subtitulo:'' }); renderMosaicoEditor(mos, lista); _mosPrev(); }));
+      if(c.slidesExtra.length){
+        const ir2 = document.createElement('div'); ir2.style.cssText = 'display:flex; align-items:center; gap:8px; margin-top:8px; font-size:.82rem; color:var(--castanho-suave);';
+        ir2.appendChild(document.createTextNode('Trocar texto a cada'));
+        const iin2 = document.createElement('input'); iin2.type = 'number'; iin2.min = '1'; iin2.max = '60'; iin2.value = (c.textoSeg || 5); iin2.style.cssText = 'width:62px; padding:5px 6px; border:1.5px solid var(--linha); border-radius:6px; font-family:inherit;';
+        iin2.addEventListener('input', function(){ const v = parseInt(iin2.value, 10); if(v) c.textoSeg = v; _mosPrev(); });
+        ir2.appendChild(iin2); ir2.appendChild(document.createTextNode('segundos'));
+        card.appendChild(ir2);
+      }
+      card.appendChild(_mosLbl('Tipo de letra'));
+      { const fSel = document.createElement('select'); fSel.style.cssText = _mosSel;
+        [['','Automático (o do layout)'],['fredoka','Fredoka'],['poppins','Poppins'],['quicksand','Quicksand'],['montserrat','Montserrat'],['playfair','Playfair Display'],['bebas','Bebas Neue'],['lobster','Lobster'],['pacifico','Pacifico']].forEach(function(o){ const op=document.createElement('option'); op.value=o[0]; op.textContent=o[1]; if((c.fonte||'')===o[0]) op.selected=true; fSel.appendChild(op); });
+        fSel.addEventListener('change', function(){ if(fSel.value) c.fonte = fSel.value; else delete c.fonte; _mosPrev(); });
+        card.appendChild(fSel);
+      }
+      function _mosEstiloRow(estObj, corDef){
+        const row = document.createElement('div'); row.style.cssText = 'display:flex; align-items:center; gap:12px; flex-wrap:wrap; font-size:.8rem; color:var(--castanho-suave);';
+        const cl = document.createElement('label'); cl.style.cssText = 'display:flex; align-items:center; gap:5px;';
+        const ci = document.createElement('input'); ci.type = 'color'; ci.value = estObj.cor || corDef; ci.style.cssText = 'width:40px;height:28px;padding:0;border:none;background:none;cursor:pointer;';
+        ci.addEventListener('input', function(){ estObj.cor = ci.value; _mosPrev(); });
+        cl.appendChild(document.createTextNode('Cor')); cl.appendChild(ci); row.appendChild(cl);
+        const tl = document.createElement('label'); tl.style.cssText = 'display:flex; align-items:center; gap:5px;';
+        const tin = document.createElement('input'); tin.type = 'number'; tin.min = '0.6'; tin.max = '3'; tin.step = '0.05'; tin.placeholder = 'auto'; tin.value = (estObj.tamanho != null ? estObj.tamanho : ''); tin.style.cssText = 'width:64px; padding:5px 6px; border:1.5px solid var(--linha); border-radius:6px; font-family:inherit;';
+        tin.addEventListener('input', function(){ const v = parseFloat(tin.value); if(v) estObj.tamanho = v; else delete estObj.tamanho; _mosPrev(); });
+        tl.appendChild(document.createTextNode('Tamanho')); tl.appendChild(tin); row.appendChild(tl);
+        const bB = document.createElement('button'); bB.type = 'button'; bB.textContent = 'B'; bB.style.cssText = 'font-weight:800; width:32px; height:30px; border-radius:6px; border:1.5px solid var(--linha); cursor:pointer;';
+        const pB = function(){ bB.style.background = estObj.negrito ? 'var(--dourado)' : 'var(--branco)'; bB.style.color = estObj.negrito ? '#fff' : 'var(--castanho)'; }; pB();
+        bB.addEventListener('click', function(){ estObj.negrito = !estObj.negrito; if(!estObj.negrito) delete estObj.negrito; pB(); _mosPrev(); });
+        row.appendChild(bB);
+        const iB = document.createElement('button'); iB.type = 'button'; iB.textContent = 'I'; iB.style.cssText = 'font-style:italic; width:32px; height:30px; border-radius:6px; border:1.5px solid var(--linha); cursor:pointer;';
+        const pI = function(){ iB.style.background = estObj.italico ? 'var(--dourado)' : 'var(--branco)'; iB.style.color = estObj.italico ? '#fff' : 'var(--castanho)'; }; pI();
+        iB.addEventListener('click', function(){ estObj.italico = !estObj.italico; if(!estObj.italico) delete estObj.italico; pI(); _mosPrev(); });
+        row.appendChild(iB);
+        return row;
+      }
+      card.appendChild(_mosLbl('Estilo do título — arrasta o texto na pré-visualização para o posicionar'));
       c.estilo = c.estilo || (c.corTexto ? { cor:c.corTexto } : {});
-      const est = c.estilo;
-      const estRow = document.createElement('div'); estRow.style.cssText = 'display:flex; align-items:center; gap:12px; flex-wrap:wrap; font-size:.8rem; color:var(--castanho-suave);';
-      const cl = document.createElement('label'); cl.style.cssText = 'display:flex; align-items:center; gap:5px;';
-      const ci = document.createElement('input'); ci.type = 'color'; ci.value = est.cor || '#ffffff'; ci.style.cssText = 'width:40px;height:28px;padding:0;border:none;background:none;cursor:pointer;';
-      ci.addEventListener('input', function(){ est.cor = ci.value; _mosPrev(); });
-      cl.appendChild(document.createTextNode('Cor')); cl.appendChild(ci); estRow.appendChild(cl);
-      const tl2 = document.createElement('label'); tl2.style.cssText = 'display:flex; align-items:center; gap:5px;';
-      const ti2 = document.createElement('input'); ti2.type = 'number'; ti2.min = '0.6'; ti2.max = '3'; ti2.step = '0.05'; ti2.placeholder = 'auto'; ti2.value = (est.tamanho != null ? est.tamanho : ''); ti2.style.cssText = 'width:64px; padding:5px 6px; border:1.5px solid var(--linha); border-radius:6px; font-family:inherit;';
-      ti2.addEventListener('input', function(){ const v = parseFloat(ti2.value); if(v) est.tamanho = v; else delete est.tamanho; _mosPrev(); });
-      tl2.appendChild(document.createTextNode('Tamanho')); tl2.appendChild(ti2); estRow.appendChild(tl2);
-      const bB = document.createElement('button'); bB.type = 'button'; bB.textContent = 'B'; bB.style.cssText = 'font-weight:800; width:32px; height:30px; border-radius:6px; border:1.5px solid var(--linha); cursor:pointer;';
-      const pB = function(){ bB.style.background = est.negrito ? 'var(--dourado)' : 'var(--branco)'; bB.style.color = est.negrito ? '#fff' : 'var(--castanho)'; }; pB();
-      bB.addEventListener('click', function(){ est.negrito = !est.negrito; if(!est.negrito) delete est.negrito; pB(); _mosPrev(); });
-      estRow.appendChild(bB);
-      const iB = document.createElement('button'); iB.type = 'button'; iB.textContent = 'I'; iB.style.cssText = 'font-style:italic; width:32px; height:30px; border-radius:6px; border:1.5px solid var(--linha); cursor:pointer;';
-      const pI = function(){ iB.style.background = est.italico ? 'var(--dourado)' : 'var(--branco)'; iB.style.color = est.italico ? '#fff' : 'var(--castanho)'; }; pI();
-      iB.addEventListener('click', function(){ est.italico = !est.italico; if(!est.italico) delete est.italico; pI(); _mosPrev(); });
-      estRow.appendChild(iB);
-      card.appendChild(estRow);
+      card.appendChild(_mosEstiloRow(c.estilo, '#ffffff'));
+      card.appendChild(_mosLbl('Estilo do subtítulo'));
+      c.estiloSub = c.estiloSub || {};
+      card.appendChild(_mosEstiloRow(c.estiloSub, '#ffffff'));
       if(cats.length){
         card.appendChild(_mosLbl('Ao tocar, abrir a secção (opcional)'));
         const selL = document.createElement('select'); selL.style.cssText = _mosSel;

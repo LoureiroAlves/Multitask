@@ -638,6 +638,8 @@
   .mos-box.tam-l{ grid-column:span 2; min-height:130px; }          /* largo: 2 colunas, meia altura */
   .mos-box.tam-g{ grid-column:span 2; aspect-ratio:1/1; }          /* grande: 2 colunas, quadrado */
   .mos-box .mos-foto{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:0; }
+  .mos-box.mos-multi .mos-foto{ opacity:0; transition:opacity 1s ease; }
+  .mos-box.mos-multi .mos-foto.ativa{ opacity:1; }
   .mos-box .mos-shade{ position:absolute; inset:0; z-index:1; background:linear-gradient(to top, rgba(0,0,0,.5), rgba(0,0,0,.04) 55%); pointer-events:none; }
   .mos-box .mos-txt{ position:absolute; z-index:2; max-width:90%; }   /* posicionado por left/top (arrastável na pré-visualização) */
   .mos-box .mos-tit{ font-family:var(--fonte-titulo); font-weight:800; font-size:1.15rem; line-height:1.1; }
@@ -2224,6 +2226,33 @@
     el.addEventListener('pointerup', function(ev){ if(!drag) return; drag = false; if(moveu){ try{ parent.postMessage({ type:'mosaico-pos', sec:(sec || null), idx:idx, x:Math.round(nx), y:Math.round(ny) }, '*'); }catch(e){} } });
     el.addEventListener('pointercancel', function(){ drag = false; });
   }
+  const _MOS_FONTES = { fredoka:"'Fredoka', sans-serif", poppins:"'Poppins', sans-serif", quicksand:"'Quicksand', sans-serif", montserrat:"'Montserrat', sans-serif", playfair:"'Playfair Display', serif", bebas:"'Bebas Neue', sans-serif", lobster:"'Lobster', cursive", pacifico:"'Pacifico', cursive" };
+  // Rotação de TEXTO de uma caixa (várias mensagens a trocar, como o carrossel da barra fixa)
+  function _mosTextoRotacao(box, tx, slides, est, esSub, ms){
+    let i = 0;
+    function fill(sl){
+      tx.innerHTML = '';
+      if(sl.t){ const t = document.createElement('div'); t.className = 'mos-tit'; t.textContent = sl.t; if(est.tamanho) t.style.fontSize = est.tamanho + 'rem'; if(est.negrito) t.style.fontWeight = '800'; if(est.italico) t.style.fontStyle = 'italic'; tx.appendChild(t); }
+      if(sl.s){ const s = document.createElement('div'); s.className = 'mos-sub'; s.textContent = sl.s; s.style.whiteSpace = 'pre-line'; if(esSub.cor) s.style.color = esSub.cor; if(esSub.tamanho) s.style.fontSize = esSub.tamanho + 'rem'; if(esSub.negrito) s.style.fontWeight = '800'; if(esSub.italico) s.style.fontStyle = 'italic'; tx.appendChild(s); }
+    }
+    const t = setInterval(function(){
+      if(!document.body.contains(box)){ clearInterval(t); return; }
+      tx.style.transition = 'opacity .35s ease'; tx.style.opacity = '0';
+      setTimeout(function(){ i = (i + 1) % slides.length; fill(slides[i]); tx.style.opacity = ''; }, 360);
+    }, ms);
+  }
+  // Rotação das fotos de uma caixa (troca de X em X segundos, como a barra fixa). Auto-limpa quando a caixa sai do DOM.
+  function _mosRotacaoCaixa(box, ms){
+    const imgs = box.querySelectorAll('.mos-foto');
+    if(imgs.length <= 1) return;
+    let i = 0;
+    const t = setInterval(function(){
+      if(!document.body.contains(box)){ clearInterval(t); return; }
+      imgs[i].classList.remove('ativa');
+      i = (i + 1) % imgs.length;
+      imgs[i].classList.add('ativa');
+    }, ms);
+  }
   // Constrói as caixas do mosaico dentro de um grid qualquer (mosaico principal ou de uma secção)
   function _mosBuildInto(grid, caixas, sec){
     grid.innerHTML = '';
@@ -2233,18 +2262,26 @@
       b.className = 'mos-box tam-' + (c.tam || 'p');
       if(c.link){ b.type = 'button'; b.setAttribute('data-target', c.link); }
       if(c.cor) b.style.background = c.cor;
-      if(c.foto){
-        const im = document.createElement('img'); im.className = 'mos-foto'; im.src = c.foto; im.alt = ''; im.decoding = 'async'; b.appendChild(im);
+      const _fotos = (Array.isArray(c.fotos) && c.fotos.length) ? c.fotos : (c.foto ? [c.foto] : []);
+      if(_fotos.length){
+        if(_fotos.length > 1) b.classList.add('mos-multi');
+        _fotos.forEach(function(fu, fi){ if(!fu) return; const im = document.createElement('img'); im.className = 'mos-foto' + (fi === 0 ? ' ativa' : ''); im.src = fu; im.alt = ''; im.decoding = 'async'; b.appendChild(im); });
         const sh = document.createElement('span'); sh.className = 'mos-shade'; b.appendChild(sh);
+        if(_fotos.length > 1){ _mosRotacaoCaixa(b, Math.max(1, parseInt(c.fotoSeg, 10) || 5) * 1000); }
       }
       const est = c.estilo || {};
+      const esSub = c.estiloSub || {};
       const tx = document.createElement('div'); tx.className = 'mos-txt';
       tx.style.color = est.cor || c.corTexto || '#ffffff';
       tx.style.left = (c.tx != null ? c.tx : 6) + '%';
       tx.style.top = (c.ty != null ? c.ty : 72) + '%';
+      if(c.fonte && _MOS_FONTES[c.fonte]) tx.style.fontFamily = _MOS_FONTES[c.fonte];
       if(c.titulo){ const t = document.createElement('div'); t.className = 'mos-tit'; t.textContent = c.titulo; if(est.tamanho) t.style.fontSize = est.tamanho + 'rem'; if(est.negrito) t.style.fontWeight = '800'; if(est.italico) t.style.fontStyle = 'italic'; tx.appendChild(t); }
-      if(c.subtitulo){ const s = document.createElement('div'); s.className = 'mos-sub'; s.textContent = c.subtitulo; s.style.whiteSpace = 'pre-line'; if(est.italico) s.style.fontStyle = 'italic'; tx.appendChild(s); }
+      if(c.subtitulo){ const s = document.createElement('div'); s.className = 'mos-sub'; s.textContent = c.subtitulo; s.style.whiteSpace = 'pre-line'; if(esSub.cor) s.style.color = esSub.cor; if(esSub.tamanho) s.style.fontSize = esSub.tamanho + 'rem'; if(esSub.negrito) s.style.fontWeight = '800'; if(esSub.italico) s.style.fontStyle = 'italic'; tx.appendChild(s); }
       b.appendChild(tx);
+      { const _ex = Array.isArray(c.slidesExtra) ? c.slidesExtra : [];
+        const _sl = [{ t:c.titulo, s:c.subtitulo }].concat(_ex.map(function(x){ return { t:x.titulo, s:x.subtitulo }; })).filter(function(o){ return (o.t && String(o.t).trim()) || (o.s && String(o.s).trim()); });
+        if(_sl.length > 1){ _mosTextoRotacao(b, tx, _sl, est, esSub, Math.max(1, parseInt(c.textoSeg, 10) || 5) * 1000); } }
       if(window.__PREVIEW){ _mosDragText(b, tx, i, sec); }
       grid.appendChild(b);
     });
