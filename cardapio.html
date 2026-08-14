@@ -562,6 +562,8 @@
 
   /* ===== Efeito Néon (ligável POR CIMA de qualquer modelo) — cor = fixa, ou a cor de cada secção ===== */
   body.neon-fx{ --nfx1:8px; --nfx2:18px; }
+  body.neon-fx.nfx-pisca:not(.modelo-caderno) .tile{ animation:nfxPisca var(--nfx-dur,1.4s) ease-in-out infinite; }
+  @keyframes nfxPisca{ 0%,100%{ opacity:1; } 55%{ opacity:.5; } }
   body.neon-fx.nfx-subtil{ --nfx1:5px; --nfx2:11px; }
   body.neon-fx.nfx-forte{ --nfx1:12px; --nfx2:30px; }
   body.neon-fx:not(.modelo-caderno) .tile{ box-shadow:0 0 var(--nfx1) var(--nfx-cor, var(--cat-cor, var(--dourado))), 0 0 var(--nfx2) var(--nfx-cor, var(--cat-cor, var(--dourado))) !important; }
@@ -641,6 +643,10 @@
   .mos-box.mos-multi .mos-foto{ opacity:0; transition:opacity 1s ease; }
   .mos-box.mos-multi .mos-foto.ativa{ opacity:1; }
   .mos-box .mos-shade{ position:absolute; inset:0; z-index:1; background:linear-gradient(to top, rgba(0,0,0,.5), rgba(0,0,0,.04) 55%); pointer-events:none; }
+  /* Néon à volta da caixa (só o contorno/brilho — não toca no texto) */
+  .mos-box.mos-neon{ border:2px solid var(--mos-neon-cor,#19e9ff); box-shadow:0 0 7px var(--mos-neon-cor,#19e9ff), 0 0 16px var(--mos-neon-cor,#19e9ff); }
+  .mos-box.mos-neon.mos-neon-pisca{ animation:mosNeonPisca var(--mos-neon-dur,1.4s) ease-in-out infinite; }
+  @keyframes mosNeonPisca{ 0%,100%{ border-color:var(--mos-neon-cor,#19e9ff); box-shadow:0 0 7px var(--mos-neon-cor,#19e9ff), 0 0 16px var(--mos-neon-cor,#19e9ff); } 50%{ border-color:rgba(255,255,255,.06); box-shadow:0 0 1px var(--mos-neon-cor,#19e9ff); } }
   .mos-box .mos-txt{ position:absolute; z-index:2; max-width:90%; }   /* posicionado por left/top (arrastável na pré-visualização) */
   .mos-box .mos-tit{ font-family:var(--fonte-titulo); font-weight:800; font-size:1.15rem; line-height:1.1; }
   .mos-box .mos-sub{ font-size:.86rem; line-height:1.2; opacity:.95; margin-top:2px; }
@@ -2264,6 +2270,11 @@
       b.className = 'mos-box tam-' + (c.tam || 'p');
       if(c.link){ b.type = 'button'; b.setAttribute('data-target', c.link); }
       if(c.cor) b.style.background = c.cor;
+      if(c.neonAtivo){
+        b.classList.add('mos-neon');
+        b.style.setProperty('--mos-neon-cor', c.neonCor || '#19e9ff');
+        if(c.neonPiscar){ b.classList.add('mos-neon-pisca'); b.style.setProperty('--mos-neon-dur', Math.max(0.3, parseFloat(c.neonPiscar) || 1.4) + 's'); }
+      }
       const _fotos = (Array.isArray(c.fotos) && c.fotos.length) ? c.fotos : (c.foto ? [c.foto] : []);
       if(_fotos.length){
         if(_fotos.length > 1) b.classList.add('mos-multi');
@@ -3150,6 +3161,8 @@
         document.body.classList.remove('nfx-subtil','nfx-medio','nfx-forte');
         if(_nf.ativo) document.body.classList.add('nfx-' + (_nf.intensidade || 'medio'));
         document.body.classList.toggle('nfx-contorno', !!(_nf.ativo && _nf.contorno));
+        document.body.classList.toggle('nfx-pisca', !!(_nf.ativo && _nf.piscar));
+        if(_nf.ativo && _nf.piscar) document.documentElement.style.setProperty('--nfx-dur', (Math.max(0.3, parseFloat(_nf.piscar) || 1.4)) + 's');
         if(_nf.ativo && _nf.cor) document.documentElement.style.setProperty('--nfx-cor', _nf.cor);
         else document.documentElement.style.removeProperty('--nfx-cor'); }
       // Cores do modelo "Deslizar" (páginas, capa e títulos) — texto a contrastar automaticamente

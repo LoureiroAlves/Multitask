@@ -486,6 +486,10 @@
           <input type="checkbox" id="neonFxContorno" style="width:auto;"> Contorno néon à volta dos separadores
         </label>
         <label style="display:flex; align-items:center; gap:8px; margin-top:10px; cursor:pointer;">
+          <input type="checkbox" id="neonFxPiscarChk" style="width:auto;"> Piscar
+          <input type="number" id="neonFxPiscar" min="0.3" max="10" step="0.1" value="1.4" style="width:64px; padding:5px 6px; border:1.5px solid var(--linha); border-radius:6px; display:none;"> <span id="neonFxPiscarSeg" style="display:none; font-size:0.85rem; color:var(--castanho-suave);">seg</span>
+        </label>
+        <label style="display:flex; align-items:center; gap:8px; margin-top:10px; cursor:pointer;">
           <input type="checkbox" id="neonFxCorAtiva" style="width:auto;"> Cor do brilho fixa
         </label>
         <div id="neonFxCorBox" style="display:none; align-items:center; gap:10px; margin-top:6px;">
@@ -1883,6 +1887,8 @@
       document.getElementById('neonFxBox').style.display = nf.ativo ? 'block' : 'none';
       document.getElementById('neonFxIntensidade').value = nf.intensidade || 'medio';
       document.getElementById('neonFxContorno').checked = !!nf.contorno;
+      { const _pc = document.getElementById('neonFxPiscarChk'), _pn = document.getElementById('neonFxPiscar'), _ps = document.getElementById('neonFxPiscarSeg');
+        if(_pc) _pc.checked = !!nf.piscar; if(_pn){ _pn.value = nf.piscar || 1.4; _pn.style.display = nf.piscar ? 'inline-block' : 'none'; } if(_ps) _ps.style.display = nf.piscar ? 'inline' : 'none'; }
       document.getElementById('neonFxCorAtiva').checked = !!nf.cor;
       document.getElementById('neonFxCorBox').style.display = nf.cor ? 'flex' : 'none';
       document.getElementById('neonFxCor').value = nf.cor || '#19e9ff'; }
@@ -2061,6 +2067,11 @@
   });
   document.getElementById('neonFxCorAtiva').addEventListener('change', e => {
     document.getElementById('neonFxCorBox').style.display = e.target.checked ? 'flex' : 'none';
+  });
+  document.getElementById('neonFxPiscarChk').addEventListener('change', e => {
+    const _pn = document.getElementById('neonFxPiscar'), _ps = document.getElementById('neonFxPiscarSeg');
+    if(_pn) _pn.style.display = e.target.checked ? 'inline-block' : 'none';
+    if(_ps) _ps.style.display = e.target.checked ? 'inline' : 'none';
   });
   document.getElementById('agCorAtiva').addEventListener('change', e => {
     document.getElementById('agCorBox').style.display = e.target.checked ? 'flex' : 'none';
@@ -2245,6 +2256,24 @@
       card.appendChild(_mosLbl('Estilo do subtítulo'));
       c.estiloSub = c.estiloSub || {};
       card.appendChild(_mosEstiloRow(c.estiloSub, '#ffffff'));
+      card.appendChild(_mosLbl('Néon à volta da caixa'));
+      { const nr = document.createElement('div'); nr.style.cssText = 'display:flex; align-items:center; gap:12px; flex-wrap:wrap; font-size:.82rem; color:var(--castanho-suave);';
+        const nl = document.createElement('label'); nl.style.cssText = 'display:flex; align-items:center; gap:5px; cursor:pointer;';
+        const nchk = document.createElement('input'); nchk.type = 'checkbox'; nchk.style.width = 'auto'; nchk.checked = !!c.neonAtivo;
+        nl.appendChild(nchk); nl.appendChild(document.createTextNode('Ligar')); nr.appendChild(nl);
+        const ncor = document.createElement('input'); ncor.type = 'color'; ncor.value = c.neonCor || '#19e9ff'; ncor.style.cssText = 'width:40px;height:28px;padding:0;border:none;background:none;cursor:pointer;';
+        ncor.addEventListener('input', function(){ c.neonCor = ncor.value; _mosPrev(); });
+        nr.appendChild(document.createTextNode('Cor')); nr.appendChild(ncor);
+        const pl = document.createElement('label'); pl.style.cssText = 'display:flex; align-items:center; gap:5px; cursor:pointer;';
+        const pchk = document.createElement('input'); pchk.type = 'checkbox'; pchk.style.width = 'auto'; pchk.checked = !!c.neonPiscar;
+        pl.appendChild(pchk); pl.appendChild(document.createTextNode('Piscar')); nr.appendChild(pl);
+        const pnum = document.createElement('input'); pnum.type = 'number'; pnum.min = '0.3'; pnum.max = '10'; pnum.step = '0.1'; pnum.value = (c.neonPiscar || 1.4); pnum.style.cssText = 'width:60px; padding:5px 6px; border:1.5px solid var(--linha); border-radius:6px; font-family:inherit;' + (c.neonPiscar ? '' : 'display:none;');
+        pnum.addEventListener('input', function(){ const v = parseFloat(pnum.value); if(v) c.neonPiscar = v; _mosPrev(); });
+        nr.appendChild(pnum); nr.appendChild(document.createTextNode('seg'));
+        nchk.addEventListener('change', function(){ if(nchk.checked) c.neonAtivo = true; else delete c.neonAtivo; _mosPrev(); });
+        pchk.addEventListener('change', function(){ if(pchk.checked){ c.neonPiscar = c.neonPiscar || 1.4; pnum.style.display = ''; } else { delete c.neonPiscar; pnum.style.display = 'none'; } _mosPrev(); });
+        card.appendChild(nr);
+      }
       if(cats.length){
         card.appendChild(_mosLbl('Ao tocar, abrir a secção (opcional)'));
         const selL = document.createElement('select'); selL.style.cssText = _mosSel;
@@ -2534,7 +2563,8 @@
         ativo: document.getElementById('neonFxAtivo').checked,
         intensidade: document.getElementById('neonFxIntensidade').value,
         contorno: document.getElementById('neonFxContorno').checked,
-        cor: document.getElementById('neonFxCorAtiva').checked ? document.getElementById('neonFxCor').value : ''
+        cor: document.getElementById('neonFxCorAtiva').checked ? document.getElementById('neonFxCor').value : '',
+        piscar: document.getElementById('neonFxPiscarChk').checked ? (parseFloat(document.getElementById('neonFxPiscar').value) || 1.4) : 0
       };
       config.fundo = {
         tipo: document.getElementById('fundoTipoSel').value,
