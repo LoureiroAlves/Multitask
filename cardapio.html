@@ -207,9 +207,9 @@
   body.fundo-visivel{ background-color:var(--bege-claro); }
   body.fundo-visivel .categoria-grid{ background:transparent; border-bottom:none; }
   /* Imagem de fundo: camada dedicada, fixa ao ecrã, isolada na GPU (evita strobe/frames a preto no scroll do iOS) */
-  #fundoFoto{ position:fixed; top:0; left:0; width:100%; height:100vh; height:100lvh; z-index:-1; display:none; overflow:hidden; pointer-events:none; transform:translateZ(0); backface-visibility:hidden; }
+  #fundoFoto{ position:fixed; top:0; left:0; width:100%; height:100vh; height:100lvh; z-index:-1; display:none; overflow:hidden; pointer-events:none; }
   body.fundo-imagem #fundoFoto{ display:block; }
-  #fundoFoto .ff-img{ position:absolute; inset:-3%; background-image:var(--fundo-img); background-size:cover; background-position:center; background-repeat:no-repeat; transform:scale(1) translateZ(0); backface-visibility:hidden; transform-origin:center; opacity:0; transition:opacity .7s ease; }
+  #fundoFoto .ff-img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center; transform:scale(1) translateZ(0); backface-visibility:hidden; transform-origin:center; will-change:transform; opacity:0; transition:opacity .6s ease; }
   #fundoFoto.pronto .ff-img{ opacity:1; }
   /* Movimento lento (zoom out e volta a aproximar, sem cortes). Duração e intensidade controladas pelo editor. */
   body.fundo-imagem.fundo-anim #fundoFoto.pronto .ff-img{ animation:fundoZoom var(--fundo-anim-dur, 28s) ease-in-out infinite alternate; }
@@ -1662,7 +1662,7 @@
 </head>
 <body class="carregando">
 
-<div id="fundoFoto" aria-hidden="true"><div class="ff-img"></div><div class="ff-veil"></div></div>
+<div id="fundoFoto" aria-hidden="true"><img class="ff-img" alt="" decoding="async"><div class="ff-veil"></div></div>
 
 <div id="introOverlay">
   <div id="introBg"></div>
@@ -2928,7 +2928,7 @@
       // Fundo do cardápio (liso / gradiente / imagem / textura)
       document.body.classList.remove('textura-pontos','textura-grelha','textura-diagonal','textura-linho','textura-xadrez','textura-favo','textura-relevo','textura-almofada','textura-azulejo-classico','textura-azulejo-floral','textura-azulejo-geometrico');
       document.body.classList.remove('fundo-imagem','fundo-anim');
-      { const _ff = document.getElementById('fundoFoto'); if(_ff){ _ff.classList.remove('pronto'); _ff.dataset.src = ''; } }
+      { const _ff = document.getElementById('fundoFoto'); if(_ff){ _ff.classList.remove('pronto'); const _i = _ff.querySelector('.ff-img'); if(_i) _i.removeAttribute('src'); } }
       const _tipoFundo = (config.fundo && config.fundo.tipo) || 'liso';
       const _isCaderno = (config.modelo || 'lista') === 'caderno';
       const _fundoProprio = ['caderno','ardosia','elegante','azulejo'].indexOf(config.modelo || 'lista') >= 0;
@@ -2945,7 +2945,6 @@
           document.body.style.background = '';
           document.body.style.backgroundColor = 'transparent';
           document.body.classList.add('fundo-imagem');
-          document.documentElement.style.setProperty('--fundo-img', "url('" + RAW_BASE + config.fundo.imagem + "')");
           document.documentElement.style.setProperty('--fundo-veil', config.tilesVidro === true ? 'rgba(0,0,0,0.30)' : 'rgba(255,255,255,0.72)');
           { const _fa = config.fundoAnim || {};
             const _animOn = _fa.ativo !== false;
@@ -2954,15 +2953,18 @@
             const _int = Math.max(2, Math.min(40, parseFloat(_fa.intensidade) || 12));
             document.documentElement.style.setProperty('--fundo-anim-dur', _dur + 's');
             document.documentElement.style.setProperty('--fundo-anim-escala', (1 + _int / 100).toFixed(3)); }
-          // Pré-carrega a foto e só a mostra (fade-in) quando estiver decodificada — evita o "salto" e frames a preto
+          // Carrega a foto num <img> real e só a revela (fade-in + arranque da animação) quando estiver
+          // MESMO pronta a pintar (decode). Evita o flash/strobe e a imagem a aparecer meio-decodificada.
           { const _ff = document.getElementById('fundoFoto');
-            if(_ff){
+            const _im = _ff && _ff.querySelector('.ff-img');
+            if(_ff && _im){
               const _src = RAW_BASE + config.fundo.imagem;
-              if(_ff.dataset.src !== _src){ _ff.classList.remove('pronto'); _ff.dataset.src = _src;
-                const _im = new Image(); _im.decoding = 'async';
-                _im.onload = function(){ if(_ff.dataset.src === _src) _ff.classList.add('pronto'); };
-                _im.src = _src;
-                if(_im.complete){ _ff.classList.add('pronto'); }
+              if(_im.getAttribute('src') !== _src){
+                _ff.classList.remove('pronto');
+                const _revelar = function(){ if(_im.getAttribute('src') === _src) _ff.classList.add('pronto'); };
+                _im.setAttribute('src', _src);
+                if(_im.decode){ _im.decode().then(_revelar).catch(_revelar); }
+                else { _im.onload = _revelar; if(_im.complete) _revelar(); }
               } else { _ff.classList.add('pronto'); }
             } }
         } else if(config.fundo.tipo === 'textura'){
