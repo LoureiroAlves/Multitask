@@ -118,6 +118,8 @@
   }
   html{ background:var(--intro-bg,#1f2530); }
   body.barra-oculta{ padding-bottom:env(safe-area-inset-bottom); }
+  /* Cabeçalho desligado: garante afastamento do topo (notch/status bar) para o conteúdo não colar ao limite */
+  body.cabecalho-oculto{ padding-top:calc(env(safe-area-inset-top) + 10px); }
   /* Realce da zona ao arrastar uma imagem para a pré-visualização */
   .drop-alvo{ outline:3px dashed #ffd75e !important; outline-offset:-3px; box-shadow:0 0 0 100vmax rgba(255,215,94,.10) inset !important; position:relative; }
   header{
@@ -294,7 +296,7 @@
   }
 
   /* ===== Modelo "grelha de cartões" (config.modelo === 'grelha') ===== */
-  body.modelo-grelha .categoria-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(102px, 1fr)); gap:10px; }
+  body.modelo-grelha .categoria-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(102px, 1fr)); gap:10px; align-content:start; }
   body.modelo-grelha .tile{ flex-direction:column; aspect-ratio:1 / 1; min-height:0; gap:6px; padding:10px 6px; overflow:hidden; }
   body.modelo-grelha .tile-emoji{ display:block; font-size:2rem; line-height:1; }
   body.modelo-grelha .tile-label{ font-size:clamp(0.58rem, 2.7vw, 0.82rem); letter-spacing:0.2px; max-width:100%; overflow-wrap:anywhere; word-break:break-word; hyphens:auto; }
@@ -3309,8 +3311,10 @@
       }
       // Mostrar/esconder o cabeçalho
       {
+        const _hdrOff = (config.header && config.header.mostrar === false);
         const _hdr = document.querySelector('header');
-        if(_hdr) _hdr.style.display = (config.header && config.header.mostrar === false) ? 'none' : '';
+        if(_hdr) _hdr.style.display = _hdrOff ? 'none' : '';
+        document.body.classList.toggle('cabecalho-oculto', _hdrOff);
       }
       // Blocos da página: ligar/desligar lista(menu), barra fixa e rodapé final (construtor)
       {
