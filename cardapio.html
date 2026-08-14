@@ -157,6 +157,9 @@
   body.secao-aberta .info-fixa{ transform:translateY(130%); }
   #cartBtn, #linkFidelidade{ transition:opacity .3s ease, visibility .3s ease; }
   body.cart-oculto #cartBtn, body.cart-oculto #linkFidelidade{ opacity:0; visibility:hidden; pointer-events:none; }
+  /* Carrinho desativado pelo dono: esconde o botão e os "+" de adicionar */
+  body.carrinho-off #cartBtn{ display:none !important; }
+  body.carrinho-off .btn-add-lista{ display:none !important; }
   .header-icons{
     display:flex; justify-content:space-between; align-items:center;
     margin-top:10px;
@@ -3025,6 +3028,14 @@
         const _rf = document.getElementById('rodapeFinal');
         if(_rf) _rf.style.display = (config.footer && config.footer.mostrar === false) ? 'none' : '';
       }
+      // Carrinho: ativar/desativar e mostrar preços (ou só a lista de itens para o empregado)
+      {
+        const _cc = config.carrinho || {};
+        window.__cartCfg = { ativo: _cc.ativo !== false, precos: _cc.precos !== false };
+        document.body.classList.toggle('carrinho-off', window.__cartCfg.ativo === false);
+        try{ if(window.montarBotoesLista) window.montarBotoesLista(); }catch(e){}
+        try{ if(window.__cartRefresh) window.__cartRefresh(); }catch(e){}
+      }
       // Texto livre posicionável (sobre o fundo) — útil quando o cabeçalho está desligado
       (function(){
         const tl = config.textoLivre || {};
@@ -5374,9 +5385,11 @@
       if(painel && painel.classList.contains('aberto') && jogos && jogos.closest('#categoriaPainel')) return true;
       return false;
     }
+    function _cartCfg(){ return window.__cartCfg || { ativo:true, precos:true }; }
+    window.__cartRefresh = function(){ try{ atualizarBadge(); if(overlay.classList.contains('aberto')) render(); }catch(e){} };
     function atualizarVisibilidade(){
       const total = lista.reduce((s,i)=>s+i.qtd,0);
-      if(total === 0 || emJogos()) cartBtn.classList.add('escondido');
+      if(!_cartCfg().ativo || total === 0 || emJogos()) cartBtn.classList.add('escondido');
       else cartBtn.classList.remove('escondido');
     }
     function atualizarBadge(){
@@ -5388,47 +5401,54 @@
 
     function render(){
       const p = document.getElementById('cartPainel');
+      const mostrarPrecos = _cartCfg().precos !== false;
+      const titulo = mostrarPrecos ? 'A minha lista' : 'O meu pedido';
       if(lista.length === 0){
-        p.innerHTML = '<h3>A minha lista</h3><div class="cart-vazio">A lista está vazia.<br>Toca no <strong>+</strong> junto a um prato ou bebida para adicionar.</div><div class="cart-acoes"><button class="cart-fechar" id="cartFechar">Fechar</button></div>';
+        p.innerHTML = '<h3>' + titulo + '</h3><div class="cart-vazio">A lista está vazia.<br>Toca no <strong>+</strong> junto a um prato ou bebida para adicionar.</div><div class="cart-acoes"><button class="cart-fechar" id="cartFechar">Fechar</button></div>';
       } else {
-        let html = '<h3>A minha lista</h3>';
+        let html = '<h3>' + titulo + '</h3>';
+        if(!mostrarPrecos){ html += '<div class="cart-vazio" style="padding:2px 0 12px; font-size:0.82rem;">Mostra esta lista ao empregado para fazer o pedido.</div>'; }
         let total = 0;
         lista.forEach((it, idx) => {
           total += it.preco * it.qtd;
           html += '<div class="cart-linha">' +
             '<span class="cart-nome">' + it.nome + '</span>' +
-            (it.precoTxt ? '<span class="cart-preco">' + it.precoTxt + '</span>' : '') +
+            (mostrarPrecos && it.precoTxt ? '<span class="cart-preco">' + it.precoTxt + '</span>' : '') +
             '<span class="cart-qtd"><button data-a="menos" data-i="' + idx + '">−</button>' + it.qtd + '<button data-a="mais" data-i="' + idx + '">+</button></span>' +
             '</div>';
         });
-        html += '<div class="cart-total"><span>Total</span><span>' + total.toFixed(2).replace('.',',') + '€</span></div>';
-        const porPessoa = (total / numPessoas).toFixed(2).replace('.',',');
-        html += '<div class="cart-dividir">' +
-          '<button class="cart-dividir-btn" id="cartDividirBtn">👥 Dividir a conta</button>' +
-          '<div class="cart-dividir-box' + (dividirAberto ? ' aberta' : '') + '" id="cartDividirBox">' +
-            '<div class="cart-pessoas-label">Por quantas pessoas?</div>' +
-            '<div class="cart-pessoas">' +
-              '<button data-d="menos">−</button>' +
-              '<strong id="cartNumPessoas">' + numPessoas + '</strong>' +
-              '<button data-d="mais">+</button>' +
+        if(mostrarPrecos){
+          html += '<div class="cart-total"><span>Total</span><span>' + total.toFixed(2).replace('.',',') + '€</span></div>';
+          const porPessoa = (total / numPessoas).toFixed(2).replace('.',',');
+          html += '<div class="cart-dividir">' +
+            '<button class="cart-dividir-btn" id="cartDividirBtn">👥 Dividir a conta</button>' +
+            '<div class="cart-dividir-box' + (dividirAberto ? ' aberta' : '') + '" id="cartDividirBox">' +
+              '<div class="cart-pessoas-label">Por quantas pessoas?</div>' +
+              '<div class="cart-pessoas">' +
+                '<button data-d="menos">−</button>' +
+                '<strong id="cartNumPessoas">' + numPessoas + '</strong>' +
+                '<button data-d="mais">+</button>' +
+              '</div>' +
+              '<div class="cart-porpessoa">Cada pessoa paga<strong id="cartPorPessoa">' + porPessoa + '€</strong></div>' +
             '</div>' +
-            '<div class="cart-porpessoa">Cada pessoa paga<strong id="cartPorPessoa">' + porPessoa + '€</strong></div>' +
-          '</div>' +
-        '</div>';
+          '</div>';
+        }
         html += '<div class="cart-acoes"><button class="cart-fechar" id="cartFechar">Fechar</button><button class="cart-limpar" id="cartLimpar">Limpar lista</button></div>';
         p.innerHTML = html;
-        const divBtn = document.getElementById('cartDividirBtn');
-        const divBox = document.getElementById('cartDividirBox');
-        if(divBtn) divBtn.onclick = () => { dividirAberto = !dividirAberto; divBox.classList.toggle('aberta', dividirAberto); };
-        p.querySelectorAll('.cart-pessoas button').forEach(b => {
-          b.onclick = () => {
-            if(b.dataset.d === 'mais') numPessoas++;
-            else if(numPessoas > 1) numPessoas--;
-            const t = lista.reduce((s,i)=>s+i.preco*i.qtd, 0);
-            document.getElementById('cartNumPessoas').textContent = numPessoas;
-            document.getElementById('cartPorPessoa').textContent = (t/numPessoas).toFixed(2).replace('.',',') + '€';
-          };
-        });
+        if(mostrarPrecos){
+          const divBtn = document.getElementById('cartDividirBtn');
+          const divBox = document.getElementById('cartDividirBox');
+          if(divBtn) divBtn.onclick = () => { dividirAberto = !dividirAberto; divBox.classList.toggle('aberta', dividirAberto); };
+          p.querySelectorAll('.cart-pessoas button').forEach(b => {
+            b.onclick = () => {
+              if(b.dataset.d === 'mais') numPessoas++;
+              else if(numPessoas > 1) numPessoas--;
+              const t = lista.reduce((s,i)=>s+i.preco*i.qtd, 0);
+              document.getElementById('cartNumPessoas').textContent = numPessoas;
+              document.getElementById('cartPorPessoa').textContent = (t/numPessoas).toFixed(2).replace('.',',') + '€';
+            };
+          });
+        }
       }
       const fechar = document.getElementById('cartFechar');
       if(fechar) fechar.onclick = () => overlay.classList.remove('aberto');
@@ -5496,9 +5516,12 @@
     // Adicionar botão "+" a cada prato/bebida (exceto na secção de jogos)
     // É uma função para poder voltar a correr depois de o menu ser gerado a partir do menu.json
     window.montarBotoesLista = function(){
+      const _ativo = _cartCfg().ativo;
       document.querySelectorAll('main .item').forEach(item => {
         if(item.closest('#jogos')) return;
-        if(item.querySelector('.btn-add-lista')) return;
+        const _existe = item.querySelector('.btn-add-lista');
+        if(!_ativo){ if(_existe) _existe.remove(); return; }
+        if(_existe) return;
         const nomeEl = item.querySelector('.nome');
         if(!nomeEl) return;
         const precoEl = item.querySelector('.preco');

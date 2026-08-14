@@ -1134,6 +1134,24 @@
     </div>
   </details>
 
+  <!-- CARRINHO / LISTA DE PEDIDO -->
+  <details id="secCarrinho" style="margin-top:20px;">
+    <summary>🛒 Carrinho / Lista de pedido</summary>
+    <div class="bloco-conteudo">
+      <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:600;">
+        <input type="checkbox" id="carrinhoAtivo" style="width:auto; margin:0;" checked>
+        Ativar o carrinho
+      </label>
+      <p style="margin:4px 0 0; font-size:0.82rem; color:var(--castanho-suave);">O cliente pode juntar pratos numa lista (botão 🛒). Desliga para tirar o carrinho e os botões "+".</p>
+
+      <label style="display:flex; align-items:center; gap:8px; margin-top:14px; cursor:pointer; font-weight:600;">
+        <input type="checkbox" id="carrinhoPrecos" style="width:auto; margin:0;" checked>
+        Mostrar preços e total
+      </label>
+      <p style="margin:4px 0 0; font-size:0.82rem; color:var(--castanho-suave);">Ligado: mostra o preço de cada item, o total e a opção de dividir a conta. Desligado: mostra só a lista do que o cliente escolheu, para mostrar ao empregado (sem preços nem total).</p>
+    </div>
+  </details>
+
   <!-- LIMPEZA DE FOTOS -->
   <details id="secLimpeza" style="margin-top:20px;">
     <summary>🧹 Limpeza de fotos (avançado)</summary>
@@ -1295,6 +1313,7 @@
     fonteTexto: 'auto',
     tileTamanho: 'normal',
     tilesVidro: false,
+    carrinho: { ativo:true, precos:true },
     cores: null,
     fundo: { tipo:'liso', imagem:'', textura:'pontos' },
     fundoAnim: { ativo:true, duracao:28, intensidade:12 },
@@ -1541,6 +1560,7 @@
         config.fonteTexto = parsed.fonteTexto || 'auto';
         config.tileTamanho = parsed.tileTamanho || 'normal';
         config.tilesVidro = parsed.tilesVidro === true;
+        config.carrinho = Object.assign({ ativo:true, precos:true }, parsed.carrinho || {});
         config.cores = (parsed.cores && typeof parsed.cores === 'object') ? parsed.cores : null;
         config.fundo = Object.assign({ tipo:'liso', imagem:'', textura:'pontos' }, parsed.fundo || {});
         config.fundoAnim = Object.assign({ ativo:true, duracao:28, intensidade:12 }, parsed.fundoAnim || {});
@@ -1739,6 +1759,9 @@
     document.getElementById('fonteTextoSel').value = config.fonteTexto || 'auto';
     document.getElementById('tileTamanhoSel').value = config.tileTamanho || 'normal';
     { const _tv = document.getElementById('tilesVidroChk'); if(_tv) _tv.checked = config.tilesVidro === true; }
+    { const _c = config.carrinho || { ativo:true, precos:true };
+      const _ca = document.getElementById('carrinhoAtivo'); if(_ca) _ca.checked = _c.ativo !== false;
+      const _cp = document.getElementById('carrinhoPrecos'); if(_cp) _cp.checked = _c.precos !== false; }
     // Cores personalizadas
     const temCores = !!(config.cores && typeof config.cores === 'object');
     const baseC = TEMA_CORES_BASE[layoutSelecionado] || TEMA_CORES_BASE['1'];
@@ -2301,6 +2324,8 @@
       config.fonteTexto = document.getElementById('fonteTextoSel').value;
       config.tileTamanho = document.getElementById('tileTamanhoSel').value;
       { const _tv = document.getElementById('tilesVidroChk'); config.tilesVidro = _tv ? _tv.checked : false; }
+      { const _ca = document.getElementById('carrinhoAtivo'), _cp = document.getElementById('carrinhoPrecos');
+        config.carrinho = { ativo: _ca ? _ca.checked : true, precos: _cp ? _cp.checked : true }; }
       if(document.getElementById('coresPersonalizar').checked){
         config.cores = {
           castanho: document.getElementById('corCastanho').value,
