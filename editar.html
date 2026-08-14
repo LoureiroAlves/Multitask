@@ -1003,6 +1003,9 @@
       <input type="text" id="redeInstagram" placeholder="https://www.instagram.com/oteurestaurante/">
       <label for="redeFacebook">Facebook (endereço)</label>
       <input type="text" id="redeFacebook" placeholder="https://www.facebook.com/oteurestaurante">
+      <label for="redeWhatsapp">WhatsApp (número com indicativo do país)</label>
+      <input type="text" id="redeWhatsapp" placeholder="Ex: 351912345678">
+      <div class="ajuda" style="margin-top:4px;">Escreve o número com o indicativo do país e sem espaços (Portugal = 351). Ao tocar no ícone, abre a conversa no WhatsApp.</div>
     </div>
   </details>
 
@@ -1542,7 +1545,7 @@
         config.fundoAnim = Object.assign({ ativo:true, duracao:28, intensidade:12 }, parsed.fundoAnim || {});
         config.textoLivre = Object.assign({ ativo:false, titulo:'', subtitulo:'', cor:'#4a3820', tamanho:2.4, altura:42, x:50, y:50 }, parsed.textoLivre || {});
         config.jogos = parsed.jogos !== false;
-        config.redes = Object.assign({ instagram:'', facebook:'' }, parsed.redes || {});
+        config.redes = Object.assign({ instagram:'', facebook:'', whatsapp:'' }, parsed.redes || {});
         config.intro = Object.assign({ ativo:false, duracao:7, fundo:'foto', tamanho:2.7, subTamanho:1.08, titulo:'', subtitulo:'', botao:'', reveal:'slide', foto:'', cor:'#ffffff' }, parsed.intro || {});
         config.menuAtivo = parsed.menuAtivo !== false;
         config.mosaico = Object.assign({ ativo:false, caixas:[] }, parsed.mosaico || {});
@@ -1776,6 +1779,7 @@
     document.getElementById('fundoImagemAtual').textContent = fundo.imagem ? ('Imagem atual: ' + fundo.imagem) : 'Sem imagem escolhida.';
     document.getElementById('redeInstagram').value = (config.redes && config.redes.instagram) || '';
     document.getElementById('redeFacebook').value = (config.redes && config.redes.facebook) || '';
+    document.getElementById('redeWhatsapp').value = (config.redes && config.redes.whatsapp) || '';
     const fid = config.fidelidade || {};
     document.getElementById('fidAtivo').checked = !!fid.ativo;
     document.getElementById('blocoFid').style.display = fid.ativo ? 'block' : 'none';
@@ -2327,7 +2331,8 @@
       { const _ac = document.getElementById('azulejoCor'); if(_ac) config.azulejoCor = _ac.value; }
       config.redes = {
         instagram: document.getElementById('redeInstagram').value.trim(),
-        facebook: document.getElementById('redeFacebook').value.trim()
+        facebook: document.getElementById('redeFacebook').value.trim(),
+        whatsapp: document.getElementById('redeWhatsapp').value.trim()
       };
       const _eiTit = lerEstilo('iTit'), _eiSub = lerEstilo('iSub');
       capturarIntroTextos(); capturarIntroBotoes();
