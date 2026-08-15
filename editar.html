@@ -3617,6 +3617,23 @@
       corRow.appendChild(corIn); corRow.appendChild(corLimpar);
       p.appendChild(corRow);
 
+      // Néon desta secção (liga/desliga e cor própria) — só afeta com o "Efeito néon" global ligado
+      const neonRow=document.createElement('div'); neonRow.style.cssText='display:flex; align-items:center; gap:14px; margin:0 0 4px; font-size:0.82rem; color:var(--castanho-suave); flex-wrap:wrap;';
+      const nOnL=document.createElement('label'); nOnL.style.cssText='display:flex; align-items:center; gap:5px; cursor:pointer;';
+      const nOn=document.createElement('input'); nOn.type='checkbox'; nOn.style.width='auto'; nOn.checked = !cat.neonOff;
+      nOnL.appendChild(nOn); nOnL.appendChild(document.createTextNode('Néon nesta secção'));
+      const nCL=document.createElement('label'); nCL.style.cssText='display:flex; align-items:center; gap:5px; cursor:pointer;';
+      const nCChk=document.createElement('input'); nCChk.type='checkbox'; nCChk.style.width='auto'; nCChk.checked=!!cat.neonCor;
+      const nCIn=document.createElement('input'); nCIn.type='color'; nCIn.value=cat.neonCor||'#19e9ff'; nCIn.style.cssText='width:40px; height:28px; padding:0; border:none; background:none; cursor:pointer;';
+      nCL.appendChild(nCChk); nCL.appendChild(document.createTextNode('Cor própria')); nCL.appendChild(nCIn);
+      nOn.addEventListener('change',()=>{ if(nOn.checked) delete cat.neonOff; else cat.neonOff=true; if(window.__agendarPreview) window.__agendarPreview(); });
+      nCChk.addEventListener('change',()=>{ if(nCChk.checked) cat.neonCor=nCIn.value; else delete cat.neonCor; if(window.__agendarPreview) window.__agendarPreview(); });
+      nCIn.addEventListener('input',()=>{ if(nCChk.checked){ cat.neonCor=nCIn.value; if(window.__agendarPreview) window.__agendarPreview(); } });
+      neonRow.appendChild(nOnL); neonRow.appendChild(nCL);
+      p.appendChild(neonRow);
+      const neonHint=document.createElement('div'); neonHint.className='subtitulo'; neonHint.style.cssText='margin:0 0 10px;'; neonHint.textContent='Só tem efeito com o "Efeito néon" ligado (aba Aspeto). Desliga aqui para o néon não afetar esta secção; ou dá-lhe uma cor própria (senão usa a cor da secção).';
+      p.appendChild(neonHint);
+
       // Foto da secção (usada nos modelos "Deslizar" e "Grelha de cartões")
       const fotoRow=document.createElement('div'); fotoRow.style.cssText='display:flex; align-items:center; gap:8px; margin:0 0 10px; font-size:0.82rem; color:var(--castanho-suave); flex-wrap:wrap;';
       fotoRow.appendChild(document.createTextNode('Foto da secção (cabeçalho / separador):'));

@@ -581,6 +581,16 @@
   body.neon-fx.nfx-contorno .deck-page{ border:2px solid var(--nfx-cor, var(--cat-cor, var(--dourado))) !important; box-shadow:0 0 var(--nfx1) var(--nfx-cor, var(--cat-cor, var(--dourado))), 0 0 var(--nfx2) var(--nfx-cor, var(--cat-cor, var(--dourado))), inset 0 0 var(--nfx1) var(--nfx-cor, var(--cat-cor, var(--dourado))) !important; }
   body.neon-fx .deck-page-tit,
   body.neon-fx .deck-capa .deck-capa-tit{ text-shadow:0 0 2px #fff, 0 0 var(--nfx1) var(--nfx-cor, var(--cat-cor, var(--dourado))), 0 0 var(--nfx2) var(--nfx-cor, var(--cat-cor, var(--dourado))) !important; }
+  /* Néon por secção: desligar o brilho numa secção específica (.sem-neon) */
+  body.neon-fx .tile.sem-neon{ box-shadow:0 4px 12px rgba(0,0,0,.12) !important; animation:none !important; }
+  body.neon-fx .tile.sem-neon .tile-label{ text-shadow:none !important; }
+  body.neon-fx.nfx-contorno:not(.modelo-caderno) .tile.sem-neon{ border:1px solid var(--linha) !important; }
+  body.neon-fx .categoria-painel.sem-neon .categoria-painel-header{ box-shadow:none !important; }
+  body.neon-fx .categoria-painel.sem-neon #painelTitulo,
+  body.neon-fx .categoria-painel.sem-neon section.categoria h2,
+  body.neon-fx .categoria-painel.sem-neon .grupo-prato > summary,
+  body.neon-fx .categoria-painel.sem-neon .grupo-vinho > summary,
+  body.neon-fx .categoria-painel.sem-neon .item .preco{ text-shadow:none !important; }
 
   /* ===== Modelo "Deslizar" (secções lado a lado, página inteira) — config.modelo === 'slider' ===== */
   body.modelo-slider #categoriaGrid{ display:none !important; }           /* sem separadores */
@@ -645,9 +655,9 @@
   .mos-box.mos-multi .mos-foto.ativa{ opacity:1; }
   .mos-box .mos-shade{ position:absolute; inset:0; z-index:1; background:linear-gradient(to top, rgba(0,0,0,.5), rgba(0,0,0,.04) 55%); pointer-events:none; }
   /* Néon à volta da caixa (só o contorno/brilho — não toca no texto) */
-  .mos-box.mos-neon{ border:2px solid var(--mos-neon-cor,#19e9ff); box-shadow:0 0 7px var(--mos-neon-cor,#19e9ff), 0 0 16px var(--mos-neon-cor,#19e9ff); }
+  .mos-box.mos-neon{ border:2.5px solid var(--mos-neon-cor,#19e9ff) !important; box-shadow:0 0 8px var(--mos-neon-cor,#19e9ff), 0 0 18px var(--mos-neon-cor,#19e9ff), inset 0 0 10px var(--mos-neon-cor,#19e9ff) !important; }
   .mos-box.mos-neon.mos-neon-pisca{ animation:mosNeonPisca var(--mos-neon-dur,1.4s) ease-in-out infinite; }
-  @keyframes mosNeonPisca{ 0%,100%{ border-color:var(--mos-neon-cor,#19e9ff); box-shadow:0 0 7px var(--mos-neon-cor,#19e9ff), 0 0 16px var(--mos-neon-cor,#19e9ff); } 50%{ border-color:rgba(255,255,255,.06); box-shadow:0 0 1px var(--mos-neon-cor,#19e9ff); } }
+  @keyframes mosNeonPisca{ 0%,100%{ border-color:var(--mos-neon-cor,#19e9ff); box-shadow:0 0 8px var(--mos-neon-cor,#19e9ff), 0 0 18px var(--mos-neon-cor,#19e9ff), inset 0 0 10px var(--mos-neon-cor,#19e9ff); } 50%{ border-color:rgba(255,255,255,.06); box-shadow:0 0 1px var(--mos-neon-cor,#19e9ff); } }
   .mos-box .mos-txt{ position:absolute; z-index:2; max-width:90%; }   /* posicionado por left/top (arrastável na pré-visualização) */
   .mos-box .mos-tit{ font-family:var(--fonte-titulo); font-weight:800; font-size:1.15rem; line-height:1.1; }
   .mos-box .mos-sub{ font-size:.86rem; line-height:1.2; opacity:.95; margin-top:2px; }
@@ -2441,6 +2451,9 @@
       const label = document.createElement('span'); label.className='tile-label'; _mLang(label, cat.tile);
       btn.appendChild(emoji); btn.appendChild(label);
       if(cat.cor){ btn.style.setProperty('--cat-cor', cat.cor); btn.dataset.cor = cat.cor; }
+      // Néon por secção: cor própria e/ou desligar
+      if(cat.neonCor){ btn.style.setProperty('--nfx-cor', cat.neonCor); btn.dataset.neoncor = cat.neonCor; }
+      if(cat.neonOff){ btn.classList.add('sem-neon'); btn.dataset.neonoff = '1'; }
       if(cat.foto){ btn.classList.add('tile-tem-foto'); btn.dataset.foto = cat.foto; const fsh = document.createElement('span'); fsh.className = 'tile-foto-shade'; btn.insertBefore(fsh, btn.firstChild); const fim = document.createElement('img'); fim.className = 'tile-foto-img'; fim.src = cat.foto; fim.alt = ''; fim.decoding = 'async'; btn.insertBefore(fim, btn.firstChild); }
       { const et = cat.estiloTile || (cat.corTile ? { cor: cat.corTile } : null);
         if(et){
@@ -2742,6 +2755,10 @@
     // Modelo Carteira: cabeçalho do painel na cor da categoria
     if(tile.dataset.cor) painel.style.setProperty('--cat-cor', tile.dataset.cor);
     else painel.style.removeProperty('--cat-cor');
+    // Néon por secção dentro do painel: cor própria e ligar/desligar
+    if(tile.dataset.neoncor) painel.style.setProperty('--nfx-cor', tile.dataset.neoncor);
+    else painel.style.removeProperty('--nfx-cor');
+    painel.classList.toggle('sem-neon', tile.dataset.neonoff === '1');
 
     categoriaAtual = target;
     categoriaPaiOriginal = target.parentNode;
