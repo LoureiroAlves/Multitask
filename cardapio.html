@@ -1481,6 +1481,9 @@
   .cart-acoes button{ flex:1; padding:13px; border:none; border-radius:11px; cursor:pointer; font-weight:700; font-family:var(--fonte-titulo); font-size:0.95rem; }
   .cart-fechar{ background:var(--bege); color:var(--castanho); }
   .cart-limpar{ background:var(--castanho); color:#fff; }
+  /* Botão de encomenda por WhatsApp */
+  .cart-whats{ display:block; width:100%; margin-top:16px; padding:14px; border:none; border-radius:12px; cursor:pointer; background:#25D366; color:#fff; font-weight:800; font-family:var(--fonte-titulo); font-size:1rem; box-shadow:0 4px 12px rgba(37,211,102,.35); }
+  .cart-whats:hover, .cart-whats:active{ background:#1ebe5b; }
   /* Dividir a conta */
   .cart-dividir{ margin-top:14px; border-top:1px dotted var(--linha); padding-top:14px; }
   .cart-dividir-btn{ width:100%; padding:12px; border:1.5px solid var(--dourado); border-radius:11px; background:var(--branco); color:var(--castanho); font-weight:700; font-family:var(--fonte-titulo); font-size:0.95rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; }
@@ -3374,7 +3377,7 @@
       // Carrinho: ativar/desativar e mostrar preços (ou só a lista de itens para o empregado)
       {
         const _cc = config.carrinho || {};
-        window.__cartCfg = { ativo: _cc.ativo !== false, precos: _cc.precos !== false };
+        window.__cartCfg = { ativo: _cc.ativo !== false, precos: _cc.precos !== false, whatsapp: (_cc.whatsapp || '').toString().replace(/\D/g,'').replace(/^00/,'') };
         document.body.classList.toggle('carrinho-off', window.__cartCfg.ativo === false);
         try{ if(window.montarBotoesLista) window.montarBotoesLista(); }catch(e){}
         try{ if(window.__cartRefresh) window.__cartRefresh(); }catch(e){}
@@ -5827,6 +5830,7 @@
             '</div>' +
           '</div>';
         }
+        if(_cartCfg().whatsapp){ html += '<button class="cart-whats" id="cartWhats"><svg viewBox="0 0 24 24" width="18" height="18" fill="#fff" style="vertical-align:-3px;margin-right:7px;"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.149-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51l-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.71.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>Enviar pedido por WhatsApp</button>'; }
         html += '<div class="cart-acoes"><button class="cart-fechar" id="cartFechar">Fechar</button><button class="cart-limpar" id="cartLimpar">Limpar lista</button></div>';
         p.innerHTML = html;
         if(mostrarPrecos){
@@ -5848,6 +5852,8 @@
       if(fechar) fechar.onclick = () => overlay.classList.remove('aberto');
       const limpar = document.getElementById('cartLimpar');
       if(limpar) limpar.onclick = () => { lista = []; guardar(); atualizarBadge(); overlay.classList.remove('aberto'); };
+      const whatsBtn = document.getElementById('cartWhats');
+      if(whatsBtn) whatsBtn.onclick = () => confirmarPedidoWhats();
       p.querySelectorAll('.cart-qtd button').forEach(b => {
         b.onclick = () => {
           const i = parseInt(b.dataset.i, 10);
@@ -5856,6 +5862,37 @@
           guardar(); atualizarBadge(); render();
         };
       });
+    }
+
+    // ---- Encomenda por WhatsApp: confirmar + enviar ----
+    function confirmarPedidoWhats(){
+      if(!_cartCfg().whatsapp || lista.length === 0) return;
+      const p = document.getElementById('cartPainel');
+      let total = 0; lista.forEach(it => { total += it.preco * it.qtd; });
+      let resumo = '';
+      lista.forEach(it => { resumo += '<div class="cart-linha"><span class="cart-nome">' + it.qtd + '× ' + it.nome + '</span><span class="cart-preco">' + (it.preco * it.qtd).toFixed(2).replace('.', ',') + '€</span></div>'; });
+      p.innerHTML = '<h3>Confirmar encomenda</h3>' +
+        '<div class="cart-vazio" style="padding:0 0 10px; font-size:0.84rem;">Vamos abrir o WhatsApp com esta lista para enviares ao negócio.</div>' +
+        resumo +
+        '<div class="cart-total"><span>Total</span><span>' + total.toFixed(2).replace('.', ',') + '€</span></div>' +
+        '<label for="cartNome" style="display:block; font-size:0.82rem; color:var(--castanho-suave); margin:12px 0 4px;">O teu nome</label>' +
+        '<input id="cartNome" type="text" placeholder="Ex.: Ana" autocomplete="name" style="width:100%; padding:11px 12px; border:1.5px solid var(--linha); border-radius:10px; font-family:inherit; font-size:0.95rem;">' +
+        '<div class="cart-acoes"><button class="cart-fechar" id="cartVoltar">‹ Voltar</button><button class="cart-whats" id="cartEnviar">Continuar para o WhatsApp</button></div>';
+      const voltar = document.getElementById('cartVoltar');
+      if(voltar) voltar.onclick = () => render();
+      const inp = document.getElementById('cartNome');
+      const enviar = document.getElementById('cartEnviar');
+      if(enviar) enviar.onclick = () => {
+        const num = _cartCfg().whatsapp;
+        if(!num) return;
+        const nome = (inp && inp.value.trim()) || '';
+        let t = 0; const linhas = [];
+        lista.forEach(it => { const lt = it.preco * it.qtd; t += lt; linhas.push('• ' + it.qtd + '× ' + it.nome + ' — ' + lt.toFixed(2).replace('.', ',') + '€'); });
+        const msg = 'Nova encomenda' + (nome ? ' — ' + nome : '') + ':\n' + linhas.join('\n') + '\nTotal: ' + t.toFixed(2).replace('.', ',') + '€';
+        if(window.__PREVIEW){ alert('Pré-visualização: aqui abriria o WhatsApp com a encomenda.'); return; }
+        window.open('https://wa.me/' + num + '?text=' + encodeURIComponent(msg), '_blank');
+      };
+      if(inp){ try{ inp.focus(); }catch(e){} }
     }
 
     // ---- Escolha de tamanho/dose ----
