@@ -472,30 +472,9 @@
       </div>
       <div class="subtitulo" style="margin-top:4px;">Separado do texto do menu — para quando o cabeçalho tem um fundo de cor diferente (ex.: verde) e a letra do conteúdo fica sobre bege/branco.</div>
 
-      <label for="neonFxAtivo" style="margin-top:16px; display:flex; align-items:center; gap:8px; cursor:pointer;">
-        <input type="checkbox" id="neonFxAtivo" style="width:auto;"> ✨ Efeito néon (brilho nos separadores, em qualquer modelo)
-      </label>
-      <div id="neonFxBox" style="display:none; margin-top:8px; padding:12px; border:1.5px solid var(--linha); border-radius:10px;">
-        <label for="neonFxIntensidade" style="margin-top:0;">Intensidade do brilho</label>
-        <select id="neonFxIntensidade" style="width:100%; padding:10px 12px; border-radius:10px; border:1.5px solid var(--linha); background:var(--branco); font-family:inherit; color:var(--castanho); font-size:0.95rem;">
-          <option value="subtil">Subtil</option>
-          <option value="medio">Médio</option>
-          <option value="forte">Forte</option>
-        </select>
-        <label style="display:flex; align-items:center; gap:8px; margin-top:10px; cursor:pointer;">
-          <input type="checkbox" id="neonFxContorno" style="width:auto;"> Contorno néon à volta dos separadores
-        </label>
-        <label style="display:flex; align-items:center; gap:8px; margin-top:10px; cursor:pointer;">
-          <input type="checkbox" id="neonFxPiscarChk" style="width:auto;"> Piscar
-          <input type="number" id="neonFxPiscar" min="0.3" max="10" step="0.1" value="1.4" style="width:64px; padding:5px 6px; border:1.5px solid var(--linha); border-radius:6px; display:none;"> <span id="neonFxPiscarSeg" style="display:none; font-size:0.85rem; color:var(--castanho-suave);">seg</span>
-        </label>
-        <label style="display:flex; align-items:center; gap:8px; margin-top:10px; cursor:pointer;">
-          <input type="checkbox" id="neonFxCorAtiva" style="width:auto;"> Cor do brilho fixa
-        </label>
-        <div id="neonFxCorBox" style="display:none; align-items:center; gap:10px; margin-top:6px;">
-          <input type="color" id="neonFxCor" value="#19e9ff" style="width:52px; height:34px; padding:0; border:none; background:none; cursor:pointer;">
-          <span class="subtitulo" style="margin:0;">Deixa desligado para o brilho seguir a cor de cada secção (ou a cor de destaque do negócio).</span>
-        </div>
+      <div style="margin-top:16px; padding:11px 12px; border:1px dashed var(--linha); border-radius:10px; background:rgba(0,0,0,.02);">
+        <div style="font-weight:700; color:var(--dourado-escuro);">✨ Efeito néon</div>
+        <div class="subtitulo" style="margin-top:3px;">O néon agora liga-se <b>secção a secção</b>, no separador de cada secção do menu (Menu → abre a secção → "Néon nesta secção", com cor própria e piscar). Deixou de haver interruptor global aqui.</div>
       </div>
 
       <label for="fundoTipoSel" style="margin-top:16px;">Fundo do cardápio</label>
@@ -1929,16 +1908,7 @@
       document.getElementById('corCabAtiva').checked = !!cc;
       document.getElementById('corCabBox').style.display = cc ? 'flex' : 'none';
       document.getElementById('corCabTexto').value = cc || '#ffffff'; }
-    { const nf = config.neonFx || {};
-      document.getElementById('neonFxAtivo').checked = !!nf.ativo;
-      document.getElementById('neonFxBox').style.display = nf.ativo ? 'block' : 'none';
-      document.getElementById('neonFxIntensidade').value = nf.intensidade || 'medio';
-      document.getElementById('neonFxContorno').checked = !!nf.contorno;
-      { const _pc = document.getElementById('neonFxPiscarChk'), _pn = document.getElementById('neonFxPiscar'), _ps = document.getElementById('neonFxPiscarSeg');
-        if(_pc) _pc.checked = !!nf.piscar; if(_pn){ _pn.value = nf.piscar || 1.4; _pn.style.display = nf.piscar ? 'inline-block' : 'none'; } if(_ps) _ps.style.display = nf.piscar ? 'inline' : 'none'; }
-      document.getElementById('neonFxCorAtiva').checked = !!nf.cor;
-      document.getElementById('neonFxCorBox').style.display = nf.cor ? 'flex' : 'none';
-      document.getElementById('neonFxCor').value = nf.cor || '#19e9ff'; }
+    // (Efeito néon agora é por secção — configurado no editor de cada secção do menu.)
     // Fundo
     const fundo = config.fundo || { tipo:'liso', imagem:'', textura:'pontos' };
     document.getElementById('fundoTipoSel').value = fundo.tipo || 'liso';
@@ -2138,17 +2108,6 @@
   });
   document.getElementById('corCabAtiva').addEventListener('change', e => {
     document.getElementById('corCabBox').style.display = e.target.checked ? 'flex' : 'none';
-  });
-  document.getElementById('neonFxAtivo').addEventListener('change', e => {
-    document.getElementById('neonFxBox').style.display = e.target.checked ? 'block' : 'none';
-  });
-  document.getElementById('neonFxCorAtiva').addEventListener('change', e => {
-    document.getElementById('neonFxCorBox').style.display = e.target.checked ? 'flex' : 'none';
-  });
-  document.getElementById('neonFxPiscarChk').addEventListener('change', e => {
-    const _pn = document.getElementById('neonFxPiscar'), _ps = document.getElementById('neonFxPiscarSeg');
-    if(_pn) _pn.style.display = e.target.checked ? 'inline-block' : 'none';
-    if(_ps) _ps.style.display = e.target.checked ? 'inline' : 'none';
   });
   document.getElementById('agCorAtiva').addEventListener('change', e => {
     document.getElementById('agCorBox').style.display = e.target.checked ? 'flex' : 'none';
@@ -2654,13 +2613,7 @@
       }
       config.corMenuTexto = document.getElementById('corMenuAtiva').checked ? document.getElementById('corMenuTexto').value : '';
       config.corCabecalho = document.getElementById('corCabAtiva').checked ? document.getElementById('corCabTexto').value : '';
-      config.neonFx = {
-        ativo: document.getElementById('neonFxAtivo').checked,
-        intensidade: document.getElementById('neonFxIntensidade').value,
-        contorno: document.getElementById('neonFxContorno').checked,
-        cor: document.getElementById('neonFxCorAtiva').checked ? document.getElementById('neonFxCor').value : '',
-        piscar: document.getElementById('neonFxPiscarChk').checked ? (parseFloat(document.getElementById('neonFxPiscar').value) || 1.4) : 0
-      };
+      // (Efeito néon agora é por secção — guardado dentro de cada secção do menu, não aqui.)
       config.fundo = {
         tipo: document.getElementById('fundoTipoSel').value,
         imagem: (config.fundo && config.fundo.imagem) || '',
@@ -3617,21 +3570,27 @@
       corRow.appendChild(corIn); corRow.appendChild(corLimpar);
       p.appendChild(corRow);
 
-      // Néon desta secção (liga/desliga e cor própria) — só afeta com o "Efeito néon" global ligado
+      // Néon desta secção: ligar + cor própria + piscar (tudo por secção, sem interruptor global)
       const neonRow=document.createElement('div'); neonRow.style.cssText='display:flex; align-items:center; gap:14px; margin:0 0 4px; font-size:0.82rem; color:var(--castanho-suave); flex-wrap:wrap;';
       const nOnL=document.createElement('label'); nOnL.style.cssText='display:flex; align-items:center; gap:5px; cursor:pointer;';
-      const nOn=document.createElement('input'); nOn.type='checkbox'; nOn.style.width='auto'; nOn.checked = !cat.neonOff;
-      nOnL.appendChild(nOn); nOnL.appendChild(document.createTextNode('Néon nesta secção'));
+      const nOn=document.createElement('input'); nOn.type='checkbox'; nOn.style.width='auto'; nOn.checked = !!cat.neonOn;
+      nOnL.appendChild(nOn); nOnL.appendChild(document.createTextNode('✨ Néon nesta secção'));
       const nCL=document.createElement('label'); nCL.style.cssText='display:flex; align-items:center; gap:5px; cursor:pointer;';
       const nCChk=document.createElement('input'); nCChk.type='checkbox'; nCChk.style.width='auto'; nCChk.checked=!!cat.neonCor;
       const nCIn=document.createElement('input'); nCIn.type='color'; nCIn.value=cat.neonCor||'#19e9ff'; nCIn.style.cssText='width:40px; height:28px; padding:0; border:none; background:none; cursor:pointer;';
       nCL.appendChild(nCChk); nCL.appendChild(document.createTextNode('Cor própria')); nCL.appendChild(nCIn);
-      nOn.addEventListener('change',()=>{ if(nOn.checked) delete cat.neonOff; else cat.neonOff=true; if(window.__agendarPreview) window.__agendarPreview(); });
+      const nPL=document.createElement('label'); nPL.style.cssText='display:flex; align-items:center; gap:5px; cursor:pointer;';
+      const nPChk=document.createElement('input'); nPChk.type='checkbox'; nPChk.style.width='auto'; nPChk.checked=!!cat.neonPiscar;
+      const nPNum=document.createElement('input'); nPNum.type='number'; nPNum.min='0.3'; nPNum.max='10'; nPNum.step='0.1'; nPNum.value=(cat.neonPiscar||1.4); nPNum.style.cssText='width:58px; padding:5px 6px; border:1.5px solid var(--linha); border-radius:6px; font-family:inherit;'+(cat.neonPiscar?'':'display:none;');
+      nPL.appendChild(nPChk); nPL.appendChild(document.createTextNode('Piscar')); nPL.appendChild(nPNum); nPL.appendChild(document.createTextNode('seg'));
+      nOn.addEventListener('change',()=>{ if(nOn.checked) cat.neonOn=true; else delete cat.neonOn; if(window.__agendarPreview) window.__agendarPreview(); });
       nCChk.addEventListener('change',()=>{ if(nCChk.checked) cat.neonCor=nCIn.value; else delete cat.neonCor; if(window.__agendarPreview) window.__agendarPreview(); });
       nCIn.addEventListener('input',()=>{ if(nCChk.checked){ cat.neonCor=nCIn.value; if(window.__agendarPreview) window.__agendarPreview(); } });
-      neonRow.appendChild(nOnL); neonRow.appendChild(nCL);
+      nPChk.addEventListener('change',()=>{ if(nPChk.checked){ cat.neonPiscar=parseFloat(nPNum.value)||1.4; nPNum.style.display=''; } else { delete cat.neonPiscar; nPNum.style.display='none'; } if(window.__agendarPreview) window.__agendarPreview(); });
+      nPNum.addEventListener('input',()=>{ if(nPChk.checked){ const v=parseFloat(nPNum.value); if(v) cat.neonPiscar=v; if(window.__agendarPreview) window.__agendarPreview(); } });
+      neonRow.appendChild(nOnL); neonRow.appendChild(nCL); neonRow.appendChild(nPL);
       p.appendChild(neonRow);
-      const neonHint=document.createElement('div'); neonHint.className='subtitulo'; neonHint.style.cssText='margin:0 0 10px;'; neonHint.textContent='Só tem efeito com o "Efeito néon" ligado (aba Aspeto). Desliga aqui para o néon não afetar esta secção; ou dá-lhe uma cor própria (senão usa a cor da secção).';
+      const neonHint=document.createElement('div'); neonHint.className='subtitulo'; neonHint.style.cssText='margin:0 0 10px;'; neonHint.textContent='Liga o brilho néon só nesta secção (separador + conteúdo). Sem cor própria usa a cor da secção. Podes fazê-lo piscar de X em X segundos.';
       p.appendChild(neonHint);
 
       // Foto da secção (usada nos modelos "Deslizar" e "Grelha de cartões")

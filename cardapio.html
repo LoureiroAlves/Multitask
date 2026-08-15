@@ -560,37 +560,25 @@
   body.modelo-neon .item .preco{ --neon:var(--cat-cor, #19e9ff); color:#fff !important; font-weight:800; text-shadow:0 0 4px #fff, 0 0 12px var(--neon), 0 0 22px var(--neon); }
   body.modelo-neon .tabela-doses .preco-dose{ --neon:var(--cat-cor, #19e9ff); color:#fff !important; text-shadow:0 0 4px #fff, 0 0 12px var(--neon); }
 
-  /* ===== Efeito Néon (ligável POR CIMA de qualquer modelo) — cor = fixa, ou a cor de cada secção ===== */
+  /* ===== Efeito Néon — POR SECÇÃO (cada secção liga/cor/piscar no editor do menu) ===== */
   body.neon-fx{ --nfx1:8px; --nfx2:18px; }
-  body.neon-fx.nfx-pisca:not(.modelo-caderno) .tile{ animation:nfxPisca var(--nfx-dur,1.4s) ease-in-out infinite; }
   @keyframes nfxPisca{ 0%,100%{ opacity:1; } 55%{ opacity:.5; } }
-  body.neon-fx.nfx-subtil{ --nfx1:5px; --nfx2:11px; }
-  body.neon-fx.nfx-forte{ --nfx1:12px; --nfx2:30px; }
-  body.neon-fx:not(.modelo-caderno) .tile{ box-shadow:0 0 var(--nfx1) var(--nfx-cor, var(--cat-cor, var(--dourado))), 0 0 var(--nfx2) var(--nfx-cor, var(--cat-cor, var(--dourado))) !important; }
-  body.neon-fx .tile .tile-label{ text-shadow:0 0 2px #fff, 0 0 var(--nfx1) var(--nfx-cor, var(--cat-cor, var(--dourado))), 0 0 var(--nfx2) var(--nfx-cor, var(--cat-cor, var(--dourado))) !important; }
-  body.neon-fx #painelTitulo,
-  body.neon-fx section.categoria h2,
-  body.neon-fx .grupo-prato > summary,
-  body.neon-fx .grupo-vinho > summary{ text-shadow:0 0 2px #fff, 0 0 var(--nfx1) var(--nfx-cor, var(--cat-cor, var(--dourado))) !important; }
-  body.neon-fx .categoria-painel-header{ box-shadow:0 0 var(--nfx2) var(--nfx-cor, var(--cat-cor, var(--dourado))); }
-  body.neon-fx .item .preco{ text-shadow:0 0 var(--nfx1) var(--nfx-cor, var(--cat-cor, var(--dourado))); }
-  /* Contorno néon à volta dos separadores (tubo de luz) */
-  body.neon-fx.nfx-contorno:not(.modelo-caderno) .tile{ border:2px solid var(--nfx-cor, var(--cat-cor, var(--dourado))) !important; box-shadow:0 0 var(--nfx1) var(--nfx-cor, var(--cat-cor, var(--dourado))), 0 0 var(--nfx2) var(--nfx-cor, var(--cat-cor, var(--dourado))), inset 0 0 var(--nfx1) var(--nfx-cor, var(--cat-cor, var(--dourado))) !important; }
-  /* Efeito néon no modelo "Deslizar" (páginas do deck e títulos) */
-  body.neon-fx .deck-page{ box-shadow:0 0 var(--nfx1) var(--nfx-cor, var(--cat-cor, var(--dourado))), 0 0 var(--nfx2) var(--nfx-cor, var(--cat-cor, var(--dourado))); }
-  body.neon-fx.nfx-contorno .deck-page{ border:2px solid var(--nfx-cor, var(--cat-cor, var(--dourado))) !important; box-shadow:0 0 var(--nfx1) var(--nfx-cor, var(--cat-cor, var(--dourado))), 0 0 var(--nfx2) var(--nfx-cor, var(--cat-cor, var(--dourado))), inset 0 0 var(--nfx1) var(--nfx-cor, var(--cat-cor, var(--dourado))) !important; }
-  body.neon-fx .deck-page-tit,
-  body.neon-fx .deck-capa .deck-capa-tit{ text-shadow:0 0 2px #fff, 0 0 var(--nfx1) var(--nfx-cor, var(--cat-cor, var(--dourado))), 0 0 var(--nfx2) var(--nfx-cor, var(--cat-cor, var(--dourado))) !important; }
-  /* Néon por secção: desligar o brilho numa secção específica (.sem-neon) */
-  body.neon-fx .tile.sem-neon{ box-shadow:0 4px 12px rgba(0,0,0,.12) !important; animation:none !important; }
-  body.neon-fx .tile.sem-neon .tile-label{ text-shadow:none !important; }
-  body.neon-fx.nfx-contorno:not(.modelo-caderno) .tile.sem-neon{ border:1px solid var(--linha) !important; }
-  body.neon-fx .categoria-painel.sem-neon .categoria-painel-header{ box-shadow:none !important; }
-  body.neon-fx .categoria-painel.sem-neon #painelTitulo,
-  body.neon-fx .categoria-painel.sem-neon section.categoria h2,
-  body.neon-fx .categoria-painel.sem-neon .grupo-prato > summary,
-  body.neon-fx .categoria-painel.sem-neon .grupo-vinho > summary,
-  body.neon-fx .categoria-painel.sem-neon .item .preco{ text-shadow:none !important; }
+  /* Separador (tile) da secção com néon */
+  body.neon-fx:not(.modelo-caderno) .tile.neon-on{ box-shadow:0 0 var(--nfx1) var(--nfx-cor, var(--cat-cor, var(--dourado))), 0 0 var(--nfx2) var(--nfx-cor, var(--cat-cor, var(--dourado))) !important; }
+  body.neon-fx .tile.neon-on .tile-label{ text-shadow:0 0 2px #fff, 0 0 var(--nfx1) var(--nfx-cor, var(--cat-cor, var(--dourado))), 0 0 var(--nfx2) var(--nfx-cor, var(--cat-cor, var(--dourado))) !important; }
+  body.neon-fx:not(.modelo-caderno) .tile.neon-on.neon-pisca{ animation:nfxPisca var(--tile-pisca-dur,1.4s) ease-in-out infinite; }
+  /* Conteúdo da secção aberta (só se essa secção tiver néon) */
+  body.neon-fx .categoria-painel.neon-on #painelTitulo,
+  body.neon-fx .categoria-painel.neon-on section.categoria h2,
+  body.neon-fx .categoria-painel.neon-on .grupo-prato > summary,
+  body.neon-fx .categoria-painel.neon-on .grupo-vinho > summary{ text-shadow:0 0 2px #fff, 0 0 var(--nfx1) var(--nfx-cor, var(--cat-cor, var(--dourado))) !important; }
+  body.neon-fx .categoria-painel.neon-on .categoria-painel-header{ box-shadow:0 0 var(--nfx2) var(--nfx-cor, var(--cat-cor, var(--dourado))); }
+  body.neon-fx .categoria-painel.neon-on .item .preco{ text-shadow:0 0 var(--nfx1) var(--nfx-cor, var(--cat-cor, var(--dourado))); }
+  body.neon-fx .categoria-painel.neon-on.neon-pisca .categoria-painel-header{ animation:nfxPisca var(--nfx-dur,1.4s) ease-in-out infinite; }
+  /* Modelo "Deslizar": páginas com néon */
+  body.neon-fx .deck-page.neon-on{ box-shadow:0 0 var(--nfx1) var(--nfx-cor, var(--cat-cor, var(--dourado))), 0 0 var(--nfx2) var(--nfx-cor, var(--cat-cor, var(--dourado))); }
+  body.neon-fx .deck-page.neon-on.neon-pisca{ animation:nfxPisca var(--nfx-dur,1.4s) ease-in-out infinite; }
+  body.neon-fx .deck-page.neon-on .deck-page-tit{ text-shadow:0 0 2px #fff, 0 0 var(--nfx1) var(--nfx-cor, var(--cat-cor, var(--dourado))), 0 0 var(--nfx2) var(--nfx-cor, var(--cat-cor, var(--dourado))) !important; }
 
   /* ===== Modelo "Deslizar" (secções lado a lado, página inteira) — config.modelo === 'slider' ===== */
   body.modelo-slider #categoriaGrid{ display:none !important; }           /* sem separadores */
@@ -2435,6 +2423,8 @@
 
   function construirMenu(menu){
     if(!menu || !Array.isArray(menu.categorias)) return;
+    // Efeito néon liga-se automaticamente se alguma secção tiver néon
+    document.body.classList.toggle('neon-fx', menu.categorias.some(function(c){ return c && c.neonOn; }));
     const grid = document.getElementById('categoriaGrid');
     const main = document.querySelector('main');
     const jogosSec = document.getElementById('jogos');
@@ -2451,9 +2441,12 @@
       const label = document.createElement('span'); label.className='tile-label'; _mLang(label, cat.tile);
       btn.appendChild(emoji); btn.appendChild(label);
       if(cat.cor){ btn.style.setProperty('--cat-cor', cat.cor); btn.dataset.cor = cat.cor; }
-      // Néon por secção: cor própria e/ou desligar
-      if(cat.neonCor){ btn.style.setProperty('--nfx-cor', cat.neonCor); btn.dataset.neoncor = cat.neonCor; }
-      if(cat.neonOff){ btn.classList.add('sem-neon'); btn.dataset.neonoff = '1'; }
+      // Néon por secção: ligar + cor própria + piscar (só nesta secção)
+      if(cat.neonOn){
+        btn.classList.add('neon-on'); btn.dataset.neonon = '1';
+        if(cat.neonCor){ btn.style.setProperty('--nfx-cor', cat.neonCor); btn.dataset.neoncor = cat.neonCor; }
+        if(cat.neonPiscar){ const _d = Math.max(0.3, parseFloat(cat.neonPiscar) || 1.4); btn.classList.add('neon-pisca'); btn.style.setProperty('--tile-pisca-dur', _d + 's'); btn.dataset.neonpisca = _d; }
+      }
       if(cat.foto){ btn.classList.add('tile-tem-foto'); btn.dataset.foto = cat.foto; const fsh = document.createElement('span'); fsh.className = 'tile-foto-shade'; btn.insertBefore(fsh, btn.firstChild); const fim = document.createElement('img'); fim.className = 'tile-foto-img'; fim.src = cat.foto; fim.alt = ''; fim.decoding = 'async'; btn.insertBefore(fim, btn.firstChild); }
       { const et = cat.estiloTile || (cat.corTile ? { cor: cat.corTile } : null);
         if(et){
@@ -2558,6 +2551,11 @@
       const page = document.createElement('div'); page.className = 'deck-page';
       const tileEl = grid ? grid.querySelector('.tile[data-target="' + s.id.replace(/"/g,'\\"') + '"]') : null;
       if(tileEl && tileEl.dataset.cor) page.style.setProperty('--cat-cor', tileEl.dataset.cor);
+      if(tileEl && tileEl.dataset.neonon){
+        page.classList.add('neon-on');
+        if(tileEl.dataset.neoncor) page.style.setProperty('--nfx-cor', tileEl.dataset.neoncor);
+        if(tileEl.dataset.neonpisca){ page.classList.add('neon-pisca'); page.style.setProperty('--nfx-dur', tileEl.dataset.neonpisca + 's'); }
+      }
       const tl = tileEl ? tileEl.querySelector('.tile-label') : null;
       const titTxt = tl ? tl.textContent : '';
       if(titTxt){ const h = document.createElement('div'); h.className = 'deck-page-tit'; h.textContent = titTxt; page.appendChild(h); }
@@ -2755,10 +2753,12 @@
     // Modelo Carteira: cabeçalho do painel na cor da categoria
     if(tile.dataset.cor) painel.style.setProperty('--cat-cor', tile.dataset.cor);
     else painel.style.removeProperty('--cat-cor');
-    // Néon por secção dentro do painel: cor própria e ligar/desligar
+    // Néon por secção dentro do painel: ligar + cor própria + piscar
     if(tile.dataset.neoncor) painel.style.setProperty('--nfx-cor', tile.dataset.neoncor);
     else painel.style.removeProperty('--nfx-cor');
-    painel.classList.toggle('sem-neon', tile.dataset.neonoff === '1');
+    painel.classList.toggle('neon-on', tile.dataset.neonon === '1');
+    if(tile.dataset.neonpisca){ painel.classList.add('neon-pisca'); painel.style.setProperty('--nfx-dur', tile.dataset.neonpisca + 's'); }
+    else painel.classList.remove('neon-pisca');
 
     categoriaAtual = target;
     categoriaPaiOriginal = target.parentNode;
@@ -3221,15 +3221,8 @@
       document.body.classList.toggle('modelo-slider', (config.modelo || 'lista') === 'slider');
       document.body.classList.toggle('modelo-neon', (config.modelo || 'lista') === 'neon');
       // Efeito néon (por cima de qualquer modelo): intensidade + cor
-      { var _nf = config.neonFx || {};
-        document.body.classList.toggle('neon-fx', !!_nf.ativo);
-        document.body.classList.remove('nfx-subtil','nfx-medio','nfx-forte');
-        if(_nf.ativo) document.body.classList.add('nfx-' + (_nf.intensidade || 'medio'));
-        document.body.classList.toggle('nfx-contorno', !!(_nf.ativo && _nf.contorno));
-        document.body.classList.toggle('nfx-pisca', !!(_nf.ativo && _nf.piscar));
-        if(_nf.ativo && _nf.piscar) document.documentElement.style.setProperty('--nfx-dur', (Math.max(0.3, parseFloat(_nf.piscar) || 1.4)) + 's');
-        if(_nf.ativo && _nf.cor) document.documentElement.style.setProperty('--nfx-cor', _nf.cor);
-        else document.documentElement.style.removeProperty('--nfx-cor'); }
+      // Efeito néon: agora é POR SECÇÃO (decidido no construirMenu conforme cada secção). Sem cor global.
+      document.documentElement.style.removeProperty('--nfx-cor');
       // Cores do modelo "Deslizar" (páginas, capa e títulos) — texto a contrastar automaticamente
       (function(){
         const eSlider = (config.modelo || 'lista') === 'slider';
