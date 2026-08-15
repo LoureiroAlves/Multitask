@@ -917,9 +917,22 @@
       <div id="estiloFTel"></div>
       <div class="subtitulo" style="margin-top:2px;">O estilo (letra, tamanho, cor, negrito, itálico, sombra, contorno) é por linha, no "Aa estilo" de cada uma.</div>
 
-      <label for="footerLink" style="margin-top:14px;">Link do patrocinador (opcional)</label>
-      <input type="text" id="footerLink" placeholder="https://... — ao clicar no rodapé abre este endereço">
-      <div class="subtitulo" style="margin-top:2px;">Se preencheres, o rodapé fica clicável e abre este link (site ou rede social do patrocinador). Deixa em branco para não ser clicável.</div>
+      <div style="margin-top:18px; padding-top:14px; border-top:1px dashed var(--linha, #d8c9a8);">
+        <div style="font-weight:800; color:var(--dourado-escuro); font-size:0.98rem;">📣 Publicidade a outro negócio</div>
+        <div class="subtitulo" style="margin-top:2px;">Usa o rodapé para anunciar outro negócio. Põe a foto do anúncio nas "Fotos do rodapé" (abaixo). <b>Ao clicar em cima da publicidade, abre o link que associares aqui</b> — a página/menu/rede social <b>desse</b> negócio, não do teu.</div>
+      </div>
+
+      <label for="footerLink" style="margin-top:12px;">Link do negócio anunciado</label>
+      <input type="text" id="footerLink" placeholder="https://... — ao clicar na publicidade abre este endereço">
+      <div class="subtitulo" style="margin-top:2px;">Ex.: link do menu, site ou Instagram do negócio anunciado. Se preencheres, toda a publicidade (foto + rodapé) fica clicável e abre este endereço. Deixa em branco para não ser clicável.</div>
+
+      <label for="footerWhatsapp" style="margin-top:14px;">Botão de WhatsApp (opcional)</label>
+      <input type="text" id="footerWhatsapp" placeholder="Ex.: 351 912 345 678 (com indicativo do país)">
+      <div class="subtitulo" style="margin-top:2px;">Número do negócio anunciado (com indicativo, ex. 351 para Portugal). Aparece um botão verde de WhatsApp que abre a conversa direta com essa pessoa — independente do link acima. Deixa em branco para não mostrar.</div>
+      <label for="footerWhatsappMsg" style="margin-top:10px;">Mensagem pré-preenchida (opcional)</label>
+      <input type="text" id="footerWhatsappMsg" placeholder="Ex.: Olá! Queria fazer uma encomenda">
+      <label for="footerWhatsappLabel" style="margin-top:10px;">Texto do botão (opcional)</label>
+      <input type="text" id="footerWhatsappLabel" placeholder="WhatsApp">
 
       <div class="lembrar" style="margin-top:16px;">
         <input type="checkbox" id="fotosFooterAtivas">
@@ -1797,6 +1810,9 @@
     document.getElementById('footerMorada').value = config.footer.morada || '';
     document.getElementById('footerTelefone').value = config.footer.telefone || '';
     document.getElementById('footerLink').value = config.footer.link || '';
+    document.getElementById('footerWhatsapp').value = config.footer.whatsapp || '';
+    document.getElementById('footerWhatsappMsg').value = config.footer.whatsappMsg || '';
+    document.getElementById('footerWhatsappLabel').value = config.footer.whatsappLabel || '';
     document.getElementById('fotosFooterAtivas').checked = config.footer.fotosAtivas === true;
     document.getElementById('fpZoom').value = config.footer.fotoZoom || 100;
     // Publicidade dos jogos
@@ -2478,6 +2494,9 @@
         morada: document.getElementById('footerMorada').value.trim(),
         telefone: document.getElementById('footerTelefone').value.trim(),
         link: document.getElementById('footerLink').value.trim(),
+        whatsapp: document.getElementById('footerWhatsapp').value.trim(),
+        whatsappMsg: document.getElementById('footerWhatsappMsg').value.trim(),
+        whatsappLabel: document.getElementById('footerWhatsappLabel').value.trim(),
         cor: (document.getElementById('fNomCor') ? document.getElementById('fNomCor').value : (config.footer.cor || '#ffffff')),
         fotosAtivas: document.getElementById('fotosFooterAtivas').checked,
         fotoOpacidade: parseInt((document.getElementById('footerFotoOpac') || {}).value, 10) || 100,
