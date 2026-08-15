@@ -2284,6 +2284,19 @@
         const pI = function(){ iB.style.background = estObj.italico ? 'var(--dourado)' : 'var(--branco)'; iB.style.color = estObj.italico ? '#fff' : 'var(--castanho)'; }; pI();
         iB.addEventListener('click', function(){ estObj.italico = !estObj.italico; if(!estObj.italico) delete estObj.italico; pI(); _mosPrev(); });
         row.appendChild(iB);
+        // Sombra
+        const sB = document.createElement('button'); sB.type = 'button'; sB.textContent = 'Sombra'; sB.style.cssText = 'padding:0 8px; height:30px; border-radius:6px; border:1.5px solid var(--linha); cursor:pointer; font-size:.72rem;';
+        const pS = function(){ sB.style.background = estObj.sombra ? 'var(--dourado)' : 'var(--branco)'; sB.style.color = estObj.sombra ? '#fff' : 'var(--castanho)'; }; pS();
+        sB.addEventListener('click', function(){ estObj.sombra = !estObj.sombra; if(!estObj.sombra) delete estObj.sombra; pS(); _mosPrev(); });
+        row.appendChild(sB);
+        // Contorno (+ cor)
+        const oL = document.createElement('label'); oL.style.cssText = 'display:flex; align-items:center; gap:5px; cursor:pointer;';
+        const oChk = document.createElement('input'); oChk.type = 'checkbox'; oChk.style.width = 'auto'; oChk.checked = !!estObj.contorno;
+        const oCor = document.createElement('input'); oCor.type = 'color'; oCor.value = estObj.contornoCor || '#000000'; oCor.style.cssText = 'width:34px;height:26px;padding:0;border:none;background:none;cursor:pointer;' + (estObj.contorno ? '' : 'display:none;');
+        oL.appendChild(oChk); oL.appendChild(document.createTextNode('Contorno')); oL.appendChild(oCor);
+        oChk.addEventListener('change', function(){ if(oChk.checked){ estObj.contorno = true; estObj.contornoCor = estObj.contornoCor || oCor.value; oCor.style.display = ''; } else { delete estObj.contorno; oCor.style.display = 'none'; } _mosPrev(); });
+        oCor.addEventListener('input', function(){ estObj.contornoCor = oCor.value; if(estObj.contorno) _mosPrev(); });
+        row.appendChild(oL);
         return row;
       }
       card.appendChild(_mosLbl('Estilo do título — arrasta o texto na pré-visualização para o posicionar'));
@@ -2327,7 +2340,7 @@
     const mc = document.getElementById('menuAtivoChk');
     if(mc) mc.addEventListener('change', _mosPrev);
     const add = document.getElementById('btnAddCaixa');
-    if(add) add.addEventListener('click', function(){ config.mosaico = config.mosaico || { ativo:false, caixas:[] }; config.mosaico.caixas.push({ tam:'l', tx:6, ty:72, cor:'#3a3a44', estilo:{ cor:'#ffffff' }, titulo:'' }); renderMosaicoEditor(); _mosPrev(); });
+    if(add) add.addEventListener('click', function(){ config.mosaico = config.mosaico || { ativo:false, caixas:[] }; config.mosaico.caixas.push({ tam:'l', tx:6, ty:72, cor:'#3a3a44', estilo:{ cor:'#ffffff', negrito:true }, titulo:'' }); renderMosaicoEditor(); _mosPrev(); });
     const gm = document.getElementById('btnGuardarMosaico');
     if(gm) gm.addEventListener('click', function(){ if(typeof guardarTudo === 'function') guardarTudo(); });
   })();
@@ -3682,7 +3695,7 @@
         const mBox=document.createElement('div'); mBox.style.cssText='margin:0 0 10px; display:'+(cat.mosaicoAtivo?'block':'none')+';';
         const mLista=document.createElement('div'); mBox.appendChild(mLista);
         const addBtn=document.createElement('button'); addBtn.type='button'; addBtn.className='mv-add'; addBtn.textContent='＋ Adicionar caixa'; addBtn.style.marginTop='6px';
-        addBtn.addEventListener('click',()=>{ cat.mosaico.caixas.push({ tam:'l', tx:6, ty:72, cor:'#3a3a44', estilo:{ cor:'#ffffff' }, titulo:'' }); renderMosaicoEditor(cat.mosaico, mLista); if(window.__agendarPreview) window.__agendarPreview(); });
+        addBtn.addEventListener('click',()=>{ cat.mosaico.caixas.push({ tam:'l', tx:6, ty:72, cor:'#3a3a44', estilo:{ cor:'#ffffff', negrito:true }, titulo:'' }); renderMosaicoEditor(cat.mosaico, mLista); if(window.__agendarPreview) window.__agendarPreview(); });
         mBox.appendChild(addBtn); p.appendChild(mBox);
         renderMosaicoEditor(cat.mosaico, mLista);
         mChk.addEventListener('change',()=>{ if(mChk.checked) cat.mosaicoAtivo=true; else delete cat.mosaicoAtivo; mBox.style.display=mChk.checked?'block':'none'; if(window.__agendarPreview) window.__agendarPreview(); });

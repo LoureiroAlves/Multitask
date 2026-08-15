@@ -562,11 +562,15 @@
 
   /* ===== Efeito Néon — POR SECÇÃO (cada secção liga/cor/piscar no editor do menu) ===== */
   body.neon-fx{ --nfx1:8px; --nfx2:18px; }
-  @keyframes nfxPisca{ 0%,100%{ opacity:1; } 55%{ opacity:.5; } }
+  /* Pisca só o brilho/moldura (box-shadow); o interior do separador fica intacto */
+  @keyframes neonEdgePisca{
+    0%,100%{ box-shadow:0 0 var(--nfx1) var(--nfx-cor, var(--cat-cor, var(--dourado))), 0 0 var(--nfx2) var(--nfx-cor, var(--cat-cor, var(--dourado))); }
+    50%{ box-shadow:0 0 0 transparent; }
+  }
   /* Separador (tile) da secção com néon */
-  body.neon-fx:not(.modelo-caderno) .tile.neon-on{ box-shadow:0 0 var(--nfx1) var(--nfx-cor, var(--cat-cor, var(--dourado))), 0 0 var(--nfx2) var(--nfx-cor, var(--cat-cor, var(--dourado))) !important; }
+  body.neon-fx:not(.modelo-caderno) .tile.neon-on{ box-shadow:0 0 var(--nfx1) var(--nfx-cor, var(--cat-cor, var(--dourado))), 0 0 var(--nfx2) var(--nfx-cor, var(--cat-cor, var(--dourado))); }
   body.neon-fx .tile.neon-on .tile-label{ text-shadow:0 0 2px #fff, 0 0 var(--nfx1) var(--nfx-cor, var(--cat-cor, var(--dourado))), 0 0 var(--nfx2) var(--nfx-cor, var(--cat-cor, var(--dourado))) !important; }
-  body.neon-fx:not(.modelo-caderno) .tile.neon-on.neon-pisca{ animation:nfxPisca var(--tile-pisca-dur,1.4s) ease-in-out infinite; }
+  body.neon-fx:not(.modelo-caderno) .tile.neon-on.neon-pisca{ animation:neonEdgePisca var(--tile-pisca-dur,1.4s) ease-in-out infinite; }
   /* Conteúdo da secção aberta (só se essa secção tiver néon) */
   body.neon-fx .categoria-painel.neon-on #painelTitulo,
   body.neon-fx .categoria-painel.neon-on section.categoria h2,
@@ -574,10 +578,10 @@
   body.neon-fx .categoria-painel.neon-on .grupo-vinho > summary{ text-shadow:0 0 2px #fff, 0 0 var(--nfx1) var(--nfx-cor, var(--cat-cor, var(--dourado))) !important; }
   body.neon-fx .categoria-painel.neon-on .categoria-painel-header{ box-shadow:0 0 var(--nfx2) var(--nfx-cor, var(--cat-cor, var(--dourado))); }
   body.neon-fx .categoria-painel.neon-on .item .preco{ text-shadow:0 0 var(--nfx1) var(--nfx-cor, var(--cat-cor, var(--dourado))); }
-  body.neon-fx .categoria-painel.neon-on.neon-pisca .categoria-painel-header{ animation:nfxPisca var(--nfx-dur,1.4s) ease-in-out infinite; }
+  body.neon-fx .categoria-painel.neon-on.neon-pisca .categoria-painel-header{ animation:neonEdgePisca var(--nfx-dur,1.4s) ease-in-out infinite; }
   /* Modelo "Deslizar": páginas com néon */
   body.neon-fx .deck-page.neon-on{ box-shadow:0 0 var(--nfx1) var(--nfx-cor, var(--cat-cor, var(--dourado))), 0 0 var(--nfx2) var(--nfx-cor, var(--cat-cor, var(--dourado))); }
-  body.neon-fx .deck-page.neon-on.neon-pisca{ animation:nfxPisca var(--nfx-dur,1.4s) ease-in-out infinite; }
+  body.neon-fx .deck-page.neon-on.neon-pisca{ animation:neonEdgePisca var(--nfx-dur,1.4s) ease-in-out infinite; }
   body.neon-fx .deck-page.neon-on .deck-page-tit{ text-shadow:0 0 2px #fff, 0 0 var(--nfx1) var(--nfx-cor, var(--cat-cor, var(--dourado))), 0 0 var(--nfx2) var(--nfx-cor, var(--cat-cor, var(--dourado))) !important; }
 
   /* ===== Modelo "Deslizar" (secções lado a lado, página inteira) — config.modelo === 'slider' ===== */
@@ -643,11 +647,12 @@
   .mos-box.mos-multi .mos-foto.ativa{ opacity:1; }
   .mos-box .mos-shade{ position:absolute; inset:0; z-index:1; background:linear-gradient(to top, rgba(0,0,0,.5), rgba(0,0,0,.04) 55%); pointer-events:none; }
   /* Néon à volta da caixa (só o contorno/brilho — não toca no texto) */
-  .mos-box.mos-neon{ border:2.5px solid var(--mos-neon-cor,#19e9ff) !important; box-shadow:0 0 8px var(--mos-neon-cor,#19e9ff), 0 0 18px var(--mos-neon-cor,#19e9ff), inset 0 0 10px var(--mos-neon-cor,#19e9ff) !important; }
+  .mos-box.mos-neon{ border:2.5px solid var(--mos-neon-cor,#19e9ff); box-shadow:0 0 8px var(--mos-neon-cor,#19e9ff), 0 0 18px var(--mos-neon-cor,#19e9ff); }
   .mos-box.mos-neon.mos-neon-pisca{ animation:mosNeonPisca var(--mos-neon-dur,1.4s) ease-in-out infinite; }
-  @keyframes mosNeonPisca{ 0%,100%{ border-color:var(--mos-neon-cor,#19e9ff); box-shadow:0 0 8px var(--mos-neon-cor,#19e9ff), 0 0 18px var(--mos-neon-cor,#19e9ff), inset 0 0 10px var(--mos-neon-cor,#19e9ff); } 50%{ border-color:rgba(255,255,255,.06); box-shadow:0 0 1px var(--mos-neon-cor,#19e9ff); } }
+  /* Pisca só na moldura (border + brilho à volta); o interior do mosaico fica intacto */
+  @keyframes mosNeonPisca{ 0%,100%{ border-color:var(--mos-neon-cor,#19e9ff); box-shadow:0 0 8px var(--mos-neon-cor,#19e9ff), 0 0 18px var(--mos-neon-cor,#19e9ff); } 50%{ border-color:transparent; box-shadow:0 0 0 transparent; } }
   .mos-box .mos-txt{ position:absolute; z-index:2; max-width:90%; }   /* posicionado por left/top (arrastável na pré-visualização) */
-  .mos-box .mos-tit{ font-family:var(--fonte-titulo); font-weight:800; font-size:1.15rem; line-height:1.1; }
+  .mos-box .mos-tit{ font-family:var(--fonte-titulo); font-size:1.15rem; line-height:1.1; }
   .mos-box .mos-sub{ font-size:.86rem; line-height:1.2; opacity:.95; margin-top:2px; }
   body.modelo-slider .deck-page > .sec-foto-banner{ margin-bottom:14px; }
   /* Foto no separador (todos os modelos) — foto como <img> por trás do nome, com véu para legibilidade */
@@ -2328,10 +2333,8 @@
         titEl.style.left = (c.tx != null ? c.tx : 6) + '%';
         titEl.style.top = (c.ty != null ? c.ty : 62) + '%';
         titEl.style.color = est.cor || c.corTexto || '#ffffff';
+        if(typeof aplicarEstiloTexto === 'function') aplicarEstiloTexto([titEl], est);
         if(_fam) titEl.style.fontFamily = _fam;
-        if(est.tamanho) titEl.style.fontSize = est.tamanho + 'rem';
-        if(est.negrito) titEl.style.fontWeight = '800';
-        if(est.italico) titEl.style.fontStyle = 'italic';
         titEl.textContent = c.titulo || '';
         b.appendChild(titEl);
         if(window.__PREVIEW){ _mosDragText(b, titEl, i, sec, 'tit'); }
@@ -2342,10 +2345,8 @@
         subEl.style.top = (c.subY != null ? c.subY : ((c.ty != null ? c.ty : 62) + 14)) + '%';
         subEl.style.color = esSub.cor || c.corTexto || '#ffffff';
         subEl.style.whiteSpace = 'pre-line';
+        if(typeof aplicarEstiloTexto === 'function') aplicarEstiloTexto([subEl], esSub);
         if(_fam) subEl.style.fontFamily = _fam;
-        if(esSub.tamanho) subEl.style.fontSize = esSub.tamanho + 'rem';
-        if(esSub.negrito) subEl.style.fontWeight = '800';
-        if(esSub.italico) subEl.style.fontStyle = 'italic';
         subEl.textContent = c.subtitulo || '';
         b.appendChild(subEl);
         if(window.__PREVIEW){ _mosDragText(b, subEl, i, sec, 'sub'); }
