@@ -3789,16 +3789,19 @@
               _img.removeAttribute('src'); _img.style.display = 'block';
               _img.style.minHeight = '170px'; _img.style.background = 'rgba(0,0,0,.06)';
             }
-            // Link oculto — clicar na publicidade abre-o
+            // Link oculto — SÓ fica clicável se houver link escrito
             let _alk = _an.link && String(_an.link).trim();
             _abox.classList.toggle('tem-link', !!_alk);
             _abox.onclick = null;
             if(_alk){
               if(!/^(https?:|tel:|mailto:|wa\.me|\/)/i.test(_alk) && !/^www\./i.test(_alk)) _alk = 'https://' + _alk;
               else if(/^www\./i.test(_alk)) _alk = 'https://' + _alk;
+              _abox.style.cursor = 'pointer';
               _abox.onclick = function(){ if(window.__PREVIEW) return; window.open(_alk, '_blank', 'noopener'); };
+            } else {
+              _abox.style.cursor = '';   // sem link: nada de clicar
             }
-            // Ícone de WhatsApp (opcional), posicionável
+            // Ícone de WhatsApp — SÓ aparece se houver número escrito
             const _anum = String(_an.whatsapp || '').replace(/\D/g, '').replace(/^00/, '');
             if(_anum){
               const _atxt = _an.whatsappMsg ? ('?text=' + encodeURIComponent(_an.whatsappMsg)) : '';
@@ -3810,6 +3813,7 @@
               if(window.__PREVIEW) _anuncioDragWa(_abox, _wa);
             } else {
               _wa.style.display = 'none';
+              _wa.removeAttribute('href');   // sem número: ícone desaparece e fica inerte
             }
           } else {
             _abox.style.display = 'none';
