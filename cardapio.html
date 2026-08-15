@@ -3054,7 +3054,7 @@
     r.style.setProperty('--intro-bg', t['--castanho']);
     const meta = document.querySelector('meta[name=theme-color]');
     if(meta) meta.content = t['--castanho'];
-    try{ localStorage.setItem('temaCor', t['--castanho']); }catch(e){}
+    try{ var _tcS = ((new URLSearchParams(location.search)).get('n') || '').toLowerCase().replace(/[^a-z0-9]/g, '') || 'geral'; localStorage.setItem('temaCor:' + _tcS, t['--castanho']); }catch(e){}
   }
 
   // Tipo de letra dos títulos, escolhido à parte (sobrepõe-se ao do layout)
