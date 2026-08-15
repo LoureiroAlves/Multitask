@@ -894,6 +894,35 @@
     </div>
   </details>
 
+  <!-- PUBLICIDADE (ANÚNCIO A OUTRO NEGÓCIO) -->
+  <details id="secAnuncio">
+    <summary>📣 Publicidade — anúncio a outro negócio</summary>
+    <div class="bloco-conteudo">
+      <div class="lembrar" style="margin-bottom:10px;">
+        <input type="checkbox" id="anuncioAtivo">
+        <label for="anuncioAtivo" style="margin:0; font-weight:700; color:var(--dourado-escuro); display:inline;">Mostrar bloco de publicidade (no fim do menu)</label>
+      </div>
+      <div class="subtitulo" style="margin:-4px 0 12px;">Um espaço só para anunciar outro negócio, no fim do menu. Ao clicar na imagem abre o link que definires — o link <b>nunca é mostrado</b>, só serve para o clique. Podes ainda pôr um ícone de WhatsApp e arrastá-lo na pré-visualização para o sítio que quiseres.</div>
+
+      <label>Imagem do anúncio</label>
+      <input type="file" id="anuncioFotoFile" accept="image/*">
+      <input type="hidden" id="anuncioFotoUrl">
+      <div id="anuncioFotoPrev" style="margin-top:8px;"></div>
+
+      <label for="anuncioLink" style="margin-top:12px;">Link do negócio anunciado (oculto)</label>
+      <input type="text" id="anuncioLink" placeholder="https://... — abre ao clicar na publicidade">
+      <div class="subtitulo" style="margin-top:2px;">Menu, site ou Instagram do negócio anunciado. Não aparece escrito em lado nenhum.</div>
+
+      <label for="anuncioWhats" style="margin-top:12px;">Número de WhatsApp (opcional)</label>
+      <input type="text" id="anuncioWhats" placeholder="Ex.: 351 912 345 678 (com indicativo do país)">
+      <label for="anuncioWhatsMsg" style="margin-top:10px;">Mensagem pré-preenchida (opcional)</label>
+      <input type="text" id="anuncioWhatsMsg" placeholder="Ex.: Olá! Vim do menu e queria encomendar">
+      <div class="subtitulo" style="margin-top:2px;">Aparece um ícone de WhatsApp (igual ao do cabeçalho) sobre o anúncio. Na pré-visualização arrasta-o para onde quiseres — a posição fica guardada.</div>
+      <input type="hidden" id="anuncioWaX">
+      <input type="hidden" id="anuncioWaY">
+    </div>
+  </details>
+
   <!-- RODAPÉ FINAL -->
   <details id="secFooter">
     <summary>Rodapé final (só aparece ao fazer scroll até ao fim)</summary>
@@ -917,22 +946,9 @@
       <div id="estiloFTel"></div>
       <div class="subtitulo" style="margin-top:2px;">O estilo (letra, tamanho, cor, negrito, itálico, sombra, contorno) é por linha, no "Aa estilo" de cada uma.</div>
 
-      <div style="margin-top:18px; padding-top:14px; border-top:1px dashed var(--linha, #d8c9a8);">
-        <div style="font-weight:800; color:var(--dourado-escuro); font-size:0.98rem;">📣 Publicidade a outro negócio</div>
-        <div class="subtitulo" style="margin-top:2px;">Usa o rodapé para anunciar outro negócio. Põe a foto do anúncio nas "Fotos do rodapé" (abaixo). <b>Ao clicar em cima da publicidade, abre o link que associares aqui</b> — a página/menu/rede social <b>desse</b> negócio, não do teu.</div>
-      </div>
-
-      <label for="footerLink" style="margin-top:12px;">Link do negócio anunciado</label>
-      <input type="text" id="footerLink" placeholder="https://... — ao clicar na publicidade abre este endereço">
-      <div class="subtitulo" style="margin-top:2px;">Ex.: link do menu, site ou Instagram do negócio anunciado. Se preencheres, toda a publicidade (foto + rodapé) fica clicável e abre este endereço. Deixa em branco para não ser clicável.</div>
-
-      <label for="footerWhatsapp" style="margin-top:14px;">Botão de WhatsApp (opcional)</label>
-      <input type="text" id="footerWhatsapp" placeholder="Ex.: 351 912 345 678 (com indicativo do país)">
-      <div class="subtitulo" style="margin-top:2px;">Número do negócio anunciado (com indicativo, ex. 351 para Portugal). Aparece um botão verde de WhatsApp que abre a conversa direta com essa pessoa — independente do link acima. Deixa em branco para não mostrar.</div>
-      <label for="footerWhatsappMsg" style="margin-top:10px;">Mensagem pré-preenchida (opcional)</label>
-      <input type="text" id="footerWhatsappMsg" placeholder="Ex.: Olá! Queria fazer uma encomenda">
-      <label for="footerWhatsappLabel" style="margin-top:10px;">Texto do botão (opcional)</label>
-      <input type="text" id="footerWhatsappLabel" placeholder="WhatsApp">
+      <label for="footerLink" style="margin-top:14px;">Link do patrocinador (opcional)</label>
+      <input type="text" id="footerLink" placeholder="https://... — ao clicar no rodapé abre este endereço">
+      <div class="subtitulo" style="margin-top:2px;">Se preencheres, o rodapé fica clicável e abre este link (site ou rede social do patrocinador). Deixa em branco para não ser clicável.</div>
 
       <div class="lembrar" style="margin-top:16px;">
         <input type="checkbox" id="fotosFooterAtivas">
@@ -1810,11 +1826,19 @@
     document.getElementById('footerMorada').value = config.footer.morada || '';
     document.getElementById('footerTelefone').value = config.footer.telefone || '';
     document.getElementById('footerLink').value = config.footer.link || '';
-    document.getElementById('footerWhatsapp').value = config.footer.whatsapp || '';
-    document.getElementById('footerWhatsappMsg').value = config.footer.whatsappMsg || '';
-    document.getElementById('footerWhatsappLabel').value = config.footer.whatsappLabel || '';
     document.getElementById('fotosFooterAtivas').checked = config.footer.fotosAtivas === true;
     document.getElementById('fpZoom').value = config.footer.fotoZoom || 100;
+    // Publicidade (anúncio a outro negócio)
+    { const _an = config.anuncio || {};
+      document.getElementById('anuncioAtivo').checked = _an.ativo === true;
+      document.getElementById('anuncioFotoUrl').value = _an.foto || '';
+      document.getElementById('anuncioLink').value = _an.link || '';
+      document.getElementById('anuncioWhats').value = _an.whatsapp || '';
+      document.getElementById('anuncioWhatsMsg').value = _an.whatsappMsg || '';
+      document.getElementById('anuncioWaX').value = (_an.waX != null ? _an.waX : '');
+      document.getElementById('anuncioWaY').value = (_an.waY != null ? _an.waY : '');
+      if(typeof _anuncioPrev === 'function') _anuncioPrev();
+    }
     // Publicidade dos jogos
     const aj = config.adJogos || {};
     document.getElementById('adjAtivo').checked = !!aj.ativo;
@@ -2043,6 +2067,36 @@
     if(!f) return;
     filaIntro = f;
     document.getElementById('introFotoAtual').textContent = 'Nova foto escolhida: ' + f.name + ' (guarda para aplicar).';
+  });
+
+  // ---- Publicidade (anúncio): imagem + pré-visualização no editor ----
+  let filaAnuncio = null;
+  function _anuncioPrev(){
+    const box = document.getElementById('anuncioFotoPrev');
+    if(!box) return;
+    const url = document.getElementById('anuncioFotoUrl').value;
+    box.innerHTML = '';
+    if(filaAnuncio){
+      const im = document.createElement('img'); im.src = URL.createObjectURL(filaAnuncio);
+      im.style.cssText = 'max-width:190px;width:100%;border-radius:10px;display:block;box-shadow:0 2px 8px rgba(0,0,0,.15);';
+      const p = document.createElement('div'); p.className = 'subtitulo'; p.style.marginTop = '4px';
+      p.textContent = 'Nova imagem escolhida (clica em Guardar tudo para aplicar).';
+      box.appendChild(im); box.appendChild(p);
+    } else if(url){
+      const im = document.createElement('img'); im.src = url;
+      im.style.cssText = 'max-width:190px;width:100%;border-radius:10px;display:block;box-shadow:0 2px 8px rgba(0,0,0,.15);';
+      const rm = document.createElement('button'); rm.type = 'button'; rm.textContent = 'Remover imagem';
+      rm.style.cssText = 'margin-top:6px;padding:6px 12px;border:1px solid var(--linha);border-radius:8px;background:#fff;cursor:pointer;font:inherit;';
+      rm.onclick = function(){ document.getElementById('anuncioFotoUrl').value = ''; filaAnuncio = null; _anuncioPrev(); if(window.__agendarPreview) window.__agendarPreview(); };
+      box.appendChild(im); box.appendChild(rm);
+    } else {
+      box.innerHTML = '<div class="subtitulo">Sem imagem escolhida.</div>';
+    }
+  }
+  document.getElementById('anuncioFotoFile').addEventListener('change', e => {
+    const f = e.target.files[0]; if(!f) return;
+    filaAnuncio = f; _anuncioPrev();
+    setEstado('Imagem da publicidade escolhida (guarda para aplicar).', 'info');
   });
 
   // ---- Aspeto avançado: cores, fundo ----
@@ -2387,6 +2441,12 @@
         config.adJogos.foto = await enviarFoto(filaAdj, token);
         filaAdj = null;
       }
+      if(filaAnuncio){
+        setEstado('A enviar imagem da publicidade…', 'info');
+        document.getElementById('anuncioFotoUrl').value = await enviarFoto(filaAnuncio, token);
+        filaAnuncio = null;
+        document.getElementById('anuncioFotoFile').value = '';
+      }
       if(filaIntro){
         setEstado('A enviar foto da abertura…', 'info');
         config.intro = config.intro || {};
@@ -2494,9 +2554,6 @@
         morada: document.getElementById('footerMorada').value.trim(),
         telefone: document.getElementById('footerTelefone').value.trim(),
         link: document.getElementById('footerLink').value.trim(),
-        whatsapp: document.getElementById('footerWhatsapp').value.trim(),
-        whatsappMsg: document.getElementById('footerWhatsappMsg').value.trim(),
-        whatsappLabel: document.getElementById('footerWhatsappLabel').value.trim(),
         cor: (document.getElementById('fNomCor') ? document.getElementById('fNomCor').value : (config.footer.cor || '#ffffff')),
         fotosAtivas: document.getElementById('fotosFooterAtivas').checked,
         fotoOpacidade: parseInt((document.getElementById('footerFotoOpac') || {}).value, 10) || 100,
@@ -2509,6 +2566,18 @@
         mostrar: document.getElementById('footerMostrar').checked,
         linhaEstilos: [lerEstilo('fNom'), lerEstilo('fMor'), lerEstilo('fTel')]
       };
+      { const _wx = parseInt(document.getElementById('anuncioWaX').value, 10);
+        const _wy = parseInt(document.getElementById('anuncioWaY').value, 10);
+        config.anuncio = {
+          ativo: document.getElementById('anuncioAtivo').checked,
+          foto: document.getElementById('anuncioFotoUrl').value.trim(),
+          link: document.getElementById('anuncioLink').value.trim(),
+          whatsapp: document.getElementById('anuncioWhats').value.trim(),
+          whatsappMsg: document.getElementById('anuncioWhatsMsg').value.trim(),
+          waX: isNaN(_wx) ? 50 : _wx,
+          waY: isNaN(_wy) ? 88 : _wy
+        };
+      }
       config.adJogos = {
         ativo: document.getElementById('adjAtivo').checked,
         foto: config.adJogos.foto || '',
@@ -4083,6 +4152,12 @@
         if(d.sec){ try{ const _md = window.__getMenuPreview && window.__getMenuPreview(); if(_md && Array.isArray(_md.categorias)){ const _ct = _md.categorias.find(function(c){ return c.id === d.sec; }); if(_ct) _m = _ct.mosaico; } }catch(e){} }
         else { _m = config.mosaico; }
         if(_m && Array.isArray(_m.caixas) && _m.caixas[d.idx]){ const _cx = _m.caixas[d.idx]; if(d.which === 'sub'){ _cx.subX = d.x; _cx.subY = d.y; } else { _cx.tx = d.x; _cx.ty = d.y; } if(window.__agendarPreview) window.__agendarPreview(); }
+      }
+      else if(d.type === 'anuncio-wa-pos'){
+        const ex = document.getElementById('anuncioWaX'), ey = document.getElementById('anuncioWaY');
+        if(ex && d.x != null) ex.value = d.x;
+        if(ey && d.y != null) ey.value = d.y;
+        if(window.__agendarPreview) window.__agendarPreview();
       }
     });
     document.addEventListener('input', agendarEnvio);

@@ -1152,19 +1152,23 @@
   }
   footer.tem-foto{ background:transparent; }
   footer .footer-texto{ position:relative; z-index:1; }
-  /* Botão de WhatsApp no rodapé final */
-  #footerWhatsapp{
-    display:inline-flex; align-items:center; gap:8px;
-    margin-top:14px; padding:10px 18px;
-    background:#25D366; color:#fff !important;
-    border-radius:999px; text-decoration:none;
-    font-family:var(--fonte-titulo); font-weight:700; font-size:0.9rem;
-    line-height:1; box-shadow:0 3px 10px rgba(0,0,0,0.22);
-    transition:transform .15s ease, box-shadow .15s ease; cursor:pointer;
+
+  /* ===== Bloco de publicidade (anúncio a outro negócio) ===== */
+  .anuncio-box{ position:relative; margin:26px 14px 6px; }
+  .anuncio-box .anuncio-img{ display:block; width:100%; height:auto; border-radius:16px; box-shadow:0 4px 16px rgba(0,0,0,.18); }
+  .anuncio-box.tem-link{ cursor:pointer; }
+  .anuncio-box.tem-link .anuncio-img{ cursor:pointer; }
+  /* Ícone de WhatsApp igual ao do cabeçalho (círculo translúcido, ícone branco), arrastável na pré-visualização */
+  .anuncio-wa{
+    position:absolute; left:50%; top:88%; transform:translate(-50%,-50%);
+    width:38px; height:38px; border-radius:50%;
+    background:rgba(255,255,255,0.22); border:1px solid rgba(255,255,255,0.55);
+    display:flex; align-items:center; justify-content:center; color:var(--branco);
+    box-shadow:0 2px 9px rgba(0,0,0,0.38); z-index:3; cursor:pointer;
+    text-decoration:none; transition:background .15s ease, border-color .15s ease;
   }
-  #footerWhatsapp:hover, #footerWhatsapp:active{ transform:translateY(-1px); box-shadow:0 5px 14px rgba(0,0,0,0.28); }
-  #footerWhatsapp svg{ width:19px; height:19px; fill:#fff; flex:0 0 auto; }
-  #footerWhatsapp span{ text-shadow:none; }
+  .anuncio-wa:hover{ background:rgba(255,255,255,0.36); border-color:rgba(255,255,255,0.8); }
+  .anuncio-wa svg{ width:19px; height:19px; fill:#fff; filter:drop-shadow(0 1px 2px rgba(0,0,0,0.55)); }
 
   .item.vinho-clicavel{
     cursor:pointer;
@@ -1925,16 +1929,19 @@
   </div>
 </div>
 
+<section id="anuncioBox" class="anuncio-box" style="display:none;">
+  <img id="anuncioImg" class="anuncio-img" alt="Publicidade">
+  <a href="#" id="anuncioWa" class="anuncio-wa" target="_blank" rel="noopener" aria-label="WhatsApp" style="display:none;">
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.149-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51l-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.71.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+  </a>
+</section>
+
 <footer id="rodapeFinal">
   <div class="footer-fotos" id="footerFotos"></div>
   <div class="footer-texto">
     <div class="nome-rest" id="footerNome"></div>
     <div id="footerMorada"></div>
     <div id="footerTelefone"></div>
-    <a href="#" id="footerWhatsapp" target="_blank" rel="noopener" aria-label="WhatsApp" style="display:none;">
-      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.149-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51l-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.71.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-      <span id="footerWhatsappTxt">WhatsApp</span>
-    </a>
   </div>
 </footer>
 
@@ -2247,6 +2254,17 @@
     el.addEventListener('pointerdown', function(ev){ ev.preventDefault(); ev.stopPropagation(); drag = true; moveu = false; try{ el.setPointerCapture(ev.pointerId); }catch(e){} });
     el.addEventListener('pointermove', function(ev){ if(!drag) return; moveu = true; var r = box.getBoundingClientRect(); nx = Math.max(1, Math.min(90, ((ev.clientX - r.left) / r.width) * 100)); ny = Math.max(1, Math.min(92, ((ev.clientY - r.top) / r.height) * 100)); el.style.left = nx + '%'; el.style.top = ny + '%'; });
     el.addEventListener('pointerup', function(ev){ if(!drag) return; drag = false; if(moveu){ try{ parent.postMessage({ type:'mosaico-pos', sec:(sec || null), idx:idx, which:(which || 'tit'), x:Math.round(nx), y:Math.round(ny) }, '*'); }catch(e){} } });
+    el.addEventListener('pointercancel', function(){ drag = false; });
+  }
+  // Arrasto do ícone de WhatsApp da publicidade (na pré-visualização): reposiciona e avisa o editor
+  function _anuncioDragWa(box, el){
+    if(el._dragOn) return; el._dragOn = true;
+    el.style.cursor = 'move'; el.style.touchAction = 'none';
+    var drag = false, moveu = false, nx = 50, ny = 88;
+    el.addEventListener('click', function(ev){ if(moveu){ ev.preventDefault(); ev.stopPropagation(); } });
+    el.addEventListener('pointerdown', function(ev){ ev.preventDefault(); ev.stopPropagation(); drag = true; moveu = false; try{ el.setPointerCapture(ev.pointerId); }catch(e){} });
+    el.addEventListener('pointermove', function(ev){ if(!drag) return; moveu = true; var r = box.getBoundingClientRect(); nx = Math.max(4, Math.min(96, ((ev.clientX - r.left) / r.width) * 100)); ny = Math.max(6, Math.min(94, ((ev.clientY - r.top) / r.height) * 100)); el.style.left = nx + '%'; el.style.top = ny + '%'; });
+    el.addEventListener('pointerup', function(ev){ if(!drag) return; drag = false; if(moveu){ try{ parent.postMessage({ type:'anuncio-wa-pos', x:Math.round(nx), y:Math.round(ny) }, '*'); }catch(e){} } });
     el.addEventListener('pointercancel', function(){ drag = false; });
   }
   const _MOS_FONTES = { fredoka:"'Fredoka', sans-serif", poppins:"'Poppins', sans-serif", quicksand:"'Quicksand', sans-serif", montserrat:"'Montserrat', sans-serif", playfair:"'Playfair Display', serif", bebas:"'Bebas Neue', sans-serif", lobster:"'Lobster', cursive", pacifico:"'Pacifico', cursive" };
@@ -2882,7 +2900,7 @@
       if(config.fundo && String(config.fundo.textura || '').indexOf('azulejo') === 0) config.fundo.textura = 'pontos';
       if(config.caderno && String(config.caderno.folha || '').indexOf('azulejo') === 0) config.caderno.folha = 'quadriculado';
     }
-    if(!pub || !pub.ativo){ if(config.adJogos) config.adJogos.ativo = false; }
+    if(!pub || !pub.ativo){ if(config.adJogos) config.adJogos.ativo = false; if(config.footer) config.footer.link = ''; }
     window.__semTraducoes = !f.traducoes;
   }
 
@@ -3752,26 +3770,49 @@
             };
           }
         }
+      }
 
-        // Botão de WhatsApp no rodapé final (vai direto para o WhatsApp)
-        {
-          const _fw = document.getElementById('footerWhatsapp');
-          if(_fw){
-            const _wnum = String(config.footer.whatsapp || '').replace(/\D/g, '').replace(/^00/, '');
-            if(_wnum){
-              const _wtxt = config.footer.whatsappMsg ? ('?text=' + encodeURIComponent(config.footer.whatsappMsg)) : '';
-              _fw.href = 'https://wa.me/' + _wnum + _wtxt;
-              _fw.style.display = 'inline-flex';
-              const _lbl = document.getElementById('footerWhatsappTxt');
-              if(_lbl) _lbl.textContent = config.footer.whatsappLabel || 'WhatsApp';
-              // não deixar o clique abrir o link do patrocinador (rodapé clicável)
-              _fw.onclick = function(ev){
-                ev.stopPropagation();
-                if(window.__PREVIEW) ev.preventDefault();
-              };
+      // ===== Bloco de publicidade (anúncio a outro negócio) =====
+      {
+        const _abox = document.getElementById('anuncioBox');
+        if(_abox){
+          const _an = config.anuncio || {};
+          const _img = document.getElementById('anuncioImg');
+          const _wa = document.getElementById('anuncioWa');
+          if(_an.ativo && (_an.foto || window.__PREVIEW)){
+            _abox.style.display = '';
+            if(_an.foto){
+              _img.src = _an.foto; _img.style.display = 'block';
+              _img.style.minHeight = ''; _img.style.background = '';
             } else {
-              _fw.style.display = 'none';
+              // pré-visualização sem imagem ainda: mostra um espaço para se ver o bloco
+              _img.removeAttribute('src'); _img.style.display = 'block';
+              _img.style.minHeight = '170px'; _img.style.background = 'rgba(0,0,0,.06)';
             }
+            // Link oculto — clicar na publicidade abre-o
+            let _alk = _an.link && String(_an.link).trim();
+            _abox.classList.toggle('tem-link', !!_alk);
+            _abox.onclick = null;
+            if(_alk){
+              if(!/^(https?:|tel:|mailto:|wa\.me|\/)/i.test(_alk) && !/^www\./i.test(_alk)) _alk = 'https://' + _alk;
+              else if(/^www\./i.test(_alk)) _alk = 'https://' + _alk;
+              _abox.onclick = function(){ if(window.__PREVIEW) return; window.open(_alk, '_blank', 'noopener'); };
+            }
+            // Ícone de WhatsApp (opcional), posicionável
+            const _anum = String(_an.whatsapp || '').replace(/\D/g, '').replace(/^00/, '');
+            if(_anum){
+              const _atxt = _an.whatsappMsg ? ('?text=' + encodeURIComponent(_an.whatsappMsg)) : '';
+              _wa.href = 'https://wa.me/' + _anum + _atxt;
+              _wa.style.display = 'flex';
+              _wa.style.left = ((_an.waX != null ? _an.waX : 50)) + '%';
+              _wa.style.top = ((_an.waY != null ? _an.waY : 88)) + '%';
+              _wa.onclick = function(ev){ ev.stopPropagation(); if(window.__PREVIEW) ev.preventDefault(); };
+              if(window.__PREVIEW) _anuncioDragWa(_abox, _wa);
+            } else {
+              _wa.style.display = 'none';
+            }
+          } else {
+            _abox.style.display = 'none';
           }
         }
       }
