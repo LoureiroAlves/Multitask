@@ -1235,6 +1235,12 @@
       </div>
       <div class="subtitulo" style="margin:2px 0 10px;">Caixas de vários tamanhos com foto e texto por cima — ótimo para serviços (unhas, estética, etc.). Podes usar só o mosaico, só o menu, ou os dois.</div>
       <div id="mosaicoBox" style="display:none;">
+        <label for="mosaicoPos" style="margin-top:2px;">Posição do mosaico</label>
+        <select id="mosaicoPos">
+          <option value="topo">No topo (antes das secções)</option>
+          <option value="fim">No fim (depois das secções, antes da publicidade)</option>
+        </select>
+        <div class="subtitulo" style="margin:2px 0 12px;">Escolhe se o mosaico aparece no início da página ou lá em baixo, a seguir às secções.</div>
         <div id="mosLista"></div>
         <button type="button" class="acao" id="btnAddCaixa" style="background:var(--dourado); margin-top:8px;">＋ Adicionar caixa</button>
         <div style="margin-top:12px; display:flex; gap:8px; align-items:center;">
@@ -1760,6 +1766,7 @@
       const mos = config.mosaico || { ativo:false, caixas:[] };
       document.getElementById('mosaicoAtivoChk').checked = !!mos.ativo;
       document.getElementById('mosaicoBox').style.display = mos.ativo ? 'block' : 'none';
+      { const _mp = document.getElementById('mosaicoPos'); if(_mp) _mp.value = (mos.posicao === 'fim') ? 'fim' : 'topo'; }
       if(typeof renderMosaicoEditor === 'function') renderMosaicoEditor(); }
     // Cabeçalho: estilo do título e do subtítulo (individuais)
     preencherEstilo('hTit', config.header.estiloTitulo || { cor: ch, negrito: (config.header.realce !== false), tamanho: config.header.tituloTamanho || 1.7 });
@@ -2508,7 +2515,7 @@
       config.mostrarAgendaIcon = document.getElementById('mostrarAgendaIcon').checked;
       config.mostrarRedes = document.getElementById('mostrarRedes').checked;
       config.menuAtivo = document.getElementById('menuAtivoChk').checked;
-      { const _mc = document.getElementById('mosaicoAtivoChk'); config.mosaico = config.mosaico || { ativo:false, caixas:[] }; config.mosaico.ativo = _mc ? _mc.checked : false; }
+      { const _mc = document.getElementById('mosaicoAtivoChk'); config.mosaico = config.mosaico || { ativo:false, caixas:[] }; config.mosaico.ativo = _mc ? _mc.checked : false; const _mp = document.getElementById('mosaicoPos'); config.mosaico.posicao = (_mp && _mp.value === 'fim') ? 'fim' : 'topo'; }
       config.textoLivre = {
         ativo: document.getElementById('tlAtivo').checked,
         titulo: document.getElementById('tlTitulo').value.trim(),

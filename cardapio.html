@@ -632,6 +632,7 @@
   /* ===== Mosaico (bento, estilo widgets do iPhone) ===== */
   #mosaicoGrid{ display:none; }
   body.mosaico-on #mosaicoGrid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; max-width:640px; margin:0 auto; padding:14px 14px 6px; }
+  body.mosaico-on #mosaicoGrid.mos-no-fim{ margin-top:18px; padding-top:6px; }
   .mos-grid-sec{ display:grid; grid-template-columns:1fr 1fr; gap:12px; max-width:640px; margin:12px auto 6px; padding:0 4px; }
   .mos-box{ position:relative; display:block; overflow:hidden; border-radius:22px; background:var(--cat-cor, #3a3a44); min-height:120px; padding:14px; text-align:left; border:none; box-shadow:0 4px 14px rgba(0,0,0,.14); -webkit-tap-highlight-color:transparent; }
   .mos-box[data-target]{ cursor:pointer; }
@@ -2361,6 +2362,18 @@
     if(!grid) return;
     const on = !!(mos && mos.ativo && Array.isArray(mos.caixas) && mos.caixas.length);
     document.body.classList.toggle('mosaico-on', on);
+    // Posição: 'topo' (antes das secções) ou 'fim' (depois das secções, antes da publicidade)
+    try{
+      const _fim = on && mos && mos.posicao === 'fim';
+      const _anuncio = document.getElementById('anuncioBox');
+      const _catGrid = document.getElementById('categoriaGrid');
+      if(_fim){
+        if(_anuncio && _anuncio.parentNode && grid.nextElementSibling !== _anuncio){ _anuncio.parentNode.insertBefore(grid, _anuncio); }
+      } else {
+        if(_catGrid && _catGrid.parentNode && grid.nextElementSibling !== _catGrid){ _catGrid.parentNode.insertBefore(grid, _catGrid); }
+      }
+      grid.classList.toggle('mos-no-fim', !!_fim);
+    }catch(e){}
     if(!on){ grid.innerHTML = ''; return; }
     _mosBuildInto(grid, mos.caixas, null);
   };
