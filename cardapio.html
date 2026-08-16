@@ -738,6 +738,29 @@
   body.modelo-ponte .tabela-doses .preco-dose{ color:var(--pt-accent2) !important; }
   body.modelo-ponte .jogos-slogan{ background:linear-gradient(180deg,#2a3038,#20252c); color:var(--pt-accent2); border:1px solid var(--pt-line); box-shadow:0 3px 8px rgba(0,0,0,.4); text-shadow:none; }
 
+  /* ===== Modelo "Manuscrito / Fernando Pessoa" (papel, tinta, lacre) — config.modelo === 'manuscrito' ===== */
+  body.modelo-manuscrito{ background-color:#f4ebd6; background-image:repeating-linear-gradient(#f4ebd6 0 30px, #e7dcc0 30px 31px); }
+  body.modelo-manuscrito .categoria-grid{ background:transparent; border:none; display:flex; flex-direction:column; gap:0; padding:12px 16px 4px; }
+  body.modelo-manuscrito .tile{ background:transparent !important; box-shadow:none !important; border:none !important; border-bottom:1px solid #ddceac !important; border-radius:0 !important; display:flex; align-items:center; gap:12px; text-align:left; width:100%; min-height:0; aspect-ratio:auto; padding:12px 4px; }
+  body.modelo-manuscrito .tile:last-child{ border-bottom:none !important; }
+  body.modelo-manuscrito .tile .tile-emoji{ display:flex; align-items:center; justify-content:center; flex:0 0 36px; width:36px; height:36px; border:1.6px solid #4a3418; border-radius:50%; font-size:1.05rem; color:#4a3418; line-height:1; }
+  body.modelo-manuscrito .tile .tile-label{ font-family:'Playfair Display', serif; font-weight:600; font-size:1.06rem; letter-spacing:.4px; color:#2e2418 !important; text-shadow:none !important; }
+  body.modelo-manuscrito .tile::after{ content:'\203A'; margin-left:auto; color:#a88b52; font-size:1.25rem; line-height:1; }
+  body.modelo-manuscrito .categoria-painel{ background:#f4ebd6; background-image:repeating-linear-gradient(#f4ebd6 0 30px, #e7dcc0 30px 31px); }
+  body.modelo-manuscrito .categoria-painel-header{ background:#f4ebd6; border-bottom:1px solid #ddceac; }
+  body.modelo-manuscrito .categoria-painel-header .voltar{ color:#6b5636 !important; font-family:'Playfair Display', serif; background:transparent !important; border:none !important; }
+  body.modelo-manuscrito #painelTitulo{ font-family:'Caveat', cursive; font-size:1.85rem; color:#241c10; letter-spacing:.5px; }
+  body.modelo-manuscrito section.categoria h2, body.modelo-manuscrito .grupo-prato > summary, body.modelo-manuscrito .grupo-vinho > summary{ font-family:'Playfair Display', serif; color:#3a2a18 !important; letter-spacing:1px; background:transparent !important; border-bottom:1px dashed #c9b78a; padding-bottom:5px; }
+  body.modelo-manuscrito .categoria-painel-conteudo .item{ border-bottom:1px solid #e0d3b4 !important; }
+  body.modelo-manuscrito .item .nome{ font-family:'Playfair Display', serif; color:#2e2418 !important; }
+  body.modelo-manuscrito .item .desc{ font-family:'Playfair Display', serif; font-style:italic; color:#7a6a4c !important; }
+  body.modelo-manuscrito .item .preco{ font-family:'Playfair Display', serif; color:#7d1f28 !important; font-weight:600; }
+  body.modelo-manuscrito .tabela-doses .preco-dose{ color:#7d1f28 !important; font-family:'Playfair Display', serif; }
+  body.modelo-manuscrito .jogos-slogan{ background:transparent; color:#6b5636; border:1px dashed #c9b78a; box-shadow:none; font-family:'Playfair Display', serif; font-style:italic; }
+  #menuLacre{ display:none; }
+  body.modelo-manuscrito #menuLacre{ display:flex; justify-content:center; margin:2px 0 16px; }
+  #menuLacre svg{ width:84px; height:88px; filter:drop-shadow(0 3px 5px rgba(90,20,27,.35)); }
+
   /* ===== Modelo "Deslizar" (secções lado a lado, página inteira) — config.modelo === 'slider' ===== */
   body.modelo-slider #categoriaGrid{ display:none !important; }           /* sem separadores */
   body.modelo-slider .menu-deck{
@@ -2114,6 +2137,22 @@
 
 <div class="categoria-grid" id="categoriaGrid">
 </div>
+<div id="menuLacre" aria-hidden="true">
+  <svg viewBox="0 0 100 104">
+    <path d="M52 96 Q49 84 55 78 L45 78 Q51 84 48 96 Z" fill="#5e141b"/>
+    <path d="M50 8 Q68 9 73 22 Q89 27 89 45 Q95 61 82 72 Q80 89 62 90 Q50 98 38 90 Q20 89 18 72 Q5 61 11 45 Q11 27 27 22 Q32 9 50 8 Z" fill="#7d1f28"/>
+    <path d="M50 15 Q65 16 69 27 Q83 31 83 46 Q87 59 76 68 Q74 82 59 83 Q50 89 41 83 Q26 82 24 68 Q13 59 17 46 Q17 31 31 27 Q35 16 50 15 Z" fill="#8f2731"/>
+    <ellipse cx="40" cy="34" rx="15" ry="9" fill="#a83a44" opacity="0.45"/>
+    <circle cx="50" cy="50" r="28" fill="none" stroke="#5e141b" stroke-width="2.5" opacity="0.55"/>
+    <g stroke="#5e141b" stroke-width="2.4" fill="none" stroke-linecap="round" opacity="0.85">
+      <path d="M34 46 Q50 52 66 46"/>
+      <path d="M40 46 Q39 35 50 34 Q61 35 60 46"/>
+      <circle cx="43" cy="56" r="6.5"/>
+      <circle cx="57" cy="56" r="6.5"/>
+      <path d="M49.5 55 Q50 53 50.5 55"/>
+    </g>
+  </svg>
+</div>
 
 <div class="categoria-painel" id="categoriaPainel">
   <div class="categoria-painel-header">
@@ -3478,6 +3517,7 @@
       document.body.classList.toggle('modelo-slider', (config.modelo || 'lista') === 'slider');
       document.body.classList.toggle('modelo-neon', (config.modelo || 'lista') === 'neon');
       document.body.classList.toggle('modelo-ponte', (config.modelo || 'lista') === 'ponte');
+      document.body.classList.toggle('modelo-manuscrito', (config.modelo || 'lista') === 'manuscrito');
       // Efeito néon (por cima de qualquer modelo): intensidade + cor
       // Efeito néon: agora é POR SECÇÃO (decidido no construirMenu conforme cada secção). Sem cor global.
       document.documentElement.style.removeProperty('--nfx-cor');
