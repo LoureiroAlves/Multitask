@@ -2754,6 +2754,13 @@
     });
   };
 
+  // Prepara os traços da caricatura para a animação de "desenhar" (mede cada linha)
+  function _pessoaDesenhar(){
+    var els = document.querySelectorAll('#introPessoa .ink');
+    for(var i=0;i<els.length;i++){
+      try{ var L = els[i].getTotalLength(); if(L){ els[i].style.strokeDasharray = L; els[i].style.strokeDashoffset = L; } }catch(e){}
+    }
+  }
   // Assinatura da abertura "Pessoa": ajusta o nome para caber no tabuleiro
   function _pessoaSetNome(nome){
     var el = document.getElementById('pessoaNome');
@@ -3890,6 +3897,7 @@
           } else if(intro.tipo === 'pessoa'){
             ov.classList.add('pessoa');
             if(typeof _pessoaSetNome === 'function') _pessoaSetNome(nome);
+            if(typeof _pessoaDesenhar === 'function') _pessoaDesenhar();
             var _pv = document.getElementById('pessoaVerso'); if(_pv) _pv.textContent = (intro.pessoaVerso != null) ? intro.pessoaVerso : 'o poeta é um fingidor';
             ov.style.cursor = 'pointer';
             ov.addEventListener('click', window.__esconderIntro);
@@ -4364,6 +4372,7 @@
     } else if(intro.tipo === 'pessoa'){
       ov.classList.add('pessoa');
       if(typeof _pessoaSetNome === 'function') _pessoaSetNome(nome);
+      if(typeof _pessoaDesenhar === 'function') _pessoaDesenhar();
       var _pvP = document.getElementById('pessoaVerso'); if(_pvP) _pvP.textContent = (intro.pessoaVerso != null) ? intro.pessoaVerso : 'o poeta é um fingidor';
     } else if(intro.tipo === 'neon'){
       ov.classList.add('ab-neon');
