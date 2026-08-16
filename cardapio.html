@@ -3908,7 +3908,7 @@
             bgImg = "linear-gradient(140deg, " + c1 + " 0%, " + c2 + " 55%, " + c3 + " 100%)";
             window.__introFill = { tipo:'grad', c1:c1, c2:c2, c3:c3 };
           }
-          window.__introReveal = intro.reveal || 'slide';
+          window.__introReveal = (['ponte','pessoa','neon'].indexOf(intro.tipo) >= 0) ? 'slide' : (intro.reveal || 'slide');
           window.__introBgImg = bgImg;
           window.__fazerStripes = function(){
             const cont = document.getElementById('introStripes');
