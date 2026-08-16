@@ -647,7 +647,6 @@
           <option value="ponte">Ponte Dom Luís (arco animado)</option>
           <option value="pessoa">Fernando Pessoa (caricatura a tinta)</option>
           <option value="neon">Néon a acender (letreiro)</option>
-          <option value="giz">Quadro de giz (escrito à mão)</option>
         </select>
         <div id="pontarOpts" style="display:none; margin:8px 0 4px; padding:10px; border:1.5px solid var(--linha); border-radius:9px;">
           <label for="pontePeriodo" style="margin-top:0;">Ambiente da ponte</label>
@@ -1716,7 +1715,7 @@
     document.getElementById('introDuracao').value = (config.intro && config.intro.duracao) || 7;
     document.getElementById('introFundo').value = (config.intro && config.intro.fundo) || 'foto';
     { const _tp = (config.intro && config.intro.tipo) || 'normal';
-      const _it = document.getElementById('introTipo'); if(_it) _it.value = (['ponte','pessoa','neon','giz'].indexOf(_tp) >= 0) ? _tp : 'normal';
+      const _it = document.getElementById('introTipo'); if(_it) _it.value = (['ponte','pessoa','neon'].indexOf(_tp) >= 0) ? _tp : 'normal';
       const _pp = document.getElementById('pontePeriodo'); if(_pp) _pp.value = (config.intro && config.intro.ponteDia) ? 'dia' : 'noite';
       const _pvI = document.getElementById('introPessoaVerso'); if(_pvI) _pvI.value = (config.intro && config.intro.pessoaVerso != null) ? config.intro.pessoaVerso : 'o poeta é um fingidor';
       const _po = document.getElementById('pontarOpts'); if(_po) _po.style.display = (_tp === 'ponte') ? 'block' : 'none';
