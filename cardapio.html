@@ -154,6 +154,38 @@
   @keyframes psName{ from{opacity:0; transform:translateY(18px)} to{opacity:1; transform:translateY(0)} }
   @keyframes psRise{ from{opacity:0; transform:translateY(12px)} to{opacity:1; transform:translateY(0)} }
   @keyframes psShow{ to{opacity:1} }
+
+  /* ===== Abertura "Néon a acender" ===== */
+  #introNeon{ position:absolute; inset:0; display:none; align-items:center; justify-content:center; padding:24px; }
+  #introOverlay.ab-neon{ padding:0; background:#141017; background-image:radial-gradient(120% 90% at 50% 40%, rgba(255,79,163,.10), transparent 60%); }
+  #introOverlay.ab-neon #introBg, #introOverlay.ab-neon #introShade, #introOverlay.ab-neon #introContent{ display:none !important; }
+  #introOverlay.ab-neon #introNeon{ display:flex; }
+  #introNeon .neon-frame{ position:relative; padding:30px 38px; border-radius:16px; border:3px solid #35e0ff; box-shadow:0 0 8px #35e0ff, 0 0 20px #35e0ff, inset 0 0 14px rgba(53,224,255,.45); text-align:center; opacity:0; }
+  #introNeon .neon-open{ font-family:'Poppins', sans-serif; letter-spacing:6px; font-size:.78rem; color:#fff; text-shadow:0 0 6px #35e0ff, 0 0 14px #35e0ff; margin-bottom:12px; opacity:0; }
+  #introNeon #neonNome{ font-family:'Pacifico', cursive; font-size:2.7rem; color:#fff; line-height:1.15; text-shadow:0 0 5px #ff4fa3, 0 0 14px #ff4fa3, 0 0 30px #ff4fa3; opacity:0; }
+  #introNeon .neon-sub{ margin-top:10px; font-family:'Poppins', sans-serif; font-size:.72rem; letter-spacing:4px; color:#ffd27f; text-shadow:0 0 6px #ffb54a, 0 0 12px #ffb54a; opacity:0; }
+  #introOverlay.ab-neon.animar .neon-frame{ animation:neonFlk 1.5s .1s both, neonHum 5s 1.6s infinite; }
+  #introOverlay.ab-neon.animar .neon-open{ animation:neonFlk 1.3s .5s both; }
+  #introOverlay.ab-neon.animar #neonNome{ animation:neonFlk 1.7s .3s both, neonHum 4.2s 2s infinite; }
+  #introOverlay.ab-neon.animar .neon-sub{ animation:neonFlk 1s 1.5s both; }
+  @keyframes neonFlk{ 0%{opacity:0} 4%{opacity:1} 6%{opacity:.15} 9%{opacity:1} 11%{opacity:.3} 15%{opacity:1} 19%{opacity:.5} 22%{opacity:1} 60%{opacity:.92} 62%{opacity:1} 100%{opacity:1} }
+  @keyframes neonHum{ 0%,100%{opacity:1} 48%{opacity:1} 49%{opacity:.82} 50%{opacity:1} 92%{opacity:1} 93%{opacity:.9} 94%{opacity:1} }
+
+  /* ===== Abertura "Quadro de giz" ===== */
+  #introGiz{ position:absolute; inset:0; display:none; align-items:center; justify-content:center; padding:26px; }
+  #introOverlay.ab-giz{ padding:0; background:#171512; }
+  #introOverlay.ab-giz #introBg, #introOverlay.ab-giz #introShade, #introOverlay.ab-giz #introContent{ display:none !important; }
+  #introOverlay.ab-giz #introGiz{ display:flex; }
+  #introGiz .giz-board{ width:100%; max-width:340px; padding:34px 24px; border-radius:8px; background:#25352c; background-image:radial-gradient(120% 80% at 30% 20%, rgba(255,255,255,.06), transparent 60%); border:12px solid #6e4a23; box-shadow:0 10px 30px rgba(0,0,0,.5), inset 0 0 44px rgba(0,0,0,.4); text-align:center; }
+  #introGiz #gizNome{ font-family:'Caveat', cursive; font-weight:700; font-size:2.9rem; color:#f4efe4; line-height:1.05; text-shadow:0 1px 1px rgba(0,0,0,.25); clip-path:inset(0 100% 0 0); }
+  #introGiz .giz-rule{ height:0; border-bottom:2px dashed rgba(244,239,228,.7); width:0; margin:12px auto 0; }
+  #introGiz .giz-sub{ margin-top:9px; font-family:'Caveat', cursive; font-size:1.15rem; letter-spacing:1px; color:#cfe0cf; opacity:0; }
+  #introOverlay.ab-giz.animar #gizNome{ animation:gizWrite 1.6s ease .4s forwards; }
+  #introOverlay.ab-giz.animar .giz-rule{ animation:gizRule .8s ease 2s forwards; }
+  #introOverlay.ab-giz.animar .giz-sub{ animation:gizFade .7s ease 2.5s forwards; }
+  @keyframes gizWrite{ from{clip-path:inset(0 100% 0 0)} to{clip-path:inset(0 0 0 0)} }
+  @keyframes gizRule{ from{width:0} to{width:72%} }
+  @keyframes gizFade{ to{opacity:.92} }
 </style>
 <script>
   // A cortina de abertura cobre o ecrã enquanto os dados carregam (evita o flash de conteúdo).
@@ -2087,6 +2119,20 @@
       </g>
     </svg>
   </div>
+  <div id="introNeon">
+    <div class="neon-frame">
+      <div class="neon-open">ABERTO</div>
+      <div id="neonNome" class="neon-txt"></div>
+      <div class="neon-sub">· open ·</div>
+    </div>
+  </div>
+  <div id="introGiz">
+    <div class="giz-board">
+      <div id="gizNome" class="giz-name"></div>
+      <div class="giz-rule"></div>
+      <div class="giz-sub">menu</div>
+    </div>
+  </div>
   <div id="introStripes"></div>
 </div>
 
@@ -3835,7 +3881,7 @@
           }
           aplicarPosOpacIntro(nEl, sEl, intro);
           // Abertura em forma de Ponte Dom Luís (animada, dia/noite)
-          ov.classList.remove('ponte','ponte-dia','ponte-noite','pessoa');
+          ov.classList.remove('ponte','ponte-dia','ponte-noite','pessoa','ab-neon','ab-giz');
           if(intro.tipo === 'ponte'){
             ov.classList.add('ponte', intro.ponteDia ? 'ponte-dia' : 'ponte-noite');
             var _pnm = document.getElementById('pontoNome'); if(_pnm) _pnm.textContent = nome || '';
@@ -3847,6 +3893,14 @@
             var _pv = document.getElementById('pessoaVerso'); if(_pv) _pv.textContent = (intro.pessoaVerso != null) ? intro.pessoaVerso : 'o poeta é um fingidor';
             ov.style.cursor = 'pointer';
             ov.addEventListener('click', window.__esconderIntro);
+          } else if(intro.tipo === 'neon'){
+            ov.classList.add('ab-neon');
+            var _nn = document.getElementById('neonNome'); if(_nn) _nn.textContent = nome || '';
+            ov.style.cursor = 'pointer'; ov.addEventListener('click', window.__esconderIntro);
+          } else if(intro.tipo === 'giz'){
+            ov.classList.add('ab-giz');
+            var _gn = document.getElementById('gizNome'); if(_gn) _gn.textContent = nome || '';
+            ov.style.cursor = 'pointer'; ov.addEventListener('click', window.__esconderIntro);
           }
           if(nEl){ nEl.classList.toggle('nletras', (intro.animNome||'letras')!=='letras'); envolverAnim(nEl, intro.animNome||'letras', 0.2); }
           if(sEl) envolverAnim(sEl, intro.animSub||'subir', 0.5);
@@ -4303,7 +4357,7 @@
     else { const cs=getComputedStyle(document.documentElement); const c1=(cs.getPropertyValue('--castanho')||'#3a2c18').trim(), c2=(cs.getPropertyValue('--dourado-escuro')||'#6b4a1f').trim(), c3=(cs.getPropertyValue('--dourado')||'#a8712f').trim(); ov.style.background='linear-gradient(140deg,'+c1+' 0%,'+c2+' 55%,'+c3+' 100%)'; if(bg) bg.style.backgroundImage=''; if(shade) shade.classList.remove('on'); }
     ov.style.display = 'flex';
     // Abertura Ponte Dom Luís (pré-visualização)
-    ov.classList.remove('ponte','ponte-dia','ponte-noite','pessoa');
+    ov.classList.remove('ponte','ponte-dia','ponte-noite','pessoa','ab-neon','ab-giz');
     if(intro.tipo === 'ponte'){
       ov.classList.add('ponte', intro.ponteDia ? 'ponte-dia' : 'ponte-noite');
       var _pnmP = document.getElementById('pontoNome'); if(_pnmP) _pnmP.textContent = nome || '';
@@ -4311,6 +4365,12 @@
       ov.classList.add('pessoa');
       if(typeof _pessoaSetNome === 'function') _pessoaSetNome(nome);
       var _pvP = document.getElementById('pessoaVerso'); if(_pvP) _pvP.textContent = (intro.pessoaVerso != null) ? intro.pessoaVerso : 'o poeta é um fingidor';
+    } else if(intro.tipo === 'neon'){
+      ov.classList.add('ab-neon');
+      var _nnP = document.getElementById('neonNome'); if(_nnP) _nnP.textContent = nome || '';
+    } else if(intro.tipo === 'giz'){
+      ov.classList.add('ab-giz');
+      var _gnP = document.getElementById('gizNome'); if(_gnP) _gnP.textContent = nome || '';
     }
     ov.classList.remove('sair'); ov.style.transform = '';   // evita ficar preso fora do ecrã
     ov.classList.remove('animar'); void ov.offsetWidth; ov.classList.add('animar');
