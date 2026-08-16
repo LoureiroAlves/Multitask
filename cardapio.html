@@ -55,6 +55,56 @@
   @keyframes eZoom{ from{ opacity:0; transform:scale(.5); } to{ opacity:1; transform:scale(1); } }
   @keyframes eRodar{ from{ opacity:0; transform:rotate(-16deg) scale(.8); } to{ opacity:1; transform:rotate(0) scale(1); } }
   @keyframes eSaltar{ 0%{ opacity:0; transform:translateY(-44px); } 60%{ opacity:1; transform:translateY(9px); } 100%{ transform:translateY(0); } }
+
+  /* ===== Abertura em forma de Ponte Dom Luís (animada, dia/noite) ===== */
+  #introPonte{ position:absolute; inset:0; display:none; }
+  #introOverlay.ponte{ padding:0; background:#0e1830; }
+  #introOverlay.ponte #introBg, #introOverlay.ponte #introShade, #introOverlay.ponte #introContent{ display:none !important; }
+  #introOverlay.ponte #introPonte{ display:block; }
+  #introPonte svg{ width:100%; height:100%; display:block; }
+  #introOverlay.ponte{ --pt-iron:#7d8ea0; --pt-pier:#586471; --pt-name:#f2ecd9; }
+  #introOverlay.ponte.ponte-dia{ --pt-iron:#3a4756; --pt-pier:#8a7f6b; --pt-name:#3a2410; }
+  #introPonte .pt-sky{ fill:#101d3e; } #introOverlay.ponte-dia #introPonte .pt-sky{ fill:#e79a54; }
+  #introPonte .pt-sky2{ fill:#22386a; } #introOverlay.ponte-dia #introPonte .pt-sky2{ fill:#f3d39a; }
+  #introPonte .pt-water{ fill:#0a1226; } #introOverlay.ponte-dia #introPonte .pt-water{ fill:#8a6238; }
+  #introPonte .pt-astro{ fill:#f3eccf; } #introOverlay.ponte-dia #introPonte .pt-astro{ fill:#fff4d8; }
+  #introPonte .pt-stars{ opacity:1; } #introOverlay.ponte-dia #introPonte .pt-stars{ display:none; }
+  #introPonte .pt-arch, #introPonte .pt-arch2, #introPonte .pt-deck, #introPonte .pt-deck2, #introPonte .pt-hanger{ stroke:var(--pt-iron); fill:none; }
+  #introPonte .pt-arch{ stroke-width:6; } #introPonte .pt-arch2{ stroke-width:3.5; opacity:.8; }
+  #introPonte .pt-deck{ stroke-width:5; } #introPonte .pt-deck2{ stroke-width:3.5; opacity:.85; } #introPonte .pt-hanger{ stroke-width:2.4; }
+  #introPonte .pt-pier{ fill:var(--pt-pier); }
+  #introPonte .pt-deckbar{ fill:#e0913f; }
+  #introPonte #pontoNome{ font-family:'Bebas Neue', var(--fonte-titulo, sans-serif); font-size:40px; letter-spacing:3px; fill:var(--pt-name); }
+  /* Animações — só quando a abertura anima */
+  #introPonte .pt-draw{ stroke-dasharray:1; stroke-dashoffset:1; }
+  #introPonte .pt-hanger{ transform-box:fill-box; transform-origin:top center; transform:scaleY(0); opacity:0; }
+  #introPonte .pt-pier{ transform-box:fill-box; transform-origin:bottom center; transform:scaleY(0); opacity:0; }
+  #introPonte .pt-astro{ transform-box:fill-box; opacity:0; }
+  #introPonte #pontoNome{ transform-box:fill-box; opacity:0; }
+  #introPonte .pt-deckbar{ opacity:0; }
+  #introOverlay.animar.ponte .pt-pier{ animation:ptRise .8s cubic-bezier(.2,.8,.3,1.2) .15s forwards; }
+  #introOverlay.animar.ponte .pt-astro{ animation:ptRise 1.3s ease .2s forwards, ptFloat 6s ease-in-out 1.5s infinite; }
+  #introOverlay.animar.ponte .pt-deck{ animation:ptDraw 1.1s ease .35s forwards; }
+  #introOverlay.animar.ponte .pt-deck2{ animation:ptDraw 1.1s ease .55s forwards; }
+  #introOverlay.animar.ponte .pt-arch{ animation:ptDraw 1.7s cubic-bezier(.4,0,.3,1) .5s forwards; }
+  #introOverlay.animar.ponte .pt-arch2{ animation:ptDraw 1.7s cubic-bezier(.4,0,.3,1) .75s forwards; }
+  #introOverlay.animar.ponte .pt-hanger{ animation:ptHanger .5s ease forwards; }
+  #introOverlay.animar.ponte .pt-hanger:nth-child(1){ animation-delay:1.15s; } #introOverlay.animar.ponte .pt-hanger:nth-child(2){ animation-delay:1.25s; }
+  #introOverlay.animar.ponte .pt-hanger:nth-child(3){ animation-delay:1.35s; } #introOverlay.animar.ponte .pt-hanger:nth-child(4){ animation-delay:1.45s; }
+  #introOverlay.animar.ponte .pt-hanger:nth-child(5){ animation-delay:1.55s; } #introOverlay.animar.ponte .pt-hanger:nth-child(6){ animation-delay:1.65s; }
+  #introOverlay.animar.ponte .pt-deckbar{ animation:ptFadeIn .6s ease 1.5s forwards; }
+  #introOverlay.animar.ponte #pontoNome{ animation:ptName 1s cubic-bezier(.2,.8,.3,1.5) 1.8s forwards; }
+  #introOverlay.ponte .pt-shimmer{ animation:ptShimmer 3.2s ease-in-out infinite; }
+  #introOverlay.ponte .pt-star{ animation:ptTwinkle 2.6s ease-in-out infinite; }
+  #introOverlay.ponte .pt-star:nth-child(even){ animation-delay:1.1s; }
+  @keyframes ptDraw{ to{ stroke-dashoffset:0; } }
+  @keyframes ptHanger{ to{ transform:scaleY(1); opacity:1; } }
+  @keyframes ptRise{ from{ transform:translateY(46px); opacity:0; } to{ transform:translateY(0) scaleY(1); opacity:1; } }
+  @keyframes ptFloat{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-7px); } }
+  @keyframes ptName{ from{ transform:translateY(26px); opacity:0; } to{ transform:translateY(0); opacity:1; } }
+  @keyframes ptFadeIn{ to{ opacity:1; } }
+  @keyframes ptShimmer{ 0%,100%{ opacity:.22; } 50%{ opacity:.6; } }
+  @keyframes ptTwinkle{ 0%,100%{ opacity:.3; } 50%{ opacity:1; } }
 </style>
 <script>
   // A cortina de abertura cobre o ecrã enquanto os dados carregam (evita o flash de conteúdo).
@@ -584,6 +634,60 @@
   body.neon-fx .deck-page.neon-on{ box-shadow:0 0 var(--nfx1) var(--nfx-cor, var(--cat-cor, var(--dourado))), 0 0 var(--nfx2) var(--nfx-cor, var(--cat-cor, var(--dourado))); }
   body.neon-fx .deck-page.neon-on.neon-pisca{ animation:neonEdgePisca var(--nfx-dur,1.4s) ease-in-out infinite; }
   body.neon-fx .deck-page.neon-on .deck-page-tit{ text-shadow:0 0 2px #fff, 0 0 var(--nfx1) var(--nfx-cor, var(--cat-cor, var(--dourado))), 0 0 var(--nfx2) var(--nfx-cor, var(--cat-cor, var(--dourado))) !important; }
+
+  /* ===== Modelo "Ponte Dom Luís" (ferro industrial do Porto) — config.modelo === 'ponte' ===== */
+  body.modelo-ponte{
+    --pt-bg:#191d23; --pt-plate:#252b33; --pt-plate2:#2f363f; --pt-accent:#e0913f; --pt-accent2:#f0b268;
+    --pt-txt:#eceae4; --pt-muted:#a6afb8; --pt-line:rgba(255,255,255,.10);
+    background-color:var(--pt-bg);
+    background-image:
+      radial-gradient(120% 62% at 50% -12%, rgba(224,145,63,.22), transparent 60%),
+      repeating-linear-gradient(45deg, rgba(255,255,255,.028) 0 2px, transparent 2px 24px),
+      repeating-linear-gradient(-45deg, rgba(255,255,255,.028) 0 2px, transparent 2px 24px);
+  }
+  /* Arco de ferro no topo da grelha (silhueta da ponte) */
+  body.modelo-ponte .categoria-grid{ background:transparent; border:none; padding:16px 14px 26px; }
+  body.modelo-ponte .categoria-grid::before{
+    content:''; display:block; height:40px; margin:2px 6px 14px;
+    background:radial-gradient(120% 190% at 50% 100%, transparent 66%, var(--pt-accent) 66% 69%, transparent 71%);
+    opacity:.85;
+  }
+  /* Separadores = chapas de ferro rebitadas, com viga âmbar à esquerda */
+  body.modelo-ponte .tile,
+  body.modelo-ponte .tile:nth-child(odd),
+  body.modelo-ponte .tile:nth-child(even){
+    background-color:var(--pt-plate) !important;
+    background-image:
+      radial-gradient(circle at 11px 11px, rgba(255,255,255,.14) 0 1.5px, transparent 2px),
+      radial-gradient(circle at calc(100% - 11px) 11px, rgba(255,255,255,.14) 0 1.5px, transparent 2px),
+      radial-gradient(circle at 11px calc(100% - 11px), rgba(255,255,255,.14) 0 1.5px, transparent 2px),
+      radial-gradient(circle at calc(100% - 11px) calc(100% - 11px), rgba(255,255,255,.14) 0 1.5px, transparent 2px),
+      linear-gradient(180deg, var(--pt-plate2), var(--pt-plate)) !important;
+    border:1px solid var(--pt-line) !important;
+    border-left:4px solid var(--pt-accent) !important;
+    border-radius:8px !important;
+    box-shadow:0 4px 12px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.07) !important;
+    color:var(--pt-txt);
+  }
+  body.modelo-ponte .tile .tile-label{ font-family:'Bebas Neue', var(--fonte-titulo); letter-spacing:1.6px; font-size:1.18rem; color:var(--pt-txt) !important; text-shadow:none !important; }
+  body.modelo-ponte .tile .tile-emoji{ filter:saturate(.85) brightness(1.05); }
+  /* Painel da secção */
+  body.modelo-ponte .categoria-painel{ background:var(--pt-bg); background-image:radial-gradient(120% 50% at 50% -10%, rgba(224,145,63,.16), transparent 60%); }
+  body.modelo-ponte .categoria-painel-header{ background:linear-gradient(180deg,#20262e,#1a1f26); border-bottom:2px solid var(--pt-accent); }
+  body.modelo-ponte .categoria-painel-header .voltar{ color:var(--pt-accent2) !important; font-family:'Bebas Neue', var(--fonte-titulo); letter-spacing:1px; background:transparent !important; border:none !important; }
+  body.modelo-ponte #painelTitulo{ font-family:'Bebas Neue', var(--fonte-titulo); color:var(--pt-txt); letter-spacing:2px; font-size:1.7rem; }
+  body.modelo-ponte section.categoria h2,
+  body.modelo-ponte .grupo-prato > summary,
+  body.modelo-ponte .grupo-vinho > summary{
+    font-family:'Bebas Neue', var(--fonte-titulo); color:var(--pt-accent2) !important; letter-spacing:2px; background:transparent !important;
+    border-bottom:2px solid; border-image:repeating-linear-gradient(90deg, var(--pt-accent) 0 10px, transparent 10px 20px) 2; padding-bottom:6px;
+  }
+  body.modelo-ponte .categoria-painel-conteudo .item{ border-bottom:1px solid var(--pt-line) !important; }
+  body.modelo-ponte .item .nome{ color:var(--pt-txt) !important; }
+  body.modelo-ponte .item .desc{ color:var(--pt-muted) !important; }
+  body.modelo-ponte .item .preco{ color:var(--pt-accent2) !important; font-weight:700; font-family:'Bebas Neue', var(--fonte-titulo); letter-spacing:1px; font-size:1.1rem; }
+  body.modelo-ponte .tabela-doses .preco-dose{ color:var(--pt-accent2) !important; }
+  body.modelo-ponte .jogos-slogan{ background:linear-gradient(180deg,#2a3038,#20252c); color:var(--pt-accent2); border:1px solid var(--pt-line); box-shadow:0 3px 8px rgba(0,0,0,.4); text-shadow:none; }
 
   /* ===== Modelo "Deslizar" (secções lado a lado, página inteira) — config.modelo === 'slider' ===== */
   body.modelo-slider #categoriaGrid{ display:none !important; }           /* sem separadores */
@@ -1822,6 +1926,43 @@
     <div id="introNome"></div>
     <div id="introSub"></div>
     <button id="introBtn" type="button">Ver menu ▸</button>
+  </div>
+  <div id="introPonte" aria-hidden="true">
+    <svg viewBox="0 0 400 720" preserveAspectRatio="xMidYMid slice">
+      <rect class="pt-sky" x="0" y="0" width="400" height="720"/>
+      <rect class="pt-sky2" x="0" y="340" width="400" height="170" opacity="0.5"/>
+      <g class="pt-stars">
+        <circle class="pt-star" cx="55" cy="70" r="1.6"/>
+        <circle class="pt-star" cx="140" cy="42" r="1.3"/>
+        <circle class="pt-star" cx="250" cy="34" r="1.4"/>
+        <circle class="pt-star" cx="345" cy="66" r="1.6"/>
+        <circle class="pt-star" cx="28" cy="150" r="1.3"/>
+        <circle class="pt-star" cx="372" cy="150" r="1.4"/>
+      </g>
+      <circle class="pt-astro" cx="312" cy="118" r="38"/>
+      <rect class="pt-water" x="0" y="470" width="400" height="250"/>
+      <g stroke="#ffffff" stroke-width="2" stroke-linecap="round" opacity="0.4">
+        <line class="pt-shimmer" x1="40" y1="522" x2="150" y2="522"/>
+        <line class="pt-shimmer" x1="222" y1="560" x2="342" y2="560"/>
+        <line class="pt-shimmer" x1="90" y1="602" x2="262" y2="602"/>
+      </g>
+      <rect class="pt-pier" x="48" y="150" width="16" height="332"/>
+      <rect class="pt-pier" x="336" y="150" width="16" height="332"/>
+      <line class="pt-deck2 pt-draw" x1="56" y1="300" x2="344" y2="300" pathLength="1"/>
+      <path class="pt-arch pt-draw" d="M56 480 Q200 190 344 480" pathLength="1"/>
+      <path class="pt-arch2 pt-draw" d="M56 480 Q200 222 344 480" pathLength="1"/>
+      <g class="pt-hangers">
+        <line class="pt-hanger" x1="100" y1="172" x2="100" y2="330"/>
+        <line class="pt-hanger" x1="140" y1="172" x2="140" y2="242"/>
+        <line class="pt-hanger" x1="180" y1="172" x2="180" y2="198"/>
+        <line class="pt-hanger" x1="220" y1="172" x2="220" y2="198"/>
+        <line class="pt-hanger" x1="260" y1="172" x2="260" y2="242"/>
+        <line class="pt-hanger" x1="300" y1="172" x2="300" y2="330"/>
+      </g>
+      <line class="pt-deck pt-draw" x1="40" y1="172" x2="360" y2="172" pathLength="1"/>
+      <rect class="pt-deckbar" x="40" y="168" width="320" height="8" rx="2"/>
+      <text id="pontoNome" x="200" y="150" text-anchor="middle"></text>
+    </svg>
   </div>
   <div id="introStripes"></div>
 </div>
@@ -3227,6 +3368,7 @@
       document.body.classList.toggle('modelo-carteira', (config.modelo || 'lista') === 'carteira');
       document.body.classList.toggle('modelo-slider', (config.modelo || 'lista') === 'slider');
       document.body.classList.toggle('modelo-neon', (config.modelo || 'lista') === 'neon');
+      document.body.classList.toggle('modelo-ponte', (config.modelo || 'lista') === 'ponte');
       // Efeito néon (por cima de qualquer modelo): intensidade + cor
       // Efeito néon: agora é POR SECÇÃO (decidido no construirMenu conforme cada secção). Sem cor global.
       document.documentElement.style.removeProperty('--nfx-cor');
@@ -3543,6 +3685,17 @@
             if(intro.cor){ if(nEl) nEl.style.color = intro.cor; if(sEl) sEl.style.color = intro.cor; }
           }
           aplicarPosOpacIntro(nEl, sEl, intro);
+          // Abertura em forma de Ponte Dom Luís (animada, dia/noite)
+          if(intro.tipo === 'ponte'){
+            ov.classList.add('ponte');
+            ov.classList.remove('ponte-dia','ponte-noite');
+            ov.classList.add(intro.ponteDia ? 'ponte-dia' : 'ponte-noite');
+            var _pnm = document.getElementById('pontoNome'); if(_pnm) _pnm.textContent = nome || '';
+            ov.style.cursor = 'pointer';
+            ov.addEventListener('click', window.__esconderIntro);
+          } else {
+            ov.classList.remove('ponte','ponte-dia','ponte-noite');
+          }
           if(nEl){ nEl.classList.toggle('nletras', (intro.animNome||'letras')!=='letras'); envolverAnim(nEl, intro.animNome||'letras', 0.2); }
           if(sEl) envolverAnim(sEl, intro.animSub||'subir', 0.5);
           renderIntroTextosLivres(config, false);
@@ -3997,6 +4150,12 @@
     if((intro.fundo !== 'gradiente') && fotoIntro){ ov.style.background=''; if(bg) bg.style.backgroundImage = "url('" + (typeof RAW_BASE!=='undefined'?RAW_BASE:'') + fotoIntro + "')"; if(shade) shade.classList.add('on'); }
     else { const cs=getComputedStyle(document.documentElement); const c1=(cs.getPropertyValue('--castanho')||'#3a2c18').trim(), c2=(cs.getPropertyValue('--dourado-escuro')||'#6b4a1f').trim(), c3=(cs.getPropertyValue('--dourado')||'#a8712f').trim(); ov.style.background='linear-gradient(140deg,'+c1+' 0%,'+c2+' 55%,'+c3+' 100%)'; if(bg) bg.style.backgroundImage=''; if(shade) shade.classList.remove('on'); }
     ov.style.display = 'flex';
+    // Abertura Ponte Dom Luís (pré-visualização)
+    if(intro.tipo === 'ponte'){
+      ov.classList.add('ponte'); ov.classList.remove('ponte-dia','ponte-noite');
+      ov.classList.add(intro.ponteDia ? 'ponte-dia' : 'ponte-noite');
+      var _pnmP = document.getElementById('pontoNome'); if(_pnmP) _pnmP.textContent = nome || '';
+    } else { ov.classList.remove('ponte','ponte-dia','ponte-noite'); }
     ov.classList.remove('sair'); ov.style.transform = '';   // evita ficar preso fora do ecrã
     ov.classList.remove('animar'); void ov.offsetWidth; ov.classList.add('animar');
     ov.onclick = function(){ try{ parent.postMessage({ type:'editar-ir', alvo:'ifundo' }, '*'); }catch(e){} };

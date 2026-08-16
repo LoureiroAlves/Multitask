@@ -244,6 +244,7 @@
         <option value="carteira">Carteira (cartões empilhados, estilo Wallet)</option>
         <option value="slider">Deslizar (secções lado a lado, página inteira)</option>
         <option value="neon">Néon (fundo escuro, separadores a brilhar)</option>
+        <option value="ponte">Ponte Dom Luís (ferro industrial, Porto)</option>
       </select>
       <div id="cadernoBox" style="display:none; margin-top:10px; padding:12px; border:1.5px solid var(--linha); border-radius:10px;">
         <label for="cadFolha" style="margin-top:0;">Tipo de folha</label>
@@ -638,6 +639,21 @@
       </div>
       <div id="blocoIntro" style="display:none;">
         <div class="ajuda" style="margin-top:6px;">Ao abrir o link/QR, mostra um ecrã inteiro com o nome animado (letra a letra) e um botão. Também esconde o carregamento.</div>
+
+        <label for="introTipo" style="margin-top:6px;">Estilo da abertura</label>
+        <select id="introTipo" style="width:100%; padding:10px 12px; border-radius:10px; border:1.5px solid var(--linha); background:var(--branco); font-family:inherit; color:var(--castanho); font-size:0.95rem;">
+          <option value="normal">Normal (nome animado)</option>
+          <option value="ponte">Ponte Dom Luís (arco animado)</option>
+        </select>
+        <div id="pontarOpts" style="display:none; margin:8px 0 4px; padding:10px; border:1.5px solid var(--linha); border-radius:9px;">
+          <label for="pontePeriodo" style="margin-top:0;">Ambiente da ponte</label>
+          <select id="pontePeriodo" style="width:100%; padding:10px 12px; border-radius:10px; border:1.5px solid var(--linha); background:var(--branco); font-family:inherit; color:var(--castanho); font-size:0.95rem;">
+            <option value="noite">Noite (crepúsculo sobre o Douro)</option>
+            <option value="dia">Dia (céu claro)</option>
+          </select>
+          <div class="ajuda" style="margin-top:6px;">A ponte desenha-se sozinha e o nome aparece no tabuleiro. Usa o "Título da abertura" abaixo (ou o nome do restaurante). O cliente toca para entrar no menu.</div>
+        </div>
+
         <label for="introTitulo">Título da abertura</label>
         <input type="text" id="introTitulo" placeholder="(vazio = usa o nome do restaurante)">
         <div id="estiloITit"></div>
@@ -1690,6 +1706,9 @@
     document.getElementById('introAtivo').checked = !!(config.intro && config.intro.ativo);
     document.getElementById('introDuracao').value = (config.intro && config.intro.duracao) || 7;
     document.getElementById('introFundo').value = (config.intro && config.intro.fundo) || 'foto';
+    { const _it = document.getElementById('introTipo'); if(_it) _it.value = (config.intro && config.intro.tipo === 'ponte') ? 'ponte' : 'normal';
+      const _pp = document.getElementById('pontePeriodo'); if(_pp) _pp.value = (config.intro && config.intro.ponteDia) ? 'dia' : 'noite';
+      const _po = document.getElementById('pontarOpts'); if(_po) _po.style.display = (config.intro && config.intro.tipo === 'ponte') ? 'block' : 'none'; }
     document.getElementById('introTitulo').value = (config.intro && config.intro.titulo) || '';
     document.getElementById('introSubtitulo').value = (config.intro && config.intro.subtitulo) || '';
     document.getElementById('introBotao').value = (config.intro && config.intro.botao) || '';
@@ -2685,6 +2704,8 @@
         botao: document.getElementById('introBotao').value.trim(),
         reveal: document.getElementById('introReveal').value,
         zoomLetra: (zoomLetraSel === null ? undefined : zoomLetraSel),
+        tipo: (document.getElementById('introTipo') && document.getElementById('introTipo').value === 'ponte') ? 'ponte' : 'normal',
+        ponteDia: !!(document.getElementById('pontePeriodo') && document.getElementById('pontePeriodo').value === 'dia'),
         foto: (config.intro && config.intro.foto) || ''
       };
       config.fidelidade = {
@@ -2852,6 +2873,8 @@
   document.getElementById('introAtivo').addEventListener('change', e => {
     document.getElementById('blocoIntro').style.display = e.target.checked ? 'block' : 'none';
   });
+  { const _it = document.getElementById('introTipo');
+    if(_it) _it.addEventListener('change', e => { const _po = document.getElementById('pontarOpts'); if(_po) _po.style.display = (e.target.value === 'ponte') ? 'block' : 'none'; }); }
   document.getElementById('introRotNome').addEventListener('input', e => {
     document.getElementById('introRotNomeVal').textContent = e.target.value + '°';
   });
