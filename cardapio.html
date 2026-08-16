@@ -105,6 +105,40 @@
   @keyframes ptFadeIn{ to{ opacity:1; } }
   @keyframes ptShimmer{ 0%,100%{ opacity:.22; } 50%{ opacity:.6; } }
   @keyframes ptTwinkle{ 0%,100%{ opacity:.3; } 50%{ opacity:1; } }
+
+  /* ===== Abertura "Fernando Pessoa" (caricatura a tinta, papel — animada) ===== */
+  #introPessoa{ position:absolute; inset:0; display:none; }
+  #introOverlay.pessoa{ padding:0; background:#f2e7d0; }
+  #introOverlay.pessoa #introBg, #introOverlay.pessoa #introShade, #introOverlay.pessoa #introContent{ display:none !important; }
+  #introOverlay.pessoa #introPessoa{ display:block; }
+  #introPessoa svg{ width:100%; height:100%; display:block; }
+  #introPessoa .ps-paper{ fill:#f2e7d0; }
+  #introPessoa .ink{ fill:none; stroke:#3a2a1a; stroke-width:2.3; stroke-linecap:round; stroke-linejoin:round; }
+  #introPessoa .ink.thin{ stroke-width:1.7; }
+  #introPessoa .ps-page{ fill:#e7d8b6; stroke:#c9b78a; stroke-width:1; }
+  #introPessoa #pessoaNome{ font-family:'Caveat', cursive; fill:#2a1c10; font-size:52px; }
+  #introPessoa #pessoaVerso{ font-family:'Playfair Display', serif; font-style:italic; fill:#6b5636; font-size:15px; letter-spacing:.5px; }
+  #introPessoa .ps-flourish{ fill:none; stroke:#2a1c10; stroke-width:2; stroke-linecap:round; }
+  #introPessoa .dw{ stroke-dasharray:1; stroke-dashoffset:1; }
+  #introPessoa .ps-glint{ opacity:0; }
+  #introPessoa .ps-page{ transform-box:fill-box; transform-origin:center; opacity:0; }
+  #introPessoa #pessoaNome, #introPessoa #pessoaVerso, #introPessoa .ps-flourish{ opacity:0; }
+  #introOverlay.animar.pessoa .d1{ animation:pdw 1s ease .25s forwards; }
+  #introOverlay.animar.pessoa .d2{ animation:pdw 1.1s ease .75s forwards; }
+  #introOverlay.animar.pessoa .d3{ animation:pdw .9s ease 1.35s forwards; }
+  #introOverlay.animar.pessoa .d4{ animation:pdw .8s ease 1.95s forwards; }
+  #introOverlay.animar.pessoa .d5{ animation:pdw .9s ease 2.35s forwards; }
+  #introOverlay.animar.pessoa .ps-glint{ animation:psGlint 1.4s ease 2.9s; }
+  #introOverlay.animar.pessoa .ps-page{ animation:psPage 5.5s ease-in-out forwards; }
+  #introOverlay.animar.pessoa .ps-page.pg2{ animation-delay:.5s; }
+  #introOverlay.animar.pessoa #pessoaNome{ animation:psName 1.1s cubic-bezier(.2,.8,.3,1.4) 3s forwards; }
+  #introOverlay.animar.pessoa .ps-flourish{ animation:pdw 1s ease 3.7s forwards, psShow .01s linear 3.7s forwards; }
+  #introOverlay.animar.pessoa #pessoaVerso{ animation:psRise .9s ease 4s forwards; }
+  @keyframes psGlint{ 0%{opacity:0} 35%{opacity:.85} 100%{opacity:0} }
+  @keyframes psPage{ 0%{opacity:0; transform:translateY(34px) rotate(var(--r,0deg))} 25%{opacity:.55} 100%{opacity:.55; transform:translateY(-16px) rotate(var(--r,0deg))} }
+  @keyframes psName{ from{opacity:0; transform:translateY(18px)} to{opacity:1; transform:translateY(0)} }
+  @keyframes psRise{ from{opacity:0; transform:translateY(12px)} to{opacity:1; transform:translateY(0)} }
+  @keyframes psShow{ to{opacity:1} }
 </style>
 <script>
   // A cortina de abertura cobre o ecrã enquanto os dados carregam (evita o flash de conteúdo).
@@ -1964,6 +1998,43 @@
       <text id="pontoNome" x="200" y="150" text-anchor="middle"></text>
     </svg>
   </div>
+  <div id="introPessoa" aria-hidden="true">
+    <svg viewBox="0 0 400 620" preserveAspectRatio="xMidYMid slice">
+      <rect class="ps-paper" x="0" y="0" width="400" height="620"/>
+      <rect class="ps-page pg1" x="66" y="150" width="52" height="66" rx="3" style="--r:-9deg"/>
+      <rect class="ps-page pg2" x="298" y="168" width="50" height="64" rx="3" style="--r:11deg"/>
+      <path class="ink d1" d="M116 208 Q200 230 284 208"/>
+      <path class="ink d1" d="M150 202 Q148 150 172 146 Q186 158 200 152 Q214 158 228 146 Q252 150 250 202"/>
+      <path class="ink d2" d="M158 214 C150 306 170 372 200 384 C230 372 250 306 242 214"/>
+      <path class="ink thin d2" d="M156 262 Q146 260 148 276 Q150 286 158 284"/>
+      <path class="ink thin d2" d="M244 262 Q254 260 252 276 Q250 286 242 284"/>
+      <circle class="ink thin d3" cx="175" cy="258" r="22"/>
+      <circle class="ink thin d3" cx="225" cy="258" r="22"/>
+      <path class="ink thin d3" d="M197 258 Q200 253 203 258"/>
+      <path class="ink thin d3" d="M153 256 Q149 254 145 258"/>
+      <path class="ink thin d3" d="M247 256 Q251 254 255 258"/>
+      <path class="ink thin d3" d="M162 240 Q175 234 189 241"/>
+      <path class="ink thin d3" d="M211 241 Q225 234 238 240"/>
+      <path class="ink thin d3" d="M169 260 Q175 256 181 260"/>
+      <path class="ink thin d3" d="M219 260 Q225 256 231 260"/>
+      <path class="ink d4" d="M200 262 L197 304 Q200 310 207 307"/>
+      <path class="ink thin d4" d="M174 320 Q181 316 183 319 Q200 326 217 319 Q219 316 226 320"/>
+      <path class="ink thin d4" d="M189 333 Q200 337 211 333"/>
+      <path class="ink thin d5" d="M186 384 L184 404"/>
+      <path class="ink thin d5" d="M214 384 L216 404"/>
+      <path class="ink d5" d="M196 410 L176 401 L176 419 Z"/>
+      <path class="ink d5" d="M204 410 L224 401 L224 419 Z"/>
+      <circle class="ink thin d5" cx="200" cy="410" r="4"/>
+      <path class="ink d5" d="M186 405 L166 420 L174 456"/>
+      <path class="ink d5" d="M214 405 L234 420 L226 456"/>
+      <path class="ink thin d5" d="M166 420 Q132 432 124 470"/>
+      <path class="ink thin d5" d="M234 420 Q268 432 276 470"/>
+      <ellipse class="ps-glint" cx="167" cy="251" rx="6" ry="9" fill="#ffffff"/>
+      <text id="pessoaNome" x="200" y="514" text-anchor="middle"></text>
+      <path class="ps-flourish dw" d="M120 528 Q200 544 280 526" pathLength="1"/>
+      <text id="pessoaVerso" x="200" y="560" text-anchor="middle"></text>
+    </svg>
+  </div>
   <div id="introStripes"></div>
 </div>
 
@@ -2568,6 +2639,15 @@
       if(el) cont.appendChild(el);
     });
   };
+
+  // Assinatura da abertura "Pessoa": ajusta o nome para caber no tabuleiro
+  function _pessoaSetNome(nome){
+    var el = document.getElementById('pessoaNome');
+    if(!el) return;
+    el.removeAttribute('textLength'); el.removeAttribute('lengthAdjust');
+    el.textContent = nome || '';
+    try{ var w = el.getComputedTextLength(); if(w > 320){ el.setAttribute('textLength', '320'); el.setAttribute('lengthAdjust', 'spacingAndGlyphs'); } }catch(e){}
+  }
 
   function construirMenu(menu){
     if(!menu || !Array.isArray(menu.categorias)) return;
@@ -3686,15 +3766,18 @@
           }
           aplicarPosOpacIntro(nEl, sEl, intro);
           // Abertura em forma de Ponte Dom Luís (animada, dia/noite)
+          ov.classList.remove('ponte','ponte-dia','ponte-noite','pessoa');
           if(intro.tipo === 'ponte'){
-            ov.classList.add('ponte');
-            ov.classList.remove('ponte-dia','ponte-noite');
-            ov.classList.add(intro.ponteDia ? 'ponte-dia' : 'ponte-noite');
+            ov.classList.add('ponte', intro.ponteDia ? 'ponte-dia' : 'ponte-noite');
             var _pnm = document.getElementById('pontoNome'); if(_pnm) _pnm.textContent = nome || '';
             ov.style.cursor = 'pointer';
             ov.addEventListener('click', window.__esconderIntro);
-          } else {
-            ov.classList.remove('ponte','ponte-dia','ponte-noite');
+          } else if(intro.tipo === 'pessoa'){
+            ov.classList.add('pessoa');
+            if(typeof _pessoaSetNome === 'function') _pessoaSetNome(nome);
+            var _pv = document.getElementById('pessoaVerso'); if(_pv) _pv.textContent = (intro.pessoaVerso != null) ? intro.pessoaVerso : 'o poeta é um fingidor';
+            ov.style.cursor = 'pointer';
+            ov.addEventListener('click', window.__esconderIntro);
           }
           if(nEl){ nEl.classList.toggle('nletras', (intro.animNome||'letras')!=='letras'); envolverAnim(nEl, intro.animNome||'letras', 0.2); }
           if(sEl) envolverAnim(sEl, intro.animSub||'subir', 0.5);
@@ -4151,11 +4234,15 @@
     else { const cs=getComputedStyle(document.documentElement); const c1=(cs.getPropertyValue('--castanho')||'#3a2c18').trim(), c2=(cs.getPropertyValue('--dourado-escuro')||'#6b4a1f').trim(), c3=(cs.getPropertyValue('--dourado')||'#a8712f').trim(); ov.style.background='linear-gradient(140deg,'+c1+' 0%,'+c2+' 55%,'+c3+' 100%)'; if(bg) bg.style.backgroundImage=''; if(shade) shade.classList.remove('on'); }
     ov.style.display = 'flex';
     // Abertura Ponte Dom Luís (pré-visualização)
+    ov.classList.remove('ponte','ponte-dia','ponte-noite','pessoa');
     if(intro.tipo === 'ponte'){
-      ov.classList.add('ponte'); ov.classList.remove('ponte-dia','ponte-noite');
-      ov.classList.add(intro.ponteDia ? 'ponte-dia' : 'ponte-noite');
+      ov.classList.add('ponte', intro.ponteDia ? 'ponte-dia' : 'ponte-noite');
       var _pnmP = document.getElementById('pontoNome'); if(_pnmP) _pnmP.textContent = nome || '';
-    } else { ov.classList.remove('ponte','ponte-dia','ponte-noite'); }
+    } else if(intro.tipo === 'pessoa'){
+      ov.classList.add('pessoa');
+      if(typeof _pessoaSetNome === 'function') _pessoaSetNome(nome);
+      var _pvP = document.getElementById('pessoaVerso'); if(_pvP) _pvP.textContent = (intro.pessoaVerso != null) ? intro.pessoaVerso : 'o poeta é um fingidor';
+    }
     ov.classList.remove('sair'); ov.style.transform = '';   // evita ficar preso fora do ecrã
     ov.classList.remove('animar'); void ov.offsetWidth; ov.classList.add('animar');
     ov.onclick = function(){ try{ parent.postMessage({ type:'editar-ir', alvo:'ifundo' }, '*'); }catch(e){} };
