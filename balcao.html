@@ -1,1 +1,151 @@
 
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Painel do Balcão - Gestão de Pedidos</title>
+
+  <!-- Biblioteca Gratuita do Supabase para Tempo Real -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: system-ui, -apple-system, sans-serif; background: #f4f6f8; margin: 0; padding: 20px; color: #2d3748; }
+    
+    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; }
+    h1 { margin: 0; font-size: 1.5rem; }
+    .badge-id { background: #edf2f7; padding: 6px 12px; border-radius: 20px; font-weight: bold; font-size: 0.9rem; color: #4a5568; }
+
+    /* Grelha de Cartões de Pedidos */
+    .grid-pedidos { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+
+    /* Cartão do Pedido */
+    .card-pedido { background: #ffffff; border-radius: 12px; border: 2px solid #e2e8f0; padding: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.04); transition: transform 0.1s ease; }
+    .card-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f7fafc; padding-bottom: 8px; margin-bottom: 12px; }
+    .mesa-title { font-size: 1.3rem; font-weight: 800; color: #1a202c; }
+    .hora { font-size: 0.85rem; color: #718096; font-weight: 600; }
+
+    /* Checklist de Itens */
+    .lista-itens { list-style: none; padding: 0; margin: 0 0 16px 0; }
+    .item-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px dashed #edf2f7; font-size: 1.05rem; cursor: pointer; user-select: none; }
+    .item-row input[type="checkbox"] { width: 22px; height: 22px; cursor: pointer; accent-color: #38a169; }
+
+    /* Item Servido / Riscado */
+    .item-row.servido span { text-decoration: line-through; color: #a0aec0; }
+
+    /* Botão de Fechar Mesa */
+    .btn-fechar { width: 100%; padding: 12px; background: #e53e3e; color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; }
+    .btn-fechar:hover { background: #c53030; }
+    .empty-state { text-align: center; color: #a0aec0; grid-column: 1 / -1; margin-top: 40px; font-size: 1.1rem; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>📥 Pedidos em Tempo Real</h1>
+    <div class="badge-id" id="display-restaurante">Restaurante: --</div>
+  </header>
+
+  <div id="grid-pedidos" class="grid-pedidos">
+    <div class="empty-state" id="empty-msg">A aguardar novos pedidos...</div>
+  </div>
+
+  <script>
+    // 1. Identificar qual é o Restaurante pelo URL (ex: balcao.html?id=restaurante_gaia_01)
+    const urlParams = new URLSearchParams(window.location.search);
+    const RESTAURANTE_ID = urlParams.get('id') || 'demo_geral';
+    document.getElementById('display-restaurante').innerText = `ID: ${RESTAURANTE_ID}`;
+
+    // 2. Configuração da Base de Dados (Supabase Gratuito)
+    const SUPABASE_URL = 'https://SEU_SUPABASE_PROJECT.supabase.co'; 
+    const SUPABASE_KEY = 'SUA_SUPABASE_ANON_KEY';
+    
+    // Inicialização (se não estiver configurado Supabase, usa canal local para testes)
+    const canalLocal = new BroadcastChannel(`pedidos_${RESTAURANTE_ID}`);
+
+    // 3. Escutar novos pedidos locais (no mesmo navegador/computador)
+    canalLocal.onmessage = (event) => {
+      adicionarPedidoAoEcra(event.data);
+      tocarAvisoSonoro();
+    };
+
+    // 4. Desenhar o Cartão no Ecrã
+    function adicionarPedidoAoEcra(pedido) {
+      // Verificar se o pedido pertence a ESTE restaurante
+      if (pedido.restaurante_id && pedido.restaurante_id !== RESTAURANTE_ID) return;
+
+      const emptyMsg = document.getElementById('empty-msg');
+      if (emptyMsg) emptyMsg.style.display = 'none';
+
+      const grid = document.getElementById('grid-pedidos');
+      const card = document.createElement('div');
+      card.className = 'card-pedido';
+      card.id = `pedido-${pedido.id}`;
+
+      let itensHTML = '';
+      pedido.itens.forEach((item) => {
+        itensHTML += `
+          <li class="item-row" onclick="alternarItem(this)">
+            <input type="checkbox" onclick="event.stopPropagation(); alternarCheck(this)">
+            <span><strong>${item.qtd}x</strong> ${item.nome}</span>
+          </li>
+        `;
+      });
+
+      card.innerHTML = `
+        <div class="card-header">
+          <span class="mesa-title">${pedido.identificacao}</span>
+          <span class="hora">${pedido.hora}</span>
+        </div>
+        <ul class="lista-itens">
+          ${itensHTML}
+        </ul>
+        <button class="btn-fechar" onclick="fecharMesa('pedido-${pedido.id}')">Fechar & Pagar Mesa</button>
+      `;
+
+      grid.prepend(card);
+    }
+
+    // 5. Função para Riscar/Desriscar Itens
+    function alternarItem(linha) {
+      const checkbox = linha.querySelector('input[type="checkbox"]');
+      checkbox.checked = !checkbox.checked;
+      linha.classList.toggle('servido', checkbox.checked);
+    }
+
+    function alternarCheck(checkbox) {
+      checkbox.parentElement.classList.toggle('servido', checkbox.checked);
+    }
+
+    // 6. Remover Mesa do Ecrã ao Concluir
+    function fecharMesa(idElemento) {
+      const card = document.getElementById(idElemento);
+      if (card) card.remove();
+
+      const grid = document.getElementById('grid-pedidos');
+      if (grid.children.length === 1 && grid.children[0].id === 'empty-msg') {
+        document.getElementById('empty-msg').style.display = 'block';
+      }
+    }
+
+    // 7. Sinal Sonoro
+    function tocarAvisoSonoro() {
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.type = 'sine';
+        osc.frequency.value = 587.33; 
+        gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.3);
+      } catch (e) {
+        console.log("Aviso sonoro bloqueado pelo navegador.");
+      }
+    }
+  </script>
+</body>
+</html>
