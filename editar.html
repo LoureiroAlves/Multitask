@@ -996,6 +996,20 @@
         <input type="checkbox" id="mostrarTraducoes" checked>
         <label for="mostrarTraducoes" style="margin:0; font-weight:600; color:var(--castanho); display:inline;">🌐 Traduções (bandeiras de idioma)</label>
       </div>
+      <div style="margin:6px 0 4px 26px; padding:8px 11px; border-left:2px solid var(--linha);">
+        <div class="subtitulo" style="margin:0 0 6px;">Que idiomas mostrar (liga/desliga cada um):</div>
+        <div style="display:flex; gap:16px; flex-wrap:wrap;">
+          <label style="display:flex; align-items:center; gap:5px; margin:0;"><input type="checkbox" id="idiomaPt" style="width:auto; margin:0;" checked> 🇵🇹 PT</label>
+          <label style="display:flex; align-items:center; gap:5px; margin:0;"><input type="checkbox" id="idiomaEn" style="width:auto; margin:0;" checked> 🇬🇧 EN</label>
+          <label style="display:flex; align-items:center; gap:5px; margin:0;"><input type="checkbox" id="idiomaFr" style="width:auto; margin:0;" checked> 🇫🇷 FR</label>
+          <label style="display:flex; align-items:center; gap:5px; margin:0;"><input type="checkbox" id="idiomaEs" style="width:auto; margin:0;" checked> 🇪🇸 ES</label>
+        </div>
+        <label for="idiomasLocal" style="display:block; margin:10px 0 3px;">Mostrar o seletor de idiomas em:</label>
+        <select id="idiomasLocal" style="padding:8px 10px; border-radius:8px; border:1.5px solid var(--linha); background:var(--branco); font-family:inherit; color:var(--castanho);">
+          <option value="cabecalho">Cabeçalho</option>
+          <option value="rodape">Rodapé (final)</option>
+        </select>
+      </div>
       <div class="lembrar" style="margin-top:8px;">
         <input type="checkbox" id="mostrarCamera" checked>
         <label for="mostrarCamera" style="margin:0; font-weight:600; color:var(--castanho); display:inline;">📷 Câmara (foto com moldura)</label>
@@ -1007,6 +1021,14 @@
       <div class="lembrar" style="margin-top:8px;">
         <input type="checkbox" id="mostrarRedes" checked>
         <label for="mostrarRedes" style="margin:0; font-weight:600; color:var(--castanho); display:inline;">📱 Redes sociais (Instagram/Facebook)</label>
+      </div>
+      <div style="margin:6px 0 4px 26px; padding:8px 11px; border-left:2px solid var(--linha);">
+        <label for="redesLocal" style="display:block; margin:0 0 3px;">Mostrar as redes em:</label>
+        <select id="redesLocal" style="padding:8px 10px; border-radius:8px; border:1.5px solid var(--linha); background:var(--branco); font-family:inherit; color:var(--castanho);">
+          <option value="cabecalho">Cabeçalho</option>
+          <option value="rodape">Rodapé (final)</option>
+        </select>
+        <div class="subtitulo" style="margin:5px 0 0;">Se escolheres "Rodapé", garante que o rodapé final está ligado.</div>
       </div>
     </div>
   </details>
@@ -1772,6 +1794,13 @@
     const cr = config.rodape.cor || '#ffffff';
     document.getElementById('headerMostrar').checked = config.header.mostrar !== false;
     document.getElementById('mostrarTraducoes').checked = config.mostrarTraducoes !== false;
+    { const _i = config.idiomas || {};
+      document.getElementById('idiomaPt').checked = _i.pt !== false;
+      document.getElementById('idiomaEn').checked = _i.en !== false;
+      document.getElementById('idiomaFr').checked = _i.fr !== false;
+      document.getElementById('idiomaEs').checked = _i.es !== false;
+      document.getElementById('idiomasLocal').value = (config.idiomasLocal === 'rodape') ? 'rodape' : 'cabecalho';
+      document.getElementById('redesLocal').value = (config.redesLocal === 'rodape') ? 'rodape' : 'cabecalho'; }
     document.getElementById('mostrarCamera').checked = config.mostrarCamera !== false;
     document.getElementById('mostrarAgendaIcon').checked = config.mostrarAgendaIcon !== false;
     document.getElementById('mostrarRedes').checked = config.mostrarRedes !== false;
@@ -2518,6 +2547,14 @@
       config.header.realce = false;
       config.header.mostrar = document.getElementById('headerMostrar').checked;
       config.mostrarTraducoes = document.getElementById('mostrarTraducoes').checked;
+      config.idiomas = {
+        pt: document.getElementById('idiomaPt').checked,
+        en: document.getElementById('idiomaEn').checked,
+        fr: document.getElementById('idiomaFr').checked,
+        es: document.getElementById('idiomaEs').checked
+      };
+      config.idiomasLocal = document.getElementById('idiomasLocal').value;
+      config.redesLocal = document.getElementById('redesLocal').value;
       config.mostrarCamera = document.getElementById('mostrarCamera').checked;
       config.mostrarAgendaIcon = document.getElementById('mostrarAgendaIcon').checked;
       config.mostrarRedes = document.getElementById('mostrarRedes').checked;
