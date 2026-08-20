@@ -1004,8 +1004,11 @@
           <label style="display:flex; align-items:center; gap:5px; margin:0;"><input type="checkbox" id="idiomaFr" style="width:auto; margin:0;" checked> 🇫🇷 FR</label>
           <label style="display:flex; align-items:center; gap:5px; margin:0;"><input type="checkbox" id="idiomaEs" style="width:auto; margin:0;" checked> 🇪🇸 ES</label>
         </div>
-        <div class="subtitulo" style="margin:10px 0 0;">📍 <b>Posição livre:</b> mostra a pré-visualização e <b>arrasta o seletor de idiomas</b> para onde quiseres no ecrã (funciona mesmo sem cabeçalho nem rodapé).</div>
-        <button type="button" id="reporIdiomasPos" style="margin-top:6px; padding:6px 12px; border:1.5px solid var(--linha); border-radius:8px; background:var(--branco); cursor:pointer; font:inherit; font-size:0.85rem;">↺ Repor posição dos idiomas</button>
+        <label for="idiomasLocal" style="display:block; margin:10px 0 3px;">Mostrar o seletor de idiomas em:</label>
+        <select id="idiomasLocal" style="padding:8px 10px; border-radius:8px; border:1.5px solid var(--linha); background:var(--branco); font-family:inherit; color:var(--castanho);">
+          <option value="cabecalho">Cabeçalho</option>
+          <option value="rodape">Rodapé (final)</option>
+        </select>
       </div>
       <div class="lembrar" style="margin-top:8px;">
         <input type="checkbox" id="mostrarCamera" checked>
@@ -1020,8 +1023,12 @@
         <label for="mostrarRedes" style="margin:0; font-weight:600; color:var(--castanho); display:inline;">📱 Redes sociais (Instagram/Facebook)</label>
       </div>
       <div style="margin:6px 0 4px 26px; padding:8px 11px; border-left:2px solid var(--linha);">
-        <div class="subtitulo" style="margin:0;">📍 <b>Posição livre:</b> na pré-visualização, <b>arrasta as redes</b> (Facebook/Instagram/WhatsApp) para onde quiseres.</div>
-        <button type="button" id="reporRedesPos" style="margin-top:6px; padding:6px 12px; border:1.5px solid var(--linha); border-radius:8px; background:var(--branco); cursor:pointer; font:inherit; font-size:0.85rem;">↺ Repor posição das redes</button>
+        <label for="redesLocal" style="display:block; margin:0 0 3px;">Mostrar as redes em:</label>
+        <select id="redesLocal" style="padding:8px 10px; border-radius:8px; border:1.5px solid var(--linha); background:var(--branco); font-family:inherit; color:var(--castanho);">
+          <option value="cabecalho">Cabeçalho</option>
+          <option value="rodape">Rodapé (final)</option>
+        </select>
+        <div class="subtitulo" style="margin:5px 0 0;">O rodapé final só aparece ao fazer scroll até ao fim, por isso tem de estar ligado.</div>
       </div>
     </div>
   </details>
@@ -1791,7 +1798,9 @@
       document.getElementById('idiomaPt').checked = _i.pt !== false;
       document.getElementById('idiomaEn').checked = _i.en !== false;
       document.getElementById('idiomaFr').checked = _i.fr !== false;
-      document.getElementById('idiomaEs').checked = _i.es !== false; }
+      document.getElementById('idiomaEs').checked = _i.es !== false;
+      document.getElementById('idiomasLocal').value = (config.idiomasLocal === 'rodape') ? 'rodape' : 'cabecalho';
+      document.getElementById('redesLocal').value = (config.redesLocal === 'rodape') ? 'rodape' : 'cabecalho'; }
     document.getElementById('mostrarCamera').checked = config.mostrarCamera !== false;
     document.getElementById('mostrarAgendaIcon').checked = config.mostrarAgendaIcon !== false;
     document.getElementById('mostrarRedes').checked = config.mostrarRedes !== false;
@@ -2544,6 +2553,8 @@
         fr: document.getElementById('idiomaFr').checked,
         es: document.getElementById('idiomaEs').checked
       };
+      config.idiomasLocal = document.getElementById('idiomasLocal').value;
+      config.redesLocal = document.getElementById('redesLocal').value;
       config.mostrarCamera = document.getElementById('mostrarCamera').checked;
       config.mostrarAgendaIcon = document.getElementById('mostrarAgendaIcon').checked;
       config.mostrarRedes = document.getElementById('mostrarRedes').checked;
@@ -2916,8 +2927,6 @@
       const _po = document.getElementById('pontarOpts'); if(_po) _po.style.display = (e.target.value === 'ponte') ? 'block' : 'none';
       const _peo = document.getElementById('pessoaOpts'); if(_peo) _peo.style.display = (e.target.value === 'pessoa') ? 'block' : 'none';
     }); }
-  { const _ri = document.getElementById('reporIdiomasPos'); if(_ri) _ri.addEventListener('click', function(){ delete config.idiomasPos; if(window.__agendarPreview) window.__agendarPreview(); }); }
-  { const _rr = document.getElementById('reporRedesPos'); if(_rr) _rr.addEventListener('click', function(){ delete config.redesPos; if(window.__agendarPreview) window.__agendarPreview(); }); }
   document.getElementById('introRotNome').addEventListener('input', e => {
     document.getElementById('introRotNomeVal').textContent = e.target.value + '°';
   });
@@ -4224,11 +4233,6 @@
         const ex = document.getElementById('anuncioWaX'), ey = document.getElementById('anuncioWaY');
         if(ex && d.x != null) ex.value = d.x;
         if(ey && d.y != null) ey.value = d.y;
-        if(window.__agendarPreview) window.__agendarPreview();
-      }
-      else if(d.type === 'flutuante-pos'){
-        if(d.alvo === 'idiomas') config.idiomasPos = { x:d.x, y:d.y };
-        else if(d.alvo === 'redes') config.redesPos = { x:d.x, y:d.y };
         if(window.__agendarPreview) window.__agendarPreview();
       }
     });
