@@ -1004,7 +1004,7 @@
           <label style="display:flex; align-items:center; gap:5px; margin:0;"><input type="checkbox" id="idiomaFr" style="width:auto; margin:0;" checked> 🇫🇷 FR</label>
           <label style="display:flex; align-items:center; gap:5px; margin:0;"><input type="checkbox" id="idiomaEs" style="width:auto; margin:0;" checked> 🇪🇸 ES</label>
         </div>
-        <div class="subtitulo" style="margin:10px 0 4px;">Mostrar os idiomas em (podes escolher vários ao mesmo tempo):</div>
+        <div class="subtitulo" style="margin:10px 0 4px;">Mostrar os idiomas em (escolhe um):</div>
         <div style="display:flex; gap:16px; flex-wrap:wrap;">
           <label style="display:flex;align-items:center;gap:5px;margin:0;"><input type="checkbox" id="idiomasCab" style="width:auto;margin:0;" checked> Cabeçalho</label>
           <label style="display:flex;align-items:center;gap:5px;margin:0;"><input type="checkbox" id="idiomasRod" style="width:auto;margin:0;"> Rodapé (barra de baixo)</label>
@@ -1028,7 +1028,7 @@
         <label for="mostrarRedes" style="margin:0; font-weight:600; color:var(--castanho); display:inline;">📱 Redes sociais (Instagram/Facebook)</label>
       </div>
       <div style="margin:6px 0 4px 26px; padding:8px 11px; border-left:2px solid var(--linha);">
-        <div class="subtitulo" style="margin:0 0 4px;">Mostrar as redes em (podes escolher vários ao mesmo tempo):</div>
+        <div class="subtitulo" style="margin:0 0 4px;">Mostrar as redes em (escolhe um):</div>
         <div style="display:flex; gap:16px; flex-wrap:wrap;">
           <label style="display:flex;align-items:center;gap:5px;margin:0;"><input type="checkbox" id="redesCab" style="width:auto;margin:0;" checked> Cabeçalho</label>
           <label style="display:flex;align-items:center;gap:5px;margin:0;"><input type="checkbox" id="redesRod" style="width:auto;margin:0;"> Rodapé (barra de baixo)</label>
@@ -2948,10 +2948,17 @@
       const _po = document.getElementById('pontarOpts'); if(_po) _po.style.display = (e.target.value === 'ponte') ? 'block' : 'none';
       const _peo = document.getElementById('pessoaOpts'); if(_peo) _peo.style.display = (e.target.value === 'pessoa') ? 'block' : 'none';
     }); }
-  { const _if = document.getElementById('idiomasFlu'), _ih = document.getElementById('idiomasFlutHint');
-    if(_if) _if.addEventListener('change', function(){ if(_ih) _ih.style.display = _if.checked ? 'block' : 'none'; }); }
-  { const _rf = document.getElementById('redesFlu'), _rh = document.getElementById('redesFlutHint');
-    if(_rf) _rf.addEventListener('change', function(){ if(_rh) _rh.style.display = _rf.checked ? 'block' : 'none'; }); }
+  function _atualizarHintFlu(){
+    var i = document.getElementById('idiomasFlu'), ih = document.getElementById('idiomasFlutHint'); if(i && ih) ih.style.display = i.checked ? 'block' : 'none';
+    var r = document.getElementById('redesFlu'), rh = document.getElementById('redesFlutHint'); if(r && rh) rh.style.display = r.checked ? 'block' : 'none';
+  }
+  function _grupoExclusivo(ids){
+    ids.forEach(function(id){ var el = document.getElementById(id); if(!el) return;
+      el.addEventListener('change', function(){ if(el.checked){ ids.forEach(function(o){ if(o !== id){ var e2 = document.getElementById(o); if(e2) e2.checked = false; } }); } _atualizarHintFlu(); });
+    });
+  }
+  _grupoExclusivo(['idiomasCab','idiomasRod','idiomasFlu']);
+  _grupoExclusivo(['redesCab','redesRod','redesFlu']);
   { const _ri = document.getElementById('reporIdiomasPos'); if(_ri) _ri.addEventListener('click', function(){ delete config.idiomasPos; if(window.__agendarPreview) window.__agendarPreview(); }); }
   { const _rr = document.getElementById('reporRedesPos'); if(_rr) _rr.addEventListener('click', function(){ delete config.redesPos; if(window.__agendarPreview) window.__agendarPreview(); }); }
   document.getElementById('introRotNome').addEventListener('input', e => {
