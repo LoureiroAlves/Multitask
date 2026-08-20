@@ -1,1 +1,183 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ÀMesa — a tua mesa está à espera</title>
+<meta name="theme-color" content="#c05a3a">
+<meta name="description" content="ÀMesa — descobre restaurantes e abre o menu digital de cada um. Reserva, escolhe, saboreia.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{ --bg:#faf5ec; --ink:#2e2418; --muted:#8a7a63; --terra:#c05a3a; --terra-esc:#a3452b; --gold:#c79a3e; --card:#ffffff; --linha:#eaddc8; }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{ font-family:'Nunito', sans-serif; background:var(--bg); color:var(--ink); -webkit-font-smoothing:antialiased; }
+  a{ color:inherit; text-decoration:none; }
+  .wrap{ max-width:1080px; margin:0 auto; padding:0 20px; }
 
+  header.top{ position:sticky; top:0; z-index:20; background:rgba(250,245,236,.9); backdrop-filter:blur(8px); border-bottom:1px solid var(--linha); }
+  .top-in{ display:flex; align-items:center; justify-content:space-between; height:64px; }
+  .logo{ display:flex; align-items:center; gap:10px; font-family:'Playfair Display', serif; font-weight:700; font-size:1.5rem; color:var(--ink); }
+  .logo .mark{ width:38px; height:38px; border-radius:50%; background:var(--terra); color:#fff; display:flex; align-items:center; justify-content:center; font-size:1.25rem; box-shadow:0 4px 12px rgba(192,90,58,.35); }
+  .top-cta{ font-weight:700; font-size:.9rem; color:var(--terra-esc); border:1.5px solid var(--terra); border-radius:999px; padding:8px 16px; transition:.15s; }
+  .top-cta:hover{ background:var(--terra); color:#fff; }
+
+  .hero{ text-align:center; padding:56px 0 30px; }
+  .hero h1{ font-family:'Playfair Display', serif; font-weight:700; font-size:clamp(2.1rem, 6vw, 3.4rem); line-height:1.1; color:var(--ink); }
+  .hero h1 em{ font-style:italic; color:var(--terra); }
+  .hero p{ margin-top:12px; font-size:1.08rem; color:var(--muted); font-weight:600; }
+  .search{ margin:26px auto 0; max-width:520px; position:relative; }
+  .search input{ width:100%; padding:15px 18px 15px 48px; border:1.5px solid var(--linha); border-radius:999px; background:#fff; font-family:inherit; font-size:1rem; color:var(--ink); box-shadow:0 6px 20px rgba(120,90,50,.08); }
+  .search input:focus{ outline:none; border-color:var(--terra); }
+  .search .ico{ position:absolute; left:18px; top:50%; transform:translateY(-50%); color:var(--muted); font-size:1.1rem; }
+
+  .sec-tit{ display:flex; align-items:baseline; justify-content:space-between; margin:34px 0 16px; }
+  .sec-tit h2{ font-family:'Playfair Display', serif; font-weight:700; font-size:1.4rem; }
+  .sec-tit .cnt{ font-size:.9rem; color:var(--muted); font-weight:700; }
+
+  .grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(250px, 1fr)); gap:18px; padding-bottom:20px; }
+  .card{ background:var(--card); border:1px solid var(--linha); border-radius:18px; overflow:hidden; box-shadow:0 6px 18px rgba(120,90,50,.06); transition:transform .16s ease, box-shadow .16s ease; display:flex; flex-direction:column; }
+  .card:hover{ transform:translateY(-3px); box-shadow:0 12px 26px rgba(120,90,50,.14); }
+  .card .foto{ height:150px; background:var(--terra); background-size:cover; background-position:center; position:relative; display:flex; align-items:center; justify-content:center; }
+  .card .foto .inicial{ font-family:'Playfair Display', serif; font-weight:700; font-size:3rem; color:rgba(255,255,255,.9); }
+  .card .foto::after{ content:''; position:absolute; inset:0; background:linear-gradient(to top, rgba(0,0,0,.18), transparent 55%); }
+  .card .corpo{ padding:14px 16px 16px; display:flex; flex-direction:column; gap:4px; flex:1; }
+  .card .nome{ font-family:'Playfair Display', serif; font-weight:700; font-size:1.15rem; line-height:1.2; }
+  .card .sub{ font-size:.86rem; color:var(--muted); font-weight:600; min-height:1.1em; }
+  .card .acoes{ margin-top:12px; display:flex; gap:8px; }
+  .card .btn{ flex:1; text-align:center; padding:10px; border-radius:11px; font-weight:800; font-size:.88rem; }
+  .card .btn-menu{ background:var(--terra); color:#fff; }
+  .card .btn-menu:hover{ background:var(--terra-esc); }
+  .card .btn-res{ border:1.5px solid var(--linha); color:var(--ink); }
+  .card .btn-res:hover{ border-color:var(--terra); color:var(--terra-esc); }
+
+  .estado{ text-align:center; padding:60px 20px; color:var(--muted); font-weight:600; }
+  .spinner{ width:34px; height:34px; border:3px solid var(--linha); border-top-color:var(--terra); border-radius:50%; margin:0 auto 14px; animation:spin .8s linear infinite; }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+
+  footer{ margin-top:30px; border-top:1px solid var(--linha); background:#fff; }
+  .foot-in{ padding:30px 0 40px; text-align:center; color:var(--muted); font-weight:600; font-size:.92rem; }
+  .foot-in .cta{ display:inline-block; margin-bottom:14px; background:var(--ink); color:#fff; font-weight:800; padding:12px 22px; border-radius:999px; }
+  .foot-in .cta:hover{ background:#000; }
+  .foot-in .marca{ font-family:'Playfair Display', serif; font-weight:700; color:var(--ink); }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap top-in">
+    <a class="logo" href="./"><span class="mark">à</span> ÀMesa</a>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="hero">
+    <h1>A tua mesa está <em>à espera</em>.</h1>
+    <p>Descobre restaurantes e abre o menu digital de cada um.</p>
+    <div class="search">
+      <span class="ico">🔎</span>
+      <input id="busca" type="text" placeholder="Procurar restaurante…" autocomplete="off" aria-label="Procurar restaurante">
+    </div>
+  </section>
+
+  <div class="sec-tit">
+    <h2>Restaurantes</h2>
+    <span class="cnt" id="contador"></span>
+  </div>
+
+  <div id="grid" class="grid"></div>
+  <div id="estado" class="estado"><div class="spinner"></div>A carregar restaurantes…</div>
+</main>
+
+<footer>
+  <div class="wrap foot-in">
+    <div><span class="marca">ÀMesa</span> · reserva, escolhe, saboreia.</div>
+  </div>
+</footer>
+
+<script>
+  var SUPA_URL = 'https://zewiijcrkyxjkhudlplk.supabase.co';
+  var SUPA_KEY = 'sb_publishable_6LP7x2v5c-c9DQkQslnUmA_g13SEjp3';
+
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]; }); }
+
+  function fotoDoConfig(cfg){
+    try{
+      if(!cfg) return '';
+      if(cfg.header && cfg.header.fotosAtivas !== false && cfg.header.fotos && cfg.header.fotos.length) return cfg.header.fotos[0];
+      if(cfg.intro && cfg.intro.foto) return cfg.intro.foto;
+      if(cfg.footer && cfg.footer.fotos && cfg.footer.fotos.length) return cfg.footer.fotos[0];
+      if(cfg.fundo && cfg.fundo.imagem) return cfg.fundo.imagem;
+    }catch(e){}
+    return '';
+  }
+  function corDoConfig(cfg){ try{ if(cfg && cfg.header && cfg.header.cor) return cfg.header.cor; }catch(e){} return ''; }
+  function subDoConfig(cfg){
+    try{
+      if(cfg){
+        if(cfg.header && cfg.header.subtitulo) return cfg.header.subtitulo;
+        if(cfg.footer && cfg.footer.morada) return cfg.footer.morada;
+      }
+    }catch(e){}
+    return '';
+  }
+
+  var TODOS = [];
+
+  function render(lista){
+    var grid = document.getElementById('grid');
+    var cont = document.getElementById('contador');
+    cont.textContent = lista.length ? (lista.length + (lista.length === 1 ? ' restaurante' : ' restaurantes')) : '';
+    if(!lista.length){ grid.innerHTML = ''; document.getElementById('estado').innerHTML = 'Ainda não há restaurantes por aqui.'; document.getElementById('estado').style.display = 'block'; return; }
+    document.getElementById('estado').style.display = 'none';
+    grid.innerHTML = lista.map(function(n){
+      var slug = String(n.slug || '').toLowerCase();
+      var nome = n.nome || (n.config && n.config.header && n.config.header.titulo) || 'Restaurante';
+      var foto = fotoDoConfig(n.config);
+      var cor = corDoConfig(n.config);
+      var sub = subDoConfig(n.config);
+      var inicial = esc((nome.trim()[0] || 'À').toUpperCase());
+      var estiloFoto = foto ? ('background-image:url(\'' + esc(foto) + '\')') : (cor ? ('background:' + esc(cor)) : '');
+      var cardapio = 'cardapio.html?n=' + encodeURIComponent(slug);
+      var reservas = 'reservas.html?n=' + encodeURIComponent(slug);
+      return '' +
+        '<article class="card">' +
+          '<a class="foto" style="' + estiloFoto + '" href="' + cardapio + '" aria-label="' + esc(nome) + '">' +
+            (foto ? '' : '<span class="inicial">' + inicial + '</span>') +
+          '</a>' +
+          '<div class="corpo">' +
+            '<div class="nome">' + esc(nome) + '</div>' +
+            '<div class="sub">' + esc(sub) + '</div>' +
+            '<div class="acoes">' +
+              '<a class="btn btn-menu" href="' + cardapio + '">Ver menu</a>' +
+              '<a class="btn btn-res" href="' + reservas + '">Reservar</a>' +
+            '</div>' +
+          '</div>' +
+        '</article>';
+    }).join('');
+  }
+
+  function filtrar(){
+    var q = (document.getElementById('busca').value || '').trim().toLowerCase();
+    if(!q){ render(TODOS); return; }
+    render(TODOS.filter(function(n){
+      var nome = (n.nome || (n.config && n.config.header && n.config.header.titulo) || '').toLowerCase();
+      var sub = subDoConfig(n.config).toLowerCase();
+      return nome.indexOf(q) >= 0 || sub.indexOf(q) >= 0;
+    }));
+  }
+
+  document.getElementById('busca').addEventListener('input', filtrar);
+
+  fetch(SUPA_URL + '/rest/v1/negocios?select=slug,nome,config&order=nome.asc', {
+    headers: { apikey: SUPA_KEY, Authorization: 'Bearer ' + SUPA_KEY }
+  }).then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); })
+    .then(function(dados){
+      TODOS = (dados || []).filter(function(n){ return n && n.slug && n.config && n.config.naApp === true; });
+      render(TODOS);
+    })
+    .catch(function(err){
+      document.getElementById('estado').innerHTML = 'Não foi possível carregar os restaurantes agora. Tenta atualizar a página.';
+    });
+</script>
+</body>
+</html>

@@ -191,6 +191,14 @@
   </div>
 
   <!-- PARTILHAR / QR -->
+  <div id="naAppBox" style="margin:0 0 14px; padding:14px 16px; border:2px solid #c05a3a; border-radius:12px; background:#fff6f0;">
+    <label style="display:flex; align-items:center; gap:10px; cursor:pointer; font-weight:800; color:#a3452b; margin:0;">
+      <input type="checkbox" id="naAppChk" style="width:auto; margin:0;">
+      🍽️ Mostrar na ÀMesa (montra pública)
+    </label>
+    <div class="subtitulo" style="margin:6px 0 0;">Liga para este restaurante aparecer na página ÀMesa, onde os clientes descobrem restaurantes. Desligado = continua acessível por link/QR direto, mas não aparece na montra.</div>
+  </div>
+
   <details id="secPartilha">
     <summary>🔗 Partilhar / QR code</summary>
     <div class="bloco-conteudo">
@@ -1711,6 +1719,7 @@
     document.getElementById('titulo').value = config.header.titulo || '';
     { const _hp = document.getElementById('headerPadrao'); if(_hp) _hp.value = config.header.padrao || 'nenhum'; }
     document.getElementById('subtitulo').value = config.header.subtitulo || '';
+    { const _na = document.getElementById('naAppChk'); if(_na) _na.checked = config.naApp === true; }
     document.getElementById('introAtivo').checked = !!(config.intro && config.intro.ativo);
     document.getElementById('introDuracao').value = (config.intro && config.intro.duracao) || 7;
     document.getElementById('introFundo').value = (config.intro && config.intro.fundo) || 'foto';
@@ -2497,6 +2506,7 @@
 
   // Lê todos os campos do formulário para o objeto config (sem gravar) — usado ao guardar e na pré-visualização
   function lerFormularioConfig(){
+      { const _na = document.getElementById('naAppChk'); config.naApp = !!(_na && _na.checked); }
       config.header.titulo = document.getElementById('titulo').value.trim();
       { const _hp = document.getElementById('headerPadrao'); if(_hp) config.header.padrao = _hp.value; }
       config.header.subtitulo = document.getElementById('subtitulo').value.trim();
