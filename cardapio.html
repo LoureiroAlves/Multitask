@@ -107,10 +107,22 @@
   @keyframes ptTwinkle{ 0%,100%{ opacity:.3; } 50%{ opacity:1; } }
 
   /* ===== Abertura "Fernando Pessoa" (caricatura a tinta, papel — animada) ===== */
-  #introPessoa{ position:absolute; inset:0; display:none; }
-  #introOverlay.pessoa{ padding:0; background:#f2e7d0; }
+  #introPessoa{ position:absolute; inset:0; display:none; z-index:1; }
+  #introOverlay.pessoa{ padding:0; background:#2a2016; }
+  /* Fundo de papel/tinta desfocado, por trás da folha */
+  #introOverlay.pessoa::before{
+    content:''; position:absolute; inset:-60px; z-index:0; pointer-events:none;
+    background:
+      radial-gradient(60% 48% at 24% 22%, rgba(150,112,64,.55), transparent 70%),
+      radial-gradient(54% 44% at 82% 30%, rgba(96,70,40,.5), transparent 72%),
+      radial-gradient(72% 60% at 60% 86%, rgba(58,40,22,.62), transparent 75%),
+      radial-gradient(48% 40% at 14% 82%, rgba(176,132,74,.4), transparent 70%),
+      linear-gradient(135deg, #3a2c18 0%, #241a10 100%);
+    filter:blur(30px);
+  }
   #introOverlay.pessoa #introBg, #introOverlay.pessoa #introShade, #introOverlay.pessoa #introContent{ display:none !important; }
-  #introOverlay.pessoa #introPessoa{ display:block; }
+  #introOverlay.pessoa #introPessoa{ display:flex; align-items:center; justify-content:center; padding:26px; }
+  .ps-card{ width:min(88%, 420px); max-height:92%; aspect-ratio:400 / 711; border-radius:16px; overflow:hidden; box-shadow:0 24px 70px rgba(20,12,4,.55), 0 4px 14px rgba(20,12,4,.4); }
   #introPessoa svg{ width:100%; height:100%; display:block; }
   #introPessoa .ps-paper{ fill:#f2e7d0; }
   #introPessoa .ink{ fill:none; stroke:#3a2a1a; stroke-width:2.3; stroke-linecap:round; stroke-linejoin:round; }
@@ -2088,6 +2100,7 @@
     </svg>
   </div>
   <div id="introPessoa" aria-hidden="true">
+    <div class="ps-card">
     <svg viewBox="0 0 400 711" preserveAspectRatio="xMidYMid slice">
       <rect class="ps-paper" x="0" y="0" width="400" height="711"/>
       <rect class="ps-page pg1" x="66" y="150" width="52" height="66" rx="3" style="--r:-9deg"/>
@@ -2137,6 +2150,7 @@
         <path class="ps-drip" d="M2 12 Q5 25 2 32 Q-1 25 2 12 Z" fill="#241708"/>
       </g>
     </svg>
+    </div>
   </div>
   <div id="introNeon">
     <div class="neon-frame">
