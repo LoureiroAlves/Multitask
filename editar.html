@@ -1032,8 +1032,13 @@
         <select id="redesLocal" style="padding:8px 10px; border-radius:8px; border:1.5px solid var(--linha); background:var(--branco); font-family:inherit; color:var(--castanho);">
           <option value="cabecalho">Cabeçalho</option>
           <option value="rodape">Rodapé (barra de baixo, sempre visível)</option>
+          <option value="flutuante">Flutuante (arrastar para onde quiser)</option>
         </select>
-        <div class="subtitulo" style="margin:5px 0 0;">"Rodapé" = a barra fixa do fundo do ecrã (sempre visível). Ideal para negócios sem cabeçalho. Tem de estar ligada.</div>
+        <div id="redesFlutHint" style="display:none; margin-top:6px;">
+          <div class="subtitulo" style="margin:0;">📍 Na pré-visualização, <b>arrasta</b> as redes para onde quiseres.</div>
+          <button type="button" id="reporRedesPos" style="margin-top:6px; padding:6px 12px; border:1.5px solid var(--linha); border-radius:8px; background:var(--branco); cursor:pointer; font:inherit; font-size:0.85rem;">↺ Repor posição</button>
+        </div>
+        <div class="subtitulo" style="margin:5px 0 0;">"Rodapé" = a barra fixa do fundo do ecrã (sempre visível). Ideal para negócios sem cabeçalho.</div>
       </div>
     </div>
   </details>
@@ -1804,8 +1809,10 @@
       document.getElementById('idiomaEn').checked = _i.en !== false;
       document.getElementById('idiomaFr').checked = _i.fr !== false;
       document.getElementById('idiomaEs').checked = _i.es !== false;
-      document.getElementById('idiomasLocal').value = (config.idiomasLocal === 'rodape') ? 'rodape' : 'cabecalho';
-      document.getElementById('redesLocal').value = (config.redesLocal === 'rodape') ? 'rodape' : 'cabecalho'; }
+      { const _v = config.idiomasLocal; document.getElementById('idiomasLocal').value = (_v === 'rodape' || _v === 'flutuante') ? _v : 'cabecalho'; }
+      { const _v2 = config.redesLocal; document.getElementById('redesLocal').value = (_v2 === 'rodape' || _v2 === 'flutuante') ? _v2 : 'cabecalho'; }
+      { const _ih = document.getElementById('idiomasFlutHint'); if(_ih) _ih.style.display = (config.idiomasLocal === 'flutuante') ? 'block' : 'none';
+        const _rh = document.getElementById('redesFlutHint'); if(_rh) _rh.style.display = (config.redesLocal === 'flutuante') ? 'block' : 'none'; } }
     document.getElementById('mostrarCamera').checked = config.mostrarCamera !== false;
     document.getElementById('mostrarAgendaIcon').checked = config.mostrarAgendaIcon !== false;
     document.getElementById('mostrarRedes').checked = config.mostrarRedes !== false;
@@ -2932,6 +2939,12 @@
       const _po = document.getElementById('pontarOpts'); if(_po) _po.style.display = (e.target.value === 'ponte') ? 'block' : 'none';
       const _peo = document.getElementById('pessoaOpts'); if(_peo) _peo.style.display = (e.target.value === 'pessoa') ? 'block' : 'none';
     }); }
+  { const _il = document.getElementById('idiomasLocal'), _ih = document.getElementById('idiomasFlutHint');
+    if(_il) _il.addEventListener('change', function(){ if(_ih) _ih.style.display = (_il.value === 'flutuante') ? 'block' : 'none'; }); }
+  { const _rl = document.getElementById('redesLocal'), _rh = document.getElementById('redesFlutHint');
+    if(_rl) _rl.addEventListener('change', function(){ if(_rh) _rh.style.display = (_rl.value === 'flutuante') ? 'block' : 'none'; }); }
+  { const _ri = document.getElementById('reporIdiomasPos'); if(_ri) _ri.addEventListener('click', function(){ delete config.idiomasPos; if(window.__agendarPreview) window.__agendarPreview(); }); }
+  { const _rr = document.getElementById('reporRedesPos'); if(_rr) _rr.addEventListener('click', function(){ delete config.redesPos; if(window.__agendarPreview) window.__agendarPreview(); }); }
   document.getElementById('introRotNome').addEventListener('input', e => {
     document.getElementById('introRotNomeVal').textContent = e.target.value + '°';
   });
@@ -4238,6 +4251,11 @@
         const ex = document.getElementById('anuncioWaX'), ey = document.getElementById('anuncioWaY');
         if(ex && d.x != null) ex.value = d.x;
         if(ey && d.y != null) ey.value = d.y;
+        if(window.__agendarPreview) window.__agendarPreview();
+      }
+      else if(d.type === 'flutuante-pos'){
+        if(d.alvo === 'idiomas') config.idiomasPos = { x:d.x, y:d.y };
+        else if(d.alvo === 'redes') config.redesPos = { x:d.x, y:d.y };
         if(window.__agendarPreview) window.__agendarPreview();
       }
     });
