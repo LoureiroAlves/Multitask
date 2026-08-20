@@ -161,9 +161,9 @@
   #introOverlay.ab-neon{ padding:0; background:#141017; background-image:radial-gradient(120% 90% at 50% 40%, rgba(255,79,163,.10), transparent 60%); }
   #introOverlay.ab-neon #introBg, #introOverlay.ab-neon #introShade, #introOverlay.ab-neon #introContent{ display:none !important; }
   #introOverlay.ab-neon #introNeon{ display:flex; }
-  #introNeon .neon-frame{ position:relative; width:min(86vw, 460px); padding:46px 30px 50px; border-radius:20px; border:4px solid #35e0ff; box-shadow:0 0 10px #35e0ff, 0 0 26px #35e0ff, inset 0 0 20px rgba(53,224,255,.45); text-align:center; opacity:0; }
-  #introNeon .neon-open{ font-family:'Poppins', sans-serif; letter-spacing:8px; font-size:1rem; color:#fff; text-shadow:0 0 6px #35e0ff, 0 0 16px #35e0ff; margin-bottom:20px; opacity:0; }
-  #introNeon #neonNome{ font-family:'Pacifico', cursive; font-size:clamp(3rem, 13vw, 4.4rem); color:#fff; line-height:1.12; text-shadow:0 0 6px #ff4fa3, 0 0 18px #ff4fa3, 0 0 38px #ff4fa3; opacity:0; }
+  #introNeon .neon-frame{ position:relative; width:min(88vw, 480px); max-width:calc(100vw - 28px); padding:38px 26px 42px; border-radius:20px; border:4px solid #35e0ff; box-shadow:0 0 10px #35e0ff, 0 0 26px #35e0ff, inset 0 0 20px rgba(53,224,255,.45); text-align:center; opacity:0; }
+  #introNeon .neon-open{ font-family:'Poppins', sans-serif; letter-spacing:8px; font-size:1rem; color:#fff; text-shadow:0 0 6px #35e0ff, 0 0 16px #35e0ff; margin-bottom:18px; opacity:0; }
+  #introNeon #neonNome{ font-family:'Pacifico', cursive; font-size:2.8rem; color:#fff; line-height:1.18; max-width:100%; overflow-wrap:anywhere; word-break:break-word; text-shadow:0 0 6px #ff4fa3, 0 0 18px #ff4fa3, 0 0 38px #ff4fa3; opacity:0; }
   #introNeon .neon-sub{ margin-top:18px; font-family:'Poppins', sans-serif; font-size:.9rem; letter-spacing:5px; color:#ffd27f; text-shadow:0 0 6px #ffb54a, 0 0 14px #ffb54a; opacity:0; }
   #introOverlay.ab-neon.animar .neon-frame{ animation:neonFlk 1.5s .1s both, neonHum 5s 1.6s infinite; }
   #introOverlay.ab-neon.animar .neon-open{ animation:neonFlk 1.3s .5s both; }
@@ -3988,7 +3988,8 @@
             ov.addEventListener('click', window.__esconderIntro);
           } else if(intro.tipo === 'neon'){
             ov.classList.add('ab-neon');
-            var _nn = document.getElementById('neonNome'); if(_nn) _nn.textContent = nome || '';
+            var _nn = document.getElementById('neonNome');
+            if(_nn){ _nn.textContent = nome || ''; var _nt = (intro.estiloTitulo && intro.estiloTitulo.tamanho) || intro.tamanho; _nn.style.fontSize = _nt ? (_nt + 'rem') : ''; }
             ov.style.cursor = 'pointer'; ov.addEventListener('click', window.__esconderIntro);
           }
           if(nEl){ nEl.classList.toggle('nletras', (intro.animNome||'letras')!=='letras'); envolverAnim(nEl, intro.animNome||'letras', 0.2); }
@@ -4457,7 +4458,8 @@
       var _pvP = document.getElementById('pessoaVerso'); if(_pvP) _pvP.textContent = (intro.pessoaVerso != null) ? intro.pessoaVerso : 'o poeta é um fingidor';
     } else if(intro.tipo === 'neon'){
       ov.classList.add('ab-neon');
-      var _nnP = document.getElementById('neonNome'); if(_nnP) _nnP.textContent = nome || '';
+      var _nnP = document.getElementById('neonNome');
+      if(_nnP){ _nnP.textContent = nome || ''; var _ntP = (intro.estiloTitulo && intro.estiloTitulo.tamanho) || intro.tamanho; _nnP.style.fontSize = _ntP ? (_ntP + 'rem') : ''; }
     }
     ov.classList.remove('sair'); ov.style.transform = '';   // evita ficar preso fora do ecrã
     ov.classList.remove('animar'); void ov.offsetWidth; ov.classList.add('animar');
