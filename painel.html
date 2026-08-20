@@ -108,6 +108,20 @@
     </div>
 
     <div class="card">
+      <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+        <h2 style="margin:0; font-size:1.05rem;">📢 Publicidade da ÀMesa</h2>
+        <a class="link" href="index.html" target="_blank">Ver montra ↗</a>
+      </div>
+      <div style="font-size:.82rem; color:#9a8b6f; margin:6px 0 10px;">Anúncios que aparecem na montra pública (faixa no topo e entre os restaurantes). Cada anúncio pode abrir um restaurante da ÀMesa ou um link externo.</div>
+      <div id="adsLista"></div>
+      <div style="display:flex; gap:8px; align-items:center; margin-top:10px; flex-wrap:wrap;">
+        <button class="mini" id="adAdicionar">➕ Adicionar anúncio</button>
+        <button class="acao" id="adGuardar">Guardar publicidade</button>
+      </div>
+      <div id="adsMsg"></div>
+    </div>
+
+    <div class="card">
       <div style="display:flex; align-items:center; justify-content:space-between;">
         <h2 style="margin:0; font-size:1.05rem;">Negócios</h2>
         <button class="mini" id="btnRecarregar">↻ Recarregar</button>
@@ -161,6 +175,9 @@
 
   const $ = function(id){ return document.getElementById(id); };
   function msg(el, txt, tipo){ el.innerHTML = '<div class="msg ' + (tipo||'ok') + '">' + txt + '</div>'; }
+  // Linha reservada que guarda a publicidade da montra ÀMesa (não é um negócio real)
+  const AMESA_SLUG = '__amesa__';
+  let NEGS_VIS = [];   // negócios reais (para o dropdown de destino dos anúncios)
 
   // ---- Autenticação ----
   $('btnEntrar').onclick = entrar;
@@ -230,10 +247,14 @@
 
   async function carregar(){
     $('lista').innerHTML = '<p style="color:#9a8b6f; font-size:.9rem;">A carregar…</p>';
-    const { data:negs, error } = await sb.from('negocios').select('*').order('criado_em', { ascending:false });
+    const { data:negsRaw, error } = await sb.from('negocios').select('*').order('criado_em', { ascending:false });
     if(error){ $('lista').innerHTML = '<div class="msg erro">Erro a carregar: ' + error.message + '</div>'; return; }
+    // separar a linha reservada da publicidade dos negócios reais
+    const negs = (negsRaw||[]).filter(function(n){ return n.slug !== AMESA_SLUG; });
+    NEGS_VIS = negs;
+    { const _amesa = (negsRaw||[]).find(function(n){ return n.slug === AMESA_SLUG; }); renderAds(_amesa && _amesa.config && Array.isArray(_amesa.config.ads) ? _amesa.config.ads : null); }
     // preencher o seletor de "Duplicar negócio"
-    { const sel = $('dupOrigem'); if(sel){ const atual = sel.value; sel.innerHTML = '<option value="">— escolher —</option>'; (negs||[]).forEach(function(n){ const o = document.createElement('option'); o.value = n.slug; o.textContent = n.nome + ' (/' + n.slug + ')'; sel.appendChild(o); }); sel.value = atual; } }
+    { const sel = $('dupOrigem'); if(sel){ const atual = sel.value; sel.innerHTML = '<option value="">— escolher —</option>'; negs.forEach(function(n){ const o = document.createElement('option'); o.value = n.slug; o.textContent = n.nome + ' (/' + n.slug + ')'; sel.appendChild(o); }); sel.value = atual; } }
     const { data:ents } = await sb.from('entitlements').select('*');
     const mapaEnt = {}; (ents||[]).forEach(function(e){ mapaEnt[e.negocio_id] = e; });
     // métricas (visitas / publicidade) — pode não existir a tabela ainda
@@ -584,6 +605,128 @@
   $('qrFechar').onclick = function(){ $('qrOverlay').style.display='none'; };
   $('qrOverlay').onclick = function(e){ if(e.target===$('qrOverlay')) $('qrOverlay').style.display='none'; };
   $('qrBaixar').onclick = function(){ if(!qrCanvasAtual){ alert('O QR ainda está a gerar.'); return; } const a=document.createElement('a'); a.href=qrCanvasAtual.toDataURL('image/png'); a.download=qrNomeFich+'.png'; document.body.appendChild(a); a.click(); a.remove(); };
+
+  // ============================================================
+  //  📢 Publicidade da ÀMesa — editor guardado na linha '__amesa__'
+  // ============================================================
+  let ADS_EDIT = [];
+  function _adEsc(s){ return String(s == null ? '' : s).replace(/"/g, '&quot;'); }
+  // Comprime a imagem (máx 1400px) — igual ao editor
+  function comprimirImagem(file){
+    const ehString = (typeof file === 'string');
+    const ehPng = ehString ? /^data:image\/png/i.test(file) : (file.type === 'image/png');
+    return new Promise(function(resolve, reject){
+      const _nome = ehString ? '' : ((file && file.name) || '');
+      const _tipo = ehString ? '' : ((file && file.type) || '');
+      if(/heic|heif/i.test(_nome) || /heic|heif/i.test(_tipo)){ reject(new Error('Formato HEIC não é suportado pelos navegadores. Usa JPG ou PNG.')); return; }
+      const img = new Image();
+      if(ehString){ img.src = file; }
+      else { const reader = new FileReader(); reader.onload = function(e){ img.src = e.target.result; }; reader.onerror = function(){ reject(new Error('Não consegui ler o ficheiro.')); }; reader.readAsDataURL(file); }
+      img.onload = function(){
+        const maxLado = 1400; let width = img.width, height = img.height;
+        if(width > maxLado || height > maxLado){ if(width > height){ height = Math.round(height * maxLado / width); width = maxLado; } else { width = Math.round(width * maxLado / height); height = maxLado; } }
+        const canvas = document.createElement('canvas'); canvas.width = width; canvas.height = height;
+        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+        if(ehPng){ canvas.toBlob(function(blob){ const r2 = new FileReader(); r2.onload = function(){ resolve({ base64:r2.result.split(',')[1], ext:'png' }); }; r2.onerror = reject; r2.readAsDataURL(blob); }, 'image/png'); }
+        else { canvas.toBlob(function(blob){ const r2 = new FileReader(); r2.onload = function(){ resolve({ base64:r2.result.split(',')[1], ext:'jpg' }); }; r2.onerror = reject; r2.readAsDataURL(blob); }, 'image/jpeg', 0.82); }
+      };
+      img.onerror = function(){ reject(new Error('Não consegui abrir a imagem. Usa JPG ou PNG.')); };
+    });
+  }
+  // Sobe a imagem para o Supabase Storage (bucket 'imagens', pasta 'amesa') e devolve o URL público
+  async function _uploadAdFoto(file){
+    const dados = await comprimirImagem(file);
+    const bin = atob(dados.base64); const arr = new Uint8Array(bin.length);
+    for(let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+    const nome = 'amesa/' + Date.now() + '-' + Math.random().toString(36).slice(2, 7) + '.' + dados.ext;
+    let session = (await sb.auth.getSession()).data.session;
+    if(session){ try{ const rr = await sb.auth.refreshSession(); if(rr.data && rr.data.session) session = rr.data.session; }catch(e){} }
+    if(!session || !session.access_token){ throw new Error('A tua sessão expirou. Sai e volta a entrar.'); }
+    const resp = await fetch(SUPABASE_URL + '/storage/v1/object/imagens/' + nome, {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + session.access_token, 'apikey': SUPABASE_KEY, 'Content-Type': 'image/' + (dados.ext === 'jpg' ? 'jpeg' : dados.ext), 'x-upsert': 'true' },
+      body: arr
+    });
+    if(!resp.ok){ let t = ''; try{ t = await resp.text(); }catch(e){} throw new Error('Upload falhou: ' + (t || resp.status)); }
+    return SUPABASE_URL + '/storage/v1/object/public/imagens/' + nome;
+  }
+  function _adOpcoesRest(sel){
+    let html = '<option value="">— Link externo —</option>';
+    NEGS_VIS.forEach(function(n){
+      html += '<option value="' + _adEsc(n.slug) + '"' + (sel === n.slug ? ' selected' : '') + '>' + (n.nome || n.slug) + ' (/' + n.slug + ')</option>';
+    });
+    return html;
+  }
+  function _adPreview(box, url){
+    if(url){ box.innerHTML = '<img src="' + _adEsc(url) + '" alt="" style="max-height:70px; border-radius:8px; border:1px solid var(--linha);">'; }
+    else { box.innerHTML = '<span style="font-size:.75rem; color:#b3a68a;">Sem imagem — mostra o título/subtítulo.</span>'; }
+  }
+  function renderAds(arr){
+    if(arr) ADS_EDIT = JSON.parse(JSON.stringify(arr));
+    const cont = $('adsLista'); if(!cont) return;
+    cont.innerHTML = '';
+    if(!ADS_EDIT.length){ cont.innerHTML = '<p style="color:#9a8b6f; font-size:.85rem; margin:4px 0;">Ainda não há anúncios. Carrega em "Adicionar anúncio".</p>'; return; }
+    ADS_EDIT.forEach(function(ad, i){
+      const box = document.createElement('div');
+      box.style.cssText = 'border:1px solid var(--linha); border-radius:10px; padding:12px; margin-bottom:10px; background:#fbf8f2;';
+      box.innerHTML =
+        '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">' +
+          '<strong style="font-size:.85rem; color:var(--dourado-escuro);">Anúncio ' + (i + 1) + '</strong>' +
+          '<button class="mini perigo" data-adrm>🗑 Remover</button>' +
+        '</div>' +
+        '<label>Imagem (URL) — recomendado ~2:3 (vertical)</label>' +
+        '<div style="display:flex; gap:8px;">' +
+          '<input type="text" data-adimg value="' + _adEsc(ad.img) + '" placeholder="https://… ou carrega ao lado">' +
+          '<label class="mini" style="cursor:pointer; white-space:nowrap; display:flex; align-items:center;">🖼 Carregar<input type="file" data-adfile accept="image/*" style="display:none;"></label>' +
+        '</div>' +
+        '<div data-adprev style="margin-top:6px;"></div>' +
+        '<label style="margin-top:10px;">Título (usado se não houver imagem)</label>' +
+        '<input type="text" data-adtit value="' + _adEsc(ad.titulo) + '" placeholder="Ex.: Aurora’s Cake">' +
+        '<label style="margin-top:10px;">Subtítulo</label>' +
+        '<input type="text" data-adsub value="' + _adEsc(ad.sub) + '" placeholder="Ex.: Bolos por encomenda">' +
+        '<label style="margin-top:10px;">Ao clicar, abre</label>' +
+        '<select data-addest>' + _adOpcoesRest(ad.slug || '') + '</select>' +
+        '<div data-adlinkwrap style="margin-top:8px;' + ((ad.slug) ? ' display:none;' : '') + '">' +
+          '<label style="margin-top:0;">Link externo</label>' +
+          '<input type="text" data-adlink value="' + _adEsc(ad.link) + '" placeholder="https://instagram.com/… ou https://wa.me/351…">' +
+        '</div>';
+      const prev = box.querySelector('[data-adprev]'); _adPreview(prev, ad.img);
+      box.querySelector('[data-adimg]').oninput = function(e){ ADS_EDIT[i].img = e.target.value.trim(); _adPreview(prev, ADS_EDIT[i].img); };
+      box.querySelector('[data-adfile]').onchange = async function(e){
+        const f = e.target.files && e.target.files[0]; if(!f) return;
+        prev.innerHTML = '<span style="font-size:.75rem; color:#b3a68a;">A carregar imagem…</span>';
+        try{
+          const url = await _uploadAdFoto(f);
+          ADS_EDIT[i].img = url; box.querySelector('[data-adimg]').value = url; _adPreview(prev, url);
+        }catch(err){ prev.innerHTML = '<span style="font-size:.75rem; color:var(--vermelho);">' + (err.message || 'Erro no upload') + '</span>'; }
+      };
+      box.querySelector('[data-adtit]').oninput = function(e){ ADS_EDIT[i].titulo = e.target.value; };
+      box.querySelector('[data-adsub]').oninput = function(e){ ADS_EDIT[i].sub = e.target.value; };
+      box.querySelector('[data-addest]').onchange = function(e){ ADS_EDIT[i].slug = e.target.value; box.querySelector('[data-adlinkwrap]').style.display = e.target.value ? 'none' : ''; };
+      box.querySelector('[data-adlink]').oninput = function(e){ ADS_EDIT[i].link = e.target.value.trim(); };
+      box.querySelector('[data-adrm]').onclick = function(){ ADS_EDIT.splice(i, 1); renderAds(); };
+      cont.appendChild(box);
+    });
+  }
+  async function guardarAds(){
+    const ads = ADS_EDIT.filter(function(a){ return a && (a.img || a.titulo || a.sub || a.slug || a.link); })
+      .map(function(a){ return { img: a.img || '', titulo: a.titulo || '', sub: a.sub || '', slug: a.slug || '', link: a.slug ? '' : (a.link || '') }; });
+    $('adGuardar').disabled = true; msg($('adsMsg'), 'A guardar…', 'ok');
+    const { data:existe, error:eGet } = await sb.from('negocios').select('id,config').eq('slug', AMESA_SLUG).maybeSingle();
+    if(eGet){ $('adGuardar').disabled = false; msg($('adsMsg'), 'Erro: ' + eGet.message, 'erro'); return; }
+    let error;
+    if(existe){
+      const cfg = Object.assign({}, existe.config || {}); cfg.ads = ads; cfg.naApp = false;
+      ({ error } = await sb.from('negocios').update({ config:cfg }).eq('id', existe.id));
+    } else {
+      ({ error } = await sb.from('negocios').insert({ nome:'ÀMesa — Publicidade', slug:AMESA_SLUG, config:{ ads:ads, naApp:false }, menu:{} }));
+    }
+    $('adGuardar').disabled = false;
+    if(error){ msg($('adsMsg'), 'Erro: ' + error.message, 'erro'); }
+    else { msg($('adsMsg'), 'Publicidade guardada ✓ (' + ads.length + ' anúncio' + (ads.length === 1 ? '' : 's') + ')', 'ok'); }
+  }
+  $('adAdicionar').onclick = function(){ ADS_EDIT.push({ img:'', titulo:'', sub:'', slug:'', link:'' }); renderAds(); };
+  $('adGuardar').onclick = guardarAds;
 
   // arranque
   verificar();

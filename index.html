@@ -142,20 +142,23 @@
   var TODOS = [];
   var filtroTipo = '';
 
-  // === Publicidade da ÀMesa (exemplos por agora — a área de gestão fica para depois) ===
-  // Cada anúncio: { img:'URL da imagem', link:'para onde vai ao clicar', titulo, sub }
-  var ADS = [
-    { img:'', link:'', titulo:'Espaço de publicidade', sub:'A tua marca aqui — anuncia na ÀMesa' },
-    { img:'', link:'', titulo:'Destaca o teu restaurante', sub:'Aparece em posição de topo na montra' }
-  ];
+  // === Publicidade da ÀMesa — gerida no painel (guardada na linha '__amesa__') ===
+  // Cada anúncio: { img, titulo, sub, slug (restaurante da ÀMesa) | link (externo) }
+  var AMESA_SLUG = '__amesa__';
+  var ADS = [];
   function adHTML(ad){
     if(!ad) return '';
+    var href = ad.slug ? ('cardapio.html?n=' + encodeURIComponent(ad.slug)) : (ad.link || '');
+    var ext = !ad.slug && !!ad.link;   // link externo abre em nova aba
+    var attrs = ext ? ' target="_blank" rel="noopener"' : '';
     if(ad.img){
       var img = '<img src="' + esc(ad.img) + '" alt="' + esc(ad.titulo || 'Publicidade') + '">';
-      return ad.link ? ('<a class="ad-faixa" href="' + esc(ad.link) + '" target="_blank" rel="noopener">' + img + '</a>')
-                     : ('<div class="ad-faixa">' + img + '</div>');
+      return href ? ('<a class="ad-faixa" href="' + esc(href) + '"' + attrs + '>' + img + '</a>')
+                  : ('<div class="ad-faixa">' + img + '</div>');
     }
-    return '<div class="ad-ph"><div class="t">' + esc(ad.titulo || 'Publicidade') + '</div><div class="s">' + esc(ad.sub || '') + '</div></div>';
+    var corpo = '<div class="t">' + esc(ad.titulo || 'Publicidade') + '</div><div class="s">' + esc(ad.sub || '') + '</div>';
+    return href ? ('<a class="ad-ph" href="' + esc(href) + '"' + attrs + ' style="text-decoration:none;">' + corpo + '</a>')
+                : ('<div class="ad-ph">' + corpo + '</div>');
   }
   function tipoDoConfig(cfg){ try{ return (cfg && cfg.tipo) ? String(cfg.tipo).trim() : ''; }catch(e){ return ''; } }
 
@@ -229,9 +232,14 @@
     headers: { apikey: SUPA_KEY, Authorization: 'Bearer ' + SUPA_KEY }
   }).then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); })
     .then(function(dados){
-      TODOS = (dados || []).filter(function(n){ return n && n.slug && n.config && n.config.naApp === true; });
+      dados = dados || [];
+      var reservado = dados.find(function(n){ return n && n.slug === AMESA_SLUG; });
+      ADS = (reservado && reservado.config && Array.isArray(reservado.config.ads))
+        ? reservado.config.ads.filter(function(a){ return a && (a.img || a.titulo); })
+        : [];
+      TODOS = dados.filter(function(n){ return n && n.slug && n.slug !== AMESA_SLUG && n.config && n.config.naApp === true; });
       renderFiltros();
-      document.getElementById('adTopo').innerHTML = adHTML(ADS[0]);
+      document.getElementById('adTopo').innerHTML = ADS.length ? adHTML(ADS[0]) : '';
       aplicar();
     })
     .catch(function(err){
