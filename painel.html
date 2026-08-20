@@ -294,6 +294,7 @@
         '<div class="linha-pub"><input type="checkbox" data-pub' + (pub.ativo ? ' checked' : '') + '> <label style="margin:0; color:var(--castanho); font-weight:600;">Mostrar publicidade neste negócio</label></div>' +
         '<div class="linha-pub" style="background:#fff6f0; border:1.5px solid #c05a3a; border-radius:9px; padding:9px 11px;"><input type="checkbox" data-naapp' + ((n.config && n.config.naApp === true) ? ' checked' : '') + '> <label style="margin:0; color:#a3452b; font-weight:700;">🍽️ Mostrar na ÀMesa (montra pública)</label></div>' +
         '<label style="margin-top:12px;">Tipo de cozinha (filtro da ÀMesa)</label><input type="text" data-tipo value="' + ((n.config && n.config.tipo) || '').replace(/"/g, '&quot;') + '" placeholder="Ex.: Português, Pizzaria, Sushi, Pastelaria…">' +
+        '<div style="margin-top:12px; font-size:.78rem; color:#9a8b6f; background:#fbf8f2; border:1px solid var(--linha); border-radius:8px; padding:8px 10px;">🗂 Pasta das imagens no Storage: <code style="color:var(--castanho); font-weight:700;">imagens/' + n.slug + '/</code><br><span style="color:#b3a68a;">O slug (<code>/' + n.slug + '</code>) é fixo e não muda quando alteras o nome — por isso a pasta mantém sempre este nome.</span></div>' +
         '<div style="margin-top:12px; display:flex; gap:8px; align-items:center;">' +
           '<button class="acao" data-act="guardar">Guardar</button>' +
           '<a class="link" href="editar.html?n=' + n.slug + '" target="_blank">Abrir editor ↗</a>' +
