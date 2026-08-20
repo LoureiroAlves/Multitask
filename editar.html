@@ -197,6 +197,9 @@
       🍽️ Mostrar na ÀMesa (montra pública)
     </label>
     <div class="subtitulo" style="margin:6px 0 0;">Liga para este restaurante aparecer na página ÀMesa, onde os clientes descobrem restaurantes. Desligado = continua acessível por link/QR direto, mas não aparece na montra.</div>
+    <label for="tipoCozinha" style="display:block; margin:12px 0 4px; font-weight:700; color:#a3452b;">Tipo de cozinha (para os filtros da ÀMesa)</label>
+    <input type="text" id="tipoCozinha" placeholder="Ex.: Português, Pizzaria, Pastelaria, Sushi, Vegetariano…">
+    <div class="subtitulo" style="margin:4px 0 0;">Escreve o tipo do restaurante. Na ÀMesa, os clientes podem filtrar por estes tipos.</div>
   </div>
 
   <details id="secPartilha">
@@ -1720,6 +1723,7 @@
     { const _hp = document.getElementById('headerPadrao'); if(_hp) _hp.value = config.header.padrao || 'nenhum'; }
     document.getElementById('subtitulo').value = config.header.subtitulo || '';
     { const _na = document.getElementById('naAppChk'); if(_na) _na.checked = config.naApp === true; }
+    { const _tc = document.getElementById('tipoCozinha'); if(_tc) _tc.value = config.tipo || ''; }
     document.getElementById('introAtivo').checked = !!(config.intro && config.intro.ativo);
     document.getElementById('introDuracao').value = (config.intro && config.intro.duracao) || 7;
     document.getElementById('introFundo').value = (config.intro && config.intro.fundo) || 'foto';
@@ -2507,6 +2511,7 @@
   // Lê todos os campos do formulário para o objeto config (sem gravar) — usado ao guardar e na pré-visualização
   function lerFormularioConfig(){
       { const _na = document.getElementById('naAppChk'); config.naApp = !!(_na && _na.checked); }
+      { const _tc = document.getElementById('tipoCozinha'); config.tipo = _tc ? _tc.value.trim() : ''; }
       config.header.titulo = document.getElementById('titulo').value.trim();
       { const _hp = document.getElementById('headerPadrao'); if(_hp) config.header.padrao = _hp.value; }
       config.header.subtitulo = document.getElementById('subtitulo').value.trim();

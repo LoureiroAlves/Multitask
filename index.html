@@ -60,6 +60,21 @@
   .foot-in .cta{ display:inline-block; margin-bottom:14px; background:var(--ink); color:#fff; font-weight:800; padding:12px 22px; border-radius:999px; }
   .foot-in .cta:hover{ background:#000; }
   .foot-in .marca{ font-family:'Playfair Display', serif; font-weight:700; color:var(--ink); }
+
+  .filtros{ display:flex; gap:8px; overflow-x:auto; padding:6px 2px 4px; margin-top:18px; -webkit-overflow-scrolling:touch; }
+  .filtros::-webkit-scrollbar{ height:0; }
+  .chip{ flex:0 0 auto; padding:8px 15px; border-radius:999px; border:1.5px solid var(--linha); background:#fff; color:var(--ink); font-weight:700; font-size:.9rem; cursor:pointer; white-space:nowrap; transition:.15s; }
+  .chip:hover{ border-color:var(--terra); }
+  .chip.on{ background:var(--terra); border-color:var(--terra); color:#fff; }
+
+  .card .tag{ align-self:flex-start; margin-top:2px; background:#f3e7d6; color:var(--terra-esc); font-weight:800; font-size:.72rem; letter-spacing:.3px; padding:3px 9px; border-radius:999px; }
+
+  .ad-faixa{ grid-column:1 / -1; border-radius:16px; overflow:hidden; border:1px dashed var(--gold); min-height:96px; display:block; }
+  .ad-faixa img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .ad-ph{ grid-column:1 / -1; border:1px dashed var(--gold); border-radius:16px; background:repeating-linear-gradient(45deg, #fff8ec 0 12px, #fdf1dc 12px 24px); min-height:96px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; color:#b08a3a; }
+  .ad-ph .t{ font-family:'Playfair Display', serif; font-weight:700; font-size:1.05rem; }
+  .ad-ph .s{ font-size:.82rem; font-weight:700; opacity:.8; }
+  .ad-topo{ margin-top:20px; }
 </style>
 </head>
 <body>
@@ -78,6 +93,9 @@
       <input id="busca" type="text" placeholder="Procurar restaurante…" autocomplete="off" aria-label="Procurar restaurante">
     </div>
   </section>
+
+  <div id="filtros" class="filtros"></div>
+  <div id="adTopo" class="ad-topo"></div>
 
   <div class="sec-tit">
     <h2>Restaurantes</h2>
@@ -122,6 +140,36 @@
   }
 
   var TODOS = [];
+  var filtroTipo = '';
+
+  // === Publicidade da ÀMesa (exemplos por agora — a área de gestão fica para depois) ===
+  // Cada anúncio: { img:'URL da imagem', link:'para onde vai ao clicar', titulo, sub }
+  var ADS = [
+    { img:'', link:'', titulo:'Espaço de publicidade', sub:'A tua marca aqui — anuncia na ÀMesa' },
+    { img:'', link:'', titulo:'Destaca o teu restaurante', sub:'Aparece em posição de topo na montra' }
+  ];
+  function adHTML(ad){
+    if(!ad) return '';
+    if(ad.img){
+      var img = '<img src="' + esc(ad.img) + '" alt="' + esc(ad.titulo || 'Publicidade') + '">';
+      return ad.link ? ('<a class="ad-faixa" href="' + esc(ad.link) + '" target="_blank" rel="noopener">' + img + '</a>')
+                     : ('<div class="ad-faixa">' + img + '</div>');
+    }
+    return '<div class="ad-ph"><div class="t">' + esc(ad.titulo || 'Publicidade') + '</div><div class="s">' + esc(ad.sub || '') + '</div></div>';
+  }
+  function tipoDoConfig(cfg){ try{ return (cfg && cfg.tipo) ? String(cfg.tipo).trim() : ''; }catch(e){ return ''; } }
+
+  function renderFiltros(){
+    var tipos = [];
+    TODOS.forEach(function(n){ var t = tipoDoConfig(n.config); if(t && tipos.indexOf(t) < 0) tipos.push(t); });
+    tipos.sort(function(a,b){ return a.localeCompare(b); });
+    var el = document.getElementById('filtros');
+    if(!tipos.length){ el.innerHTML = ''; return; }
+    var chips = ['<button class="chip' + (filtroTipo === '' ? ' on' : '') + '" data-t="">Todos</button>'];
+    tipos.forEach(function(t){ chips.push('<button class="chip' + (filtroTipo === t ? ' on' : '') + '" data-t="' + esc(t) + '">' + esc(t) + '</button>'); });
+    el.innerHTML = chips.join('');
+    el.querySelectorAll('.chip').forEach(function(b){ b.onclick = function(){ filtroTipo = b.getAttribute('data-t'); renderFiltros(); aplicar(); }; });
+  }
 
   function render(lista){
     var grid = document.getElementById('grid');
@@ -129,12 +177,13 @@
     cont.textContent = lista.length ? (lista.length + (lista.length === 1 ? ' restaurante' : ' restaurantes')) : '';
     if(!lista.length){ grid.innerHTML = ''; document.getElementById('estado').innerHTML = 'Ainda não há restaurantes por aqui.'; document.getElementById('estado').style.display = 'block'; return; }
     document.getElementById('estado').style.display = 'none';
-    grid.innerHTML = lista.map(function(n){
+    var cards = lista.map(function(n){
       var slug = String(n.slug || '').toLowerCase();
       var nome = n.nome || (n.config && n.config.header && n.config.header.titulo) || 'Restaurante';
       var foto = fotoDoConfig(n.config);
       var cor = corDoConfig(n.config);
       var sub = subDoConfig(n.config);
+      var tipo = tipoDoConfig(n.config);
       var inicial = esc((nome.trim()[0] || 'À').toUpperCase());
       var estiloFoto = foto ? ('background-image:url(\'' + esc(foto) + '\')') : (cor ? ('background:' + esc(cor)) : '');
       var cardapio = 'cardapio.html?n=' + encodeURIComponent(slug);
@@ -146,6 +195,7 @@
           '</a>' +
           '<div class="corpo">' +
             '<div class="nome">' + esc(nome) + '</div>' +
+            (tipo ? '<div class="tag">' + esc(tipo) + '</div>' : '') +
             '<div class="sub">' + esc(sub) + '</div>' +
             '<div class="acoes">' +
               '<a class="btn btn-menu" href="' + cardapio + '">Ver menu</a>' +
@@ -153,27 +203,37 @@
             '</div>' +
           '</div>' +
         '</article>';
-    }).join('');
+    });
+    var out = [];
+    cards.forEach(function(c, i){
+      out.push(c);
+      if((i + 1) % 6 === 0 && (i + 1) < cards.length && ADS.length){ out.push(adHTML(ADS[Math.floor(i / 6) % ADS.length])); }
+    });
+    grid.innerHTML = out.join('');
   }
 
-  function filtrar(){
+  function aplicar(){
     var q = (document.getElementById('busca').value || '').trim().toLowerCase();
-    if(!q){ render(TODOS); return; }
     render(TODOS.filter(function(n){
       var nome = (n.nome || (n.config && n.config.header && n.config.header.titulo) || '').toLowerCase();
       var sub = subDoConfig(n.config).toLowerCase();
-      return nome.indexOf(q) >= 0 || sub.indexOf(q) >= 0;
+      var tipo = tipoDoConfig(n.config);
+      var okBusca = !q || nome.indexOf(q) >= 0 || sub.indexOf(q) >= 0 || tipo.toLowerCase().indexOf(q) >= 0;
+      var okTipo = !filtroTipo || tipo === filtroTipo;
+      return okBusca && okTipo;
     }));
   }
 
-  document.getElementById('busca').addEventListener('input', filtrar);
+  document.getElementById('busca').addEventListener('input', aplicar);
 
   fetch(SUPA_URL + '/rest/v1/negocios?select=slug,nome,config&order=nome.asc', {
     headers: { apikey: SUPA_KEY, Authorization: 'Bearer ' + SUPA_KEY }
   }).then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); })
     .then(function(dados){
       TODOS = (dados || []).filter(function(n){ return n && n.slug && n.config && n.config.naApp === true; });
-      render(TODOS);
+      renderFiltros();
+      document.getElementById('adTopo').innerHTML = adHTML(ADS[0]);
+      aplicar();
     })
     .catch(function(err){
       document.getElementById('estado').innerHTML = 'Não foi possível carregar os restaurantes agora. Tenta atualizar a página.';
