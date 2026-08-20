@@ -271,6 +271,8 @@
         '<label style="margin-top:12px;">Funções ativas</label>' +
         '<div class="funcoes" data-funcoes></div>' +
         '<div class="linha-pub"><input type="checkbox" data-pub' + (pub.ativo ? ' checked' : '') + '> <label style="margin:0; color:var(--castanho); font-weight:600;">Mostrar publicidade neste negócio</label></div>' +
+        '<div class="linha-pub" style="background:#fff6f0; border:1.5px solid #c05a3a; border-radius:9px; padding:9px 11px;"><input type="checkbox" data-naapp' + ((n.config && n.config.naApp === true) ? ' checked' : '') + '> <label style="margin:0; color:#a3452b; font-weight:700;">🍽️ Mostrar na ÀMesa (montra pública)</label></div>' +
+        '<label style="margin-top:12px;">Tipo de cozinha (filtro da ÀMesa)</label><input type="text" data-tipo value="' + ((n.config && n.config.tipo) || '').replace(/"/g, '&quot;') + '" placeholder="Ex.: Português, Pizzaria, Sushi, Pastelaria…">' +
         '<div style="margin-top:12px; display:flex; gap:8px; align-items:center;">' +
           '<button class="acao" data-act="guardar">Guardar</button>' +
           '<a class="link" href="editar.html?n=' + n.slug + '" target="_blank">Abrir editor ↗</a>' +
@@ -498,6 +500,15 @@
     const box = div.querySelector('[data-msg]');
     const _upNeg = { dono_email: emailDono || null };
     if(nomeNovo) _upNeg.nome = nomeNovo;
+    // ÀMesa (decisão do administrador): visibilidade na montra + tipo de cozinha
+    { const _naEl = div.querySelector('[data-naapp]'); const _tpEl = div.querySelector('[data-tipo]');
+      let _cfg = n.config || {};
+      try{ const { data:fresh } = await sb.from('negocios').select('config').eq('id', n.id).maybeSingle(); if(fresh && fresh.config) _cfg = fresh.config; }catch(e){}
+      _cfg = Object.assign({}, _cfg);
+      _cfg.naApp = !!(_naEl && _naEl.checked);
+      _cfg.tipo = (_tpEl ? _tpEl.value : '').trim();
+      _upNeg.config = _cfg;
+    }
     const { error:eN } = await sb.from('negocios').update(_upNeg).eq('id', n.id);
     const { error } = await sb.from('entitlements').update({ plano:plano, funcoes:funcoes, publicidade:publicidade, atualizado_em:new Date().toISOString() }).eq('negocio_id', n.id);
     if(error || eN){ msg(box, 'Erro: ' + ((error||eN).message), 'erro'); } else { msg(box, 'Guardado ✓', 'ok'); carregar(); }
