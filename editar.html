@@ -757,7 +757,7 @@
 
   <!-- BARRA FIXA -->
   <details id="secRodape">
-    <summary>Barra fixa (fundo da página)</summary>
+    <summary>Rodapé (barra fixa do fundo do ecrã, sempre visível)</summary>
     <div class="bloco-conteudo">
       <div class="lembrar" style="margin-bottom:12px;">
         <input type="checkbox" id="rodapeMostrar" checked>
@@ -928,7 +928,7 @@
 
   <!-- RODAPÉ FINAL -->
   <details id="secFooter">
-    <summary>Rodapé final (só aparece ao fazer scroll até ao fim)</summary>
+    <summary>Scroll (aparece ao fazer scroll até ao fim da página)</summary>
     <div class="bloco-conteudo">
       <div class="lembrar" style="margin-bottom:12px;">
         <input type="checkbox" id="footerMostrar" checked>
@@ -1007,8 +1007,13 @@
         <label for="idiomasLocal" style="display:block; margin:10px 0 3px;">Mostrar o seletor de idiomas em:</label>
         <select id="idiomasLocal" style="padding:8px 10px; border-radius:8px; border:1.5px solid var(--linha); background:var(--branco); font-family:inherit; color:var(--castanho);">
           <option value="cabecalho">Cabeçalho</option>
-          <option value="rodape">Rodapé (final)</option>
+          <option value="rodape">Rodapé (barra de baixo, sempre visível)</option>
+          <option value="flutuante">Flutuante (arrastar para onde quiser)</option>
         </select>
+        <div id="idiomasFlutHint" style="display:none; margin-top:6px;">
+          <div class="subtitulo" style="margin:0;">📍 Mostra a pré-visualização e <b>arrasta</b> o seletor de idiomas para onde quiseres (ex.: por cima de um mosaico usado como título).</div>
+          <button type="button" id="reporIdiomasPos" style="margin-top:6px; padding:6px 12px; border:1.5px solid var(--linha); border-radius:8px; background:var(--branco); cursor:pointer; font:inherit; font-size:0.85rem;">↺ Repor posição</button>
+        </div>
       </div>
       <div class="lembrar" style="margin-top:8px;">
         <input type="checkbox" id="mostrarCamera" checked>
@@ -1026,9 +1031,9 @@
         <label for="redesLocal" style="display:block; margin:0 0 3px;">Mostrar as redes em:</label>
         <select id="redesLocal" style="padding:8px 10px; border-radius:8px; border:1.5px solid var(--linha); background:var(--branco); font-family:inherit; color:var(--castanho);">
           <option value="cabecalho">Cabeçalho</option>
-          <option value="rodape">Rodapé (final)</option>
+          <option value="rodape">Rodapé (barra de baixo, sempre visível)</option>
         </select>
-        <div class="subtitulo" style="margin:5px 0 0;">O rodapé final só aparece ao fazer scroll até ao fim, por isso tem de estar ligado.</div>
+        <div class="subtitulo" style="margin:5px 0 0;">"Rodapé" = a barra fixa do fundo do ecrã (sempre visível). Ideal para negócios sem cabeçalho. Tem de estar ligada.</div>
       </div>
     </div>
   </details>
