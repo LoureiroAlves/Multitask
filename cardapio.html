@@ -5382,10 +5382,11 @@
   // ==========================================================
   //  JOGO DO STOP — MULTIPLAYER (versão nova, Supabase direto)
   // ==========================================================
-  const MP_URL = window.SUPABASE_URL + '/rest/v1/';
+  // Multiplayer usa o MESMO projeto Supabase do menu/negócios (o antigo estava inativo)
+  const MP_URL = 'https://zewiijcrkyxjkhudlplk.supabase.co/rest/v1/';
   const MP_HEAD = {
-    'apikey': window.SUPABASE_KEY,
-    'Authorization': 'Bearer ' + window.SUPABASE_KEY,
+    'apikey': 'sb_publishable_6LP7x2v5c-c9DQkQslnUmA_g13SEjp3',
+    'Authorization': 'Bearer sb_publishable_6LP7x2v5c-c9DQkQslnUmA_g13SEjp3',
     'Content-Type': 'application/json'
   };
   async function mpGet(tabela, q){
