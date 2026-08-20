@@ -69,9 +69,12 @@
 
   .card .tag{ align-self:flex-start; margin-top:2px; background:#f3e7d6; color:var(--terra-esc); font-weight:800; font-size:.72rem; letter-spacing:.3px; padding:3px 9px; border-radius:999px; }
 
-  .ad-faixa{ position:relative; grid-column:1 / -1; border-radius:16px; overflow:hidden; border:1px dashed var(--gold); min-height:96px; display:block; }
+  /* Proporção fixa da caixa de publicidade: a imagem preenche sempre (recorte automático), em qualquer ecrã.
+     Proporção 3:1 (largura:altura). Construir imagens nesta proporção — ver medidas recomendadas. */
+  :root{ --ad-ratio: 3 / 1; }
+  .ad-faixa{ position:relative; grid-column:1 / -1; border-radius:16px; overflow:hidden; border:1px dashed var(--gold); aspect-ratio:var(--ad-ratio); display:block; }
   .ad-faixa img{ width:100%; height:100%; object-fit:cover; display:block; }
-  .ad-ph{ position:relative; grid-column:1 / -1; border:1px dashed var(--gold); border-radius:16px; background:repeating-linear-gradient(45deg, #fff8ec 0 12px, #fdf1dc 12px 24px); min-height:96px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; color:#b08a3a; }
+  .ad-ph{ position:relative; grid-column:1 / -1; border:1px dashed var(--gold); border-radius:16px; background:repeating-linear-gradient(45deg, #fff8ec 0 12px, #fdf1dc 12px 24px); aspect-ratio:var(--ad-ratio); display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; color:#b08a3a; }
   .ad-tag{ position:absolute; top:8px; left:8px; z-index:2; font-size:.62rem; font-weight:700; letter-spacing:.4px; text-transform:uppercase; color:#fff; background:rgba(0,0,0,0.55); padding:3px 8px; border-radius:6px; pointer-events:none; }
   .ad-ph .t{ font-family:'Playfair Display', serif; font-weight:700; font-size:1.05rem; }
   .ad-ph .s{ font-size:.82rem; font-weight:700; opacity:.8; }
