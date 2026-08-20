@@ -930,7 +930,10 @@
             <input type="number" id="masSubir" min="-40" max="200" step="2" value="0">
           </div>
         </div>
-        <div class="subtitulo" style="margin:6px 0 0;">"Subir" positivo levanta a imagem (sai mais para cima); "Largura" define o tamanho. O "Afastamento" não se aplica quando o lado é Centro.</div>
+        <input type="hidden" id="masDx" value="0">
+        <input type="hidden" id="masDy" value="0">
+        <div class="subtitulo" style="margin:6px 0 0;">Dica: na pré-visualização podes <b>arrastar a imagem</b> para a mover e <b>arrastar a pega azul do canto</b> para a redimensionar. Os campos acima são o ponto de partida.</div>
+        <button type="button" id="masReporPos" style="margin-top:8px;padding:6px 12px;border:1px solid var(--linha);border-radius:8px;background:#fff;cursor:pointer;font:inherit;">↺ Repor posição arrastada</button>
       </div>
     </div>
   </details>
@@ -1848,6 +1851,8 @@
       document.getElementById('masLargura').value = (_mc.largura != null) ? _mc.largura : 120;
       document.getElementById('masAfastX').value = (_mc.afastX != null) ? _mc.afastX : 10;
       document.getElementById('masSubir').value = (_mc.subir != null) ? _mc.subir : 0;
+      document.getElementById('masDx').value = (_mc.dx != null) ? _mc.dx : 0;
+      document.getElementById('masDy').value = (_mc.dy != null) ? _mc.dy : 0;
       filaMascote = null; if(typeof _mascotePrev === 'function') _mascotePrev();
     }
     const ch = config.header.cor || '#ffffff';
@@ -2646,7 +2651,9 @@
         lado: document.getElementById('masLado').value,
         largura: parseInt(document.getElementById('masLargura').value, 10) || 120,
         afastX: parseInt(document.getElementById('masAfastX').value, 10) || 0,
-        subir: parseInt(document.getElementById('masSubir').value, 10) || 0
+        subir: parseInt(document.getElementById('masSubir').value, 10) || 0,
+        dx: parseInt(document.getElementById('masDx').value, 10) || 0,
+        dy: parseInt(document.getElementById('masDy').value, 10) || 0
       };
       config.header.cor = (document.getElementById('hTitCor') ? document.getElementById('hTitCor').value : (config.header.cor || '#ffffff'));
       config.header.estiloTitulo = lerEstilo('hTit');
@@ -4368,7 +4375,19 @@
         else if(d.alvo === 'redes') config.redesPos = { x:d.x, y:d.y };
         if(window.__agendarPreview) window.__agendarPreview();
       }
+      else if(d.type === 'mascote-pos'){
+        const _dx = document.getElementById('masDx'), _dy = document.getElementById('masDy');
+        if(_dx && d.dx != null) _dx.value = d.dx;
+        if(_dy && d.dy != null) _dy.value = d.dy;
+        if(window.__agendarPreview) window.__agendarPreview();
+      }
+      else if(d.type === 'mascote-size'){
+        const _lg = document.getElementById('masLargura');
+        if(_lg && d.largura != null) _lg.value = d.largura;
+        if(window.__agendarPreview) window.__agendarPreview();
+      }
     });
+    { const _mr = document.getElementById('masReporPos'); if(_mr) _mr.addEventListener('click', function(){ document.getElementById('masDx').value = 0; document.getElementById('masDy').value = 0; if(window.__agendarPreview) window.__agendarPreview(); }); }
     document.addEventListener('input', agendarEnvio);
     document.addEventListener('change', agendarEnvio);
     const btn = document.getElementById('btnAtualizarPreview');
