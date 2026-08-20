@@ -79,6 +79,7 @@
   .ad-faixa.ad-png img{ width:100%; max-width:100%; height:auto; object-fit:contain; display:inline-block; margin:0 auto; }
   .ad-ph{ position:relative; grid-column:1 / -1; border:1px dashed var(--gold); border-radius:16px; background:repeating-linear-gradient(45deg, #fff8ec 0 12px, #fdf1dc 12px 24px); aspect-ratio:var(--ad-ratio); display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; color:#b08a3a; }
   .ad-tag{ position:absolute; top:8px; left:8px; z-index:2; font-size:.62rem; font-weight:700; letter-spacing:.4px; text-transform:uppercase; color:#fff; background:rgba(0,0,0,0.55); padding:3px 8px; border-radius:6px; pointer-events:none; }
+  .ad-slot{ grid-column:1 / -1; transition:opacity .38s ease; }
   .ad-ph .t{ font-family:'Playfair Display', serif; font-weight:700; font-size:1.05rem; }
   .ad-ph .s{ font-size:.82rem; font-weight:700; opacity:.8; }
   .ad-topo{ margin-top:20px; }
@@ -153,6 +154,7 @@
   // Cada anúncio: { img, titulo, sub, slug (restaurante da ÀMesa) | link (externo) }
   var AMESA_SLUG = '__amesa__';
   var ADS = [];
+  var ADS_INT = 5;   // segundos entre trocas (definido no painel)
   var AD_TAG = '<span class="ad-tag">Publicidade</span>';
   function adHTML(ad){
     if(!ad) return '';
@@ -218,11 +220,33 @@
         '</article>';
     });
     var out = [];
+    var slot = 1;   // 0 é a faixa de topo; os espaços entre cards seguem-se
     cards.forEach(function(c, i){
       out.push(c);
-      if((i + 1) % 6 === 0 && (i + 1) < cards.length && ADS.length){ out.push(adHTML(ADS[Math.floor(i / 6) % ADS.length])); }
+      if((i + 1) % 6 === 0 && (i + 1) < cards.length && ADS.length){ out.push('<div class="ad-slot" data-off="' + (slot++) + '"></div>'); }
     });
     grid.innerHTML = out.join('');
+    pintarAds();
+  }
+
+  // === Rotação/carrossel de publicidade (intervalo definido no painel) ===
+  var adTick = 0, adTimer = null;
+  function pintarAds(){
+    if(!ADS.length) return;
+    document.querySelectorAll('.ad-slot').forEach(function(sl){
+      var off = parseInt(sl.getAttribute('data-off'), 10) || 0;
+      sl.innerHTML = adHTML(ADS[(off + adTick) % ADS.length]);
+    });
+  }
+  function rodarAds(){
+    if(adTimer){ clearInterval(adTimer); adTimer = null; }
+    if(ADS.length > 1 && ADS_INT > 0){
+      adTimer = setInterval(function(){
+        var slots = document.querySelectorAll('.ad-slot');
+        slots.forEach(function(s){ s.style.opacity = '0'; });
+        setTimeout(function(){ adTick++; pintarAds(); slots.forEach(function(s){ s.style.opacity = '1'; }); }, 380);
+      }, ADS_INT * 1000);
+    }
   }
 
   function aplicar(){
@@ -248,10 +272,13 @@
       ADS = (reservado && reservado.config && Array.isArray(reservado.config.ads))
         ? reservado.config.ads.filter(function(a){ return a && (a.img || a.titulo); })
         : [];
+      ADS_INT = (reservado && reservado.config && reservado.config.adsIntervalo > 0) ? reservado.config.adsIntervalo : 5;
       TODOS = dados.filter(function(n){ return n && n.slug && n.slug !== AMESA_SLUG && n.config && n.config.naApp === true; });
       renderFiltros();
-      document.getElementById('adTopo').innerHTML = ADS.length ? adHTML(ADS[0]) : '';
-      aplicar();
+      document.getElementById('adTopo').innerHTML = ADS.length ? '<div class="ad-slot" data-off="0"></div>' : '';
+      aplicar();          // renderiza os cards + pinta os anúncios
+      pintarAds();        // garante a faixa de topo preenchida
+      rodarAds();         // arranca o carrossel se houver mais que um anúncio
     })
     .catch(function(err){
       document.getElementById('estado').innerHTML = 'Não foi possível carregar os restaurantes agora. Tenta atualizar a página.';

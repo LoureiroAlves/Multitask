@@ -114,7 +114,13 @@
       </div>
       <div style="font-size:.82rem; color:#9a8b6f; margin:6px 0 10px;">Anúncios que aparecem na montra pública (faixa no topo e entre os restaurantes). Cada anúncio pode abrir um restaurante da ÀMesa ou um link externo.</div>
       <div id="adsLista"></div>
-      <div style="display:flex; gap:8px; align-items:center; margin-top:10px; flex-wrap:wrap;">
+      <div style="display:flex; align-items:center; gap:10px; margin-top:12px; padding-top:10px; border-top:1px dashed var(--linha); flex-wrap:wrap;">
+        <label for="adsIntervalo" style="margin:0;">⏱ Trocar de publicidade a cada</label>
+        <input type="number" id="adsIntervalo" min="2" max="60" step="1" value="5" style="width:80px;">
+        <span style="font-size:.85rem; color:#9a8b6f;">segundos</span>
+      </div>
+      <div class="subtitulo" style="margin:6px 0 0; font-size:.8rem; color:#9a8b6f;">Com vários anúncios, eles vão rodando automaticamente neste intervalo (na faixa de topo e nos espaços entre restaurantes).</div>
+      <div style="display:flex; gap:8px; align-items:center; margin-top:12px; flex-wrap:wrap;">
         <button class="mini" id="adAdicionar">➕ Adicionar anúncio</button>
         <button class="acao" id="adGuardar">Guardar publicidade</button>
       </div>
@@ -252,7 +258,11 @@
     // separar a linha reservada da publicidade dos negócios reais
     const negs = (negsRaw||[]).filter(function(n){ return n.slug !== AMESA_SLUG; });
     NEGS_VIS = negs;
-    { const _amesa = (negsRaw||[]).find(function(n){ return n.slug === AMESA_SLUG; }); renderAds(_amesa && _amesa.config && Array.isArray(_amesa.config.ads) ? _amesa.config.ads : null); }
+    { const _amesa = (negsRaw||[]).find(function(n){ return n.slug === AMESA_SLUG; });
+      const _acfg = (_amesa && _amesa.config) || {};
+      renderAds(Array.isArray(_acfg.ads) ? _acfg.ads : null);
+      const _iv = document.getElementById('adsIntervalo'); if(_iv) _iv.value = (_acfg.adsIntervalo && _acfg.adsIntervalo > 0) ? _acfg.adsIntervalo : 5;
+    }
     // preencher o seletor de "Duplicar negócio"
     { const sel = $('dupOrigem'); if(sel){ const atual = sel.value; sel.innerHTML = '<option value="">— escolher —</option>'; negs.forEach(function(n){ const o = document.createElement('option'); o.value = n.slug; o.textContent = n.nome + ' (/' + n.slug + ')'; sel.appendChild(o); }); sel.value = atual; } }
     const { data:ents } = await sb.from('entitlements').select('*');
@@ -731,15 +741,16 @@
   async function guardarAds(){
     const ads = ADS_EDIT.filter(function(a){ return a && (a.img || a.titulo || a.sub || a.slug || a.link); })
       .map(function(a){ return { img: a.img || '', titulo: a.titulo || '', sub: a.sub || '', slug: a.slug || '', link: a.slug ? '' : (a.link || ''), escala: (a.escala && a.escala > 0 && a.escala < 100) ? a.escala : 100 }; });
+    const intervalo = Math.max(2, Math.min(60, parseInt(($('adsIntervalo') || {}).value, 10) || 5));
     $('adGuardar').disabled = true; msg($('adsMsg'), 'A guardar…', 'ok');
     const { data:existe, error:eGet } = await sb.from('negocios').select('id,config').eq('slug', AMESA_SLUG).maybeSingle();
     if(eGet){ $('adGuardar').disabled = false; msg($('adsMsg'), 'Erro: ' + eGet.message, 'erro'); return; }
     let error;
     if(existe){
-      const cfg = Object.assign({}, existe.config || {}); cfg.ads = ads; cfg.naApp = false;
+      const cfg = Object.assign({}, existe.config || {}); cfg.ads = ads; cfg.adsIntervalo = intervalo; cfg.naApp = false;
       ({ error } = await sb.from('negocios').update({ config:cfg }).eq('id', existe.id));
     } else {
-      ({ error } = await sb.from('negocios').insert({ nome:'ÀMesa — Publicidade', slug:AMESA_SLUG, config:{ ads:ads, naApp:false }, menu:{} }));
+      ({ error } = await sb.from('negocios').insert({ nome:'ÀMesa — Publicidade', slug:AMESA_SLUG, config:{ ads:ads, adsIntervalo:intervalo, naApp:false }, menu:{} }));
     }
     $('adGuardar').disabled = false;
     if(error){ msg($('adsMsg'), 'Erro: ' + error.message, 'erro'); }
