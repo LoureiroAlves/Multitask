@@ -126,6 +126,27 @@
 
   function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]; }); }
 
+  // === Métricas (conta cada evento; usa a função inc_metrica do Supabase) ===
+  function incMetrica(slug, tipo){
+    if(!slug) return;
+    try{
+      fetch(SUPA_URL + '/rest/v1/rpc/inc_metrica', {
+        method: 'POST',
+        headers: { apikey: SUPA_KEY, Authorization: 'Bearer ' + SUPA_KEY, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ p_slug: slug, p_tipo: tipo }),
+        keepalive: true
+      }).catch(function(){});
+    }catch(e){}
+  }
+  // Observa os espaços de publicidade e conta uma impressão sempre que um anúncio fica visível
+  var adIO = ('IntersectionObserver' in window) ? new IntersectionObserver(function(ents){
+    ents.forEach(function(en){
+      var sl = en.target;
+      sl._vis = en.isIntersecting;
+      if(en.isIntersecting && sl._adId){ incMetrica('ad:' + sl._adId, 'view'); }
+    });
+  }, { threshold: 0.4 }) : null;
+
   function fotoDoConfig(cfg){
     try{
       if(!cfg) return '';
@@ -205,7 +226,7 @@
       var cardapio = 'cardapio.html?n=' + encodeURIComponent(slug);
       var reservas = 'reservas.html?n=' + encodeURIComponent(slug);
       return '' +
-        '<article class="card">' +
+        '<article class="card" data-slug="' + esc(slug) + '">' +
           '<a class="foto" style="' + estiloFoto + '" href="' + cardapio + '" aria-label="' + esc(nome) + '">' +
             (foto ? '' : '<span class="inicial">' + inicial + '</span>') +
           '</a>' +
@@ -231,11 +252,17 @@
 
   // === Rotação/carrossel de publicidade (intervalo definido no painel) ===
   var adTick = 0, adTimer = null;
-  function pintarAds(){
+  function _adId(ad, idx){ return (ad && ad.id) ? ad.id : ('a' + idx); }
+  function pintarAds(contar){
     if(!ADS.length) return;
     document.querySelectorAll('.ad-slot').forEach(function(sl){
       var off = parseInt(sl.getAttribute('data-off'), 10) || 0;
-      sl.innerHTML = adHTML(ADS[(off + adTick) % ADS.length]);
+      var idx = (off + adTick) % ADS.length;
+      var ad = ADS[idx];
+      sl.innerHTML = adHTML(ad);
+      sl._adId = _adId(ad, idx);
+      if(adIO) adIO.observe(sl);
+      if(contar && sl._vis){ incMetrica('ad:' + sl._adId, 'view'); }
     });
   }
   function rodarAds(){
@@ -244,7 +271,7 @@
       adTimer = setInterval(function(){
         var slots = document.querySelectorAll('.ad-slot');
         slots.forEach(function(s){ s.style.opacity = '0'; });
-        setTimeout(function(){ adTick++; pintarAds(); slots.forEach(function(s){ s.style.opacity = '1'; }); }, 380);
+        setTimeout(function(){ adTick++; pintarAds(true); slots.forEach(function(s){ s.style.opacity = '1'; }); }, 380);
       }, ADS_INT * 1000);
     }
   }
@@ -262,6 +289,15 @@
   }
 
   document.getElementById('busca').addEventListener('input', aplicar);
+
+  // Cliques: restaurante (via card) e publicidade (via slot). Conta antes de o link navegar.
+  document.addEventListener('click', function(e){
+    var t = e.target;
+    var sl = t.closest ? t.closest('.ad-slot') : null;
+    if(sl && sl._adId && (t.closest('a') || t.closest('.ad-faixa') || t.closest('.ad-ph'))){ incMetrica('ad:' + sl._adId, 'click'); return; }
+    var card = t.closest ? t.closest('.card[data-slug]') : null;
+    if(card && t.closest('a')){ incMetrica(card.getAttribute('data-slug'), 'amesa'); }
+  }, true);
 
   fetch(SUPA_URL + '/rest/v1/negocios?select=slug,nome,config&order=nome.asc', {
     headers: { apikey: SUPA_KEY, Authorization: 'Bearer ' + SUPA_KEY }

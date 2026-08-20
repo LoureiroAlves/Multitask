@@ -1,1 +1,175 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Estatísticas — Multitask</title>
+<style>
+  :root{ --castanho:#3a2c18; --dourado:#a8712f; --dourado-escuro:#6b4a1f; --bege-claro:#fbf8f2; --linha:#e3d9c4; --verde:#2e9b57; --vermelho:#c0392b; --azul:#2a5aa8; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; background:var(--bege-claro); color:var(--castanho); }
+  header.top{ background:var(--castanho); color:#fff; padding:14px 18px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; }
+  header.top h1{ font-size:1.15rem; margin:0; font-weight:700; }
+  header.top a, header.top button{ background:rgba(255,255,255,.15); color:#fff; border:none; border-radius:8px; padding:8px 12px; cursor:pointer; font-size:.85rem; text-decoration:none; }
+  .wrap{ max-width:1000px; margin:0 auto; padding:18px 16px 60px; }
+  .card{ background:#fff; border:1px solid var(--linha); border-radius:14px; padding:16px; margin-bottom:14px; }
+  input{ width:100%; padding:10px 12px; border:1.5px solid var(--linha); border-radius:9px; font-family:inherit; font-size:.95rem; color:var(--castanho); background:#fff; }
+  label{ font-size:.82rem; font-weight:600; color:var(--dourado-escuro); display:block; margin:10px 0 4px; }
+  button.acao{ background:var(--dourado); color:#fff; border:none; border-radius:10px; padding:11px 16px; font-weight:700; cursor:pointer; font-size:.95rem; }
+  .msg{ font-size:.85rem; padding:8px 10px; border-radius:8px; margin-top:8px; }
+  .msg.erro{ background:#fbe7e4; color:var(--vermelho); }
+  .hide{ display:none; }
+  .kpis{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-bottom:14px; }
+  .kpi{ background:#fff; border:1px solid var(--linha); border-radius:14px; padding:14px 16px; }
+  .kpi .n{ font-size:1.7rem; font-weight:800; color:var(--dourado-escuro); }
+  .kpi .l{ font-size:.8rem; color:#8a7a5c; font-weight:600; margin-top:2px; }
+  .card h2{ margin:0 0 12px; font-size:1rem; }
+  .grafico-wrap{ position:relative; height:300px; }
+  .vazio{ color:#9a8b6f; font-size:.9rem; }
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>📊 Multitask — Estatísticas</h1>
+  <div style="display:flex; gap:8px;">
+    <a href="painel.html">← Painel</a>
+    <button id="btnRecarregar" class="hide">↻ Recarregar</button>
+    <button id="btnSair" class="hide">Sair</button>
+  </div>
+</header>
 
+<div class="wrap">
+  <div class="card" id="loginCard">
+    <h2 style="margin:0 0 4px; font-size:1.1rem;">Entrar</h2>
+    <p style="margin:0 0 8px; font-size:.85rem; color:#9a8b6f;">Acesso de administrador.</p>
+    <label for="email">Email</label>
+    <input type="email" id="email" placeholder="o-teu-email@exemplo.com" autocomplete="username">
+    <label for="pass">Password</label>
+    <input type="password" id="pass" placeholder="••••••••" autocomplete="current-password">
+    <div style="margin-top:14px;"><button class="acao" id="btnEntrar">Entrar</button></div>
+    <div id="loginMsg"></div>
+  </div>
+
+  <div id="painel" class="hide">
+    <div class="kpis" id="kpis"></div>
+    <div class="card"><h2>👁 Visitas ao menu (por restaurante)</h2><div class="grafico-wrap"><canvas id="gVisitas"></canvas></div></div>
+    <div class="card"><h2>🔗 Cliques a partir da ÀMesa (por restaurante)</h2><div class="grafico-wrap"><canvas id="gAmesa"></canvas></div></div>
+    <div class="card"><h2>📢 Publicidade — visualizações e cliques (por anúncio)</h2><div class="grafico-wrap"><canvas id="gAds"></canvas></div><div id="adsVazio" class="vazio hide" style="margin-top:8px;">Ainda não há dados de publicidade.</div></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+  const SUPABASE_URL = 'https://zewiijcrkyxjkhudlplk.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_6LP7x2v5c-c9DQkQslnUmA_g13SEjp3';
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  const AMESA_SLUG = '__amesa__';
+  const $ = function(id){ return document.getElementById(id); };
+  function msg(el, txt){ el.innerHTML = '<div class="msg erro">' + txt + '</div>'; }
+
+  $('btnEntrar').onclick = entrar;
+  $('pass').addEventListener('keydown', function(e){ if(e.key === 'Enter') entrar(); });
+  $('btnSair').onclick = async function(){ await sb.auth.signOut(); location.reload(); };
+  $('btnRecarregar').onclick = carregar;
+
+  async function entrar(){
+    const email = $('email').value.trim(), pass = $('pass').value;
+    if(!email || !pass){ msg($('loginMsg'), 'Preenche o email e a password.'); return; }
+    $('btnEntrar').disabled = true;
+    const { error } = await sb.auth.signInWithPassword({ email:email, password:pass });
+    $('btnEntrar').disabled = false;
+    if(error){ msg($('loginMsg'), 'Erro: ' + error.message); return; }
+    verificar();
+  }
+  async function verificar(){
+    const { data:{ session } } = await sb.auth.getSession();
+    if(!session) return;
+    const { data:adminRows, error } = await sb.from('admins').select('user_id').eq('user_id', session.user.id);
+    if(error || !adminRows || !adminRows.length){ msg($('loginMsg'), 'Esta conta não é administrador.'); await sb.auth.signOut(); return; }
+    $('loginCard').classList.add('hide');
+    $('painel').classList.remove('hide');
+    $('btnSair').classList.remove('hide');
+    $('btnRecarregar').classList.remove('hide');
+    carregar();
+  }
+
+  let charts = {};
+  function pintar(id, cfg){ if(charts[id]) charts[id].destroy(); charts[id] = new Chart($(id).getContext('2d'), cfg); }
+  const COR1 = '#a8712f', COR2 = '#2a5aa8', COR3 = '#2e9b57';
+
+  async function carregar(){
+    // Métricas + negócios (nomes e anúncios)
+    const { data:mets } = await sb.from('metricas').select('slug,tipo,total');
+    const { data:negs } = await sb.from('negocios').select('slug,nome,config');
+    const nomePorSlug = {}; let adsDef = [];
+    (negs || []).forEach(function(n){
+      if(n.slug === AMESA_SLUG){ if(n.config && Array.isArray(n.config.ads)) adsDef = n.config.ads; }
+      else nomePorSlug[n.slug] = n.nome || n.slug;
+    });
+    const tituloAd = {};
+    adsDef.forEach(function(a, i){ if(a && a.id){ tituloAd[a.id] = a.titulo || (a.slug ? ('→ ' + (nomePorSlug[a.slug] || a.slug)) : ('Anúncio ' + (i + 1))); } });
+
+    // Agregar
+    const menu = {}, amesa = {}, adView = {}, adClick = {};
+    let totMenu = 0, totAmesa = 0, totView = 0, totClick = 0;
+    (mets || []).forEach(function(m){
+      const s = m.slug || '', t = m.tipo, v = m.total || 0;
+      if(s.indexOf('ad:') === 0){
+        const id = s.slice(3);
+        if(t === 'view'){ adView[id] = (adView[id] || 0) + v; totView += v; }
+        else if(t === 'click'){ adClick[id] = (adClick[id] || 0) + v; totClick += v; }
+      } else if(s === AMESA_SLUG){ /* ignora */ }
+      else {
+        if(t === 'menu'){ menu[s] = (menu[s] || 0) + v; totMenu += v; }
+        else if(t === 'amesa'){ amesa[s] = (amesa[s] || 0) + v; totAmesa += v; }
+      }
+    });
+
+    // KPIs
+    const ctr = totView ? Math.round((totClick / totView) * 1000) / 10 : 0;
+    $('kpis').innerHTML =
+      kpi(totMenu, 'Visitas ao menu') + kpi(totAmesa, 'Cliques ÀMesa') +
+      kpi(totView, 'Publicidade vista') + kpi(totClick, 'Cliques na publicidade') +
+      kpi(ctr + '%', 'Taxa de clique (CTR)');
+
+    // Gráfico: visitas ao menu
+    barra('gVisitas', ordenar(menu, nomePorSlug), 'Visitas', COR1);
+    // Gráfico: cliques ÀMesa
+    barra('gAmesa', ordenar(amesa, nomePorSlug), 'Cliques', COR2);
+
+    // Gráfico: anúncios (views vs cliques)
+    const ids = Object.keys(tituloAd).length ? Object.keys(tituloAd) : Object.keys(Object.assign({}, adView, adClick));
+    if(!ids.length){ $('adsVazio').classList.remove('hide'); if(charts.gAds) charts.gAds.destroy(); }
+    else {
+      $('adsVazio').classList.add('hide');
+      const labels = ids.map(function(id){ return tituloAd[id] || id; });
+      pintar('gAds', {
+        type:'bar',
+        data:{ labels:labels, datasets:[
+          { label:'Visualizações', data:ids.map(function(id){ return adView[id] || 0; }), backgroundColor:COR1 },
+          { label:'Cliques', data:ids.map(function(id){ return adClick[id] || 0; }), backgroundColor:COR3 }
+        ] },
+        options:{ responsive:true, maintainAspectRatio:false, scales:{ y:{ beginAtZero:true, ticks:{ precision:0 } } } }
+      });
+    }
+  }
+
+  function kpi(n, l){ return '<div class="kpi"><div class="n">' + n + '</div><div class="l">' + l + '</div></div>'; }
+  function ordenar(mapa, nomes){
+    return Object.keys(mapa).map(function(s){ return { label:(nomes[s] || s), v:mapa[s] }; })
+      .sort(function(a, b){ return b.v - a.v; }).slice(0, 15);
+  }
+  function barra(id, arr, rotulo, cor){
+    if(!arr.length){ if(charts[id]) charts[id].destroy(); return; }
+    pintar(id, {
+      type:'bar',
+      data:{ labels:arr.map(function(x){ return x.label; }), datasets:[{ label:rotulo, data:arr.map(function(x){ return x.v; }), backgroundColor:cor }] },
+      options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } }, scales:{ y:{ beginAtZero:true, ticks:{ precision:0 } } } }
+    });
+  }
+
+  verificar();
+</script>
+</body>
+</html>
