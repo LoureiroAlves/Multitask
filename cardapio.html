@@ -4321,7 +4321,8 @@
       if(agb) agb.style.display = (window._agenda && config.mostrarAgendaIcon !== false) ? 'flex' : 'none';
       // Ícones do topo: câmara e traduções (ligar/desligar pelo dono)
       { const cam = document.getElementById('linkCamera'); if(cam) cam.style.display = (config.mostrarCamera === false) ? 'none' : ''; }
-      { const ls = document.getElementById('langSwitch'); if(ls && config.mostrarTraducoes === false) ls.style.display = 'none'; else if(ls && !window.__semTraducoes) ls.style.display = ''; }
+      // A visibilidade/localização dos idiomas é decidida por _colocarExtras (cabeçalho/rodapé/flutuante). Aqui só escondemos se estiver desligado.
+      { const ls = document.getElementById('langSwitch'); if(ls && (config.mostrarTraducoes === false || window.__semTraducoes)) ls.style.display = 'none'; }
       // Cor dos números do calendário (legibilidade conforme o layout)
       if(config.agenda && config.agenda.corTexto){ document.documentElement.style.setProperty('--ag-cor-num', config.agenda.corTexto); }
       else { document.documentElement.style.removeProperty('--ag-cor-num'); }
