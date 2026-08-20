@@ -664,7 +664,11 @@
         <div id="neonOpts" style="display:none; margin:8px 0 4px; padding:10px; border:1.5px solid var(--linha); border-radius:9px;">
           <label for="introNeonTopo" style="margin-top:0;">Palavra em cima (letreiro néon)</label>
           <input type="text" id="introNeonTopo" placeholder="ABERTO">
-          <div class="ajuda" style="margin-top:6px;">Texto que brilha por cima do nome (ex.: ABERTO, WELCOME, BEM-VINDO). Deixa vazio para não mostrar. O nome usa o "Título da abertura" abaixo; podes arrastar cada texto na pré-visualização.</div>
+          <div style="display:flex; gap:18px; flex-wrap:wrap; margin-top:10px;">
+            <label style="display:flex; align-items:center; gap:8px; margin:0;">Cor da caixa <input type="color" id="introNeonCorCaixa" value="#35e0ff" style="width:44px; height:30px; padding:0; border:none; background:none; cursor:pointer;"></label>
+            <label style="display:flex; align-items:center; gap:8px; margin:0;">Cor das palavras <input type="color" id="introNeonCorTexto" value="#ff4fa3" style="width:44px; height:30px; padding:0; border:none; background:none; cursor:pointer;"></label>
+          </div>
+          <div class="ajuda" style="margin-top:6px;">Texto que brilha por cima do nome (ex.: ABERTO, WELCOME, BEM-VINDO). Deixa vazio para não mostrar. Escolhe a cor do brilho da moldura e das palavras. Podes arrastar cada texto na pré-visualização.</div>
         </div>
 
         <label for="introTitulo">Título da abertura</label>
@@ -1756,6 +1760,8 @@
       const _pp = document.getElementById('pontePeriodo'); if(_pp) _pp.value = (config.intro && config.intro.ponteDia) ? 'dia' : 'noite';
       const _pvI = document.getElementById('introPessoaVerso'); if(_pvI) _pvI.value = (config.intro && config.intro.pessoaVerso != null) ? config.intro.pessoaVerso : 'o poeta é um fingidor';
       const _ntI = document.getElementById('introNeonTopo'); if(_ntI) _ntI.value = (config.intro && config.intro.neonTopo != null) ? config.intro.neonTopo : 'ABERTO';
+      const _ncc = document.getElementById('introNeonCorCaixa'); if(_ncc) _ncc.value = (config.intro && config.intro.neonCorCaixa) || '#35e0ff';
+      const _nct = document.getElementById('introNeonCorTexto'); if(_nct) _nct.value = (config.intro && config.intro.neonCorTexto) || '#ff4fa3';
       const _po = document.getElementById('pontarOpts'); if(_po) _po.style.display = (_tp === 'ponte') ? 'block' : 'none';
       const _peo = document.getElementById('pessoaOpts'); if(_peo) _peo.style.display = (_tp === 'pessoa') ? 'block' : 'none';
       const _neo = document.getElementById('neonOpts'); if(_neo) _neo.style.display = (_tp === 'neon') ? 'block' : 'none'; }
@@ -2784,6 +2790,8 @@
         ponteDia: !!(document.getElementById('pontePeriodo') && document.getElementById('pontePeriodo').value === 'dia'),
         pessoaVerso: (document.getElementById('introPessoaVerso') ? document.getElementById('introPessoaVerso').value : ''),
         neonTopo: (document.getElementById('introNeonTopo') ? document.getElementById('introNeonTopo').value : 'ABERTO'),
+        neonCorCaixa: (document.getElementById('introNeonCorCaixa') ? document.getElementById('introNeonCorCaixa').value : '#35e0ff'),
+        neonCorTexto: (document.getElementById('introNeonCorTexto') ? document.getElementById('introNeonCorTexto').value : '#ff4fa3'),
         foto: (config.intro && config.intro.foto) || ''
       };
       config.fidelidade = {
