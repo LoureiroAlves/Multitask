@@ -7,7 +7,7 @@
 <style>
   /* ===== Ecrã de abertura / cortina de carregamento ===== */
   /* Enquanto carrega, esconde tudo menos o ecrã de abertura (evita flash da barra fixa/cabeçalho ao abrir a app) */
-  body.carregando > *:not(#introOverlay){ visibility:hidden !important; }
+  body.carregando > *:not(#introOverlay):not(.flutua){ visibility:hidden !important; }
   #introOverlay{ position:fixed; inset:0; z-index:99999; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:24px; overflow:hidden; background:var(--intro-bg,#1f2530); }
   #introOverlay.animar{ background:linear-gradient(140deg, var(--castanho,#3a2c18) 0%, var(--dourado-escuro,#6b4a1f) 55%, var(--dourado,#a8712f) 100%); background-size:200% 200%; animation:introGrad 9s ease infinite; }
   @keyframes introGrad{ 0%{background-position:0% 50%;} 50%{background-position:100% 50%;} 100%{background-position:0% 50%;} }
@@ -2505,12 +2505,11 @@
       else el.textContent = texto;
     });
 
-    langButtons.forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
+    document.querySelectorAll('.lang-switch button').forEach(function(b){ b.classList.toggle('active', b.dataset.lang === lang); });
   }
 
-  langButtons.forEach(b => {
-    b.addEventListener('click', () => aplicarIdioma(b.dataset.lang));
-  });
+  // Delegação: qualquer botão de idioma (mesmo em cópias no rodapé/flutuante) muda o idioma
+  document.addEventListener('click', function(e){ var b = (e.target && e.target.closest) ? e.target.closest('.lang-switch button[data-lang]') : null; if(b) aplicarIdioma(b.dataset.lang); });
 
   aplicarIdioma(idiomaAtual);
 
@@ -2795,18 +2794,42 @@
     el.addEventListener('click', function(ev){ if(moveu){ ev.preventDefault(); ev.stopPropagation(); } }, true);
   }
   // Coloca um ícone (idiomas/redes) conforme a localização: cabeçalho / rodapé (barra fixa) / flutuante
-  function _colocarExtra(el, local, pos, def, alvo){
-    if(!el) return;
-    if(local !== 'flutuante'){ el.classList.remove('flutua'); el.style.position = ''; el.style.left = ''; el.style.top = ''; el.style.right = ''; el.style.bottom = ''; el.style.cursor = ''; }
-    if(local === 'flutuante'){
-      _flutuaColocar(el, pos, def, alvo);
-    } else if(local === 'rodape'){
-      var _b = document.getElementById('barraExtras'); if(_b && el.parentNode !== _b) _b.appendChild(el);
-    } else {
-      if(alvo === 'idiomas'){ var _h = document.querySelector('header .header-icons'); if(_h && el.parentNode !== _h) _h.appendChild(el); }
-      else { var _s = document.querySelector('header .social-links'); if(_s && el.parentNode !== _s) _s.insertBefore(el, _s.firstChild); }
+  function _limparEstiloFlutua(el){ el.classList.remove('flutua'); el.style.position=''; el.style.left=''; el.style.top=''; el.style.right=''; el.style.bottom=''; el.style.cursor=''; }
+  function _cloneExtra(el){ var c = el.cloneNode(true); c.id=''; c.setAttribute('data-extra-clone','1'); _limparEstiloFlutua(c); c.style.display=''; return c; }
+  // Coloca idiomas e redes nos sítios ativos (cabeçalho / rodapé / flutuante) — pode ser em vários ao mesmo tempo
+  function _colocarExtras(config){
+    document.querySelectorAll('[data-extra-clone]').forEach(function(n){ n.remove(); });
+    var _ls = document.getElementById('langSwitch');
+    var _rd = document.getElementById('redesIcones');
+    var _hdr = document.querySelector('header .header-icons');
+    var _soc = document.querySelector('header .social-links');
+    var _barra = document.getElementById('barraExtras');
+    var _redesOn = (config.mostrarRedes !== false);
+    var _anyR = _redesOn && !!(window.__redes && (window.__redes.facebook || window.__redes.instagram || String(window.__redes.whatsapp || '').replace(/\D/g, '')));
+    var _langOn = (config.mostrarTraducoes !== false) && !window.__semTraducoes;
+    function _locs(prefix, oldVal){
+      var cab = config[prefix + 'Cab'], rod = config[prefix + 'Rod'], flu = config[prefix + 'Flu'];
+      if(cab === undefined && rod === undefined && flu === undefined){ cab = (!oldVal || oldVal === 'cabecalho'); rod = (oldVal === 'rodape'); flu = (oldVal === 'flutuante'); }
+      return { cab:!!cab, rod:!!rod, flu:!!flu };
     }
-    var _b2 = document.getElementById('barraExtras'); if(_b2) _b2.classList.toggle('on', _b2.children.length > 0);
+    var idi = _locs('idiomas', config.idiomasLocal);
+    var red = _locs('redes', config.redesLocal);
+    if(_ls){
+      _limparEstiloFlutua(_ls);
+      if(_hdr && _ls.parentNode !== _hdr) _hdr.appendChild(_ls);
+      _ls.style.display = (_langOn && idi.cab) ? '' : 'none';
+      if(_langOn && idi.rod && _barra) _barra.appendChild(_cloneExtra(_ls));
+      if(_langOn && idi.flu) _flutuaColocar(_cloneExtra(_ls), config.idiomasPos, { x:64, y:2 }, 'idiomas');
+    }
+    if(_rd){
+      _limparEstiloFlutua(_rd);
+      if(_soc && _rd.parentNode !== _soc) _soc.insertBefore(_rd, _soc.firstChild);
+      _rd.style.display = (_anyR && red.cab) ? '' : 'none';
+      if(_anyR && red.rod && _barra) _barra.appendChild(_cloneExtra(_rd));
+      if(_anyR && red.flu) _flutuaColocar(_cloneExtra(_rd), config.redesPos, { x:4, y:2 }, 'redes');
+    }
+    if(_barra) _barra.classList.toggle('on', _barra.children.length > 0);
+    try{ document.querySelectorAll('.lang-switch button').forEach(function(b){ b.classList.toggle('active', b.dataset.lang === idiomaAtual); }); }catch(e){}
   }
 
   function construirMenu(menu){
@@ -3876,8 +3899,7 @@
             }
           }catch(e){}
         }
-        _colocarExtra(_ls, (config.idiomasLocal || 'cabecalho'), config.idiomasPos, { x:64, y:2 }, 'idiomas');
-        _colocarExtra(document.getElementById('redesIcones'), (config.redesLocal || 'cabecalho'), config.redesPos, { x:4, y:2 }, 'redes');
+        _colocarExtras(config);
       }
 
       // Cabeçalho: título e subtítulo

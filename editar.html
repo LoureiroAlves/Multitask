@@ -1004,14 +1004,14 @@
           <label style="display:flex; align-items:center; gap:5px; margin:0;"><input type="checkbox" id="idiomaFr" style="width:auto; margin:0;" checked> 🇫🇷 FR</label>
           <label style="display:flex; align-items:center; gap:5px; margin:0;"><input type="checkbox" id="idiomaEs" style="width:auto; margin:0;" checked> 🇪🇸 ES</label>
         </div>
-        <label for="idiomasLocal" style="display:block; margin:10px 0 3px;">Mostrar o seletor de idiomas em:</label>
-        <select id="idiomasLocal" style="padding:8px 10px; border-radius:8px; border:1.5px solid var(--linha); background:var(--branco); font-family:inherit; color:var(--castanho);">
-          <option value="cabecalho">Cabeçalho</option>
-          <option value="rodape">Rodapé (barra de baixo, sempre visível)</option>
-          <option value="flutuante">Flutuante (arrastar para onde quiser)</option>
-        </select>
+        <div class="subtitulo" style="margin:10px 0 4px;">Mostrar os idiomas em (podes escolher vários ao mesmo tempo):</div>
+        <div style="display:flex; gap:16px; flex-wrap:wrap;">
+          <label style="display:flex;align-items:center;gap:5px;margin:0;"><input type="checkbox" id="idiomasCab" style="width:auto;margin:0;" checked> Cabeçalho</label>
+          <label style="display:flex;align-items:center;gap:5px;margin:0;"><input type="checkbox" id="idiomasRod" style="width:auto;margin:0;"> Rodapé (barra de baixo)</label>
+          <label style="display:flex;align-items:center;gap:5px;margin:0;"><input type="checkbox" id="idiomasFlu" style="width:auto;margin:0;"> Flutuante (arrastar)</label>
+        </div>
         <div id="idiomasFlutHint" style="display:none; margin-top:6px;">
-          <div class="subtitulo" style="margin:0;">📍 Mostra a pré-visualização e <b>arrasta</b> o seletor de idiomas para onde quiseres (ex.: por cima de um mosaico usado como título).</div>
+          <div class="subtitulo" style="margin:0;">📍 Na pré-visualização, <b>arrasta</b> o seletor de idiomas para onde quiseres (ex.: por cima de um mosaico usado como título).</div>
           <button type="button" id="reporIdiomasPos" style="margin-top:6px; padding:6px 12px; border:1.5px solid var(--linha); border-radius:8px; background:var(--branco); cursor:pointer; font:inherit; font-size:0.85rem;">↺ Repor posição</button>
         </div>
       </div>
@@ -1028,12 +1028,12 @@
         <label for="mostrarRedes" style="margin:0; font-weight:600; color:var(--castanho); display:inline;">📱 Redes sociais (Instagram/Facebook)</label>
       </div>
       <div style="margin:6px 0 4px 26px; padding:8px 11px; border-left:2px solid var(--linha);">
-        <label for="redesLocal" style="display:block; margin:0 0 3px;">Mostrar as redes em:</label>
-        <select id="redesLocal" style="padding:8px 10px; border-radius:8px; border:1.5px solid var(--linha); background:var(--branco); font-family:inherit; color:var(--castanho);">
-          <option value="cabecalho">Cabeçalho</option>
-          <option value="rodape">Rodapé (barra de baixo, sempre visível)</option>
-          <option value="flutuante">Flutuante (arrastar para onde quiser)</option>
-        </select>
+        <div class="subtitulo" style="margin:0 0 4px;">Mostrar as redes em (podes escolher vários ao mesmo tempo):</div>
+        <div style="display:flex; gap:16px; flex-wrap:wrap;">
+          <label style="display:flex;align-items:center;gap:5px;margin:0;"><input type="checkbox" id="redesCab" style="width:auto;margin:0;" checked> Cabeçalho</label>
+          <label style="display:flex;align-items:center;gap:5px;margin:0;"><input type="checkbox" id="redesRod" style="width:auto;margin:0;"> Rodapé (barra de baixo)</label>
+          <label style="display:flex;align-items:center;gap:5px;margin:0;"><input type="checkbox" id="redesFlu" style="width:auto;margin:0;"> Flutuante (arrastar)</label>
+        </div>
         <div id="redesFlutHint" style="display:none; margin-top:6px;">
           <div class="subtitulo" style="margin:0;">📍 Na pré-visualização, <b>arrasta</b> as redes para onde quiseres.</div>
           <button type="button" id="reporRedesPos" style="margin-top:6px; padding:6px 12px; border:1.5px solid var(--linha); border-radius:8px; background:var(--branco); cursor:pointer; font:inherit; font-size:0.85rem;">↺ Repor posição</button>
@@ -1809,10 +1809,15 @@
       document.getElementById('idiomaEn').checked = _i.en !== false;
       document.getElementById('idiomaFr').checked = _i.fr !== false;
       document.getElementById('idiomaEs').checked = _i.es !== false;
-      { const _v = config.idiomasLocal; document.getElementById('idiomasLocal').value = (_v === 'rodape' || _v === 'flutuante') ? _v : 'cabecalho'; }
-      { const _v2 = config.redesLocal; document.getElementById('redesLocal').value = (_v2 === 'rodape' || _v2 === 'flutuante') ? _v2 : 'cabecalho'; }
-      { const _ih = document.getElementById('idiomasFlutHint'); if(_ih) _ih.style.display = (config.idiomasLocal === 'flutuante') ? 'block' : 'none';
-        const _rh = document.getElementById('redesFlutHint'); if(_rh) _rh.style.display = (config.redesLocal === 'flutuante') ? 'block' : 'none'; } }
+      { function _lc(p, old, w){ let c = config[p+'Cab'], r = config[p+'Rod'], f = config[p+'Flu']; if(c===undefined && r===undefined && f===undefined){ c=(!old||old==='cabecalho'); r=(old==='rodape'); f=(old==='flutuante'); } return w==='cab' ? !!c : (w==='rod' ? !!r : !!f); }
+        document.getElementById('idiomasCab').checked = _lc('idiomas', config.idiomasLocal, 'cab');
+        document.getElementById('idiomasRod').checked = _lc('idiomas', config.idiomasLocal, 'rod');
+        document.getElementById('idiomasFlu').checked = _lc('idiomas', config.idiomasLocal, 'flu');
+        document.getElementById('redesCab').checked = _lc('redes', config.redesLocal, 'cab');
+        document.getElementById('redesRod').checked = _lc('redes', config.redesLocal, 'rod');
+        document.getElementById('redesFlu').checked = _lc('redes', config.redesLocal, 'flu');
+        document.getElementById('idiomasFlutHint').style.display = document.getElementById('idiomasFlu').checked ? 'block' : 'none';
+        document.getElementById('redesFlutHint').style.display = document.getElementById('redesFlu').checked ? 'block' : 'none'; } }
     document.getElementById('mostrarCamera').checked = config.mostrarCamera !== false;
     document.getElementById('mostrarAgendaIcon').checked = config.mostrarAgendaIcon !== false;
     document.getElementById('mostrarRedes').checked = config.mostrarRedes !== false;
@@ -2565,8 +2570,12 @@
         fr: document.getElementById('idiomaFr').checked,
         es: document.getElementById('idiomaEs').checked
       };
-      config.idiomasLocal = document.getElementById('idiomasLocal').value;
-      config.redesLocal = document.getElementById('redesLocal').value;
+      config.idiomasCab = document.getElementById('idiomasCab').checked;
+      config.idiomasRod = document.getElementById('idiomasRod').checked;
+      config.idiomasFlu = document.getElementById('idiomasFlu').checked;
+      config.redesCab = document.getElementById('redesCab').checked;
+      config.redesRod = document.getElementById('redesRod').checked;
+      config.redesFlu = document.getElementById('redesFlu').checked;
       config.mostrarCamera = document.getElementById('mostrarCamera').checked;
       config.mostrarAgendaIcon = document.getElementById('mostrarAgendaIcon').checked;
       config.mostrarRedes = document.getElementById('mostrarRedes').checked;
@@ -2939,10 +2948,10 @@
       const _po = document.getElementById('pontarOpts'); if(_po) _po.style.display = (e.target.value === 'ponte') ? 'block' : 'none';
       const _peo = document.getElementById('pessoaOpts'); if(_peo) _peo.style.display = (e.target.value === 'pessoa') ? 'block' : 'none';
     }); }
-  { const _il = document.getElementById('idiomasLocal'), _ih = document.getElementById('idiomasFlutHint');
-    if(_il) _il.addEventListener('change', function(){ if(_ih) _ih.style.display = (_il.value === 'flutuante') ? 'block' : 'none'; }); }
-  { const _rl = document.getElementById('redesLocal'), _rh = document.getElementById('redesFlutHint');
-    if(_rl) _rl.addEventListener('change', function(){ if(_rh) _rh.style.display = (_rl.value === 'flutuante') ? 'block' : 'none'; }); }
+  { const _if = document.getElementById('idiomasFlu'), _ih = document.getElementById('idiomasFlutHint');
+    if(_if) _if.addEventListener('change', function(){ if(_ih) _ih.style.display = _if.checked ? 'block' : 'none'; }); }
+  { const _rf = document.getElementById('redesFlu'), _rh = document.getElementById('redesFlutHint');
+    if(_rf) _rf.addEventListener('change', function(){ if(_rh) _rh.style.display = _rf.checked ? 'block' : 'none'; }); }
   { const _ri = document.getElementById('reporIdiomasPos'); if(_ri) _ri.addEventListener('click', function(){ delete config.idiomasPos; if(window.__agendarPreview) window.__agendarPreview(); }); }
   { const _rr = document.getElementById('reporRedesPos'); if(_rr) _rr.addEventListener('click', function(){ delete config.redesPos; if(window.__agendarPreview) window.__agendarPreview(); }); }
   document.getElementById('introRotNome').addEventListener('input', e => {
