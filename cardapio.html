@@ -1560,6 +1560,19 @@
     opacity:0;
     transition:opacity .3s ease, transform .42s cubic-bezier(.22,.8,.25,1);
   }
+  /* Imagem PNG que "salta" para cima, para fora da barra fixa (ex.: mascote a espreitar) */
+  .info-fixa-mascote{
+    position:absolute;
+    bottom:var(--mas-baixo, 0px);
+    z-index:105;
+    width:var(--mas-larg, 120px);
+    height:auto;
+    pointer-events:none;
+    filter:drop-shadow(0 4px 8px rgba(0,0,0,0.28));
+  }
+  .info-fixa-mascote.lado-esq{ left:var(--mas-x, 10px); right:auto; }
+  .info-fixa-mascote.lado-dir{ right:var(--mas-x, 10px); left:auto; }
+  .info-fixa-mascote.lado-centro{ left:50%; right:auto; transform:translateX(-50%); }
   .info-fixa-fotos{
     position:absolute;
     inset:0;
@@ -2284,6 +2297,7 @@
 </footer>
 
 <div class="info-fixa">
+  <img id="infoFixaMascote" class="info-fixa-mascote" alt="" style="display:none;">
   <div class="info-fixa-fotos" id="infoFixaFotos">
   </div>
   <div class="info-fixa-texto" id="infoFixaTexto"
@@ -3830,6 +3844,20 @@
         document.body.classList.toggle('barra-oculta', _barraOff);
         const _rf = document.getElementById('rodapeFinal');
         if(_rf) _rf.style.display = (config.footer && config.footer.mostrar === false) ? 'none' : '';
+        // Imagem PNG que salta para fora da barra fixa (mascote)
+        { const _mas = document.getElementById('infoFixaMascote'); const _mc = (config.rodape && config.rodape.mascote) || {};
+          if(_mas){
+            if(_mc.img && !_barraOff){
+              _mas.src = (typeof RAW_BASE !== 'undefined' ? RAW_BASE : '') + _mc.img;
+              _mas.style.display = '';
+              _mas.classList.remove('lado-esq','lado-dir','lado-centro');
+              _mas.classList.add('lado-' + (_mc.lado || 'dir'));
+              _mas.style.setProperty('--mas-larg', ((_mc.largura) || 120) + 'px');
+              _mas.style.setProperty('--mas-x', ((_mc.afastX) || 10) + 'px');
+              _mas.style.setProperty('--mas-baixo', ((_mc.subir) || 0) + 'px');
+            } else { _mas.style.display = 'none'; _mas.removeAttribute('src'); }
+          }
+        }
       }
       // Carrinho: ativar/desativar e mostrar preços (ou só a lista de itens para o empregado)
       {

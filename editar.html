@@ -903,6 +903,35 @@
       <label>Fotos da barra fixa (rodam automaticamente)</label>
       <div class="lista-fotos" id="listaFotosRodape"></div>
       <input type="file" id="novaFotoRodape" accept="image/*" multiple>
+
+      <div style="margin-top:18px; padding-top:14px; border-top:1px dashed var(--linha);">
+        <label style="margin:0;">🧍 Imagem que salta para fora da barra (PNG transparente)</label>
+        <div class="subtitulo" style="margin:4px 0 10px;">Uma imagem (ex.: mascote, produto) que assenta na barra fixa e cuja parte de cima sai por cima da página. Usa um PNG com fundo transparente para o efeito ficar bem.</div>
+        <input type="file" id="masFotoFile" accept="image/png,image/*">
+        <input type="hidden" id="masFotoUrl">
+        <div id="masFotoPrev" style="margin-top:8px;"></div>
+        <div class="row2" style="margin-top:10px;">
+          <div>
+            <label style="margin-top:0;">Lado</label>
+            <select id="masLado"><option value="esq">Esquerda</option><option value="centro">Centro</option><option value="dir" selected>Direita</option></select>
+          </div>
+          <div>
+            <label style="margin-top:0;">Largura (px)</label>
+            <input type="number" id="masLargura" min="40" max="400" step="5" value="120">
+          </div>
+        </div>
+        <div class="row2" style="margin-top:8px;">
+          <div>
+            <label style="margin-top:0;">Afastamento do lado (px)</label>
+            <input type="number" id="masAfastX" min="0" max="300" step="2" value="10">
+          </div>
+          <div>
+            <label style="margin-top:0;">Subir / descer (px)</label>
+            <input type="number" id="masSubir" min="-40" max="200" step="2" value="0">
+          </div>
+        </div>
+        <div class="subtitulo" style="margin:6px 0 0;">"Subir" positivo levanta a imagem (sai mais para cima); "Largura" define o tamanho. O "Afastamento" não se aplica quando o lado é Centro.</div>
+      </div>
     </div>
   </details>
 
@@ -1813,6 +1842,14 @@
     document.getElementById('linha4').value = config.rodape.linha4 || '';
     document.getElementById('fotosHeaderAtivas').checked = config.header.fotosAtivas !== false;
     document.getElementById('fotosRodapeAtivas').checked = config.rodape.fotosAtivas !== false;
+    { const _mc = config.rodape.mascote || {};
+      document.getElementById('masFotoUrl').value = _mc.img || '';
+      document.getElementById('masLado').value = _mc.lado || 'dir';
+      document.getElementById('masLargura').value = (_mc.largura != null) ? _mc.largura : 120;
+      document.getElementById('masAfastX').value = (_mc.afastX != null) ? _mc.afastX : 10;
+      document.getElementById('masSubir').value = (_mc.subir != null) ? _mc.subir : 0;
+      filaMascote = null; if(typeof _mascotePrev === 'function') _mascotePrev();
+    }
     const ch = config.header.cor || '#ffffff';
     const cr = config.rodape.cor || '#ffffff';
     document.getElementById('headerMostrar').checked = config.header.mostrar !== false;
@@ -2142,6 +2179,33 @@
 
   // ---- Publicidade (anúncio): imagem + pré-visualização no editor ----
   let filaAnuncio = null;
+  let filaMascote = null;
+  function _mascotePrev(){
+    const box = document.getElementById('masFotoPrev'); if(!box) return;
+    const url = document.getElementById('masFotoUrl').value;
+    box.innerHTML = '';
+    if(filaMascote){
+      const im = document.createElement('img'); im.src = URL.createObjectURL(filaMascote);
+      im.style.cssText = 'max-width:150px;width:100%;border-radius:10px;display:block;background:repeating-conic-gradient(#eee 0% 25%, #fff 0% 50%) 50%/16px 16px;';
+      const p = document.createElement('div'); p.className = 'subtitulo'; p.style.marginTop = '4px';
+      p.textContent = 'Nova imagem escolhida (guarda para aplicar).';
+      box.appendChild(im); box.appendChild(p);
+    } else if(url){
+      const im = document.createElement('img'); im.src = url;
+      im.style.cssText = 'max-width:150px;width:100%;border-radius:10px;display:block;background:repeating-conic-gradient(#eee 0% 25%, #fff 0% 50%) 50%/16px 16px;';
+      const rm = document.createElement('button'); rm.type = 'button'; rm.textContent = 'Remover imagem';
+      rm.style.cssText = 'margin-top:6px;padding:6px 12px;border:1px solid var(--linha);border-radius:8px;background:#fff;cursor:pointer;font:inherit;';
+      rm.onclick = function(){ document.getElementById('masFotoUrl').value = ''; filaMascote = null; _mascotePrev(); if(window.__agendarPreview) window.__agendarPreview(); };
+      box.appendChild(im); box.appendChild(rm);
+    } else {
+      box.innerHTML = '<div class="subtitulo">Sem imagem.</div>';
+    }
+  }
+  document.getElementById('masFotoFile').addEventListener('change', e => {
+    const f = e.target.files[0]; if(!f) return;
+    filaMascote = f; _mascotePrev();
+    setEstado('Imagem escolhida (guarda para aplicar).', 'info');
+  });
   function _anuncioPrev(){
     const box = document.getElementById('anuncioFotoPrev');
     if(!box) return;
@@ -2520,6 +2584,12 @@
         filaAnuncio = null;
         document.getElementById('anuncioFotoFile').value = '';
       }
+      if(filaMascote){
+        setEstado('A enviar imagem da barra fixa…', 'info');
+        document.getElementById('masFotoUrl').value = await enviarFoto(filaMascote, token);
+        filaMascote = null;
+        document.getElementById('masFotoFile').value = '';
+      }
       if(filaIntro){
         setEstado('A enviar foto da abertura…', 'info');
         config.intro = config.intro || {};
@@ -2571,6 +2641,13 @@
       config.header.fotosAtivas = document.getElementById('fotosHeaderAtivas').checked;
       config.header.fotoOpacidade = parseInt((document.getElementById('headerFotoOpac') || {}).value, 10) || 100;
       config.rodape.fotosAtivas = document.getElementById('fotosRodapeAtivas').checked;
+      config.rodape.mascote = {
+        img: document.getElementById('masFotoUrl').value.trim(),
+        lado: document.getElementById('masLado').value,
+        largura: parseInt(document.getElementById('masLargura').value, 10) || 120,
+        afastX: parseInt(document.getElementById('masAfastX').value, 10) || 0,
+        subir: parseInt(document.getElementById('masSubir').value, 10) || 0
+      };
       config.header.cor = (document.getElementById('hTitCor') ? document.getElementById('hTitCor').value : (config.header.cor || '#ffffff'));
       config.header.estiloTitulo = lerEstilo('hTit');
       config.header.estiloSub = lerEstilo('hSub');
