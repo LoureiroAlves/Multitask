@@ -323,6 +323,10 @@
   .footer-extras.on{ display:flex; }
   .footer-extras .lang-switch button, .footer-extras .redes-icones a{ background:rgba(0,0,0,0.30); border-color:rgba(255,255,255,0.4); color:#fff; box-shadow:0 1px 3px rgba(0,0,0,0.3); }
   .footer-extras .lang-switch button.active{ background:rgba(0,0,0,0.55); border-color:rgba(255,255,255,0.85); }
+  /* Barra flutuante (idiomas / redes) — posição livre, funciona sem cabeçalho/rodapé */
+  .lang-switch.flutua, .redes-icones.flutua{ position:fixed; z-index:150; padding:6px 9px; border-radius:999px; background:rgba(18,18,24,0.45); box-shadow:0 3px 10px rgba(0,0,0,0.28); -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px); }
+  .lang-switch.flutua button, .redes-icones.flutua a{ background:rgba(255,255,255,0.20); border-color:rgba(255,255,255,0.45); color:#fff; }
+  .lang-switch.flutua button.active{ background:rgba(255,255,255,0.55); border-color:#fff; }
 
   .categoria-grid{
     display:flex;
@@ -2762,6 +2766,32 @@
     try{ var w = el.getComputedTextLength(); if(w > 320){ el.setAttribute('textLength', '320'); el.setAttribute('lengthAdjust', 'spacingAndGlyphs'); } }catch(e){}
   }
 
+  // Barra flutuante (idiomas/redes): coloca-a fixa e, na pré-visualização, deixa arrastar
+  function _flutuaColocar(el, pos, def, alvo){
+    if(!el) return;
+    el.classList.add('flutua');
+    if(el.parentNode !== document.body) document.body.appendChild(el);
+    var x = (pos && pos.x != null) ? pos.x : def.x;
+    var y = (pos && pos.y != null) ? pos.y : def.y;
+    el.style.left = x + '%'; el.style.top = y + '%'; el.style.right = 'auto'; el.style.bottom = 'auto';
+    try{
+      var r = el.getBoundingClientRect(), vw = window.innerWidth, vh = window.innerHeight;
+      if(r.width && r.right > vw - 6) el.style.left = Math.max(4, vw - r.width - 8) + 'px';
+      if(r.height && r.bottom > vh - 6) el.style.top = Math.max(4, vh - r.height - 8) + 'px';
+    }catch(e){}
+    if(window.__PREVIEW) _flutuaDrag(el, alvo);
+  }
+  function _flutuaDrag(el, alvo){
+    if(el._flOn) return; el._flOn = true;
+    el.style.cursor = 'move'; el.style.touchAction = 'none';
+    var drag = false, moveu = false, sx = 0, sy = 0, nx = 0, ny = 0;
+    el.addEventListener('pointerdown', function(ev){ drag = true; moveu = false; sx = ev.clientX; sy = ev.clientY; try{ el.setPointerCapture(ev.pointerId); }catch(e){} });
+    el.addEventListener('pointermove', function(ev){ if(!drag) return; if(Math.abs(ev.clientX - sx) > 4 || Math.abs(ev.clientY - sy) > 4) moveu = true; if(!moveu) return; var vw = window.innerWidth, vh = window.innerHeight; nx = Math.max(1, Math.min(94, (ev.clientX / vw) * 100)); ny = Math.max(1, Math.min(94, (ev.clientY / vh) * 100)); el.style.left = nx + '%'; el.style.top = ny + '%'; });
+    el.addEventListener('pointerup', function(ev){ if(!drag) return; drag = false; if(moveu){ try{ parent.postMessage({ type:'flutuante-pos', alvo:alvo, x:Math.round(nx), y:Math.round(ny) }, '*'); }catch(e){} } });
+    el.addEventListener('pointercancel', function(){ drag = false; });
+    el.addEventListener('click', function(ev){ if(moveu){ ev.preventDefault(); ev.stopPropagation(); } }, true);
+  }
+
   function construirMenu(menu){
     if(!menu || !Array.isArray(menu.categorias)) return;
     // Efeito néon liga-se automaticamente se alguma secção tiver néon
@@ -3804,6 +3834,7 @@
         if(_redesOn && _num){ _wa.href = 'https://wa.me/' + _num; _wa.style.display = ''; }
         else { _wa.style.display = 'none'; }
       }
+      { var _rq = document.getElementById('redesIcones'); if(_rq){ var _anyR = _redesOn && (window.__redes.facebook || window.__redes.instagram || String(window.__redes.whatsapp || '').replace(/\D/g, '')); _rq.style.display = _anyR ? '' : 'none'; } }
       if(window.__setPhotoboothInfo){
         var _nome = (config.footer && config.footer.nome) || (config.header && config.header.titulo) || '';
         window.__setPhotoboothInfo(_nome, window.__redes.social || '');
@@ -3828,15 +3859,8 @@
             }
           }catch(e){}
         }
-        var _extras = document.getElementById('footerExtras');
-        var _hdrIcons = document.querySelector('header .header-icons');
-        var _social = document.querySelector('header .social-links');
-        var _redes = document.getElementById('redesIcones');
-        var _idiLocal = (config.idiomasLocal === 'rodape') ? 'rodape' : 'cabecalho';
-        var _redLocal = (config.redesLocal === 'rodape') ? 'rodape' : 'cabecalho';
-        if(_extras && _ls){ if(_idiLocal === 'rodape'){ if(_ls.parentNode !== _extras) _extras.appendChild(_ls); } else if(_hdrIcons && _ls.parentNode !== _hdrIcons){ _hdrIcons.appendChild(_ls); } }
-        if(_extras && _redes){ if(_redLocal === 'rodape'){ if(_redes.parentNode !== _extras) _extras.insertBefore(_redes, _extras.firstChild); } else if(_social && _redes.parentNode !== _social){ _social.insertBefore(_redes, _social.firstChild); } }
-        if(_extras){ _extras.classList.toggle('on', _extras.children.length > 0); }
+        _flutuaColocar(_ls, config.idiomasPos, { x:64, y:2 }, 'idiomas');
+        _flutuaColocar(document.getElementById('redesIcones'), config.redesPos, { x:4, y:2 }, 'redes');
       }
 
       // Cabeçalho: título e subtítulo
