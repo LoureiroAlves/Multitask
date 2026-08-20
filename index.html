@@ -75,8 +75,8 @@
   .ad-faixa{ position:relative; grid-column:1 / -1; border-radius:16px; overflow:hidden; border:1px dashed var(--gold); aspect-ratio:var(--ad-ratio); display:block; }
   .ad-faixa img{ width:100%; height:100%; object-fit:cover; display:block; }
   /* PNG: sem caixa nem moldura — a imagem aparece solta, na forma natural, com a transparência a mostrar a página */
-  .ad-faixa.ad-png{ border:none; border-radius:0; overflow:visible; aspect-ratio:auto; background:transparent; }
-  .ad-faixa.ad-png img{ width:100%; height:auto; object-fit:contain; }
+  .ad-faixa.ad-png{ border:none; border-radius:0; overflow:visible; aspect-ratio:auto; background:transparent; text-align:center; }
+  .ad-faixa.ad-png img{ width:100%; max-width:100%; height:auto; object-fit:contain; display:inline-block; margin:0 auto; }
   .ad-ph{ position:relative; grid-column:1 / -1; border:1px dashed var(--gold); border-radius:16px; background:repeating-linear-gradient(45deg, #fff8ec 0 12px, #fdf1dc 12px 24px); aspect-ratio:var(--ad-ratio); display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; color:#b08a3a; }
   .ad-tag{ position:absolute; top:8px; left:8px; z-index:2; font-size:.62rem; font-weight:700; letter-spacing:.4px; text-transform:uppercase; color:#fff; background:rgba(0,0,0,0.55); padding:3px 8px; border-radius:6px; pointer-events:none; }
   .ad-ph .t{ font-family:'Playfair Display', serif; font-weight:700; font-size:1.05rem; }
@@ -162,7 +162,8 @@
     if(ad.img){
       var isPng = /\.png(\?|$)/i.test(ad.img) || /^data:image\/png/i.test(ad.img);
       var cls = 'ad-faixa' + (isPng ? ' ad-png' : '');
-      var img = AD_TAG + '<img src="' + esc(ad.img) + '" alt="' + esc(ad.titulo || 'Publicidade') + '">';
+      var wsty = (isPng && ad.escala && ad.escala > 0 && ad.escala < 100) ? (' style="width:' + ad.escala + '%"') : '';
+      var img = AD_TAG + '<img src="' + esc(ad.img) + '" alt="' + esc(ad.titulo || 'Publicidade') + '"' + wsty + '>';
       return href ? ('<a class="' + cls + '" href="' + esc(href) + '"' + attrs + '>' + img + '</a>')
                   : ('<div class="' + cls + '">' + img + '</div>');
     }

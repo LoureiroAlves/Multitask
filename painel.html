@@ -658,9 +658,18 @@
     });
     return html;
   }
-  function _adPreview(box, url){
-    if(url){ box.innerHTML = '<img src="' + _adEsc(url) + '" alt="" style="max-height:70px; border-radius:8px; border:1px solid var(--linha);">'; }
-    else { box.innerHTML = '<span style="font-size:.75rem; color:#b3a68a;">Sem imagem — mostra o título/subtítulo.</span>'; }
+  function _adEhPng(url){ return /\.png(\?|$)/i.test(url || '') || /^data:image\/png/i.test(url || ''); }
+  function _adPreview(box, url, escala){
+    if(!url){ box.innerHTML = '<span style="font-size:.75rem; color:#b3a68a;">Sem imagem — mostra o título/subtítulo.</span>'; return; }
+    if(_adEhPng(url)){
+      // PNG: mostra "solto" ao tamanho escolhido, sobre o fundo claro da ÀMesa (como fica na montra)
+      var w = (escala && escala > 0) ? escala : 100;
+      box.innerHTML = '<div style="background:#fbf6ec; border:1px dashed var(--linha); border-radius:8px; padding:8px; text-align:center;">' +
+        '<img src="' + _adEsc(url) + '" alt="" style="width:' + w + '%; max-width:100%; height:auto; display:inline-block;"></div>';
+    } else {
+      // JPG: caixa 3:1 com recorte (como fica na montra)
+      box.innerHTML = '<div style="aspect-ratio:3/1; border-radius:8px; overflow:hidden; border:1px solid var(--linha);"><img src="' + _adEsc(url) + '" alt="" style="width:100%; height:100%; object-fit:cover; display:block;"></div>';
+    }
   }
   function renderAds(arr){
     if(arr) ADS_EDIT = JSON.parse(JSON.stringify(arr));
@@ -681,6 +690,13 @@
           '<label class="mini" style="cursor:pointer; white-space:nowrap; display:flex; align-items:center;">🖼 Carregar<input type="file" data-adfile accept="image/*" style="display:none;"></label>' +
         '</div>' +
         '<div data-adprev style="margin-top:6px;"></div>' +
+        '<div data-adescwrap style="margin-top:8px;' + (_adEhPng(ad.img) ? '' : ' display:none;') + '">' +
+          '<label style="margin-top:0;">Tamanho na página (largura) — só para PNG</label>' +
+          '<div style="display:flex; align-items:center; gap:10px;">' +
+            '<input type="range" min="20" max="100" step="1" value="' + ((ad.escala && ad.escala > 0) ? ad.escala : 100) + '" data-adesc style="flex:1;">' +
+            '<span data-adescval style="font-weight:700; min-width:46px; text-align:right;">' + ((ad.escala && ad.escala > 0) ? ad.escala : 100) + '%</span>' +
+          '</div>' +
+        '</div>' +
         '<label style="margin-top:10px;">Título (usado se não houver imagem)</label>' +
         '<input type="text" data-adtit value="' + _adEsc(ad.titulo) + '" placeholder="Ex.: Aurora’s Cake">' +
         '<label style="margin-top:10px;">Subtítulo</label>' +
@@ -691,16 +707,19 @@
           '<label style="margin-top:0;">Link externo</label>' +
           '<input type="text" data-adlink value="' + _adEsc(ad.link) + '" placeholder="https://instagram.com/… ou https://wa.me/351…">' +
         '</div>';
-      const prev = box.querySelector('[data-adprev]'); _adPreview(prev, ad.img);
-      box.querySelector('[data-adimg]').oninput = function(e){ ADS_EDIT[i].img = e.target.value.trim(); _adPreview(prev, ADS_EDIT[i].img); };
+      const prev = box.querySelector('[data-adprev]'); _adPreview(prev, ad.img, ad.escala);
+      const escWrap = box.querySelector('[data-adescwrap]');
+      box.querySelector('[data-adimg]').oninput = function(e){ ADS_EDIT[i].img = e.target.value.trim(); if(escWrap) escWrap.style.display = _adEhPng(ADS_EDIT[i].img) ? '' : 'none'; _adPreview(prev, ADS_EDIT[i].img, ADS_EDIT[i].escala); };
       box.querySelector('[data-adfile]').onchange = async function(e){
         const f = e.target.files && e.target.files[0]; if(!f) return;
         prev.innerHTML = '<span style="font-size:.75rem; color:#b3a68a;">A carregar imagem…</span>';
         try{
           const url = await _uploadAdFoto(f);
-          ADS_EDIT[i].img = url; box.querySelector('[data-adimg]').value = url; _adPreview(prev, url);
+          ADS_EDIT[i].img = url; renderAds();   // re-render para mostrar/ocultar o controlo de tamanho conforme PNG/JPG
         }catch(err){ prev.innerHTML = '<span style="font-size:.75rem; color:var(--vermelho);">' + (err.message || 'Erro no upload') + '</span>'; }
       };
+      { const esc = box.querySelector('[data-adesc]'), escv = box.querySelector('[data-adescval]');
+        if(esc) esc.oninput = function(e){ const v = parseInt(e.target.value, 10) || 100; ADS_EDIT[i].escala = v; if(escv) escv.textContent = v + '%'; _adPreview(prev, ADS_EDIT[i].img, v); }; }
       box.querySelector('[data-adtit]').oninput = function(e){ ADS_EDIT[i].titulo = e.target.value; };
       box.querySelector('[data-adsub]').oninput = function(e){ ADS_EDIT[i].sub = e.target.value; };
       box.querySelector('[data-addest]').onchange = function(e){ ADS_EDIT[i].slug = e.target.value; box.querySelector('[data-adlinkwrap]').style.display = e.target.value ? 'none' : ''; };
@@ -711,7 +730,7 @@
   }
   async function guardarAds(){
     const ads = ADS_EDIT.filter(function(a){ return a && (a.img || a.titulo || a.sub || a.slug || a.link); })
-      .map(function(a){ return { img: a.img || '', titulo: a.titulo || '', sub: a.sub || '', slug: a.slug || '', link: a.slug ? '' : (a.link || '') }; });
+      .map(function(a){ return { img: a.img || '', titulo: a.titulo || '', sub: a.sub || '', slug: a.slug || '', link: a.slug ? '' : (a.link || ''), escala: (a.escala && a.escala > 0 && a.escala < 100) ? a.escala : 100 }; });
     $('adGuardar').disabled = true; msg($('adsMsg'), 'A guardar…', 'ok');
     const { data:existe, error:eGet } = await sb.from('negocios').select('id,config').eq('slug', AMESA_SLUG).maybeSingle();
     if(eGet){ $('adGuardar').disabled = false; msg($('adsMsg'), 'Erro: ' + eGet.message, 'erro'); return; }
@@ -726,7 +745,7 @@
     if(error){ msg($('adsMsg'), 'Erro: ' + error.message, 'erro'); }
     else { msg($('adsMsg'), 'Publicidade guardada ✓ (' + ads.length + ' anúncio' + (ads.length === 1 ? '' : 's') + ')', 'ok'); }
   }
-  $('adAdicionar').onclick = function(){ ADS_EDIT.push({ img:'', titulo:'', sub:'', slug:'', link:'' }); renderAds(); };
+  $('adAdicionar').onclick = function(){ ADS_EDIT.push({ img:'', titulo:'', sub:'', slug:'', link:'', escala:100 }); renderAds(); };
   $('adGuardar').onclick = guardarAds;
 
   // arranque
