@@ -661,6 +661,11 @@
           <input type="text" id="introPessoaVerso" placeholder="o poeta é um fingidor">
           <div class="ajuda" style="margin-top:6px;">A caricatura desenha-se a tinta sobre papel e o nome aparece assinado à mão (usa o "Título da abertura" abaixo, ou o nome do restaurante). Deixa o verso vazio para não mostrar frase.</div>
         </div>
+        <div id="neonOpts" style="display:none; margin:8px 0 4px; padding:10px; border:1.5px solid var(--linha); border-radius:9px;">
+          <label for="introNeonTopo" style="margin-top:0;">Palavra em cima (letreiro néon)</label>
+          <input type="text" id="introNeonTopo" placeholder="ABERTO">
+          <div class="ajuda" style="margin-top:6px;">Texto que brilha por cima do nome (ex.: ABERTO, WELCOME, BEM-VINDO). Deixa vazio para não mostrar. O nome usa o "Título da abertura" abaixo; podes arrastar cada texto na pré-visualização.</div>
+        </div>
 
         <label for="introTitulo">Título da abertura</label>
         <input type="text" id="introTitulo" placeholder="(vazio = usa o nome do restaurante)">
@@ -1750,8 +1755,10 @@
       const _it = document.getElementById('introTipo'); if(_it) _it.value = (['ponte','pessoa','neon'].indexOf(_tp) >= 0) ? _tp : 'normal';
       const _pp = document.getElementById('pontePeriodo'); if(_pp) _pp.value = (config.intro && config.intro.ponteDia) ? 'dia' : 'noite';
       const _pvI = document.getElementById('introPessoaVerso'); if(_pvI) _pvI.value = (config.intro && config.intro.pessoaVerso != null) ? config.intro.pessoaVerso : 'o poeta é um fingidor';
+      const _ntI = document.getElementById('introNeonTopo'); if(_ntI) _ntI.value = (config.intro && config.intro.neonTopo != null) ? config.intro.neonTopo : 'ABERTO';
       const _po = document.getElementById('pontarOpts'); if(_po) _po.style.display = (_tp === 'ponte') ? 'block' : 'none';
-      const _peo = document.getElementById('pessoaOpts'); if(_peo) _peo.style.display = (_tp === 'pessoa') ? 'block' : 'none'; }
+      const _peo = document.getElementById('pessoaOpts'); if(_peo) _peo.style.display = (_tp === 'pessoa') ? 'block' : 'none';
+      const _neo = document.getElementById('neonOpts'); if(_neo) _neo.style.display = (_tp === 'neon') ? 'block' : 'none'; }
     document.getElementById('introTitulo').value = (config.intro && config.intro.titulo) || '';
     document.getElementById('introSubtitulo').value = (config.intro && config.intro.subtitulo) || '';
     document.getElementById('introBotao').value = (config.intro && config.intro.botao) || '';
@@ -2776,6 +2783,7 @@
         tipo: (document.getElementById('introTipo') ? document.getElementById('introTipo').value : 'normal'),
         ponteDia: !!(document.getElementById('pontePeriodo') && document.getElementById('pontePeriodo').value === 'dia'),
         pessoaVerso: (document.getElementById('introPessoaVerso') ? document.getElementById('introPessoaVerso').value : ''),
+        neonTopo: (document.getElementById('introNeonTopo') ? document.getElementById('introNeonTopo').value : 'ABERTO'),
         foto: (config.intro && config.intro.foto) || ''
       };
       config.fidelidade = {
@@ -2947,6 +2955,7 @@
     if(_it) _it.addEventListener('change', e => {
       const _po = document.getElementById('pontarOpts'); if(_po) _po.style.display = (e.target.value === 'ponte') ? 'block' : 'none';
       const _peo = document.getElementById('pessoaOpts'); if(_peo) _peo.style.display = (e.target.value === 'pessoa') ? 'block' : 'none';
+      const _neo = document.getElementById('neonOpts'); if(_neo) _neo.style.display = (e.target.value === 'neon') ? 'block' : 'none';
     }); }
   function _atualizarHintFlu(){
     var i = document.getElementById('idiomasFlu'), ih = document.getElementById('idiomasFlutHint'); if(i && ih) ih.style.display = i.checked ? 'block' : 'none';
