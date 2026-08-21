@@ -2940,7 +2940,7 @@
       grid.appendChild(btn);
       const sec = document.createElement('section');
       sec.className = 'categoria'; sec.id = cat.id;
-      if(cat.foto){ sec.dataset.foto = cat.foto; const _b = document.createElement('div'); _b.className = 'sec-foto-banner'; _b.style.backgroundImage = "url('" + cat.foto + "')"; sec.appendChild(_b); }
+      { var _ban = cat.bannerOn ? (cat.fotoBanner || cat.foto) : ''; if(_ban){ sec.dataset.foto = _ban; const _b = document.createElement('div'); _b.className = 'sec-foto-banner'; _b.style.backgroundImage = "url('" + _ban + "')"; sec.appendChild(_b); } }
       if(cat.pratoDia){
         sec.classList.add('sec-pratodia');
         const f = cat.fundo || {};
