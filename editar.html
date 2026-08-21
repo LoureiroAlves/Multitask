@@ -1097,6 +1097,10 @@
       <label for="adjTexto">Texto do anúncio (opcional)</label>
       <input type="text" id="adjTexto" placeholder="Ex: O teu negócio aqui!">
 
+      <label for="adjLink">Link ao clicar (opcional)</label>
+      <input type="text" id="adjLink" placeholder="https://… — abre ao tocar no anúncio">
+      <div style="font-size:0.78rem; color:var(--castanho-suave); margin-top:4px;">Se preencheres, o anúncio no fim dos jogos fica clicável e abre este link (com a indicação "Toca para saber mais").</div>
+
       <label for="corAdj">Cor do texto</label>
       <div class="campo-cor">
         <input type="color" id="corAdj" value="#ffffff">
@@ -1498,7 +1502,7 @@
         { titulo:'Sugestão', linhas:[], ocultarDomingo:false }
       ], dias:{} } },
     footer: { nome:'', morada:'', telefone:'', link:'', cor:'#ffffff', fotosAtivas:false, fotos:[], fotoZoom:100, fotoPanX:0, fotoPanY:0, textoX:50, textoY:50 },
-    adJogos: { ativo:false, foto:'', fotoZoom:100, fotoPanX:0, fotoPanY:0, texto:'', textoX:50, textoY:80, cor:'#ffffff', duracao:5 },
+    adJogos: { ativo:false, foto:'', fotoZoom:100, fotoPanX:0, fotoPanY:0, texto:'', textoX:50, textoY:80, cor:'#ffffff', duracao:5, link:'' },
     sazonal: true,
     decor: { tema:'nenhum', queda:false, luzes:false, fixas:[], intro:{ queda:false, luzes:false, fixas:[] } },
     fidelidade: { ativo:false, codigo:'', total:8, premio:'' },
@@ -1738,7 +1742,7 @@
         const carGuardado = (parsed.rodape && parsed.rodape.carrossel) || {};
         config.rodape.carrossel = { ativo: !!carGuardado.ativo, modo: carGuardado.modo || 'fixo', intervalo: carGuardado.intervalo || 5, inicio: carGuardado.inicio || '', fim: carGuardado.fim || '', slides: (Array.isArray(carGuardado.slides) && carGuardado.slides.length) ? carGuardado.slides : carDef.slides, dias: (carGuardado.dias && typeof carGuardado.dias === 'object') ? carGuardado.dias : {} };
         config.footer = Object.assign({ nome:'', morada:'', telefone:'', link:'', cor:'#ffffff', fotosAtivas:false, fotos:[], fotoZoom:100, fotoPanX:0, fotoPanY:0, textoX:50, textoY:50 }, parsed.footer || {});
-        config.adJogos = Object.assign({ ativo:false, foto:'', fotoZoom:100, fotoPanX:0, fotoPanY:0, texto:'', textoX:50, textoY:80, cor:'#ffffff', duracao:5 }, parsed.adJogos || {});
+        config.adJogos = Object.assign({ ativo:false, foto:'', fotoZoom:100, fotoPanX:0, fotoPanY:0, texto:'', textoX:50, textoY:80, cor:'#ffffff', duracao:5, link:'' }, parsed.adJogos || {});
         config.sazonal = parsed.sazonal !== false;
         config.decor = Object.assign({ tema:'nenhum', queda:false, luzes:false, fixas:[], intro:{ queda:false, luzes:false, fixas:[] } }, parsed.decor || {});
         if(!config.decor.intro || typeof config.decor.intro !== 'object') config.decor.intro = { queda:false, luzes:false, fixas:[] };
@@ -1964,6 +1968,7 @@
     const aj = config.adJogos || {};
     document.getElementById('adjAtivo').checked = !!aj.ativo;
     document.getElementById('adjTexto').value = aj.texto || '';
+    { const _al = document.getElementById('adjLink'); if(_al) _al.value = aj.link || ''; }
     document.getElementById('adjDuracao').value = aj.duracao || 5;
     const ca = aj.cor || '#ffffff';
     document.getElementById('corAdj').value = ca;
@@ -2757,7 +2762,8 @@
         textoX: config.adJogos.textoX ?? 50,
         textoY: config.adJogos.textoY ?? 80,
         cor: document.getElementById('corAdj').value,
-        duracao: parseInt(document.getElementById('adjDuracao').value, 10) || 5
+        duracao: parseInt(document.getElementById('adjDuracao').value, 10) || 5,
+        link: (document.getElementById('adjLink') ? document.getElementById('adjLink').value.trim() : '')
       };
       if(document.getElementById('decorTema')){
         decorState.tema = document.getElementById('decorTema').value;

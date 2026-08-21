@@ -1864,6 +1864,7 @@
   .adj-texto{ position:absolute; transform:translate(-50%,-50%); text-align:center; font-family:var(--fonte-titulo); font-weight:700; font-size:1.1rem; line-height:1.25; text-shadow:0 1px 4px rgba(0,0,0,0.6); padding:0 10px; width:max-content; max-width:88%; }
   .adj-badge{ position:absolute; top:8px; left:8px; background:rgba(0,0,0,0.5); color:#fff; font-size:0.62rem; padding:2px 8px; border-radius:8px; letter-spacing:1px; text-transform:uppercase; }
   .adj-timer{ position:absolute; top:8px; right:8px; background:rgba(0,0,0,0.5); color:#fff; font-size:0.8rem; width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; }
+  .adj-link-hint{ position:absolute; left:50%; bottom:12px; transform:translateX(-50%); background:rgba(255,255,255,0.92); color:#1a1a1a; font-size:0.8rem; font-weight:700; padding:7px 14px; border-radius:999px; box-shadow:0 2px 8px rgba(0,0,0,0.35); white-space:nowrap; }
 
   /* ===== Photobooth (foto com moldura) ===== */
   #camOverlay{
@@ -5141,14 +5142,22 @@
     const cor = ad.cor || '#ffffff';
     const tx = ad.textoX ?? 50, ty = ad.textoY ?? 80;
     let dur = parseInt(ad.duracao, 10) || 5;
+    // Link opcional — clicar no anúncio abre o link
+    let _lk = ad.link && String(ad.link).trim();
+    if(_lk){
+      if(!/^(https?:|tel:|mailto:|wa\.me|\/)/i.test(_lk) && !/^www\./i.test(_lk)) _lk = 'https://' + _lk;
+      else if(/^www\./i.test(_lk)) _lk = 'https://' + _lk;
+    }
     ov.innerHTML =
-      '<div class="adj-card">' +
+      '<div class="adj-card"' + (_lk ? ' style="cursor:pointer;"' : '') + '>' +
         '<div class="adj-foto"><img src="' + RAW_BASE + ad.foto + '" alt="" style="transform:translate(' + panX + '%, ' + panY + '%) scale(' + zoom + ');"></div>' +
         (ad.texto ? '<div class="adj-texto" style="left:' + tx + '%; top:' + ty + '%; color:' + cor + ';">' + ad.texto.replace(/\n/g, '<br>') + '</div>' : '') +
         '<div class="adj-badge">Publicidade</div>' +
+        (_lk ? '<div class="adj-link-hint">Toca para saber mais ↗</div>' : '') +
         '<div class="adj-timer" id="adjTimer">' + dur + '</div>' +
       '</div>';
     ov.classList.add('aberto');
+    if(_lk){ var _ac = ov.querySelector('.adj-card'); if(_ac) _ac.addEventListener('click', function(){ if(!window.__PREVIEW) window.open(_lk, '_blank', 'noopener'); }); }
     const iv = setInterval(() => {
       dur--;
       const el = document.getElementById('adjTimer');
