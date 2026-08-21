@@ -175,6 +175,7 @@
     <input type="password" id="authPass" placeholder="password" autocomplete="current-password">
     <button id="authBtn">Entrar</button>
     <button class="alt" id="authToggle">Criar conta nova</button>
+    <button class="alt" id="authForgot" style="display:block;">Esqueci-me da password</button>
     <div id="authMsg"></div>
   </div>
 </div>
@@ -4565,7 +4566,49 @@
       toggle.textContent = (modo === 'entrar') ? 'Criar conta nova' : 'Já tenho conta';
       setMsg('');
     };
+    // Enviar email de reposição de password
+    const forgot = document.getElementById('authForgot');
+    if(forgot) forgot.onclick = async function(){
+      const email = emailI.value.trim();
+      if(!email){ setMsg('Escreve primeiro o teu email, depois carrega em "Esqueci-me da password".'); emailI.focus(); return; }
+      forgot.disabled = true; setMsg('A enviar…');
+      const redir = location.origin + location.pathname + (SLUG ? ('?n=' + encodeURIComponent(SLUG)) : '');
+      const { error } = await sbc.auth.resetPasswordForEmail(email, { redirectTo: redir });
+      forgot.disabled = false;
+      if(error){ setMsg('Erro: ' + error.message); return; }
+      setMsg('Enviámos um email para ' + email + '. Abre-o e clica no link para definires uma nova password.', true);
+    };
+    // Regresso do email de reposição: o Supabase dispara PASSWORD_RECOVERY
+    try{
+      sbc.auth.onAuthStateChange(function(event){
+        if(event === 'PASSWORD_RECOVERY'){
+          modo = 'recuperar';
+          ov.style.display = 'flex';
+          tit.textContent = 'Nova password';
+          sub.textContent = 'Escreve a tua nova password para esta conta.';
+          emailI.style.display = 'none';
+          passI.value = ''; passI.placeholder = 'nova password'; passI.setAttribute('autocomplete', 'new-password');
+          btn.textContent = 'Guardar nova password';
+          if(toggle) toggle.style.display = 'none';
+          if(forgot) forgot.style.display = 'none';
+          setMsg('');
+        }
+      });
+    }catch(e){}
     btn.onclick = async function(){
+      // Modo reposição: define a nova password (a sessão de recuperação já está ativa)
+      if(modo === 'recuperar'){
+        const nova = passI.value;
+        if(!nova || nova.length < 6){ setMsg('A password tem de ter pelo menos 6 caracteres.'); return; }
+        btn.disabled = true; setMsg('A guardar…');
+        const { error } = await sbc.auth.updateUser({ password: nova });
+        btn.disabled = false;
+        if(error){ setMsg('Erro: ' + error.message); return; }
+        setMsg('Password alterada ✓', true);
+        modo = 'entrar'; emailI.style.display = ''; if(toggle) toggle.style.display = '';
+        iniciarSessao();
+        return;
+      }
       const email = emailI.value.trim(), pass = passI.value;
       if(!email || !pass){ setMsg('Preenche email e password.'); return; }
       btn.disabled = true; setMsg('');
