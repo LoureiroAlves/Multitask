@@ -665,7 +665,12 @@
       headers: { 'Authorization': 'Bearer ' + session.access_token, 'apikey': SUPABASE_KEY, 'Content-Type': 'image/' + (dados.ext === 'jpg' ? 'jpeg' : dados.ext), 'x-upsert': 'true' },
       body: arr
     });
-    if(!resp.ok){ let t = ''; try{ t = await resp.text(); }catch(e){} throw new Error('Upload falhou: ' + (t || resp.status)); }
+    if(!resp.ok){
+      let t = ''; try{ t = await resp.text(); }catch(e){}
+      if(resp.status >= 500 || /<!DOCTYPE|<html/i.test(t)){ throw new Error('O servidor de imagens do Supabase está temporariamente indisponível (erro ' + resp.status + '). Tenta de novo daqui a 1–2 minutos.'); }
+      let msg = t; try{ const j = JSON.parse(t); msg = j.message || j.error || t; }catch(e){}
+      throw new Error('Upload falhou: ' + (msg || resp.status));
+    }
     return SUPABASE_URL + '/storage/v1/object/public/imagens/' + nome;
   }
   function _adOpcoesRest(sel){

@@ -1427,7 +1427,16 @@
       },
       body: arr
     });
-    if(!resp.ok){ let t = ''; try{ t = await resp.text(); }catch(e){} throw new Error('Upload falhou: ' + (t || resp.status)); }
+    if(!resp.ok){
+      let t = ''; try{ t = await resp.text(); }catch(e){}
+      // Se o Storage devolve uma página HTML (ex.: erro 520 do Cloudflare), não despejar o HTML todo
+      if(resp.status >= 500 || /<!DOCTYPE|<html/i.test(t)){
+        throw new Error('O servidor de imagens do Supabase está temporariamente indisponível (erro ' + resp.status + '). Espera 1–2 minutos e carrega em Guardar outra vez.');
+      }
+      let msg = t;
+      try{ const j = JSON.parse(t); msg = j.message || j.error || t; }catch(e){}
+      throw new Error('Upload falhou: ' + (msg || resp.status));
+    }
     return SUPA_URL + '/storage/v1/object/public/imagens/' + nome;
   }
 
