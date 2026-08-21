@@ -1749,12 +1749,23 @@
   }
 
   // Esconde secções conforme o plano (funções) e esconde a publicidade ao dono
+  // Secções que são SEMPRE só do administrador (nunca do dono)
+  const SEC_SO_ADMIN = ['secAnuncio', 'secAnuncioJogos', 'secLimpeza'];
   function aplicarGating(ent){
     ent = ent || {}; const f = ent.funcoes || {};
+    const admin = !!window.__admin;
+    const cfg = (window.__negocio && window.__negocio.config) || {};
     function esconderSec(id){ const e = document.getElementById(id); if(e){ const d = e.closest('details') || e; d.style.display = 'none'; } }
     if(!f.agenda) esconderSec('secAgenda');
-    // Publicidade é controlada pelo administrador — esconder do dono
+    // Publicidade é controlada pelo administrador — esconder o link do rodapé do dono
     const fl = document.getElementById('footerLink'); if(fl){ fl.style.display='none'; const lab = document.querySelector('label[for="footerLink"]'); if(lab) lab.style.display='none'; }
+    if(!admin){
+      // 1) Secções sempre só do admin
+      SEC_SO_ADMIN.forEach(esconderSec);
+      // 2) Secções que o admin desligou para este negócio (no painel)
+      const off = Array.isArray(cfg.editorOff) ? cfg.editorOff : [];
+      off.forEach(esconderSec);
+    }
   }
 
   // ---- Carregar config (Supabase) ----

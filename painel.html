@@ -176,6 +176,24 @@
     ['agenda','Agenda / Reservas'],
     ['pagamentos','Pagamento de sinal']
   ];
+  // Secções do editor que o dono pode ver (o admin liga/desliga por negócio).
+  // Publicidade e Limpeza NÃO estão aqui — são sempre só do admin.
+  const EDITOR_SECS = [
+    ['secPartilha', 'Partilha / QR'],
+    ['secLayout', 'Layout, cores e modelo'],
+    ['secHeader', 'Cabeçalho'],
+    ['secTextoLivre', 'Texto livre'],
+    ['secAbertura', 'Abertura (intro)'],
+    ['secRodape', 'Barra fixa (fundo)'],
+    ['secFooter', 'Scroll final'],
+    ['secIconesTopo', 'Ícones / idiomas'],
+    ['secExtras', 'Extras (decorações, jogos, fidelidade…)'],
+    ['secRedes', 'Redes sociais'],
+    ['secAgenda', 'Reservas'],
+    ['secMenu', 'Menu'],
+    ['secMosaico', 'Mosaico'],
+    ['secCarrinho', 'Carrinho']
+  ];
   const PLANOS = {
     basico: {},
     intermedio: { traducoes:true, modelosPremium:true, azulejos:true, decoracoes:true, intro:true, jogos:true, fidelidade:true, photobooth:true },
@@ -311,6 +329,9 @@
         '<div class="linha-pub"><input type="checkbox" data-pub' + (pub.ativo ? ' checked' : '') + '> <label style="margin:0; color:var(--castanho); font-weight:600;">Mostrar publicidade neste negócio</label></div>' +
         '<div class="linha-pub" style="background:#fff6f0; border:1.5px solid #c05a3a; border-radius:9px; padding:9px 11px;"><input type="checkbox" data-naapp' + ((n.config && n.config.naApp === true) ? ' checked' : '') + '> <label style="margin:0; color:#a3452b; font-weight:700;">🍽️ Mostrar na ÀMesa (montra pública)</label></div>' +
         '<label style="margin-top:12px;">Tipo de cozinha (filtro da ÀMesa)</label><input type="text" data-tipo value="' + ((n.config && n.config.tipo) || '').replace(/"/g, '&quot;') + '" placeholder="Ex.: Português, Pizzaria, Sushi, Pastelaria…">' +
+        '<label style="margin-top:14px;">🔑 Secções do editor a que o dono tem acesso</label>' +
+        '<div style="font-size:.76rem; color:#9a8b6f; margin:-2px 0 6px;">Desliga as que não queres que o dono mexa. Publicidade e Limpeza de dados são sempre só tuas.</div>' +
+        '<div class="funcoes" data-secs></div>' +
         '<div style="margin-top:12px; font-size:.78rem; color:#9a8b6f; background:#fbf8f2; border:1px solid var(--linha); border-radius:8px; padding:8px 10px;">🗂 Pasta das imagens no Storage: <code style="color:var(--castanho); font-weight:700;">imagens/' + n.slug + '/</code><br><span style="color:#b3a68a;">O slug (<code>/' + n.slug + '</code>) é fixo e não muda quando alteras o nome — por isso a pasta mantém sempre este nome.</span></div>' +
         '<div style="margin-top:12px; display:flex; gap:8px; align-items:center;">' +
           '<button class="acao" data-act="guardar">Guardar</button>' +
@@ -334,6 +355,15 @@
       const def = PLANOS[e.target.value] || {};
       div.querySelectorAll('[data-fn]').forEach(function(c){ c.checked = !!def[c.getAttribute('data-fn')]; });
     };
+    // preencher secções do editor (checked = o dono vê; por defeito tudo ligado)
+    { const sbox = div.querySelector('[data-secs]');
+      const off = (n.config && Array.isArray(n.config.editorOff)) ? n.config.editorOff : [];
+      EDITOR_SECS.forEach(function(s){
+        const lab = document.createElement('label');
+        lab.innerHTML = '<input type="checkbox" data-sec="' + s[0] + '"' + (off.indexOf(s[0]) < 0 ? ' checked' : '') + '> ' + s[1];
+        sbox.appendChild(lab);
+      });
+    }
 
     div.querySelector('[data-act="editar"]').onclick = function(){ div.querySelector('[data-corpo]').classList.toggle('hide'); };
     div.querySelector('[data-act="qr"]').onclick = function(){ abrirQR(n); };
@@ -546,6 +576,8 @@
       _cfg = Object.assign({}, _cfg);
       _cfg.naApp = !!(_naEl && _naEl.checked);
       _cfg.tipo = (_tpEl ? _tpEl.value : '').trim();
+      // Secções do editor desligadas para o dono (guarda as NÃO marcadas)
+      { const off = []; div.querySelectorAll('[data-sec]').forEach(function(c){ if(!c.checked) off.push(c.getAttribute('data-sec')); }); _cfg.editorOff = off; }
       _upNeg.config = _cfg;
     }
     const { error:eN } = await sb.from('negocios').update(_upNeg).eq('id', n.id);
