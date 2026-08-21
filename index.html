@@ -11,7 +11,7 @@
 <style>
   :root{ --bg:#faf5ec; --ink:#2e2418; --muted:#8a7a63; --terra:#c05a3a; --terra-esc:#a3452b; --gold:#c79a3e; --card:#ffffff; --linha:#eaddc8; }
   *{ box-sizing:border-box; margin:0; padding:0; }
-  body{ font-family:'Nunito', sans-serif; background:var(--bg); color:var(--ink); -webkit-font-smoothing:antialiased; }
+  body{ font-family:'Nunito', sans-serif; background:var(--bg); color:var(--ink); -webkit-font-smoothing:antialiased; overflow-x:hidden; }
   a{ color:inherit; text-decoration:none; }
   .wrap{ max-width:1080px; margin:0 auto; padding:0 20px; }
 
@@ -77,8 +77,8 @@
   /* PNG: sem caixa nem moldura — a imagem aparece solta, na forma natural, com a transparência a mostrar a página */
   .ad-faixa.ad-png{ border:none; border-radius:0; overflow:visible; aspect-ratio:auto; background:transparent; text-align:center; }
   .ad-faixa.ad-png img{ width:var(--adw,100%); max-width:100%; height:auto; object-fit:contain; display:inline-block; margin:0 auto; }
-  /* No telemóvel usa a largura própria definida no painel */
-  @media (max-width:640px){ .ad-faixa.ad-png img{ width:var(--adwm,100%); } }
+  /* No telemóvel usa a largura própria definida no painel (pode passar de 100%, saindo para fora da coluna) */
+  @media (max-width:640px){ .ad-faixa.ad-png img{ width:var(--adwm,100%); max-width:none; } }
   .ad-ph{ position:relative; grid-column:1 / -1; border:1px dashed var(--gold); border-radius:16px; background:repeating-linear-gradient(45deg, #fff8ec 0 12px, #fdf1dc 12px 24px); aspect-ratio:var(--ad-ratio); display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; color:#b08a3a; }
   .ad-tag{ position:absolute; top:8px; left:8px; z-index:2; font-size:.62rem; font-weight:700; letter-spacing:.4px; text-transform:uppercase; color:#fff; background:rgba(0,0,0,0.55); padding:3px 8px; border-radius:6px; pointer-events:none; }
   .ad-slot{ grid-column:1 / -1; transition:opacity .38s ease; }
