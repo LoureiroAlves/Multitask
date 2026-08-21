@@ -333,8 +333,9 @@
         '<div style="font-size:.76rem; color:#9a8b6f; margin:-2px 0 6px;">Desliga as que não queres que o dono mexa. Publicidade e Limpeza de dados são sempre só tuas.</div>' +
         '<div class="funcoes" data-secs></div>' +
         '<div style="margin-top:12px; font-size:.78rem; color:#9a8b6f; background:#fbf8f2; border:1px solid var(--linha); border-radius:8px; padding:8px 10px;">🗂 Pasta das imagens no Storage: <code style="color:var(--castanho); font-weight:700;">imagens/' + n.slug + '/</code><br><span style="color:#b3a68a;">O slug (<code>/' + n.slug + '</code>) é fixo e não muda quando alteras o nome — por isso a pasta mantém sempre este nome.</span></div>' +
-        '<div style="margin-top:12px; display:flex; gap:8px; align-items:center;">' +
+        '<div style="margin-top:12px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">' +
           '<button class="acao" data-act="guardar">Guardar</button>' +
+          '<button class="mini" data-act="magic">✉️ Enviar acesso ao dono</button>' +
           '<a class="link" href="editar.html?n=' + n.slug + '" target="_blank">Abrir editor ↗</a>' +
           '<a class="link" href="cardapio.html?n=' + n.slug + '" target="_blank">Ver menu ↗</a>' +
           '<a class="link" href="reservas.html?n=' + n.slug + '" target="_blank">Reservas ↗</a>' +
@@ -370,6 +371,7 @@
     div.querySelector('[data-act="ativo"]').onclick = function(){ toggleAtivo(n); };
     div.querySelector('[data-act="apagar"]').onclick = function(){ apagar(n); };
     div.querySelector('[data-act="guardar"]').onclick = function(){ guardarEnt(n, div); };
+    div.querySelector('[data-act="magic"]').onclick = function(){ enviarAcessoDono(n, div); };
     return div;
   }
 
@@ -583,6 +585,18 @@
     const { error:eN } = await sb.from('negocios').update(_upNeg).eq('id', n.id);
     const { error } = await sb.from('entitlements').update({ plano:plano, funcoes:funcoes, publicidade:publicidade, atualizado_em:new Date().toISOString() }).eq('negocio_id', n.id);
     if(error || eN){ msg(box, 'Erro: ' + ((error||eN).message), 'erro'); } else { msg(box, 'Guardado ✓', 'ok'); carregar(); }
+  }
+
+  // Envia ao dono um link de acesso (magic link) — ele clica no email e entra direto no editor
+  async function enviarAcessoDono(n, div){
+    const box = div.querySelector('[data-msg]');
+    const email = ((div.querySelector('[data-email]') || {}).value || n.dono_email || '').trim().toLowerCase();
+    if(!email){ msg(box, 'Este negócio ainda não tem email de dono. Preenche o email e carrega em Guardar primeiro.', 'erro'); return; }
+    const redir = QR_BASE + 'editar.html?n=' + n.slug;
+    msg(box, 'A enviar link de acesso…', 'ok');
+    const { error } = await sb.auth.signInWithOtp({ email: email, options: { emailRedirectTo: redir, shouldCreateUser: true } });
+    if(error){ msg(box, 'Erro: ' + error.message, 'erro'); }
+    else { msg(box, 'Link de acesso enviado para ' + email + ' ✓ — ele clica no email e entra direto no editor.', 'ok'); }
   }
 
   async function toggleAtivo(n){
