@@ -708,10 +708,15 @@
         '</div>' +
         '<div data-adprev style="margin-top:6px;"></div>' +
         '<div data-adescwrap style="margin-top:8px;' + (_adEhPng(ad.img) ? '' : ' display:none;') + '">' +
-          '<label style="margin-top:0;">Tamanho na página (largura) — só para PNG</label>' +
+          '<label style="margin-top:0;">💻 Tamanho no computador (largura) — só PNG</label>' +
           '<div style="display:flex; align-items:center; gap:10px;">' +
             '<input type="range" min="20" max="100" step="1" value="' + ((ad.escala && ad.escala > 0) ? ad.escala : 100) + '" data-adesc style="flex:1;">' +
             '<span data-adescval style="font-weight:700; min-width:46px; text-align:right;">' + ((ad.escala && ad.escala > 0) ? ad.escala : 100) + '%</span>' +
+          '</div>' +
+          '<label style="margin-top:8px;">📱 Tamanho no telemóvel (largura) — só PNG</label>' +
+          '<div style="display:flex; align-items:center; gap:10px;">' +
+            '<input type="range" min="20" max="100" step="1" value="' + ((ad.escalaMob && ad.escalaMob > 0) ? ad.escalaMob : 100) + '" data-adescm style="flex:1;">' +
+            '<span data-adescmval style="font-weight:700; min-width:46px; text-align:right;">' + ((ad.escalaMob && ad.escalaMob > 0) ? ad.escalaMob : 100) + '%</span>' +
           '</div>' +
         '</div>' +
         '<label style="margin-top:10px;">Título (usado se não houver imagem)</label>' +
@@ -738,6 +743,8 @@
       };
       { const esc = box.querySelector('[data-adesc]'), escv = box.querySelector('[data-adescval]');
         if(esc) esc.oninput = function(e){ const v = parseInt(e.target.value, 10) || 100; ADS_EDIT[i].escala = v; if(escv) escv.textContent = v + '%'; _adPreview(prev, ADS_EDIT[i].img, v); }; }
+      { const escm = box.querySelector('[data-adescm]'), escmv = box.querySelector('[data-adescmval]');
+        if(escm) escm.oninput = function(e){ const v = parseInt(e.target.value, 10) || 100; ADS_EDIT[i].escalaMob = v; if(escmv) escmv.textContent = v + '%'; }; }
       box.querySelector('[data-adtit]').oninput = function(e){ ADS_EDIT[i].titulo = e.target.value; };
       box.querySelector('[data-adsub]').oninput = function(e){ ADS_EDIT[i].sub = e.target.value; };
       box.querySelector('[data-addest]').onchange = function(e){ ADS_EDIT[i].slug = e.target.value; box.querySelector('[data-adlinkwrap]').style.display = e.target.value ? 'none' : ''; };
@@ -748,7 +755,7 @@
   }
   async function guardarAds(){
     const ads = ADS_EDIT.filter(function(a){ return a && (a.img || a.titulo || a.sub || a.slug || a.link); })
-      .map(function(a){ return { id: a.id || ('ad' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6)), img: a.img || '', titulo: a.titulo || '', sub: a.sub || '', slug: a.slug || '', link: a.slug ? '' : (a.link || ''), escala: (a.escala && a.escala > 0 && a.escala < 100) ? a.escala : 100 }; });
+      .map(function(a){ return { id: a.id || ('ad' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6)), img: a.img || '', titulo: a.titulo || '', sub: a.sub || '', slug: a.slug || '', link: a.slug ? '' : (a.link || ''), escala: (a.escala && a.escala > 0 && a.escala < 100) ? a.escala : 100, escalaMob: (a.escalaMob && a.escalaMob > 0 && a.escalaMob < 100) ? a.escalaMob : 100 }; });
     const intervalo = Math.max(2, Math.min(60, parseInt(($('adsIntervalo') || {}).value, 10) || 5));
     $('adGuardar').disabled = true; msg($('adsMsg'), 'A guardar…', 'ok');
     const { data:existe, error:eGet } = await sb.from('negocios').select('id,config').eq('slug', AMESA_SLUG).maybeSingle();
@@ -764,7 +771,7 @@
     if(error){ msg($('adsMsg'), 'Erro: ' + error.message, 'erro'); }
     else { msg($('adsMsg'), 'Publicidade guardada ✓ (' + ads.length + ' anúncio' + (ads.length === 1 ? '' : 's') + ')', 'ok'); }
   }
-  $('adAdicionar').onclick = function(){ ADS_EDIT.push({ img:'', titulo:'', sub:'', slug:'', link:'', escala:100 }); renderAds(); };
+  $('adAdicionar').onclick = function(){ ADS_EDIT.push({ img:'', titulo:'', sub:'', slug:'', link:'', escala:100, escalaMob:100 }); renderAds(); };
   $('adGuardar').onclick = guardarAds;
 
   // arranque
