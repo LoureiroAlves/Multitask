@@ -288,7 +288,8 @@
     const div = document.createElement('div'); div.className = 'neg';
     const planoBadge = '<span class="badge b-' + (ent.plano||'basico') + '">' + (ent.plano||'basico') + '</span>';
     const estadoBadge = n.ativo ? '' : ' <span class="badge b-off">suspenso</span>';
-    const metLinha = '<div style="font-size:.75rem; color:#8a9a6f; margin-top:3px;">👁 ' + (met.menu||0) + ' visitas · 🔗 ' + (met.amesa||0) + ' cliques ÀMesa · 📢 ' + (met.ad||0) + ' publicidade · 🎮 ' + (met.jogos||0) + ' jogos</div>';
+    const metLinha = '<div style="font-size:.75rem; color:#8a9a6f; margin-top:3px;">👁 ' + (met.menu||0) + ' visitas · 🔗 ' + (met.amesa||0) + ' cliques ÀMesa · 🎮 ' + (met.jogos||0) + ' jogos</div>' +
+      '<div style="font-size:.75rem; color:#8a9a6f; margin-top:2px;">📣 anúncio no menu: ' + (met.anuncio_view||0) + ' vistas · ' + (met.anuncio_click||0) + ' cliques</div>';
     div.innerHTML =
       '<div class="neg-top">' +
         '<div><div class="neg-nome">' + n.nome + ' ' + planoBadge + estadoBadge + '</div><div class="neg-slug">/' + n.slug + '</div>' + metLinha + '</div>' +

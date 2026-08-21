@@ -4424,6 +4424,19 @@
               _wa.style.display = 'none';
               _wa.removeAttribute('href');   // sem número: ícone desaparece e fica inerte
             }
+            // Métricas: anúncio visto (aparece no ecrã) e clicado (imagem ou WhatsApp)
+            if(!window.__PREVIEW && _an.foto && window.__inc){
+              if(!_abox._trkView && ('IntersectionObserver' in window)){
+                _abox._trkView = true;
+                var _aio = new IntersectionObserver(function(es){ es.forEach(function(en){ if(en.isIntersecting) window.__inc('anuncio_view'); }); }, { threshold: 0.4 });
+                _aio.observe(_abox);
+              }
+              if(!_abox._trkClick){
+                _abox._trkClick = true;
+                _abox.addEventListener('click', function(){ window.__inc('anuncio_click'); }, true);
+                if(_wa) _wa.addEventListener('click', function(){ window.__inc('anuncio_click'); }, true);
+              }
+            }
           } else {
             _abox.style.display = 'none';
           }
@@ -4503,6 +4516,7 @@
     function jaContou(k){ try{ return localStorage.getItem(k) === '1'; }catch(e){ return false; } }
     function marcar(k){ try{ localStorage.setItem(k, '1'); }catch(e){} }
     function inc(tipo){ try{ sbC.rpc('inc_metrica', { p_slug: SLUG, p_tipo: tipo }).then(function(){}, function(){}); }catch(e){} }
+    window.__inc = inc;   // usado também pelo bloco de anúncio (view/clique)
     // Visita ao menu
     var kMenu = 'vm_' + SLUG + '_' + hoje;
     if(!jaContou(kMenu)){ marcar(kMenu); inc('menu'); }

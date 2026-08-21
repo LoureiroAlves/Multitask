@@ -112,7 +112,7 @@
 
     // Agregar
     const menu = {}, amesa = {}, adView = {}, adClick = {};
-    let totMenu = 0, totAmesa = 0, totView = 0, totClick = 0;
+    let totMenu = 0, totAmesa = 0, totView = 0, totClick = 0, totAnV = 0, totAnC = 0;
     (mets || []).forEach(function(m){
       const s = m.slug || '', t = m.tipo, v = m.total || 0;
       if(s.indexOf('ad:') === 0){
@@ -123,6 +123,8 @@
       else {
         if(t === 'menu'){ menu[s] = (menu[s] || 0) + v; totMenu += v; }
         else if(t === 'amesa'){ amesa[s] = (amesa[s] || 0) + v; totAmesa += v; }
+        else if(t === 'anuncio_view'){ totAnV += v; }
+        else if(t === 'anuncio_click'){ totAnC += v; }
       }
     });
 
@@ -130,8 +132,9 @@
     const ctr = totView ? Math.round((totClick / totView) * 1000) / 10 : 0;
     $('kpis').innerHTML =
       kpi(totMenu, 'Visitas ao menu') + kpi(totAmesa, 'Cliques ÀMesa') +
-      kpi(totView, 'Publicidade vista') + kpi(totClick, 'Cliques na publicidade') +
-      kpi(ctr + '%', 'Taxa de clique (CTR)');
+      kpi(totView, 'Publicidade vista (ÀMesa)') + kpi(totClick, 'Cliques publicidade (ÀMesa)') +
+      kpi(ctr + '%', 'CTR ÀMesa') +
+      kpi(totAnV, 'Anúncio nos menus (vistas)') + kpi(totAnC, 'Anúncio nos menus (cliques)');
 
     // Gráfico: visitas ao menu
     barra('gVisitas', ordenar(menu, nomePorSlug), 'Visitas', COR1);
