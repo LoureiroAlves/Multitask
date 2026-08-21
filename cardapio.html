@@ -621,7 +621,10 @@
   /* ===== Modelo "Ardósia" (quadro de giz) ===== */
   body.modelo-ardosia{ background-color:#2b322c; background-image:radial-gradient(rgba(255,255,255,.05) 1px, transparent 1.4px); background-size:6px 6px; }
   body.modelo-ardosia .categoria-grid{ background:transparent; border:none; }
-  body.modelo-ardosia .tile{ background:rgba(255,255,255,.05) !important; border:1px solid rgba(255,255,255,.20) !important; box-shadow:none !important; }
+  body.modelo-ardosia .tile{ background:rgba(255,255,255,.05) !important; border:1px solid rgba(255,255,255,.20) !important; }
+  body.modelo-ardosia .tile:not(.neon-on){ box-shadow:none !important; }
+  /* Secção com néon ligado: borda na cor do néon (o brilho da caixa vem das regras gerais de néon) */
+  body.modelo-ardosia .tile.neon-on{ border:2px solid var(--nfx-cor, var(--cat-cor, var(--dourado))) !important; }
   body.modelo-ardosia .tile .tile-label{ font-family:'Caveat', cursive; font-weight:700; font-size:1.5rem; color:#f6f2e6 !important; text-shadow:0 1px 0 rgba(0,0,0,.45); letter-spacing:.4px; }
   body.modelo-ardosia .categoria-painel{ background-color:#2b322c; background-image:radial-gradient(rgba(255,255,255,.05) 1px, transparent 1.4px); background-size:6px 6px; }
   body.modelo-ardosia .categoria-painel-header{ background:rgba(18,22,18,.72); border-bottom:1px solid rgba(255,255,255,.16); }
