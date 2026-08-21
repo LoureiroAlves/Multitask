@@ -3952,6 +3952,39 @@
       const banHint=document.createElement('div'); banHint.className='subtitulo'; banHint.style.cssText='margin:-4px 0 10px;' + (cat.bannerOn ? '' : 'display:none;'); banHint.textContent='Se não puseres uma foto aqui, o banner usa a foto do separador.';
       p.appendChild(banRow); p.appendChild(banHint);
 
+      // Ajuste do banner PNG (sai da caixa) — tamanho e posição, igual ao rodapé
+      { const _bf = cat.fotoBanner || cat.foto || ''; const _bIsPng = /\.png(\?|$)/i.test(_bf) || /^data:image\/png/i.test(_bf);
+        if(cat.bannerOn && _bIsPng){
+          cat.bannerCfg = cat.bannerCfg || {};
+          const bcfg = cat.bannerCfg;
+          const wrap=document.createElement('div'); wrap.style.cssText='margin:0 0 10px; padding:10px; border:1.5px dashed var(--linha); border-radius:9px;';
+          const t=document.createElement('div'); t.className='subtitulo'; t.style.cssText='margin:0 0 8px; font-weight:700; color:var(--dourado-escuro);'; t.textContent='🖼 Banner PNG — sai da caixa (ajusta tamanho e posição)';
+          wrap.appendChild(t);
+          const r1=document.createElement('div'); r1.style.cssText='display:flex; gap:10px; flex-wrap:wrap; align-items:center;';
+          // Lado
+          const lLab=document.createElement('label'); lLab.style.cssText='font-size:.8rem; display:flex; align-items:center; gap:6px;'; lLab.appendChild(document.createTextNode('Lado'));
+          const lSel=document.createElement('select'); lSel.style.cssText='padding:6px; border-radius:8px; border:1.5px solid var(--linha); font-family:inherit;';
+          [['esq','Esquerda'],['centro','Centro'],['dir','Direita']].forEach(o=>{ const op=document.createElement('option'); op.value=o[0]; op.textContent=o[1]; if((bcfg.lado||'centro')===o[0]) op.selected=true; lSel.appendChild(op); });
+          lSel.addEventListener('change',()=>{ bcfg.lado=lSel.value; if(window.__agendarPreview) window.__agendarPreview(); });
+          lLab.appendChild(lSel); r1.appendChild(lLab);
+          function numCtrl(rot, key, def, min, max){
+            const lab=document.createElement('label'); lab.style.cssText='font-size:.8rem; display:flex; align-items:center; gap:6px;'; lab.appendChild(document.createTextNode(rot));
+            const inp=document.createElement('input'); inp.type='number'; inp.min=String(min); inp.max=String(max); inp.step='2'; inp.value=(bcfg[key]!=null?bcfg[key]:def); inp.style.cssText='width:74px; padding:6px; border-radius:8px; border:1.5px solid var(--linha); font-family:inherit;';
+            inp.addEventListener('input',()=>{ bcfg[key]=parseInt(inp.value,10)||0; if(window.__agendarPreview) window.__agendarPreview(); });
+            lab.appendChild(inp); return lab;
+          }
+          r1.appendChild(numCtrl('Largura (px)','larg',160,40,700));
+          r1.appendChild(numCtrl('Afastamento','afastX',10,0,300));
+          r1.appendChild(numCtrl('Subir/descer','subir',0,-60,200));
+          wrap.appendChild(r1);
+          const h=document.createElement('div'); h.className='subtitulo'; h.style.cssText='margin:8px 0 0;'; h.textContent='Na pré-visualização podes arrastar a imagem para mover e a pega azul do canto para redimensionar.';
+          const rep=document.createElement('button'); rep.type='button'; rep.className='mv-mini'; rep.textContent='↺ Repor arrasto'; rep.style.marginTop='6px';
+          rep.addEventListener('click',()=>{ bcfg.dx=0; bcfg.dy=0; renderEditor(); if(window.__agendarPreview) window.__agendarPreview(); });
+          wrap.appendChild(h); wrap.appendChild(rep);
+          p.appendChild(wrap);
+        }
+      }
+
       // Estilo do texto do separador (modelo Grelha): cor, tamanho, negrito, itálico
       if(!cat.estiloTile) cat.estiloTile = cat.corTile ? { cor: cat.corTile } : {};
       if(cat.corTile) delete cat.corTile;
@@ -4505,6 +4538,17 @@
         const _lg = document.getElementById('masLargura');
         if(_lg && d.largura != null) _lg.value = d.largura;
         if(window.__agendarPreview) window.__agendarPreview();
+      }
+      else if(d.type === 'banner-pos' || d.type === 'banner-size'){
+        const _md = window.__getMenuPreview ? window.__getMenuPreview() : null;
+        if(_md && Array.isArray(_md.categorias)){
+          const _ct = _md.categorias.find(function(c){ return c && c.id === d.cat; });
+          if(_ct){ _ct.bannerCfg = _ct.bannerCfg || {};
+            if(d.type === 'banner-pos'){ _ct.bannerCfg.dx = d.dx; _ct.bannerCfg.dy = d.dy; }
+            else if(d.largura != null){ _ct.bannerCfg.larg = d.largura; }
+            if(window.__agendarPreview) window.__agendarPreview();
+          }
+        }
       }
     });
     { const _mr = document.getElementById('masReporPos'); if(_mr) _mr.addEventListener('click', function(){ document.getElementById('masDx').value = 0; document.getElementById('masDy').value = 0; if(window.__agendarPreview) window.__agendarPreview(); }); }
