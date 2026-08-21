@@ -126,7 +126,9 @@
 
   function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]; }); }
 
-  // === Métricas (conta cada evento; usa a função inc_metrica do Supabase) ===
+  // === Métricas (1 por dispositivo/dia; usa a função inc_metrica do Supabase) ===
+  function _hojeStr(){ try{ return new Date().toISOString().slice(0, 10); }catch(e){ return '0'; } }
+  function _umaVezDia(chave){ try{ var k = chave + '_' + _hojeStr(); if(localStorage.getItem(k) === '1') return false; localStorage.setItem(k, '1'); return true; }catch(e){ return true; } }
   function incMetrica(slug, tipo){
     if(!slug) return;
     try{
@@ -143,7 +145,7 @@
     ents.forEach(function(en){
       var sl = en.target;
       sl._vis = en.isIntersecting;
-      if(en.isIntersecting && sl._adId){ incMetrica('ad:' + sl._adId, 'view'); }
+      if(en.isIntersecting && sl._adId && _umaVezDia('adv_' + sl._adId)){ incMetrica('ad:' + sl._adId, 'view'); }
     });
   }, { threshold: 0.4 }) : null;
 
@@ -262,7 +264,7 @@
       sl.innerHTML = adHTML(ad);
       sl._adId = _adId(ad, idx);
       if(adIO) adIO.observe(sl);
-      if(contar && sl._vis){ incMetrica('ad:' + sl._adId, 'view'); }
+      if(contar && sl._vis && _umaVezDia('adv_' + sl._adId)){ incMetrica('ad:' + sl._adId, 'view'); }
     });
   }
   function rodarAds(){
@@ -294,9 +296,9 @@
   document.addEventListener('click', function(e){
     var t = e.target;
     var sl = t.closest ? t.closest('.ad-slot') : null;
-    if(sl && sl._adId && (t.closest('a') || t.closest('.ad-faixa') || t.closest('.ad-ph'))){ incMetrica('ad:' + sl._adId, 'click'); return; }
+    if(sl && sl._adId && (t.closest('a') || t.closest('.ad-faixa') || t.closest('.ad-ph'))){ if(_umaVezDia('adc_' + sl._adId)) incMetrica('ad:' + sl._adId, 'click'); return; }
     var card = t.closest ? t.closest('.card[data-slug]') : null;
-    if(card && t.closest('a')){ incMetrica(card.getAttribute('data-slug'), 'amesa'); }
+    if(card && t.closest('a')){ var _cs = card.getAttribute('data-slug'); if(_umaVezDia('amc_' + _cs)) incMetrica(_cs, 'amesa'); }
   }, true);
 
   fetch(SUPA_URL + '/rest/v1/negocios?select=slug,nome,config&order=nome.asc', {

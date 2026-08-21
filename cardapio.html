@@ -4428,13 +4428,14 @@
             if(!window.__PREVIEW && _an.foto && window.__inc){
               if(!_abox._trkView && ('IntersectionObserver' in window)){
                 _abox._trkView = true;
-                var _aio = new IntersectionObserver(function(es){ es.forEach(function(en){ if(en.isIntersecting) window.__inc('anuncio_view'); }); }, { threshold: 0.4 });
+                var _aio = new IntersectionObserver(function(es){ es.forEach(function(en){ if(en.isIntersecting && (!window.__umaVezDia || window.__umaVezDia('anv'))) window.__inc('anuncio_view'); }); }, { threshold: 0.4 });
                 _aio.observe(_abox);
               }
               if(!_abox._trkClick){
                 _abox._trkClick = true;
-                _abox.addEventListener('click', function(){ window.__inc('anuncio_click'); }, true);
-                if(_wa) _wa.addEventListener('click', function(){ window.__inc('anuncio_click'); }, true);
+                var _anClick = function(){ if(!window.__umaVezDia || window.__umaVezDia('anc')) window.__inc('anuncio_click'); };
+                _abox.addEventListener('click', _anClick, true);
+                if(_wa) _wa.addEventListener('click', _anClick, true);
               }
             }
           } else {
@@ -4517,6 +4518,8 @@
     function marcar(k){ try{ localStorage.setItem(k, '1'); }catch(e){} }
     function inc(tipo){ try{ sbC.rpc('inc_metrica', { p_slug: SLUG, p_tipo: tipo }).then(function(){}, function(){}); }catch(e){} }
     window.__inc = inc;   // usado também pelo bloco de anúncio (view/clique)
+    // 1 por dispositivo/dia: devolve true só na primeira vez do dia para uma dada chave
+    window.__umaVezDia = function(chave){ var k = chave + '_' + SLUG + '_' + hoje; if(jaContou(k)) return false; marcar(k); return true; };
     // Visita ao menu
     var kMenu = 'vm_' + SLUG + '_' + hoje;
     if(!jaContou(kMenu)){ marcar(kMenu); inc('menu'); }
