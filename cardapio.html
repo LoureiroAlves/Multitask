@@ -1858,10 +1858,11 @@
   /* ===== Publicidade no fim dos jogos ===== */
   #adJogosOverlay{ position:fixed; inset:0; z-index:600; background:rgba(0,0,0,0.85); display:none; align-items:center; justify-content:center; padding:16px; }
   #adJogosOverlay.aberto{ display:flex; }
-  .adj-card{ position:relative; width:100%; max-width:340px; aspect-ratio:3/4; border-radius:16px; overflow:hidden; background:var(--castanho); box-shadow:0 12px 40px rgba(0,0,0,0.55); animation:modalPop .2s ease; }
-  .adj-foto{ position:absolute; inset:0; overflow:hidden; }
-  .adj-foto img{ position:absolute; inset:0; width:100%; height:100%; object-fit:contain; transform-origin:center; }
-  .adj-texto{ position:absolute; transform:translate(-50%,-50%); text-align:center; font-family:var(--fonte-titulo); font-weight:700; font-size:1.1rem; line-height:1.25; text-shadow:0 1px 4px rgba(0,0,0,0.6); padding:0 10px; width:max-content; max-width:88%; }
+  /* Popup dos jogos = o mesmo anúncio do scroll (imagem no tamanho natural) */
+  .adj-card{ position:relative; width:min(92vw, 380px); max-height:86vh; border-radius:16px; overflow:hidden; background:transparent; box-shadow:0 12px 40px rgba(0,0,0,0.55); animation:modalPop .2s ease; }
+  .adj-img{ display:block; width:100%; height:auto; max-height:86vh; object-fit:contain; }
+  .adj-wa{ position:absolute; transform:translate(-50%,-50%); width:44px; height:44px; border-radius:50%; background:rgba(255,255,255,0.22); border:1px solid rgba(255,255,255,0.55); display:flex; align-items:center; justify-content:center; -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px); }
+  .adj-wa svg{ width:22px; height:22px; fill:#fff; filter:drop-shadow(0 1px 2px rgba(0,0,0,0.55)); }
   .adj-badge{ position:absolute; top:8px; left:8px; background:rgba(0,0,0,0.5); color:#fff; font-size:0.62rem; padding:2px 8px; border-radius:8px; letter-spacing:1px; text-transform:uppercase; }
   .adj-timer{ position:absolute; top:8px; right:8px; background:rgba(0,0,0,0.5); color:#fff; font-size:0.8rem; width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; }
   .adj-link-hint{ position:absolute; left:50%; bottom:12px; transform:translateX(-50%); background:rgba(255,255,255,0.92); color:#1a1a1a; font-size:0.8rem; font-weight:700; padding:7px 14px; border-radius:999px; box-shadow:0 2px 8px rgba(0,0,0,0.35); white-space:nowrap; }
@@ -4437,8 +4438,8 @@
         }
       }
 
-      // Publicidade nos jogos
-      if(config.adJogos) window._adJogos = config.adJogos;
+      // Publicidade nos jogos = anúncio próprio (config.anuncioJogos), com a mesma medida do scroll
+      window.__adPopup = config.anuncioJogos || null;
 
       // Decoração sazonal (desativar se configurado)
       if(config.sazonal === false){ const ov = document.getElementById('sazonalOverlay'); if(ov) ov.remove(); }
@@ -5130,34 +5131,36 @@
   const jogoTitulo = document.getElementById('jogoTitulo');
   const jogoConteudo = document.getElementById('jogoConteudo');
 
-  // Popup de publicidade no fim dos jogos (mostra durante N segundos, depois chama cb)
-  window._adJogos = window._adJogos || null;
+  // Popup de publicidade no fim dos jogos = o mesmo anúncio do scroll (config.anuncio)
+  window.__adPopup = window.__adPopup || null;
   window.mostrarPubJogos = function(cb){
-    const ad = window._adJogos;
+    const ad = window.__adPopup;
+    // Só aparece se o anúncio dos jogos estiver ativo e tiver imagem
     if(!ad || !ad.ativo || !ad.foto){ if(cb) cb(); return; }
     let ov = document.getElementById('adJogosOverlay');
     if(!ov){ ov = document.createElement('div'); ov.id = 'adJogosOverlay'; document.body.appendChild(ov); }
-    const zoom = (ad.fotoZoom || 100) / 100;
-    const panX = ad.fotoPanX || 0, panY = ad.fotoPanY || 0;
-    const cor = ad.cor || '#ffffff';
-    const tx = ad.textoX ?? 50, ty = ad.textoY ?? 80;
-    let dur = parseInt(ad.duracao, 10) || 5;
-    // Link opcional — clicar no anúncio abre o link
+    let dur = 6;
+    // Link opcional (o mesmo do scroll) — clicar no anúncio abre o link
     let _lk = ad.link && String(ad.link).trim();
     if(_lk){
       if(!/^(https?:|tel:|mailto:|wa\.me|\/)/i.test(_lk) && !/^www\./i.test(_lk)) _lk = 'https://' + _lk;
       else if(/^www\./i.test(_lk)) _lk = 'https://' + _lk;
     }
+    // WhatsApp (o mesmo do scroll) — reutiliza o ícone do #anuncioWa
+    const _num = String(ad.whatsapp || '').replace(/\D/g, '').replace(/^00/, '');
+    const _watxt = ad.whatsappMsg ? ('?text=' + encodeURIComponent(ad.whatsappMsg)) : '';
+    const _waEl = document.getElementById('anuncioWa');
+    const _waSvg = _waEl ? _waEl.innerHTML : '';
     ov.innerHTML =
       '<div class="adj-card"' + (_lk ? ' style="cursor:pointer;"' : '') + '>' +
-        '<div class="adj-foto"><img src="' + RAW_BASE + ad.foto + '" alt="" style="transform:translate(' + panX + '%, ' + panY + '%) scale(' + zoom + ');"></div>' +
-        (ad.texto ? '<div class="adj-texto" style="left:' + tx + '%; top:' + ty + '%; color:' + cor + ';">' + ad.texto.replace(/\n/g, '<br>') + '</div>' : '') +
-        '<div class="adj-badge">Publicidade</div>' +
+        '<span class="adj-badge">Publicidade</span>' +
+        '<img class="adj-img" src="' + RAW_BASE + ad.foto + '" alt="">' +
+        (_num ? '<a class="adj-wa" href="https://wa.me/' + _num + _watxt + '" target="_blank" rel="noopener" aria-label="WhatsApp" style="left:' + (ad.waX != null ? ad.waX : 50) + '%; top:' + (ad.waY != null ? ad.waY : 88) + '%;">' + _waSvg + '</a>' : '') +
         (_lk ? '<div class="adj-link-hint">Toca para saber mais ↗</div>' : '') +
         '<div class="adj-timer" id="adjTimer">' + dur + '</div>' +
       '</div>';
     ov.classList.add('aberto');
-    if(_lk){ var _ac = ov.querySelector('.adj-card'); if(_ac) _ac.addEventListener('click', function(){ if(!window.__PREVIEW) window.open(_lk, '_blank', 'noopener'); }); }
+    if(_lk){ var _ac = ov.querySelector('.adj-card'); if(_ac) _ac.addEventListener('click', function(e){ if(e.target && e.target.closest && e.target.closest('.adj-wa')) return; if(!window.__PREVIEW) window.open(_lk, '_blank', 'noopener'); }); }
     const iv = setInterval(() => {
       dur--;
       const el = document.getElementById('adjTimer');

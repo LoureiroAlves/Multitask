@@ -967,6 +967,31 @@
     </div>
   </details>
 
+  <!-- PUBLICIDADE NO FIM DOS JOGOS (anúncio próprio, mesma medida do scroll) -->
+  <details id="secAnuncioJogos">
+    <summary>🎮 Publicidade no fim dos jogos</summary>
+    <div class="bloco-conteudo">
+      <div class="lembrar" style="margin-bottom:10px;">
+        <input type="checkbox" id="ajgAtivo">
+        <label for="ajgAtivo" style="margin:0; font-weight:700; color:var(--dourado-escuro); display:inline;">Mostrar anúncio no fim de cada jogo</label>
+      </div>
+      <div class="subtitulo" style="margin:-4px 0 12px;">Um popup no fim de cada jogo, com a <b>mesma medida</b> do anúncio do scroll. Pode ser um anúncio <b>diferente</b> deste — escolhe a imagem, o link e o WhatsApp que quiseres.</div>
+
+      <label>Imagem do anúncio</label>
+      <input type="file" id="ajgFotoFile" accept="image/*">
+      <input type="hidden" id="ajgFotoUrl">
+      <div id="ajgFotoPrev" style="margin-top:8px;"></div>
+
+      <label for="ajgLink" style="margin-top:12px;">Link ao clicar (oculto)</label>
+      <input type="text" id="ajgLink" placeholder="https://... — abre ao clicar no anúncio">
+
+      <label for="ajgWhats" style="margin-top:12px;">Número de WhatsApp (opcional)</label>
+      <input type="text" id="ajgWhats" placeholder="Ex.: 351 912 345 678 (com indicativo do país)">
+      <label for="ajgWhatsMsg" style="margin-top:10px;">Mensagem pré-preenchida (opcional)</label>
+      <input type="text" id="ajgWhatsMsg" placeholder="Ex.: Olá! Vim dos jogos e queria saber mais">
+    </div>
+  </details>
+
   <!-- RODAPÉ FINAL -->
   <details id="secFooter">
     <summary>Scroll (aparece ao fazer scroll até ao fim da página)</summary>
@@ -1084,8 +1109,8 @@
     </div>
   </details>
 
-  <!-- PUBLICIDADE NOS JOGOS -->
-  <details id="secAdJogos">
+  <!-- PUBLICIDADE NOS JOGOS (antiga — substituída pelo anúncio do scroll; escondida) -->
+  <details id="secAdJogos" style="display:none;">
     <summary>Publicidade nos jogos</summary>
     <div class="bloco-conteudo">
       <div style="font-size:0.82rem; color:var(--castanho-suave); margin-bottom:8px;">Um popup de patrocínio aparece no fim de cada jogo (Stop, Velha, Forca, Adivinhas). Só surge se estiver ativo e tiver foto.</div>
@@ -1964,6 +1989,15 @@
       document.getElementById('anuncioWaY').value = (_an.waY != null ? _an.waY : '');
       if(typeof _anuncioPrev === 'function') _anuncioPrev();
     }
+    // Anúncio dos jogos (imagem própria)
+    { const _ajg = config.anuncioJogos || {};
+      const _a1 = document.getElementById('ajgAtivo'); if(_a1) _a1.checked = _ajg.ativo === true;
+      const _a2 = document.getElementById('ajgFotoUrl'); if(_a2) _a2.value = _ajg.foto || '';
+      const _a3 = document.getElementById('ajgLink'); if(_a3) _a3.value = _ajg.link || '';
+      const _a4 = document.getElementById('ajgWhats'); if(_a4) _a4.value = _ajg.whatsapp || '';
+      const _a5 = document.getElementById('ajgWhatsMsg'); if(_a5) _a5.value = _ajg.whatsappMsg || '';
+      filaAjg = null; if(typeof _ajgPrev === 'function') _ajgPrev();
+    }
     // Publicidade dos jogos
     const aj = config.adJogos || {};
     document.getElementById('adjAtivo').checked = !!aj.ativo;
@@ -2242,6 +2276,35 @@
     const f = e.target.files[0]; if(!f) return;
     filaAnuncio = f; _anuncioPrev();
     setEstado('Imagem da publicidade escolhida (guarda para aplicar).', 'info');
+  });
+
+  // ---- Anúncio dos jogos (imagem própria, mesma medida do scroll) ----
+  let filaAjg = null;
+  function _ajgPrev(){
+    const box = document.getElementById('ajgFotoPrev'); if(!box) return;
+    const url = document.getElementById('ajgFotoUrl').value;
+    box.innerHTML = '';
+    if(filaAjg){
+      const im = document.createElement('img'); im.src = URL.createObjectURL(filaAjg);
+      im.style.cssText = 'max-width:190px;width:100%;border-radius:10px;display:block;box-shadow:0 2px 8px rgba(0,0,0,.15);';
+      const p = document.createElement('div'); p.className = 'subtitulo'; p.style.marginTop = '4px';
+      p.textContent = 'Nova imagem escolhida (guarda para aplicar).';
+      box.appendChild(im); box.appendChild(p);
+    } else if(url){
+      const im = document.createElement('img'); im.src = url;
+      im.style.cssText = 'max-width:190px;width:100%;border-radius:10px;display:block;box-shadow:0 2px 8px rgba(0,0,0,.15);';
+      const rm = document.createElement('button'); rm.type = 'button'; rm.textContent = 'Remover imagem';
+      rm.style.cssText = 'margin-top:6px;padding:6px 12px;border:1px solid var(--linha);border-radius:8px;background:#fff;cursor:pointer;font:inherit;';
+      rm.onclick = function(){ document.getElementById('ajgFotoUrl').value = ''; filaAjg = null; _ajgPrev(); if(window.__agendarPreview) window.__agendarPreview(); };
+      box.appendChild(im); box.appendChild(rm);
+    } else {
+      box.innerHTML = '<div class="subtitulo">Sem imagem escolhida.</div>';
+    }
+  }
+  document.getElementById('ajgFotoFile').addEventListener('change', e => {
+    const f = e.target.files[0]; if(!f) return;
+    filaAjg = f; _ajgPrev();
+    setEstado('Imagem do anúncio dos jogos escolhida (guarda para aplicar).', 'info');
   });
 
   // ---- Aspeto avançado: cores, fundo ----
@@ -2594,6 +2657,12 @@
         filaAnuncio = null;
         document.getElementById('anuncioFotoFile').value = '';
       }
+      if(filaAjg){
+        setEstado('A enviar imagem do anúncio dos jogos…', 'info');
+        document.getElementById('ajgFotoUrl').value = await enviarFoto(filaAjg, token);
+        filaAjg = null;
+        document.getElementById('ajgFotoFile').value = '';
+      }
       if(filaMascote){
         setEstado('A enviar imagem da barra fixa…', 'info');
         document.getElementById('masFotoUrl').value = await enviarFoto(filaMascote, token);
@@ -2752,6 +2821,13 @@
           waY: isNaN(_wy) ? 88 : _wy
         };
       }
+      config.anuncioJogos = {
+        ativo: (document.getElementById('ajgAtivo') ? document.getElementById('ajgAtivo').checked : false),
+        foto: (document.getElementById('ajgFotoUrl') ? document.getElementById('ajgFotoUrl').value.trim() : ''),
+        link: (document.getElementById('ajgLink') ? document.getElementById('ajgLink').value.trim() : ''),
+        whatsapp: (document.getElementById('ajgWhats') ? document.getElementById('ajgWhats').value.trim() : ''),
+        whatsappMsg: (document.getElementById('ajgWhatsMsg') ? document.getElementById('ajgWhatsMsg').value.trim() : '')
+      };
       config.adJogos = {
         ativo: document.getElementById('adjAtivo').checked,
         foto: config.adJogos.foto || '',
