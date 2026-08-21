@@ -182,11 +182,21 @@
   // A cortina de abertura cobre o ecrã enquanto os dados carregam (evita o flash de conteúdo).
   // Se o "ecrã de abertura" estiver ligado, vira uma animação com o nome; senão, some assim que carrega.
   window.__introAtiva = false; window.__introReveal = 'slide'; window.__menuOk = false; window.__cfgOk = false;
+  // Nome do negócio: primeiro do ?n=slug; se não houver, do endereço (link limpo: amesadigital.pt/nome)
+  function __slugDoEndereco(){
+    try{
+      var q = (new URLSearchParams(location.search)).get('n');
+      if(q) return q.toLowerCase().replace(/[^a-z0-9]/g, '');
+      var seg = location.pathname.split('/').filter(Boolean).pop() || '';
+      if(/\.html?$/i.test(seg)) return '';   // é um ficheiro (ex.: cardapio.html), não um nome de negócio
+      return seg.toLowerCase().replace(/[^a-z0-9]/g, '');
+    }catch(e){ return ''; }
+  }
   try{ window.__PREVIEW = (new URLSearchParams(location.search)).get('preview') === '1'; }catch(e){ window.__PREVIEW = false; }
   // Pintar o ecrã de carregamento com a cor do tema deste restaurante (guardada da última visita),
   // para não mostrar o neutro azul num restaurante de outra cor.
   try{
-    var _tcSlug = ((new URLSearchParams(location.search)).get('n') || '').toLowerCase().replace(/[^a-z0-9]/g, '') || 'geral';
+    var _tcSlug = __slugDoEndereco() || 'geral';
     var _tc = localStorage.getItem('temaCor:' + _tcSlug);
     if(_tc){
       document.documentElement.style.setProperty('--intro-bg', _tc);
@@ -3383,7 +3393,7 @@
   // ---- Carrega definições do Supabase (por ?n=slug) ----
   // As fotos são URLs completos do Supabase Storage; RAW_BASE vazio deixa-os passar tal e qual.
   const RAW_BASE = '';
-  const SLUG = ((new URLSearchParams(location.search)).get('n') || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  const SLUG = __slugDoEndereco();
   const SUPA_URL = 'https://zewiijcrkyxjkhudlplk.supabase.co';
   const SUPA_KEY = 'sb_publishable_6LP7x2v5c-c9DQkQslnUmA_g13SEjp3';
   const sbC = (window.supabase && SLUG) ? window.supabase.createClient(SUPA_URL, SUPA_KEY) : null;
@@ -3518,7 +3528,7 @@
     r.style.setProperty('--intro-bg', t['--castanho']);
     const meta = document.querySelector('meta[name=theme-color]');
     if(meta) meta.content = t['--castanho'];
-    try{ var _tcS = ((new URLSearchParams(location.search)).get('n') || '').toLowerCase().replace(/[^a-z0-9]/g, '') || 'geral'; localStorage.setItem('temaCor:' + _tcS, t['--castanho']); }catch(e){}
+    try{ var _tcS = __slugDoEndereco() || 'geral'; localStorage.setItem('temaCor:' + _tcS, t['--castanho']); }catch(e){}
   }
 
   // Tipo de letra dos títulos, escolhido à parte (sobrepõe-se ao do layout)
