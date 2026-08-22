@@ -2,6 +2,7 @@
 <html lang="pt">
 <head>
 <meta charset="UTF-8">
+<script>/* Domínio oficial: se abrir pelo GitHub Pages, salta para o amesadigital.pt */(function(){try{if(/github\.io$/i.test(location.hostname)){location.replace('https://amesadigital.pt'+location.pathname.replace(/^\/Multitask/i,'')+location.search+location.hash);}}catch(e){}})();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Painel — Multitask</title>
 <style>
@@ -336,9 +337,9 @@
         '<div style="margin-top:12px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">' +
           '<button class="acao" data-act="guardar">Guardar</button>' +
           '<button class="mini" data-act="magic">✉️ Enviar acesso ao dono</button>' +
-          '<a class="link" href="editar.html?n=' + n.slug + '" target="_blank">Abrir editor ↗</a>' +
+          '<a class="link" href="' + SITE + '/editar.html?n=' + n.slug + '" target="_blank">Abrir editor ↗</a>' +
           '<a class="link" href="' + SITE + '/' + n.slug + '" target="_blank">Ver menu ↗</a>' +
-          '<a class="link" href="reservas.html?n=' + n.slug + '" target="_blank">Reservas ↗</a>' +
+          '<a class="link" href="' + SITE + '/reservas.html?n=' + n.slug + '" target="_blank">Reservas ↗</a>' +
         '</div>' +
         '<div data-msg></div>' +
       '</div>';
