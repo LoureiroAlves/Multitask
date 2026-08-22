@@ -3957,11 +3957,11 @@
       bInp.addEventListener('change', async ()=>{ const f=bInp.files&&bInp.files[0]; if(!f) return; setEstadoMenu('A enviar foto do banner…','info'); try{ const url=await _uploadFoto(f); cat.fotoBanner=url; setEstadoMenu('Foto adicionada ✓','ok'); renderEditor(); if(window.__agendarPreview) window.__agendarPreview(); }catch(e){ setEstadoMenu('Erro ao enviar foto: '+e.message,'erro'); } });
       bLbl.appendChild(bInp); banRow.appendChild(bLbl);
       if(cat.fotoBanner){ const bRm=document.createElement('button'); bRm.type='button'; bRm.className='mv-mini'; bRm.textContent='sem foto'; bRm.addEventListener('click',()=>{ delete cat.fotoBanner; renderEditor(); if(window.__agendarPreview) window.__agendarPreview(); }); banRow.appendChild(bRm); }
-      const banHint=document.createElement('div'); banHint.className='subtitulo'; banHint.style.cssText='margin:-4px 0 10px;' + (cat.bannerOn ? '' : 'display:none;'); banHint.textContent='Se não puseres uma foto aqui, o banner usa a foto do separador.';
+      const banHint=document.createElement('div'); banHint.className='subtitulo'; banHint.style.cssText='margin:-4px 0 10px;' + (cat.bannerOn ? '' : 'display:none;'); banHint.textContent='O banner só aparece se puseres aqui uma foto própria (não usa a do separador).';
       p.appendChild(banRow); p.appendChild(banHint);
 
       // Ajuste do banner PNG (sai da caixa) — tamanho e posição, igual ao rodapé
-      { const _bf = cat.fotoBanner || cat.foto || ''; const _bIsPng = /\.png(\?|$)/i.test(_bf) || /^data:image\/png/i.test(_bf);
+      { const _bf = cat.fotoBanner || ''; const _bIsPng = /\.png(\?|$)/i.test(_bf) || /^data:image\/png/i.test(_bf);
         if(cat.bannerOn && _bIsPng){
           cat.bannerCfg = cat.bannerCfg || {};
           const bcfg = cat.bannerCfg;

@@ -2996,7 +2996,7 @@
       grid.appendChild(btn);
       const sec = document.createElement('section');
       sec.className = 'categoria'; sec.id = cat.id;
-      { var _ban = cat.bannerOn ? (cat.fotoBanner || cat.foto) : '';
+      { var _ban = (cat.bannerOn && cat.fotoBanner) ? cat.fotoBanner : '';   // banner só com foto própria (não usa a do separador)
         if(_ban){
           var _isPngBan = /\.png(\?|$)/i.test(_ban) || /^data:image\/png/i.test(_ban);
           if(_isPngBan){
