@@ -75,12 +75,37 @@
       </div>
       <label for="nEmailDono">Email do dono (para ele entrar no editor)</label>
       <input type="email" id="nEmailDono" placeholder="dono@exemplo.com (podes deixar em branco e definir depois)">
-      <label for="nPlano">Plano</label>
-      <select id="nPlano">
-        <option value="basico">Básico</option>
-        <option value="intermedio">Intermédio</option>
-        <option value="pro">Pro</option>
-      </select>
+      <div class="row2">
+        <div>
+          <label for="nTipoNegocio">Tipo de negócio</label>
+          <select id="nTipoNegocio">
+            <option value="restaurante">Restaurante</option>
+            <option value="cafe">Café / Brunch</option>
+            <option value="padaria">Padaria / Pastelaria</option>
+            <option value="pizza">Pizzaria</option>
+            <option value="hamburguer">Hamburgueria</option>
+            <option value="sushi">Sushi / Japonês</option>
+            <option value="marisqueira">Marisqueira</option>
+            <option value="churrasco">Churrascaria / Grelhados</option>
+            <option value="tasca">Tasca / Petiscos</option>
+            <option value="gelataria">Gelataria</option>
+            <option value="bar">Bar / Cervejaria</option>
+            <option value="garrafeira">Garrafeira / Vinhos</option>
+            <option value="vegetariano">Saudável / Vegetariano</option>
+            <option value="barbearia">Barbearia / Estética</option>
+            <option value="outro">Outro (generalista) — menu vem do JSON</option>
+          </select>
+        </div>
+        <div>
+          <label for="nPlano">Plano</label>
+          <select id="nPlano">
+            <option value="basico">Básico</option>
+            <option value="intermedio">Intermédio</option>
+            <option value="pro">Pro</option>
+          </select>
+        </div>
+      </div>
+      <div class="subtitulo" style="margin:6px 0 0; font-size:.8rem; color:#9a8b6f;">O tipo define o estilo/menu de base. Em "Outro", o menu fica vazio e é criado pelo ficheiro JSON que importares no editor.</div>
 
       <div style="margin-top:14px; padding:14px; border-radius:12px; background:linear-gradient(135deg,#2b2140,#3a2c5e); color:#fff;">
         <div style="font-weight:800; display:flex; align-items:center; gap:8px;">✨ Criar por descrição (assistente)</div>
@@ -545,10 +570,19 @@
     const descricao = ($('nDescricao').value || '').trim();
     if(!nome || !slug){ msg($('criarMsg'),'Preenche o nome e o slug.','erro'); return; }
     $('btnCriar').disabled = true;
+    const tipoNeg = $('nTipoNegocio') ? $('nTipoNegocio').value : 'restaurante';
     let config = {}, menu = {}, notaAsst = '';
-    if(descricao){
-      const g = asstGerar(descricao, nome, $('nAsstMenu').checked);
-      config = g.config; menu = g.menu;
+    if(tipoNeg === 'outro'){
+      // Generalista: menu vazio (vem do JSON), estilo neutro; só a cor pode vir da descrição
+      const layout = (typeof asstCorHint === 'function' && asstCorHint(asstNorm(descricao))) || '1';
+      config = { modelo:'lista', layout: layout, cores:null, fonte:'auto', fonteTexto:'auto', tipoNegocio:'outro',
+        header:{ titulo:nome, subtitulo:'', cor:'#ffffff', realce:true, fotosAtivas:true, fotos:[] } };
+      menu = { restaurante:'', categorias:[] };
+      notaAsst = ' — generalista (o menu é criado pelo JSON que importares no editor)';
+    } else {
+      // Tipo escolhido define o preset; a descrição refina cores/estilo
+      const g = asstGerar((tipoNeg + ' ' + descricao).trim(), nome, $('nAsstMenu').checked);
+      config = g.config; menu = g.menu; config.tipoNegocio = tipoNeg;
       notaAsst = ' — estilo "' + g.preset.nome + '" (modelo ' + g.modelo + ', paleta ' + g.layout + ')' + ($('nAsstMenu').checked ? ' com menu de exemplo' : '');
     }
     const { data:neg, error } = await sb.from('negocios').insert({ nome:nome, slug:slug, dono_email:emailDono || null, config:config, menu:menu }).select().single();
