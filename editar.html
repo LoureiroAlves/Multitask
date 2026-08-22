@@ -183,8 +183,8 @@
 <div class="wrap">
   <a class="voltar" href="cardapio.html">← Voltar ao cardápio</a>
   <button type="button" id="btnSair" style="display:none; float:right; background:none; border:1px solid var(--linha); color:var(--castanho-suave); padding:6px 12px; border-radius:8px; font-size:0.8rem; cursor:pointer;">Sair da conta</button>
-  <h1>Editar Cardápio</h1>
-  <div class="subtitulo" id="editorSub">Edita o teu cardápio. As alterações são guardadas na tua conta.</div>
+  <h1>Editar Menu</h1>
+  <div class="subtitulo" id="editorSub">Edita o teu menu. As alterações são guardadas na tua conta.</div>
   <div style="display:none;" aria-hidden="true">
     <input type="password" id="token" value="supabase">
     <button type="button" id="mostrarToken">Ver</button>
@@ -1308,7 +1308,7 @@
   <div class="estado" id="estado"></div>
 
   <details id="secMenu" style="margin-top:22px;">
-    <summary>🍽️ Menu — pratos, preços e traduções</summary>
+    <summary>🧾 Menu — itens, preços e traduções</summary>
     <div class="bloco-conteudo">
       <div class="lembrar" style="margin-top:6px;">
         <input type="checkbox" id="menuAtivoChk" checked>
@@ -3754,7 +3754,7 @@
       }
 
       const row=document.createElement('div'); row.className='mv-item';
-      const nome=document.createElement('input'); nome.className='mv-nome'; nome.value=it.nome.pt||''; nome.placeholder='Nome do prato';
+      const nome=document.createElement('input'); nome.className='mv-nome'; nome.value=it.nome.pt||''; nome.placeholder='Nome do item';
       nome.addEventListener('input',()=>{ it.nome.pt=nome.value; });
       const preco=document.createElement('input'); preco.className='mv-preco'; preco.value=(it.preco==null?'':it.preco); preco.placeholder='Preço';
       preco.addEventListener('input',()=>{ it.preco=preco.value; });
@@ -3777,12 +3777,12 @@
       mais.appendChild(campoMulti(it.desc,'Descrição'));
       mais.appendChild(mkLabel('Chave do vinho (ⓘ, opcional)'));
       mais.appendChild(mkInput(it.vinho,'ex: monte-velho-tinto', v=>{ v=v.trim(); if(v) it.vinho=v; else delete it.vinho; }));
-      mais.appendChild(mkLabel('Foto do prato'));
+      mais.appendChild(mkLabel('Foto do item'));
       const fRow=document.createElement('div'); fRow.style.cssText='display:flex; align-items:center; gap:8px; flex-wrap:wrap;';
       if(it.foto){ const pv=document.createElement('img'); pv.src=it.foto; pv.style.cssText='width:44px; height:44px; object-fit:cover; border-radius:6px; border:1px solid var(--linha);'; fRow.appendChild(pv); }
       const fL=document.createElement('label'); fL.className='mv-mini'; fL.style.cursor='pointer'; fL.textContent = it.foto ? 'trocar foto' : '＋ foto';
       const fI=document.createElement('input'); fI.type='file'; fI.accept='image/*'; fI.style.display='none';
-      fI.addEventListener('change', async ()=>{ const f=fI.files&&fI.files[0]; if(!f) return; setEstadoMenu('A enviar foto do prato…','info'); try{ const url=await _uploadFoto(f); it.foto=url; setEstadoMenu('Foto adicionada ✓','ok'); renderEditor(); if(window.__agendarPreview) window.__agendarPreview(); }catch(e){ setEstadoMenu('Erro ao enviar foto: '+(e&&e.message?e.message:e),'erro'); } });
+      fI.addEventListener('change', async ()=>{ const f=fI.files&&fI.files[0]; if(!f) return; setEstadoMenu('A enviar foto do item…','info'); try{ const url=await _uploadFoto(f); it.foto=url; setEstadoMenu('Foto adicionada ✓','ok'); renderEditor(); if(window.__agendarPreview) window.__agendarPreview(); }catch(e){ setEstadoMenu('Erro ao enviar foto: '+(e&&e.message?e.message:e),'erro'); } });
       fL.appendChild(fI); fRow.appendChild(fL);
       if(it.foto){ const fR=document.createElement('button'); fR.type='button'; fR.className='mv-mini'; fR.textContent='sem foto'; fR.addEventListener('click',()=>{ delete it.foto; renderEditor(); if(window.__agendarPreview) window.__agendarPreview(); }); fRow.appendChild(fR); }
       mais.appendChild(fRow);
@@ -4107,7 +4107,7 @@
         const ss=document.createElement('summary'); ss.textContent='subtítulo (opcional)'; ss.style.cssText='font-size:0.75rem;color:var(--castanho-suave);';
         sd.appendChild(ss); g.subtitulo=g.subtitulo||{pt:''}; sd.appendChild(campoMulti(g.subtitulo,'Subtítulo')); if(g.subtitulo.pt) sd.open=true; p.appendChild(sd);
         const lista=document.createElement('div'); g.itens.forEach((it,idx)=> lista.appendChild(mvItem(g,it,idx))); p.appendChild(lista);
-        const add=document.createElement('button'); add.className='mv-add'; add.type='button'; add.textContent='＋ adicionar prato';
+        const add=document.createElement('button'); add.className='mv-add'; add.type='button'; add.textContent='＋ adicionar item';
         add.addEventListener('click',()=>{ g.itens.push({nome:{pt:''},preco:''}); renderEditor(); });
         p.appendChild(add);
       }
@@ -4130,7 +4130,7 @@
       const grid=document.createElement('div'); grid.className='mv-grid';
       menuData.categorias.forEach((cat,ci)=>{
         const t=document.createElement('button'); t.type='button'; t.className='mv-tile'+(abertaCi===ci?' ativa':'');
-        const em=document.createElement('span'); em.className='em'; em.textContent=cat.emoji||'🍽️';
+        const em=document.createElement('span'); em.className='em'; em.textContent=cat.emoji||'';
         const tl=document.createElement('span'); tl.className='tl';
         tl.textContent = (cat.tipo==='comida')
           ? ((cat.grupos&&cat.grupos[0]&&cat.grupos[0].summary&&cat.grupos[0].summary.pt)||'(sem título)')

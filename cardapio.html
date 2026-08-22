@@ -1528,7 +1528,12 @@
     display:flex; flex-direction:column; align-items:center; gap:6px;
     color:var(--castanho-suave); font-size:.8rem; text-align:center; padding:20px;
   }
-  .modal-foto .foto-placeholder .emoji{font-size:2.2rem;}
+  /* Spinner neutro enquanto a foto carrega (sem ícones de restaurante) */
+  .modal-foto .foto-placeholder .foto-spinner{ width:34px; height:34px; border-radius:50%; border:3px solid rgba(0,0,0,.14); border-top-color:var(--dourado, #a8712f); animation:fotoSpin .8s linear infinite; }
+  @keyframes fotoSpin{ to{ transform:rotate(360deg); } }
+  .modal-foto .foto-placeholder .foto-semfoto{ display:none; }
+  .modal-foto .foto-placeholder.sem-foto .foto-spinner{ display:none; }
+  .modal-foto .foto-placeholder.sem-foto .foto-semfoto{ display:block; }
   .modal-foto h3{
     font-family:var(--fonte-titulo);
     color:var(--dourado);
@@ -2302,8 +2307,8 @@
     <div class="foto-wrap" id="fotoWrap">
       <img id="fotoImg" src="" alt="" style="display:none;">
       <div class="foto-placeholder" id="fotoPlaceholder">
-        <span class="emoji">🍽️</span>
-        <span data-en="Photo coming soon" data-fr="Photo à venir" data-es="Foto próximamente">Foto em breve</span>
+        <span class="foto-spinner" aria-hidden="true"></span>
+        <span class="foto-semfoto" data-en="Photo coming soon" data-fr="Photo à venir" data-es="Foto próximamente">Foto em breve</span>
       </div>
     </div>
     <h3 id="modalFotoNome">Nome do prato</h3>
@@ -5196,9 +5201,11 @@
 
     fotoImg.style.display = 'none';
     fotoPlaceholder.style.display = 'flex';
+    fotoPlaceholder.classList.remove('sem-foto');   // estado: a carregar (mostra spinner)
     fotoImg.onerror = () => {
       fotoImg.style.display = 'none';
       fotoPlaceholder.style.display = 'flex';
+      fotoPlaceholder.classList.add('sem-foto');    // sem foto: mostra só o texto (sem spinner)
     };
     fotoImg.onload = () => {
       fotoImg.style.display = 'block';
