@@ -183,7 +183,7 @@
   var AD_TAG = '<span class="ad-tag">Publicidade</span>';
   function adHTML(ad){
     if(!ad) return '';
-    var href = ad.slug ? ('cardapio.html?n=' + encodeURIComponent(ad.slug)) : (ad.link || '');
+    var href = ad.slug ? ('/' + encodeURIComponent(ad.slug)) : (ad.link || '');
     var ext = !ad.slug && !!ad.link;   // link externo abre em nova aba
     var attrs = ext ? ' target="_blank" rel="noopener"' : '';
     if(ad.img){
@@ -229,7 +229,7 @@
       var tipo = tipoDoConfig(n.config);
       var inicial = esc((nome.trim()[0] || 'À').toUpperCase());
       var estiloFoto = foto ? ('background-image:url(\'' + esc(foto) + '\')') : (cor ? ('background:' + esc(cor)) : '');
-      var cardapio = 'cardapio.html?n=' + encodeURIComponent(slug);
+      var cardapio = '/' + encodeURIComponent(slug);
       var reservas = 'reservas.html?n=' + encodeURIComponent(slug);
       return '' +
         '<article class="card" data-slug="' + esc(slug) + '">' +

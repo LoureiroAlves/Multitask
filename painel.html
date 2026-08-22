@@ -337,7 +337,7 @@
           '<button class="acao" data-act="guardar">Guardar</button>' +
           '<button class="mini" data-act="magic">✉️ Enviar acesso ao dono</button>' +
           '<a class="link" href="editar.html?n=' + n.slug + '" target="_blank">Abrir editor ↗</a>' +
-          '<a class="link" href="cardapio.html?n=' + n.slug + '" target="_blank">Ver menu ↗</a>' +
+          '<a class="link" href="' + SITE + '/' + n.slug + '" target="_blank">Ver menu ↗</a>' +
           '<a class="link" href="reservas.html?n=' + n.slug + '" target="_blank">Reservas ↗</a>' +
         '</div>' +
         '<div data-msg></div>' +
@@ -613,6 +613,7 @@
   // ---- QR code com o nome do negócio ao centro ----
   let qrCanvasAtual = null, qrNomeFich = 'qr';
   const QR_BASE = location.href.replace(/[?#].*$/, '').replace(/[^/]*$/, '');
+  const SITE = 'https://amesadigital.pt';   // domínio oficial (link curto do menu: SITE/slug)
   function _rr(ctx,x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
   function _wrap(ctx,text,maxW){ const words=String(text).split(/\s+/); const lines=[]; let cur=''; words.forEach(function(w){ const t=cur?cur+' '+w:w; if(ctx.measureText(t).width<=maxW||!cur){cur=t;} else {lines.push(cur);cur=w;} }); if(cur) lines.push(cur); return lines; }
   function _nome(ctx,texto,cx,cy,maxW,maxH){
@@ -623,7 +624,7 @@
   }
   let qrUrlAtual = '', qrLogoImg = null;
   function abrirQR(n){
-    qrUrlAtual = QR_BASE + 'cardapio.html?n=' + n.slug;
+    qrUrlAtual = SITE + '/' + n.slug;
     qrNomeFich = 'qr-' + n.slug;
     qrLogoImg = null;
     $('qrNome').textContent = n.nome;
