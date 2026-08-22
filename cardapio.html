@@ -6808,7 +6808,9 @@
       ctx.fillStyle = M.nome;
       const fNome = Math.round(bannerH * 0.36);
       ctx.font = '700 ' + fNome + "px 'Fredoka', sans-serif";
-      ctx.fillText(NOME, w/2, by + bannerH * 0.44, w - borda*3);
+      // Nome à prova de falhas: usa o que estiver disponível
+      var _nomeUsar = (NOME && String(NOME).trim()) ? NOME : (window.__negNome || window.__nomeRestaurante || (document.title && !/cardápio|pré-visualiza/i.test(document.title) ? document.title : '') || '');
+      ctx.fillText(_nomeUsar, w/2, by + bannerH * 0.44, w - borda*3);
       ctx.fillStyle = M.social;
       const fSoc = Math.round(bannerH * 0.20);
       ctx.font = '600 ' + fSoc + "px 'Nunito', sans-serif";
