@@ -3903,9 +3903,14 @@
 
       // Néon desta secção: ligar + cor própria + piscar (tudo por secção, sem interruptor global)
       const neonRow=document.createElement('div'); neonRow.style.cssText='display:flex; align-items:center; gap:14px; margin:0 0 4px; font-size:0.82rem; color:var(--castanho-suave); flex-wrap:wrap;';
-      const nOnL=document.createElement('label'); nOnL.style.cssText='display:flex; align-items:center; gap:5px; cursor:pointer;';
-      const nOn=document.createElement('input'); nOn.type='checkbox'; nOn.style.width='auto'; nOn.checked = !!cat.neonOn;
-      nOnL.appendChild(nOn); nOnL.appendChild(document.createTextNode('✨ Néon nesta secção'));
+      const _nBoxIni = (cat.neonCaixa !== undefined) ? !!cat.neonCaixa : !!cat.neonOn;
+      const _nTxtIni = (cat.neonTexto !== undefined) ? !!cat.neonTexto : !!cat.neonOn;
+      const nBoxL=document.createElement('label'); nBoxL.style.cssText='display:flex; align-items:center; gap:5px; cursor:pointer;';
+      const nBox=document.createElement('input'); nBox.type='checkbox'; nBox.style.width='auto'; nBox.checked = _nBoxIni;
+      nBoxL.appendChild(nBox); nBoxL.appendChild(document.createTextNode('✨ Néon no contorno'));
+      const nTxtL=document.createElement('label'); nTxtL.style.cssText='display:flex; align-items:center; gap:5px; cursor:pointer;';
+      const nTxt=document.createElement('input'); nTxt.type='checkbox'; nTxt.style.width='auto'; nTxt.checked = _nTxtIni;
+      nTxtL.appendChild(nTxt); nTxtL.appendChild(document.createTextNode('✨ Néon nas letras'));
       const nCL=document.createElement('label'); nCL.style.cssText='display:flex; align-items:center; gap:5px; cursor:pointer;';
       const nCChk=document.createElement('input'); nCChk.type='checkbox'; nCChk.style.width='auto'; nCChk.checked=!!cat.neonCor;
       const nCIn=document.createElement('input'); nCIn.type='color'; nCIn.value=cat.neonCor||'#19e9ff'; nCIn.style.cssText='width:40px; height:28px; padding:0; border:none; background:none; cursor:pointer;';
@@ -3914,14 +3919,16 @@
       const nPChk=document.createElement('input'); nPChk.type='checkbox'; nPChk.style.width='auto'; nPChk.checked=!!cat.neonPiscar;
       const nPNum=document.createElement('input'); nPNum.type='number'; nPNum.min='0.3'; nPNum.max='10'; nPNum.step='0.1'; nPNum.value=(cat.neonPiscar||1.4); nPNum.style.cssText='width:58px; padding:5px 6px; border:1.5px solid var(--linha); border-radius:6px; font-family:inherit;'+(cat.neonPiscar?'':'display:none;');
       nPL.appendChild(nPChk); nPL.appendChild(document.createTextNode('Piscar')); nPL.appendChild(nPNum); nPL.appendChild(document.createTextNode('seg'));
-      nOn.addEventListener('change',()=>{ if(nOn.checked) cat.neonOn=true; else delete cat.neonOn; if(window.__agendarPreview) window.__agendarPreview(); });
+      function _syncNeon(){ delete cat.neonOn; if(nBox.checked) cat.neonCaixa=true; else delete cat.neonCaixa; if(nTxt.checked) cat.neonTexto=true; else delete cat.neonTexto; if(window.__agendarPreview) window.__agendarPreview(); }
+      nBox.addEventListener('change', _syncNeon);
+      nTxt.addEventListener('change', _syncNeon);
       nCChk.addEventListener('change',()=>{ if(nCChk.checked) cat.neonCor=nCIn.value; else delete cat.neonCor; if(window.__agendarPreview) window.__agendarPreview(); });
       nCIn.addEventListener('input',()=>{ if(nCChk.checked){ cat.neonCor=nCIn.value; if(window.__agendarPreview) window.__agendarPreview(); } });
       nPChk.addEventListener('change',()=>{ if(nPChk.checked){ cat.neonPiscar=parseFloat(nPNum.value)||1.4; nPNum.style.display=''; } else { delete cat.neonPiscar; nPNum.style.display='none'; } if(window.__agendarPreview) window.__agendarPreview(); });
       nPNum.addEventListener('input',()=>{ if(nPChk.checked){ const v=parseFloat(nPNum.value); if(v) cat.neonPiscar=v; if(window.__agendarPreview) window.__agendarPreview(); } });
-      neonRow.appendChild(nOnL); neonRow.appendChild(nCL); neonRow.appendChild(nPL);
+      neonRow.appendChild(nBoxL); neonRow.appendChild(nTxtL); neonRow.appendChild(nCL); neonRow.appendChild(nPL);
       p.appendChild(neonRow);
-      const neonHint=document.createElement('div'); neonHint.className='subtitulo'; neonHint.style.cssText='margin:0 0 10px;'; neonHint.textContent='Liga o brilho néon só nesta secção (separador + conteúdo). Sem cor própria usa a cor da secção. Podes fazê-lo piscar de X em X segundos.';
+      const neonHint=document.createElement('div'); neonHint.className='subtitulo'; neonHint.style.cssText='margin:0 0 10px;'; neonHint.textContent='Néon individual: contorno da caixa e/ou letras. Sem cor própria usa a cor da secção. Podes fazê-lo piscar de X em X segundos.';
       p.appendChild(neonHint);
 
       // Foto do SEPARADOR (tile) — a que aparece no botão/tile desta categoria

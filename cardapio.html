@@ -622,9 +622,9 @@
   body.modelo-ardosia{ background-color:#2b322c; background-image:radial-gradient(rgba(255,255,255,.05) 1px, transparent 1.4px); background-size:6px 6px; }
   body.modelo-ardosia .categoria-grid{ background:transparent; border:none; }
   body.modelo-ardosia .tile{ background:rgba(255,255,255,.05) !important; border:1px solid rgba(255,255,255,.20) !important; }
-  body.modelo-ardosia .tile:not(.neon-on){ box-shadow:none !important; }
-  /* Secção com néon ligado: borda na cor do néon (o brilho da caixa vem das regras gerais de néon) */
-  body.modelo-ardosia .tile.neon-on{ border:2px solid var(--nfx-cor, var(--cat-cor, var(--dourado))) !important; }
+  body.modelo-ardosia .tile:not(.neon-box){ box-shadow:none !important; }
+  /* Secção com néon no contorno: borda na cor do néon (o brilho da caixa vem das regras gerais de néon) */
+  body.modelo-ardosia .tile.neon-box{ border:2px solid var(--nfx-cor, var(--cat-cor, var(--dourado))) !important; }
   body.modelo-ardosia .tile .tile-label{ font-family:'Caveat', cursive; font-weight:700; font-size:1.5rem; color:#f6f2e6 !important; text-shadow:0 1px 0 rgba(0,0,0,.45); letter-spacing:.4px; }
   body.modelo-ardosia .categoria-painel{ background-color:#2b322c; background-image:radial-gradient(rgba(255,255,255,.05) 1px, transparent 1.4px); background-size:6px 6px; }
   body.modelo-ardosia .categoria-painel-header{ background:rgba(18,22,18,.72); border-bottom:1px solid rgba(255,255,255,.16); }
@@ -721,9 +721,11 @@
     50%{ box-shadow:0 0 0 transparent; }
   }
   /* Separador (tile) da secção com néon */
-  body.neon-fx:not(.modelo-caderno) .tile.neon-on{ box-shadow:0 0 var(--nfx1) var(--nfx-cor, var(--cat-cor, var(--dourado))), 0 0 var(--nfx2) var(--nfx-cor, var(--cat-cor, var(--dourado))); }
-  body.neon-fx .tile.neon-on .tile-label{ text-shadow:0 0 2px #fff, 0 0 var(--nfx1) var(--nfx-cor, var(--cat-cor, var(--dourado))), 0 0 var(--nfx2) var(--nfx-cor, var(--cat-cor, var(--dourado))) !important; }
-  body.neon-fx:not(.modelo-caderno) .tile.neon-on.neon-pisca{ animation:neonEdgePisca var(--tile-pisca-dur,1.4s) ease-in-out infinite; }
+  body.neon-fx:not(.modelo-caderno) .tile.neon-box{ box-shadow:0 0 var(--nfx1) var(--nfx-cor, var(--cat-cor, var(--dourado))), 0 0 var(--nfx2) var(--nfx-cor, var(--cat-cor, var(--dourado))); }
+  body.neon-fx .tile.neon-txt .tile-label{ text-shadow:0 0 2px #fff, 0 0 var(--nfx1) var(--nfx-cor, var(--cat-cor, var(--dourado))), 0 0 var(--nfx2) var(--nfx-cor, var(--cat-cor, var(--dourado))) !important; }
+  body.neon-fx:not(.modelo-caderno) .tile.neon-box.neon-pisca{ animation:neonEdgePisca var(--tile-pisca-dur,1.4s) ease-in-out infinite; }
+  body.neon-fx .tile.neon-txt.neon-pisca .tile-label{ animation:neonTxtPisca var(--tile-pisca-dur,1.4s) ease-in-out infinite; }
+  @keyframes neonTxtPisca{ 0%,100%{ text-shadow:0 0 2px #fff, 0 0 var(--nfx1) var(--nfx-cor, var(--cat-cor, var(--dourado))), 0 0 var(--nfx2) var(--nfx-cor, var(--cat-cor, var(--dourado))); } 50%{ text-shadow:0 0 1px rgba(255,255,255,.5); } }
   /* Conteúdo da secção aberta (só se essa secção tiver néon) */
   body.neon-fx .categoria-painel.neon-on #painelTitulo,
   body.neon-fx .categoria-painel.neon-on section.categoria h2,
@@ -863,7 +865,7 @@
   /* Banner de foto no cabeçalho de cada secção (todos os modelos) */
   .sec-foto-banner{ width:100%; height:170px; border-radius:14px; background-size:cover; background-position:center; margin:0 0 14px; box-shadow:0 3px 10px rgba(0,0,0,.15); }
   /* Banner em PNG: sem caixa, a imagem "salta" para fora (ajuste de tamanho/posição, como no rodapé) */
-  .sec-foto-banner.banner-png{ background:none !important; box-shadow:none !important; border-radius:0; position:relative; overflow:visible; }
+  .sec-foto-banner.banner-png{ background:none !important; box-shadow:none !important; border-radius:0; position:relative; overflow:visible; height:auto; min-height:0; }
   .sec-banner-png{ position:absolute; bottom:var(--ban-baixo,0px); z-index:3; width:var(--ban-larg,160px); height:auto; pointer-events:none; filter:drop-shadow(0 6px 10px rgba(0,0,0,.28)); }
   .sec-banner-png.lado-esq{ left:var(--ban-x,10px); right:auto; transform:translate(var(--ban-dx,0px), var(--ban-dy,0px)); }
   .sec-banner-png.lado-dir{ right:var(--ban-x,10px); left:auto; transform:translate(var(--ban-dx,0px), var(--ban-dy,0px)); }
@@ -2712,7 +2714,7 @@
     if(handle._on) return; handle._on = true;
     var rez = false, anchorX = 0, factor = 1, larg = 160;
     handle.addEventListener('pointerdown', function(ev){ ev.preventDefault(); ev.stopPropagation(); rez = true; var r = el.getBoundingClientRect(); var l = _lado(); anchorX = (l === 'esq') ? r.left : (l === 'dir' ? r.right : (r.left + r.width / 2)); factor = (l === 'centro') ? 2 : 1; try{ handle.setPointerCapture(ev.pointerId); }catch(e){} });
-    handle.addEventListener('pointermove', function(ev){ if(!rez) return; larg = Math.max(40, Math.min(700, Math.round(Math.abs(ev.clientX - anchorX) * factor))); el.style.setProperty('--ban-larg', larg + 'px'); pos(); });
+    handle.addEventListener('pointermove', function(ev){ if(!rez) return; larg = Math.max(40, Math.min(700, Math.round(Math.abs(ev.clientX - anchorX) * factor))); el.style.setProperty('--ban-larg', larg + 'px'); if(el._ajustaCaixa) el._ajustaCaixa(); pos(); });
     handle.addEventListener('pointerup', function(ev){ if(!rez) return; rez = false; try{ parent.postMessage({ type:'banner-size', cat:el.dataset.cat, largura:larg }, '*'); }catch(e){} });
     handle.addEventListener('pointercancel', function(){ rez = false; });
   }
@@ -2949,7 +2951,7 @@
   function construirMenu(menu){
     if(!menu || !Array.isArray(menu.categorias)) return;
     // Efeito néon liga-se automaticamente se alguma secção tiver néon
-    document.body.classList.toggle('neon-fx', menu.categorias.some(function(c){ return c && c.neonOn; }));
+    document.body.classList.toggle('neon-fx', menu.categorias.some(function(c){ return c && (c.neonOn || c.neonCaixa || c.neonTexto); }));
     const grid = document.getElementById('categoriaGrid');
     const main = document.querySelector('main');
     const jogosSec = document.getElementById('jogos');
@@ -2966,9 +2968,13 @@
       const label = document.createElement('span'); label.className='tile-label'; _mLang(label, cat.tile);
       btn.appendChild(emoji); btn.appendChild(label);
       if(cat.cor){ btn.style.setProperty('--cat-cor', cat.cor); btn.dataset.cor = cat.cor; }
-      // Néon por secção: ligar + cor própria + piscar (só nesta secção)
-      if(cat.neonOn){
-        btn.classList.add('neon-on'); btn.dataset.neonon = '1';
+      // Néon por secção: contorno da caixa e/ou letras (individuais) + cor + piscar
+      var _nBox = (cat.neonCaixa !== undefined) ? !!cat.neonCaixa : !!cat.neonOn;
+      var _nTxt = (cat.neonTexto !== undefined) ? !!cat.neonTexto : !!cat.neonOn;
+      if(_nBox || _nTxt){
+        if(_nBox) btn.classList.add('neon-box');
+        if(_nTxt) btn.classList.add('neon-txt');
+        btn.dataset.neonon = '1';
         if(cat.neonCor){ btn.style.setProperty('--nfx-cor', cat.neonCor); btn.dataset.neoncor = cat.neonCor; }
         if(cat.neonPiscar){ const _d = Math.max(0.3, parseFloat(cat.neonPiscar) || 1.4); btn.classList.add('neon-pisca'); btn.style.setProperty('--tile-pisca-dur', _d + 's'); btn.dataset.neonpisca = _d; }
       }
@@ -3000,6 +3006,11 @@
             _bimg.style.setProperty('--ban-dx', ((_bc.dx) || 0) + 'px');
             _bimg.style.setProperty('--ban-dy', ((_bc.dy) || 0) + 'px');
             _bimg.dataset.cat = cat.id;
+            // A caixa acompanha o tamanho da imagem (não fica com espaço vazio quando a foto é pequena)
+            var _fitBanner = function(){ try{ _bw.style.height = Math.max(1, Math.round(_bimg.getBoundingClientRect().height)) + 'px'; }catch(e){} };
+            _bimg._ajustaCaixa = _fitBanner;
+            _bimg.addEventListener('load', _fitBanner);
+            if(_bimg.complete) setTimeout(_fitBanner, 0);
             if(window.__PREVIEW && typeof _bannerDrag === 'function'){ _bimg.classList.add('arrastavel'); _bannerDrag(_bimg); _bannerResize(_bimg); }
             _bw.appendChild(_bimg); sec.appendChild(_bw);
           } else {
