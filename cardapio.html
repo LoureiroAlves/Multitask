@@ -4763,6 +4763,10 @@
         window.__preverIntro(window.__lastPreviewCfg, window.__mostrarIntroPreview);
         return;
       }
+      if(d.type === 'preview-preabertura'){
+        try{ mostrarPreAbertura(d.cfg || {}); }catch(e){}
+        return;
+      }
       if(d.type !== 'cardapio-preview') return;
       if(d.config) window.__lastPreviewCfg = d.config;
       try{ if(d.config) aplicarConfig(d.config); }catch(err){}

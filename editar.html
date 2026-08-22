@@ -1027,6 +1027,7 @@
 
       <label for="paLink" style="margin-top:12px;">Link ao clicar (opcional)</label>
       <input type="text" id="paLink" placeholder="https://… — abre ao tocar na imagem">
+      <button type="button" id="btnPreverPreAb" class="acao" style="margin-top:12px; background:var(--castanho);">👁 Ver pré-abertura na pré-visualização</button>
     </div>
   </details>
 
@@ -4678,6 +4679,25 @@
         marcarBtnIntro();
         if(introVisivel) dock.classList.remove('min');
       });
+    }
+    // Ver a pré-abertura publicitária na pré-visualização
+    { const btnPA = document.getElementById('btnPreverPreAb');
+      function _enviarPreAb(foto){
+        const cfg = {
+          ativo: true, foto: foto,
+          duracao: parseInt((document.getElementById('paDuracao') || {}).value, 10) || 3,
+          animacao: (document.getElementById('paAnimacao') || {}).value || 'nenhuma',
+          link: (document.getElementById('paLink') || {}).value || ''
+        };
+        dock.classList.remove('min');
+        try{ frame.contentWindow.postMessage({ type:'preview-preabertura', cfg:cfg }, '*'); }catch(e){}
+      }
+      if(btnPA){ btnPA.addEventListener('click', function(){
+        if(filaPreAb){ const r = new FileReader(); r.onload = function(ev){ _enviarPreAb(ev.target.result); }; r.readAsDataURL(filaPreAb); return; }
+        const _url = (document.getElementById('paFotoUrl') || {}).value || '';
+        if(!_url){ setEstado('Escolhe uma imagem para a pré-abertura primeiro.', 'erro'); return; }
+        _enviarPreAb(_url);
+      }); }
     }
     function irParaEditor(id){
       const el = document.getElementById(id); if(!el) return;
