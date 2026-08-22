@@ -872,6 +872,8 @@
   .sec-banner-png.lado-dir{ right:var(--ban-x,10px); left:auto; transform:translate(var(--ban-dx,0px), var(--ban-dy,0px)); }
   .sec-banner-png.lado-centro{ left:50%; right:auto; transform:translate(calc(-50% + var(--ban-dx,0px)), var(--ban-dy,0px)); }
   .sec-banner-png.arrastavel{ pointer-events:auto; cursor:move; touch-action:none; }
+  /* Banner atrás do texto/conteúdo (fica por baixo das letras) */
+  .sec-banner-png.atras{ z-index:-1; }
 
   /* ===== Mosaico (bento, estilo widgets do iPhone) ===== */
   #mosaicoGrid{ display:none; }
@@ -3002,8 +3004,8 @@
           if(_isPngBan){
             // PNG: imagem que salta da caixa, com tamanho/posição ajustáveis
             var _bc = cat.bannerCfg || {};
-            var _bw = document.createElement('div'); _bw.className = 'sec-foto-banner banner-png';
-            var _bimg = document.createElement('img'); _bimg.className = 'sec-banner-png';
+            var _bw = document.createElement('div'); _bw.className = 'sec-foto-banner banner-png' + (cat.bannerAtras ? ' atras' : '');
+            var _bimg = document.createElement('img'); _bimg.className = 'sec-banner-png' + (cat.bannerAtras ? ' atras' : '');
             _bimg.src = (typeof RAW_BASE !== 'undefined' ? RAW_BASE : '') + _ban; _bimg.alt = '';
             _bimg.classList.add('lado-' + (_bc.lado || 'centro'));
             _bimg.style.setProperty('--ban-larg', ((_bc.larg) || 160) + 'px');

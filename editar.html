@@ -3985,6 +3985,11 @@
           r1.appendChild(numCtrl('Afastamento','afastX',10,0,300));
           r1.appendChild(numCtrl('Subir/descer','subir',0,-60,200));
           wrap.appendChild(r1);
+          const atrasL=document.createElement('label'); atrasL.style.cssText='display:flex; align-items:center; gap:7px; margin:10px 0 0; font-size:.82rem; cursor:pointer;';
+          const atrasC=document.createElement('input'); atrasC.type='checkbox'; atrasC.style.width='auto'; atrasC.checked=!!cat.bannerAtras;
+          atrasC.addEventListener('change',()=>{ if(atrasC.checked) cat.bannerAtras=true; else delete cat.bannerAtras; if(window.__agendarPreview) window.__agendarPreview(); });
+          atrasL.appendChild(atrasC); atrasL.appendChild(document.createTextNode('Pôr o banner atrás do texto (por baixo das letras)'));
+          wrap.appendChild(atrasL);
           const h=document.createElement('div'); h.className='subtitulo'; h.style.cssText='margin:8px 0 0;'; h.textContent='Na pré-visualização podes arrastar a imagem para mover e a pega azul do canto para redimensionar.';
           const rep=document.createElement('button'); rep.type='button'; rep.className='mv-mini'; rep.textContent='↺ Repor arrasto'; rep.style.marginTop='6px';
           rep.addEventListener('click',()=>{ bcfg.dx=0; bcfg.dy=0; renderEditor(); if(window.__agendarPreview) window.__agendarPreview(); });
