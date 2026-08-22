@@ -1087,6 +1087,15 @@
         <input type="checkbox" id="mostrarCamera" checked>
         <label for="mostrarCamera" style="margin:0; font-weight:600; color:var(--castanho); display:inline;">📷 Câmara (foto com moldura)</label>
       </div>
+      <label for="pbMoldura" style="margin-top:8px;">Estilo da moldura da foto</label>
+      <select id="pbMoldura" style="width:100%; padding:9px; border-radius:8px; border:1.5px solid var(--linha); background:var(--branco); font-family:inherit; color:var(--castanho);">
+        <option value="classica">Clássica (castanho + dourado)</option>
+        <option value="dourada">Dourada (elegante)</option>
+        <option value="escura">Escura (moderna)</option>
+        <option value="clara">Clara (branca minimal)</option>
+        <option value="festa">Festa (colorida)</option>
+      </select>
+      <div class="subtitulo" style="margin-top:4px;">A moldura leva o nome do negócio e a rede social. Escolhe o estilo que combina.</div>
       <div class="lembrar" style="margin-top:8px;">
         <input type="checkbox" id="mostrarAgendaIcon" checked>
         <label for="mostrarAgendaIcon" style="margin:0; font-weight:600; color:var(--castanho); display:inline;">📅 Agenda (ícone de reservas)</label>
@@ -1925,6 +1934,7 @@
         document.getElementById('idiomasFlutHint').style.display = document.getElementById('idiomasFlu').checked ? 'block' : 'none';
         document.getElementById('redesFlutHint').style.display = document.getElementById('redesFlu').checked ? 'block' : 'none'; } }
     document.getElementById('mostrarCamera').checked = config.mostrarCamera !== false;
+    { const _pm = document.getElementById('pbMoldura'); if(_pm) _pm.value = (config.photobooth && config.photobooth.moldura) || 'classica'; }
     document.getElementById('mostrarAgendaIcon').checked = config.mostrarAgendaIcon !== false;
     document.getElementById('mostrarRedes').checked = config.mostrarRedes !== false;
     { document.getElementById('menuAtivoChk').checked = config.menuAtivo !== false;
@@ -2770,6 +2780,7 @@
       config.redesRod = document.getElementById('redesRod').checked;
       config.redesFlu = document.getElementById('redesFlu').checked;
       config.mostrarCamera = document.getElementById('mostrarCamera').checked;
+      { const _pm = document.getElementById('pbMoldura'); config.photobooth = config.photobooth || {}; config.photobooth.moldura = _pm ? _pm.value : 'classica'; }
       config.mostrarAgendaIcon = document.getElementById('mostrarAgendaIcon').checked;
       config.mostrarRedes = document.getElementById('mostrarRedes').checked;
       config.menuAtivo = document.getElementById('menuAtivoChk').checked;

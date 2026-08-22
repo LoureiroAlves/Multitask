@@ -4096,8 +4096,9 @@
       }
       { var _rq = document.getElementById('redesIcones'); if(_rq){ var _anyR = _redesOn && (window.__redes.facebook || window.__redes.instagram || String(window.__redes.whatsapp || '').replace(/\D/g, '')); _rq.style.display = _anyR ? '' : 'none'; } }
       if(window.__setPhotoboothInfo){
-        var _nome = (config.footer && config.footer.nome) || (config.header && config.header.titulo) || '';
-        window.__setPhotoboothInfo(_nome, window.__redes.social || '');
+        var _nome = (config.footer && config.footer.nome) || (config.header && config.header.titulo) || window.__negNome || '';
+        var _molde = (config.photobooth && config.photobooth.moldura) || 'classica';
+        window.__setPhotoboothInfo(_nome, window.__redes.social || '', _molde);
       }
 
       // ===== Idiomas (ligar/desligar cada um) + localização de idiomas e redes (cabeçalho/rodapé) =====
@@ -4582,6 +4583,7 @@
       const funcoes = (ent && ent.funcoes) || {};
       const pub = (ent && ent.publicidade) || {};
       window.__negocioId = neg.id;
+      window.__negNome = neg.nome || '';
       const config = neg.config || {};
       aplicarPlano(config, funcoes, pub);
       aplicarConfig(config);
@@ -6719,7 +6721,8 @@
   (function(){
     let NOME = '';
     let SOCIAL = '';
-    window.__setPhotoboothInfo = function(n, s){ NOME = n || ''; SOCIAL = s || ''; };
+    let MOLDE = 'classica';
+    window.__setPhotoboothInfo = function(n, s, m){ NOME = n || ''; SOCIAL = s || ''; if(m) MOLDE = m; };
 
     const btn = document.getElementById('linkCamera');
     if(!btn) return;
@@ -6764,31 +6767,49 @@
       img.src = dataUrl;
     }
 
+    // Paletas das várias molduras
+    const MOLDES = {
+      classica: { borda:'#4a3820', linha:'#a8712f', banner:'rgba(74,56,32,0.94)', nome:'#ffffff', social:'#e6dcc8' },
+      dourada:  { borda:'#a8712f', linha:'#f0d9a0', banner:'rgba(168,113,47,0.96)', nome:'#fff8e8', social:'#ffeccb' },
+      escura:   { borda:'#111318', linha:'', banner:'rgba(10,12,16,0.9)', nome:'#ffffff', social:'#c8cdd6' },
+      clara:    { borda:'#ffffff', linha:'#e2d9c6', banner:'rgba(255,255,255,0.94)', nome:'#3a2c18', social:'#8a7a5c' },
+      festa:    { borda:'festa', linha:'', banner:'rgba(20,18,30,0.9)', nome:'#ffffff', social:'#ffd5f0' }
+    };
     function desenharMoldura(ctx, w, h){
       const min = Math.min(w, h);
       const borda = Math.round(min * 0.035);
-      // Borda castanho
-      ctx.lineWidth = borda;
-      ctx.strokeStyle = '#4a3820';
-      ctx.strokeRect(borda/2, borda/2, w - borda, h - borda);
-      // Linha dourada interior
-      const gap = borda * 1.5;
-      ctx.lineWidth = Math.max(2, Math.round(min * 0.008));
-      ctx.strokeStyle = '#a8712f';
-      ctx.strokeRect(gap, gap, w - gap*2, h - gap*2);
-      // Banner inferior
+      const M = MOLDES[MOLDE] || MOLDES.classica;
+      // Borda exterior
+      if(M.borda === 'festa'){
+        const cores = ['#ff5d8f','#ffb84d','#4dd0e1','#7c4dff','#5cd65c','#ff6b6b'];
+        const seg = Math.round((w + h) * 2 / 40);
+        ctx.lineWidth = borda; ctx.lineCap = 'butt';
+        let i = 0;
+        // topo, direita, baixo, esquerda em segmentos coloridos
+        const rectPts = [[0,0,w,0],[w,0,w,h],[w,h,0,h],[0,h,0,0]];
+        rectPts.forEach(([x1,y1,x2,y2])=>{ const dx=x2-x1, dy=y2-y1, len=Math.hypot(dx,dy), n=Math.max(1,Math.round(len/seg)); for(let k=0;k<n;k++){ ctx.strokeStyle=cores[(i++)%cores.length]; ctx.beginPath(); ctx.moveTo(x1+dx*(k/n)+ (dx>0?borda/2:dx<0?-borda/2:0), y1+dy*(k/n)); ctx.lineTo(x1+dx*((k+1)/n), y1+dy*((k+1)/n)); ctx.stroke(); } });
+        ctx.strokeStyle = 'rgba(255,255,255,0.25)'; ctx.lineWidth = borda; ctx.strokeRect(borda/2, borda/2, w-borda, h-borda);
+      } else {
+        ctx.lineWidth = borda; ctx.strokeStyle = M.borda; ctx.strokeRect(borda/2, borda/2, w - borda, h - borda);
+      }
+      // Linha interior (se houver)
+      if(M.linha){
+        const gap = borda * 1.5;
+        ctx.lineWidth = Math.max(2, Math.round(min * 0.008));
+        ctx.strokeStyle = M.linha;
+        ctx.strokeRect(gap, gap, w - gap*2, h - gap*2);
+      }
+      // Banner inferior com nome + social
       const bannerH = Math.round(h * 0.15);
       const by = h - bannerH - borda;
-      ctx.fillStyle = 'rgba(74,56,32,0.94)';
+      ctx.fillStyle = M.banner;
       ctx.fillRect(borda, by, w - borda*2, bannerH);
-      // Nome
       ctx.textAlign = 'center';
-      ctx.fillStyle = '#ffffff';
+      ctx.fillStyle = M.nome;
       const fNome = Math.round(bannerH * 0.36);
       ctx.font = '700 ' + fNome + "px 'Fredoka', sans-serif";
       ctx.fillText(NOME, w/2, by + bannerH * 0.44, w - borda*3);
-      // Social
-      ctx.fillStyle = '#e6dcc8';
+      ctx.fillStyle = M.social;
       const fSoc = Math.round(bannerH * 0.20);
       ctx.font = '600 ' + fSoc + "px 'Nunito', sans-serif";
       ctx.fillText(SOCIAL, w/2, by + bannerH * 0.80, w - borda*3);
@@ -6822,7 +6843,7 @@
         '<button class="cam-repetir" id="camRepetir">Tirar outra</button>' +
         '<button class="cam-fechar" id="camFechar">Fechar</button>' +
         '</div>' +
-        '<p class="cam-dica">No telemóvel, toca em "Guardar na galeria" e escolhe <strong>Guardar Imagem</strong>. 💛</p>';
+        '<p class="cam-dica">No telemóvel: carrega em <strong>Guardar na galeria</strong> (abre a partilha → "Guardar imagem"). Se não aparecer, <strong>mantém premida a foto acima</strong> e escolhe <strong>Adicionar às Fotos / Guardar imagem</strong>. 💛</p>';
 
       document.getElementById('camGuardar').onclick = () => { guardarFoto(); };
       const sp = document.getElementById('camPartilhar');
