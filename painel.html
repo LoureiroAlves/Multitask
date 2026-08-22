@@ -46,7 +46,8 @@
 <body>
 <header class="top">
   <h1>🍀 Multitask — Painel</h1>
-  <div style="display:flex; gap:8px; align-items:center;">
+  <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+    <button class="sair hide" id="btnLimparFotos" title="Apaga do Storage as fotos que já não são usadas por nenhum negócio">🧹 Eliminar fotos não utilizadas</button>
     <a class="sair hide" id="linkEstat" href="estatisticas.html" style="text-decoration:none;">📊 Estatísticas</a>
     <button class="sair hide" id="btnSair">Sair</button>
   </div>
@@ -183,6 +184,20 @@
   </div>
 </div>
 
+<div id="limparOverlay" style="position:fixed; inset:0; z-index:900; background:rgba(0,0,0,.55); display:none; align-items:center; justify-content:center; padding:16px;">
+  <div style="background:#fff; border-radius:16px; padding:18px; max-width:520px; width:100%; max-height:88vh; display:flex; flex-direction:column;">
+    <div style="font-weight:700; color:var(--castanho); font-size:1.05rem; margin-bottom:4px;">🧹 Fotos não utilizadas</div>
+    <div id="limparResumo" style="font-size:.82rem; color:#9a8b6f; margin-bottom:8px;"></div>
+    <label style="display:flex; align-items:center; gap:8px; padding:6px 4px; border-bottom:1px solid var(--linha); font-weight:700; color:var(--castanho); font-size:.85rem;"><input type="checkbox" id="limparTodas" checked style="width:auto;"> Selecionar todas</label>
+    <div id="limparLista" style="overflow-y:auto; flex:1; margin:4px 0;"></div>
+    <div style="display:flex; gap:8px; align-items:center; margin-top:8px;">
+      <button class="acao" id="limparApagar" style="background:var(--vermelho); flex:1;">🗑️ Apagar selecionadas</button>
+      <button class="mini" id="limparFechar">Fechar</button>
+    </div>
+    <div id="limparMsg" style="font-size:.82rem; margin-top:6px;"></div>
+  </div>
+</div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -262,6 +277,7 @@
     $('painel').classList.remove('hide');
     $('btnSair').classList.remove('hide');
     { const _le = $('linkEstat'); if(_le) _le.classList.remove('hide'); }
+    { const _lf = $('btnLimparFotos'); if(_lf) _lf.classList.remove('hide'); }
     carregar();
   }
 
@@ -861,6 +877,84 @@
   }
   $('adAdicionar').onclick = function(){ ADS_EDIT.push({ img:'', titulo:'', sub:'', slug:'', link:'', escala:100, escalaMob:100 }); renderAds(); };
   $('adGuardar').onclick = guardarAds;
+
+  // ============================================================
+  //  🧹 Eliminar fotos não utilizadas — em TODOS os negócios
+  // ============================================================
+  // Recolhe recursivamente todos os caminhos 'pasta/ficheiro' referenciados em qualquer config/menu
+  function _coletarFotosUsadas(obj, set){
+    if(obj == null) return;
+    if(typeof obj === 'string'){ const i = obj.indexOf('/imagens/'); if(i >= 0){ set.add(obj.slice(i + '/imagens/'.length).split('?')[0]); } return; }
+    if(Array.isArray(obj)){ obj.forEach(function(x){ _coletarFotosUsadas(x, set); }); return; }
+    if(typeof obj === 'object'){ for(const k in obj){ if(Object.prototype.hasOwnProperty.call(obj, k)) _coletarFotosUsadas(obj[k], set); } }
+  }
+  async function _tokenAdmin(){ let s = (await sb.auth.getSession()).data.session; if(s){ try{ const rr = await sb.auth.refreshSession(); if(rr.data && rr.data.session) s = rr.data.session; }catch(e){} } return (s && s.access_token) ? s.access_token : null; }
+  async function _listarStorage(prefix, H){
+    try{
+      const r = await fetch(SUPABASE_URL + '/storage/v1/object/list/imagens', { method:'POST', headers:H, body: JSON.stringify({ prefix: prefix, limit: 1000, sortBy:{ column:'name', order:'asc' } }) });
+      if(!r.ok) return []; return await r.json();
+    }catch(e){ return []; }
+  }
+  async function limparFotosGlobais(){
+    const btn = $('btnLimparFotos'); if(!btn) return;
+    if(!confirm('Vou procurar em TODOS os negócios as fotos que já não são usadas em lado nenhum (layout + menu) e apagá-las do Storage.\n\nContinuar?')) return;
+    const old = btn.textContent; btn.disabled = true; btn.textContent = '🔍 A verificar…';
+    try{
+      // 1) Fotos usadas — de todos os negócios (config + menu)
+      const { data:negs, error } = await sb.from('negocios').select('config,menu');
+      if(error || !Array.isArray(negs)){ alert('Não consegui carregar os negócios — cancelado por segurança (nada foi apagado).'); return; }
+      const usadas = new Set();
+      negs.forEach(function(n){ try{ _coletarFotosUsadas(n.config, usadas); _coletarFotosUsadas(n.menu, usadas); }catch(e){} });
+      // 2) Sessão
+      const token = await _tokenAdmin();
+      if(!token){ alert('A tua sessão expirou. Sai e volta a entrar.'); return; }
+      const H = { 'Authorization':'Bearer ' + token, 'apikey': SUPABASE_KEY, 'Content-Type':'application/json' };
+      // 3) Lista todas as pastas e ficheiros do bucket 'imagens'
+      const raiz = await _listarStorage('', H);
+      const pastas = (raiz || []).filter(function(it){ return it && it.id === null && it.name; }).map(function(it){ return it.name; });
+      let ficheiros = [];
+      (raiz || []).forEach(function(it){ if(it && it.name && it.id) ficheiros.push(it.name); }); // ficheiros na raiz (raro)
+      for(const p of pastas){ const items = await _listarStorage(p + '/', H); (items || []).forEach(function(it){ if(it && it.name && it.id) ficheiros.push(p + '/' + it.name); }); }
+      // 4) Cruza
+      const naoUsadas = ficheiros.filter(function(f){ return !usadas.has(f); });
+      if(ficheiros.length === 0){ alert('Não encontrei fotos no Storage.'); return; }
+      if(naoUsadas.length === 0){ alert('✓ Não há fotos por limpar. ' + ficheiros.length + ' em uso.'); return; }
+      // 5) Mostra a lista com miniaturas para confirmares antes de apagar
+      mostrarLimpeza(naoUsadas, ficheiros.length, token);
+    }catch(err){ alert('Erro: ' + (err && err.message ? err.message : err)); }
+    finally{ btn.disabled = false; btn.textContent = old; }
+  }
+  function mostrarLimpeza(naoUsadas, total, token){
+    const lista = $('limparLista');
+    $('limparResumo').innerHTML = total + ' fotos no total · <strong style="color:var(--verde);">' + (total - naoUsadas.length) + '</strong> em uso · <strong style="color:var(--vermelho);">' + naoUsadas.length + '</strong> não usadas';
+    lista.innerHTML = naoUsadas.map(function(p){
+      return '<label style="display:flex; align-items:center; gap:10px; padding:6px 4px; border-bottom:1px dotted var(--linha);">' +
+        '<input type="checkbox" class="lmp-chk" data-path="' + p + '" checked style="width:20px; height:20px; flex:0 0 auto;">' +
+        '<img src="' + SUPABASE_URL + '/storage/v1/object/public/imagens/' + p + '" alt="" loading="lazy" style="width:44px; height:44px; object-fit:cover; border-radius:6px; background:var(--linha); flex:0 0 auto;">' +
+        '<span style="flex:1; font-size:.74rem; color:#9a8b6f; word-break:break-all;">' + p + '</span>' +
+        '<span style="font-size:.66rem; font-weight:700; padding:1px 6px; border-radius:6px; background:#fdecea; color:var(--vermelho);">livre</span>' +
+        '</label>';
+    }).join('');
+    $('limparMsg').innerHTML = '';
+    $('limparOverlay').style.display = 'flex';
+    $('limparTodas').checked = true;
+    $('limparTodas').onchange = function(e){ lista.querySelectorAll('.lmp-chk').forEach(function(c){ c.checked = e.target.checked; }); };
+    $('limparApagar').onclick = async function(){
+      const checks = Array.from(lista.querySelectorAll('.lmp-chk:checked'));
+      if(!checks.length){ msg($('limparMsg'), 'Não selecionaste nenhuma.', 'erro'); return; }
+      if(!confirm('Apagar ' + checks.length + ' foto(s) definitivamente? Não pode ser desfeito.')) return;
+      const ap = $('limparApagar'); ap.disabled = true; ap.textContent = 'A apagar…';
+      let ok = 0, fail = 0;
+      for(const ch of checks){
+        try{ const r = await fetch(SUPABASE_URL + '/storage/v1/object/imagens/' + ch.getAttribute('data-path'), { method:'DELETE', headers:{ 'Authorization':'Bearer ' + token, 'apikey': SUPABASE_KEY } }); if(r.ok){ ok++; ch.closest('label').remove(); } else fail++; }catch(e){ fail++; }
+      }
+      ap.disabled = false; ap.textContent = '🗑️ Apagar selecionadas';
+      msg($('limparMsg'), '🧹 ' + ok + ' apagada(s)' + (fail ? (' · ' + fail + ' falharam') : '') + '.', fail ? 'erro' : 'ok');
+    };
+    $('limparFechar').onclick = function(){ $('limparOverlay').style.display = 'none'; };
+    $('limparOverlay').onclick = function(e){ if(e.target === $('limparOverlay')) $('limparOverlay').style.display = 'none'; };
+  }
+  { const _lf = $('btnLimparFotos'); if(_lf) _lf.onclick = limparFotosGlobais; }
 
   // arranque
   verificar();
