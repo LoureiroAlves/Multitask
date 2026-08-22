@@ -8,7 +8,19 @@
 <style>
   /* ===== Ecrã de abertura / cortina de carregamento ===== */
   /* Enquanto carrega, esconde tudo menos o ecrã de abertura (evita flash da barra fixa/cabeçalho ao abrir a app) */
-  body.carregando > *:not(#introOverlay):not(.flutua){ visibility:hidden !important; }
+  body.carregando > *:not(#introOverlay):not(#preAbertura):not(.flutua){ visibility:hidden !important; }
+  /* Pré-abertura publicitária (ecrã cheio, alguns segundos, antes do menu) */
+  #preAbertura{ position:fixed; inset:0; z-index:100000; display:none; background:#000; overflow:hidden; }
+  #preAbertura .pa-img{ width:100%; height:100%; object-fit:cover; display:block; }
+  #preAbertura .pa-tag{ position:absolute; top:12px; left:12px; z-index:2; background:rgba(0,0,0,.55); color:#fff; font-size:.62rem; font-weight:700; letter-spacing:.5px; text-transform:uppercase; padding:3px 9px; border-radius:7px; -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px); }
+  #preAbertura .pa-skip{ position:absolute; bottom:18px; right:16px; z-index:2; background:rgba(255,255,255,.92); color:#111; border:none; border-radius:999px; padding:9px 18px; font-weight:800; font-size:.85rem; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,.35); }
+  #preAbertura.pa-anim-fade.pa-on .pa-img{ animation:paFade .8s ease both; }
+  #preAbertura.pa-anim-zoom.pa-on .pa-img{ animation:paZoom 4s ease-out both; }
+  #preAbertura.pa-anim-deslizar.pa-on .pa-img{ animation:paDesliza 4s ease-out both; }
+  @keyframes paFade{ from{opacity:0} to{opacity:1} }
+  @keyframes paZoom{ from{transform:scale(1.14)} to{transform:scale(1)} }
+  @keyframes paDesliza{ from{transform:translateX(6%) scale(1.06)} to{transform:translateX(-6%) scale(1.06)} }
+  #preAbertura.pa-sair{ transition:opacity .45s ease; opacity:0; }
   #introOverlay{ position:fixed; inset:0; z-index:99999; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:24px; overflow:hidden; background:var(--intro-bg,#1f2530); }
   #introOverlay.animar{ background:linear-gradient(140deg, var(--castanho,#3a2c18) 0%, var(--dourado-escuro,#6b4a1f) 55%, var(--dourado,#a8712f) 100%); background-size:200% 200%; animation:introGrad 9s ease infinite; }
   @keyframes introGrad{ 0%{background-position:0% 50%;} 50%{background-position:100% 50%;} 100%{background-position:0% 50%;} }
@@ -2078,6 +2090,7 @@
 
 <div id="wipeFx" aria-hidden="true"><div class="wf-cover"></div><div class="wf-img"></div><div class="wf-alpha"></div><div class="wf-band"></div><div class="wf-vert"></div><div class="wf-p1"></div><div class="wf-p2"></div><div class="wf-disc"></div><div class="wf-stripes"></div><div class="wf-losangos"></div><div class="wf-lab"><span class="wf-ini"></span><span class="wf-nm" style="display:none"></span></div><div class="wf-flash"></div></div>
 
+<div id="preAbertura"></div>
 <div id="introOverlay">
   <div id="introBg"></div>
   <div id="introShade"></div>
@@ -4572,6 +4585,31 @@
       if(main) main.querySelectorAll(':scope > section.categoria').forEach(function(s){ if(s.id !== 'jogos') s.remove(); });
     }catch(e){}
   }
+  // Pré-abertura publicitária (ecrã cheio, N segundos, estática ou animada) — mostra antes do menu
+  function mostrarPreAbertura(cfg){
+    return new Promise(function(resolve){
+      cfg = cfg || {};
+      var ov = document.getElementById('preAbertura');
+      if(!ov || !cfg.ativo || !cfg.foto){ resolve(); return; }
+      var dur = Math.max(1, Math.min(15, parseInt(cfg.duracao, 10) || 3));
+      var _anim = cfg.animacao || 'nenhuma';
+      var link = cfg.link && String(cfg.link).trim();
+      if(link){ if(!/^(https?:|tel:|mailto:|wa\.me|\/)/i.test(link) && !/^www\./i.test(link)) link = 'https://' + link; else if(/^www\./i.test(link)) link = 'https://' + link; }
+      ov.className = 'pa-anim-' + _anim;
+      ov.innerHTML =
+        '<img class="pa-img" src="' + (typeof RAW_BASE !== 'undefined' ? RAW_BASE : '') + cfg.foto + '" alt="Publicidade">' +
+        '<span class="pa-tag">Publicidade</span>' +
+        '<button type="button" class="pa-skip" id="paSkip">Saltar ›</button>';
+      ov.style.display = 'block';
+      void ov.offsetWidth; ov.classList.add('pa-on');
+      if(link){ var _im = ov.querySelector('.pa-img'); if(_im){ _im.style.cursor = 'pointer'; _im.addEventListener('click', function(){ window.open(link, '_blank', 'noopener'); }); } }
+      var done = false;
+      function fechar(){ if(done) return; done = true; ov.classList.add('pa-sair'); setTimeout(function(){ ov.style.display = 'none'; ov.innerHTML = ''; ov.className = ''; resolve(); }, 450); }
+      var t = setTimeout(fechar, dur * 1000);
+      var sk = document.getElementById('paSkip'); if(sk) sk.addEventListener('click', function(){ clearTimeout(t); fechar(); });
+    });
+  }
+
   async function carregarConfig(){
     if(window.__PREVIEW) return; // em pré-visualização, os dados vêm do editor
     if(!sbC || !SLUG){ _limparEstatico(); console.log('[INFO] Sem negócio (?n=slug).'); return; }
@@ -4586,6 +4624,7 @@
       window.__negNome = neg.nome || '';
       const config = neg.config || {};
       aplicarPlano(config, funcoes, pub);
+      try{ await mostrarPreAbertura(config.preAbertura); }catch(e){}   // publicidade de ecrã cheio, antes do menu
       aplicarConfig(config);
       try{ document.title = ((config.header && config.header.titulo) || neg.nome || 'Cardápio'); }catch(e){}
       if(window.__semTraducoes){ const ls = document.getElementById('langSwitch'); if(ls) ls.style.display = 'none'; }

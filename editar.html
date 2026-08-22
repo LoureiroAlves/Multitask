@@ -994,6 +994,42 @@
     </div>
   </details>
 
+  <!-- PRÉ-ABERTURA (PUBLICIDADE ECRÃ CHEIO) -->
+  <details id="secPreAbertura">
+    <summary>🎬 Pré-abertura (publicidade ecrã cheio)</summary>
+    <div class="bloco-conteudo">
+      <div class="lembrar" style="margin-bottom:10px;">
+        <input type="checkbox" id="paAtivo">
+        <label for="paAtivo" style="margin:0; font-weight:700; color:var(--dourado-escuro); display:inline;">Mostrar pré-abertura antes do menu</label>
+      </div>
+      <div class="subtitulo" style="margin:-4px 0 12px;">Uma imagem de publicidade em <b>ecrã cheio</b> que aparece durante alguns segundos ao abrir o menu, e depois entra o menu (ou a abertura, se tiveres uma). O cliente pode "Saltar".</div>
+
+      <label>Imagem (ecrã cheio — recomendado 9:16, vertical)</label>
+      <input type="file" id="paFotoFile" accept="image/*">
+      <input type="hidden" id="paFotoUrl">
+      <div id="paFotoPrev" style="margin-top:8px;"></div>
+
+      <div class="row2" style="margin-top:12px;">
+        <div>
+          <label for="paDuracao">Duração (segundos)</label>
+          <input type="number" id="paDuracao" min="1" max="15" step="1" value="3" style="width:100%; padding:9px; border-radius:8px; border:1.5px solid var(--linha); font-family:inherit;">
+        </div>
+        <div>
+          <label for="paAnimacao">Movimento</label>
+          <select id="paAnimacao" style="width:100%; padding:9px; border-radius:8px; border:1.5px solid var(--linha); background:var(--branco); font-family:inherit; color:var(--castanho);">
+            <option value="nenhuma">Estática (sem movimento)</option>
+            <option value="fade">Aparecer (fade)</option>
+            <option value="zoom">Zoom lento</option>
+            <option value="deslizar">Deslizar</option>
+          </select>
+        </div>
+      </div>
+
+      <label for="paLink" style="margin-top:12px;">Link ao clicar (opcional)</label>
+      <input type="text" id="paLink" placeholder="https://… — abre ao tocar na imagem">
+    </div>
+  </details>
+
   <!-- RODAPÉ FINAL -->
   <details id="secFooter">
     <summary>Scroll (aparece ao fazer scroll até ao fim da página)</summary>
@@ -2030,6 +2066,15 @@
       const _a5 = document.getElementById('ajgWhatsMsg'); if(_a5) _a5.value = _ajg.whatsappMsg || '';
       filaAjg = null; if(typeof _ajgPrev === 'function') _ajgPrev();
     }
+    // Pré-abertura
+    { const _pa = config.preAbertura || {};
+      const _e1 = document.getElementById('paAtivo'); if(_e1) _e1.checked = _pa.ativo === true;
+      const _e2 = document.getElementById('paFotoUrl'); if(_e2) _e2.value = _pa.foto || '';
+      const _e3 = document.getElementById('paDuracao'); if(_e3) _e3.value = _pa.duracao || 3;
+      const _e4 = document.getElementById('paAnimacao'); if(_e4) _e4.value = _pa.animacao || 'nenhuma';
+      const _e5 = document.getElementById('paLink'); if(_e5) _e5.value = _pa.link || '';
+      filaPreAb = null; if(typeof _paPrev === 'function') _paPrev();
+    }
     // Publicidade dos jogos
     const aj = config.adJogos || {};
     document.getElementById('adjAtivo').checked = !!aj.ativo;
@@ -2337,6 +2382,32 @@
     const f = e.target.files[0]; if(!f) return;
     filaAjg = f; _ajgPrev();
     setEstado('Imagem do anúncio dos jogos escolhida (guarda para aplicar).', 'info');
+  });
+
+  // ---- Pré-abertura (publicidade ecrã cheio) ----
+  let filaPreAb = null;
+  function _paPrev(){
+    const box = document.getElementById('paFotoPrev'); if(!box) return;
+    const url = document.getElementById('paFotoUrl').value;
+    box.innerHTML = '';
+    if(filaPreAb){
+      const im = document.createElement('img'); im.src = URL.createObjectURL(filaPreAb);
+      im.style.cssText = 'max-width:150px;width:100%;border-radius:10px;display:block;box-shadow:0 2px 8px rgba(0,0,0,.15);';
+      const p = document.createElement('div'); p.className = 'subtitulo'; p.style.marginTop = '4px'; p.textContent = 'Nova imagem escolhida (guarda para aplicar).';
+      box.appendChild(im); box.appendChild(p);
+    } else if(url){
+      const im = document.createElement('img'); im.src = url;
+      im.style.cssText = 'max-width:150px;width:100%;border-radius:10px;display:block;box-shadow:0 2px 8px rgba(0,0,0,.15);';
+      const rm = document.createElement('button'); rm.type = 'button'; rm.textContent = 'Remover imagem';
+      rm.style.cssText = 'margin-top:6px;padding:6px 12px;border:1px solid var(--linha);border-radius:8px;background:#fff;cursor:pointer;font:inherit;';
+      rm.onclick = function(){ document.getElementById('paFotoUrl').value = ''; filaPreAb = null; _paPrev(); };
+      box.appendChild(im); box.appendChild(rm);
+    } else { box.innerHTML = '<div class="subtitulo">Sem imagem.</div>'; }
+  }
+  document.getElementById('paFotoFile').addEventListener('change', e => {
+    const f = e.target.files[0]; if(!f) return;
+    filaPreAb = f; _paPrev();
+    setEstado('Imagem da pré-abertura escolhida (guarda para aplicar).', 'info');
   });
 
   // ---- Aspeto avançado: cores, fundo ----
@@ -2695,6 +2766,12 @@
         filaAjg = null;
         document.getElementById('ajgFotoFile').value = '';
       }
+      if(filaPreAb){
+        setEstado('A enviar imagem da pré-abertura…', 'info');
+        document.getElementById('paFotoUrl').value = await enviarFoto(filaPreAb, token);
+        filaPreAb = null;
+        document.getElementById('paFotoFile').value = '';
+      }
       if(filaMascote){
         setEstado('A enviar imagem da barra fixa…', 'info');
         document.getElementById('masFotoUrl').value = await enviarFoto(filaMascote, token);
@@ -2854,6 +2931,13 @@
           waY: isNaN(_wy) ? 88 : _wy
         };
       }
+      config.preAbertura = {
+        ativo: (document.getElementById('paAtivo') ? document.getElementById('paAtivo').checked : false),
+        foto: (document.getElementById('paFotoUrl') ? document.getElementById('paFotoUrl').value.trim() : ''),
+        duracao: parseInt((document.getElementById('paDuracao') || {}).value, 10) || 3,
+        animacao: (document.getElementById('paAnimacao') ? document.getElementById('paAnimacao').value : 'nenhuma'),
+        link: (document.getElementById('paLink') ? document.getElementById('paLink').value.trim() : '')
+      };
       config.anuncioJogos = {
         ativo: (document.getElementById('ajgAtivo') ? document.getElementById('ajgAtivo').checked : false),
         foto: (document.getElementById('ajgFotoUrl') ? document.getElementById('ajgFotoUrl').value.trim() : ''),
