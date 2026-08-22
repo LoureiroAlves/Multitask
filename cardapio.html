@@ -4096,7 +4096,7 @@
       }
       { var _rq = document.getElementById('redesIcones'); if(_rq){ var _anyR = _redesOn && (window.__redes.facebook || window.__redes.instagram || String(window.__redes.whatsapp || '').replace(/\D/g, '')); _rq.style.display = _anyR ? '' : 'none'; } }
       if(window.__setPhotoboothInfo){
-        var _nome = (config.footer && config.footer.nome) || (config.header && config.header.titulo) || window.__negNome || '';
+        var _nome = (config.header && config.header.titulo) || window.__negNome || (config.footer && config.footer.nome) || '';
         var _molde = (config.photobooth && config.photobooth.moldura) || 'classica';
         window.__setPhotoboothInfo(_nome, window.__redes.social || '', _molde);
       }
