@@ -4945,7 +4945,7 @@
   // ==========================================================
   window._fidelidade = window._fidelidade || null;
   (function(){
-    const _fidSlug = ((new URLSearchParams(location.search)).get('n') || '').toLowerCase().replace(/[^a-z0-9]/g, '') || 'geral';
+    const _fidSlug = (typeof __slugDoEndereco === 'function' ? __slugDoEndereco() : ((new URLSearchParams(location.search)).get('n') || '').toLowerCase().replace(/[^a-z0-9]/g, '')) || 'geral';
     const KEY = 'cardapioFidelidade:' + _fidSlug;
     const btn = document.getElementById('linkFidelidade');
     if(!btn) return;
@@ -6441,7 +6441,7 @@
   // ==========================================================
   (function(){
     // Carrinho separado por negócio (senão a lista de um negócio aparecia noutro)
-    const _cartSlug = ((new URLSearchParams(location.search)).get('n') || '').toLowerCase().replace(/[^a-z0-9]/g, '') || 'geral';
+    const _cartSlug = (typeof __slugDoEndereco === 'function' ? __slugDoEndereco() : ((new URLSearchParams(location.search)).get('n') || '').toLowerCase().replace(/[^a-z0-9]/g, '')) || 'geral';
     const STORAGE_KEY = 'cardapioListaCompras:' + _cartSlug;
     const EXPIRA_MS = 3 * 60 * 60 * 1000; // 3 horas
 
