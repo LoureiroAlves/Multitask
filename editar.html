@@ -347,6 +347,17 @@
         <span class="subtitulo" style="margin:8px 0 0; display:block;">Cada secção mostra um destes desenhos no fundo, alternando entre os que ligares. Sem nenhum ligado, o fundo fica limpo.</span>
       </div>
 
+      <div id="italianoDecoBox" style="display:none; margin-top:10px; padding:12px; border:1.5px solid var(--linha); border-radius:10px;">
+        <label style="display:block; margin:0 0 6px; font-weight:500; font-size:.85rem;">Desenhos nas secções (modelo Italiano)</label>
+        <div style="display:flex; flex-wrap:wrap; gap:6px 16px;">
+          <label style="display:flex; align-items:center; gap:8px; margin:0; font-size:.9rem;"><input type="checkbox" class="italianoDeco" value="manjericao" style="width:auto;"> 🌿 Manjericão</label>
+          <label style="display:flex; align-items:center; gap:8px; margin:0; font-size:.9rem;"><input type="checkbox" class="italianoDeco" value="tomate" style="width:auto;"> 🍅 Tomate</label>
+          <label style="display:flex; align-items:center; gap:8px; margin:0; font-size:.9rem;"><input type="checkbox" class="italianoDeco" value="azeitona" style="width:auto;"> 🫒 Azeitona</label>
+          <label style="display:flex; align-items:center; gap:8px; margin:0; font-size:.9rem;"><input type="checkbox" class="italianoDeco" value="vinho" style="width:auto;"> 🍷 Taça de vinho</label>
+        </div>
+        <span class="subtitulo" style="margin:8px 0 0; display:block;">Cada secção mostra um destes motivos, com tamanho e posição diferentes, alternando entre os que ligares. Sem nenhum ligado, as secções ficam limpas.</span>
+      </div>
+
       <label for="abrirEfeitoSel" style="margin-top:16px;">Efeito ao abrir os separadores</label>
       <select id="abrirEfeitoSel" style="width:100%; padding:10px 12px; border-radius:10px; border:1.5px solid var(--linha); background:var(--branco); font-family:inherit; color:var(--castanho); font-size:0.95rem;">
         <option value="zoom">Normal (zoom)</option>
@@ -2134,6 +2145,9 @@
       document.getElementById('praiaCor2').value = config.praiaCor2 || '#90835f';
       const _pd = Array.isArray(config.praiaDeco) ? config.praiaDeco : ['palmeira'];
       document.querySelectorAll('.praiaDeco').forEach(cb => { cb.checked = _pd.includes(cb.value); }); }
+    { document.getElementById('italianoDecoBox').style.display = (config.modelo === 'italiano') ? 'block' : 'none';
+      const _id = Array.isArray(config.italianoDeco) ? config.italianoDeco : ['manjericao'];
+      document.querySelectorAll('.italianoDeco').forEach(cb => { cb.checked = _id.includes(cb.value); }); }
     { const temSc = !!(config.sliderCor && String(config.sliderCor).trim());
       document.getElementById('sliderCorBox').style.display = (config.modelo === 'slider') ? 'block' : 'none';
       document.getElementById('sliderCorAtiva').checked = temSc;
@@ -2504,6 +2518,7 @@
     document.getElementById('cadernoBox').style.display = (e.target.value === 'caderno') ? 'block' : 'none';
     document.getElementById('sliderCorBox').style.display = (e.target.value === 'slider') ? 'block' : 'none';
     document.getElementById('praiaCorBox').style.display = (e.target.value === 'praia') ? 'block' : 'none';
+    document.getElementById('italianoDecoBox').style.display = (e.target.value === 'italiano') ? 'block' : 'none';
   });
   document.getElementById('abrirEfeitoSel').addEventListener('change', e => {
     const wb = document.getElementById('wipeBox'); if(wb) wb.style.display = (e.target.value === 'wipe') ? 'block' : 'none';
@@ -3018,6 +3033,7 @@
       config.praiaCor1 = document.getElementById('praiaCor1').value;
       config.praiaCor2 = document.getElementById('praiaCor2').value;
       config.praiaDeco = Array.prototype.slice.call(document.querySelectorAll('.praiaDeco:checked')).map(cb => cb.value);
+      config.italianoDeco = Array.prototype.slice.call(document.querySelectorAll('.italianoDeco:checked')).map(cb => cb.value);
       config.caderno = {
         folha: document.getElementById('cadFolha').value,
         corLetra: document.getElementById('cadCorLetra').value,
