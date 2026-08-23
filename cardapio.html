@@ -917,9 +917,11 @@
   body.modelo-ananas .jogos-slogan{ background:#fdeee2; color:#8a3d1c; border:1px solid #f4d0ba; box-shadow:none; }
 
   /* ===== Modelo "Praia" (riscas azul + kraft, estilo lounge) ===== */
-  body.modelo-praia{ background-color:#8a7d5a; background-image:repeating-linear-gradient(90deg, #23417f 0 26px, #90835f 26px 52px); }
+  body.modelo-praia{ background-color:#8a7d5a; background-image:repeating-linear-gradient(90deg, var(--praia-c1,#23417f) 0 26px, var(--praia-c2,#90835f) 26px 52px); }
   body.modelo-praia .categoria-grid{ background:transparent; border:none; }
   body.modelo-praia .tile{ background:#fbf8f0 !important; border:1px solid rgba(255,255,255,.5) !important; box-shadow:0 2px 8px rgba(0,0,0,.25) !important; border-radius:10px; }
+  /* Palmeira alusiva ao tema, sempre presente no interior das secções */
+  body.modelo-praia .categoria-painel-conteudo, body.modelo-praia section.categoria{ position:relative; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='140'%3E%3Cg fill='none' stroke='%23cdd6e6' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M60 130 C57 100 55 78 58 60'/%3E%3Cpath d='M52 120 h14 M53 108 h12 M54 96 h11 M55 84 h10' stroke-width='1.6'/%3E%3Cpath d='M58 58 C40 44 24 42 10 48 C26 46 40 52 56 60'/%3E%3Cpath d='M58 58 C42 36 26 30 14 26 C30 34 46 44 57 58'/%3E%3Cpath d='M58 58 C58 38 56 22 54 10 C58 26 62 42 60 58'/%3E%3Cpath d='M58 58 C74 36 90 30 104 28 C88 34 72 44 60 58'/%3E%3Cpath d='M58 58 C78 46 96 46 110 52 C94 48 78 52 60 60'/%3E%3C/g%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 14px bottom 14px; background-size:118px auto; }
   body.modelo-praia .tile .tile-label{ font-family:'Poppins', sans-serif; font-weight:600; color:#1c3366 !important; text-shadow:none !important; }
   body.modelo-praia .categoria-painel{ background:#f4efe1; }
   body.modelo-praia .categoria-painel-header{ background:repeating-linear-gradient(90deg, #23417f 0 22px, #90835f 22px 44px); border-bottom:2px solid #1c3366; }
@@ -3958,6 +3960,14 @@
       document.body.classList.toggle('modelo-tropical', (config.modelo || 'lista') === 'tropical');
       document.body.classList.toggle('modelo-ananas', (config.modelo || 'lista') === 'ananas');
       document.body.classList.toggle('modelo-praia', (config.modelo || 'lista') === 'praia');
+      // Cores das riscas do modelo "Praia" (editáveis)
+      (function(){
+        const rs = document.body.style;
+        if((config.modelo || 'lista') === 'praia'){
+          rs.setProperty('--praia-c1', config.praiaCor1 || '#23417f');
+          rs.setProperty('--praia-c2', config.praiaCor2 || '#90835f');
+        } else { rs.removeProperty('--praia-c1'); rs.removeProperty('--praia-c2'); }
+      })();
       // Efeito néon (por cima de qualquer modelo): intensidade + cor
       // Efeito néon: agora é POR SECÇÃO (decidido no construirMenu conforme cada secção). Sem cor global.
       document.documentElement.style.removeProperty('--nfx-cor');
