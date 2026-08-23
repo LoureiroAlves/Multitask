@@ -335,7 +335,15 @@
             <input type="color" id="praiaCor2" value="#90835f" style="width:52px; height:38px; padding:2px; border:1.5px solid var(--linha); border-radius:8px; cursor:pointer;"> Risca 2
           </label>
         </div>
-        <span class="subtitulo" style="margin:8px 0 0; display:block;">As secções mostram sempre uma palmeira desenhada no fundo.</span>
+        <label style="display:block; margin:14px 0 6px; font-weight:500; font-size:.85rem;">Desenhos nas secções (liga/desliga)</label>
+        <div style="display:flex; flex-wrap:wrap; gap:6px 16px;">
+          <label style="display:flex; align-items:center; gap:8px; margin:0; font-size:.9rem;"><input type="checkbox" class="praiaDeco" value="palmeira" style="width:auto;"> 🌴 Palmeira</label>
+          <label style="display:flex; align-items:center; gap:8px; margin:0; font-size:.9rem;"><input type="checkbox" class="praiaDeco" value="coco" style="width:auto;"> 🥥 Coco</label>
+          <label style="display:flex; align-items:center; gap:8px; margin:0; font-size:.9rem;"><input type="checkbox" class="praiaDeco" value="ondas" style="width:auto;"> 🌊 Ondas</label>
+          <label style="display:flex; align-items:center; gap:8px; margin:0; font-size:.9rem;"><input type="checkbox" class="praiaDeco" value="concha" style="width:auto;"> 🐚 Concha</label>
+          <label style="display:flex; align-items:center; gap:8px; margin:0; font-size:.9rem;"><input type="checkbox" class="praiaDeco" value="buzio" style="width:auto;"> 🐌 Búzio</label>
+        </div>
+        <span class="subtitulo" style="margin:8px 0 0; display:block;">Cada secção mostra um destes desenhos no fundo, alternando entre os que ligares. Sem nenhum ligado, o fundo fica limpo.</span>
       </div>
 
       <label for="abrirEfeitoSel" style="margin-top:16px;">Efeito ao abrir os separadores</label>
@@ -2122,7 +2130,9 @@
     document.getElementById('cadernoBox').style.display = (config.modelo === 'caderno') ? 'block' : 'none';
     { document.getElementById('praiaCorBox').style.display = (config.modelo === 'praia') ? 'block' : 'none';
       document.getElementById('praiaCor1').value = config.praiaCor1 || '#23417f';
-      document.getElementById('praiaCor2').value = config.praiaCor2 || '#90835f'; }
+      document.getElementById('praiaCor2').value = config.praiaCor2 || '#90835f';
+      const _pd = Array.isArray(config.praiaDeco) ? config.praiaDeco : ['palmeira'];
+      document.querySelectorAll('.praiaDeco').forEach(cb => { cb.checked = _pd.includes(cb.value); }); }
     { const temSc = !!(config.sliderCor && String(config.sliderCor).trim());
       document.getElementById('sliderCorBox').style.display = (config.modelo === 'slider') ? 'block' : 'none';
       document.getElementById('sliderCorAtiva').checked = temSc;
@@ -3006,6 +3016,7 @@
       config.sliderCapaAzCor = document.getElementById('sliderCapaAzCor').value;
       config.praiaCor1 = document.getElementById('praiaCor1').value;
       config.praiaCor2 = document.getElementById('praiaCor2').value;
+      config.praiaDeco = Array.prototype.slice.call(document.querySelectorAll('.praiaDeco:checked')).map(cb => cb.value);
       config.caderno = {
         folha: document.getElementById('cadFolha').value,
         corLetra: document.getElementById('cadCorLetra').value,
