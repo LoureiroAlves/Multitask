@@ -830,7 +830,7 @@
   #menuLacre svg{ width:84px; height:88px; filter:drop-shadow(0 3px 5px rgba(90,20,27,.35)); }
 
   /* ===== Modelo "Bambu Zen" (natural, verde) ===== */
-  body.modelo-bambu{ background-color:#f2f6ea; background-image:radial-gradient(rgba(99,153,34,.06) 1px, transparent 1.4px); background-size:7px 7px; }
+  body.modelo-bambu{ background-color:#f2f6ea; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='140' viewBox='0 0 96 140'%3E%3Crect x='22' y='-4' width='8' height='148' rx='4' fill='%23dbe8c6'/%3E%3Cg stroke='%23c9dcac' stroke-width='2' fill='none' stroke-linecap='round'%3E%3Cpath d='M21 30 q4 -3 9 0'/%3E%3Cpath d='M21 74 q4 -3 9 0'/%3E%3Cpath d='M21 118 q4 -3 9 0'/%3E%3C/g%3E%3Crect x='62' y='16' width='7' height='128' rx='3.5' fill='%23dbe8c6'/%3E%3Cg stroke='%23c9dcac' stroke-width='1.8' fill='none' stroke-linecap='round'%3E%3Cpath d='M61 52 q3.5 -3 8 0'/%3E%3Cpath d='M61 92 q3.5 -3 8 0'/%3E%3C/g%3E%3Cg fill='%23d3e6b6'%3E%3Cpath d='M30 40 C42 30 54 28 66 26 C54 34 42 40 32 46 Z'/%3E%3Cpath d='M69 70 C58 62 46 62 36 62 C48 66 60 72 70 76 Z'/%3E%3C/g%3E%3C/svg%3E"); background-size:96px 140px; }
   body.modelo-bambu .categoria-grid{ background:transparent; border:none; }
   body.modelo-bambu .tile{ background:#ffffff !important; border:1px solid #dce7c8 !important; border-left:4px solid #639922 !important; box-shadow:none !important; border-radius:8px; }
   body.modelo-bambu .tile .tile-label{ font-family:'Poppins', sans-serif; font-weight:600; color:#1f3a12 !important; text-shadow:none !important; }
@@ -845,6 +845,22 @@
   body.modelo-bambu .item .preco{ font-family:'Poppins', sans-serif; color:#3b6d11 !important; font-weight:700; }
   body.modelo-bambu .tabela-doses .preco-dose{ color:#3b6d11 !important; }
   body.modelo-bambu .jogos-slogan{ background:#e8f0dc; color:#2b4d10; border:1px solid #cfe0b0; box-shadow:none; }
+  /* Desenhos por secção (escolhidos no editor) */
+  body.modelo-bambu .categoria-painel-conteudo{ position:relative; --bambu-deco:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='130' viewBox='0 0 100 130'%3E%3Cg fill='%237fb64f'%3E%3Cpath d='M46 54 C30 36 18 26 6 18 C20 36 36 48 50 62 Z'/%3E%3Cpath d='M64 70 C82 50 94 38 106 30 C92 50 76 62 66 78 Z'/%3E%3C/g%3E%3Crect x='34' y='4' width='11' height='124' rx='5' fill='%238fbf58'/%3E%3Cg stroke='%234f7d29' stroke-width='2.2' fill='none' stroke-linecap='round'%3E%3Cpath d='M33 34 q5.5 -4 12 0'/%3E%3Cpath d='M33 70 q5.5 -4 12 0'/%3E%3Cpath d='M33 106 q5.5 -4 12 0'/%3E%3C/g%3E%3Crect x='60' y='18' width='9' height='110' rx='4.5' fill='%237ba848'/%3E%3Cg stroke='%23456e24' stroke-width='1.8' fill='none' stroke-linecap='round'%3E%3Cpath d='M59 48 q4.5 -3 9 0'/%3E%3Cpath d='M59 86 q4.5 -3 9 0'/%3E%3C/g%3E%3Cg fill='%238cc95c' stroke='%234f7d29' stroke-width='1'%3E%3Cpath d='M40 32 C26 14 16 4 6 -4 C20 12 34 24 46 38 Z'/%3E%3Cpath d='M40 32 C56 18 70 12 84 6 C68 20 52 30 42 40 Z'/%3E%3C/g%3E%3C/svg%3E"); }
+  body.modelo-bambu .categoria-painel-conteudo::before, body.modelo-bambu .categoria-painel-conteudo::after{ content:''; position:absolute; pointer-events:none; z-index:8; background-image:var(--bambu-deco); background-repeat:no-repeat; background-size:contain; }
+  body.modelo-bambu .categoria-painel-conteudo.bambu-deco-folha{ --bambu-deco:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='130' viewBox='0 0 100 130'%3E%3Cpath d='M52 126 C52 92 50 60 50 30' stroke='%235e8b30' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3Cg fill='%238cc95c' stroke='%234f7d29' stroke-width='1'%3E%3Cpath d='M50 40 C34 26 22 16 10 8 C24 22 38 34 52 46 Z'/%3E%3Cpath d='M50 40 C66 26 78 16 90 8 C76 22 62 34 52 46 Z'/%3E%3Cpath d='M50 64 C36 52 24 46 12 42 C26 52 40 62 52 70 Z'/%3E%3Cpath d='M50 64 C64 52 76 46 88 42 C74 52 62 62 52 70 Z'/%3E%3Cpath d='M51 24 C46 12 44 4 42 -4 C48 8 52 20 54 32 Z'/%3E%3C/g%3E%3C/svg%3E"); }
+  body.modelo-bambu .categoria-painel-conteudo.bambu-deco-lotus{ --bambu-deco:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='130' viewBox='0 0 100 130'%3E%3Cg fill='%23efc6d6' stroke='%23cf8ea8' stroke-width='1'%3E%3Cpath d='M50 96 C40 80 40 58 50 44 C60 58 60 80 50 96 Z'/%3E%3Cpath d='M50 96 C36 84 30 64 30 48 C46 60 54 78 52 94 Z'/%3E%3Cpath d='M50 96 C64 84 70 64 70 48 C54 60 46 78 48 94 Z'/%3E%3Cpath d='M50 96 C30 92 16 78 10 62 C34 74 48 84 52 94 Z'/%3E%3Cpath d='M50 96 C70 92 84 78 90 62 C66 74 52 84 48 94 Z'/%3E%3C/g%3E%3Cpath d='M20 98 C34 104 66 104 80 98' stroke='%237fb64f' stroke-width='3' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); }
+  body.modelo-bambu .categoria-painel-conteudo.bambu-deco-none::before, body.modelo-bambu .categoria-painel-conteudo.bambu-deco-none::after{ display:none; }
+  body.modelo-bambu .categoria-painel-conteudo.bambu-var-1::after{ right:12px; bottom:10px; width:112px; height:146px; opacity:.5; transform:rotate(4deg); }
+  body.modelo-bambu .categoria-painel-conteudo.bambu-var-1::before{ left:8px; top:8px; width:56px; height:73px; opacity:.28; transform:rotate(-12deg) scaleX(-1); }
+  body.modelo-bambu .categoria-painel-conteudo.bambu-var-2::after{ left:10px; bottom:12px; width:92px; height:120px; opacity:.46; transform:rotate(-8deg) scaleX(-1); }
+  body.modelo-bambu .categoria-painel-conteudo.bambu-var-2::before{ right:10px; top:6px; width:100px; height:130px; opacity:.26; transform:rotate(10deg); }
+  body.modelo-bambu .categoria-painel-conteudo.bambu-var-3::after{ right:14px; bottom:14px; width:76px; height:99px; opacity:.55; transform:rotate(-4deg); }
+  body.modelo-bambu .categoria-painel-conteudo.bambu-var-3::before{ left:12px; bottom:12px; width:60px; height:78px; opacity:.3; transform:rotate(16deg) scaleX(-1); }
+  body.modelo-bambu .categoria-painel-conteudo.bambu-var-4::after{ right:12px; top:8px; width:120px; height:156px; opacity:.46; transform:rotate(8deg); }
+  body.modelo-bambu .categoria-painel-conteudo.bambu-var-4::before{ left:8px; bottom:10px; width:66px; height:86px; opacity:.28; transform:rotate(-18deg) scaleX(-1); }
+  body.modelo-bambu .categoria-painel-conteudo.bambu-var-5::after{ right:10px; bottom:10px; width:140px; height:182px; opacity:.4; transform:rotate(-3deg); }
+  body.modelo-bambu .categoria-painel-conteudo.bambu-var-5::before{ display:none; }
 
   /* ===== Modelo "Mármore" (elegante, claro, dourado) ===== */
   body.modelo-marmore{ background-color:#f5f2ec; background-image:radial-gradient(rgba(168,113,47,.05) 1px, transparent 1.5px); background-size:9px 9px; }
@@ -982,7 +998,7 @@
   body.painel-fundo-suave.modelo-praia .categoria-painel{ background:linear-gradient(rgba(244,239,225,.82), rgba(244,239,225,.82)), repeating-linear-gradient(90deg, var(--praia-c1,#23417f) 0 26px, var(--praia-c2,#90835f) 26px 52px); }
   body.painel-fundo-suave.modelo-italiano .categoria-painel{ background-color:#fbf6ec; background-image:linear-gradient(45deg, rgba(176,35,48,.06) 25%, transparent 25%, transparent 75%, rgba(176,35,48,.06) 75%), linear-gradient(45deg, rgba(176,35,48,.06) 25%, transparent 25%, transparent 75%, rgba(176,35,48,.06) 75%); background-size:28px 28px; background-position:0 0, 14px 14px; }
   body.painel-fundo-suave.modelo-ananas .categoria-painel{ background-color:#fdf6ee; background-image:linear-gradient(rgba(253,246,238,.62), rgba(253,246,238,.62)), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='96'%3E%3Cg transform='translate(16,8)'%3E%3Cg fill='%23a9d8c4'%3E%3Cpath d='M20 26 C20 17 20 10 20 4 C23 10 23 19 22 26 Z'/%3E%3Cpath d='M20 26 C16 19 12 13 8 8 C15 11 20 17 22 25 Z'/%3E%3Cpath d='M20 26 C24 19 28 13 32 8 C25 11 20 17 18 25 Z'/%3E%3C/g%3E%3Cellipse cx='20' cy='40' rx='12' ry='16' fill='%23f2b18c'/%3E%3Cg stroke='%23fff5ec' stroke-width='1.2' opacity='0.9'%3E%3Cpath d='M2 30 L38 54 M8 24 L44 48 M-4 36 L32 60'/%3E%3Cpath d='M38 30 L2 54 M32 24 L-4 48 M44 36 L8 60'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"); background-size:auto, 72px 96px; }
-  body.painel-fundo-suave.modelo-bambu .categoria-painel{ background-color:#f2f6ea; background-image:radial-gradient(rgba(99,153,34,.08) 1px, transparent 1.4px); background-size:7px 7px; }
+  body.painel-fundo-suave.modelo-bambu .categoria-painel{ background-color:#f2f6ea; background-image:linear-gradient(rgba(242,246,234,.35), rgba(242,246,234,.35)), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='140' viewBox='0 0 96 140'%3E%3Crect x='22' y='-4' width='8' height='148' rx='4' fill='%23dbe8c6'/%3E%3Cg stroke='%23c9dcac' stroke-width='2' fill='none' stroke-linecap='round'%3E%3Cpath d='M21 30 q4 -3 9 0'/%3E%3Cpath d='M21 74 q4 -3 9 0'/%3E%3Cpath d='M21 118 q4 -3 9 0'/%3E%3C/g%3E%3Crect x='62' y='16' width='7' height='128' rx='3.5' fill='%23dbe8c6'/%3E%3Cg stroke='%23c9dcac' stroke-width='1.8' fill='none' stroke-linecap='round'%3E%3Cpath d='M61 52 q3.5 -3 8 0'/%3E%3Cpath d='M61 92 q3.5 -3 8 0'/%3E%3C/g%3E%3Cg fill='%23d3e6b6'%3E%3Cpath d='M30 40 C42 30 54 28 66 26 C54 34 42 40 32 46 Z'/%3E%3Cpath d='M69 70 C58 62 46 62 36 62 C48 66 60 72 70 76 Z'/%3E%3C/g%3E%3C/svg%3E"); background-size:auto, 96px 140px; }
   body.painel-fundo-suave.modelo-marmore .categoria-painel{ background-color:#f5f2ec; background-image:radial-gradient(rgba(168,113,47,.07) 1px, transparent 1.5px); background-size:9px 9px; }
   body.painel-fundo-suave.modelo-vinha .categoria-painel{ background-color:#2a0f18; background-image:radial-gradient(rgba(255,255,255,.06) 1px, transparent 1.4px); background-size:6px 6px; }
   body.painel-fundo-suave.modelo-tropical .categoria-painel{ background-color:#eefbf6; background-image:radial-gradient(rgba(15,110,86,.05) 1px, transparent 1.4px); background-size:8px 8px; }
@@ -3518,6 +3534,16 @@
       if(listI.length){ painelConteudo.classList.add('italiano-deco-' + listI[idxI % listI.length]); }
       else { painelConteudo.classList.add('italiano-deco-none'); }
     }
+    // Modelo Bambu: motivo escolhido + tamanho/posição diferente por secção
+    painelConteudo.classList.remove('bambu-var-1','bambu-var-2','bambu-var-3','bambu-var-4','bambu-var-5','bambu-deco-canas','bambu-deco-folha','bambu-deco-lotus','bambu-deco-none');
+    if(document.body.classList.contains('modelo-bambu')){
+      const tilesB = Array.prototype.slice.call(document.querySelectorAll('#categoriaGrid .tile'));
+      const idxB = Math.max(0, tilesB.indexOf(tile));
+      painelConteudo.classList.add('bambu-var-' + ((idxB % 5) + 1));
+      const listB = window.__bambuDeco || [];
+      if(listB.length){ painelConteudo.classList.add('bambu-deco-' + listB[idxB % listB.length]); }
+      else { painelConteudo.classList.add('bambu-deco-none'); }
+    }
     if(target.classList.contains('sec-pratodia') && target.dataset.pdBg){ painel.style.background = target.dataset.pdBg; painel.classList.add('painel-pratodia'); }
     else { painel.style.background = ''; painel.classList.remove('painel-pratodia'); }
 
@@ -4037,6 +4063,7 @@
           window.__praiaDeco = Array.isArray(config.praiaDeco) ? config.praiaDeco.slice() : ['palmeira'];
         } else { rs.removeProperty('--praia-c1'); rs.removeProperty('--praia-c2'); window.__praiaDeco = []; }
         window.__italianoDeco = ((config.modelo || 'lista') === 'italiano') ? (Array.isArray(config.italianoDeco) ? config.italianoDeco.slice() : ['manjericao']) : [];
+        window.__bambuDeco = ((config.modelo || 'lista') === 'bambu') ? (Array.isArray(config.bambuDeco) ? config.bambuDeco.slice() : ['canas']) : [];
       })();
       // Efeito néon (por cima de qualquer modelo): intensidade + cor
       // Efeito néon: agora é POR SECÇÃO (decidido no construirMenu conforme cada secção). Sem cor global.
