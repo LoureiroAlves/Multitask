@@ -900,7 +900,7 @@
   body.modelo-tropical .jogos-slogan{ background:#e1f5ee; color:#0f6e56; border:1px solid #bfe9dd; box-shadow:none; }
 
   /* ===== Modelo "Ananás" (padrão divertido, coral + menta) ===== */
-  body.modelo-ananas{ background-color:#fdf6ee; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='58' height='58'%3E%3Cg transform='translate(21,11)'%3E%3Cpath d='M10 12 L6 1 M10 12 L10 0 M10 12 L14 1' stroke='%23bfe0d0' stroke-width='3' fill='none' stroke-linecap='round'/%3E%3Cellipse cx='10' cy='23' rx='8' ry='11' fill='%23f4bd9a'/%3E%3C/g%3E%3C/svg%3E"); background-size:58px 58px; }
+  body.modelo-ananas{ background-color:#fdf6ee; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='96'%3E%3Cg transform='translate(16,8)'%3E%3Cg fill='%23a9d8c4'%3E%3Cpath d='M20 26 C20 17 20 10 20 4 C23 10 23 19 22 26 Z'/%3E%3Cpath d='M20 26 C16 19 12 13 8 8 C15 11 20 17 22 25 Z'/%3E%3Cpath d='M20 26 C24 19 28 13 32 8 C25 11 20 17 18 25 Z'/%3E%3C/g%3E%3Cellipse cx='20' cy='40' rx='12' ry='16' fill='%23f2b18c'/%3E%3Cg stroke='%23fff5ec' stroke-width='1.2' opacity='0.9'%3E%3Cpath d='M2 30 L38 54 M8 24 L44 48 M-4 36 L32 60'/%3E%3Cpath d='M38 30 L2 54 M32 24 L-4 48 M44 36 L8 60'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"); background-size:72px 96px; }
   body.modelo-ananas .categoria-grid{ background:transparent; border:none; }
   body.modelo-ananas .tile{ background:#ffffff !important; border:1px solid #f4d9c8 !important; box-shadow:none !important; border-radius:16px; }
   body.modelo-ananas .tile .tile-label{ font-family:'Fredoka', sans-serif; font-weight:600; color:#8a3d1c !important; text-shadow:none !important; }
@@ -3606,7 +3606,7 @@
     if(!f.fidelidade && config.fidelidade) config.fidelidade.ativo = false;
     if(!f.agenda && config.agenda) config.agenda.ativo = false;
     if(!f.decoracoes && config.decor) config.decor.tema = 'nenhum';
-    if(!f.modelosPremium && ['ardosia','elegante','azulejo','bambu','marmore','vinha','tropical'].indexOf(config.modelo) >= 0) config.modelo = 'lista';
+    if(!f.modelosPremium && ['ardosia','elegante','azulejo','bambu','marmore','vinha','tropical','ananas','praia'].indexOf(config.modelo) >= 0) config.modelo = 'lista';
     if(!f.azulejos){
       if(config.header) config.header.padrao = 'nenhum';
       if(config.rodape) config.rodape.padrao = 'nenhum';
@@ -4038,7 +4038,7 @@
       { const _ff = document.getElementById('fundoFoto'); if(_ff){ _ff.classList.remove('pronto'); const _i = _ff.querySelector('.ff-img'); if(_i) _i.removeAttribute('src'); } }
       const _tipoFundo = (config.fundo && config.fundo.tipo) || 'liso';
       const _isCaderno = (config.modelo || 'lista') === 'caderno';
-      const _fundoProprio = ['caderno','ardosia','elegante','azulejo','bambu','marmore','vinha','tropical'].indexOf(config.modelo || 'lista') >= 0;
+      const _fundoProprio = ['caderno','ardosia','elegante','azulejo','bambu','marmore','vinha','tropical','ananas','praia'].indexOf(config.modelo || 'lista') >= 0;
       document.body.classList.toggle('fundo-visivel', _tipoFundo !== 'liso' && !_fundoProprio);
       if(_fundoProprio){ document.body.style.background = ''; document.body.style.backgroundColor = ''; }
       else if(config.fundo && config.fundo.tipo){
