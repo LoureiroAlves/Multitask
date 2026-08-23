@@ -958,6 +958,19 @@
   body.modelo-italiano .item .preco{ font-family:'Playfair Display', serif; color:#1b6b3a !important; font-weight:700; }
   body.modelo-italiano .tabela-doses .preco-dose{ color:#b02330 !important; }
   body.modelo-italiano .jogos-slogan{ background:#fffdf8; color:#1b5e34; border:1px solid #e7dcc4; box-shadow:none; }
+  /* Manjericão por secção — tamanhos e posições diferentes para dar vida */
+  body.modelo-italiano .categoria-painel-conteudo{ position:relative; --it-basil:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='80' viewBox='0 0 60 80'%3E%3Cpath d='M30 78 C30 60 30 40 30 12' stroke='%237ba354' stroke-width='1.6' fill='none' stroke-linecap='round'/%3E%3Cg fill='%239ec27a' stroke='%236f9a49' stroke-width='1'%3E%3Cg transform='translate%2830,10%29'%3E%3Cpath d='M0 0 C-7 -6 -7 -18 0 -24 C7 -18 7 -6 0 0 Z'/%3E%3C/g%3E%3Cg transform='translate%2830,30%29 rotate%28-38%29'%3E%3Cpath d='M0 0 C-6 -6 -6 -16 0 -22 C6 -16 6 -6 0 0 Z'/%3E%3C/g%3E%3Cg transform='translate%2830,30%29 rotate%2838%29'%3E%3Cpath d='M0 0 C-6 -6 -6 -16 0 -22 C6 -16 6 -6 0 0 Z'/%3E%3C/g%3E%3Cg transform='translate%2830,50%29 rotate%28-42%29'%3E%3Cpath d='M0 0 C-7 -7 -7 -18 0 -25 C7 -18 7 -7 0 0 Z'/%3E%3C/g%3E%3Cg transform='translate%2830,50%29 rotate%2842%29'%3E%3Cpath d='M0 0 C-7 -7 -7 -18 0 -25 C7 -18 7 -7 0 0 Z'/%3E%3C/g%3E%3Cg transform='translate%2830,68%29 rotate%28-48%29'%3E%3Cpath d='M0 0 C-7 -7 -7 -18 0 -25 C7 -18 7 -7 0 0 Z'/%3E%3C/g%3E%3Cg transform='translate%2830,68%29 rotate%2848%29'%3E%3Cpath d='M0 0 C-7 -7 -7 -18 0 -25 C7 -18 7 -7 0 0 Z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"); }
+  body.modelo-italiano .categoria-painel-conteudo::before, body.modelo-italiano .categoria-painel-conteudo::after{ content:''; position:absolute; pointer-events:none; z-index:8; background-image:var(--it-basil); background-repeat:no-repeat; background-size:contain; }
+  body.modelo-italiano .categoria-painel-conteudo.italiano-var-1::after{ right:14px; bottom:12px; width:120px; height:150px; opacity:.55; transform:rotate(8deg); }
+  body.modelo-italiano .categoria-painel-conteudo.italiano-var-1::before{ left:10px; top:10px; width:60px; height:76px; opacity:.32; transform:rotate(-18deg); }
+  body.modelo-italiano .categoria-painel-conteudo.italiano-var-2::after{ left:12px; bottom:14px; width:96px; height:120px; opacity:.5; transform:rotate(-10deg); }
+  body.modelo-italiano .categoria-painel-conteudo.italiano-var-2::before{ right:12px; top:8px; width:104px; height:130px; opacity:.3; transform:rotate(14deg); }
+  body.modelo-italiano .categoria-painel-conteudo.italiano-var-3::after{ right:16px; bottom:16px; width:80px; height:100px; opacity:.6; transform:rotate(-6deg); }
+  body.modelo-italiano .categoria-painel-conteudo.italiano-var-3::before{ left:14px; bottom:14px; width:64px; height:80px; opacity:.35; transform:rotate(22deg); }
+  body.modelo-italiano .categoria-painel-conteudo.italiano-var-4::after{ right:14px; top:10px; width:128px; height:160px; opacity:.5; transform:rotate(16deg); }
+  body.modelo-italiano .categoria-painel-conteudo.italiano-var-4::before{ left:10px; bottom:12px; width:72px; height:90px; opacity:.34; transform:rotate(-24deg); }
+  body.modelo-italiano .categoria-painel-conteudo.italiano-var-5::after{ right:12px; bottom:12px; width:150px; height:188px; opacity:.42; transform:rotate(-4deg); }
+  body.modelo-italiano .categoria-painel-conteudo.italiano-var-5::before{ display:none; }
 
   /* ===== Modelo "Deslizar" (secções lado a lado, página inteira) — config.modelo === 'slider' ===== */
   body.modelo-slider #categoriaGrid{ display:none !important; }           /* sem separadores */
@@ -3484,6 +3497,13 @@
         const idx = Math.max(0, tiles.indexOf(tile));
         painelConteudo.classList.add('praia-deco-' + deco[idx % deco.length]);
       } else { painelConteudo.classList.add('praia-deco-none'); }
+    }
+    // Modelo Italiano: manjericão de tamanho/posição diferente por secção
+    painelConteudo.classList.remove('italiano-var-1','italiano-var-2','italiano-var-3','italiano-var-4','italiano-var-5');
+    if(document.body.classList.contains('modelo-italiano')){
+      const tilesI = Array.prototype.slice.call(document.querySelectorAll('#categoriaGrid .tile'));
+      const idxI = Math.max(0, tilesI.indexOf(tile));
+      painelConteudo.classList.add('italiano-var-' + ((idxI % 5) + 1));
     }
     if(target.classList.contains('sec-pratodia') && target.dataset.pdBg){ painel.style.background = target.dataset.pdBg; painel.classList.add('painel-pratodia'); }
     else { painel.style.background = ''; painel.classList.remove('painel-pratodia'); }
