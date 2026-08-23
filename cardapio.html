@@ -978,6 +978,15 @@
   body.modelo-italiano .categoria-painel-conteudo.italiano-deco-none::before,
   body.modelo-italiano .categoria-painel-conteudo.italiano-deco-none::after{ display:none; }
 
+  /* ===== Fundo do layout (versão suave) no interior das secções — opcional ===== */
+  body.painel-fundo-suave.modelo-praia .categoria-painel{ background:linear-gradient(rgba(244,239,225,.82), rgba(244,239,225,.82)), repeating-linear-gradient(90deg, var(--praia-c1,#23417f) 0 26px, var(--praia-c2,#90835f) 26px 52px); }
+  body.painel-fundo-suave.modelo-italiano .categoria-painel{ background-color:#fbf6ec; background-image:linear-gradient(45deg, rgba(176,35,48,.06) 25%, transparent 25%, transparent 75%, rgba(176,35,48,.06) 75%), linear-gradient(45deg, rgba(176,35,48,.06) 25%, transparent 25%, transparent 75%, rgba(176,35,48,.06) 75%); background-size:28px 28px; background-position:0 0, 14px 14px; }
+  body.painel-fundo-suave.modelo-ananas .categoria-painel{ background-color:#fdf6ee; background-image:linear-gradient(rgba(253,246,238,.62), rgba(253,246,238,.62)), url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='96'%3E%3Cg transform='translate(16,8)'%3E%3Cg fill='%23a9d8c4'%3E%3Cpath d='M20 26 C20 17 20 10 20 4 C23 10 23 19 22 26 Z'/%3E%3Cpath d='M20 26 C16 19 12 13 8 8 C15 11 20 17 22 25 Z'/%3E%3Cpath d='M20 26 C24 19 28 13 32 8 C25 11 20 17 18 25 Z'/%3E%3C/g%3E%3Cellipse cx='20' cy='40' rx='12' ry='16' fill='%23f2b18c'/%3E%3Cg stroke='%23fff5ec' stroke-width='1.2' opacity='0.9'%3E%3Cpath d='M2 30 L38 54 M8 24 L44 48 M-4 36 L32 60'/%3E%3Cpath d='M38 30 L2 54 M32 24 L-4 48 M44 36 L8 60'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"); background-size:auto, 72px 96px; }
+  body.painel-fundo-suave.modelo-bambu .categoria-painel{ background-color:#f2f6ea; background-image:radial-gradient(rgba(99,153,34,.08) 1px, transparent 1.4px); background-size:7px 7px; }
+  body.painel-fundo-suave.modelo-marmore .categoria-painel{ background-color:#f5f2ec; background-image:radial-gradient(rgba(168,113,47,.07) 1px, transparent 1.5px); background-size:9px 9px; }
+  body.painel-fundo-suave.modelo-vinha .categoria-painel{ background-color:#2a0f18; background-image:radial-gradient(rgba(255,255,255,.06) 1px, transparent 1.4px); background-size:6px 6px; }
+  body.painel-fundo-suave.modelo-tropical .categoria-painel{ background-color:#eefbf6; background-image:radial-gradient(rgba(15,110,86,.05) 1px, transparent 1.4px); background-size:8px 8px; }
+
   /* ===== Modelo "Deslizar" (secções lado a lado, página inteira) — config.modelo === 'slider' ===== */
   body.modelo-slider #categoriaGrid{ display:none !important; }           /* sem separadores */
   body.modelo-slider .menu-deck{
@@ -4111,6 +4120,7 @@
       const _isCaderno = (config.modelo || 'lista') === 'caderno';
       const _fundoProprio = ['caderno','ardosia','elegante','azulejo','bambu','marmore','vinha','tropical','ananas','praia','italiano'].indexOf(config.modelo || 'lista') >= 0;
       document.body.classList.toggle('fundo-visivel', _tipoFundo !== 'liso' && !_fundoProprio);
+      document.body.classList.toggle('painel-fundo-suave', !!config.painelFundoLayout && _fundoProprio);
       if(_fundoProprio){ document.body.style.background = ''; document.body.style.backgroundColor = ''; }
       else if(config.fundo && config.fundo.tipo){
         const cs = getComputedStyle(document.documentElement);
