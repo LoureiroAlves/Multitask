@@ -1320,11 +1320,7 @@
   @keyframes wfLos3d{ 0%{ transform:translateZ(-640px) scale(.5); opacity:0; } 22%{ opacity:1; } 30%{ transform:translateZ(0) scale(1); opacity:1; } 72%{ transform:translateZ(0) scale(1); opacity:1; } 100%{ transform:translateZ(460px) scale(1.25); opacity:0; } }
   /* Foto ÚNICA repartida: cada peça mostra a sua fatia da mesma imagem */
   #wipeFx.wf-temfoto .wf-band, #wipeFx.wf-temfoto .wf-vert, #wipeFx.wf-temfoto .wf-disc, #wipeFx.wf-temfoto .wf-cover{ background-image:var(--wipe-img); background-size:cover; background-position:center; background-repeat:no-repeat; }
-  #wipeFx.wf-temfoto .wf-p1, #wipeFx.wf-temfoto .wf-p2, #wipeFx.wf-temfoto .wf-stripes b, #wipeFx.wf-temfoto .wf-losangos i{ background-image:var(--wipe-img); background-size:100vw 100vh; background-repeat:no-repeat; }
-  #wipeFx.wf-temfoto.wf-cortina .wf-p1{ background-position:0 0; }
-  #wipeFx.wf-temfoto.wf-cortina .wf-p2{ background-position:-49.5vw 0; }
-  #wipeFx.wf-temfoto.wf-cortinah .wf-p1{ background-position:0 0; }
-  #wipeFx.wf-temfoto.wf-cortinah .wf-p2{ background-position:0 -49.5vh; }
+  #wipeFx.wf-temfoto .wf-p1, #wipeFx.wf-temfoto .wf-p2, #wipeFx.wf-temfoto .wf-stripes b, #wipeFx.wf-temfoto .wf-losangos i{ background-image:var(--wipe-img); background-size:cover; background-position:center; background-repeat:no-repeat; background-attachment:fixed; }
 
   /* ===== Efeitos de abertura das secções (config.abrirEfeito → classe body.abrir-*) ===== */
   /* "zoom" é o comportamento base (scale a partir do separador tocado) — sem classe própria */
@@ -3419,7 +3415,6 @@
       if(estilo === 'stripes'){
         const cont = fx.querySelector('.wf-stripes'); cont.innerHTML = ''; let acc = 0;
         [9,15,7,18,11,16,8,16].forEach(function(ww, i){ const b = document.createElement('b'); b.style.width = ww + '%'; b.style.setProperty('--fy', (i % 2 ? '115%' : '-115%'));
-          if(comFoto){ b.style.backgroundPosition = (-acc) + 'vw 0'; }
           cont.appendChild(b); acc += ww; });
       } else if(estilo === 'losangos'){
         const cont = fx.querySelector('.wf-losangos'); cont.innerHTML = '';
@@ -3429,7 +3424,6 @@
           const lx = (c + 0.5) / cols * 100, ty = (r + 0.5) / rows * 100;
           i.style.left = lx + '%'; i.style.top = ty + '%';
           i.style.animationDelay = ((r + c) * dur * 0.02).toFixed(3) + 's';
-          if(comFoto){ i.style.backgroundPosition = 'calc(20vmax - ' + lx + 'vw) calc(20vmax - ' + ty + 'vh)'; }
           cont.appendChild(i);
         } }
         coverFrac = 0.60;
@@ -3445,10 +3439,11 @@
       // Alpha: só a PALAVRA fica visível (na cor escolhida) e tudo à volta transparente — a palavra varre o ecrã
       const esc = palavra.replace(/[&<>]/g, function(c){ return c === '&' ? '&amp;' : c === '<' ? '&lt;' : '&gt;'; });
       const alpha = fx.querySelector('.wf-alpha');
+      const _fs = Math.max(9, Math.min(30, 150 / Math.max(1, palavra.length)));
       alpha.innerHTML = '<svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet">' +
         '<defs><mask id="wfMask"><rect width="100" height="100" fill="#000"/>' +
-        '<text x="50" y="50" text-anchor="middle" dominant-baseline="central" textLength="80" lengthAdjust="spacingAndGlyphs" ' +
-        'style="font-family:var(--fonte-titulo); font-weight:800; font-size:26px; fill:#fff">' + esc + '</text></mask></defs>' +
+        '<text x="50" y="50" text-anchor="middle" dominant-baseline="central" ' +
+        'style="font-family:var(--fonte-titulo); font-weight:800; font-size:' + _fs + 'px; fill:#fff">' + esc + '</text></mask></defs>' +
         '<rect width="100" height="100" style="fill:' + (cor || '#a8712f') + '" mask="url(#wfMask)"/></svg>';
       fx.style.setProperty('--wipe-flash', w.flashCor || '#b8b8b8');
       fx.classList.add('play', 'wf-alpha');
