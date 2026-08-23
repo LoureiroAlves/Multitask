@@ -252,6 +252,8 @@
         <option value="marmore">Mármore (elegante, claro, dourado)</option>
         <option value="vinha">Vinha (adega, bordô, escuro)</option>
         <option value="tropical">Tropical (verde-água e coral)</option>
+        <option value="ananas">Ananás (padrão divertido, coral e menta)</option>
+        <option value="praia">Praia (riscas azul e kraft, lounge)</option>
       </select>
       <div id="cadernoBox" style="display:none; margin-top:10px; padding:12px; border:1.5px solid var(--linha); border-radius:10px;">
         <label for="cadFolha" style="margin-top:0;">Tipo de folha</label>
@@ -321,6 +323,19 @@
           <input type="color" id="sliderCapaAzCor" value="#2a5aa8" style="width:44px; height:32px; padding:0; border:none; background:none; cursor:pointer;">
           <span class="subtitulo" style="margin:0;">Padrão de azulejo na capa (se não usares foto). Escolhe o tipo e a cor.</span>
         </div>
+      </div>
+
+      <div id="praiaCorBox" style="display:none; margin-top:10px; padding:12px; border:1.5px solid var(--linha); border-radius:10px;">
+        <label style="display:block; margin:0 0 8px; font-weight:500; font-size:.85rem;">Cores das riscas (modelo Praia)</label>
+        <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+          <label style="display:flex; align-items:center; gap:8px; margin:0; font-size:.9rem;">
+            <input type="color" id="praiaCor1" value="#23417f" style="width:52px; height:38px; padding:2px; border:1.5px solid var(--linha); border-radius:8px; cursor:pointer;"> Risca 1
+          </label>
+          <label style="display:flex; align-items:center; gap:8px; margin:0; font-size:.9rem;">
+            <input type="color" id="praiaCor2" value="#90835f" style="width:52px; height:38px; padding:2px; border:1.5px solid var(--linha); border-radius:8px; cursor:pointer;"> Risca 2
+          </label>
+        </div>
+        <span class="subtitulo" style="margin:8px 0 0; display:block;">As secções mostram sempre uma palmeira desenhada no fundo.</span>
       </div>
 
       <label for="abrirEfeitoSel" style="margin-top:16px;">Efeito ao abrir os separadores</label>
@@ -2105,6 +2120,9 @@
     document.getElementById('jogosAtivo').checked = config.jogos !== false;
     document.getElementById('modeloSel').value = config.modelo || 'lista';
     document.getElementById('cadernoBox').style.display = (config.modelo === 'caderno') ? 'block' : 'none';
+    { document.getElementById('praiaCorBox').style.display = (config.modelo === 'praia') ? 'block' : 'none';
+      document.getElementById('praiaCor1').value = config.praiaCor1 || '#23417f';
+      document.getElementById('praiaCor2').value = config.praiaCor2 || '#90835f'; }
     { const temSc = !!(config.sliderCor && String(config.sliderCor).trim());
       document.getElementById('sliderCorBox').style.display = (config.modelo === 'slider') ? 'block' : 'none';
       document.getElementById('sliderCorAtiva').checked = temSc;
@@ -2474,6 +2492,7 @@
   document.getElementById('modeloSel').addEventListener('change', e => {
     document.getElementById('cadernoBox').style.display = (e.target.value === 'caderno') ? 'block' : 'none';
     document.getElementById('sliderCorBox').style.display = (e.target.value === 'slider') ? 'block' : 'none';
+    document.getElementById('praiaCorBox').style.display = (e.target.value === 'praia') ? 'block' : 'none';
   });
   document.getElementById('abrirEfeitoSel').addEventListener('change', e => {
     const wb = document.getElementById('wipeBox'); if(wb) wb.style.display = (e.target.value === 'wipe') ? 'block' : 'none';
@@ -2985,6 +3004,8 @@
       config.sliderCorTitulo = document.getElementById('sliderTitAtiva').checked ? document.getElementById('sliderCorTitulo').value : '';
       config.sliderCapaAzTipo = document.getElementById('sliderCapaAzTipo').value;
       config.sliderCapaAzCor = document.getElementById('sliderCapaAzCor').value;
+      config.praiaCor1 = document.getElementById('praiaCor1').value;
+      config.praiaCor2 = document.getElementById('praiaCor2').value;
       config.caderno = {
         folha: document.getElementById('cadFolha').value,
         corLetra: document.getElementById('cadCorLetra').value,
