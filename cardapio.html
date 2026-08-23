@@ -920,14 +920,15 @@
   body.modelo-praia{ background-color:#8a7d5a; background-image:repeating-linear-gradient(90deg, var(--praia-c1,#23417f) 0 26px, var(--praia-c2,#90835f) 26px 52px); }
   body.modelo-praia .categoria-grid{ background:transparent; border:none; }
   body.modelo-praia .tile{ background:#fbf8f0 !important; border:1px solid rgba(255,255,255,.5) !important; box-shadow:0 2px 8px rgba(0,0,0,.25) !important; border-radius:10px; }
-  /* Decorações alusivas ao tema (ligar/desligar no editor) */
-  body.modelo-praia .categoria-painel-conteudo{ position:relative; background-repeat:no-repeat; background-position:right 14px bottom 14px; background-size:118px auto; }
-  body.modelo-praia .categoria-painel-conteudo.praia-deco-none{ background-image:none; }
-  body.modelo-praia .categoria-painel-conteudo.praia-deco-palmeira{ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='140'%3E%3Cg fill='none' stroke='%23cdd6e6' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M60 130 C57 100 55 78 58 60'/%3E%3Cpath d='M52 120 h14 M53 108 h12 M54 96 h11 M55 84 h10' stroke-width='1.6'/%3E%3Cpath d='M58 58 C40 44 24 42 10 48 C26 46 40 52 56 60'/%3E%3Cpath d='M58 58 C42 36 26 30 14 26 C30 34 46 44 57 58'/%3E%3Cpath d='M58 58 C58 38 56 22 54 10 C58 26 62 42 60 58'/%3E%3Cpath d='M58 58 C74 36 90 30 104 28 C88 34 72 44 60 58'/%3E%3Cpath d='M58 58 C78 46 96 46 110 52 C94 48 78 52 60 60'/%3E%3C/g%3E%3C/svg%3E"); }
-  body.modelo-praia .categoria-painel-conteudo.praia-deco-coco{ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='140'%3E%3Cg fill='none' stroke='%23cdd6e6' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M34 70 a26 26 0 1 0 52 0'/%3E%3Cpath d='M34 70 h52'/%3E%3Ccircle cx='52' cy='84' r='2.4' fill='%23cdd6e6'/%3E%3Ccircle cx='70' cy='88' r='2.4' fill='%23cdd6e6'/%3E%3Ccircle cx='60' cy='98' r='2.4' fill='%23cdd6e6'/%3E%3Cpath d='M74 70 C80 50 90 40 98 34'/%3E%3Cpath d='M70 68 C60 40 60 26 60 16'/%3E%3Cpath d='M60 16 q10 4 8 14 M60 16 q-10 4 -8 14'/%3E%3C/g%3E%3C/svg%3E"); }
-  body.modelo-praia .categoria-painel-conteudo.praia-deco-ondas{ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='140'%3E%3Cg fill='none' stroke='%23cdd6e6' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 84 q14 -20 28 0 t28 0 t28 0 t20 0'/%3E%3Cpath d='M8 62 q14 -20 28 0 t28 0 t28 0 t20 0'/%3E%3Cpath d='M14 104 q12 -16 24 0 t24 0 t24 0'/%3E%3C/g%3E%3C/svg%3E"); }
-  body.modelo-praia .categoria-painel-conteudo.praia-deco-concha{ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='140'%3E%3Cg fill='none' stroke='%23cdd6e6' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M60 104 C24 104 16 60 40 40 C48 62 52 66 60 68 C68 66 72 62 80 40 C104 60 96 104 60 104 Z'/%3E%3Cpath d='M60 68 L48 102 M60 68 L60 104 M60 68 L72 102 M60 68 L36 96 M60 68 L84 96'/%3E%3Ccircle cx='60' cy='42' r='4'/%3E%3C/g%3E%3C/svg%3E"); }
-  body.modelo-praia .categoria-painel-conteudo.praia-deco-buzio{ background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='140'%3E%3Cg fill='none' stroke='%23cdd6e6' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M86 44 C58 30 34 46 34 74 C34 96 52 108 72 104 C58 100 48 88 48 74 C48 58 62 48 78 54'/%3E%3Cpath d='M86 44 C96 58 98 78 88 96 L72 104'/%3E%3Cpath d='M60 66 q10 6 8 18'/%3E%3C/g%3E%3C/svg%3E"); }
+  /* Decorações alusivas ao tema (ligar/desligar no editor) — camada POR CIMA dos banners */
+  body.modelo-praia .categoria-painel-conteudo{ position:relative; }
+  body.modelo-praia .categoria-painel-conteudo::after{ content:''; position:absolute; right:14px; bottom:14px; width:118px; height:138px; background-image:var(--praia-deco-img, none); background-repeat:no-repeat; background-position:right bottom; background-size:contain; pointer-events:none; z-index:8; opacity:.85; }
+  body.modelo-praia .categoria-painel-conteudo.praia-deco-none::after{ background-image:none; }
+  body.modelo-praia .categoria-painel-conteudo.praia-deco-palmeira{ --praia-deco-img:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='140'%3E%3Cg fill='none' stroke='%23cdd6e6' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M60 130 C57 100 55 78 58 60'/%3E%3Cpath d='M52 120 h14 M53 108 h12 M54 96 h11 M55 84 h10' stroke-width='1.6'/%3E%3Cpath d='M58 58 C40 44 24 42 10 48 C26 46 40 52 56 60'/%3E%3Cpath d='M58 58 C42 36 26 30 14 26 C30 34 46 44 57 58'/%3E%3Cpath d='M58 58 C58 38 56 22 54 10 C58 26 62 42 60 58'/%3E%3Cpath d='M58 58 C74 36 90 30 104 28 C88 34 72 44 60 58'/%3E%3Cpath d='M58 58 C78 46 96 46 110 52 C94 48 78 52 60 60'/%3E%3C/g%3E%3C/svg%3E"); }
+  body.modelo-praia .categoria-painel-conteudo.praia-deco-coco{ --praia-deco-img:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='140'%3E%3Cg fill='none' stroke='%23cdd6e6' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M34 70 a26 26 0 1 0 52 0'/%3E%3Cpath d='M34 70 h52'/%3E%3Ccircle cx='52' cy='84' r='2.4' fill='%23cdd6e6'/%3E%3Ccircle cx='70' cy='88' r='2.4' fill='%23cdd6e6'/%3E%3Ccircle cx='60' cy='98' r='2.4' fill='%23cdd6e6'/%3E%3Cpath d='M74 70 C80 50 90 40 98 34'/%3E%3Cpath d='M70 68 C60 40 60 26 60 16'/%3E%3Cpath d='M60 16 q10 4 8 14 M60 16 q-10 4 -8 14'/%3E%3C/g%3E%3C/svg%3E"); }
+  body.modelo-praia .categoria-painel-conteudo.praia-deco-ondas{ --praia-deco-img:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='140'%3E%3Cg fill='none' stroke='%23cdd6e6' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 84 q14 -20 28 0 t28 0 t28 0 t20 0'/%3E%3Cpath d='M8 62 q14 -20 28 0 t28 0 t28 0 t20 0'/%3E%3Cpath d='M14 104 q12 -16 24 0 t24 0 t24 0'/%3E%3C/g%3E%3C/svg%3E"); }
+  body.modelo-praia .categoria-painel-conteudo.praia-deco-concha{ --praia-deco-img:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='140'%3E%3Cg fill='none' stroke='%23cdd6e6' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M60 104 C24 104 16 60 40 40 C48 62 52 66 60 68 C68 66 72 62 80 40 C104 60 96 104 60 104 Z'/%3E%3Cpath d='M60 68 L48 102 M60 68 L60 104 M60 68 L72 102 M60 68 L36 96 M60 68 L84 96'/%3E%3Ccircle cx='60' cy='42' r='4'/%3E%3C/g%3E%3C/svg%3E"); }
+  body.modelo-praia .categoria-painel-conteudo.praia-deco-buzio{ --praia-deco-img:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='140'%3E%3Cg fill='none' stroke='%23cdd6e6' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M86 44 C58 30 34 46 34 74 C34 96 52 108 72 104 C58 100 48 88 48 74 C48 58 62 48 78 54'/%3E%3Cpath d='M86 44 C96 58 98 78 88 96 L72 104'/%3E%3Cpath d='M60 66 q10 6 8 18'/%3E%3C/g%3E%3C/svg%3E"); }
   body.modelo-praia .tile .tile-label{ font-family:'Poppins', sans-serif; font-weight:600; color:#1c3366 !important; text-shadow:none !important; }
   body.modelo-praia .categoria-painel{ background:#f4efe1; }
   body.modelo-praia .categoria-painel-header{ background:repeating-linear-gradient(90deg, #23417f 0 22px, #90835f 22px 44px); border-bottom:2px solid #1c3366; }
@@ -940,6 +941,23 @@
   body.modelo-praia .item .preco{ font-family:'Poppins', sans-serif; color:#23417f !important; font-weight:700; }
   body.modelo-praia .tabela-doses .preco-dose{ color:#23417f !important; }
   body.modelo-praia .jogos-slogan{ background:#f4efe1; color:#1c3366; border:1px solid #d8cba0; box-shadow:none; }
+
+  /* ===== Modelo "Italiano" (trattoria: creme, xadrez, tricolore, Playfair) ===== */
+  body.modelo-italiano{ background-color:#fbf6ec; background-image:linear-gradient(45deg, rgba(176,35,48,.045) 25%, transparent 25%, transparent 75%, rgba(176,35,48,.045) 75%), linear-gradient(45deg, rgba(176,35,48,.045) 25%, transparent 25%, transparent 75%, rgba(176,35,48,.045) 75%); background-size:28px 28px; background-position:0 0, 14px 14px; }
+  body.modelo-italiano .categoria-grid{ background:transparent; border:none; }
+  body.modelo-italiano .tile{ background:#fffdf8 !important; border:1px solid #e7dcc4 !important; box-shadow:0 2px 6px rgba(90,60,20,.10) !important; border-radius:12px; }
+  body.modelo-italiano .tile .tile-label{ font-family:'Playfair Display', serif; font-weight:700; color:#1b6b3a !important; text-shadow:none !important; }
+  body.modelo-italiano .categoria-painel{ background:#fbf6ec; }
+  body.modelo-italiano .categoria-painel-header{ background:#fffdf8; border-bottom:4px solid #b02330; border-image:linear-gradient(90deg,#1b6b3a 0 33.33%, #fbf6ec 33.33% 66.66%, #b02330 66.66% 100%) 1; }
+  body.modelo-italiano .categoria-painel-header .voltar{ color:#b02330 !important; }
+  body.modelo-italiano #painelTitulo{ font-family:'Playfair Display', serif; color:#1b5e34; font-weight:700; letter-spacing:.4px; }
+  body.modelo-italiano section.categoria h2, body.modelo-italiano .grupo-prato > summary, body.modelo-italiano .grupo-vinho > summary{ font-family:'Playfair Display', serif; color:#b02330 !important; background:transparent !important; }
+  body.modelo-italiano .categoria-painel-conteudo .item{ border-bottom:1px solid #e9dfc9 !important; }
+  body.modelo-italiano .item .nome{ font-family:'Playfair Display', serif; font-weight:600; color:#2c2118 !important; }
+  body.modelo-italiano .item .desc{ color:#7c6a54 !important; font-style:italic; }
+  body.modelo-italiano .item .preco{ font-family:'Playfair Display', serif; color:#1b6b3a !important; font-weight:700; }
+  body.modelo-italiano .tabela-doses .preco-dose{ color:#b02330 !important; }
+  body.modelo-italiano .jogos-slogan{ background:#fffdf8; color:#1b5e34; border:1px solid #e7dcc4; box-shadow:none; }
 
   /* ===== Modelo "Deslizar" (secções lado a lado, página inteira) — config.modelo === 'slider' ===== */
   body.modelo-slider #categoriaGrid{ display:none !important; }           /* sem separadores */
@@ -3624,7 +3642,7 @@
     if(!f.fidelidade && config.fidelidade) config.fidelidade.ativo = false;
     if(!f.agenda && config.agenda) config.agenda.ativo = false;
     if(!f.decoracoes && config.decor) config.decor.tema = 'nenhum';
-    if(!f.modelosPremium && ['ardosia','elegante','azulejo','bambu','marmore','vinha','tropical','ananas','praia'].indexOf(config.modelo) >= 0) config.modelo = 'lista';
+    if(!f.modelosPremium && ['ardosia','elegante','azulejo','bambu','marmore','vinha','tropical','ananas','praia','italiano'].indexOf(config.modelo) >= 0) config.modelo = 'lista';
     if(!f.azulejos){
       if(config.header) config.header.padrao = 'nenhum';
       if(config.rodape) config.rodape.padrao = 'nenhum';
@@ -3976,6 +3994,7 @@
       document.body.classList.toggle('modelo-tropical', (config.modelo || 'lista') === 'tropical');
       document.body.classList.toggle('modelo-ananas', (config.modelo || 'lista') === 'ananas');
       document.body.classList.toggle('modelo-praia', (config.modelo || 'lista') === 'praia');
+      document.body.classList.toggle('modelo-italiano', (config.modelo || 'lista') === 'italiano');
       // Cores das riscas do modelo "Praia" (editáveis)
       (function(){
         const rs = document.body.style;
@@ -4065,7 +4084,7 @@
       { const _ff = document.getElementById('fundoFoto'); if(_ff){ _ff.classList.remove('pronto'); const _i = _ff.querySelector('.ff-img'); if(_i) _i.removeAttribute('src'); } }
       const _tipoFundo = (config.fundo && config.fundo.tipo) || 'liso';
       const _isCaderno = (config.modelo || 'lista') === 'caderno';
-      const _fundoProprio = ['caderno','ardosia','elegante','azulejo','bambu','marmore','vinha','tropical','ananas','praia'].indexOf(config.modelo || 'lista') >= 0;
+      const _fundoProprio = ['caderno','ardosia','elegante','azulejo','bambu','marmore','vinha','tropical','ananas','praia','italiano'].indexOf(config.modelo || 'lista') >= 0;
       document.body.classList.toggle('fundo-visivel', _tipoFundo !== 'liso' && !_fundoProprio);
       if(_fundoProprio){ document.body.style.background = ''; document.body.style.backgroundColor = ''; }
       else if(config.fundo && config.fundo.tipo){
