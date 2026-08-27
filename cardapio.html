@@ -3263,6 +3263,7 @@
         if(mainEl){ if(jogosSec && jogosSec.parentNode === mainEl) mainEl.insertBefore(s, jogosSec); else mainEl.appendChild(s); }
       });
     }catch(e){}
+    _desbloquearFundo();   // só agora, com a animação de saída já terminada
   }
   function _restaurarPendente(e){
     if(e.target !== painel) return;
@@ -3447,7 +3448,6 @@
       window.__playWipe(window.__wipeCor || '#a8712f', function(){ painel.classList.remove('aberto'); });
       setTimeout(restaurarCategoria, _d + 20);
       document.body.classList.remove('secao-aberta');
-      _desbloquearFundo();
       setTimeout(function(){ if(!document.body.classList.contains('secao-aberta')) document.body.classList.remove('cart-oculto'); }, 650);
       return;
     }
@@ -3460,7 +3460,6 @@
     painel.addEventListener('transitionend', _restaurarPendente);
     // Cabeçalho e barra voltam já (acompanham o fecho); carrinho e fidelidade só reaparecem no fim
     document.body.classList.remove('secao-aberta');
-    _desbloquearFundo();
     setTimeout(function(){ if(!document.body.classList.contains('secao-aberta')) document.body.classList.remove('cart-oculto'); }, 650);
   }
 
