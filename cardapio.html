@@ -301,8 +301,9 @@
   header{ transition:transform .42s cubic-bezier(.22,.8,.25,1); }
   body.secao-aberta header{ transform:translateY(-110%); }
   body.secao-aberta .info-fixa{ transform:translateY(130%); }
-  /* Isolar o scroll: com uma secção aberta, o fundo (menu principal, rodapé e publicidade) não faz scroll */
-  body.scroll-lock{ position:fixed; left:0; right:0; width:100%; overflow:hidden; }
+  /* Isolar o scroll: com uma secção aberta, o fundo (menu principal, rodapé e publicidade) não faz scroll.
+     Usa overflow:hidden (mantém a posição de scroll — não há salto ao voltar). */
+  html.scroll-lock, body.scroll-lock{ overflow:hidden !important; }
   #cartBtn, #linkFidelidade{ transition:opacity .3s ease, visibility .3s ease; }
   body.cart-oculto #cartBtn, body.cart-oculto #linkFidelidade{ opacity:0; visibility:hidden; pointer-events:none; }
   /* Carrinho desativado pelo dono: esconde o botão e os "+" de adicionar */
@@ -3426,20 +3427,10 @@
   }
 
   function _bloquearFundo(){
-    try{
-      if(document.body.classList.contains('scroll-lock')) return;
-      window.__scrollLockY = window.scrollY || window.pageYOffset || 0;
-      document.body.style.top = (-window.__scrollLockY) + 'px';
-      document.body.classList.add('scroll-lock');
-    }catch(e){}
+    try{ document.documentElement.classList.add('scroll-lock'); document.body.classList.add('scroll-lock'); }catch(e){}
   }
   function _desbloquearFundo(){
-    try{
-      if(!document.body.classList.contains('scroll-lock')) return;
-      document.body.classList.remove('scroll-lock');
-      document.body.style.top = '';
-      window.scrollTo(0, window.__scrollLockY || 0);
-    }catch(e){}
+    try{ document.documentElement.classList.remove('scroll-lock'); document.body.classList.remove('scroll-lock'); }catch(e){}
   }
   function fecharCategoria(){
     document.querySelectorAll('.tile').forEach(t => t.classList.remove('active'));
