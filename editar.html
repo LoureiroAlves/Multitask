@@ -4699,7 +4699,7 @@
     let pronto = false, temporizador = null;
     // A pré-visualização renderiza à largura real de um telemóvel (390px) e encolhe para caber no dock,
     // para o layout (quebras de linha, tamanhos) ser fiel ao que o cliente vê.
-    const LARGURA_TELEMOVEL = 390;
+    const LARGURA_TELEMOVEL = 360;   // largura conservadora (telemóvel estreito), para a pré ser fiel
     function ajustarEscalaPreview(){
       const corpo = dock.querySelector('.preview-dock-corpo');
       if(!corpo || dock.classList.contains('min')) return;
@@ -4707,10 +4707,18 @@
       if(!w || !h) return;
       const escala = w / LARGURA_TELEMOVEL;
       frame.style.width = LARGURA_TELEMOVEL + 'px';
-      frame.style.height = (h / escala) + 'px';
+      frame.style.height = Math.ceil(h / escala) + 'px';
+      frame.style.transformOrigin = 'top left';
       frame.style.transform = 'scale(' + escala + ')';
     }
     window.addEventListener('resize', ajustarEscalaPreview);
+    // Recalcular sempre que a coluna mudar de tamanho (mais fiável que só 'resize')
+    try{
+      const _corpo = dock.querySelector('.preview-dock-corpo');
+      if(window.ResizeObserver && _corpo){ new ResizeObserver(function(){ ajustarEscalaPreview(); }).observe(_corpo); }
+    }catch(e){}
+    frame.addEventListener('load', function(){ setTimeout(ajustarEscalaPreview, 30); });
+    setTimeout(ajustarEscalaPreview, 120); setTimeout(ajustarEscalaPreview, 600);
     function enviar(){
       if(!pronto || !frame.contentWindow) return;
       let cfg;
