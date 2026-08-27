@@ -5065,7 +5065,21 @@
       menuListEl.appendChild(nova);
     };
 
+    // Move o "Guardar tudo" para o fundo da barra lateral (mais pequeno)
+    { var gb = document.getElementById('btnGuardarDock');
+      if(gb){ gb.style.cssText = 'margin-top:10px; width:100%; border:none; background:var(--verde,#3b8a4f); color:#fff; padding:9px 10px; font-weight:700; font-family:inherit; cursor:pointer; font-size:0.82rem; border-radius:11px;'; side.appendChild(gb); } }
+
     var homeEl = document.querySelector('.ed-home');
+    // "Guardar tudo" (grande) aparece no fim da secção aberta
+    var _btnG = document.getElementById('btnGuardar');
+    var _estado = document.getElementById('estado');
+    function _posBtnGuardar(sec){
+      if(!_btnG || !sec) return;
+      var body = sec.querySelector(':scope > .bloco-conteudo') || sec;
+      _btnG.style.marginTop = '18px'; _btnG.style.width = '100%'; _btnG.style.display = '';
+      body.appendChild(_btnG);
+      if(_estado) body.appendChild(_estado);
+    }
 
     function abrirAba(tab, selPrimeiro){
       Object.keys(tabHeaders).forEach(function(t){
@@ -5087,6 +5101,7 @@
       Object.keys(subItems).forEach(function(k){ subItems[k].classList.toggle('on', k === id); });
       if(id !== 'secMenu') _limparMenuOn();
       if(!jaAba){ NAV.forEach(function(tb){ if(tb[2].indexOf(id) >= 0) abrirAba(tb[0], false); }); }
+      _posBtnGuardar(sec);
       try{ localStorage.setItem('editorSec', id); }catch(e){}
     }
     function irInicio(){
@@ -5094,6 +5109,7 @@
       Object.keys(subItems).forEach(function(k){ subItems[k].classList.remove('on'); });
       Object.keys(tabHeaders).forEach(function(t){ tabHeaders[t].h.classList.remove('aberta'); tabHeaders[t].list.classList.remove('aberta'); });
       if(homeEl) homeEl.classList.add('ativa');
+      if(_btnG) _btnG.style.display = 'none';
       try{ localStorage.removeItem('editorSec'); }catch(e){}
     }
     brand.addEventListener('click', irInicio);
