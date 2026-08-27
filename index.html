@@ -316,7 +316,8 @@
         ? reservado.config.ads.filter(function(a){ return a && (a.img || a.titulo); })
         : [];
       ADS_INT = (reservado && reservado.config && reservado.config.adsIntervalo > 0) ? reservado.config.adsIntervalo : 5;
-      TODOS = dados.filter(function(n){ return n && n.slug && n.slug !== AMESA_SLUG && n.config && n.config.naApp === true; });
+      // Mostra todos os negócios reais por defeito; só esconde os marcados com config.oculto === true
+      TODOS = dados.filter(function(n){ return n && n.slug && n.slug !== AMESA_SLUG && !(n.config && n.config.oculto === true); });
       renderFiltros();
       document.getElementById('adTopo').innerHTML = ADS.length ? '<div class="ad-slot" data-off="0"></div>' : '';
       aplicar();          // renderiza os cards + pinta os anúncios

@@ -3195,11 +3195,13 @@
       // Nunca sobrescrever campos geridos pelo admin (visibilidade na montra, tipo, secções desligadas).
       // Relê o valor atual mesmo antes de gravar, para evitar reverter uma alteração feita entretanto.
       try{
-        const { data:fresh } = await sbc.from('negocios').select('naApp:config->naApp,tipo:config->tipo,editorOff:config->editorOff').eq('id', window.__negocio.id).maybeSingle();
-        if(fresh){
-          if(fresh.naApp !== undefined && fresh.naApp !== null) config.naApp = fresh.naApp;
-          if(fresh.tipo !== undefined && fresh.tipo !== null) config.tipo = fresh.tipo;
-          if(fresh.editorOff !== undefined && fresh.editorOff !== null) config.editorOff = fresh.editorOff;
+        const { data:fresh } = await sbc.from('negocios').select('config').eq('id', window.__negocio.id).maybeSingle();
+        const fc = (fresh && fresh.config) || null;
+        if(fc){
+          if(fc.oculto !== undefined) config.oculto = fc.oculto;      // visibilidade na montra (gerida pelo admin)
+          if(fc.naApp !== undefined) config.naApp = fc.naApp;         // legado (compatibilidade)
+          if(fc.tipo !== undefined) config.tipo = fc.tipo;            // filtro de cozinha na montra
+          if(fc.editorOff !== undefined) config.editorOff = fc.editorOff; // secções desligadas ao dono
         }
       }catch(e){}
       const { error } = await sbc.from('negocios').update({ config: config }).eq('id', window.__negocio.id);

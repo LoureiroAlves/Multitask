@@ -330,7 +330,7 @@
         '<label style="margin-top:12px;">Funções ativas</label>' +
         '<div class="funcoes" data-funcoes></div>' +
         '<div class="linha-pub"><input type="checkbox" data-pub' + (pub.ativo ? ' checked' : '') + '> <label style="margin:0; color:var(--castanho); font-weight:600;">Mostrar publicidade neste negócio</label></div>' +
-        '<div class="linha-pub" style="background:#fff6f0; border:1.5px solid #c05a3a; border-radius:9px; padding:9px 11px;"><input type="checkbox" data-naapp' + ((n.config && n.config.naApp === true) ? ' checked' : '') + '> <label style="margin:0; color:#a3452b; font-weight:700;">🍽️ Mostrar na ÀMesa (montra pública)</label></div>' +
+        '<div class="linha-pub" style="background:#fff6f0; border:1.5px solid #c05a3a; border-radius:9px; padding:9px 11px;"><input type="checkbox" data-oculto' + ((n.config && n.config.oculto === true) ? ' checked' : '') + '> <label style="margin:0; color:#a3452b; font-weight:700;">🙈 Esconder da ÀMesa (montra pública)</label></div>' +
         '<label style="margin-top:12px;">Tipo de cozinha (filtro da ÀMesa)</label><input type="text" data-tipo value="' + ((n.config && n.config.tipo) || '').replace(/"/g, '&quot;') + '" placeholder="Ex.: Português, Pizzaria, Sushi, Pastelaria…">' +
         '<label style="margin-top:14px;">🔑 Secções do editor a que o dono tem acesso</label>' +
         '<div style="font-size:.76rem; color:#9a8b6f; margin:-2px 0 6px;">Desliga as que não queres que o dono mexa. Publicidade e Limpeza de dados são sempre só tuas.</div>' +
@@ -412,11 +412,11 @@
     const _upNeg = { dono_email: emailDono || null };
     if(nomeNovo) _upNeg.nome = nomeNovo;
     // ÀMesa (decisão do administrador): visibilidade na montra + tipo de cozinha
-    { const _naEl = div.querySelector('[data-naapp]'); const _tpEl = div.querySelector('[data-tipo]');
+    { const _ocEl = div.querySelector('[data-oculto]'); const _tpEl = div.querySelector('[data-tipo]');
       let _cfg = n.config || {};
       try{ const { data:fresh } = await sb.from('negocios').select('config').eq('id', n.id).maybeSingle(); if(fresh && fresh.config) _cfg = fresh.config; }catch(e){}
       _cfg = Object.assign({}, _cfg);
-      _cfg.naApp = !!(_naEl && _naEl.checked);
+      _cfg.oculto = !!(_ocEl && _ocEl.checked);
       _cfg.tipo = (_tpEl ? _tpEl.value : '').trim();
       // Secções do editor desligadas para o dono (guarda as NÃO marcadas)
       { const off = []; div.querySelectorAll('[data-sec]').forEach(function(c){ if(!c.checked) off.push(c.getAttribute('data-sec')); }); _cfg.editorOff = off; }
