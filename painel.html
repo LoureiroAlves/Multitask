@@ -12,7 +12,7 @@
   header.top{ background:var(--castanho); color:#fff; padding:14px 18px; display:flex; align-items:center; justify-content:space-between; }
   header.top h1{ font-size:1.15rem; margin:0; font-weight:700; }
   header.top .sair{ background:rgba(255,255,255,.15); color:#fff; border:none; border-radius:8px; padding:8px 12px; cursor:pointer; font-size:.85rem; }
-  .wrap{ max-width:920px; margin:0 auto; padding:18px 16px 60px; }
+  .wrap{ max-width:1060px; margin:0 auto; padding:18px 16px 60px; }
   .card{ background:#fff; border:1px solid var(--linha); border-radius:14px; padding:16px; margin-bottom:14px; }
   input, select{ width:100%; padding:10px 12px; border:1.5px solid var(--linha); border-radius:9px; font-family:inherit; font-size:.95rem; color:var(--castanho); background:#fff; }
   label{ font-size:.82rem; font-weight:600; color:var(--dourado-escuro); display:block; margin:10px 0 4px; }
@@ -41,16 +41,29 @@
   .row2{ display:flex; gap:10px; }
   .row2 > div{ flex:1; }
   a.link{ color:var(--azul); text-decoration:none; font-size:.85rem; }
+  /* ===== Layout com barra lateral ===== */
+  .painel-layout{ display:flex; gap:18px; align-items:flex-start; }
+  .side{ flex:0 0 218px; background:#fff; border:1px solid var(--linha); border-radius:16px; padding:10px; position:sticky; top:18px; display:flex; flex-direction:column; gap:3px; box-shadow:0 1px 2px rgba(58,44,24,.04); }
+  .side-item{ display:flex; align-items:center; gap:10px; width:100%; text-align:left; border:none; background:transparent; color:var(--castanho); font-family:inherit; font-size:.92rem; font-weight:600; padding:11px 13px; border-radius:11px; cursor:pointer; text-decoration:none; transition:background .12s ease; }
+  .side-item:hover{ background:var(--bege); }
+  .side-item.on{ background:var(--castanho); color:#fff; }
+  .side-sep{ height:1px; background:var(--linha); margin:9px 6px; }
+  .conteudo{ flex:1; min-width:0; }
+  .conteudo .card{ margin-top:0; box-shadow:0 1px 2px rgba(58,44,24,.04); }
+  .tab-panel{ animation:painelFade .18s ease; }
+  @keyframes painelFade{ from{ opacity:0; transform:translateY(4px);} to{ opacity:1; transform:none;} }
+  #loginCard{ max-width:420px; margin:24px auto 0; }
+  @media (max-width:760px){
+    .painel-layout{ flex-direction:column; gap:12px; }
+    .side{ position:static; flex:none; width:100%; flex-direction:row; overflow-x:auto; gap:4px; }
+    .side-item{ white-space:nowrap; }
+    .side-sep{ display:none; }
+  }
 </style>
 </head>
 <body>
 <header class="top">
   <h1>🍀 Multitask — Painel</h1>
-  <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-    <button class="sair hide" id="btnLimparFotos" title="Apaga do Storage as fotos que já não são usadas por nenhum negócio">🧹 Eliminar fotos não utilizadas</button>
-    <a class="sair hide" id="linkEstat" href="estatisticas.html" style="text-decoration:none;">📊 Estatísticas</a>
-    <button class="sair hide" id="btnSair">Sair</button>
-  </div>
 </header>
 
 <div class="wrap">
@@ -68,6 +81,19 @@
 
   <!-- PAINEL -->
   <div id="painel" class="hide">
+    <div class="painel-layout">
+      <nav class="side">
+        <button class="side-item on" data-tab="negocios">🏪 Negócios</button>
+        <button class="side-item" data-tab="criar">➕ Criar negócio</button>
+        <button class="side-item" data-tab="publicidade">📢 Publicidade</button>
+        <div class="side-sep"></div>
+        <a class="side-item hide" id="linkEstat" href="estatisticas.html" style="text-decoration:none;">📊 Estatísticas</a>
+        <button class="side-item hide" id="btnLimparFotos" title="Apaga do Storage as fotos que já não são usadas por nenhum negócio">🧹 Fotos não usadas</button>
+        <button class="side-item hide" id="btnSair">🚪 Sair</button>
+      </nav>
+      <div class="conteudo">
+
+        <section class="tab-panel hide" data-panel="criar">
     <div class="card">
       <h2 style="margin:0 0 10px; font-size:1.05rem;">➕ Novo negócio</h2>
       <div class="row2">
@@ -95,7 +121,9 @@
       <div style="margin-top:12px;"><button class="acao" id="btnDuplicar">Duplicar</button></div>
       <div id="dupMsg"></div>
     </div>
+        </section>
 
+        <section class="tab-panel hide" data-panel="publicidade">
     <div class="card">
       <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
         <h2 style="margin:0; font-size:1.05rem;">📢 Publicidade da ÀMesa</h2>
@@ -115,13 +143,20 @@
       </div>
       <div id="adsMsg"></div>
     </div>
+        </section>
 
+        <section class="tab-panel" data-panel="negocios">
     <div class="card">
-      <div style="display:flex; align-items:center; justify-content:space-between;">
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
         <h2 style="margin:0; font-size:1.05rem;">Negócios</h2>
         <button class="mini" id="btnRecarregar">↻ Recarregar</button>
       </div>
+      <input type="text" id="buscaNeg" placeholder="🔎 Procurar por nome ou slug…" style="margin-top:12px;">
       <div id="lista" style="margin-top:12px;"><p style="color:#9a8b6f; font-size:.9rem;">A carregar…</p></div>
+    </div>
+        </section>
+
+      </div>
     </div>
   </div>
 </div>
@@ -747,6 +782,29 @@
 
   // arranque
   verificar();
+</script>
+<script>
+  // Navegação por separadores (barra lateral) + procura na lista de negócios
+  (function(){
+    var navs = Array.prototype.slice.call(document.querySelectorAll('.side-item[data-tab]'));
+    var panels = Array.prototype.slice.call(document.querySelectorAll('.tab-panel[data-panel]'));
+    function irPara(t){
+      navs.forEach(function(n){ n.classList.toggle('on', n.getAttribute('data-tab') === t); });
+      panels.forEach(function(p){ p.classList.toggle('hide', p.getAttribute('data-panel') !== t); });
+      try{ localStorage.setItem('painelAba', t); }catch(e){}
+    }
+    navs.forEach(function(n){ n.addEventListener('click', function(){ irPara(n.getAttribute('data-tab')); }); });
+    var inicial = 'negocios';
+    try{ var s = localStorage.getItem('painelAba'); if(s) inicial = s; }catch(e){}
+    irPara(inicial);
+    var bn = document.getElementById('buscaNeg');
+    if(bn){ bn.addEventListener('input', function(){
+      var q = (bn.value || '').toLowerCase().trim();
+      Array.prototype.slice.call(document.querySelectorAll('#lista .neg')).forEach(function(el){
+        el.style.display = (!q || el.textContent.toLowerCase().indexOf(q) >= 0) ? '' : 'none';
+      });
+    }); }
+  })();
 </script>
 </body>
 </html>
