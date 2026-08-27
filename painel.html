@@ -48,6 +48,12 @@
   .side-item:hover{ background:var(--bege); }
   .side-item.on{ background:var(--castanho); color:#fff; }
   .side-item.side-sub{ padding-left:30px; font-size:.86rem; font-weight:500; margin-left:8px; border-left:2px solid var(--linha); border-radius:0 11px 11px 0; }
+  .side-sublist{ display:none; flex-direction:column; gap:1px; margin:1px 0 6px 10px; padding-left:8px; border-left:2px solid var(--linha); max-height:46vh; overflow-y:auto; }
+  .side-sublist.aberta{ display:flex; }
+  .side-sublist input.busca-neg{ width:100%; padding:7px 9px; border:1.5px solid var(--linha); border-radius:8px; font-family:inherit; font-size:.82rem; margin:0 0 5px; }
+  .side-sub-neg{ text-align:left; border:none; background:transparent; color:var(--castanho-suave); font-family:inherit; font-size:.85rem; font-weight:600; padding:7px 9px; border-radius:8px; cursor:pointer; }
+  .side-sub-neg:hover{ background:var(--bege); color:var(--castanho); }
+  .side-sub-neg.on{ background:var(--castanho); color:#fff; }
   .side-sep{ height:1px; background:var(--linha); margin:9px 6px; }
   .conteudo{ flex:1; min-width:0; }
   .conteudo .card{ margin-top:0; box-shadow:0 1px 2px rgba(58,44,24,.04); }
@@ -87,6 +93,7 @@
         <button class="side-item" data-tab="criar">➕ Criar negócio</button>
         <button class="side-item side-sub" data-tab="duplicar">📋 Duplicar negócio</button>
         <button class="side-item" data-tab="negocios">🏪 Negócios</button>
+        <div id="negSublist" class="side-sublist"></div>
         <button class="side-item" data-tab="publicidade">📢 Publicidade</button>
         <div class="side-sep"></div>
         <a class="side-item hide" id="linkEstat" href="estatisticas.html" style="text-decoration:none;">📊 Estatísticas</a>
@@ -155,8 +162,9 @@
         <h2 style="margin:0; font-size:1.05rem;">Negócios</h2>
         <button class="mini" id="btnRecarregar">↻ Recarregar</button>
       </div>
-      <input type="text" id="buscaNeg" placeholder="🔎 Procurar por nome ou slug…" style="margin-top:12px;">
-      <div id="lista" style="margin-top:12px;"><p style="color:#9a8b6f; font-size:.9rem;">A carregar…</p></div>
+      <input type="text" id="buscaNeg" class="busca-neg" placeholder="🔎 Procurar negócio…" style="margin-top:12px;">
+      <div id="negPrompt" style="margin-top:14px; color:#9a8b6f; font-size:.9rem;">👈 Escolhe um negócio na lista à esquerda para o gerir.</div>
+      <div id="lista" style="margin-top:12px;"></div>
     </div>
         </section>
 
@@ -331,13 +339,14 @@
     if(!negs.length){ $('lista').innerHTML = '<p style="color:#9a8b6f; font-size:.9rem;">Ainda não há negócios. Cria o primeiro acima.</p>'; return; }
     $('lista').innerHTML = '';
     negs.forEach(function(n){ $('lista').appendChild(renderNeg(n, mapaEnt[n.id] || { plano:'basico', funcoes:{}, publicidade:{} }, mapaMet[n.slug] || { menu:0, ad:0, jogos:0 })); });
+    try{ if(window.__buildNegNav) window.__buildNegNav(); }catch(e){}
   }
 
   function renderNeg(n, ent, met){
     const funcoes = ent.funcoes || {};
     const pub = ent.publicidade || {};
     met = met || { menu:0, ad:0, jogos:0 };
-    const div = document.createElement('div'); div.className = 'neg';
+    const div = document.createElement('div'); div.className = 'neg'; div.dataset.slug = n.slug;
     const planoBadge = '<span class="badge b-' + (ent.plano||'basico') + '">' + (ent.plano||'basico') + '</span>';
     const estadoBadge = n.ativo ? '' : ' <span class="badge b-off">suspenso</span>';
     const metLinha = '<div style="font-size:.75rem; color:#8a9a6f; margin-top:3px;">👁 ' + (met.menu||0) + ' visitas · 🔗 ' + (met.amesa||0) + ' cliques ÀMesa · 🎮 ' + (met.jogos||0) + ' jogos</div>' +
@@ -776,26 +785,64 @@
   verificar();
 </script>
 <script>
-  // Navegação por separadores (barra lateral) + procura na lista de negócios
+  // Navegação da barra lateral: separadores + lista de negócios como sub-itens
   (function(){
     var navs = Array.prototype.slice.call(document.querySelectorAll('.side-item[data-tab]'));
     var panels = Array.prototype.slice.call(document.querySelectorAll('.tab-panel[data-panel]'));
+    var negSub = document.getElementById('negSublist');
+    var busca = document.getElementById('buscaNeg');
+
+    function _cards(){ return Array.prototype.slice.call(document.querySelectorAll('#lista .neg')); }
+    function _prompt(){
+      var algum = !!document.querySelector('#negSublist .side-sub-neg.on');
+      var pr = document.getElementById('negPrompt'); if(pr) pr.style.display = algum ? 'none' : '';
+      if(!algum) _cards().forEach(function(c){ c.style.display = 'none'; });
+    }
     function irPara(t){
       navs.forEach(function(n){ n.classList.toggle('on', n.getAttribute('data-tab') === t); });
       panels.forEach(function(p){ p.classList.toggle('hide', p.getAttribute('data-panel') !== t); });
+      if(negSub) negSub.classList.toggle('aberta', t === 'negocios');
+      if(t === 'negocios') _prompt();
       try{ localStorage.setItem('painelAba', t); }catch(e){}
     }
     navs.forEach(function(n){ n.addEventListener('click', function(){ irPara(n.getAttribute('data-tab')); }); });
-    var inicial = 'criar';   // por defeito abre "Criar negócio" (a página não fica vazia; os negócios só aparecem ao clicar)
+
+    function abrirNeg(slug){
+      irPara('negocios');
+      _cards().forEach(function(c){
+        var on = (c.dataset.slug === slug);
+        c.style.display = on ? 'block' : 'none';
+        if(on){ var corpo = c.querySelector('[data-corpo]'); if(corpo) corpo.classList.remove('hide'); }
+      });
+      Array.prototype.slice.call(document.querySelectorAll('#negSublist .side-sub-neg')).forEach(function(b){ b.classList.toggle('on', b.dataset.slug === slug); });
+      var pr = document.getElementById('negPrompt'); if(pr) pr.style.display = 'none';
+    }
+
+    // Constrói a lista de negócios na barra (chamada após carregar)
+    window.__buildNegNav = function(){
+      if(!negSub) return;
+      var ativoBtn = negSub.querySelector('.side-sub-neg.on');
+      var ativoSlug = ativoBtn ? ativoBtn.dataset.slug : null;
+      negSub.innerHTML = '';
+      if(busca){ busca.classList.add('busca-neg'); negSub.appendChild(busca);
+        busca.oninput = function(){ var q = (busca.value || '').toLowerCase().trim();
+          Array.prototype.slice.call(negSub.querySelectorAll('.side-sub-neg')).forEach(function(b){ b.style.display = (!q || b.textContent.toLowerCase().indexOf(q) >= 0) ? '' : 'none'; }); };
+      }
+      _cards().forEach(function(c){
+        c.style.display = 'none';
+        var slug = c.dataset.slug || '';
+        var nomeEl = c.querySelector('.neg-nome');
+        var nome = nomeEl ? nomeEl.textContent.replace(/\s*(b[aá]sico|interm[eé]dio|pro|suspenso)\s*/gi, ' ').trim() : slug;
+        var b = document.createElement('button'); b.type = 'button'; b.className = 'side-sub-neg'; b.textContent = nome || slug; b.dataset.slug = slug;
+        b.addEventListener('click', function(){ abrirNeg(slug); });
+        negSub.appendChild(b);
+      });
+      if(ativoSlug && negSub.querySelector('.side-sub-neg[data-slug="' + ativoSlug + '"]')) abrirNeg(ativoSlug);
+    };
+
+    var inicial = 'criar';
     try{ var s = localStorage.getItem('painelAba'); if(s) inicial = s; }catch(e){}
     irPara(inicial);
-    var bn = document.getElementById('buscaNeg');
-    if(bn){ bn.addEventListener('input', function(){
-      var q = (bn.value || '').toLowerCase().trim();
-      Array.prototype.slice.call(document.querySelectorAll('#lista .neg')).forEach(function(el){
-        el.style.display = (!q || el.textContent.toLowerCase().indexOf(q) >= 0) ? '' : 'none';
-      });
-    }); }
   })();
 </script>
 </body>
