@@ -245,7 +245,7 @@
       <div class="ed-home" data-tab="home">
         <div class="ed-home-logo">🍀</div>
         <div class="ed-home-tit">Multitask</div>
-        <div class="ed-home-sub">Escolhe uma secção à esquerda para começares a editar o teu cardápio.</div>
+        <div class="ed-home-sub">Escolhe uma secção à esquerda para começares a editar o teu negócio.</div>
       </div>
 
   <!-- PARTILHAR / QR -->
@@ -5067,7 +5067,8 @@
 
     // Move o "Guardar tudo" para o fundo da barra lateral (mais pequeno)
     { var gb = document.getElementById('btnGuardarDock');
-      if(gb){ gb.style.cssText = 'margin-top:10px; width:100%; border:none; background:var(--verde,#3b8a4f); color:#fff; padding:9px 10px; font-weight:700; font-family:inherit; cursor:pointer; font-size:0.82rem; border-radius:11px;'; side.appendChild(gb); } }
+      if(gb){ gb.style.cssText = 'margin-top:10px; width:100%; border:none; background:var(--verde,#3b8a4f); color:#fff; padding:9px 10px; font-weight:700; font-family:inherit; cursor:pointer; font-size:0.82rem; border-radius:11px;'; side.appendChild(gb); }
+      var est = document.getElementById('estado'); if(est){ est.style.margin = '6px 2px 0'; side.appendChild(est); } }
 
     var homeEl = document.querySelector('.ed-home');
     // "Guardar tudo" (grande) aparece no fim da secção aberta
@@ -5078,7 +5079,6 @@
       var body = sec.querySelector(':scope > .bloco-conteudo') || sec;
       _btnG.style.marginTop = '18px'; _btnG.style.width = '100%'; _btnG.style.display = '';
       body.appendChild(_btnG);
-      if(_estado) body.appendChild(_estado);
     }
 
     function abrirAba(tab, selPrimeiro){
