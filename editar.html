@@ -105,6 +105,7 @@
 
   /* ---- Editor visual do cardápio ---- */
   .mv-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(88px,1fr)); gap:8px; margin-top:12px; }
+  #menuEditor > .mv-grid{ display:none; }   /* categorias movidas para a barra lateral */
   .mv-tile{ background:var(--bege); border:1.5px solid var(--linha); border-radius:12px; padding:10px 6px; text-align:center; cursor:pointer; color:var(--castanho); }
   .mv-tile.ativa{ background:var(--dourado); color:#fff; border-color:var(--dourado); }
   .mv-tile.nova{ background:#eef7ee; border-style:dashed; color:var(--verde); }
@@ -4385,7 +4386,20 @@
       grid.appendChild(nova);
       editorEl.appendChild(grid);
       if(abertaCi!=null && menuData.categorias[abertaCi]) editorEl.appendChild(mvPainel(menuData.categorias[abertaCi], abertaCi));
+      try{ if(window.__edBuildMenuSub) window.__edBuildMenuSub(); }catch(e){}
     }
+    // Expõe a navegação do menu para a barra lateral do editor
+    window.__edMenuCats = function(){
+      if(!menuData || !Array.isArray(menuData.categorias)) return [];
+      return menuData.categorias.map(function(cat,ci){
+        var nome = (cat.tipo==='comida')
+          ? ((cat.grupos&&cat.grupos[0]&&cat.grupos[0].summary&&cat.grupos[0].summary.pt)||'(sem título)')
+          : ((cat.tile&&cat.tile.pt)||(cat.tipo==='menus'?'Menu de Grupo':'Vinhos'));
+        return { ci:ci, nome:(cat.emoji?cat.emoji+' ':'')+nome, aberta:(abertaCi===ci) };
+      });
+    };
+    window.__edAbrirCat = function(ci){ abertaCi = ci; renderEditor(); };
+    window.__edNovaCat = function(){ menuData.categorias.push({ emoji:'', tipo:'comida', tile:{pt:''}, grupos:[{summary:{pt:''},itens:[]}] }); abertaCi = menuData.categorias.length-1; renderEditor(); };
 
     // ---- Limpar objetos vazios antes de guardar ----
     function limparLang(o){ if(!o) return; ['en','fr','es'].forEach(k=>{ if(o[k]!=null && String(o[k]).trim()==='') delete o[k]; }); }
@@ -5007,21 +5021,41 @@
     side.innerHTML = '';
     var brand = document.createElement('button'); brand.type = 'button'; brand.className = 'ed-brand'; brand.textContent = '🍀 Multitask'; brand.title = 'Início';
     side.appendChild(brand);
-    var subItems = {}, tabHeaders = {};
+    var subItems = {}, tabHeaders = {}, menuListEl = null;
+    function mkSub(txt, fn){ var b = document.createElement('button'); b.type = 'button'; b.className = 'ed-subitem'; b.textContent = txt; b.addEventListener('click', fn); return b; }
+    function _limparMenuOn(){ if(menuListEl) menuListEl.querySelectorAll('.ed-subitem.on').forEach(function(b){ b.classList.remove('on'); }); }
     NAV.forEach(function(tb){
       var tab = tb[0], nome = tb[1], secs = tb[2].filter(function(id){ return document.getElementById(id); });
       if(!secs.length) return;
       var h = document.createElement('button'); h.type = 'button'; h.className = 'ed-tab-h'; h.textContent = nome;
       var list = document.createElement('div'); list.className = 'ed-sublist';
-      secs.forEach(function(id){
-        var b = document.createElement('button'); b.type = 'button'; b.className = 'ed-subitem'; b.textContent = LABEL[id] || id;
-        b.addEventListener('click', function(){ abrirSec(id); });
-        list.appendChild(b); subItems[id] = b;
-      });
-      h.addEventListener('click', function(){ abrirAba(tab, true); });
+      if(tab === 'menu'){
+        menuListEl = list;   // as categorias do menu entram aqui (dinâmico)
+      } else {
+        secs.forEach(function(id){
+          var b = mkSub(LABEL[id] || id, function(){ abrirSec(id); });
+          list.appendChild(b); subItems[id] = b;
+        });
+      }
+      h.addEventListener('click', function(){ var jaAberta = h.classList.contains('aberta'); abrirAba(jaAberta ? null : tab, false); if(tab === 'menu' && !jaAberta){ try{ if(window.__edBuildMenuSub) window.__edBuildMenuSub(); }catch(e){} } });
       side.appendChild(h); side.appendChild(list);
       tabHeaders[tab] = { h:h, list:list, secs:secs };
     });
+    // Sub-lista do Menu = categorias do menu (＋ carregar/importar e nova secção)
+    window.__edBuildMenuSub = function(){
+      if(!menuListEl) return;
+      menuListEl.innerHTML = '';
+      var tools = mkSub('⚙️ Carregar / Importar', function(){ if(window.__edAbrirCat) window.__edAbrirCat(null); abrirSec('secMenu', true); _limparMenuOn(); tools.classList.add('on'); });
+      menuListEl.appendChild(tools);
+      ((window.__edMenuCats && window.__edMenuCats()) || []).forEach(function(c){
+        var b = mkSub(c.nome || '(sem título)', function(){ if(window.__edAbrirCat) window.__edAbrirCat(c.ci); abrirSec('secMenu', true); _limparMenuOn(); b.classList.add('on'); });
+        if(c.aberta) b.classList.add('on');
+        menuListEl.appendChild(b);
+      });
+      var nova = mkSub('＋ Nova secção', function(){ if(window.__edNovaCat) window.__edNovaCat(); abrirSec('secMenu', true); });
+      nova.style.color = 'var(--verde)';
+      menuListEl.appendChild(nova);
+    };
 
     var homeEl = document.querySelector('.ed-home');
 
@@ -5043,6 +5077,7 @@
       if(homeEl) homeEl.classList.remove('ativa');
       sec.classList.add('ativa');
       Object.keys(subItems).forEach(function(k){ subItems[k].classList.toggle('on', k === id); });
+      if(id !== 'secMenu') _limparMenuOn();
       if(!jaAba){ NAV.forEach(function(tb){ if(tb[2].indexOf(id) >= 0) abrirAba(tb[0], false); }); }
       try{ localStorage.setItem('editorSec', id); }catch(e){}
     }
