@@ -303,6 +303,10 @@
   header{ transition:transform .42s cubic-bezier(.22,.8,.25,1); }
   body.secao-aberta header{ transform:translateY(-110%); }
   body.secao-aberta .info-fixa{ transform:translateY(130%); }
+  /* Setinha "voltar à montra" — só aparece quando aberto como app (ecrã principal) */
+  #btnHome{ position:fixed; top:calc(env(safe-area-inset-top) + 8px); left:8px; z-index:60; width:40px; height:40px; padding:0; border:none; border-radius:50%; background:rgba(0,0,0,.34); color:#fff; font-size:1.6rem; font-weight:700; line-height:38px; text-align:center; cursor:pointer; -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px); box-shadow:0 2px 8px rgba(0,0,0,.28); display:none; }
+  body.pwa-standalone #btnHome{ display:block; }
+  body.pwa-standalone.secao-aberta #btnHome{ display:none; }
   /* Isolar o scroll: com uma secção aberta, o fundo (menu principal, rodapé e publicidade) não faz scroll.
      Usa overflow:hidden (mantém a posição de scroll — não há salto ao voltar). */
   html.scroll-lock, body.scroll-lock{ overflow:hidden !important; }
@@ -7100,6 +7104,27 @@
       document.body.classList.add('fundo-scroll');
       clearTimeout(_st); _st = setTimeout(function(){ document.body.classList.remove('fundo-scroll'); }, 220);
     }, { passive:true }); })();
+  })();
+</script>
+
+<script>
+  /* Modo app (ecrã principal): mostra uma setinha para voltar à montra, já que não há botão do browser */
+  (function(){
+    try{
+      var standalone = (window.navigator.standalone === true) ||
+        (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+      if(!standalone) return;
+      document.body.classList.add('pwa-standalone');
+      var b = document.createElement('button');
+      b.id = 'btnHome'; b.type = 'button';
+      b.setAttribute('aria-label', 'Voltar aos restaurantes');
+      b.textContent = '‹';
+      b.addEventListener('click', function(){
+        if(document.body.classList.contains('secao-aberta')){ return; }
+        location.href = location.origin + '/';
+      });
+      document.body.appendChild(b);
+    }catch(e){}
   })();
 </script>
 
