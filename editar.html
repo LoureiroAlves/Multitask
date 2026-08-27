@@ -3192,6 +3192,16 @@
 
   async function gravarConfigJson(token){
       if(!window.__negocio || !window.__negocio.id) throw new Error('Negócio não carregado.');
+      // Nunca sobrescrever campos geridos pelo admin (visibilidade na montra, tipo, secções desligadas).
+      // Relê o valor atual mesmo antes de gravar, para evitar reverter uma alteração feita entretanto.
+      try{
+        const { data:fresh } = await sbc.from('negocios').select('naApp:config->naApp,tipo:config->tipo,editorOff:config->editorOff').eq('id', window.__negocio.id).maybeSingle();
+        if(fresh){
+          if(fresh.naApp !== undefined && fresh.naApp !== null) config.naApp = fresh.naApp;
+          if(fresh.tipo !== undefined && fresh.tipo !== null) config.tipo = fresh.tipo;
+          if(fresh.editorOff !== undefined && fresh.editorOff !== null) config.editorOff = fresh.editorOff;
+        }
+      }catch(e){}
       const { error } = await sbc.from('negocios').update({ config: config }).eq('id', window.__negocio.id);
       if(error) throw new Error(error.message);
       window.__negocio.config = JSON.parse(JSON.stringify(config));

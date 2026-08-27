@@ -240,6 +240,8 @@
     intermedio: { traducoes:true, modelosPremium:true, azulejos:true, decoracoes:true, intro:true, jogos:true, fidelidade:true, photobooth:true },
     pro: { traducoes:true, modelosPremium:true, azulejos:true, decoracoes:true, intro:true, jogos:true, fidelidade:true, photobooth:true, agenda:true, pagamentos:true }
   };
+  // Novos negócios vêm com todas as permissões ativas (podes desligar depois em "Gerir")
+  const FUNCOES_TODAS = { traducoes:true, modelosPremium:true, azulejos:true, decoracoes:true, intro:true, jogos:true, fidelidade:true, photobooth:true, agenda:true, pagamentos:true };
 
   const $ = function(id){ return document.getElementById(id); };
   function msg(el, txt, tipo){ el.innerHTML = '<div class="msg ' + (tipo||'ok') + '">' + txt + '</div>'; }
@@ -603,7 +605,8 @@
     }
     const { data:neg, error } = await sb.from('negocios').insert({ nome:nome, slug:slug, dono_email:emailDono || null, config:config, menu:menu }).select().single();
     if(error){ $('btnCriar').disabled = false; msg($('criarMsg'), 'Erro: ' + error.message, 'erro'); return; }
-    const funcoes = Object.assign({}, PLANOS[plano] || {});
+    // Novos negócios começam com tudo ligado (independente do plano escolhido); ajustas depois em "Gerir".
+    const funcoes = Object.assign({}, FUNCOES_TODAS);
     const publicidade = { ativo: plano === 'basico' };
     const { error:e2 } = await sb.from('entitlements').insert({ negocio_id:neg.id, plano:plano, funcoes:funcoes, publicidade:publicidade });
     $('btnCriar').disabled = false;
