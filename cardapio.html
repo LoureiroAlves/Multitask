@@ -4007,9 +4007,12 @@
       const _tipoFundo = (config.fundo && config.fundo.tipo) || 'liso';
       const _isCaderno = (config.modelo || 'lista') === 'caderno';
       const _fundoProprio = ['caderno','ardosia','elegante','azulejo','bambu','marmore','vinha','tropical','ananas','praia','italiano'].indexOf(config.modelo || 'lista') >= 0;
-      document.body.classList.toggle('fundo-visivel', _tipoFundo !== 'liso' && !_fundoProprio);
-      document.body.classList.toggle('painel-fundo-suave', !!config.painelFundoLayout && _fundoProprio);
-      if(_fundoProprio){ document.body.style.background = ''; document.body.style.backgroundColor = ''; }
+      // O fundo do layout só é usado quando NÃO escolheste um fundo/textura próprio ("liso").
+      // Se escolheres textura/gradiente/imagem, ela aplica-se em qualquer layout.
+      const _usarFundoModelo = _fundoProprio && _tipoFundo === 'liso';
+      document.body.classList.toggle('fundo-visivel', _tipoFundo !== 'liso');
+      document.body.classList.toggle('painel-fundo-suave', !!config.painelFundoLayout && _usarFundoModelo);
+      if(_usarFundoModelo){ document.body.style.background = ''; document.body.style.backgroundColor = ''; }
       else if(config.fundo && config.fundo.tipo){
         const cs = getComputedStyle(document.documentElement);
         const bgClaro = (cs.getPropertyValue('--bege-claro')||'#fbf8f2').trim();
