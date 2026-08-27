@@ -4068,6 +4068,17 @@
       trd.appendChild(campoMulti(g.subtitulo,'Subtítulo'));
       wrap.appendChild(trd);
 
+      // Foto do sub-menu (grupo)
+      const gfRow=document.createElement('div'); gfRow.style.cssText='display:flex; align-items:center; gap:8px; margin:8px 0 6px; font-size:0.82rem; color:var(--castanho-suave); flex-wrap:wrap;';
+      gfRow.appendChild(document.createTextNode('Foto do sub-menu:'));
+      if(g.foto){ const pv=document.createElement('img'); pv.src=g.foto; pv.style.cssText='width:40px; height:40px; object-fit:cover; border-radius:8px; border:1px solid var(--linha);'; gfRow.appendChild(pv); }
+      const gfL=document.createElement('label'); gfL.className='mv-mini'; gfL.style.cursor='pointer'; gfL.textContent = g.foto ? 'trocar foto' : '＋ foto';
+      const gfI=document.createElement('input'); gfI.type='file'; gfI.accept='image/*'; gfI.style.display='none';
+      gfI.addEventListener('change', async ()=>{ const f=gfI.files&&gfI.files[0]; if(!f) return; setEstadoMenu('A enviar foto do sub-menu…','info'); try{ const url=await _uploadFoto(f); g.foto=url; setEstadoMenu('Foto adicionada ✓','ok'); renderEditor(); if(window.__agendarPreview) window.__agendarPreview(); }catch(e){ setEstadoMenu('Erro ao enviar foto: '+(e&&e.message?e.message:e),'erro'); } });
+      gfL.appendChild(gfI); gfRow.appendChild(gfL);
+      if(g.foto){ const gfR=document.createElement('button'); gfR.type='button'; gfR.className='mv-mini'; gfR.textContent='sem foto'; gfR.addEventListener('click',()=>{ delete g.foto; renderEditor(); if(window.__agendarPreview) window.__agendarPreview(); }); gfRow.appendChild(gfR); }
+      wrap.appendChild(gfRow);
+
       const itensBox=document.createElement('div');
       g.itens.forEach((it,idx)=> itensBox.appendChild(mvItem(g,it,idx)));
       wrap.appendChild(itensBox);
@@ -4308,6 +4319,16 @@
         const sd=document.createElement('details'); sd.style.cssText='border:none;background:transparent;margin:2px 0 6px;';
         const ss=document.createElement('summary'); ss.textContent='subtítulo (opcional)'; ss.style.cssText='font-size:0.75rem;color:var(--castanho-suave);';
         sd.appendChild(ss); g.subtitulo=g.subtitulo||{pt:''}; sd.appendChild(campoMulti(g.subtitulo,'Subtítulo')); if(g.subtitulo.pt) sd.open=true; p.appendChild(sd);
+        // Foto do sub-menu (grupo)
+        { const gfRow=document.createElement('div'); gfRow.style.cssText='display:flex; align-items:center; gap:8px; margin:2px 0 8px; font-size:0.82rem; color:var(--castanho-suave); flex-wrap:wrap;';
+          gfRow.appendChild(document.createTextNode('Foto do sub-menu:'));
+          if(g.foto){ const pv=document.createElement('img'); pv.src=g.foto; pv.style.cssText='width:40px; height:40px; object-fit:cover; border-radius:8px; border:1px solid var(--linha);'; gfRow.appendChild(pv); }
+          const gfL=document.createElement('label'); gfL.className='mv-mini'; gfL.style.cursor='pointer'; gfL.textContent = g.foto ? 'trocar foto' : '＋ foto';
+          const gfI=document.createElement('input'); gfI.type='file'; gfI.accept='image/*'; gfI.style.display='none';
+          gfI.addEventListener('change', async ()=>{ const f=gfI.files&&gfI.files[0]; if(!f) return; setEstadoMenu('A enviar foto do sub-menu…','info'); try{ const url=await _uploadFoto(f); g.foto=url; setEstadoMenu('Foto adicionada ✓','ok'); renderEditor(); if(window.__agendarPreview) window.__agendarPreview(); }catch(e){ setEstadoMenu('Erro ao enviar foto: '+(e&&e.message?e.message:e),'erro'); } });
+          gfL.appendChild(gfI); gfRow.appendChild(gfL);
+          if(g.foto){ const gfR=document.createElement('button'); gfR.type='button'; gfR.className='mv-mini'; gfR.textContent='sem foto'; gfR.addEventListener('click',()=>{ delete g.foto; renderEditor(); if(window.__agendarPreview) window.__agendarPreview(); }); gfRow.appendChild(gfR); }
+          p.appendChild(gfRow); }
         const lista=document.createElement('div'); g.itens.forEach((it,idx)=> lista.appendChild(mvItem(g,it,idx))); p.appendChild(lista);
         const add=document.createElement('button'); add.className='mv-add'; add.type='button'; add.textContent='＋ adicionar item';
         add.addEventListener('click',()=>{ g.itens.push({nome:{pt:''},preco:''}); renderEditor(); });

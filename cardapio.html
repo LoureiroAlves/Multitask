@@ -1487,6 +1487,7 @@
   .grupo-prato[open] summary::after{content:"▴";}
   .grupo-prato .card-lista{margin-top:10px;}
   .grupo-prato .subtitulo{margin:8px 0 0;}
+  .grupo-prato > summary .grupo-foto, .grupo-vinho > summary .grupo-foto{ display:block; width:58px; height:58px; object-fit:cover; border-radius:10px; margin:0 auto 8px; box-shadow:0 2px 8px rgba(0,0,0,.14); }
   /* Menu de Grupo — preço em destaque + descrição multi-linha */
   .menu-preco{ text-align:center; font-family:var(--fonte-titulo); color:var(--dourado); font-size:1.25rem; font-weight:700; padding:6px 0 6px; }
   .menu-desc{ white-space:pre-line; color:var(--castanho); font-size:0.92rem; line-height:1.6; padding:2px 14px 12px; text-align:center; }
@@ -2661,6 +2662,7 @@
     det.className = cls;
     const sum = document.createElement('summary');
     _mLang(sum, g.summary);
+    if(g.foto){ const gimg = document.createElement('img'); gimg.className = 'grupo-foto'; gimg.src = (typeof RAW_BASE !== 'undefined' ? RAW_BASE : '') + g.foto; gimg.alt = ''; gimg.loading = 'lazy'; sum.insertBefore(gimg, sum.firstChild); }
     det.appendChild(sum);
     if(g.subtitulo){ const s=document.createElement('div'); s.className='subtitulo'; _mLang(s, g.subtitulo); det.appendChild(s); }
     const lista = document.createElement('div');
