@@ -615,6 +615,11 @@
       box.innerHTML = '<div style="aspect-ratio:3/1; border-radius:8px; overflow:hidden; border:1px solid var(--linha);"><img src="' + _adEsc(url) + '" alt="" style="width:100%; height:100%; object-fit:cover; display:block;"></div>';
     }
   }
+  function _adBlocoOpcoes(sel){
+    sel = (sel == null || sel === '') ? 'todos' : String(sel);
+    var ops = [['todos','Rodar em todos os espaços'],['0','Topo (antes dos restaurantes)'],['1','1º espaço (após 6 restaurantes)'],['2','2º espaço (após 12)'],['3','3º espaço (após 18)']];
+    return ops.map(function(o){ return '<option value="' + o[0] + '"' + (o[0] === sel ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('');
+  }
   function renderAds(arr){
     if(arr) ADS_EDIT = JSON.parse(JSON.stringify(arr));
     const cont = $('adsLista'); if(!cont) return;
@@ -657,6 +662,9 @@
           '<label style="margin-top:0;">Link externo</label>' +
           '<input type="text" data-adlink value="' + _adEsc(ad.link) + '" placeholder="https://instagram.com/… ou https://wa.me/351…">' +
         '</div>' +
+        '<label style="margin-top:10px;">📍 Posição na montra (bloco)</label>' +
+        '<select data-adbloco>' + _adBlocoOpcoes(ad.bloco) + '</select>' +
+        '<div class="subtitulo" style="margin:2px 0 0; font-size:.76rem; color:#9a8b6f;">Cada anúncio escolhe o seu espaço. "Rodar em todos" aparece em todos os espaços; os outros só no espaço indicado — assim não se repete o mesmo anúncio de um bloco para o outro.</div>' +
         (ad.id && MET['ad:' + ad.id] ? ('<div style="margin-top:10px; font-size:.76rem; color:#8a9a6f;">👁 ' + (MET['ad:' + ad.id].view || 0) + ' visualizações · 👆 ' + (MET['ad:' + ad.id].click || 0) + ' cliques</div>') : (ad.id ? '<div style="margin-top:10px; font-size:.76rem; color:#b3a68a;">Sem dados ainda (guarda e aguarda visitas).</div>' : ''));
       const prev = box.querySelector('[data-adprev]'); _adPreview(prev, ad.img, ad.escala);
       const escWrap = box.querySelector('[data-adescwrap]');
@@ -677,13 +685,14 @@
       box.querySelector('[data-adsub]').oninput = function(e){ ADS_EDIT[i].sub = e.target.value; };
       box.querySelector('[data-addest]').onchange = function(e){ ADS_EDIT[i].slug = e.target.value; box.querySelector('[data-adlinkwrap]').style.display = e.target.value ? 'none' : ''; };
       box.querySelector('[data-adlink]').oninput = function(e){ ADS_EDIT[i].link = e.target.value.trim(); };
+      box.querySelector('[data-adbloco]').onchange = function(e){ ADS_EDIT[i].bloco = e.target.value; };
       box.querySelector('[data-adrm]').onclick = function(){ ADS_EDIT.splice(i, 1); renderAds(); };
       cont.appendChild(box);
     });
   }
   async function guardarAds(){
     const ads = ADS_EDIT.filter(function(a){ return a && (a.img || a.titulo || a.sub || a.slug || a.link); })
-      .map(function(a){ return { id: a.id || ('ad' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6)), img: a.img || '', titulo: a.titulo || '', sub: a.sub || '', slug: a.slug || '', link: a.slug ? '' : (a.link || ''), escala: (a.escala && a.escala > 0 && a.escala < 100) ? a.escala : 100, escalaMob: (a.escalaMob && a.escalaMob > 0) ? Math.min(a.escalaMob, 160) : 100 }; });
+      .map(function(a){ return { id: a.id || ('ad' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6)), img: a.img || '', titulo: a.titulo || '', sub: a.sub || '', slug: a.slug || '', link: a.slug ? '' : (a.link || ''), bloco: a.bloco || 'todos', escala: (a.escala && a.escala > 0 && a.escala < 100) ? a.escala : 100, escalaMob: (a.escalaMob && a.escalaMob > 0) ? Math.min(a.escalaMob, 160) : 100 }; });
     const intervalo = Math.max(2, Math.min(60, parseInt(($('adsIntervalo') || {}).value, 10) || 5));
     $('adGuardar').disabled = true; msg($('adsMsg'), 'A guardar…', 'ok');
     const { data:existe, error:eGet } = await sb.from('negocios').select('id,config').eq('slug', AMESA_SLUG).maybeSingle();
@@ -699,7 +708,7 @@
     if(error){ msg($('adsMsg'), 'Erro: ' + error.message, 'erro'); }
     else { msg($('adsMsg'), 'Publicidade guardada ✓ (' + ads.length + ' anúncio' + (ads.length === 1 ? '' : 's') + ')', 'ok'); }
   }
-  $('adAdicionar').onclick = function(){ ADS_EDIT.push({ img:'', titulo:'', sub:'', slug:'', link:'', escala:100, escalaMob:100 }); renderAds(); };
+  $('adAdicionar').onclick = function(){ ADS_EDIT.push({ img:'', titulo:'', sub:'', slug:'', link:'', bloco:'todos', escala:100, escalaMob:100 }); renderAds(); };
   $('adGuardar').onclick = guardarAds;
 
   // ============================================================

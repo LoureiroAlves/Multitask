@@ -260,12 +260,21 @@
   // === Rotação/carrossel de publicidade (intervalo definido no painel) ===
   var adTick = 0, adTimer = null;
   function _adId(ad, idx){ return (ad && ad.id) ? ad.id : ('a' + idx); }
+  // Anúncios elegíveis para o bloco B: os marcados para "todos" (ou sem bloco) + os desse bloco
+  function _adsDoBloco(B){
+    return ADS.filter(function(a){
+      var b = (a && a.bloco != null && a.bloco !== '') ? String(a.bloco) : 'todos';
+      return b === 'todos' || b === String(B);
+    });
+  }
   function pintarAds(contar){
     if(!ADS.length) return;
     document.querySelectorAll('.ad-slot').forEach(function(sl){
       var off = parseInt(sl.getAttribute('data-off'), 10) || 0;
-      var idx = (off + adTick) % ADS.length;
-      var ad = ADS[idx];
+      var elig = _adsDoBloco(off);
+      if(!elig.length){ sl.innerHTML = ''; sl._adId = null; return; }
+      var idx = (off + adTick) % elig.length;
+      var ad = elig[idx];
       sl.innerHTML = adHTML(ad);
       sl._adId = _adId(ad, idx);
       if(adIO) adIO.observe(sl);
@@ -319,7 +328,7 @@
       // Mostra todos os negócios reais por defeito; só esconde os marcados com config.oculto === true
       TODOS = dados.filter(function(n){ return n && n.slug && n.slug !== AMESA_SLUG && !(n.config && n.config.oculto === true); });
       renderFiltros();
-      document.getElementById('adTopo').innerHTML = ADS.length ? '<div class="ad-slot" data-off="0"></div>' : '';
+      document.getElementById('adTopo').innerHTML = _adsDoBloco(0).length ? '<div class="ad-slot" data-off="0"></div>' : '';
       aplicar();          // renderiza os cards + pinta os anúncios
       pintarAds();        // garante a faixa de topo preenchida
       rodarAds();         // arranca o carrossel se houver mais que um anúncio
