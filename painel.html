@@ -95,6 +95,7 @@
         <button class="side-item" data-tab="negocios">🏪 Negócios</button>
         <div id="negSublist" class="side-sublist"></div>
         <button class="side-item" data-tab="publicidade">📢 Publicidade</button>
+        <div id="pubSublist" class="side-sublist"></div>
         <div class="side-sep"></div>
         <a class="side-item hide" id="linkEstat" href="estatisticas.html" style="text-decoration:none;">📊 Estatísticas</a>
         <button class="side-item hide" id="btnLimparFotos" title="Apaga do Storage as fotos que já não são usadas por nenhum negócio">🧹 Fotos não usadas</button>
@@ -140,7 +141,8 @@
         <h2 style="margin:0; font-size:1.05rem;">📢 Publicidade da ÀMesa</h2>
         <a class="link" href="index.html" target="_blank">Ver montra ↗</a>
       </div>
-      <div style="font-size:.82rem; color:#9a8b6f; margin:6px 0 10px;">Anúncios que aparecem na montra pública (faixa no topo e entre os restaurantes). Cada anúncio pode abrir um restaurante da ÀMesa ou um link externo.</div>
+      <div style="font-size:.82rem; color:#9a8b6f; margin:6px 0 10px;">Anúncios que aparecem na montra pública (faixa no topo e entre os restaurantes). Cada anúncio pode abrir um restaurante da ÀMesa ou um link externo. À esquerda arrastas os anúncios para os reordenar.</div>
+      <div id="pubPrompt" style="color:#9a8b6f; font-size:.9rem; margin:6px 0;">👈 Escolhe um anúncio na lista à esquerda, ou "＋ Adicionar publicidade".</div>
       <div id="adsLista"></div>
       <div style="display:flex; align-items:center; gap:10px; margin-top:12px; padding-top:10px; border-top:1px dashed var(--linha); flex-wrap:wrap;">
         <label for="adsIntervalo" style="margin:0;">⏱ Trocar de publicidade a cada</label>
@@ -616,9 +618,10 @@
     if(arr) ADS_EDIT = JSON.parse(JSON.stringify(arr));
     const cont = $('adsLista'); if(!cont) return;
     cont.innerHTML = '';
-    if(!ADS_EDIT.length){ cont.innerHTML = '<p style="color:#9a8b6f; font-size:.85rem; margin:4px 0;">Ainda não há anúncios. Carrega em "Adicionar anúncio".</p>'; return; }
+    if(!ADS_EDIT.length){ cont.innerHTML = '<p style="color:#9a8b6f; font-size:.85rem; margin:4px 0;">Ainda não há anúncios. Carrega em "＋ Adicionar publicidade" à esquerda.</p>'; try{ if(window.__buildPubNav) window.__buildPubNav(); }catch(e){} return; }
     ADS_EDIT.forEach(function(ad, i){
       const box = document.createElement('div');
+      box.dataset.idx = i;
       box.style.cssText = 'border:1px solid var(--linha); border-radius:10px; padding:12px; margin-bottom:10px; background:#fbf8f2;';
       box.innerHTML =
         '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">' +
@@ -678,10 +681,15 @@
       box.querySelector('[data-addest]').onchange = function(e){ ADS_EDIT[i].slug = e.target.value; box.querySelector('[data-adlinkwrap]').style.display = e.target.value ? 'none' : ''; };
       box.querySelector('[data-adlink]').oninput = function(e){ ADS_EDIT[i].link = e.target.value.trim(); };
       box.querySelector('[data-adbloco]').onchange = function(e){ ADS_EDIT[i].bloco = e.target.value; };
-      box.querySelector('[data-adrm]').onclick = function(){ ADS_EDIT.splice(i, 1); renderAds(); };
+      box.querySelector('[data-adrm]').onclick = function(){ ADS_EDIT.splice(i, 1); if(window.__pubSel != null && window.__pubSel >= ADS_EDIT.length) window.__pubSel = ADS_EDIT.length ? ADS_EDIT.length - 1 : null; renderAds(); };
       cont.appendChild(box);
     });
+    try{ if(window.__buildPubNav) window.__buildPubNav(); }catch(e){}
   }
+  // Ganchos para a barra lateral (cascata de publicidade)
+  window.__pubAds = function(){ return ADS_EDIT.map(function(a, i){ return { i:i, nome:(a.titulo && a.titulo.trim()) ? a.titulo.trim() : ('Anúncio ' + (i + 1)) }; }); };
+  window.__pubAdd = function(){ ADS_EDIT.push({ img:'', titulo:'', sub:'', slug:'', link:'', bloco:'todos', escala:100, escalaMob:100 }); renderAds(); };
+  window.__pubMover = function(from, to){ if(from === to || from < 0 || to < 0 || from >= ADS_EDIT.length || to >= ADS_EDIT.length) return; var a = ADS_EDIT.splice(from, 1)[0]; ADS_EDIT.splice(to, 0, a); renderAds(); };
   async function guardarAds(){
     const ads = ADS_EDIT.filter(function(a){ return a && (a.img || a.titulo || a.sub || a.slug || a.link); })
       .map(function(a){ return { id: a.id || ('ad' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6)), img: a.img || '', titulo: a.titulo || '', sub: a.sub || '', slug: a.slug || '', link: a.slug ? '' : (a.link || ''), bloco: a.bloco || 'todos', escala: (a.escala && a.escala > 0 && a.escala < 100) ? a.escala : 100, escalaMob: (a.escalaMob && a.escalaMob > 0) ? Math.min(a.escalaMob, 160) : 100 }; });
@@ -791,6 +799,8 @@
     var panels = Array.prototype.slice.call(document.querySelectorAll('.tab-panel[data-panel]'));
     var negSub = document.getElementById('negSublist');
     var busca = document.getElementById('buscaNeg');
+    var pubSub = document.getElementById('pubSublist');
+    var pubSel = null;
 
     function _cards(){ return Array.prototype.slice.call(document.querySelectorAll('#lista .neg')); }
     function _prompt(){
@@ -802,7 +812,9 @@
       navs.forEach(function(n){ n.classList.toggle('on', n.getAttribute('data-tab') === t); });
       panels.forEach(function(p){ p.classList.toggle('hide', p.getAttribute('data-panel') !== t); });
       if(negSub) negSub.classList.toggle('aberta', t === 'negocios');
+      if(pubSub) pubSub.classList.toggle('aberta', t === 'publicidade');
       if(t === 'negocios') _prompt();
+      if(t === 'publicidade') _pubAplicar();
       try{ localStorage.setItem('painelAba', t); }catch(e){}
     }
     navs.forEach(function(n){ n.addEventListener('click', function(){ irPara(n.getAttribute('data-tab')); }); });
@@ -840,9 +852,46 @@
       if(ativoSlug && negSub.querySelector('.side-sub-neg[data-slug="' + ativoSlug + '"]')) abrirNeg(ativoSlug);
     };
 
+    // ===== Cascata da Publicidade (cada anúncio um item; arrastar para reordenar) =====
+    function _pubCards(){ return Array.prototype.slice.call(document.querySelectorAll('#adsLista > div[data-idx]')); }
+    function _pubAplicar(){
+      var pr = document.getElementById('pubPrompt');
+      var cards = _pubCards();
+      if(pubSel == null){ cards.forEach(function(c){ c.style.display = 'none'; }); if(pr) pr.style.display = ''; }
+      else { cards.forEach(function(c){ c.style.display = (parseInt(c.dataset.idx, 10) === pubSel) ? 'block' : 'none'; }); if(pr) pr.style.display = 'none'; }
+      if(pubSub) Array.prototype.slice.call(pubSub.querySelectorAll('.side-sub-neg[data-i]')).forEach(function(b){ b.classList.toggle('on', parseInt(b.dataset.i, 10) === pubSel); });
+      window.__pubSel = pubSel;
+    }
+    function pubAbrir(i){ irPara('publicidade'); pubSel = i; _pubAplicar(); }
+    var _pubDragFrom = null;
+    function _pubDragify(b){
+      b.draggable = true;
+      b.addEventListener('dragstart', function(){ _pubDragFrom = parseInt(b.dataset.i, 10); b.style.opacity = '0.5'; });
+      b.addEventListener('dragend', function(){ b.style.opacity = ''; });
+      b.addEventListener('dragover', function(e){ e.preventDefault(); });
+      b.addEventListener('drop', function(e){ e.preventDefault(); var to = parseInt(b.dataset.i, 10); if(_pubDragFrom != null && !isNaN(to) && window.__pubMover){ pubSel = to; window.__pubMover(_pubDragFrom, to); } _pubDragFrom = null; });
+    }
+    window.__buildPubNav = function(){
+      if(!pubSub) return;
+      pubSub.innerHTML = '';
+      var ads = (window.__pubAds && window.__pubAds()) || [];
+      ads.forEach(function(a){
+        var b = document.createElement('button'); b.type = 'button'; b.className = 'side-sub-neg'; b.textContent = a.nome; b.dataset.i = a.i;
+        b.addEventListener('click', function(){ pubAbrir(a.i); });
+        _pubDragify(b);
+        pubSub.appendChild(b);
+      });
+      var add = document.createElement('button'); add.type = 'button'; add.className = 'side-sub-neg'; add.textContent = '＋ Adicionar publicidade'; add.style.color = 'var(--verde)';
+      add.addEventListener('click', function(){ if(window.__pubAdd){ var n0 = ((window.__pubAds && window.__pubAds()) || []).length; window.__pubAdd(); pubSel = n0; pubAbrir(pubSel); } });
+      pubSub.appendChild(add);
+      var n = ads.length; if(pubSel != null && pubSel > n - 1) pubSel = n ? n - 1 : null;
+      _pubAplicar();
+    };
+
     var inicial = 'criar';
     try{ var s = localStorage.getItem('painelAba'); if(s) inicial = s; }catch(e){}
     irPara(inicial);
+    try{ if(window.__buildPubNav) window.__buildPubNav(); }catch(e){}
   })();
 </script>
 </body>
