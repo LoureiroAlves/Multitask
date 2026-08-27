@@ -3458,6 +3458,8 @@
     }
     painel.classList.remove('aberto');
     painel.addEventListener('transitionend', _restaurarPendente);
+    // Rede de segurança: se o transitionend não disparar (efeitos sem transform), restaura/desbloqueia à mesma
+    setTimeout(function(){ if(!painel.classList.contains('aberto')) restaurarCategoria(); }, 620);
     // Cabeçalho e barra voltam já (acompanham o fecho); carrinho e fidelidade só reaparecem no fim
     document.body.classList.remove('secao-aberta');
     setTimeout(function(){ if(!document.body.classList.contains('secao-aberta')) document.body.classList.remove('cart-oculto'); }, 650);
