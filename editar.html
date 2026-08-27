@@ -4579,6 +4579,106 @@
       'cada': { en:'each', fr:'chacun', es:'cada uno' },
       'take away': { en:'Take Away', fr:'À Emporter', es:'Para Llevar' }
     };
+
+    // Pratos tradicionais portugueses: o NOME mantém-se em português (é nome próprio);
+    // guardamos uma descrição curta em cada idioma para o turista perceber o que é.
+    // Chave normalizada (minúsculas, sem acentos), tal como o resultado de _normTrad.
+    const PRATOS = {
+      "prego": { en:"Garlic beef steak in a bun", fr:"Steak de bœuf à l'ail en pain", es:"Filete de ternera al ajo en pan" },
+      "prego no prato": { en:"Thin garlic beef steak with egg, rice & fries", fr:"Steak de bœuf à l'ail, œuf, riz et frites", es:"Filete de ternera al ajo con huevo, arroz y patatas" },
+      "prego no pao": { en:"Garlic beef steak sandwich", fr:"Sandwich au steak de bœuf à l'ail", es:"Bocadillo de filete de ternera al ajo" },
+      "bifana": { en:"Marinated pork sandwich", fr:"Sandwich au porc mariné", es:"Bocadillo de cerdo adobado" },
+      "bifana no prato": { en:"Marinated pork with rice & fries", fr:"Porc mariné, riz et frites", es:"Cerdo adobado con arroz y patatas" },
+      "bitoque": { en:"Small steak with fried egg, rice & fries", fr:"Petit steak, œuf au plat, riz et frites", es:"Filete pequeño con huevo frito, arroz y patatas" },
+      "francesinha": { en:"Porto layered meat sandwich in spicy beer sauce", fr:"Sandwich de viandes de Porto, sauce épicée à la bière", es:"Sándwich de carnes de Oporto en salsa picante de cerveza" },
+      "picanha": { en:"Grilled top sirloin (rump cap)", fr:"Picanha grillée (aiguillette de rumsteck)", es:"Picaña a la parrilla (tapa de cuadril)" },
+      "febras": { en:"Grilled pork loin slices", fr:"Tranches de longe de porc grillées", es:"Lomo de cerdo a la plancha" },
+      "rojoes": { en:"Minho-style fried pork chunks", fr:"Morceaux de porc frits à la mode du Minho", es:"Trozos de cerdo fritos al estilo del Miño" },
+      "alheira": { en:"Smoked bread & poultry sausage", fr:"Saucisse fumée de pain et volaille", es:"Embutido ahumado de pan y aves" },
+      "farinheira": { en:"Smoked flour & pork-fat sausage", fr:"Saucisse fumée de farine et gras de porc", es:"Embutido ahumado de harina y grasa de cerdo" },
+      "chourico": { en:"Smoked pork sausage", fr:"Chorizo fumé (saucisse de porc)", es:"Chorizo ahumado" },
+      "chourico assado": { en:"Flame-grilled smoked pork sausage", fr:"Chorizo fumé grillé à la flamme", es:"Chorizo ahumado a la llama" },
+      "morcela": { en:"Portuguese blood sausage", fr:"Boudin noir portugais", es:"Morcilla portuguesa" },
+      "cozido a portuguesa": { en:"Portuguese boiled meats & vegetables stew", fr:"Pot-au-feu portugais (viandes et légumes)", es:"Cocido portugués de carnes y verduras" },
+      "feijoada": { en:"Bean & meat stew", fr:"Ragoût de haricots et viandes", es:"Guiso de alubias y carnes" },
+      "feijoada a transmontana": { en:"Trás-os-Montes bean & pork stew", fr:"Ragoût de haricots et porc de Trás-os-Montes", es:"Guiso de alubias y cerdo de Trás-os-Montes" },
+      "dobrada": { en:"Tripe & white bean stew", fr:"Tripes aux haricots blancs", es:"Callos con alubias blancas" },
+      "tripas a moda do porto": { en:"Porto-style tripe with white beans", fr:"Tripes à la mode de Porto, haricots blancs", es:"Callos al estilo de Oporto con alubias" },
+      "arroz de cabidela": { en:"Chicken rice cooked in its blood", fr:"Riz de volaille au sang", es:"Arroz de pollo a la sangre" },
+      "cabidela": { en:"Poultry cooked in its blood with rice", fr:"Volaille au sang avec riz", es:"Ave a la sangre con arroz" },
+      "carne de porco a alentejana": { en:"Pork with clams, Alentejo style", fr:"Porc aux palourdes à l'Alentejo", es:"Carne de cerdo con almejas al estilo alentejano" },
+      "migas": { en:"Alentejo bread & garlic mash", fr:"Migas (pain à l'ail écrasé de l'Alentejo)", es:"Migas alentejanas de pan y ajo" },
+      "pica pau": { en:"Sautéed beef bites with pickles", fr:"Émincé de bœuf sauté aux cornichons", es:"Bocaditos de ternera salteados con encurtidos" },
+      "moelas": { en:"Stewed chicken gizzards", fr:"Gésiers de volaille mijotés", es:"Mollejas de pollo guisadas" },
+      "espetada": { en:"Skewered grilled beef", fr:"Brochette de bœuf grillé", es:"Brocheta de ternera a la parrilla" },
+      "leitao": { en:"Roast suckling pig", fr:"Cochon de lait rôti", es:"Cochinillo asado" },
+      "leitao da bairrada": { en:"Bairrada roast suckling pig", fr:"Cochon de lait rôti de Bairrada", es:"Cochinillo asado de Bairrada" },
+      "cabrito assado": { en:"Roast kid goat", fr:"Chevreau rôti", es:"Cabrito asado" },
+      "chanfana": { en:"Goat stewed in red wine", fr:"Chèvre mijotée au vin rouge", es:"Cabra guisada en vino tinto" },
+      "secretos": { en:'Grilled Iberian pork "secreto"', fr:"Secreto de porc ibérique grillé", es:"Secreto ibérico a la parrilla" },
+      "plumas": { en:'Grilled Iberian pork "pluma"', fr:"Pluma de porc ibérique grillée", es:"Pluma ibérica a la parrilla" },
+      "entremeada": { en:"Grilled pork belly", fr:"Poitrine de porc grillée", es:"Panceta de cerdo a la parrilla" },
+      "vitela assada": { en:"Roast veal", fr:"Veau rôti", es:"Ternera asada" },
+      "bife a portuguesa": { en:"Portuguese-style steak with egg & smoked ham", fr:"Steak à la portugaise, œuf et jambon fumé", es:"Filete a la portuguesa con huevo y jamón ahumado" },
+      "bife com ovo a cavalo": { en:"Steak topped with a fried egg", fr:"Steak avec œuf au plat dessus", es:"Filete con huevo a caballo" },
+      "frango no churrasco": { en:"Charcoal-grilled chicken", fr:"Poulet grillé au charbon", es:"Pollo a la brasa" },
+      "frango de churrasco": { en:"Charcoal-grilled chicken", fr:"Poulet grillé au charbon", es:"Pollo a la brasa" },
+      "frango assado": { en:"Roast chicken", fr:"Poulet rôti", es:"Pollo asado" },
+      "frango piri piri": { en:"Piri-piri grilled chicken", fr:"Poulet grillé au piri-piri", es:"Pollo a la brasa con piri-piri" },
+      "bacalhau a bras": { en:"Shredded cod with eggs, onion & straw potatoes", fr:"Morue effilochée aux œufs, oignon et pommes paille", es:"Bacalao dorado con huevo, cebolla y patatas paja" },
+      "bacalhau a gomes de sa": { en:"Cod baked with potatoes, egg & olives", fr:"Morue au four, pommes de terre, œuf et olives", es:"Bacalao al horno con patatas, huevo y aceitunas" },
+      "bacalhau com natas": { en:"Cod baked in cream with potatoes", fr:"Morue à la crème et pommes de terre", es:"Bacalao con nata y patatas al horno" },
+      "bacalhau a lagareiro": { en:"Roasted cod with olive oil & smashed potatoes", fr:"Morue rôtie à l'huile d'olive, pommes écrasées", es:"Bacalao asado con aceite de oliva y patatas a lo pobre" },
+      "bacalhau espiritual": { en:"Creamy shredded cod & bread gratin", fr:"Gratin crémeux de morue et pain", es:"Gratén cremoso de bacalao y pan" },
+      "bacalhau assado": { en:"Char-grilled cod", fr:"Morue grillée", es:"Bacalao asado" },
+      "pataniscas de bacalhau": { en:"Cod fritters", fr:"Beignets de morue", es:"Buñuelos de bacalao" },
+      "pasteis de bacalhau": { en:"Cod croquettes", fr:"Croquettes de morue", es:"Croquetas de bacalao" },
+      "bolinhos de bacalhau": { en:"Cod croquettes", fr:"Croquettes de morue", es:"Croquetas de bacalao" },
+      "polvo a lagareiro": { en:"Roasted octopus with olive oil & smashed potatoes", fr:"Poulpe rôti à l'huile d'olive, pommes écrasées", es:"Pulpo asado con aceite de oliva y patatas" },
+      "arroz de polvo": { en:"Octopus rice", fr:"Riz au poulpe", es:"Arroz de pulpo" },
+      "arroz de marisco": { en:"Seafood rice", fr:"Riz aux fruits de mer", es:"Arroz de marisco" },
+      "arroz de tamboril": { en:"Monkfish rice", fr:"Riz à la lotte", es:"Arroz de rape" },
+      "arroz de pato": { en:"Oven-baked duck rice", fr:"Riz au canard au four", es:"Arroz de pato al horno" },
+      "caldeirada": { en:"Portuguese fish stew", fr:"Ragoût de poisson portugais", es:"Caldereta de pescado" },
+      "cataplana": { en:"Algarve seafood cataplana stew", fr:"Cataplana de fruits de mer de l'Algarve", es:"Cataplana de marisco del Algarve" },
+      "sardinha assada": { en:"Char-grilled sardines", fr:"Sardines grillées", es:"Sardinas a la brasa" },
+      "sardinhas assadas": { en:"Char-grilled sardines", fr:"Sardines grillées", es:"Sardinas a la brasa" },
+      "acorda de marisco": { en:"Seafood bread stew", fr:"Açorda (soupe de pain) aux fruits de mer", es:"Açorda de marisco (sopa de pan)" },
+      "acorda alentejana": { en:"Alentejo garlic & coriander bread soup with egg", fr:"Açorda alentejane (pain, ail, coriandre, œuf)", es:"Açorda alentejana de pan, ajo, cilantro y huevo" },
+      "ameijoas a bulhao pato": { en:"Clams in garlic, coriander & white wine", fr:"Palourdes à l'ail, coriandre et vin blanc", es:"Almejas al ajillo con cilantro y vino blanco" },
+      "gambas al alho": { en:"Garlic prawns", fr:"Gambas à l'ail", es:"Gambas al ajillo" },
+      "peixinhos da horta": { en:"Battered fried green beans", fr:"Haricots verts frits en beignet", es:"Judías verdes rebozadas" },
+      "caldo verde": { en:"Kale & potato soup with chouriço", fr:"Soupe de chou vert, pomme de terre et chorizo", es:"Sopa de berza y patata con chorizo" },
+      "sopa da pedra": { en:'Hearty bean & meat "stone soup"', fr:"Soupe à la pierre (haricots et viandes)", es:"Sopa de piedra (alubias y carnes)" },
+      "canja": { en:"Chicken & rice soup", fr:"Bouillon de poule au riz", es:"Sopa de pollo y arroz" },
+      "canja de galinha": { en:"Chicken & rice soup", fr:"Bouillon de poule au riz", es:"Sopa de pollo y arroz" },
+      "gaspacho alentejano": { en:"Cold Alentejo tomato & bread soup", fr:"Gaspacho alentejain (soupe froide de tomate)", es:"Gazpacho alentejano frío" },
+      "rissois de camarao": { en:"Shrimp rissoles (fried turnovers)", fr:"Rissoles de crevettes", es:"Rissoles de gambas (empanadillas fritas)" },
+      "rissois": { en:"Fried filled turnovers", fr:"Rissoles (chaussons frits)", es:"Rissoles (empanadillas fritas)" },
+      "croquetes": { en:"Meat croquettes", fr:"Croquettes de viande", es:"Croquetas de carne" },
+      "pasteis de massa tenra": { en:"Beef-filled soft pastry turnovers", fr:"Chaussons fourrés au bœuf", es:"Empanadillas de carne" },
+      "tremocos": { en:"Lupin beans", fr:"Lupins", es:"Altramuces" },
+      "presunto": { en:"Cured ham", fr:"Jambon cru", es:"Jamón curado" },
+      "queijo da serra": { en:"Serra da Estrela cheese", fr:"Fromage Serra da Estrela", es:"Queso Serra da Estrela" },
+      "tabua de enchidos": { en:"Board of cured sausages", fr:"Planche de charcuterie fumée", es:"Tabla de embutidos" },
+      "tabua mista": { en:"Mixed cheese & charcuterie board", fr:"Planche mixte fromages et charcuterie", es:"Tabla mixta de quesos y embutidos" },
+      "pao de alho": { en:"Garlic bread", fr:"Pain à l'ail", es:"Pan de ajo" },
+      "pastel de nata": { en:"Portuguese custard tart", fr:"Flan pâtissier portugais (pastel de nata)", es:"Pastelito de crema portugués" },
+      "pasteis de nata": { en:"Portuguese custard tarts", fr:"Flans pâtissiers portugais (pastéis de nata)", es:"Pastelitos de crema portugueses" },
+      "arroz doce": { en:"Portuguese rice pudding", fr:"Riz au lait portugais", es:"Arroz con leche portugués" },
+      "leite creme": { en:"Portuguese crème brûlée", fr:"Crème brûlée portugaise", es:"Crema quemada portuguesa" },
+      "molotov": { en:"Fluffy meringue pudding with caramel", fr:"Pudding meringué au caramel", es:"Pudin de merengue con caramelo" },
+      "aletria": { en:"Sweet vermicelli pudding", fr:"Vermicelles au lait sucré", es:"Fideos dulces con leche" },
+      "baba de camelo": { en:"Caramel condensed-milk mousse", fr:"Mousse au caramel de lait concentré", es:"Mousse de dulce de leche" },
+      "toucinho do ceu": { en:"Almond & egg-yolk cake", fr:"Gâteau aux amandes et jaunes d'œufs", es:"Bizcocho de almendra y yema" },
+      "pao de lo": { en:"Portuguese sponge cake", fr:"Génoise portugaise", es:"Bizcocho portugués" },
+      "salame de chocolate": { en:'Chocolate & biscuit "salami"', fr:"Salami au chocolat et biscuits", es:"Salchichón de chocolate" },
+      "farofias": { en:"Floating islands (poached meringue)", fr:"Œufs à la neige", es:"Isla flotante (merengue)" },
+      "sericaia": { en:"Alentejo cinnamon egg pudding", fr:"Sericaia (flan à la cannelle de l'Alentejo)", es:"Sericaia (pudin de canela alentejano)" },
+      "queijada": { en:"Sweet cheese tartlet", fr:"Tartelette au fromage", es:"Quesada (tartaleta de queso)" },
+      "bola de berlim": { en:"Custard-filled doughnut", fr:"Beignet fourré à la crème", es:"Berlina rellena de crema" }
+    };
+
     function _normTrad(s){ return String(s||'').trim().toLowerCase()
         .replace(/[áàâãä]/g,'a').replace(/[éèêë]/g,'e').replace(/[íìîï]/g,'i').replace(/[óòôõö]/g,'o').replace(/[úùûü]/g,'u').replace(/ç/g,'c')
         .replace(/[.:;,]+$/,'').replace(/\s+/g,' '); }
@@ -4622,36 +4722,71 @@
       }
     }
 
+    function _ehVinhoNode(node){ return node && Object.prototype.hasOwnProperty.call(node, 'vinho'); }
+
+    // Percorre o menu com contexto: distingue NOME de prato, descrição e restantes textos.
+    // Pratos tradicionais (PRATOS) mantêm o nome em português e recebem uma descrição-glossário.
+    function _coletarTarefas(node, tasks){
+      if(Array.isArray(node)){ node.forEach(function(n){ _coletarTarefas(n, tasks); }); return; }
+      if(!node || typeof node !== 'object') return;
+      if(ehObjIdioma(node.nome)){
+        const vinho = _ehVinhoNode(node);
+        const dish = PRATOS[_normTrad(node.nome.pt)];
+        if(vinho){
+          // marca de vinho: nunca traduzir o nome
+        } else if(dish){
+          // manter o nome em PT em todos os idiomas
+          LANGS_TRAD.forEach(function(l){ tasks.push({ tipo:'copiar', o:node.nome, l:l, v:node.nome.pt }); });
+          const temDescPt = node.desc && ehObjIdioma(node.desc) && String(node.desc.pt||'').trim();
+          if(temDescPt){
+            // o dono escreveu descrição própria — traduzi-la normalmente
+            LANGS_TRAD.forEach(function(l){ tasks.push({ tipo:'traduzir', o:node.desc, l:l }); });
+          } else {
+            // sem descrição do dono — usar a descrição-glossário (só nos idiomas estrangeiros)
+            if(!node.desc || typeof node.desc !== 'object' || Array.isArray(node.desc)) node.desc = { pt:'' };
+            if(node.desc.pt == null) node.desc.pt = '';
+            LANGS_TRAD.forEach(function(l){ if(dish[l]) tasks.push({ tipo:'copiar', o:node.desc, l:l, v:dish[l] }); });
+          }
+        } else {
+          // nome comum (não tradicional) — traduzir
+          LANGS_TRAD.forEach(function(l){ tasks.push({ tipo:'traduzir', o:node.nome, l:l }); });
+          if(node.desc && ehObjIdioma(node.desc)) LANGS_TRAD.forEach(function(l){ tasks.push({ tipo:'traduzir', o:node.desc, l:l }); });
+        }
+        Object.keys(node).forEach(function(k){ if(k==='nome'||k==='desc') return; const v=node[k]; if(v && typeof v==='object') _coletarTarefas(v, tasks); });
+        return;
+      }
+      if(ehObjIdioma(node)){
+        LANGS_TRAD.forEach(function(l){ tasks.push({ tipo:'traduzir', o:node, l:l }); });
+        return;
+      }
+      Object.keys(node).forEach(function(k){ const v=node[k]; if(v && typeof v==='object') _coletarTarefas(v, tasks); });
+    }
+
     async function traduzirMenu(){
       if(!menuData){ setEstadoTrad('Carrega o menu primeiro.', 'erro'); return; }
       const substituir = document.getElementById('chkTradSubstituir').checked;
-      const objs = []; recolherObjsIdioma(menuData.categorias, objs);
-      // Constrói lista de tarefas (objeto + idioma em falta)
-      const tarefas = [];
-      objs.forEach(o=>{
-        LANGS_TRAD.forEach(l=>{
-          const jaTem = o[l] && String(o[l]).trim();
-          if(substituir || !jaTem) tarefas.push({o, l});
-        });
-      });
+      const brutas = []; _coletarTarefas(menuData.categorias, brutas);
+      // só o que falta (ou tudo, se "refazer" estiver marcado)
+      const tarefas = brutas.filter(function(t){ return substituir || !(t.o[t.l] && String(t.o[t.l]).trim()); });
       if(!tarefas.length){ setEstadoTrad('Já está tudo traduzido. (Marca a caixa acima se quiseres refazer as traduções.)', 'ok'); return; }
       const btn = document.getElementById('btnTraduzirMenu');
       btn.disabled = true;
+      // cópias (nomes mantidos em PT + descrições-glossário) são imediatas
+      tarefas.forEach(function(t){ if(t.tipo === 'copiar') t.o[t.l] = t.v; });
+      const traduzir = tarefas.filter(function(t){ return t.tipo === 'traduzir'; });
       let feitas = 0, erros = 0;
-      for(const t of tarefas){
-        try{
-          const traduzido = await traduzirTexto(String(t.o.pt), t.l);
-          t.o[t.l] = traduzido;
-        }catch(e){ erros++; }
+      for(const t of traduzir){
+        try{ t.o[t.l] = await traduzirTexto(String(t.o.pt), t.l); }
+        catch(e){ erros++; }
         feitas++;
-        setEstadoTrad('A traduzir… '+feitas+' / '+tarefas.length, 'info');
+        setEstadoTrad('A traduzir… '+feitas+' / '+traduzir.length, 'info');
         await new Promise(r=>setTimeout(r, 120)); // pausa curta para não saturar
       }
       renderEditor();
       try{ document.dispatchEvent(new Event('change')); }catch(e){}
       btn.disabled = false;
       if(erros){ setEstadoTrad('Tradução concluída com '+erros+' falha(s). Revê e clica em "💾 Guardar menu".', 'erro'); }
-      else { setEstadoTrad('✅ Tradução concluída ('+feitas+' campos). Revê e clica em "💾 Guardar menu" para publicar.', 'ok'); }
+      else { setEstadoTrad('✅ Tradução concluída. Os pratos tradicionais ficam com o nome em português e descrição traduzida. Revê e clica em "💾 Guardar menu".', 'ok'); }
     }
     document.getElementById('btnTraduzirMenu').addEventListener('click', traduzirMenu);
 

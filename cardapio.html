@@ -2608,6 +2608,10 @@
       const texto = (lang === 'pt') ? el.dataset.pt : (el.dataset[lang] || el.dataset.pt);
       if(el.tagName === 'INPUT') el.placeholder = texto;
       else el.textContent = texto;
+      // Descrição vazia no idioma ativo (ex.: prato tradicional só com descrição em estrangeiro): esconde a linha
+      if(el.classList.contains('desc') || el.classList.contains('menu-desc')){
+        el.style.display = (texto && String(texto).trim()) ? '' : 'none';
+      }
     });
 
     document.querySelectorAll('.lang-switch button').forEach(function(b){ b.classList.toggle('active', b.dataset.lang === lang); });
