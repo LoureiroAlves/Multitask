@@ -3574,21 +3574,11 @@
   const SUPA_KEY = 'sb_publishable_6LP7x2v5c-c9DQkQslnUmA_g13SEjp3';
   const sbC = (window.supabase && SLUG) ? window.supabase.createClient(SUPA_URL, SUPA_KEY) : null;
   function aplicarPlano(config, f, pub){
-    f = f || {}; config = config || {};
-    if(!f.intro && config.intro) config.intro.ativo = false;
-    if(!f.jogos) config.jogos = false;
-    if(!f.fidelidade && config.fidelidade) config.fidelidade.ativo = false;
-    if(!f.agenda && config.agenda) config.agenda.ativo = false;
-    if(!f.decoracoes && config.decor) config.decor.tema = 'nenhum';
-    if(!f.modelosPremium && ['ardosia','elegante','azulejo','bambu','marmore','vinha','tropical','ananas','praia','italiano'].indexOf(config.modelo) >= 0) config.modelo = 'lista';
-    if(!f.azulejos){
-      if(config.header) config.header.padrao = 'nenhum';
-      if(config.rodape) config.rodape.padrao = 'nenhum';
-      if(config.fundo && String(config.fundo.textura || '').indexOf('azulejo') === 0) config.fundo.textura = 'pontos';
-      if(config.caderno && String(config.caderno.folha || '').indexOf('azulejo') === 0) config.caderno.folha = 'quadriculado';
-    }
+    config = config || {};
+    // Gating de funcionalidades por plano removido: o site mostra o que está configurado no editor.
+    // Mantém-se apenas o controlo de publicidade (decidido pelo administrador).
     if(!pub || !pub.ativo){ if(config.adJogos) config.adJogos.ativo = false; if(config.footer) config.footer.link = ''; }
-    window.__semTraducoes = !f.traducoes;
+    window.__semTraducoes = false;
   }
 
   function preencherFotos(container, fotos){

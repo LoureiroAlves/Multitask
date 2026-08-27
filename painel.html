@@ -213,21 +213,13 @@
   ];
   // Secções do editor que o dono pode ver (o admin liga/desliga por negócio).
   // Publicidade e Limpeza NÃO estão aqui — são sempre só do admin.
-  const EDITOR_SECS = [
-    ['secPartilha', 'Partilha / QR'],
-    ['secLayout', 'Layout, cores e modelo'],
-    ['secHeader', 'Cabeçalho'],
-    ['secTextoLivre', 'Texto livre'],
-    ['secAbertura', 'Abertura (intro)'],
-    ['secRodape', 'Barra fixa (fundo)'],
-    ['secFooter', 'Scroll final'],
-    ['secIconesTopo', 'Ícones / idiomas'],
-    ['secExtras', 'Extras (decorações, jogos, fidelidade…)'],
-    ['secRedes', 'Redes sociais'],
-    ['secAgenda', 'Reservas'],
-    ['secMenu', 'Menu'],
-    ['secMosaico', 'Mosaico'],
-    ['secCarrinho', 'Carrinho']
+  const EDITOR_SECS_GRUPOS = [
+    ['🎨 Aparência', [ ['secLayout','Layout, cores e modelo'], ['secHeader','Cabeçalho'], ['secRodape','Rodapé (barra fixa)'], ['secFooter','Rodapé final'], ['secAbertura','Ecrã de abertura'] ]],
+    ['🧾 Menu', [ ['secMenu','Menu (itens e preços)'] ]],
+    ['🧩 Mosaico', [ ['secMosaico','Mosaico (caixas)'] ]],
+    ['⚙️ Extras', [ ['secJogos','Jogos'], ['secExtras','Decoração e fidelidade'], ['secAgenda','Agenda / Reservas'], ['secTextoLivre','Texto livre'], ['secCarrinho','Carrinho'], ['secIconesTopo','Ícones do topo'], ['secRedes','Redes sociais'] ]],
+    ['📣 Publicidade', [ ['secPreAbertura','Pré-abertura'] ]],
+    ['🔗 Partilha / QR', [ ['secPartilha','Partilhar / QR'] ]]
   ];
   const PLANOS = {
     basico: {},
@@ -359,16 +351,11 @@
       '<div class="det-corpo hide" data-corpo>' +
         '<label>Nome do negócio</label><input type="text" data-nome value="' + (n.nome || '').replace(/"/g, '&quot;') + '" placeholder="Nome do negócio">' +
         '<label style="margin-top:12px;">Email do dono</label><input type="email" data-email value="' + (n.dono_email || '') + '" placeholder="dono@exemplo.com">' +
-        '<label style="margin-top:12px;">Plano</label><select data-plano>' +
-          '<option value="basico">Básico</option><option value="intermedio">Intermédio</option><option value="pro">Pro</option>' +
-        '</select>' +
-        '<label style="margin-top:12px;">Funções ativas</label>' +
-        '<div class="funcoes" data-funcoes></div>' +
         '<div class="linha-pub"><input type="checkbox" data-pub' + (pub.ativo ? ' checked' : '') + '> <label style="margin:0; color:var(--castanho); font-weight:600;">Mostrar publicidade neste negócio</label></div>' +
         '<div class="linha-pub" style="background:#fff6f0; border:1.5px solid #c05a3a; border-radius:9px; padding:9px 11px;"><input type="checkbox" data-oculto' + ((n.config && n.config.oculto === true) ? ' checked' : '') + '> <label style="margin:0; color:#a3452b; font-weight:700;">🙈 Esconder da ÀMesa (montra pública)</label></div>' +
         '<label style="margin-top:12px;">Tipo de cozinha (filtro da ÀMesa)</label><input type="text" data-tipo value="' + ((n.config && n.config.tipo) || '').replace(/"/g, '&quot;') + '" placeholder="Ex.: Português, Pizzaria, Sushi, Pastelaria…">' +
         '<label style="margin-top:14px;">🔑 Secções do editor a que o dono tem acesso</label>' +
-        '<div style="font-size:.76rem; color:#9a8b6f; margin:-2px 0 6px;">Desliga as que não queres que o dono mexa. Publicidade e Limpeza de dados são sempre só tuas.</div>' +
+        '<div style="font-size:.76rem; color:#9a8b6f; margin:-2px 0 6px;">Desliga as que não queres que o dono mexa. Os anúncios (Publicidade no menu/nos jogos) e a Limpeza de fotos são sempre só teus.</div>' +
         '<div class="funcoes" data-secs></div>' +
         '<div style="margin-top:12px; font-size:.78rem; color:#9a8b6f; background:#fbf8f2; border:1px solid var(--linha); border-radius:8px; padding:8px 10px;">🗂 Pasta das imagens no Storage: <code style="color:var(--castanho); font-weight:700;">imagens/' + n.slug + '/</code><br><span style="color:#b3a68a;">O slug (<code>/' + n.slug + '</code>) é fixo e não muda quando alteras o nome — por isso a pasta mantém sempre este nome.</span></div>' +
         '<div style="margin-top:12px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">' +
@@ -382,25 +369,18 @@
       '</div>';
 
     // preencher plano + funções
-    div.querySelector('[data-plano]').value = ent.plano || 'basico';
-    const fbox = div.querySelector('[data-funcoes]');
-    FUNCOES.forEach(function(f){
-      const lab = document.createElement('label');
-      lab.innerHTML = '<input type="checkbox" data-fn="' + f[0] + '"' + (funcoes[f[0]] ? ' checked' : '') + '> ' + f[1];
-      fbox.appendChild(lab);
-    });
-    // mudar plano preenche as funções sugeridas
-    div.querySelector('[data-plano]').onchange = function(e){
-      const def = PLANOS[e.target.value] || {};
-      div.querySelectorAll('[data-fn]').forEach(function(c){ c.checked = !!def[c.getAttribute('data-fn')]; });
-    };
     // preencher secções do editor (checked = o dono vê; por defeito tudo ligado)
     { const sbox = div.querySelector('[data-secs]');
       const off = (n.config && Array.isArray(n.config.editorOff)) ? n.config.editorOff : [];
-      EDITOR_SECS.forEach(function(s){
-        const lab = document.createElement('label');
-        lab.innerHTML = '<input type="checkbox" data-sec="' + s[0] + '"' + (off.indexOf(s[0]) < 0 ? ' checked' : '') + '> ' + s[1];
-        sbox.appendChild(lab);
+      EDITOR_SECS_GRUPOS.forEach(function(grp){
+        const h = document.createElement('div'); h.textContent = grp[0];
+        h.style.cssText = 'grid-column:1/-1; font-weight:800; color:var(--dourado-escuro); margin:8px 0 2px; font-size:.82rem;';
+        sbox.appendChild(h);
+        grp[1].forEach(function(s){
+          const lab = document.createElement('label');
+          lab.innerHTML = '<input type="checkbox" data-sec="' + s[0] + '"' + (off.indexOf(s[0]) < 0 ? ' checked' : '') + '> ' + s[1];
+          sbox.appendChild(lab);
+        });
       });
     }
 
@@ -437,9 +417,8 @@
   }
 
   async function guardarEnt(n, div){
-    const plano = div.querySelector('[data-plano]').value;
-    const funcoes = {};
-    div.querySelectorAll('[data-fn]').forEach(function(c){ if(c.checked) funcoes[c.getAttribute('data-fn')] = true; });
+    const plano = 'pro';
+    const funcoes = Object.assign({}, FUNCOES_TODAS);   // tudo ligado (o gating do site foi retirado)
     const publicidade = { ativo: div.querySelector('[data-pub]').checked };
     const emailDono = (div.querySelector('[data-email]').value || '').trim().toLowerCase();
     const nomeNovo = (div.querySelector('[data-nome]').value || '').trim();

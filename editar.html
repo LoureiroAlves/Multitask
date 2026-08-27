@@ -1922,7 +1922,6 @@
     const admin = !!window.__admin;
     const cfg = (window.__negocio && window.__negocio.config) || {};
     function esconderSec(id){ const e = document.getElementById(id); if(e){ const d = e.closest('details') || e; d.style.display = 'none'; } }
-    if(!f.agenda) esconderSec('secAgenda');
     // Publicidade é controlada pelo administrador — esconder o link do rodapé do dono
     const fl = document.getElementById('footerLink'); if(fl){ fl.style.display='none'; const lab = document.querySelector('label[for="footerLink"]'); if(lab) lab.style.display='none'; }
     if(!admin){
@@ -4997,16 +4996,16 @@
   (function(){
     // Estrutura da navegação: [tab, nome, [secções por ordem]]
     var NAV = [
-      ['aparencia','🎨 Aparência', ['secLayout','secHeader','secRodape','secFooter','secAbertura']],
+      ['aparencia','🎨 Aparência', ['secLayout','secHeader','secRodape','secAbertura']],
       ['menu','🧾 Menu', ['secMenu']],
       ['mosaico','🧩 Mosaico', ['secMosaico']],
-      ['extras','⚙️ Extras', ['secJogos','secExtras','secAgenda','secTextoLivre','secCarrinho','secIconesTopo','secRedes']],
+      ['extras','⚙️ Extras', ['secJogos','secExtras','secAgenda','secTextoLivre','secCarrinho','secFooter','secIconesTopo','secRedes']],
       ['publicidade','📣 Publicidade', ['secPreAbertura','secAnuncio','secAnuncioJogos']],
       ['partilha','🔗 Partilha / QR', ['secPartilha']],
       ['limpeza','🧹 Limpeza de fotos', ['secLimpeza']]
     ];
     var LABEL = {
-      secLayout:'Layout', secHeader:'Cabeçalho', secRodape:'Rodapé (barra fixa)', secFooter:'Rodapé final', secAbertura:'Ecrã de abertura',
+      secLayout:'Layout', secHeader:'Cabeçalho', secRodape:'Rodapé (barra fixa)', secFooter:'Rodapé final (scroll)', secAbertura:'Ecrã de abertura',
       secMenu:'Menu — itens e preços', secMosaico:'Mosaico (caixas)',
       secJogos:'Jogos', secExtras:'Decoração e fidelidade', secAgenda:'Agenda / Reservas', secTextoLivre:'Texto livre', secCarrinho:'Carrinho', secIconesTopo:'Ícones do topo', secRedes:'Redes sociais',
       secPreAbertura:'Pré-abertura', secAnuncio:'Publicidade no menu', secAnuncioJogos:'Publicidade nos jogos',
