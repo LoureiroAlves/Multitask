@@ -3982,9 +3982,9 @@
         it.tabela.doses = it.tabela.doses || [];
         it.tabela.precos = it.tabela.precos || [];
         box.style.cssText='padding:10px;border:1px solid var(--linha);border-radius:9px;margin:6px 0;background:var(--bege-claro);';
-        const rot=document.createElement('div'); rot.style.cssText='font-size:0.78rem;font-weight:700;color:var(--dourado-escuro);margin-bottom:5px;'; rot.textContent='🍷 Vinho com vários tamanhos';
+        const rot=document.createElement('div'); rot.style.cssText='font-size:0.78rem;font-weight:700;color:var(--dourado-escuro);margin-bottom:5px;'; rot.textContent='🍽️ Item com vários tamanhos / doses';
         box.appendChild(rot);
-        const nome=document.createElement('input'); nome.value=(it.nome && it.nome.pt) || ''; nome.placeholder='Nome (ex: Sangria Frutos Vermelhos, Vinho da Casa)';
+        const nome=document.createElement('input'); nome.value=(it.nome && it.nome.pt) || ''; nome.placeholder='Nome (ex: Frango, Costelinhas, Vinho da Casa)';
         nome.style.cssText='width:100%;padding:8px 10px;border-radius:8px;border:1.5px solid var(--linha);font-family:inherit;font-weight:600;';
         nome.addEventListener('input',()=>{ it.nome=it.nome||{pt:''}; it.nome.pt=nome.value; });
         box.appendChild(nome);
@@ -3999,7 +3999,7 @@
           linhasBox.innerHTML='';
           it.tabela.doses.forEach((dose,ri)=>{
             const r=document.createElement('div'); r.style.cssText='display:flex;gap:6px;margin-bottom:5px;align-items:center;';
-            const dIn=document.createElement('input'); dIn.value=dose||''; dIn.placeholder='0,5 L'; dIn.style.cssText='flex:1;padding:7px;border-radius:8px;border:1.5px solid var(--linha);font-family:inherit;';
+            const dIn=document.createElement('input'); dIn.value=dose||''; dIn.placeholder='ex: 1/2 Dose'; dIn.style.cssText='flex:1;padding:7px;border-radius:8px;border:1.5px solid var(--linha);font-family:inherit;';
             dIn.addEventListener('input',()=>{ it.tabela.doses[ri]=dIn.value; });
             const pIn=document.createElement('input'); pIn.value=(it.tabela.precos[ri]||''); pIn.placeholder='7,50€'; pIn.style.cssText='flex:1;padding:7px;border-radius:8px;border:1.5px solid var(--linha);font-family:inherit;';
             pIn.addEventListener('input',()=>{ it.tabela.precos[ri]=pIn.value; });
@@ -4012,7 +4012,7 @@
         box.appendChild(linhasBox);
         const addLinha=mkBtn('＋ tamanho','var(--dourado)',()=>{ it.tabela.doses.push(''); it.tabela.precos.push(''); renderLinhas(); });
         box.appendChild(addLinha);
-        const del=mkBtn('🗑 remover vinho','var(--vermelho)',()=>{ g.itens.splice(idx,1); renderEditor(); }); del.style.marginTop='8px'; del.style.marginLeft='8px';
+        const del=mkBtn('🗑 remover item','var(--vermelho)',()=>{ g.itens.splice(idx,1); renderEditor(); }); del.style.marginTop='8px'; del.style.marginLeft='8px';
         box.appendChild(del);
         return box;
       }
@@ -4054,7 +4054,7 @@
       return box;
     }
 
-    // ---- Render visual de um grupo (só para a secção de vinhos) ----
+    // ---- Render visual de um grupo (secções com tamanhos/doses: vinhos, mas também pratos com 1/2 dose e dose) ----
     function mvGrupo(cat, g, gi){
       g.summary = g.summary || {pt:''};
       g.itens = g.itens || [];
@@ -4095,10 +4095,10 @@
       g.itens.forEach((it,idx)=> itensBox.appendChild(mvItem(g,it,idx)));
       wrap.appendChild(itensBox);
 
-      const addItem=document.createElement('button'); addItem.className='mv-add'; addItem.type='button'; addItem.textContent='＋ vinho (nome + preço)';
+      const addItem=document.createElement('button'); addItem.className='mv-add'; addItem.type='button'; addItem.textContent='＋ item (nome + preço)';
       addItem.addEventListener('click',()=>{ g.itens.push({nome:{pt:''},preco:''}); renderEditor(); });
       wrap.appendChild(addItem);
-      const addTab=document.createElement('button'); addTab.className='mv-add'; addTab.type='button'; addTab.textContent='＋ vinho com tamanhos (ex: sangria, vinho da casa)'; addTab.style.cssText='background:var(--dourado);margin-top:6px;';
+      const addTab=document.createElement('button'); addTab.className='mv-add'; addTab.type='button'; addTab.textContent='＋ item com tamanhos / doses (ex: 1/2 dose e dose, sangria)'; addTab.style.cssText='background:var(--dourado);margin-top:6px;';
       addTab.addEventListener('click',()=>{ g.itens.push({nome:{pt:''},tabela:{doses:['',''],precos:['','']}}); renderEditor(); });
       wrap.appendChild(addTab);
       return wrap;
@@ -4315,7 +4315,7 @@
         cat.notaFinal=cat.notaFinal||{pt:''}; avb.appendChild(mkLabel('Nota final (ex: IVA incluído…)')); avb.appendChild(campoMulti(cat.notaFinal,'Nota'));
         av.appendChild(avb); p.appendChild(av);
         cat.grupos.forEach((g,gi)=> p.appendChild(mvGrupo(cat,g,gi)));
-        const addG=document.createElement('button'); addG.className='mv-add'; addG.type='button'; addG.textContent='＋ grupo de vinhos'; addG.style.background='var(--dourado)';
+        const addG=document.createElement('button'); addG.className='mv-add'; addG.type='button'; addG.textContent='＋ grupo (subtítulo)'; addG.style.background='var(--dourado)';
         addG.addEventListener('click',()=>{ cat.grupos.push({summary:{pt:''},itens:[]}); renderEditor(); });
         p.appendChild(addG);
       } else if(cat.tipo==='menus'){
