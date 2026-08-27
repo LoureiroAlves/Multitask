@@ -213,18 +213,6 @@
   const SUPABASE_KEY = 'sb_publishable_6LP7x2v5c-c9DQkQslnUmA_g13SEjp3';
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  const FUNCOES = [
-    ['traducoes','Traduções (EN/FR/ES)'],
-    ['modelosPremium','Modelos premium (Ardósia/Elegante/Azulejo)'],
-    ['azulejos','Azulejos (cabeçalho/barra/fundo)'],
-    ['decoracoes','Decorações por época'],
-    ['intro','Ecrã de abertura (intro)'],
-    ['jogos','Jogos'],
-    ['fidelidade','Cartão de fidelidade'],
-    ['photobooth','Foto com moldura'],
-    ['agenda','Agenda / Reservas'],
-    ['pagamentos','Pagamento de sinal']
-  ];
   // Secções do editor que o dono pode ver (o admin liga/desliga por negócio).
   // Publicidade e Limpeza NÃO estão aqui — são sempre só do admin.
   const EDITOR_SECS_GRUPOS = [
