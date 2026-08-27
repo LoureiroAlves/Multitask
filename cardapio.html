@@ -3691,6 +3691,35 @@
     try{ var _tcS = __slugDoEndereco() || 'geral'; localStorage.setItem('temaCor:' + _tcS, t['--castanho']); }catch(e){}
   }
 
+  // Ícone da app (ecrã principal): gera a inicial do restaurante na sua cor, para cada negócio ter o seu próprio ícone.
+  function __gerarIconeApp(nome, corBg){
+    try{
+      var letra = '';
+      var s = (nome || '').trim();
+      for(var i = 0; i < s.length; i++){ if(/[a-zA-Z0-9À-ſ]/.test(s[i])){ letra = s[i].toUpperCase(); break; } }
+      if(!letra) letra = 'M';
+      var bg = (corBg || '').trim() || '#4a3820';
+      var cv = document.createElement('canvas'); cv.width = 180; cv.height = 180;
+      var x = cv.getContext('2d');
+      x.fillStyle = bg; x.fillRect(0, 0, 180, 180);
+      var c = bg.replace('#', ''); if(c.length === 3){ c = c[0]+c[0]+c[1]+c[1]+c[2]+c[2]; }
+      var r = parseInt(c.substr(0,2),16)||0, g = parseInt(c.substr(2,2),16)||0, b = parseInt(c.substr(4,2),16)||0;
+      var lum = 0.299*r + 0.587*g + 0.114*b;
+      x.fillStyle = lum > 150 ? '#1a1a1a' : '#ffffff';
+      x.font = '800 104px "Playfair Display", Georgia, serif';
+      x.textAlign = 'center'; x.textBaseline = 'middle';
+      x.fillText(letra, 90, 100);
+      var url = cv.toDataURL('image/png');
+      var link = document.querySelector('link[rel="apple-touch-icon"]');
+      if(!link){ link = document.createElement('link'); link.rel = 'apple-touch-icon'; document.head.appendChild(link); }
+      link.href = url;
+      var fav = document.querySelector('link[rel="icon"]');
+      if(!fav){ fav = document.createElement('link'); fav.rel = 'icon'; fav.type = 'image/png'; document.head.appendChild(fav); }
+      fav.href = url;
+    }catch(e){}
+  }
+  window.__gerarIconeApp = __gerarIconeApp;
+
   // Tipo de letra dos títulos, escolhido à parte (sobrepõe-se ao do layout)
   const FONTES_TITULO = {
     fredoka: "'Fredoka', sans-serif",
@@ -4713,6 +4742,7 @@
       try{ await mostrarPreAbertura(config.preAbertura); }catch(e){}   // publicidade de ecrã cheio, antes do menu
       aplicarConfig(config);
       try{ document.title = ((config.header && config.header.titulo) || neg.nome || 'Cardápio'); }catch(e){}
+      try{ var _icoNome = ((config.header && config.header.titulo) || neg.nome || 'M'); var _icoCor = (getComputedStyle(document.documentElement).getPropertyValue('--castanho') || '#4a3820').trim(); __gerarIconeApp(_icoNome, _icoCor); }catch(e){}
       if(window.__semTraducoes){ const ls = document.getElementById('langSwitch'); if(ls) ls.style.display = 'none'; }
       const menu = neg.menu || {};
       if(!Array.isArray(menu.categorias)) menu.categorias = [];
