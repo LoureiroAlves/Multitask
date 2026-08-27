@@ -4011,7 +4011,9 @@
       // Se escolheres textura/gradiente/imagem, ela aplica-se em qualquer layout.
       const _usarFundoModelo = _fundoProprio && _tipoFundo === 'liso';
       document.body.classList.toggle('fundo-visivel', _tipoFundo !== 'liso');
-      document.body.classList.toggle('painel-fundo-suave', !!config.painelFundoLayout && _usarFundoModelo);
+      // "Fundo do layout (versão suave)" nas secções funciona sempre que o modelo tem fundo próprio,
+      // mesmo que o fundo principal use uma textura/imagem à tua escolha.
+      document.body.classList.toggle('painel-fundo-suave', !!config.painelFundoLayout && _fundoProprio);
       if(_usarFundoModelo){ document.body.style.background = ''; document.body.style.backgroundColor = ''; }
       else if(config.fundo && config.fundo.tipo){
         const cs = getComputedStyle(document.documentElement);
