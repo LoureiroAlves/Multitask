@@ -301,6 +301,8 @@
   header{ transition:transform .42s cubic-bezier(.22,.8,.25,1); }
   body.secao-aberta header{ transform:translateY(-110%); }
   body.secao-aberta .info-fixa{ transform:translateY(130%); }
+  /* Isolar o scroll: com uma secção aberta, o fundo (menu principal, rodapé e publicidade) não faz scroll */
+  body.scroll-lock{ position:fixed; left:0; right:0; width:100%; overflow:hidden; }
   #cartBtn, #linkFidelidade{ transition:opacity .3s ease, visibility .3s ease; }
   body.cart-oculto #cartBtn, body.cart-oculto #linkFidelidade{ opacity:0; visibility:hidden; pointer-events:none; }
   /* Carrinho desativado pelo dono: esconde o botão e os "+" de adicionar */
@@ -1248,6 +1250,7 @@
     z-index:300;
     background:var(--bege-claro);
     overflow-y:auto;
+    overscroll-behavior:contain;
     -webkit-overflow-scrolling:touch;
     transform-origin:var(--origin-x, 50%) var(--origin-y, 50%);
     transform:scale(0.05);
@@ -2102,151 +2105,6 @@
 
 </style>
 
-<!-- Supabase REST API (sem biblioteca) -->
-<script>
-  window.SUPABASE_URL = 'https://hobpcvsexzhmiochuuab.supabase.co';
-  window.SUPABASE_KEY = 'sb_publishable_A_BZL8gRuXUQGIuix_-fDQ_T_MJ7KE-';
-
-  // Supabase Mock simples
-  window.supabaseClient = {
-    from: (table) => {
-      let filters = [];
-      let updateData = null;
-
-      return {
-        insert: (data) => {
-          const doInsert = async () => {
-            try {
-              const res = await fetch(`${window.SUPABASE_URL}/rest/v1/${table}`, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${window.SUPABASE_KEY}`,
-                  'apikey': window.SUPABASE_KEY,
-                  'Prefer': 'return=representation'
-                },
-                body: JSON.stringify(data)
-              });
-
-              const text = await res.text();
-              let result;
-              try {
-                result = JSON.parse(text);
-              } catch(e) {
-                result = { message: text, status: res.status };
-              }
-
-              if(!res.ok) throw result;
-              return { data: result, error: null };
-            } catch(e) {
-              throw e;
-            }
-          };
-
-          return {
-            select: () => doInsert(),
-            then: (fn, fnErr) => doInsert().then(fn, fnErr),
-            catch: (fn) => doInsert().catch(fn)
-          };
-        },
-
-        select: () => {
-          return {
-            eq: (col, val) => {
-              return {
-                single: async () => {
-                  try {
-                    const res = await fetch(`${window.SUPABASE_URL}/rest/v1/${table}?${col}=eq.${val}&limit=1`, {
-                      headers: {
-                        'Authorization': `Bearer ${window.SUPABASE_KEY}`,
-                        'apikey': window.SUPABASE_KEY
-                      }
-                    });
-                    const result = await res.json();
-                    return { data: result[0], error: null };
-                  } catch(e) {
-                    return { data: null, error: e };
-                  }
-                }
-              };
-            }
-          };
-        },
-
-        update: (data) => {
-          updateData = data;
-          filters = [];
-          return {
-            eq: (col, val) => {
-              filters.push({ col, val });
-              return {
-                eq: function(c2, v2) {
-                  filters.push({ col: c2, val: v2 });
-                  return this;
-                },
-                [Symbol.toStringTag]: 'Promise',
-                then: async (resolve, reject) => {
-                  try {
-                    let url = `${window.SUPABASE_URL}/rest/v1/${table}`;
-                    filters.forEach((f, i) => {
-                      url += (i === 0 ? '?' : '&') + f.col + '=eq.' + f.val;
-                    });
-
-                    const res = await fetch(url, {
-                      method: 'PATCH',
-                      headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${window.SUPABASE_KEY}`,
-                        'apikey': window.SUPABASE_KEY
-                      },
-                      body: JSON.stringify(updateData)
-                    });
-                    resolve({ error: null });
-                  } catch(e) {
-                    reject(e);
-                  }
-                }
-              };
-            }
-          };
-        },
-
-        delete: () => {
-          filters = [];
-          return {
-            eq: (col, val) => {
-              filters.push({ col, val });
-              return {
-                [Symbol.toStringTag]: 'Promise',
-                then: async (resolve, reject) => {
-                  try {
-                    let url = `${window.SUPABASE_URL}/rest/v1/${table}`;
-                    filters.forEach((f, i) => {
-                      url += (i === 0 ? '?' : '&') + f.col + '=eq.' + f.val;
-                    });
-
-                    await fetch(url, {
-                      method: 'DELETE',
-                      headers: {
-                        'Authorization': `Bearer ${window.SUPABASE_KEY}`,
-                        'apikey': window.SUPABASE_KEY
-                      }
-                    });
-                    resolve({ error: null });
-                  } catch(e) {
-                    reject(e);
-                  }
-                }
-              };
-            }
-          };
-        }
-      };
-    }
-  };
-
-  console.log('✅ Supabase REST API inicializado!');
-</script>
 
 <script>
   // Função de debug desativada (mantida vazia para compatibilidade)
@@ -3554,6 +3412,7 @@
     painelConteudo.scrollTop = 0;
     // Barra fixa, cabeçalho e botões saem (gerido por CSS via classe, para não conflituar com a lógica de cada um)
     document.body.classList.add('secao-aberta', 'cart-oculto');
+    _bloquearFundo();
     if(document.body.classList.contains('abrir-wipe') && window.__playWipe){
       const _wc = (window.__wipeCfg && window.__wipeCfg.cor) || (tile.dataset.cor) || '#a8712f';
       window.__wipeCor = _wc;
@@ -3563,6 +3422,22 @@
     }
   }
 
+  function _bloquearFundo(){
+    try{
+      if(document.body.classList.contains('scroll-lock')) return;
+      window.__scrollLockY = window.scrollY || window.pageYOffset || 0;
+      document.body.style.top = (-window.__scrollLockY) + 'px';
+      document.body.classList.add('scroll-lock');
+    }catch(e){}
+  }
+  function _desbloquearFundo(){
+    try{
+      if(!document.body.classList.contains('scroll-lock')) return;
+      document.body.classList.remove('scroll-lock');
+      document.body.style.top = '';
+      window.scrollTo(0, window.__scrollLockY || 0);
+    }catch(e){}
+  }
   function fecharCategoria(){
     document.querySelectorAll('.tile').forEach(t => t.classList.remove('active'));
     if(document.body.classList.contains('abrir-wipe') && window.__playWipe && !(window.__wipeCfg && window.__wipeCfg.sairNormal)){
@@ -3570,6 +3445,7 @@
       window.__playWipe(window.__wipeCor || '#a8712f', function(){ painel.classList.remove('aberto'); });
       setTimeout(restaurarCategoria, _d + 20);
       document.body.classList.remove('secao-aberta');
+      _desbloquearFundo();
       setTimeout(function(){ if(!document.body.classList.contains('secao-aberta')) document.body.classList.remove('cart-oculto'); }, 650);
       return;
     }
@@ -3582,6 +3458,7 @@
     painel.addEventListener('transitionend', _restaurarPendente);
     // Cabeçalho e barra voltam já (acompanham o fecho); carrinho e fidelidade só reaparecem no fim
     document.body.classList.remove('secao-aberta');
+    _desbloquearFundo();
     setTimeout(function(){ if(!document.body.classList.contains('secao-aberta')) document.body.classList.remove('cart-oculto'); }, 650);
   }
 
