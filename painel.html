@@ -47,6 +47,7 @@
   .side-item{ display:flex; align-items:center; gap:10px; width:100%; text-align:left; border:none; background:transparent; color:var(--castanho); font-family:inherit; font-size:.92rem; font-weight:600; padding:11px 13px; border-radius:11px; cursor:pointer; text-decoration:none; transition:background .12s ease; }
   .side-item:hover{ background:var(--bege); }
   .side-item.on{ background:var(--castanho); color:#fff; }
+  .side-item.side-sub{ padding-left:30px; font-size:.86rem; font-weight:500; margin-left:8px; border-left:2px solid var(--linha); border-radius:0 11px 11px 0; }
   .side-sep{ height:1px; background:var(--linha); margin:9px 6px; }
   .conteudo{ flex:1; min-width:0; }
   .conteudo .card{ margin-top:0; box-shadow:0 1px 2px rgba(58,44,24,.04); }
@@ -83,8 +84,9 @@
   <div id="painel" class="hide">
     <div class="painel-layout">
       <nav class="side">
-        <button class="side-item on" data-tab="negocios">🏪 Negócios</button>
         <button class="side-item" data-tab="criar">➕ Criar negócio</button>
+        <button class="side-item side-sub" data-tab="duplicar">📋 Duplicar negócio</button>
+        <button class="side-item" data-tab="negocios">🏪 Negócios</button>
         <button class="side-item" data-tab="publicidade">📢 Publicidade</button>
         <div class="side-sep"></div>
         <a class="side-item hide" id="linkEstat" href="estatisticas.html" style="text-decoration:none;">📊 Estatísticas</a>
@@ -106,7 +108,9 @@
       <div style="margin-top:12px;"><button class="acao" id="btnCriar">Criar negócio</button></div>
       <div id="criarMsg"></div>
     </div>
+        </section>
 
+        <section class="tab-panel hide" data-panel="duplicar">
     <div class="card">
       <h2 style="margin:0 0 10px; font-size:1.05rem;">📋 Duplicar negócio</h2>
       <div style="font-size:.82rem; color:#9a8b6f; margin-bottom:8px;">Copia <strong>tudo</strong> (layout, cores, secções, menu e permissões) de um negócio para um novo. Depois mudas o nome e editas o que quiseres.</div>
@@ -782,7 +786,7 @@
       try{ localStorage.setItem('painelAba', t); }catch(e){}
     }
     navs.forEach(function(n){ n.addEventListener('click', function(){ irPara(n.getAttribute('data-tab')); }); });
-    var inicial = 'negocios';
+    var inicial = 'criar';   // por defeito abre "Criar negócio" (a página não fica vazia; os negócios só aparecem ao clicar)
     try{ var s = localStorage.getItem('painelAba'); if(s) inicial = s; }catch(e){}
     irPara(inicial);
     var bn = document.getElementById('buscaNeg');
