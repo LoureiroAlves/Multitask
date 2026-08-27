@@ -19,7 +19,7 @@
     font-family:'Nunito',sans-serif; background:var(--bege-claro);
     color:var(--castanho); padding:20px 14px 60px; line-height:1.5;
   }
-  .wrap{max-width:620px; margin:0 auto;}
+  .wrap{max-width:1000px; margin:0 auto;}
   h1{font-family:'Fredoka',sans-serif; color:var(--dourado-escuro); font-size:1.5rem; margin-bottom:6px;}
   .subtitulo{font-size:0.9rem; color:var(--castanho-suave); margin-bottom:18px;}
   label{display:block; font-weight:700; font-size:0.85rem; color:var(--dourado-escuro); margin:14px 0 5px;}
@@ -143,6 +143,21 @@
   .grupo[open] > .grupo-sum::after{ transform:rotate(90deg); }
   .grupo[open] > .grupo-sum{ margin-bottom:6px; }
   .grupo > details{ margin-left:4px; }
+  /* ===== Editor com barra lateral (abas) ===== */
+  .ed-layout{ display:flex; gap:18px; align-items:flex-start; }
+  .ed-side{ flex:0 0 208px; position:sticky; top:14px; background:var(--branco,#fff); border:1.5px solid var(--linha); border-radius:16px; padding:10px; display:flex; flex-direction:column; gap:3px; }
+  .ed-side-item{ display:flex; align-items:center; gap:9px; width:100%; text-align:left; border:none; background:transparent; color:var(--castanho); font-family:inherit; font-size:.9rem; font-weight:800; padding:11px 13px; border-radius:11px; cursor:pointer; }
+  .ed-side-item:hover{ background:var(--bege); }
+  .ed-side-item.on{ background:var(--castanho); color:#fff; }
+  .ed-conteudo{ flex:1; min-width:0; }
+  .ed-panel.ed-hide{ display:none; }
+  .ed-panel > summary{ display:none !important; }
+  details.grupo.ed-panel{ margin:0; }
+  @media(max-width:820px){
+    .ed-layout{ flex-direction:column; gap:12px; }
+    .ed-side{ position:static; flex:none; width:100%; flex-direction:row; overflow-x:auto; }
+    .ed-side-item{ white-space:nowrap; }
+  }
   /* Painel fixo de pré-visualização */
   .preview-dock{ position:fixed; right:14px; bottom:14px; width:290px; z-index:900; background:#1f2530; border-radius:16px; overflow:hidden; box-shadow:0 10px 30px rgba(0,0,0,0.28); }
   .preview-dock-bar{ display:flex; align-items:center; justify-content:space-between; padding:7px 8px 7px 12px; color:#fff; font-size:0.8rem; font-weight:700; }
@@ -192,8 +207,18 @@
     <button type="button" id="btnCarregar">Carregar</button>
   </div>
 
+  <div class="ed-layout">
+    <nav class="ed-side">
+      <button type="button" class="ed-side-item on" data-etab="aparencia">🎨 Aparência</button>
+      <button type="button" class="ed-side-item" data-etab="conteudo">📋 Conteúdo</button>
+      <button type="button" class="ed-side-item" data-etab="menu">🧾 Menu</button>
+      <button type="button" class="ed-side-item" data-etab="avancado">⚙️ Avançado</button>
+      <button type="button" class="ed-side-item" data-etab="partilha">🔗 Partilha / QR</button>
+    </nav>
+    <div class="ed-conteudo">
+
   <!-- PARTILHAR / QR -->
-  <details id="secPartilha">
+  <details id="secPartilha" class="ed-panel" data-epanel="partilha" open>
     <summary>🔗 Partilhar / QR code</summary>
     <div class="bloco-conteudo">
       <div class="subtitulo" style="margin-top:6px;">O link e o código QR do teu cardápio. Imprime o QR para as mesas ou partilha o link.</div>
@@ -225,7 +250,7 @@
     </div>
   </div>
 
-  <details class="grupo" open><summary class="grupo-sum">🎨 Aparência</summary>
+  <details class="grupo ed-panel" data-epanel="aparencia" open><summary class="grupo-sum">🎨 Aparência</summary>
 
   <!-- LAYOUT / ASPETO -->
   <details id="secLayout">
@@ -816,7 +841,7 @@
 
   </details>
 
-  <details class="grupo"><summary class="grupo-sum">📋 Conteúdo</summary>
+  <details class="grupo ed-panel" data-epanel="conteudo" open><summary class="grupo-sum">📋 Conteúdo</summary>
 
   <!-- BARRA FIXA -->
   <details id="secRodape">
@@ -1142,7 +1167,7 @@
 
   </details>
 
-  <details class="grupo"><summary class="grupo-sum">⚙️ Avançado</summary>
+  <details class="grupo ed-panel" data-epanel="avancado" open><summary class="grupo-sum">⚙️ Avançado</summary>
 
   <!-- ÍCONES DO TOPO -->
   <details id="secIconesTopo">
@@ -1411,7 +1436,7 @@
   <button type="button" class="acao" id="btnGuardar">💾 Guardar tudo</button>
   <div class="estado" id="estado"></div>
 
-  <details id="secMenu" style="margin-top:22px;">
+  <details id="secMenu" class="ed-panel" data-epanel="menu" open style="margin-top:22px;">
     <summary>🧾 Menu — itens, preços e traduções</summary>
     <div class="bloco-conteudo">
       <div class="lembrar" style="margin-top:6px;">
@@ -1437,7 +1462,7 @@
   </details>
 
   <!-- MOSAICO (BENTO) -->
-  <details id="secMosaico" style="margin-top:20px;">
+  <details id="secMosaico" class="ed-panel" data-epanel="menu" open style="margin-top:20px;">
     <summary>🧩 Mosaico (caixas com foto — estilo widgets)</summary>
     <div class="bloco-conteudo">
       <div class="lembrar" style="margin-top:6px;">
@@ -1463,7 +1488,7 @@
   </details>
 
   <!-- CARRINHO / LISTA DE PEDIDO -->
-  <details id="secCarrinho" style="margin-top:20px;">
+  <details id="secCarrinho" class="ed-panel" data-epanel="menu" open style="margin-top:20px;">
     <summary>🛒 Carrinho / Lista de pedido</summary>
     <div class="bloco-conteudo">
       <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:600;">
@@ -1485,7 +1510,7 @@
   </details>
 
   <!-- LIMPEZA DE FOTOS -->
-  <details id="secLimpeza" style="margin-top:20px;">
+  <details id="secLimpeza" class="ed-panel" data-epanel="avancado" open style="margin-top:20px;">
     <summary>🧹 Limpeza de fotos (avançado)</summary>
     <div class="bloco-conteudo">
       <div style="font-size:0.82rem; color:var(--castanho-suave); margin-bottom:8px;">
@@ -1496,6 +1521,8 @@
       <div id="limpezaResultado" style="margin-top:12px;"></div>
     </div>
   </details>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -4925,6 +4952,20 @@
       try{ if(window.__agendarPreview) window.__agendarPreview(); }catch(e){}
     }
     iniciarSessao();
+  })();
+</script>
+<script>
+  (function(){
+    var navs = Array.prototype.slice.call(document.querySelectorAll('.ed-side-item[data-etab]'));
+    var panels = Array.prototype.slice.call(document.querySelectorAll('.ed-panel[data-epanel]'));
+    function go(t){
+      navs.forEach(function(n){ n.classList.toggle('on', n.getAttribute('data-etab') === t); });
+      panels.forEach(function(p){ p.classList.toggle('ed-hide', p.getAttribute('data-epanel') !== t); });
+      try{ localStorage.setItem('editorAba', t); }catch(e){}
+    }
+    navs.forEach(function(n){ n.addEventListener('click', function(){ go(n.getAttribute('data-etab')); }); });
+    var ini='aparencia'; try{ var g=localStorage.getItem('editorAba'); if(g) ini=g; }catch(e){}
+    go(ini);
   })();
 </script>
 </body>
