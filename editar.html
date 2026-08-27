@@ -592,6 +592,7 @@
         <div class="subtitulo">Escolhe uma imagem de fundo (fica esbatida por trás dos pratos).</div>
         <input type="file" id="novaFotoFundo" accept="image/*" style="margin-top:8px;">
         <div id="fundoImagemAtual" style="font-size:0.82rem; color:var(--castanho-suave); margin-top:6px;"></div>
+        <button type="button" id="removerFundoImg" style="display:none; margin-top:6px; padding:6px 12px; border:1px solid var(--linha); border-radius:8px; background:var(--branco); color:var(--castanho); cursor:pointer; font:inherit; font-size:.85rem;">✕ Remover imagem de fundo</button>
         <label for="fundoOpac" style="font-size:0.85rem; margin-top:10px; display:block;">Opacidade da foto: <span id="fundoOpacVal">100</span>%</label>
         <input type="range" id="fundoOpac" min="10" max="100" step="1" value="100" style="width:100%;">
         <label style="display:flex; align-items:center; gap:8px; margin-top:12px; cursor:pointer; font-weight:600;">
@@ -783,6 +784,7 @@
         <label style="margin-top:10px;">Foto própria da abertura (opcional)</label>
         <div id="introFotoAtual" class="ajuda" style="margin-top:4px;">Sem foto própria — usa a do cabeçalho.</div>
         <input type="file" id="novaFotoIntro" accept="image/*">
+        <button type="button" id="removerIntroFoto" style="display:none; margin-top:6px; padding:6px 12px; border:1px solid var(--linha); border-radius:8px; background:var(--branco); color:var(--castanho); cursor:pointer; font:inherit; font-size:.85rem;">✕ Remover foto da abertura</button>
         <label for="introReveal" style="margin-top:12px;">Efeito de entrada (ao passar para o menu)</label>
         <select id="introReveal" style="width:100%; padding:10px 12px; border-radius:10px; border:1.5px solid var(--linha); background:var(--branco); font-family:inherit; color:var(--castanho); font-size:0.95rem;">
           <option value="slide">Slide — desliza para cima</option>
@@ -1988,6 +1990,7 @@
     document.getElementById('introFotoAtual').textContent = (config.intro && config.intro.foto)
       ? ('Tem foto própria: ' + config.intro.foto)
       : 'Sem foto própria — usa a do cabeçalho.';
+    { const _ri = document.getElementById('removerIntroFoto'); if(_ri) _ri.style.display = ((config.intro && config.intro.foto) || filaIntro) ? 'inline-block' : 'none'; }
     const _ic = (config.intro && config.intro.cor) || '#ffffff';
     preencherEstilo('iTit', (config.intro && config.intro.estiloTitulo) || { tamanho:(config.intro && config.intro.tamanho) || 2.7, cor:_ic, negrito:true });
     preencherEstilo('iSub', (config.intro && config.intro.estiloSub) || { tamanho:(config.intro && config.intro.subTamanho) || 1.08, cor:_ic, italico:true });
@@ -2277,6 +2280,7 @@
     { const _o = document.getElementById('footerFotoOpac'), _ov = document.getElementById('footerFotoOpacVal'); const _v = (config.footer && config.footer.fotoOpacidade != null) ? config.footer.fotoOpacidade : 100; if(_o){ _o.value = _v; } if(_ov) _ov.textContent = _v; }
     { const _ac = document.getElementById('azulejoCor'); if(_ac) _ac.value = config.azulejoCor || '#2a5aa8'; }
     document.getElementById('fundoImagemAtual').textContent = fundo.imagem ? ('Imagem atual: ' + fundo.imagem) : 'Sem imagem escolhida.';
+    { const _rf = document.getElementById('removerFundoImg'); if(_rf) _rf.style.display = (fundo.imagem || filaFundo) ? 'inline-block' : 'none'; }
     document.getElementById('redeInstagram').value = (config.redes && config.redes.instagram) || '';
     document.getElementById('redeFacebook').value = (config.redes && config.redes.facebook) || '';
     document.getElementById('redeWhatsapp').value = (config.redes && config.redes.whatsapp) || '';
@@ -2394,7 +2398,15 @@
     if(!f) return;
     filaIntro = f;
     document.getElementById('introFotoAtual').textContent = 'Nova foto escolhida: ' + f.name + ' (guarda para aplicar).';
+    { const _ri = document.getElementById('removerIntroFoto'); if(_ri) _ri.style.display = 'inline-block'; }
   });
+  { const _ri = document.getElementById('removerIntroFoto'); if(_ri) _ri.onclick = function(){
+      if(config.intro) config.intro.foto = ''; filaIntro = null;
+      const inp = document.getElementById('novaFotoIntro'); if(inp) inp.value = '';
+      document.getElementById('introFotoAtual').textContent = 'Sem foto própria — usa a do cabeçalho.';
+      _ri.style.display = 'none';
+      if(window.__agendarPreview) window.__agendarPreview();
+    }; }
 
   // ---- Publicidade (anúncio): imagem + pré-visualização no editor ----
   let filaAnuncio = null;
@@ -2515,7 +2527,15 @@
     if(!f) return;
     filaFundo = f;
     document.getElementById('fundoImagemAtual').textContent = 'Nova imagem escolhida: ' + f.name + ' (guarda para aplicar).';
+    { const _rf = document.getElementById('removerFundoImg'); if(_rf) _rf.style.display = 'inline-block'; }
   });
+  { const _rf = document.getElementById('removerFundoImg'); if(_rf) _rf.onclick = function(){
+      if(config.fundo) config.fundo.imagem = ''; filaFundo = null;
+      const inp = document.getElementById('novaFotoFundo'); if(inp) inp.value = '';
+      document.getElementById('fundoImagemAtual').textContent = 'Sem imagem escolhida.';
+      _rf.style.display = 'none';
+      if(window.__agendarPreview) window.__agendarPreview();
+    }; }
   document.getElementById('coresPersonalizar').addEventListener('change', e => {
     const on = e.target.checked;
     document.getElementById('coresBox').style.display = on ? 'block' : 'none';
@@ -4156,61 +4176,6 @@
       fLbl.appendChild(fInp); fotoRow.appendChild(fLbl);
       if(cat.foto){ const fRm=document.createElement('button'); fRm.type='button'; fRm.className='mv-mini'; fRm.textContent='sem foto'; fRm.addEventListener('click',()=>{ delete cat.foto; renderEditor(); if(window.__agendarPreview) window.__agendarPreview(); }); fotoRow.appendChild(fRm); }
       p.appendChild(fotoRow);
-
-      // BANNER da secção — só aparece se for ligado aqui (não usa nada por defeito)
-      const banTggl=document.createElement('label'); banTggl.style.cssText='display:flex; align-items:center; gap:7px; margin:0 0 6px; font-size:0.85rem; font-weight:700; color:var(--dourado-escuro); cursor:pointer;';
-      const banChk=document.createElement('input'); banChk.type='checkbox'; banChk.style.width='auto'; banChk.checked=!!cat.bannerOn;
-      banChk.addEventListener('change',()=>{ if(banChk.checked) cat.bannerOn=true; else delete cat.bannerOn; renderEditor(); if(window.__agendarPreview) window.__agendarPreview(); });
-      banTggl.appendChild(banChk); banTggl.appendChild(document.createTextNode('🖼 Mostrar banner no topo desta secção'));
-      p.appendChild(banTggl);
-      const banRow=document.createElement('div'); banRow.style.cssText='display:flex; align-items:center; gap:8px; margin:0 0 10px; font-size:0.82rem; color:var(--castanho-suave); flex-wrap:wrap;' + (cat.bannerOn ? '' : 'display:none;');
-      banRow.appendChild(document.createTextNode('Foto do banner da secção:'));
-      if(cat.fotoBanner){ const pv2=document.createElement('img'); pv2.src=cat.fotoBanner; pv2.style.cssText='width:46px; height:46px; object-fit:cover; border-radius:8px; border:1px solid var(--linha);'; banRow.appendChild(pv2); }
-      const bLbl=document.createElement('label'); bLbl.className='mv-mini'; bLbl.style.cursor='pointer'; bLbl.textContent = cat.fotoBanner ? 'trocar foto' : '＋ foto';
-      const bInp=document.createElement('input'); bInp.type='file'; bInp.accept='image/*'; bInp.style.display='none';
-      bInp.addEventListener('change', async ()=>{ const f=bInp.files&&bInp.files[0]; if(!f) return; setEstadoMenu('A enviar foto do banner…','info'); try{ const url=await _uploadFoto(f); cat.fotoBanner=url; setEstadoMenu('Foto adicionada ✓','ok'); renderEditor(); if(window.__agendarPreview) window.__agendarPreview(); }catch(e){ setEstadoMenu('Erro ao enviar foto: '+e.message,'erro'); } });
-      bLbl.appendChild(bInp); banRow.appendChild(bLbl);
-      if(cat.fotoBanner){ const bRm=document.createElement('button'); bRm.type='button'; bRm.className='mv-mini'; bRm.textContent='sem foto'; bRm.addEventListener('click',()=>{ delete cat.fotoBanner; renderEditor(); if(window.__agendarPreview) window.__agendarPreview(); }); banRow.appendChild(bRm); }
-      const banHint=document.createElement('div'); banHint.className='subtitulo'; banHint.style.cssText='margin:-4px 0 10px;' + (cat.bannerOn ? '' : 'display:none;'); banHint.textContent='O banner só aparece se puseres aqui uma foto própria (não usa a do separador).';
-      p.appendChild(banRow); p.appendChild(banHint);
-
-      // Ajuste do banner PNG (sai da caixa) — tamanho e posição, igual ao rodapé
-      { const _bf = cat.fotoBanner || ''; const _bIsPng = /\.png(\?|$)/i.test(_bf) || /^data:image\/png/i.test(_bf);
-        if(cat.bannerOn && _bIsPng){
-          cat.bannerCfg = cat.bannerCfg || {};
-          const bcfg = cat.bannerCfg;
-          const wrap=document.createElement('div'); wrap.style.cssText='margin:0 0 10px; padding:10px; border:1.5px dashed var(--linha); border-radius:9px;';
-          const t=document.createElement('div'); t.className='subtitulo'; t.style.cssText='margin:0 0 8px; font-weight:700; color:var(--dourado-escuro);'; t.textContent='🖼 Banner PNG — sai da caixa (ajusta tamanho e posição)';
-          wrap.appendChild(t);
-          const r1=document.createElement('div'); r1.style.cssText='display:flex; gap:10px; flex-wrap:wrap; align-items:center;';
-          // Lado
-          const lLab=document.createElement('label'); lLab.style.cssText='font-size:.8rem; display:flex; align-items:center; gap:6px;'; lLab.appendChild(document.createTextNode('Lado'));
-          const lSel=document.createElement('select'); lSel.style.cssText='padding:6px; border-radius:8px; border:1.5px solid var(--linha); font-family:inherit;';
-          [['esq','Esquerda'],['centro','Centro'],['dir','Direita']].forEach(o=>{ const op=document.createElement('option'); op.value=o[0]; op.textContent=o[1]; if((bcfg.lado||'centro')===o[0]) op.selected=true; lSel.appendChild(op); });
-          lSel.addEventListener('change',()=>{ bcfg.lado=lSel.value; if(window.__agendarPreview) window.__agendarPreview(); });
-          lLab.appendChild(lSel); r1.appendChild(lLab);
-          function numCtrl(rot, key, def, min, max){
-            const lab=document.createElement('label'); lab.style.cssText='font-size:.8rem; display:flex; align-items:center; gap:6px;'; lab.appendChild(document.createTextNode(rot));
-            const inp=document.createElement('input'); inp.type='number'; inp.min=String(min); inp.max=String(max); inp.step='2'; inp.value=(bcfg[key]!=null?bcfg[key]:def); inp.style.cssText='width:74px; padding:6px; border-radius:8px; border:1.5px solid var(--linha); font-family:inherit;';
-            inp.addEventListener('input',()=>{ bcfg[key]=parseInt(inp.value,10)||0; if(window.__agendarPreview) window.__agendarPreview(); });
-            lab.appendChild(inp); return lab;
-          }
-          r1.appendChild(numCtrl('Largura (px)','larg',160,40,700));
-          r1.appendChild(numCtrl('Afastamento','afastX',10,0,300));
-          r1.appendChild(numCtrl('Subir/descer','subir',0,-60,200));
-          wrap.appendChild(r1);
-          const atrasL=document.createElement('label'); atrasL.style.cssText='display:flex; align-items:center; gap:7px; margin:10px 0 0; font-size:.82rem; cursor:pointer;';
-          const atrasC=document.createElement('input'); atrasC.type='checkbox'; atrasC.style.width='auto'; atrasC.checked=!!cat.bannerAtras;
-          atrasC.addEventListener('change',()=>{ if(atrasC.checked) cat.bannerAtras=true; else delete cat.bannerAtras; if(window.__agendarPreview) window.__agendarPreview(); });
-          atrasL.appendChild(atrasC); atrasL.appendChild(document.createTextNode('Pôr o banner atrás do texto (por baixo das letras)'));
-          wrap.appendChild(atrasL);
-          const h=document.createElement('div'); h.className='subtitulo'; h.style.cssText='margin:8px 0 0;'; h.textContent='Na pré-visualização podes arrastar a imagem para mover e a pega azul do canto para redimensionar.';
-          const rep=document.createElement('button'); rep.type='button'; rep.className='mv-mini'; rep.textContent='↺ Repor arrasto'; rep.style.marginTop='6px';
-          rep.addEventListener('click',()=>{ bcfg.dx=0; bcfg.dy=0; renderEditor(); if(window.__agendarPreview) window.__agendarPreview(); });
-          wrap.appendChild(h); wrap.appendChild(rep);
-          p.appendChild(wrap);
-        }
-      }
 
       // Estilo do texto do separador (modelo Grelha): cor, tamanho, negrito, itálico
       if(!cat.estiloTile) cat.estiloTile = cat.corTile ? { cor: cat.corTile } : {};
