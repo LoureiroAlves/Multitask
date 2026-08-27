@@ -76,47 +76,6 @@
       </div>
       <label for="nEmailDono">Email do dono (para ele entrar no editor)</label>
       <input type="email" id="nEmailDono" placeholder="dono@exemplo.com (podes deixar em branco e definir depois)">
-      <div class="row2">
-        <div>
-          <label for="nTipoNegocio">Tipo de negócio</label>
-          <select id="nTipoNegocio">
-            <option value="restaurante">Restaurante</option>
-            <option value="cafe">Café / Brunch</option>
-            <option value="padaria">Padaria / Pastelaria</option>
-            <option value="pizza">Pizzaria</option>
-            <option value="hamburguer">Hamburgueria</option>
-            <option value="sushi">Sushi / Japonês</option>
-            <option value="marisqueira">Marisqueira</option>
-            <option value="churrasco">Churrascaria / Grelhados</option>
-            <option value="tasca">Tasca / Petiscos</option>
-            <option value="gelataria">Gelataria</option>
-            <option value="bar">Bar / Cervejaria</option>
-            <option value="garrafeira">Garrafeira / Vinhos</option>
-            <option value="vegetariano">Saudável / Vegetariano</option>
-            <option value="barbearia">Barbearia / Estética</option>
-            <option value="outro">Outro (generalista) — menu vem do JSON</option>
-          </select>
-        </div>
-        <div>
-          <label for="nPlano">Plano</label>
-          <select id="nPlano">
-            <option value="basico">Básico</option>
-            <option value="intermedio">Intermédio</option>
-            <option value="pro">Pro</option>
-          </select>
-        </div>
-      </div>
-      <div class="subtitulo" style="margin:6px 0 0; font-size:.8rem; color:#9a8b6f;">O tipo define o estilo/menu de base. Em "Outro", o menu fica vazio e é criado pelo ficheiro JSON que importares no editor.</div>
-
-      <div style="margin-top:14px; padding:14px; border-radius:12px; background:linear-gradient(135deg,#2b2140,#3a2c5e); color:#fff;">
-        <div style="font-weight:800; display:flex; align-items:center; gap:8px;">✨ Criar por descrição (assistente)</div>
-        <div style="font-size:.82rem; opacity:.9; margin:4px 0 10px;">Descreve o tipo de negócio e o estilo. O assistente escolhe o modelo, as cores, as secções e um menu de exemplo — depois é só abrir o editor e afinar.</div>
-        <textarea id="nDescricao" rows="3" placeholder="Ex: Padaria tradicional portuguesa, acolhedora, com pão quente, bolos e cafés. Cores quentes." style="width:100%; padding:10px; border-radius:10px; border:none; font-family:inherit; font-size:.9rem; resize:vertical; color:#2b2140;"></textarea>
-        <div id="nChips" style="display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;"></div>
-        <label style="display:flex; align-items:center; gap:8px; margin-top:10px; font-weight:500; font-size:.85rem; cursor:pointer;">
-          <input type="checkbox" id="nAsstMenu" checked style="width:auto;"> Criar também um menu de exemplo
-        </label>
-      </div>
 
       <div style="margin-top:12px;"><button class="acao" id="btnCriar">Criar negócio</button></div>
       <div id="criarMsg"></div>
@@ -419,199 +378,26 @@
     return div;
   }
 
-  // ============================================================
-  //  ✨ ASSISTENTE — gera layout + menu a partir de uma descrição
-  //  (gerador local: sem chaves nem custos; reconhece o tipo de
-  //   negócio e o estilo e escolhe modelo, paleta, secções e menu)
-  // ============================================================
-  function asstNorm(s){ return (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
-  function asstSlug(s){ return asstNorm(s).replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,24); }
-  const ASST_CORES = ['#b5651d','#2fa763','#c0392b','#2a5aa8','#8e44ad','#d97a34','#1f8a86','#c9a227','#d64f7c','#546073'];
-  const ASST_PRESETS = [
-    { nome:'Padaria / Pastelaria', chaves:['padaria','pastelaria','confeitaria','pao','pães','paes','bolos','doçaria','docaria'], modelo:'grelha', layout:'6', sub:'Pão quente e doçaria caseira', cats:[
-      ['Pães','🥖',[['Pão da avó','',''],['Broa de milho','',''],['Baguete','','']]],
-      ['Bolos & Doces','🧁',[['Bolo de bolacha','',''],['Pastel de nata','',''],['Bola de Berlim','','']]],
-      ['Salgados','🥟',[['Rissol de camarão','',''],['Croquete','',''],['Empada de frango','','']]],
-      ['Cafetaria','☕',[['Café','',''],['Galão','',''],['Torrada','','']]] ] },
-    { nome:'Café / Brunch', chaves:['cafe','café','cafetaria','brunch','pequeno-almoço','pequeno almoco','snack'], modelo:'grelha', layout:'1', sub:'Cafés, brunch e petiscos', cats:[
-      ['Cafés','☕',[['Espresso','',''],['Cappuccino','',''],['Galão','','']]],
-      ['Brunch','🥐',[['Ovos mexidos','',''],['Panqueca','',''],['Croissant misto','','']]],
-      ['Tostas & Sandes','🥪',[['Tosta mista','',''],['Sandes de frango','','']]],
-      ['Sumos & Batidos','🥤',[['Sumo natural','',''],['Batido de fruta','','']]],
-      ['Doces','🍰',[['Cheesecake','',''],['Brownie','','']]] ] },
-    { nome:'Restaurante', chaves:['restaurante','cozinha','bistro','ementa'], modelo:'elegante', layout:'1', sub:'Cozinha de sempre', cats:[
-      ['Entradas','🥗',[['Sopa do dia','',''],['Queijo & enchidos','','']]],
-      ['Carne','🥩',[['Bife à casa','',''],['Vitela assada','','']]],
-      ['Peixe','🐟',[['Bacalhau à lagareiro','',''],['Robalo grelhado','','']]],
-      ['Sobremesas','🍮',[['Leite-creme','',''],['Mousse de chocolate','','']]],
-      ['Bebidas','🍷',[['Vinho da casa','',''],['Água','','']]] ] },
-    { nome:'Pizzaria', chaves:['pizza','pizzaria','italiano','italiana','massas','pasta'], modelo:'grelha', layout:'3', sub:'Pizzas e massas', cats:[
-      ['Pizzas','🍕',[['Margherita','Tomate e mozzarella',''],['Diavola','Picante',''],['Quatro queijos','','']]],
-      ['Massas','🍝',[['Carbonara','',''],['Bolonhesa','','']]],
-      ['Entradas','🧄',[['Pão de alho','',''],['Bruschetta','','']]],
-      ['Sobremesas','🍰',[['Tiramisù','',''],['Panna cotta','','']]],
-      ['Bebidas','🥤',[['Refrigerante','',''],['Cerveja','','']]] ] },
-    { nome:'Hamburgueria', chaves:['hamburguer','hambúrguer','burger','hamburgueria','fast food','street food'], modelo:'carteira', layout:'9', sub:'Burgers e street food', cats:[
-      ['Hambúrgueres','🍔',[['Clássico','Carne, queijo, alface',''],['Bacon','',''],['Veggie','','']]],
-      ['Acompanhamentos','🍟',[['Batata frita','',''],['Onion rings','','']]],
-      ['Menus','🍽️',[['Menu duplo','Burger + batata + bebida','']]],
-      ['Bebidas','🥤',[['Refrigerante','',''],['Batido','','']]],
-      ['Sobremesas','🍨',[['Brownie','',''],['Gelado','','']]] ] },
-    { nome:'Sushi / Japonês', chaves:['sushi','japones','japonês','nikkei','ramen','poke'], modelo:'elegante', layout:'5', sub:'Cozinha japonesa', cats:[
-      ['Entradas','🍢',[['Edamame','',''],['Gyoza','','']]],
-      ['Sushi','🍣',[['Niguiri salmão','',''],['California roll','','']]],
-      ['Sashimi','🐟',[['Sashimi salmão','',''],['Sashimi atum','','']]],
-      ['Quentes','🍜',[['Ramen','',''],['Yakisoba','','']]],
-      ['Sobremesas','🍡',[['Mochi','',''],['Cheesecake yuzu','','']]] ] },
-    { nome:'Marisqueira', chaves:['marisqueira','marisco','mariscos','frutos do mar'], modelo:'azulejo', layout:'4', sub:'Marisco fresco', cats:[
-      ['Entradas','🍤',[['Camarão cozido','',''],['Amêijoas à Bulhão Pato','','']]],
-      ['Mariscos','🦞',[['Sapateira','',''],['Lavagante','',''],['Percebes','','']]],
-      ['Peixe','🐟',[['Bacalhau','',''],['Robalo','','']]],
-      ['Arroz & Cataplanas','🥘',[['Arroz de marisco','',''],['Cataplana','','']]],
-      ['Sobremesas','🍮',[['Pudim','',''],['Fruta','','']]] ] },
-    { nome:'Churrascaria / Grelhados', chaves:['churrasco','churrascaria','grelhados','grelhador','brasa','frango','churrasqueira'], modelo:'ardosia', layout:'1', sub:'Na brasa', cats:[
-      ['Entradas','🥗',[['Salada mista','',''],['Chouriço assado','','']]],
-      ['Frango no Churrasco','🍗',[['Meio frango','',''],['Frango inteiro','','']]],
-      ['Carnes na Brasa','🥩',[['Costela','',''],['Espetada','','']]],
-      ['Acompanhamentos','🍟',[['Batata frita','',''],['Arroz','',''],['Feijão','','']]],
-      ['Sobremesas','🍨',[['Gelado','',''],['Salada de fruta','','']]] ] },
-    { nome:'Tasca / Petiscos', chaves:['tasca','petiscos','petisqueira','petisco','taberna'], modelo:'caderno', layout:'1', sub:'Petiscos e vinho', cats:[
-      ['Petiscos','🧀',[['Pica-pau','',''],['Moelas','',''],['Peixinhos da horta','','']]],
-      ['Pratos do Dia','🍲',[['Bitoque','',''],['Bacalhau à Brás','','']]],
-      ['Tábuas','🍖',[['Tábua de enchidos','',''],['Tábua de queijos','','']]],
-      ['Sobremesas','🍮',[['Toucinho do céu','',''],['Aletria','','']]],
-      ['Vinhos','🍷',[['Tinto da casa','',''],['Branco da casa','','']]] ] },
-    { nome:'Gelataria', chaves:['gelataria','gelados','gelado','sorvete','geladaria'], modelo:'grelha', layout:'11', sub:'Gelados artesanais', cats:[
-      ['Gelados','🍦',[['Baunilha','',''],['Chocolate','',''],['Morango','','']]],
-      ['Taças','🍨',[['Taça da casa','',''],['Banana split','','']]],
-      ['Crepes & Waffles','🧇',[['Crepe Nutella','',''],['Waffle com gelado','','']]],
-      ['Bebidas','🥤',[['Milkshake','',''],['Sumo','','']]] ] },
-    { nome:'Bar / Cervejaria', chaves:['bar','cervejaria','pub','cocktail','cocktails','drinks'], modelo:'ardosia', layout:'5', sub:'Bebidas e petiscos', cats:[
-      ['Cervejas','🍺',[['Imperial','',''],['Caneca','',''],['Artesanal','','']]],
-      ['Cocktails','🍸',[['Mojito','',''],['Caipirinha','',''],['Gin tónico','','']]],
-      ['Shots','🥃',[['Shot da casa','','']]],
-      ['Petiscos','🍢',[['Tábua mista','',''],['Tremoços','','']]],
-      ['Sem álcool','🧃',[['Refrigerante','',''],['Água','','']]] ] },
-    { nome:'Garrafeira / Vinhos', chaves:['garrafeira','vinhos','vinho','wine','enoteca'], modelo:'elegante', layout:'3', sub:'Seleção de vinhos', cats:[
-      ['Tintos','🍷',[['Douro','',''],['Alentejo','','']]],
-      ['Brancos','🥂',[['Vinho Verde','',''],['Dão','','']]],
-      ['Rosés','🌸',[['Rosé da casa','','']]],
-      ['Espumantes','🍾',[['Bairrada','','']]],
-      ['Petiscos','🧀',[['Queijos','',''],['Enchidos','','']]] ] },
-    { nome:'Saudável / Vegetariano', chaves:['vegetariano','vegan','vegano','saudavel','saudável','healthy','poke','bowl','fit'], modelo:'elegante', layout:'2', sub:'Comida fresca e saudável', cats:[
-      ['Entradas','🥗',[['Húmus','',''],['Sopa de legumes','','']]],
-      ['Bowls','🥙',[['Poke bowl','',''],['Buddha bowl','','']]],
-      ['Pratos','🌱',[['Caril de grão','',''],['Lasanha de legumes','','']]],
-      ['Sumos Detox','🥤',[['Verde detox','',''],['Laranja & cenoura','','']]],
-      ['Sobremesas','🍓',[['Taça de fruta','',''],['Bolo vegan','','']]] ] },
-    { nome:'Barbearia / Cabeleireiro', chaves:['barbearia','barbeiro','cabeleireiro','salao','salão','estetica','estética','unhas','spa'], modelo:'carteira', layout:'10', sub:'Serviços e preços', cats:[
-      ['Cortes','✂️',[['Corte de cabelo','',''],['Corte + barba','','']]],
-      ['Barba','🧔',[['Aparar barba','',''],['Barba completa','','']]],
-      ['Coloração','🎨',[['Pintura','',''],['Madeixas','','']]],
-      ['Tratamentos','💆',[['Lavagem','',''],['Hidratação','','']]],
-      ['Extras','⭐',[['Sobrancelhas','','']]] ] }
-  ];
-  const ASST_GENERICO = ASST_PRESETS[2];
-  function asstAcharPreset(n){
-    const toks = {}; n.replace(/[^a-z0-9]+/g,' ').split(' ').forEach(function(t){ if(t) toks[t] = true; });
-    function bate(k){ k = asstNorm(k); return k.indexOf(' ') >= 0 ? (n.indexOf(k) >= 0) : !!toks[k]; }
-    let melhor = null, pontos = 0;
-    ASST_PRESETS.forEach(function(p){ let c = 0; p.chaves.forEach(function(k){ if(bate(k)) c++; }); if(c > pontos){ pontos = c; melhor = p; } });
-    return melhor || ASST_GENERICO;
-  }
-  function asstCorHint(n){
-    const M = [ [['azul','oceano','maritimo','praia'],'4'], [['verde','natural','bio'],'2'], [['vermelho','vinho tinto','bordeaux'],'3'],
-      [['preto','dourado','luxo','ouro','elegante','requintad','sofisticad'],'5'], [['laranja'],'9'], [['roxo','lilas','violeta'],'8'],
-      [['rosa','fofo'],'11'], [['cinza','cinzento','moderno','minimalista','industrial'],'10'], [['castanho','rustico','quente','acolhedor','madeira'],'1'],
-      [['terracota','barro'],'6'], [['petroleo','petróleo','teal','turquesa'],'7'], [['azeitona','oliva'],'12'] ];
-    const toks = {}; n.replace(/[^a-z0-9]+/g,' ').split(' ').forEach(function(t){ if(t) toks[t] = true; });
-    function bate(k){ k = asstNorm(k); return k.indexOf(' ') >= 0 ? (n.indexOf(k) >= 0) : !!toks[k]; }
-    for(let i=0;i<M.length;i++){ for(let j=0;j<M[i][0].length;j++){ if(bate(M[i][0][j])) return M[i][1]; } }
-    return null;
-  }
-  function asstEstiloHint(n){
-    if(/\bardosia|quadro|giz\b/.test(n)) return 'ardosia';
-    if(n.indexOf('azulejo') >= 0) return 'azulejo';
-    if(/caderno|manuscrit|a mao|à mao|escrito/.test(n)) return 'caderno';
-    if(/carteira|wallet|cartoes empilhad|cartões empilhad/.test(n)) return 'carteira';
-    if(/elegante|fino|luxo|requintad|sofisticad|fine dining|chique|gourmet/.test(n)) return 'elegante';
-    if(/grelha|emoji|colorid|divertid|casual/.test(n)) return 'grelha';
-    if(/\blista\b|\bsimples\b/.test(n)) return 'lista';
-    return null;
-  }
-  function asstConstruirMenu(preset){
-    const cats = (preset.cats || []).map(function(c, i){
-      return {
-        id: (asstSlug(c[0]) || ('cat' + i)),
-        cor: ASST_CORES[i % ASST_CORES.length],
-        tile: { pt: c[0] },
-        tipo: 'comida',
-        emoji: c[1] || '',
-        grupos: [ { summary: { pt: c[0] }, itens: (c[2] || []).map(function(it){
-          const o = { nome: { pt: it[0] } };
-          if(it[1]) o.desc = { pt: it[1] };
-          if(it[2]) o.preco = it[2];
-          return o;
-        }) } ]
-      };
-    });
-    return { restaurante:'', categorias: cats };
-  }
-  // Devolve { config, menu, preset } a partir da descrição + nome do negócio
-  function asstGerar(texto, nome, incluirMenu){
-    const n = asstNorm(texto);
-    const preset = asstAcharPreset(n);
-    const modelo = asstEstiloHint(n) || preset.modelo || 'lista';
-    const layout = asstCorHint(n) || preset.layout || '1';
-    const config = {
-      modelo: modelo, layout: layout, cores: null, fonte: 'auto', fonteTexto: 'auto',
-      header: { titulo: nome || '', subtitulo: preset.sub || '', cor:'#ffffff', realce:true, fotosAtivas:true, fotos:[] }
-    };
-    const menu = incluirMenu ? asstConstruirMenu(preset) : { restaurante:'', categorias:[] };
-    return { config: config, menu: menu, preset: preset, modelo: modelo, layout: layout };
-  }
-  (function asstChips(){
-    const cont = $('nChips'); if(!cont) return;
-    ['Padaria acolhedora','Restaurante elegante','Pizzaria moderna','Hamburgueria','Sushi minimalista','Café / brunch','Marisqueira','Churrascaria','Bar / cervejaria','Gelataria','Vinhos','Barbearia'].forEach(function(c){
-      const b = document.createElement('button'); b.type = 'button'; b.textContent = c;
-      b.style.cssText = 'background:rgba(255,255,255,.16);color:#fff;border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:5px 11px;font-family:inherit;font-size:.8rem;cursor:pointer;';
-      b.addEventListener('click', function(){ const t = $('nDescricao'); t.value = (t.value.trim() ? t.value.trim() + ' ' : '') + c + '.'; t.focus(); });
-      cont.appendChild(b);
-    });
-  })();
 
   async function criar(){
     const nome = $('nNome').value.trim();
     let slug = $('nSlug').value.trim().toLowerCase().replace(/[^a-z0-9]+/g,'');
-    const plano = $('nPlano').value;
+    const plano = 'pro';   // sem campo de plano: novos negócios nascem com tudo
     const emailDono = $('nEmailDono').value.trim().toLowerCase();
-    const descricao = ($('nDescricao').value || '').trim();
     if(!nome || !slug){ msg($('criarMsg'),'Preenche o nome e o slug.','erro'); return; }
     $('btnCriar').disabled = true;
-    const tipoNeg = $('nTipoNegocio') ? $('nTipoNegocio').value : 'restaurante';
-    let config = {}, menu = {}, notaAsst = '';
-    if(tipoNeg === 'outro'){
-      // Generalista: menu vazio (vem do JSON), estilo neutro; só a cor pode vir da descrição
-      const layout = (typeof asstCorHint === 'function' && asstCorHint(asstNorm(descricao))) || '1';
-      config = { modelo:'lista', layout: layout, cores:null, fonte:'auto', fonteTexto:'auto', tipoNegocio:'outro',
-        header:{ titulo:nome, subtitulo:'', cor:'#ffffff', realce:true, fotosAtivas:true, fotos:[] } };
-      menu = { restaurante:'', categorias:[] };
-      notaAsst = ' — generalista (o menu é criado pelo JSON que importares no editor)';
-    } else {
-      // Tipo escolhido define o preset; a descrição refina cores/estilo
-      const g = asstGerar((tipoNeg + ' ' + descricao).trim(), nome, $('nAsstMenu').checked);
-      config = g.config; menu = g.menu; config.tipoNegocio = tipoNeg;
-      notaAsst = ' — estilo "' + g.preset.nome + '" (modelo ' + g.modelo + ', paleta ' + g.layout + ')' + ($('nAsstMenu').checked ? ' com menu de exemplo' : '');
-    }
+    // Folha em branco: menu vazio e config mínima (só o nome). O dono constrói tudo no editor.
+    const config = { header:{ titulo:nome, subtitulo:'', cor:'#ffffff', realce:true, fotosAtivas:true, fotos:[] } };
+    const menu = { restaurante:'', categorias:[] };
     const { data:neg, error } = await sb.from('negocios').insert({ nome:nome, slug:slug, dono_email:emailDono || null, config:config, menu:menu }).select().single();
     if(error){ $('btnCriar').disabled = false; msg($('criarMsg'), 'Erro: ' + error.message, 'erro'); return; }
     // Novos negócios começam com tudo ligado (independente do plano escolhido); ajustas depois em "Gerir".
     const funcoes = Object.assign({}, FUNCOES_TODAS);
-    const publicidade = { ativo: plano === 'basico' };
+    const publicidade = { ativo: true };
     const { error:e2 } = await sb.from('entitlements').insert({ negocio_id:neg.id, plano:plano, funcoes:funcoes, publicidade:publicidade });
     $('btnCriar').disabled = false;
     if(e2){ msg($('criarMsg'), 'Negócio criado, mas erro nas permissões: ' + e2.message, 'erro'); }
-    else { msg($('criarMsg'), 'Negócio "' + nome + '" criado ✓' + notaAsst + '. Abre o editor para afinar.', 'ok'); $('nNome').value=''; $('nSlug').value=''; $('nEmailDono').value=''; $('nDescricao').value=''; }
+    else { msg($('criarMsg'), 'Negócio "' + nome + '" criado ✓. Abre o editor para começar do zero.', 'ok'); $('nNome').value=''; $('nSlug').value=''; $('nEmailDono').value=''; }
     carregar();
   }
 
