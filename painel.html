@@ -214,10 +214,10 @@
   // Secções do editor que o dono pode ver (o admin liga/desliga por negócio).
   // Publicidade e Limpeza NÃO estão aqui — são sempre só do admin.
   const EDITOR_SECS_GRUPOS = [
-    ['🎨 Aparência', [ ['secLayout','Layout, cores e modelo'], ['secHeader','Cabeçalho'], ['secRodape','Rodapé (barra fixa)'], ['secFooter','Rodapé final'], ['secAbertura','Ecrã de abertura'] ]],
+    ['🎨 Aparência', [ ['secLayout','Layout, cores e modelo'], ['secHeader','Cabeçalho'], ['secRodape','Rodapé (barra fixa)'], ['secAbertura','Ecrã de abertura'] ]],
     ['🧾 Menu', [ ['secMenu','Menu (itens e preços)'] ]],
     ['🧩 Mosaico', [ ['secMosaico','Mosaico (caixas)'] ]],
-    ['⚙️ Extras', [ ['secJogos','Jogos'], ['secExtras','Decoração e fidelidade'], ['secAgenda','Agenda / Reservas'], ['secTextoLivre','Texto livre'], ['secCarrinho','Carrinho'], ['secIconesTopo','Ícones do topo'], ['secRedes','Redes sociais'] ]],
+    ['⚙️ Extras', [ ['secJogos','Jogos'], ['secExtras','Decoração e fidelidade'], ['secAgenda','Agenda / Reservas'], ['secTextoLivre','Texto livre'], ['secCarrinho','Carrinho'], ['secFooter','Rodapé final (scroll)'], ['secIconesTopo','Ícones do topo'], ['secRedes','Redes sociais'] ]],
     ['📣 Publicidade', [ ['secPreAbertura','Pré-abertura'] ]],
     ['🔗 Partilha / QR', [ ['secPartilha','Partilhar / QR'] ]]
   ];
@@ -402,7 +402,7 @@
     if(!nome || !slug){ msg($('criarMsg'),'Preenche o nome e o slug.','erro'); return; }
     $('btnCriar').disabled = true;
     // Folha em branco: menu vazio e config mínima (só o nome). O dono constrói tudo no editor.
-    const config = { header:{ titulo:nome, subtitulo:'', cor:'#ffffff', realce:true, fotosAtivas:true, fotos:[] } };
+    const config = { header:{ titulo:nome, subtitulo:'', cor:'#ffffff', realce:true, fotosAtivas:true, fotos:[] }, footer:{ mostrar:false } };
     const menu = { restaurante:'', categorias:[] };
     const { data:neg, error } = await sb.from('negocios').insert({ nome:nome, slug:slug, dono_email:emailDono || null, config:config, menu:menu }).select().single();
     if(error){ $('btnCriar').disabled = false; msg($('criarMsg'), 'Erro: ' + error.message, 'erro'); return; }
