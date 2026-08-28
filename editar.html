@@ -1822,6 +1822,8 @@ amesadigital.pt</textarea>
     renderQR();
     window.__renderQR = renderQR;
     window.__setQRPos = function(a, r){ _qrPos.amesa = a || null; _qrPos.rodape = r || null; };
+    window.__getQRPos = function(){ return { amesa: _qrPos.amesa, rodape: _qrPos.rodape }; };
+    window.__lerQR = _lerQR;
     window.__reporQRPos = function(){ _qrPos.amesa = null; _qrPos.rodape = null; _comporQR(); if(window.__agendarPreview) window.__agendarPreview(); };
     // Arrastar o QR do amesadigital e o texto do rodapé na pré-visualização
     (function(){
@@ -3490,7 +3492,7 @@ amesadigital.pt</textarea>
         if(isNaN(config.agenda.sinalPercent)) config.agenda.sinalPercent = 50;
       }
       config.layout = layoutSelecionado;
-      try{ config.qr = _lerQR(); config.qr.amesaPos = _qrPos.amesa || null; config.qr.rodapePos = _qrPos.rodape || null; }catch(e){}
+      try{ if(window.__lerQR){ config.qr = window.__lerQR(); var _qp = (window.__getQRPos ? window.__getQRPos() : {}); config.qr.amesaPos = _qp.amesa || null; config.qr.rodapePos = _qp.rodape || null; } }catch(e){ console.warn('QR save falhou', e); }
       return config;
   }
 
