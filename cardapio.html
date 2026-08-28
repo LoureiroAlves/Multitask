@@ -389,6 +389,8 @@
   /* Quando há fundo (textura/degradê/imagem), a caixa dos separadores fica transparente para o fundo preencher a página toda */
   body.fundo-visivel{ background-color:var(--bege-claro); }
   body.fundo-visivel .categoria-grid{ background:transparent; border-bottom:none; }
+  /* Grelha dentro de uma pasta (Take Away…): transparente, para o fundo/estilo do modelo aparecer como numa categoria */
+  .folder-grid{ background:transparent !important; border-bottom:none !important; padding:8px 12px 20px; }
   /* Imagem de fundo: camada dedicada, fixa ao ecrã, isolada na GPU (evita strobe/frames a preto no scroll do iOS) */
   #fundoFoto{ position:fixed; top:0; left:0; width:100%; height:calc(100vh + 160px); height:calc(100lvh + 160px); z-index:-1; display:none; overflow:hidden; pointer-events:none; }
   body.fundo-imagem #fundoFoto{ display:block; }
@@ -3044,7 +3046,8 @@
     const _folderIds = {}; _cats.forEach(function(c){ if(c && c.contentor && c.id) _folderIds[c.id] = true; });
     const _ehFilho = function(c){ return !!(c && c.pai && _folderIds[c.pai]); };
     const _filhosDe = function(fid){ return _cats.filter(function(c){ return c && c.pai === fid && !c.contentor; }); };
-    menu.categorias.forEach(cat => {
+    // Constrói o botão (tile) de uma categoria — usado no menu principal E dentro das pastas (mesmo aspeto do layout)
+    function _mTile(cat){
       const btn = document.createElement('button');
       btn.className = 'tile tile-espera'; btn.type = 'button';
       btn.setAttribute('data-target', cat.id);
@@ -3052,7 +3055,6 @@
       const label = document.createElement('span'); label.className='tile-label'; _mLang(label, cat.tile);
       btn.appendChild(emoji); btn.appendChild(label);
       if(cat.cor){ btn.style.setProperty('--cat-cor', cat.cor); btn.dataset.cor = cat.cor; }
-      // Néon por secção: contorno da caixa e/ou letras (individuais) + cor + piscar
       var _nBox = (cat.neonCaixa !== undefined) ? !!cat.neonCaixa : !!cat.neonOn;
       var _nTxt = (cat.neonTexto !== undefined) ? !!cat.neonTexto : !!cat.neonOn;
       if(_nBox || _nTxt){
@@ -3067,9 +3069,14 @@
         if(et){
           if(et.cor){ btn.classList.add('tile-cor-txt'); btn.style.setProperty('--tile-txt', et.cor); label.style.color = et.cor; }
           if(et.tamanho){ label.style.fontSize = et.tamanho + 'rem'; }
-          if(et.negrito){ label.style.fontWeight = '800'; }
-          if(et.italico){ label.style.fontStyle = 'italic'; }
+          if(et.negrito){ btn.querySelector('.tile-label').style.fontWeight = '800'; }
+          if(et.italico){ btn.querySelector('.tile-label').style.fontStyle = 'italic'; }
         } }
+      return btn;
+    }
+    window.__mTilePasta = _mTile;
+    menu.categorias.forEach(cat => {
+      const btn = _mTile(cat);
       if(cat.ocultarMenu){ btn.classList.add('tile-oculto'); }
       // Categoria dentro de uma pasta: não aparece como tile de topo (só dentro da pasta), mas fica no DOM para abrir
       if(_ehFilho(cat)){ btn.classList.add('tile-oculto', 'tile-filho'); }
@@ -3105,17 +3112,14 @@
         }
       }
       if(cat.contentor){
-        // Pasta (ex.: Take Away): o painel mostra as categorias lá dentro; tocar numa abre o menu dela
-        const _wrap = document.createElement('div'); _wrap.className = 'cat-filhos';
+        // Pasta (ex.: Take Away): mostra as categorias lá dentro como tiles reais, para seguirem o layout do modelo
+        const _wrap = document.createElement('div'); _wrap.className = 'categoria-grid folder-grid';
         _filhosDe(cat.id).forEach(function(fc){
-          const fb = document.createElement('button'); fb.type = 'button'; fb.className = 'cat-filho-btn'; fb.setAttribute('data-target', fc.id);
-          if(fc.cor){ fb.style.setProperty('--cat-cor', fc.cor); fb.dataset.cor = fc.cor; }
-          if(fc.foto){ fb.classList.add('tem-foto'); const _fim = document.createElement('img'); _fim.className = 'cf-img'; _fim.src = fc.foto; _fim.alt = ''; _fim.decoding = 'async'; const _fsh = document.createElement('span'); _fsh.className = 'cf-shade'; fb.appendChild(_fim); fb.appendChild(_fsh); }
-          const fe = document.createElement('span'); fe.className = 'cat-filho-emoji'; fe.textContent = fc.emoji || '';
-          const fl = document.createElement('span'); fl.className = 'cat-filho-label'; _mLang(fl, fc.tile);
-          fb.appendChild(fe); fb.appendChild(fl); _wrap.appendChild(fb);
+          const ft = _mTile(fc);
+          ft.classList.remove('tile-espera');   // dentro da pasta não há a animação de entrada por tile
+          _wrap.appendChild(ft);
         });
-        if(!_wrap.querySelector('.cat-filho-btn')){ const _v = document.createElement('div'); _v.className = 'subtitulo'; _v.style.textAlign = 'center'; _v.textContent = '(vazio)'; _wrap.appendChild(_v); }
+        if(!_wrap.querySelector('.tile')){ const _v = document.createElement('div'); _v.className = 'subtitulo'; _v.style.textAlign = 'center'; _v.style.padding = '14px'; _v.textContent = '(pasta vazia)'; _wrap.appendChild(_v); }
         sec.appendChild(_wrap);
         if(jogosSec) main.insertBefore(sec, jogosSec); else main.appendChild(sec);
         return;
@@ -3527,14 +3531,13 @@
     _origemCentro();
   }
 
-  // Dentro de uma pasta: tocar numa categoria fecha a pasta (animação) e abre o menu dela (animação)
+  // Dentro de uma pasta: tocar numa categoria (tile) abre-a com a mesma animação de uma categoria normal
   document.addEventListener('click', function(e){
-    var fb = (e.target && e.target.closest) ? e.target.closest('.cat-filho-btn') : null;
-    if(!fb || !fb.dataset.target) return;
-    var childTile = document.querySelector('.tile[data-target="' + fb.dataset.target.replace(/"/g,'\\"') + '"]');
-    if(childTile){
+    var childTile = (e.target && e.target.closest) ? e.target.closest('.folder-grid .tile[data-target]') : null;
+    if(!childTile || !childTile.dataset.target) return;
+    {
       // guarda a pasta de origem, para o "voltar" regressar a ela (e não ao menu principal)
-      var folderSec = fb.closest('section.categoria');
+      var folderSec = childTile.closest('section.categoria');
       window.__pastaVoltar = folderSec ? folderSec.id : null;
       // cabeçalho: o botão voltar passa a indicar a pasta (ex.: "‹ Take Away")
       if(folderSec){
