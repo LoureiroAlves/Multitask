@@ -320,6 +320,10 @@ amesadigital.pt</textarea>
             <label style="margin:0; font-size:.82rem; color:var(--castanho-suave);"><input type="checkbox" id="qrRodapeB" style="width:auto;"> Negrito</label>
             <label style="margin:0; font-size:.82rem; color:var(--castanho-suave);"><input type="checkbox" id="qrRodapeI" style="width:auto;"> Itálico</label>
           </div>
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; margin-top:10px;">
+            <span style="font-size:.8rem; color:var(--castanho-suave);">💡 Arrasta o QR do amesadigital e o texto do rodapé na pré-visualização para os reposicionares.</span>
+            <button type="button" id="qrReporPos" class="mv-mini">repor posições</button>
+          </div>
         </div>
       </details>
     </div>
@@ -1726,10 +1730,11 @@ amesadigital.pt</textarea>
         rodapeCor: v('qrRodapeCor','#4a3820') || '#4a3820', rodapeTam: n('qrRodapeTam', 15), rodapeB: c('qrRodapeB', false), rodapeI: c('qrRodapeI', false)
       };
     }
+    var _qrCache = { i1: null, i2: null };
+    var _qrPos = { amesa: null, rodape: null };   // posições arrastadas (fração do canto sup. esq., de W e H)
     function renderQR(){
       if(!qrBox || !window.QRCode) return;
       const opt = _lerQR();
-      const nome = opt.textoNome || (document.getElementById('titulo') ? document.getElementById('titulo').value : '').trim();
       const tmp = document.createElement('div');
       const tmp2 = document.createElement('div');
       try{
@@ -1741,7 +1746,15 @@ amesadigital.pt</textarea>
         const src2 = tmp2.querySelector('canvas') || tmp2.querySelector('img');
         if(!src) return;
         const toImg = function(s, cb){ if(!s){ cb(null); return; } if(s.tagName === 'CANVAS'){ cb(s); } else { const im = new Image(); im.onload = function(){ cb(im); }; im.src = s.src; } };
-        toImg(src, function(i1){ toImg(src2, function(i2){
+        toImg(src, function(i1){ toImg(src2, function(i2){ _qrCache.i1 = i1; _qrCache.i2 = i2; _comporQR(); }); });
+      }, 90);
+    }
+    function _comporQR(){
+        if(!qrBox || !_qrCache.i1) return;
+        const i1 = _qrCache.i1, i2 = _qrCache.i2;
+        const opt = _lerQR();
+        const nome = opt.textoNome || (document.getElementById('titulo') ? document.getElementById('titulo').value : '').trim();
+        (function(){
           const S = QR_LADO;
           const _rodLinhas = (opt.rodape || '').split('\n');
           while(_rodLinhas.length && !_rodLinhas[_rodLinhas.length - 1].trim()) _rodLinhas.pop();
@@ -1788,21 +1801,57 @@ amesadigital.pt</textarea>
           const _fy = QY + S;
           ctx.strokeStyle = 'rgba(74,56,32,.16)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(P + 4, _fy + 8); ctx.lineTo(P + S - 4, _fy + 8); ctx.stroke();
           const qs = Math.min(footH - 20, 66);               // QR do amesadigital
-          const qx = P + S - qs, qy = _fy + (footH - qs) / 2 + 4;
-          if(i2){ ctx.drawImage(i2, qx, qy, qs, qs); }
-          // rodapé (cada linha = um parágrafo), centrado na vertical
+          const amX = _qrPos.amesa ? _qrPos.amesa.x * W : (P + S - qs);
+          const amY = _qrPos.amesa ? _qrPos.amesa.y * H : (_fy + (footH - qs) / 2 + 4);
+          if(i2){ ctx.drawImage(i2, amX, amY, qs, qs); }
+          // rodapé (cada linha = um parágrafo)
           ctx.fillStyle = opt.rodapeCor; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
           ctx.font = _qrFont(opt, opt.rodapeTam, opt.rodapeB, opt.rodapeI);
-          const _tx = P + 2;
-          let _ly = _fy + (footH - _rodLinhas.length * _rodLH) / 2 + _rodLH / 2 + 3;
-          _rodLinhas.forEach(function(l){ if(l.trim()) ctx.fillText(l, _tx, _ly); _ly += _rodLH; });
+          let _txw = 0; _rodLinhas.forEach(function(l){ if(l.trim()) _txw = Math.max(_txw, ctx.measureText(l).width); });
+          const _blockH = _rodLinhas.length * _rodLH;
+          const rdX = _qrPos.rodape ? _qrPos.rodape.x * W : (P + 2);
+          const rdTop = _qrPos.rodape ? _qrPos.rodape.y * H : (_fy + (footH - _blockH) / 2);
+          let _ly = rdTop + _rodLH / 2 + 1;
+          _rodLinhas.forEach(function(l){ if(l.trim()) ctx.fillText(l, rdX, _ly); _ly += _rodLH; });
+          cv._boxes = { amesa: { x: amX, y: amY, w: qs, h: qs }, rodape: { x: rdX, y: rdTop, w: (_txw || 60), h: _blockH } };
+          cv._dims = { W: W, H: H };
           cv.style.width = '220px'; cv.style.height = (220 * (cv.height / cv.width)) + 'px';
           qrBox.innerHTML = ''; qrBox.appendChild(cv); qrCanvas = cv;
-        }); });
-      }, 90);
+        })();
     }
     renderQR();
     window.__renderQR = renderQR;
+    window.__setQRPos = function(a, r){ _qrPos.amesa = a || null; _qrPos.rodape = r || null; };
+    window.__reporQRPos = function(){ _qrPos.amesa = null; _qrPos.rodape = null; _comporQR(); if(window.__agendarPreview) window.__agendarPreview(); };
+    // Arrastar o QR do amesadigital e o texto do rodapé na pré-visualização
+    (function(){
+      if(!qrBox) return;
+      var drag = null;
+      var _pt = function(e){ var cv = qrCanvas; var r = cv.getBoundingClientRect(); var sx = cv.width / r.width; return { x: (e.clientX - r.left) * sx, y: (e.clientY - r.top) * sx }; };
+      var _dentro = function(p, b, m){ return p.x >= b.x - m && p.x <= b.x + b.w + m && p.y >= b.y - m && p.y <= b.y + b.h + m; };
+      qrBox.style.touchAction = 'none';
+      qrBox.addEventListener('pointerdown', function(e){
+        var cv = qrCanvas; if(!cv || !cv._boxes) return;
+        var p = _pt(e); var b = cv._boxes; var hit = null;
+        if(_dentro(p, b.amesa, 8)) hit = 'amesa';
+        else if(_dentro(p, b.rodape, 8)) hit = 'rodape';
+        if(!hit) return;
+        e.preventDefault(); drag = { hit: hit, ox: p.x - b[hit].x, oy: p.y - b[hit].y };
+        try{ qrBox.setPointerCapture(e.pointerId); }catch(_){}
+        qrBox.style.cursor = 'grabbing';
+      });
+      qrBox.addEventListener('pointermove', function(e){
+        var cv = qrCanvas;
+        if(!drag){ if(cv && cv._boxes){ var pp = _pt(e); qrBox.style.cursor = (_dentro(pp, cv._boxes.amesa, 6) || _dentro(pp, cv._boxes.rodape, 6)) ? 'grab' : ''; } return; }
+        if(!cv || !cv._dims) return;
+        var p = _pt(e); var nx = p.x - drag.ox, ny = p.y - drag.oy;
+        nx = Math.max(4, Math.min(cv._dims.W - 20, nx)); ny = Math.max(4, Math.min(cv._dims.H - 20, ny));
+        _qrPos[drag.hit] = { x: nx / cv._dims.W, y: ny / cv._dims.H };
+        _comporQR();
+      });
+      var _end = function(){ if(drag){ drag = null; qrBox.style.cursor = ''; try{ if(window.__agendarPreview) window.__agendarPreview(); }catch(e){} } };
+      qrBox.addEventListener('pointerup', _end); qrBox.addEventListener('pointercancel', _end);
+    })();
     const _tit = document.getElementById('titulo');
     if(_tit){ let _qt; _tit.addEventListener('input', function(){ clearTimeout(_qt); _qt = setTimeout(renderQR, 400); }); }
     // Controlos de personalização do QR: pré-visualização em direto
@@ -1818,6 +1867,8 @@ amesadigital.pt</textarea>
       });
       _syncMold();
       window.__syncQRMold = _syncMold;
+      var _rp = document.getElementById('qrReporPos');
+      if(_rp) _rp.addEventListener('click', function(){ if(window.__reporQRPos) window.__reporQRPos(); });
     })();
     const btnCopiar = document.getElementById('btnCopiarLink');
     if(btnCopiar) btnCopiar.addEventListener('click', function(){
@@ -2156,6 +2207,7 @@ amesadigital.pt</textarea>
         if(_q.nomeCor) _set('qrNomeCor', _q.nomeCor); if(_q.nomeTam != null) _set('qrNomeTam', _q.nomeTam); if('nomeB' in _q) _setc('qrNomeB', _q.nomeB); if('nomeI' in _q) _setc('qrNomeI', _q.nomeI);
         if(_q.rodape != null) _set('qrRodape', _q.rodape); else if(_q.rodape1 != null || _q.rodape2 != null) _set('qrRodape', ((_q.rodape1 || '') + '\n' + (_q.rodape2 || '')).replace(/^\n|\n$/g,''));
         if(_q.rodapeCor) _set('qrRodapeCor', _q.rodapeCor); if(_q.rodapeTam != null) _set('qrRodapeTam', _q.rodapeTam); if('rodapeB' in _q) _setc('qrRodapeB', _q.rodapeB); if('rodapeI' in _q) _setc('qrRodapeI', _q.rodapeI);
+        try{ if(window.__setQRPos) window.__setQRPos(_q.amesaPos || null, _q.rodapePos || null); }catch(e){}
         if(window.__syncQRMold) window.__syncQRMold();
         if(window.__renderQR) window.__renderQR();
       }catch(e){}
@@ -3438,7 +3490,7 @@ amesadigital.pt</textarea>
         if(isNaN(config.agenda.sinalPercent)) config.agenda.sinalPercent = 50;
       }
       config.layout = layoutSelecionado;
-      try{ config.qr = _lerQR(); }catch(e){}
+      try{ config.qr = _lerQR(); config.qr.amesaPos = _qrPos.amesa || null; config.qr.rodapePos = _qrPos.rodape || null; }catch(e){}
       return config;
   }
 
