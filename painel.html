@@ -311,7 +311,8 @@
     const { data:negsRaw, error } = await sb.from('negocios').select('*').order('criado_em', { ascending:false });
     if(error){ $('lista').innerHTML = '<div class="msg erro">Erro a carregar: ' + error.message + '</div>'; return; }
     // separar a linha reservada da publicidade dos negócios reais
-    const negs = (negsRaw||[]).filter(function(n){ return n.slug !== AMESA_SLUG; });
+    const negs = (negsRaw||[]).filter(function(n){ return n.slug !== AMESA_SLUG; })
+      .sort(function(a, b){ return String(a.nome || a.slug || '').localeCompare(String(b.nome || b.slug || ''), 'pt', { sensitivity:'base' }); });
     NEGS_VIS = negs;
     { const _amesa = (negsRaw||[]).find(function(n){ return n.slug === AMESA_SLUG; });
       const _acfg = (_amesa && _amesa.config) || {};
