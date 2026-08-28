@@ -1648,8 +1648,8 @@
       const tmp = document.createElement('div');
       const tmp2 = document.createElement('div');
       try{
-        new QRCode(tmp, { text: CARDAPIO_URL, width: QR_LADO, height: QR_LADO, colorDark: QR_COR, colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.H });
-        new QRCode(tmp2, { text: AMESA_URL, width: 120, height: 120, colorDark: QR_COR, colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.H });
+        new QRCode(tmp, { text: CARDAPIO_URL, width: QR_LADO, height: QR_LADO, colorDark: '#000000', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.H });
+        new QRCode(tmp2, { text: AMESA_URL, width: 170, height: 170, colorDark: '#000000', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.H });
       }catch(e){ return; }
       setTimeout(function(){
         const src = tmp.querySelector('canvas') || tmp.querySelector('img');
@@ -1658,7 +1658,7 @@
         const toImg = function(s, cb){ if(!s){ cb(null); return; } if(s.tagName === 'CANVAS'){ cb(s); } else { const im = new Image(); im.onload = function(){ cb(im); }; im.src = s.src; } };
         toImg(src, function(i1){ toImg(src2, function(i2){
           const S = QR_LADO;
-          const footH = 66;                                  // faixa "em parceria com o ÀMesa"
+          const footH = 86;                                  // faixa "Parte da rede amesadigital.pt"
           const cv = document.createElement('canvas'); cv.width = S; cv.height = S + footH;
           const ctx = cv.getContext('2d');
           ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, cv.width, cv.height);
@@ -1670,14 +1670,18 @@
             _desenharNome(ctx, nome, S / 2, S / 2, bw - 16, bh - 10);
           }
           // faixa de parceria por baixo do QR
-          ctx.strokeStyle = 'rgba(74,56,32,.18)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(12, S + 3.5); ctx.lineTo(S - 12, S + 3.5); ctx.stroke();
-          const qs = footH - 18;                             // QR pequeno do amesadigital
+          ctx.strokeStyle = 'rgba(74,56,32,.18)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(12, S + 4); ctx.lineTo(S - 12, S + 4); ctx.stroke();
+          const qs = footH - 22;                             // QR do amesadigital (maior)
           const qx = S - qs - 12, qy = S + (footH - qs) / 2 + 2;
           if(i2){ ctx.drawImage(i2, qx, qy, qs, qs); }
-          ctx.fillStyle = QR_COR; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-          ctx.font = '600 13px "Fredoka","Poppins",sans-serif';
-          ctx.fillText('em parceria com o ÀMesa', 14, S + footH / 2 + 2);
-          cv.style.width = '200px'; cv.style.height = (200 * (cv.height / cv.width)) + 'px';
+          const _tx = 16, _ty = S + footH / 2 + 2;
+          ctx.fillStyle = QR_COR; ctx.textAlign = 'left';
+          ctx.textBaseline = 'alphabetic';
+          ctx.font = '600 15px "Fredoka","Poppins",sans-serif';
+          ctx.fillText('Parte da rede', _tx, _ty - 5);
+          ctx.font = '700 16px "Fredoka","Poppins",sans-serif';
+          ctx.fillText('amesadigital.pt', _tx, _ty + 16);
+          cv.style.width = '210px'; cv.style.height = (210 * (cv.height / cv.width)) + 'px';
           qrBox.innerHTML = ''; qrBox.appendChild(cv); qrCanvas = cv;
         }); });
       }, 90);
