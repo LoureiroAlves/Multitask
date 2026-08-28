@@ -3512,7 +3512,22 @@
     if(tile){ window.__pastaVoltar = null; abrirCategoria(tile); }   // tile de topo: o "voltar" regressa ao menu
   });
 
-  // Dentro de uma pasta: tocar numa categoria abre o menu dela (usa o tile oculto correspondente)
+  // Centra a origem da animação (os tiles-filho estão ocultos, com rect 0,0)
+  function _origemCentro(){ painel.style.setProperty('--origin-x', (window.innerWidth / 2) + 'px'); painel.style.setProperty('--origin-y', (window.innerHeight / 2) + 'px'); }
+  // Duração aproximada da animação de fecho (para encadear fecho→abertura com o mesmo efeito)
+  function _durFecho(){
+    if(document.body.classList.contains('abrir-wipe') && window.__playWipe && window.__wipeCfg && !(window.__wipeCfg.sairNormal)){
+      return Math.max(0.4, Math.min(3, parseFloat((window.__wipeCfg && window.__wipeCfg.duracao)) || 1.1)) * 1000 + 60;
+    }
+    return 500;
+  }
+  // Fecha a secção atual (com animação) e, ao terminar, abre outra (com animação) — mesmo efeito de entrada/saída
+  function _trocarComAnimacao(tile){
+    fecharCategoria();
+    setTimeout(function(){ if(tile){ abrirCategoria(tile); _origemCentro(); } }, _durFecho());
+  }
+
+  // Dentro de uma pasta: tocar numa categoria fecha a pasta (animação) e abre o menu dela (animação)
   document.addEventListener('click', function(e){
     var fb = (e.target && e.target.closest) ? e.target.closest('.cat-filho-btn') : null;
     if(!fb || !fb.dataset.target) return;
@@ -3521,19 +3536,16 @@
       // guarda a pasta de origem, para o "voltar" regressar a ela (e não ao menu principal)
       var folderSec = fb.closest('section.categoria');
       window.__pastaVoltar = folderSec ? folderSec.id : null;
-      abrirCategoria(childTile);
-      // o tile-filho está oculto (rect 0,0); centra a origem da animação
-      painel.style.setProperty('--origin-x', (window.innerWidth / 2) + 'px');
-      painel.style.setProperty('--origin-y', (window.innerHeight / 2) + 'px');
+      _trocarComAnimacao(childTile);
     }
   });
 
-  // "Voltar": se viemos de uma pasta, reabre a pasta; senão fecha para o menu principal
+  // "Voltar": se viemos de uma pasta, fecha a categoria (animação) e reabre a pasta (animação); senão fecha para o menu
   function voltarCategoria(){
     if(window.__pastaVoltar){
       var fid = window.__pastaVoltar; window.__pastaVoltar = null;
       var ftile = document.querySelector('.tile[data-target="' + String(fid).replace(/"/g,'\\"') + '"]');
-      if(ftile){ abrirCategoria(ftile); painel.style.setProperty('--origin-x', (window.innerWidth / 2) + 'px'); painel.style.setProperty('--origin-y', (window.innerHeight / 2) + 'px'); return; }
+      if(ftile){ _trocarComAnimacao(ftile); return; }
     }
     fecharCategoria();
   }
