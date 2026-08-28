@@ -162,6 +162,7 @@
   .ed-subitem.ed-pasta{ font-weight:800; }
   .ed-subitem.a-arrastar{ opacity:.45; }
   .ed-subitem.ed-pasta.drop-hover{ outline:2px dashed var(--dourado); outline-offset:-2px; background:var(--bege); color:var(--castanho); }
+  .ed-drag-ghost{ position:fixed; z-index:99999; pointer-events:none; background:var(--castanho); color:#fff; font-size:.8rem; font-weight:700; padding:6px 10px; border-radius:8px; box-shadow:0 5px 16px rgba(0,0,0,.32); opacity:.94; max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   /* Conteúdo central: mostra só a secção ativa, em grande */
   .ed-conteudo{ flex:1; min-width:0; }
   .grupo{ margin:0 !important; border:none !important; background:transparent !important; overflow:visible; }
@@ -5219,14 +5220,53 @@
       menuListEl.appendChild(tools);
       var cats = (window.__edMenuCats && window.__edMenuCats()) || [];
       var folderIds = {}; cats.forEach(function(c){ if(c.contentor && c.id) folderIds[c.id] = true; });
-      // sub-item de categoria arrastável
+      // Arrasto próprio (pointer) — mais fiável que o drag-and-drop nativo em <button>
+      function _limparHover(){ menuListEl.querySelectorAll('.ed-pasta.drop-hover').forEach(function(p){ p.classList.remove('drop-hover'); }); }
+      function tornarArrastavel(b, ci){
+        b.addEventListener('pointerdown', function(ev){
+          if(ev.button != null && ev.button !== 0) return;
+          var sx = ev.clientX, sy = ev.clientY, moving = false, ghost = null;
+          function mv(e){
+            if(!moving && (Math.abs(e.clientX - sx) > 6 || Math.abs(e.clientY - sy) > 6)){
+              moving = true; b.classList.add('a-arrastar'); document.body.style.userSelect = 'none';
+              ghost = document.createElement('div'); ghost.className = 'ed-drag-ghost'; ghost.textContent = (b.textContent || '').replace(/^↳\s*/, '');
+              document.body.appendChild(ghost);
+            }
+            if(moving){
+              ghost.style.left = (e.clientX + 12) + 'px'; ghost.style.top = (e.clientY + 8) + 'px';
+              _limparHover();
+              var el = document.elementFromPoint(e.clientX, e.clientY);
+              var pasta = el && el.closest ? el.closest('.ed-pasta') : null;
+              if(pasta) pasta.classList.add('drop-hover');
+            }
+          }
+          function up(e){
+            document.removeEventListener('pointermove', mv); document.removeEventListener('pointerup', up);
+            document.body.style.userSelect = '';
+            if(ghost) ghost.remove();
+            b.classList.remove('a-arrastar');
+            if(moving){
+              var el = document.elementFromPoint(e.clientX, e.clientY);
+              var pasta = el && el.closest ? el.closest('.ed-pasta') : null;
+              _limparHover();
+              if(pasta && pasta.__folderId){
+                var cat = menuData.categorias[ci];
+                if(cat && !cat.contentor){ cat.pai = pasta.__folderId; renderEditor(); window.__edBuildMenuSub(); }
+              }
+              b.__suprimirClick = true; setTimeout(function(){ b.__suprimirClick = false; }, 60);
+            }
+          }
+          document.addEventListener('pointermove', mv); document.addEventListener('pointerup', up);
+        });
+        // evita que o "click" a seguir a um arrasto abra a categoria
+        b.addEventListener('click', function(e){ if(b.__suprimirClick){ e.stopImmediatePropagation(); e.preventDefault(); } }, true);
+      }
       function mkCatItem(c, dentro){
         var b = mkSub((dentro?'↳ ':'') + (c.nome || '(sem título)'), function(){ if(window.__edAbrirCat) window.__edAbrirCat(c.ci); abrirSec('secMenu', true); _limparMenuOn(); b.classList.add('on'); });
         if(c.aberta) b.classList.add('on');
         if(dentro) b.style.paddingLeft = '26px';
-        b.setAttribute('draggable', 'true');
-        b.addEventListener('dragstart', function(ev){ try{ ev.dataTransfer.setData('text/plain', String(c.ci)); ev.dataTransfer.effectAllowed = 'move'; }catch(e){} b.classList.add('a-arrastar'); });
-        b.addEventListener('dragend', function(){ b.classList.remove('a-arrastar'); });
+        b.style.touchAction = 'none';
+        tornarArrastavel(b, c.ci);
         return b;
       }
       cats.forEach(function(c){
@@ -5235,9 +5275,7 @@
           var f = mkSub('📦 ' + (c.nome || 'Pasta'), function(){ if(window.__edAbrirCat) window.__edAbrirCat(c.ci); abrirSec('secMenu', true); _limparMenuOn(); f.classList.add('on'); });
           if(c.aberta) f.classList.add('on');
           f.classList.add('ed-pasta');
-          f.addEventListener('dragover', function(ev){ ev.preventDefault(); try{ ev.dataTransfer.dropEffect = 'move'; }catch(e){} f.classList.add('drop-hover'); });
-          f.addEventListener('dragleave', function(){ f.classList.remove('drop-hover'); });
-          f.addEventListener('drop', function(ev){ ev.preventDefault(); f.classList.remove('drop-hover'); var ci = parseInt(ev.dataTransfer.getData('text/plain'), 10); var cat = menuData.categorias[ci]; if(cat && !cat.contentor && c.id){ cat.pai = c.id; renderEditor(); window.__edBuildMenuSub(); } });
+          f.__folderId = c.id;
           menuListEl.appendChild(f);
           cats.filter(function(x){ return x.pai === c.id; }).forEach(function(x){ menuListEl.appendChild(mkCatItem(x, true)); });
         } else {
