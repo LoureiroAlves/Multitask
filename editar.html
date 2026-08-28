@@ -4208,6 +4208,19 @@
         return p;
       }
 
+      // Meter/tirar esta categoria de uma pasta (alternativa ao arrasto, sempre fiável)
+      { const pastas = menuData.categorias.filter(function(x){ return x.contentor && x.id; });
+        if(pastas.length){
+          const pRow=document.createElement('div'); pRow.style.cssText='display:flex; align-items:center; gap:8px; margin:0 0 10px; font-size:0.82rem; color:var(--castanho-suave); flex-wrap:wrap;';
+          pRow.appendChild(document.createTextNode('📦 Dentro da pasta:'));
+          const psel=document.createElement('select'); psel.style.cssText='padding:7px 10px; border-radius:9px; border:1.5px solid var(--linha); background:var(--branco); font-family:inherit; color:var(--castanho);';
+          const o0=document.createElement('option'); o0.value=''; o0.textContent='— nenhuma (solta no menu) —'; psel.appendChild(o0);
+          pastas.forEach(function(pk){ const o=document.createElement('option'); o.value=pk.id; o.textContent=(pk.emoji?pk.emoji+' ':'')+((pk.tile&&pk.tile.pt)||'Pasta'); if(cat.pai===pk.id) o.selected=true; psel.appendChild(o); });
+          psel.addEventListener('change', function(){ if(psel.value){ cat.pai=psel.value; } else { delete cat.pai; } renderEditor(); try{ if(window.__edBuildMenuSub) window.__edBuildMenuSub(); }catch(e){} });
+          pRow.appendChild(psel); p.appendChild(pRow);
+        }
+      }
+
       const corRow=document.createElement('div'); corRow.style.cssText='display:flex; align-items:center; gap:8px; margin:0 0 10px; font-size:0.82rem; color:var(--castanho-suave); flex-wrap:wrap;';
       corRow.appendChild(document.createTextNode('Cor do cartão (modelo Carteira):'));
       const corIn=document.createElement('input'); corIn.type='color'; corIn.value=cat.cor||'#a8712f'; corIn.style.cssText='width:44px; height:30px; padding:0; border:none; background:none; cursor:pointer;';
