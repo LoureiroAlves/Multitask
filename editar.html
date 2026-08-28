@@ -264,7 +264,7 @@
       </div>
       <div style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;">
         <button type="button" id="btnAbrirCardapio" style="padding:9px 12px; border-radius:8px; border:1.5px solid var(--linha); background:var(--branco); color:var(--castanho); cursor:pointer;">Abrir cardápio</button>
-        <button type="button" id="btnDescarregarQR" style="padding:9px 12px; border-radius:8px; border:1.5px solid var(--linha); background:var(--branco); color:var(--castanho); cursor:pointer;">Descarregar QR (PNG)</button>
+        <button type="button" id="btnDescarregarQR" style="padding:9px 12px; border-radius:8px; border:1.5px solid var(--linha); background:var(--branco); color:var(--castanho); cursor:pointer;">Descarregar QR (JPG)</button>
       </div>
       <div id="qrCardapio" style="margin-top:14px; display:flex; justify-content:center; padding:14px; background:#fff; border:1.5px solid var(--linha); border-radius:12px;"></div>
     </div>
@@ -1668,6 +1668,7 @@
           const cB = _cores.castanho || QR_COR;
           const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
           const ctx = cv.getContext('2d');
+          ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, H);   // fundo branco (para o JPEG não ficar com cantos pretos)
           // cartão branco arredondado
           _roundRect(ctx, 0, 0, W, H, 30); ctx.fillStyle = '#ffffff'; ctx.fill();
           // moldura colorida (degradê das cores da marca)
@@ -1725,10 +1726,10 @@
       const cv = qrCanvas || qrBox.querySelector('canvas');
       const img = qrBox.querySelector('img');
       let dataUrl = '';
-      if(cv){ try{ dataUrl = cv.toDataURL('image/png'); }catch(e){} }
+      if(cv){ try{ dataUrl = cv.toDataURL('image/jpeg', 0.92); }catch(e){} }
       if(!dataUrl && img && img.src){ dataUrl = img.src; }
       if(!dataUrl){ alert('QR ainda não está pronto — tenta novamente daqui a um instante.'); return; }
-      const a = document.createElement('a'); a.href = dataUrl; a.download = 'qr-cardapio.png'; document.body.appendChild(a); a.click(); a.remove();
+      const a = document.createElement('a'); a.href = dataUrl; a.download = 'qr-cardapio.jpg'; document.body.appendChild(a); a.click(); a.remove();
     });
   })();
 
