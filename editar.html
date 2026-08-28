@@ -4186,9 +4186,10 @@
 
       // Secção-pasta (contentor, ex.: Take Away): não tem pratos, só agrupa outras categorias
       if(cat.contentor){
+        if(!cat.id || !String(cat.id).trim()){ cat.id = 'pasta-' + Date.now().toString(36); }
         const nota=document.createElement('div');
         nota.style.cssText='background:var(--bege); border:1px dashed var(--linha); border-radius:10px; padding:12px 14px; font-size:0.86rem; color:var(--castanho-suave); line-height:1.5;';
-        nota.innerHTML='📦 <b>Esta secção é uma pasta.</b><br>Não tem pratos próprios — serve para agrupar outras categorias lá dentro.<br>Na barra da esquerda, arrasta as categorias para cima desta pasta para as pores aqui dentro.';
+        nota.innerHTML='📦 <b>Esta secção é uma pasta.</b><br>Não tem pratos próprios — agrupa outras categorias lá dentro. Uma categoria que entra aqui <b>deixa de aparecer no menu principal</b> e passa a estar só dentro desta pasta (é reversível — tira quando quiseres).';
         p.appendChild(nota);
         const dentro = menuData.categorias.filter(function(x){ return x.pai === cat.id; });
         const lst=document.createElement('div'); lst.style.cssText='margin-top:10px; display:flex; flex-direction:column; gap:6px;';
@@ -4201,6 +4202,20 @@
           row.appendChild(nm); row.appendChild(out); lst.appendChild(row);
         });
         p.appendChild(lst);
+        // Adicionar uma categoria a esta pasta (categorias que ainda não estão cá dentro)
+        const foraDaqui = menuData.categorias.filter(function(x){ return !x.contentor && x.pai !== cat.id; });
+        const addRow=document.createElement('div'); addRow.style.cssText='display:flex; align-items:center; gap:8px; margin-top:10px; flex-wrap:wrap;';
+        if(foraDaqui.length){
+          const addSel=document.createElement('select'); addSel.style.cssText='flex:1; min-width:150px; padding:8px 10px; border-radius:9px; border:1.5px solid var(--linha); background:var(--branco); font-family:inherit; color:var(--castanho); font-weight:600;';
+          const o0=document.createElement('option'); o0.value=''; o0.textContent='＋ Adicionar categoria a esta pasta…'; addSel.appendChild(o0);
+          foraDaqui.forEach(function(sc){ const ci2=menuData.categorias.indexOf(sc); const o=document.createElement('option'); o.value=String(ci2); o.textContent=(sc.emoji?sc.emoji+' ':'')+((sc.tipo==='comida'&&sc.grupos&&sc.grupos[0]&&sc.grupos[0].summary&&sc.grupos[0].summary.pt)||(sc.tile&&sc.tile.pt)||'(sem título)')+(sc.pai?' (mover doutra pasta)':''); addSel.appendChild(o); });
+          addSel.addEventListener('change', function(){ const ci2=parseInt(addSel.value,10); if(!isNaN(ci2) && menuData.categorias[ci2]){ menuData.categorias[ci2].pai=cat.id; renderEditor(); try{ if(window.__edBuildMenuSub) window.__edBuildMenuSub(); }catch(e){} } });
+          addRow.appendChild(addSel);
+        } else {
+          const vazio=document.createElement('div'); vazio.style.cssText='font-size:0.82rem; color:var(--castanho-suave);'; vazio.textContent='(não há mais categorias para adicionar — cria categorias primeiro)';
+          addRow.appendChild(vazio);
+        }
+        p.appendChild(addRow);
         cat.tile=cat.tile||{pt:''};
         const trdF=document.createElement('details'); trdF.style.cssText='border:none;background:transparent;margin-top:10px;';
         const trsF=document.createElement('summary'); trsF.textContent='traduções do título'; trsF.style.cssText='font-size:0.75rem;color:var(--castanho-suave);';
