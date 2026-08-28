@@ -1584,6 +1584,9 @@
   .grupo-vinho .card-lista{margin-top:6px;}
 
   .vinho-tab-nome{ font-family:var(--fonte-titulo); font-weight:700; color:var(--castanho); margin:10px 0 0; text-align:center; }
+  .vinho-tab-head{ display:flex; align-items:center; justify-content:center; gap:10px; }
+  .vinho-tab-head .vinho-tab-nome{ margin:10px 0 0; }
+  .vinho-tab-head .btn-add-lista{ margin-top:10px; }
   .tabela-doses{width:100%; border-collapse:collapse; text-align:center; margin:4px 0;}
   .tabela-doses td{padding:6px 4px; font-size:0.85rem;}
   .tabela-doses .dose{color:var(--castanho-suave); font-size:0.78rem;}
@@ -2710,9 +2713,13 @@
     lista.className = 'card-lista';
     (g.itens||[]).forEach(it => {
       if(it.tabela){
-        if(it.foto){ const pf = document.createElement('img'); pf.className = 'vinho-tab-foto'; pf.src = (typeof RAW_BASE !== 'undefined' ? RAW_BASE : '') + it.foto; pf.alt = ''; pf.loading = 'lazy'; lista.appendChild(pf); }
-        if(it.nome && (it.nome.pt || it.nome.en || it.nome.fr || it.nome.es)){ const h = document.createElement('div'); h.className = 'vinho-tab-nome'; _mLang(h, it.nome); lista.appendChild(h); }
-        lista.appendChild(_mTabela(it.tabela));
+        const cont = document.createElement('div'); cont.className = 'item-doses';
+        if(it.foto){ const pf = document.createElement('img'); pf.className = 'vinho-tab-foto'; pf.src = (typeof RAW_BASE !== 'undefined' ? RAW_BASE : '') + it.foto; pf.alt = ''; pf.loading = 'lazy'; cont.appendChild(pf); }
+        const head = document.createElement('div'); head.className = 'vinho-tab-head';
+        if(it.nome && (it.nome.pt || it.nome.en || it.nome.fr || it.nome.es)){ const h = document.createElement('div'); h.className = 'vinho-tab-nome nome'; _mLang(h, it.nome); head.appendChild(h); }
+        cont.appendChild(head);
+        cont.appendChild(_mTabela(it.tabela));
+        lista.appendChild(cont);
       } else {
         lista.appendChild(_mItem(it));
       }
@@ -6917,7 +6924,10 @@
 
     // Devolve lista de opções [{label, preco}] se o item tiver vários tamanhos/doses; senão null
     function opcoesDoItem(item, precoEl){
-      const seg = item.nextElementSibling;
+      let seg = item.nextElementSibling;
+      if(!(seg && seg.classList && seg.classList.contains('tabela-doses'))){
+        seg = item.querySelector ? item.querySelector('.tabela-doses') : null;
+      }
       if(seg && seg.classList && seg.classList.contains('tabela-doses')){
         const doses = Array.from(seg.querySelectorAll('.dose')).map(td => td.textContent.trim());
         const precos = Array.from(seg.querySelectorAll('.preco-dose')).map(td => td.textContent.trim());
@@ -6981,6 +6991,32 @@
           }
         });
         item.appendChild(btn);
+      });
+      // Pratos/bebidas com tabela de doses (meia dose / dose): botão "+" junto ao nome
+      document.querySelectorAll('main .item-doses').forEach(cont => {
+        if(cont.closest('#jogos')) return;
+        const head = cont.querySelector('.vinho-tab-head');
+        const nomeEl = cont.querySelector('.nome');
+        const _existe = cont.querySelector('.btn-add-lista');
+        if(!_ativo){ if(_existe) _existe.remove(); return; }
+        if(!head || !nomeEl) return;
+        if(_existe) return;
+        const btn = document.createElement('button');
+        btn.className = 'btn-add-lista';
+        btn.type = 'button';
+        btn.textContent = '+';
+        btn.setAttribute('aria-label','Adicionar à lista');
+        btn.addEventListener('click', e => {
+          e.stopPropagation();
+          const ops = opcoesDoItem(cont, null);
+          if(ops && ops.length){
+            abrirEscolha(nomeEl.textContent.trim(), ops, btn);
+          } else {
+            adicionarALista(nomeEl.textContent.trim(), '');
+            feedbackBtn(btn);
+          }
+        });
+        head.appendChild(btn);
       });
     };
     window.montarBotoesLista();
