@@ -3514,17 +3514,17 @@
 
   // Centra a origem da animação (os tiles-filho estão ocultos, com rect 0,0)
   function _origemCentro(){ painel.style.setProperty('--origin-x', (window.innerWidth / 2) + 'px'); painel.style.setProperty('--origin-y', (window.innerHeight / 2) + 'px'); }
-  // Duração aproximada da animação de fecho (para encadear fecho→abertura com o mesmo efeito)
-  function _durFecho(){
-    if(document.body.classList.contains('abrir-wipe') && window.__playWipe && window.__wipeCfg && !(window.__wipeCfg.sairNormal)){
-      return Math.max(0.4, Math.min(3, parseFloat((window.__wipeCfg && window.__wipeCfg.duracao)) || 1.1)) * 1000 + 60;
-    }
-    return 500;
-  }
-  // Fecha a secção atual (com animação) e, ao terminar, abre outra (com animação) — mesmo efeito de entrada/saída
+  // Troca a secção mostrada no painel (pasta ⇄ categoria) reproduzindo a MESMA animação de abertura de uma categoria,
+  // sem fechar até ao menu (nada de flash). O painel salta ao estado fechado sem animar e volta a abrir normalmente.
   function _trocarComAnimacao(tile){
-    fecharCategoria();
-    setTimeout(function(){ if(tile){ abrirCategoria(tile); _origemCentro(); } }, _durFecho());
+    restaurarCategoria();                       // solta a secção atual (a pasta ou a categoria)
+    var _t = painel.style.transition;
+    painel.style.transition = 'none';           // salta ao estado fechado sem animar o fecho
+    painel.classList.remove('aberto');
+    void painel.offsetWidth;                    // aplica o estado fechado
+    painel.style.transition = _t || '';         // repõe as transições do layout
+    abrirCategoria(tile);                        // abre com a animação normal da categoria
+    _origemCentro();
   }
 
   // Dentro de uma pasta: tocar numa categoria fecha a pasta (animação) e abre o menu dela (animação)
