@@ -3456,7 +3456,8 @@
     else { painel.style.background = ''; painel.classList.remove('painel-pratodia'); }
 
     document.querySelectorAll('.grupo-prato, .grupo-vinho').forEach(det => { det.open = false; });
-    const grupo = target.querySelector('.grupo-prato');
+    // Abre logo o interior (primeiro grupo), seja de pratos ou de doses/vinhos — menos um clique
+    const grupo = target.querySelector('.grupo-prato, .grupo-vinho');
     if (grupo) grupo.open = true;
 
     painelConteudo.scrollTop = 0;
