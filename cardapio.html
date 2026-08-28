@@ -2605,7 +2605,8 @@
     adPopup.addEventListener('click', (e) => { if(e.target === adPopup) esconderAd(); });
   })();
 
-  let idiomaAtual = localStorage.getItem('idiomaCardapio') || 'pt';
+  // Ao abrir qualquer menu, começa sempre em português (o botão de idioma continua a funcionar durante a visita)
+  let idiomaAtual = 'pt';
   const elementosTraduzeis = document.querySelectorAll('[data-en]');
   const langButtons = document.querySelectorAll('#langSwitch button');
 
