@@ -3509,7 +3509,7 @@
 
   document.getElementById('categoriaGrid').addEventListener('click', (e) => {
     const tile = e.target.closest('.tile');
-    if(tile){ window.__pastaVoltar = null; abrirCategoria(tile); }   // tile de topo: o "voltar" regressa ao menu
+    if(tile){ window.__pastaVoltar = null; try{ fecharPainelBtn.textContent = '‹ menu'; }catch(_){} abrirCategoria(tile); }   // tile de topo: o "voltar" regressa ao menu
   });
 
   // Centra a origem da animação (os tiles-filho estão ocultos, com rect 0,0)
@@ -3536,6 +3536,12 @@
       // guarda a pasta de origem, para o "voltar" regressar a ela (e não ao menu principal)
       var folderSec = fb.closest('section.categoria');
       window.__pastaVoltar = folderSec ? folderSec.id : null;
+      // cabeçalho: o botão voltar passa a indicar a pasta (ex.: "‹ Take Away")
+      if(folderSec){
+        var _ft = document.querySelector('.tile[data-target="' + String(folderSec.id).replace(/"/g,'\\"') + '"]');
+        var _fn = (_ft && _ft.querySelector('.tile-label')) ? _ft.querySelector('.tile-label').textContent.trim() : '';
+        try{ fecharPainelBtn.textContent = '‹ ' + (_fn || 'voltar'); }catch(_){}
+      }
       _trocarComAnimacao(childTile);
     }
   });
@@ -3545,8 +3551,9 @@
     if(window.__pastaVoltar){
       var fid = window.__pastaVoltar; window.__pastaVoltar = null;
       var ftile = document.querySelector('.tile[data-target="' + String(fid).replace(/"/g,'\\"') + '"]');
-      if(ftile){ _trocarComAnimacao(ftile); return; }
+      if(ftile){ try{ fecharPainelBtn.textContent = '‹ menu'; }catch(_){} _trocarComAnimacao(ftile); return; }   // já estamos na pasta: voltar → menu
     }
+    try{ fecharPainelBtn.textContent = '‹ menu'; }catch(_){}
     fecharCategoria();
   }
 
