@@ -159,6 +159,9 @@
   .ed-subitem{ text-align:left; border:none; background:transparent; color:var(--castanho-suave); font-family:inherit; font-size:.86rem; font-weight:600; padding:8px 10px; border-radius:9px; cursor:pointer; }
   .ed-subitem:hover{ background:var(--bege); color:var(--castanho); }
   .ed-subitem.on{ background:var(--castanho); color:#fff; }
+  .ed-subitem.ed-pasta{ font-weight:800; }
+  .ed-subitem.a-arrastar{ opacity:.45; }
+  .ed-subitem.ed-pasta.drop-hover{ outline:2px dashed var(--dourado); outline-offset:-2px; background:var(--bege); color:var(--castanho); }
   /* Conteúdo central: mostra só a secção ativa, em grande */
   .ed-conteudo{ flex:1; min-width:0; }
   .grupo{ margin:0 !important; border:none !important; background:transparent !important; overflow:visible; }
@@ -4165,8 +4168,32 @@
       const barra=document.createElement('div'); barra.className='mv-barra'; barra.style.margin='0 0 8px';
       barra.appendChild(mkBtn('↑ subir','var(--castanho-suave)',()=>{ mover(menuData.categorias,ci,-1); abertaCi=Math.max(0,ci-1); renderEditor(); }));
       barra.appendChild(mkBtn('↓ descer','var(--castanho-suave)',()=>{ mover(menuData.categorias,ci,1); abertaCi=Math.min(menuData.categorias.length-1,ci+1); renderEditor(); }));
-      barra.appendChild(mkBtn('🗑 apagar secção','var(--vermelho)',()=>{ if(confirm('Apagar a secção "'+(tituloObj.pt||'')+'"?')){ menuData.categorias.splice(ci,1); abertaCi=null; renderEditor(); } }));
+      barra.appendChild(mkBtn('🗑 apagar secção','var(--vermelho)',()=>{ if(confirm('Apagar a secção "'+(tituloObj.pt||'')+'"?')){ menuData.categorias.splice(ci,1); abertaCi=null; renderEditor(); try{ if(window.__edBuildMenuSub) window.__edBuildMenuSub(); }catch(e){} } }));
       p.appendChild(barra);
+
+      // Secção-pasta (contentor, ex.: Take Away): não tem pratos, só agrupa outras categorias
+      if(cat.contentor){
+        const nota=document.createElement('div');
+        nota.style.cssText='background:var(--bege); border:1px dashed var(--linha); border-radius:10px; padding:12px 14px; font-size:0.86rem; color:var(--castanho-suave); line-height:1.5;';
+        nota.innerHTML='📦 <b>Esta secção é uma pasta.</b><br>Não tem pratos próprios — serve para agrupar outras categorias lá dentro.<br>Na barra da esquerda, arrasta as categorias para cima desta pasta para as pores aqui dentro.';
+        p.appendChild(nota);
+        const dentro = menuData.categorias.filter(function(x){ return x.pai === cat.id; });
+        const lst=document.createElement('div'); lst.style.cssText='margin-top:10px; display:flex; flex-direction:column; gap:6px;';
+        lst.appendChild(mkLabel(dentro.length ? 'Categorias dentro desta pasta:' : 'Ainda não tens categorias nesta pasta.'));
+        dentro.forEach(function(fc){
+          const row=document.createElement('div'); row.style.cssText='display:flex; align-items:center; gap:8px; background:var(--branco); border:1px solid var(--linha); border-radius:9px; padding:7px 10px; font-size:0.88rem;';
+          const nm=document.createElement('span'); nm.style.flex='1'; nm.textContent=(fc.emoji?fc.emoji+' ':'')+((fc.tipo==='comida'&&fc.grupos&&fc.grupos[0]&&fc.grupos[0].summary&&fc.grupos[0].summary.pt)||(fc.tile&&fc.tile.pt)||'(sem título)');
+          const out=document.createElement('button'); out.type='button'; out.className='mv-mini'; out.textContent='tirar'; out.title='Tirar da pasta';
+          out.addEventListener('click',function(){ delete fc.pai; renderEditor(); try{ if(window.__edBuildMenuSub) window.__edBuildMenuSub(); }catch(e){} });
+          row.appendChild(nm); row.appendChild(out); lst.appendChild(row);
+        });
+        p.appendChild(lst);
+        cat.tile=cat.tile||{pt:''};
+        const trdF=document.createElement('details'); trdF.style.cssText='border:none;background:transparent;margin-top:10px;';
+        const trsF=document.createElement('summary'); trsF.textContent='traduções do título'; trsF.style.cssText='font-size:0.75rem;color:var(--castanho-suave);';
+        trdF.appendChild(trsF); trdF.appendChild(campoTraducoes(cat.tile)); p.appendChild(trdF);
+        return p;
+      }
 
       const corRow=document.createElement('div'); corRow.style.cssText='display:flex; align-items:center; gap:8px; margin:0 0 10px; font-size:0.82rem; color:var(--castanho-suave); flex-wrap:wrap;';
       corRow.appendChild(document.createTextNode('Cor do cartão (modelo Carteira):'));
@@ -4393,12 +4420,13 @@
       return menuData.categorias.map(function(cat,ci){
         var nome = (cat.tipo==='comida')
           ? ((cat.grupos&&cat.grupos[0]&&cat.grupos[0].summary&&cat.grupos[0].summary.pt)||'(sem título)')
-          : ((cat.tile&&cat.tile.pt)||(cat.tipo==='menus'?'Menu de Grupo':'Vinhos'));
-        return { ci:ci, nome:(cat.emoji?cat.emoji+' ':'')+nome, aberta:(abertaCi===ci) };
+          : ((cat.tile&&cat.tile.pt)||(cat.contentor?'Pasta':(cat.tipo==='menus'?'Menu de Grupo':'Vinhos')));
+        return { ci:ci, id:cat.id||null, contentor:!!cat.contentor, pai:cat.pai||null, nome:(cat.emoji?cat.emoji+' ':'')+nome, aberta:(abertaCi===ci) };
       });
     };
     window.__edAbrirCat = function(ci){ abertaCi = ci; renderEditor(); };
     window.__edNovaCat = function(){ menuData.categorias.push({ emoji:'', tipo:'comida', tile:{pt:''}, grupos:[{summary:{pt:''},itens:[]}] }); abertaCi = menuData.categorias.length-1; renderEditor(); };
+    window.__edNovaPasta = function(){ menuData.categorias.push({ emoji:'📦', tipo:'contentor', contentor:true, id:'pasta-'+Date.now().toString(36), tile:{pt:'Take Away'} }); abertaCi = menuData.categorias.length-1; renderEditor(); };
 
     // ---- Limpar objetos vazios antes de guardar ----
     function limparLang(o){ if(!o) return; ['en','fr','es'].forEach(k=>{ if(o[k]!=null && String(o[k]).trim()==='') delete o[k]; }); }
@@ -5189,12 +5217,37 @@
       menuListEl.innerHTML = '';
       var tools = mkSub('⚙️ Carregar / Importar', function(){ if(window.__edAbrirCat) window.__edAbrirCat(null); abrirSec('secMenu', true); _limparMenuOn(); tools.classList.add('on'); });
       menuListEl.appendChild(tools);
-      ((window.__edMenuCats && window.__edMenuCats()) || []).forEach(function(c){
-        var b = mkSub(c.nome || '(sem título)', function(){ if(window.__edAbrirCat) window.__edAbrirCat(c.ci); abrirSec('secMenu', true); _limparMenuOn(); b.classList.add('on'); });
+      var cats = (window.__edMenuCats && window.__edMenuCats()) || [];
+      var folderIds = {}; cats.forEach(function(c){ if(c.contentor && c.id) folderIds[c.id] = true; });
+      // sub-item de categoria arrastável
+      function mkCatItem(c, dentro){
+        var b = mkSub((dentro?'↳ ':'') + (c.nome || '(sem título)'), function(){ if(window.__edAbrirCat) window.__edAbrirCat(c.ci); abrirSec('secMenu', true); _limparMenuOn(); b.classList.add('on'); });
         if(c.aberta) b.classList.add('on');
-        menuListEl.appendChild(b);
+        if(dentro) b.style.paddingLeft = '26px';
+        b.setAttribute('draggable', 'true');
+        b.addEventListener('dragstart', function(ev){ try{ ev.dataTransfer.setData('text/plain', String(c.ci)); ev.dataTransfer.effectAllowed = 'move'; }catch(e){} b.classList.add('a-arrastar'); });
+        b.addEventListener('dragend', function(){ b.classList.remove('a-arrastar'); });
+        return b;
+      }
+      cats.forEach(function(c){
+        if(c.pai && folderIds[c.pai]) return;   // filhos entram debaixo da pasta
+        if(c.contentor){
+          var f = mkSub('📦 ' + (c.nome || 'Pasta'), function(){ if(window.__edAbrirCat) window.__edAbrirCat(c.ci); abrirSec('secMenu', true); _limparMenuOn(); f.classList.add('on'); });
+          if(c.aberta) f.classList.add('on');
+          f.classList.add('ed-pasta');
+          f.addEventListener('dragover', function(ev){ ev.preventDefault(); try{ ev.dataTransfer.dropEffect = 'move'; }catch(e){} f.classList.add('drop-hover'); });
+          f.addEventListener('dragleave', function(){ f.classList.remove('drop-hover'); });
+          f.addEventListener('drop', function(ev){ ev.preventDefault(); f.classList.remove('drop-hover'); var ci = parseInt(ev.dataTransfer.getData('text/plain'), 10); var cat = menuData.categorias[ci]; if(cat && !cat.contentor && c.id){ cat.pai = c.id; renderEditor(); window.__edBuildMenuSub(); } });
+          menuListEl.appendChild(f);
+          cats.filter(function(x){ return x.pai === c.id; }).forEach(function(x){ menuListEl.appendChild(mkCatItem(x, true)); });
+        } else {
+          menuListEl.appendChild(mkCatItem(c, false));
+        }
       });
-      var nova = mkSub('＋ Nova secção', function(){ if(window.__edNovaCat) window.__edNovaCat(); abrirSec('secMenu', true); });
+      var novaP = mkSub('＋ Nova pasta', function(){ if(window.__edNovaPasta) window.__edNovaPasta(); abrirSec('secMenu', true); window.__edBuildMenuSub(); });
+      novaP.style.color = 'var(--dourado-escuro)';
+      menuListEl.appendChild(novaP);
+      var nova = mkSub('＋ Nova secção', function(){ if(window.__edNovaCat) window.__edNovaCat(); abrirSec('secMenu', true); window.__edBuildMenuSub(); });
       nova.style.color = 'var(--verde)';
       menuListEl.appendChild(nova);
     };

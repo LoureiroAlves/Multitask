@@ -286,6 +286,14 @@
   /* Sem foto: garante fundo sólido para o nome se ler sempre */
   header.sem-foto{ background:var(--castanho); }
   header.sem-foto #headerFotos{ display:none; }
+  /* Pastas: categorias dentro de uma secção contentora (ex.: Take Away) */
+  .cat-filhos{ display:flex; flex-direction:column; gap:10px; padding:8px 2px 6px; }
+  .cat-filho-btn{ position:relative; display:flex; align-items:center; gap:12px; width:100%; text-align:left; border:none; border-radius:14px; padding:16px 18px; font-family:var(--fonte-titulo); font-size:1.1rem; font-weight:700; color:#fff; background:var(--cat-cor, var(--castanho)); box-shadow:0 4px 14px rgba(0,0,0,.16); cursor:pointer; overflow:hidden; }
+  .cat-filho-btn:active{ transform:translateY(1px); }
+  .cat-filho-btn .cat-filho-emoji{ font-size:1.5rem; line-height:1; position:relative; z-index:2; }
+  .cat-filho-btn .cat-filho-label{ position:relative; z-index:2; }
+  .cat-filho-btn .cf-img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:0; }
+  .cat-filho-btn .cf-shade{ position:absolute; inset:0; background:linear-gradient(90deg, rgba(0,0,0,.55), rgba(0,0,0,.18)); z-index:1; }
   header .brand-mark{
     font-family:var(--fonte-titulo);
     color:var(--branco);
@@ -3022,6 +3030,12 @@
     // limpa um deck (modelo "slider") anterior, se existir — as secções são reconstruídas a seguir
     { const _od = document.getElementById('menuDeck'); if(_od) _od.remove(); const _odd = main.querySelector(':scope > .deck-dots'); if(_odd) _odd.remove(); }
     main.querySelectorAll(':scope > section.categoria').forEach(s => { if(s.id !== 'jogos') s.remove(); });
+    // Pastas (contentor) e categorias-filho (pai): garante ids e prepara os mapas
+    const _cats = menu.categorias;
+    _cats.forEach(function(c, i){ if(c && (!c.id || !String(c.id).trim())) c.id = 'sec' + i; });
+    const _folderIds = {}; _cats.forEach(function(c){ if(c && c.contentor && c.id) _folderIds[c.id] = true; });
+    const _ehFilho = function(c){ return !!(c && c.pai && _folderIds[c.pai]); };
+    const _filhosDe = function(fid){ return _cats.filter(function(c){ return c && c.pai === fid && !c.contentor; }); };
     menu.categorias.forEach(cat => {
       const btn = document.createElement('button');
       btn.className = 'tile tile-espera'; btn.type = 'button';
@@ -3049,6 +3063,8 @@
           if(et.italico){ label.style.fontStyle = 'italic'; }
         } }
       if(cat.ocultarMenu){ btn.classList.add('tile-oculto'); }
+      // Categoria dentro de uma pasta: não aparece como tile de topo (só dentro da pasta), mas fica no DOM para abrir
+      if(_ehFilho(cat)){ btn.classList.add('tile-oculto', 'tile-filho'); }
       grid.appendChild(btn);
       const sec = document.createElement('section');
       sec.className = 'categoria'; sec.id = cat.id;
@@ -3079,6 +3095,22 @@
             sec.dataset.foto = _ban; const _b = document.createElement('div'); _b.className = 'sec-foto-banner'; _b.style.backgroundImage = "url('" + _ban + "')"; sec.appendChild(_b);
           }
         }
+      }
+      if(cat.contentor){
+        // Pasta (ex.: Take Away): o painel mostra as categorias lá dentro; tocar numa abre o menu dela
+        const _wrap = document.createElement('div'); _wrap.className = 'cat-filhos';
+        _filhosDe(cat.id).forEach(function(fc){
+          const fb = document.createElement('button'); fb.type = 'button'; fb.className = 'cat-filho-btn'; fb.setAttribute('data-target', fc.id);
+          if(fc.cor){ fb.style.setProperty('--cat-cor', fc.cor); fb.dataset.cor = fc.cor; }
+          if(fc.foto){ fb.classList.add('tem-foto'); const _fim = document.createElement('img'); _fim.className = 'cf-img'; _fim.src = fc.foto; _fim.alt = ''; _fim.decoding = 'async'; const _fsh = document.createElement('span'); _fsh.className = 'cf-shade'; fb.appendChild(_fim); fb.appendChild(_fsh); }
+          const fe = document.createElement('span'); fe.className = 'cat-filho-emoji'; fe.textContent = fc.emoji || '';
+          const fl = document.createElement('span'); fl.className = 'cat-filho-label'; _mLang(fl, fc.tile);
+          fb.appendChild(fe); fb.appendChild(fl); _wrap.appendChild(fb);
+        });
+        if(!_wrap.querySelector('.cat-filho-btn')){ const _v = document.createElement('div'); _v.className = 'subtitulo'; _v.style.textAlign = 'center'; _v.textContent = '(vazio)'; _wrap.appendChild(_v); }
+        sec.appendChild(_wrap);
+        if(jogosSec) main.insertBefore(sec, jogosSec); else main.appendChild(sec);
+        return;
       }
       if(cat.pratoDia){
         sec.classList.add('sec-pratodia');
@@ -3469,6 +3501,19 @@
   document.getElementById('categoriaGrid').addEventListener('click', (e) => {
     const tile = e.target.closest('.tile');
     if(tile) abrirCategoria(tile);
+  });
+
+  // Dentro de uma pasta: tocar numa categoria abre o menu dela (usa o tile oculto correspondente)
+  document.addEventListener('click', function(e){
+    var fb = (e.target && e.target.closest) ? e.target.closest('.cat-filho-btn') : null;
+    if(!fb || !fb.dataset.target) return;
+    var childTile = document.querySelector('.tile[data-target="' + fb.dataset.target.replace(/"/g,'\\"') + '"]');
+    if(childTile){
+      abrirCategoria(childTile);
+      // o tile-filho está oculto (rect 0,0); centra a origem da animação
+      painel.style.setProperty('--origin-x', (window.innerWidth / 2) + 'px');
+      painel.style.setProperty('--origin-y', (window.innerHeight / 2) + 'px');
+    }
   });
 
   fecharPainelBtn.addEventListener('click', fecharCategoria);
