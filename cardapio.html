@@ -2683,8 +2683,11 @@
     const det = document.createElement('details');
     det.className = cls;
     const sum = document.createElement('summary');
-    _mLang(sum, g.summary);
-    if(g.foto){ const gimg = document.createElement('img'); gimg.className = 'grupo-foto grupo-banner'; gimg.src = (typeof RAW_BASE !== 'undefined' ? RAW_BASE : '') + g.foto; gimg.alt = ''; gimg.loading = 'lazy'; sum.insertBefore(gimg, sum.firstChild); }
+    // Título num span próprio: o aplicarIdioma mexe só no texto do span e não apaga a foto do grupo
+    if(g.foto){ const gimg = document.createElement('img'); gimg.className = 'grupo-foto grupo-banner'; gimg.src = (typeof RAW_BASE !== 'undefined' ? RAW_BASE : '') + g.foto; gimg.alt = ''; gimg.loading = 'lazy'; sum.appendChild(gimg); }
+    const _tit = document.createElement('span'); _tit.className = 'grupo-tit';
+    _mLang(_tit, g.summary);
+    sum.appendChild(_tit);
     det.appendChild(sum);
     if(g.subtitulo){ const s=document.createElement('div'); s.className='subtitulo'; _mLang(s, g.subtitulo); det.appendChild(s); }
     const lista = document.createElement('div');
