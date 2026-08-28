@@ -4016,6 +4016,16 @@
         box.appendChild(linhasBox);
         const addLinha=mkBtn('＋ tamanho','var(--dourado)',()=>{ it.tabela.doses.push(''); it.tabela.precos.push(''); renderLinhas(); });
         box.appendChild(addLinha);
+        // Foto do prato (também disponível nos pratos com tamanhos/doses)
+        const pfRow=document.createElement('div'); pfRow.style.cssText='display:flex; align-items:center; gap:8px; margin:10px 0 2px; font-size:0.82rem; color:var(--castanho-suave); flex-wrap:wrap;';
+        pfRow.appendChild(document.createTextNode('Foto do prato:'));
+        if(it.foto){ const pv=document.createElement('img'); pv.src=it.foto; pv.style.cssText='width:40px; height:40px; object-fit:cover; border-radius:8px; border:1px solid var(--linha);'; pfRow.appendChild(pv); }
+        const pfL=document.createElement('label'); pfL.className='mv-mini'; pfL.style.cursor='pointer'; pfL.textContent = it.foto ? 'trocar foto' : '＋ foto';
+        const pfI=document.createElement('input'); pfI.type='file'; pfI.accept='image/*'; pfI.style.display='none';
+        pfI.addEventListener('change', async ()=>{ const f=pfI.files&&pfI.files[0]; if(!f) return; setEstadoMenu('A enviar foto do prato…','info'); try{ const url=await _uploadFoto(f); it.foto=url; setEstadoMenu('Foto adicionada ✓','ok'); renderEditor(); if(window.__agendarPreview) window.__agendarPreview(); }catch(e){ setEstadoMenu('Erro ao enviar foto: '+(e&&e.message?e.message:e),'erro'); } });
+        pfL.appendChild(pfI); pfRow.appendChild(pfL);
+        if(it.foto){ const pfR=document.createElement('button'); pfR.type='button'; pfR.className='mv-mini'; pfR.textContent='sem foto'; pfR.addEventListener('click',()=>{ delete it.foto; renderEditor(); if(window.__agendarPreview) window.__agendarPreview(); }); pfRow.appendChild(pfR); }
+        box.appendChild(pfRow);
         const del=mkBtn('🗑 remover item','var(--vermelho)',()=>{ g.itens.splice(idx,1); renderEditor(); }); del.style.marginTop='8px'; del.style.marginLeft='8px';
         box.appendChild(del);
         return box;
