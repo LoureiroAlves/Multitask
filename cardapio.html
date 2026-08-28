@@ -3115,8 +3115,7 @@
         // Pasta (ex.: Take Away): mostra as categorias lá dentro como tiles reais, para seguirem o layout do modelo
         const _wrap = document.createElement('div'); _wrap.className = 'categoria-grid folder-grid';
         _filhosDe(cat.id).forEach(function(fc){
-          const ft = _mTile(fc);
-          ft.classList.remove('tile-espera');   // dentro da pasta não há a animação de entrada por tile
+          const ft = _mTile(fc);   // fica com 'tile-espera' (escondido) até a pasta abrir e fazer o efeito de entrada
           _wrap.appendChild(ft);
         });
         if(!_wrap.querySelector('.tile')){ const _v = document.createElement('div'); _v.className = 'subtitulo'; _v.style.textAlign = 'center'; _v.style.padding = '14px'; _v.textContent = '(pasta vazia)'; _wrap.appendChild(_v); }
@@ -3430,6 +3429,16 @@
 
     target.classList.add('ativa');
     painelConteudo.appendChild(target);
+    // Se a secção é uma pasta, os separadores lá dentro entram com o mesmo efeito escalonado do menu
+    (function(){
+      var _fg = target.querySelector && target.querySelector('.folder-grid');
+      if(!_fg) return;
+      var _fts = _fg.querySelectorAll('.tile');
+      _fts.forEach(function(t){ t.classList.remove('tile-entra'); t.classList.add('tile-espera'); t.style.animationDelay = ''; });
+      setTimeout(function(){
+        _fts.forEach(function(t, i){ t.style.animationDelay = (i * 0.055) + 's'; t.classList.remove('tile-espera'); t.classList.add('tile-entra'); });
+      }, 160);
+    })();
     // Decoração alusiva ao tema (modelo Praia): alterna entre as ativas por secção
     painelConteudo.classList.remove('praia-deco-palmeira','praia-deco-coco','praia-deco-ondas','praia-deco-concha','praia-deco-buzio','praia-deco-none');
     if(document.body.classList.contains('modelo-praia')){
