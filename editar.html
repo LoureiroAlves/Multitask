@@ -1760,7 +1760,7 @@ amesadigital.pt</textarea>
           while(_rodLinhas.length && !_rodLinhas[_rodLinhas.length - 1].trim()) _rodLinhas.pop();
           const _rodLH = Math.round(opt.rodapeTam * 1.34);
           const footH = _rodLinhas.length ? (_rodLinhas.length * _rodLH + 24) : 28;   // faixa de rodapé (cresce com as linhas)
-          const topH = opt.textoTopo ? Math.max(38, Math.round(opt.topoTam) + 22) : 0; // faixa do topo (cresce com o tamanho)
+          const topH = opt.textoTopo ? Math.max(38, Math.round(opt.topoTam) + 22) : footH; // faixa do topo — sem texto, iguala o rodapé para o QR ficar centrado
           const P = 22;                                      // margem/moldura à volta
           const W = S + P * 2, H = topH + S + footH + P * 2;
           // cores da moldura — cores da marca ou personalizadas
