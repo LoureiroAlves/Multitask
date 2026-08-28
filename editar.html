@@ -267,6 +267,35 @@
         <button type="button" id="btnDescarregarQR" style="padding:9px 12px; border-radius:8px; border:1.5px solid var(--linha); background:var(--branco); color:var(--castanho); cursor:pointer;">Descarregar QR (JPG)</button>
       </div>
       <div id="qrCardapio" style="margin-top:14px; display:flex; justify-content:center; padding:14px; background:#fff; border:1.5px solid var(--linha); border-radius:12px;"></div>
+
+      <details style="margin-top:14px; border:1.5px solid var(--linha); border-radius:12px; padding:10px 12px; background:var(--bege-claro);">
+        <summary style="cursor:pointer; font-weight:700; color:var(--castanho);">🎨 Personalizar o QR</summary>
+        <div style="padding:8px 2px 2px;">
+          <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin:6px 0;">
+            <label style="margin:0; font-size:.85rem; color:var(--castanho-suave);">Cor do QR</label>
+            <input type="color" id="qrCorQR" value="#000000" style="width:42px; height:30px; padding:0; border:none; background:none; cursor:pointer;">
+            <span style="font-size:.75rem; color:var(--castanho-suave);">(usa cores escuras para ler melhor)</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin:6px 0;">
+            <label style="margin:0; font-size:.85rem; color:var(--castanho-suave);"><input type="checkbox" id="qrMoldMarca" checked style="width:auto;"> Moldura com as cores da marca</label>
+          </div>
+          <div id="qrMoldCores" style="display:none; align-items:center; gap:10px; flex-wrap:wrap; margin:6px 0;">
+            <label style="margin:0; font-size:.85rem; color:var(--castanho-suave);">Moldura de</label>
+            <input type="color" id="qrCorMold1" value="#c79a3e" style="width:42px; height:30px; padding:0; border:none; background:none; cursor:pointer;">
+            <label style="margin:0; font-size:.85rem; color:var(--castanho-suave);">até</label>
+            <input type="color" id="qrCorMold2" value="#4a3820" style="width:42px; height:30px; padding:0; border:none; background:none; cursor:pointer;">
+          </div>
+          <label style="margin:8px 0 2px; font-size:.85rem; color:var(--castanho-suave);"><input type="checkbox" id="qrCantos" checked style="width:auto;"> Cantos estilo "scanner"</label>
+          <label style="margin-top:10px;">Texto no topo (opcional)</label>
+          <input type="text" id="qrTextoTopo" placeholder="ex: Aponta e vê o menu" style="width:100%; padding:9px; border-radius:8px; border:1.5px solid var(--linha); font-family:inherit;">
+          <label style="margin-top:8px;">Nome no centro do QR</label>
+          <input type="text" id="qrTextoNome" placeholder="(vazio = usa o nome do negócio)" style="width:100%; padding:9px; border-radius:8px; border:1.5px solid var(--linha); font-family:inherit;">
+          <label style="margin-top:8px;">Rodapé — linha 1</label>
+          <input type="text" id="qrRodape1" value="Parte da rede" style="width:100%; padding:9px; border-radius:8px; border:1.5px solid var(--linha); font-family:inherit;">
+          <label style="margin-top:6px;">Rodapé — linha 2</label>
+          <input type="text" id="qrRodape2" value="amesadigital.pt" style="width:100%; padding:9px; border-radius:8px; border:1.5px solid var(--linha); font-family:inherit;">
+        </div>
+      </details>
     </div>
   </details>
 
@@ -1642,13 +1671,20 @@
       lines.forEach(function(l){ ctx.fillText(l, cx, y); y += lh; });
     }
     var AMESA_URL = 'https://amesadigital.pt/';
+    function _lerQR(){
+      var g = function(id){ return document.getElementById(id); };
+      var v = function(id, d){ var e = g(id); return e ? e.value : d; };
+      var c = function(id, d){ var e = g(id); return e ? e.checked : d; };
+      return { corQR: v('qrCorQR','#000000') || '#000000', moldMarca: c('qrMoldMarca', true), corMold1: v('qrCorMold1','#c79a3e') || '#c79a3e', corMold2: v('qrCorMold2','#4a3820') || '#4a3820', cantos: c('qrCantos', true), textoTopo: (v('qrTextoTopo','') || '').trim(), textoNome: (v('qrTextoNome','') || '').trim(), rodape1: (v('qrRodape1','Parte da rede') || '').trim(), rodape2: (v('qrRodape2','amesadigital.pt') || '').trim() };
+    }
     function renderQR(){
       if(!qrBox || !window.QRCode) return;
-      const nome = (document.getElementById('titulo') ? document.getElementById('titulo').value : '').trim();
+      const opt = _lerQR();
+      const nome = opt.textoNome || (document.getElementById('titulo') ? document.getElementById('titulo').value : '').trim();
       const tmp = document.createElement('div');
       const tmp2 = document.createElement('div');
       try{
-        new QRCode(tmp, { text: CARDAPIO_URL, width: QR_LADO, height: QR_LADO, colorDark: '#000000', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.H });
+        new QRCode(tmp, { text: CARDAPIO_URL, width: QR_LADO, height: QR_LADO, colorDark: opt.corQR, colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.H });
         new QRCode(tmp2, { text: AMESA_URL, width: 170, height: 170, colorDark: '#000000', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.H });
       }catch(e){ return; }
       setTimeout(function(){
@@ -1658,27 +1694,31 @@
         const toImg = function(s, cb){ if(!s){ cb(null); return; } if(s.tagName === 'CANVAS'){ cb(s); } else { const im = new Image(); im.onload = function(){ cb(im); }; im.src = s.src; } };
         toImg(src, function(i1){ toImg(src2, function(i2){
           const S = QR_LADO;
-          const footH = 86;                                  // faixa "Parte da rede amesadigital.pt"
+          const footH = 86;                                  // faixa de rodapé
+          const topH = opt.textoTopo ? 42 : 0;               // faixa do texto no topo
           const P = 22;                                      // margem/moldura à volta
-          const W = S + P * 2, H = S + footH + P * 2;
-          // cores da moldura — usa as cores da marca do restaurante, se existirem
+          const W = S + P * 2, H = topH + S + footH + P * 2;
+          // cores da moldura — cores da marca ou personalizadas
           const _cfg = (window.__negocio && window.__negocio.config) || {};
           const _cores = _cfg.cores || {};
-          const cA = _cores.dourado || '#c79a3e';
-          const cB = _cores.castanho || QR_COR;
+          const cA = opt.moldMarca ? (_cores.dourado || '#c79a3e') : opt.corMold1;
+          const cB = opt.moldMarca ? (_cores.castanho || QR_COR) : opt.corMold2;
           const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
           const ctx = cv.getContext('2d');
           ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, H);   // fundo branco (para o JPEG não ficar com cantos pretos)
           // cartão branco arredondado
           _roundRect(ctx, 0, 0, W, H, 30); ctx.fillStyle = '#ffffff'; ctx.fill();
-          // moldura colorida (degradê das cores da marca)
+          // moldura colorida (degradê)
           const _grad = ctx.createLinearGradient(0, 0, W, H); _grad.addColorStop(0, cA); _grad.addColorStop(1, cB);
           ctx.lineWidth = 9; ctx.strokeStyle = _grad; _roundRect(ctx, 7, 7, W - 14, H - 14, 24); ctx.stroke();
+          // texto no topo (opcional)
+          if(opt.textoTopo){ ctx.fillStyle = cB; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = '800 18px "Fredoka","Poppins",sans-serif'; ctx.fillText(opt.textoTopo, W / 2, P + topH / 2); }
+          const QY = P + topH;                               // topo do QR
           // QR do restaurante
-          ctx.drawImage(i1, P, P, S, S);
+          ctx.drawImage(i1, P, QY, S, S);
           // cantos estilo "scanner" à volta do QR
-          (function(){
-            const x = P - 5, y = P - 5, s = S + 10, L = 30, t = 6, r = 8;
+          if(opt.cantos)(function(){
+            const x = P - 5, y = QY - 5, s = S + 10, L = 30, t = 6, r = 8;
             ctx.strokeStyle = cA; ctx.lineWidth = t; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
             ctx.beginPath(); ctx.moveTo(x, y + L); ctx.lineTo(x, y + r); ctx.arcTo(x, y, x + r, y, r); ctx.lineTo(x + L, y); ctx.stroke();
             ctx.beginPath(); ctx.moveTo(x + s - L, y); ctx.lineTo(x + s - r, y); ctx.arcTo(x + s, y, x + s, y + r, r); ctx.lineTo(x + s, y + L); ctx.stroke();
@@ -1687,23 +1727,21 @@
           })();
           // nome no centro do QR
           if(nome){
-            const bw = S * 0.46, bh = S * 0.22, bx = P + (S - bw) / 2, by = P + (S - bh) / 2;
+            const bw = S * 0.46, bh = S * 0.22, bx = P + (S - bw) / 2, by = QY + (S - bh) / 2;
             _roundRect(ctx, bx, by, bw, bh, 12); ctx.fillStyle = '#ffffff'; ctx.fill();
             ctx.lineWidth = 3; ctx.strokeStyle = QR_COR; ctx.stroke();
-            _desenharNome(ctx, nome, P + S / 2, P + S / 2, bw - 16, bh - 10);
+            _desenharNome(ctx, nome, P + S / 2, QY + S / 2, bw - 16, bh - 10);
           }
-          // faixa de parceria por baixo do QR
-          const _fy = P + S;
+          // faixa de rodapé por baixo do QR
+          const _fy = QY + S;
           ctx.strokeStyle = 'rgba(74,56,32,.16)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(P + 4, _fy + 9); ctx.lineTo(P + S - 4, _fy + 9); ctx.stroke();
           const qs = footH - 22;                             // QR do amesadigital
           const qx = P + S - qs, qy = _fy + (footH - qs) / 2 + 4;
           if(i2){ ctx.drawImage(i2, qx, qy, qs, qs); }
           const _tx = P + 2, _ty = _fy + footH / 2 + 6;
           ctx.fillStyle = QR_COR; ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
-          ctx.font = '600 15px "Fredoka","Poppins",sans-serif';
-          ctx.fillText('Parte da rede', _tx, _ty - 5);
-          ctx.font = '700 16px "Fredoka","Poppins",sans-serif';
-          ctx.fillText('amesadigital.pt', _tx, _ty + 16);
+          if(opt.rodape1){ ctx.font = '600 15px "Fredoka","Poppins",sans-serif'; ctx.fillText(opt.rodape1, _tx, _ty - 5); }
+          if(opt.rodape2){ ctx.font = '700 16px "Fredoka","Poppins",sans-serif'; ctx.fillText(opt.rodape2, _tx, _ty + 16); }
           cv.style.width = '220px'; cv.style.height = (220 * (cv.height / cv.width)) + 'px';
           qrBox.innerHTML = ''; qrBox.appendChild(cv); qrCanvas = cv;
         }); });
@@ -1713,6 +1751,20 @@
     window.__renderQR = renderQR;
     const _tit = document.getElementById('titulo');
     if(_tit){ let _qt; _tit.addEventListener('input', function(){ clearTimeout(_qt); _qt = setTimeout(renderQR, 400); }); }
+    // Controlos de personalização do QR: pré-visualização em direto
+    (function(){
+      var _qd;
+      var _re = function(){ clearTimeout(_qd); _qd = setTimeout(renderQR, 250); };
+      var _mold = document.getElementById('qrMoldMarca');
+      var _moldCores = document.getElementById('qrMoldCores');
+      var _syncMold = function(){ if(_moldCores) _moldCores.style.display = (_mold && _mold.checked) ? 'none' : 'flex'; };
+      ['qrCorQR','qrCorMold1','qrCorMold2','qrMoldMarca','qrCantos','qrTextoTopo','qrTextoNome','qrRodape1','qrRodape2'].forEach(function(id){
+        var e = document.getElementById(id); if(!e) return;
+        e.addEventListener('input', _re); e.addEventListener('change', function(){ _syncMold(); _re(); });
+      });
+      _syncMold();
+      window.__syncQRMold = _syncMold;
+    })();
     const btnCopiar = document.getElementById('btnCopiarLink');
     if(btnCopiar) btnCopiar.addEventListener('click', function(){
       const ok = function(){ btnCopiar.textContent = 'Copiado!'; setTimeout(function(){ btnCopiar.textContent = 'Copiar'; }, 1500); };
@@ -2033,6 +2085,23 @@
         setEstado('Definições carregadas ✓', 'ok');
       }
       preencherFormulario();
+      // Definições do QR guardadas
+      try{
+        var _q = (window.__negocio && window.__negocio.config && window.__negocio.config.qr) || {};
+        var _set = function(id, val){ var e = document.getElementById(id); if(e && val != null) e.value = val; };
+        var _setc = function(id, val){ var e = document.getElementById(id); if(e && val != null) e.checked = !!val; };
+        if(_q.corQR) _set('qrCorQR', _q.corQR);
+        if(_q.corMold1) _set('qrCorMold1', _q.corMold1);
+        if(_q.corMold2) _set('qrCorMold2', _q.corMold2);
+        if('moldMarca' in _q) _setc('qrMoldMarca', _q.moldMarca);
+        if('cantos' in _q) _setc('qrCantos', _q.cantos);
+        _set('qrTextoTopo', _q.textoTopo || '');
+        _set('qrTextoNome', _q.textoNome || '');
+        if(_q.rodape1 != null) _set('qrRodape1', _q.rodape1);
+        if(_q.rodape2 != null) _set('qrRodape2', _q.rodape2);
+        if(window.__syncQRMold) window.__syncQRMold();
+        if(window.__renderQR) window.__renderQR();
+      }catch(e){}
       configCarregado = true;
       document.getElementById('btnGuardar').disabled = false;
     }catch(err){
@@ -3312,6 +3381,7 @@
         if(isNaN(config.agenda.sinalPercent)) config.agenda.sinalPercent = 50;
       }
       config.layout = layoutSelecionado;
+      try{ config.qr = _lerQR(); }catch(e){}
       return config;
   }
 
