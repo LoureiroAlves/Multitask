@@ -1659,29 +1659,51 @@
         toImg(src, function(i1){ toImg(src2, function(i2){
           const S = QR_LADO;
           const footH = 86;                                  // faixa "Parte da rede amesadigital.pt"
-          const cv = document.createElement('canvas'); cv.width = S; cv.height = S + footH;
+          const P = 22;                                      // margem/moldura à volta
+          const W = S + P * 2, H = S + footH + P * 2;
+          // cores da moldura — usa as cores da marca do restaurante, se existirem
+          const _cfg = (window.__negocio && window.__negocio.config) || {};
+          const _cores = _cfg.cores || {};
+          const cA = _cores.dourado || '#c79a3e';
+          const cB = _cores.castanho || QR_COR;
+          const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
           const ctx = cv.getContext('2d');
-          ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, cv.width, cv.height);
-          ctx.drawImage(i1, 0, 0, S, S);
+          // cartão branco arredondado
+          _roundRect(ctx, 0, 0, W, H, 30); ctx.fillStyle = '#ffffff'; ctx.fill();
+          // moldura colorida (degradê das cores da marca)
+          const _grad = ctx.createLinearGradient(0, 0, W, H); _grad.addColorStop(0, cA); _grad.addColorStop(1, cB);
+          ctx.lineWidth = 9; ctx.strokeStyle = _grad; _roundRect(ctx, 7, 7, W - 14, H - 14, 24); ctx.stroke();
+          // QR do restaurante
+          ctx.drawImage(i1, P, P, S, S);
+          // cantos estilo "scanner" à volta do QR
+          (function(){
+            const x = P - 5, y = P - 5, s = S + 10, L = 30, t = 6, r = 8;
+            ctx.strokeStyle = cA; ctx.lineWidth = t; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+            ctx.beginPath(); ctx.moveTo(x, y + L); ctx.lineTo(x, y + r); ctx.arcTo(x, y, x + r, y, r); ctx.lineTo(x + L, y); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(x + s - L, y); ctx.lineTo(x + s - r, y); ctx.arcTo(x + s, y, x + s, y + r, r); ctx.lineTo(x + s, y + L); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(x, y + s - L); ctx.lineTo(x, y + s - r); ctx.arcTo(x, y + s, x + r, y + s, r); ctx.lineTo(x + L, y + s); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(x + s - L, y + s); ctx.lineTo(x + s - r, y + s); ctx.arcTo(x + s, y + s, x + s, y + s - r, r); ctx.lineTo(x + s, y + s - L); ctx.stroke();
+          })();
+          // nome no centro do QR
           if(nome){
-            const bw = S * 0.46, bh = S * 0.22, bx = (S - bw) / 2, by = (S - bh) / 2;
+            const bw = S * 0.46, bh = S * 0.22, bx = P + (S - bw) / 2, by = P + (S - bh) / 2;
             _roundRect(ctx, bx, by, bw, bh, 12); ctx.fillStyle = '#ffffff'; ctx.fill();
             ctx.lineWidth = 3; ctx.strokeStyle = QR_COR; ctx.stroke();
-            _desenharNome(ctx, nome, S / 2, S / 2, bw - 16, bh - 10);
+            _desenharNome(ctx, nome, P + S / 2, P + S / 2, bw - 16, bh - 10);
           }
           // faixa de parceria por baixo do QR
-          ctx.strokeStyle = 'rgba(74,56,32,.18)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(12, S + 4); ctx.lineTo(S - 12, S + 4); ctx.stroke();
-          const qs = footH - 22;                             // QR do amesadigital (maior)
-          const qx = S - qs - 12, qy = S + (footH - qs) / 2 + 2;
+          const _fy = P + S;
+          ctx.strokeStyle = 'rgba(74,56,32,.16)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(P + 4, _fy + 9); ctx.lineTo(P + S - 4, _fy + 9); ctx.stroke();
+          const qs = footH - 22;                             // QR do amesadigital
+          const qx = P + S - qs, qy = _fy + (footH - qs) / 2 + 4;
           if(i2){ ctx.drawImage(i2, qx, qy, qs, qs); }
-          const _tx = 16, _ty = S + footH / 2 + 2;
-          ctx.fillStyle = QR_COR; ctx.textAlign = 'left';
-          ctx.textBaseline = 'alphabetic';
+          const _tx = P + 2, _ty = _fy + footH / 2 + 6;
+          ctx.fillStyle = QR_COR; ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
           ctx.font = '600 15px "Fredoka","Poppins",sans-serif';
           ctx.fillText('Parte da rede', _tx, _ty - 5);
           ctx.font = '700 16px "Fredoka","Poppins",sans-serif';
           ctx.fillText('amesadigital.pt', _tx, _ty + 16);
-          cv.style.width = '210px'; cv.style.height = (210 * (cv.height / cv.width)) + 'px';
+          cv.style.width = '220px'; cv.style.height = (220 * (cv.height / cv.width)) + 'px';
           qrBox.innerHTML = ''; qrBox.appendChild(cv); qrCanvas = cv;
         }); });
       }, 90);
