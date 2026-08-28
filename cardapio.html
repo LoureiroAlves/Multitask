@@ -391,6 +391,11 @@
   body.fundo-visivel .categoria-grid{ background:transparent; border-bottom:none; }
   /* Grelha dentro de uma pasta (Take Away…): transparente, para o fundo/estilo do modelo aparecer como numa categoria */
   .folder-grid{ background:transparent !important; border-bottom:none !important; padding:8px 12px 20px; }
+  /* Entrada/saída de uma sub-categoria dentro de uma pasta (o painel não fecha; nunca se vê o menu) */
+  @keyframes subEntra{ from{ opacity:0; transform:translateY(22px) scale(.985); } to{ opacity:1; transform:translateY(0) scale(1); } }
+  @keyframes subSai{ from{ opacity:1; transform:translateY(0) scale(1); } to{ opacity:0; transform:translateY(22px) scale(.985); } }
+  section.categoria.a-entrar-sub{ animation:subEntra .38s cubic-bezier(.2,.7,.3,1) both; }
+  section.categoria.a-sair-sub{ animation:subSai .3s cubic-bezier(.4,0,.6,1) forwards; }
   /* Imagem de fundo: camada dedicada, fixa ao ecrã, isolada na GPU (evita strobe/frames a preto no scroll do iOS) */
   #fundoFoto{ position:fixed; top:0; left:0; width:100%; height:calc(100vh + 160px); height:calc(100lvh + 160px); z-index:-1; display:none; overflow:hidden; pointer-events:none; }
   body.fundo-imagem #fundoFoto{ display:block; }
@@ -3318,19 +3323,6 @@
       });
     }catch(e){}
     _desbloquearFundo();   // só agora, com a animação de saída já terminada
-    // Se estávamos numa categoria aberta a partir de uma pasta, a pasta reaparece INSTANTÂNEA (sem reanimar — a categoria já fez a saída)
-    if(window.__reabrirPasta){
-      var _p = window.__reabrirPasta; window.__reabrirPasta = null;
-      setTimeout(function(){ try{
-        window.__pastaInstantanea = true;                 // não refazer o efeito de entrada dos tiles
-        var _t = painel.style.transition;
-        painel.style.transition = 'none';                 // sem animação de abertura do painel
-        abrirCategoria(_p);
-        painel.classList.add('aberto');
-        void painel.offsetWidth;                          // aplica o estado aberto já
-        painel.style.transition = _t || '';
-      }catch(e){} }, 0);
-    }
   }
   function _restaurarPendente(e){
     if(e.target !== painel) return;
@@ -3441,6 +3433,7 @@
     categoriaProximoOriginal = target.nextSibling;
 
     target.classList.add('ativa');
+    target.classList.remove('a-entrar-sub', 'a-sair-sub');   // limpa animações de sub-categoria anteriores
     painelConteudo.appendChild(target);
     // Se a secção é uma pasta, os separadores lá dentro entram com o mesmo efeito escalonado do menu
     (function(){
@@ -3539,19 +3532,18 @@
     if(tile){ window.__pastaVoltar = null; try{ fecharPainelBtn.textContent = '‹ menu'; }catch(_){} abrirCategoria(tile); }   // tile de topo: o "voltar" regressa ao menu
   });
 
-  // Centra a origem da animação (os tiles-filho estão ocultos, com rect 0,0)
-  function _origemCentro(){ painel.style.setProperty('--origin-x', (window.innerWidth / 2) + 'px'); painel.style.setProperty('--origin-y', (window.innerHeight / 2) + 'px'); }
-  // Troca a secção mostrada no painel (pasta ⇄ categoria) reproduzindo a MESMA animação de abertura de uma categoria,
-  // sem fechar até ao menu (nada de flash). O painel salta ao estado fechado sem animar e volta a abrir normalmente.
-  function _trocarComAnimacao(tile){
-    restaurarCategoria();                       // solta a secção atual (a pasta ou a categoria)
-    var _t = painel.style.transition;
-    painel.style.transition = 'none';           // salta ao estado fechado sem animar o fecho
-    painel.classList.remove('aberto');
-    void painel.offsetWidth;                    // aplica o estado fechado
-    painel.style.transition = _t || '';         // repõe as transições do layout
-    abrirCategoria(tile);                        // abre com a animação normal da categoria
-    _origemCentro();
+  // Abrir uma sub-categoria a partir da pasta: o painel MANTÉM-SE aberto (nunca se vê o menu); a secção entra com animação
+  function _abrirSub(childTile){
+    abrirCategoria(childTile);   // painel já aberto → troca o conteúdo sem reanimar o painel
+    var sec = document.getElementById(childTile.dataset.target);
+    if(sec){ sec.classList.remove('a-sair-sub'); void sec.offsetWidth; sec.classList.add('a-entrar-sub'); }
+  }
+  // Voltar da sub-categoria para a pasta: a categoria SAI com animação e a pasta fica logo por baixo (sem passar pelo menu)
+  function _voltarSub(folderTile){
+    var childSec = categoriaAtual;
+    var _ir = function(){ window.__pastaInstantanea = true; abrirCategoria(folderTile); };
+    if(childSec){ childSec.classList.remove('a-entrar-sub'); childSec.classList.add('a-sair-sub'); setTimeout(_ir, 290); }
+    else { _ir(); }
   }
 
   // Dentro de uma pasta: tocar numa categoria (tile) abre-a com a mesma animação de uma categoria normal
@@ -3568,7 +3560,7 @@
         var _fn = (_ft && _ft.querySelector('.tile-label')) ? _ft.querySelector('.tile-label').textContent.trim() : '';
         try{ fecharPainelBtn.textContent = '‹ ' + (_fn || 'voltar'); }catch(_){}
       }
-      _trocarComAnimacao(childTile);
+      _abrirSub(childTile);
     }
   });
 
@@ -3577,7 +3569,7 @@
     if(window.__pastaVoltar){
       var fid = window.__pastaVoltar; window.__pastaVoltar = null;
       var ftile = document.querySelector('.tile[data-target="' + String(fid).replace(/"/g,'\\"') + '"]');
-      if(ftile){ try{ fecharPainelBtn.textContent = '‹ menu'; }catch(_){} window.__reabrirPasta = ftile; fecharCategoria(); return; }   // fecha a categoria (animação de saída) e reabre a pasta
+      if(ftile){ try{ fecharPainelBtn.textContent = '‹ menu'; }catch(_){} _voltarSub(ftile); return; }   // sai da categoria e mostra a pasta por baixo (sem passar pelo menu)
     }
     try{ fecharPainelBtn.textContent = '‹ menu'; }catch(_){}
     fecharCategoria();
