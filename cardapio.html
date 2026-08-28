@@ -3318,6 +3318,11 @@
       });
     }catch(e){}
     _desbloquearFundo();   // só agora, com a animação de saída já terminada
+    // Se estávamos numa categoria aberta a partir de uma pasta, reabre a pasta agora (a categoria já fez a saída)
+    if(window.__reabrirPasta){
+      var _p = window.__reabrirPasta; window.__reabrirPasta = null;
+      setTimeout(function(){ try{ abrirCategoria(_p); painel.style.setProperty('--origin-x', (window.innerWidth / 2) + 'px'); painel.style.setProperty('--origin-y', (window.innerHeight / 2) + 'px'); }catch(e){} }, 0);
+    }
   }
   function _restaurarPendente(e){
     if(e.target !== painel) return;
@@ -3563,7 +3568,7 @@
     if(window.__pastaVoltar){
       var fid = window.__pastaVoltar; window.__pastaVoltar = null;
       var ftile = document.querySelector('.tile[data-target="' + String(fid).replace(/"/g,'\\"') + '"]');
-      if(ftile){ try{ fecharPainelBtn.textContent = '‹ menu'; }catch(_){} _trocarComAnimacao(ftile); return; }   // já estamos na pasta: voltar → menu
+      if(ftile){ try{ fecharPainelBtn.textContent = '‹ menu'; }catch(_){} window.__reabrirPasta = ftile; fecharCategoria(); return; }   // fecha a categoria (animação de saída) e reabre a pasta
     }
     try{ fecharPainelBtn.textContent = '‹ menu'; }catch(_){}
     fecharCategoria();
