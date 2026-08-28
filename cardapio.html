@@ -3505,7 +3505,7 @@
 
   document.getElementById('categoriaGrid').addEventListener('click', (e) => {
     const tile = e.target.closest('.tile');
-    if(tile) abrirCategoria(tile);
+    if(tile){ window.__pastaVoltar = null; abrirCategoria(tile); }   // tile de topo: o "voltar" regressa ao menu
   });
 
   // Dentro de uma pasta: tocar numa categoria abre o menu dela (usa o tile oculto correspondente)
@@ -3514,6 +3514,9 @@
     if(!fb || !fb.dataset.target) return;
     var childTile = document.querySelector('.tile[data-target="' + fb.dataset.target.replace(/"/g,'\\"') + '"]');
     if(childTile){
+      // guarda a pasta de origem, para o "voltar" regressar a ela (e não ao menu principal)
+      var folderSec = fb.closest('section.categoria');
+      window.__pastaVoltar = folderSec ? folderSec.id : null;
       abrirCategoria(childTile);
       // o tile-filho está oculto (rect 0,0); centra a origem da animação
       painel.style.setProperty('--origin-x', (window.innerWidth / 2) + 'px');
@@ -3521,8 +3524,18 @@
     }
   });
 
-  fecharPainelBtn.addEventListener('click', fecharCategoria);
-  document.addEventListener('keydown', (e) => { if(e.key === 'Escape' && painel.classList.contains('aberto')) fecharCategoria(); });
+  // "Voltar": se viemos de uma pasta, reabre a pasta; senão fecha para o menu principal
+  function voltarCategoria(){
+    if(window.__pastaVoltar){
+      var fid = window.__pastaVoltar; window.__pastaVoltar = null;
+      var ftile = document.querySelector('.tile[data-target="' + String(fid).replace(/"/g,'\\"') + '"]');
+      if(ftile){ abrirCategoria(ftile); painel.style.setProperty('--origin-x', (window.innerWidth / 2) + 'px'); painel.style.setProperty('--origin-y', (window.innerHeight / 2) + 'px'); return; }
+    }
+    fecharCategoria();
+  }
+
+  fecharPainelBtn.addEventListener('click', voltarCategoria);
+  document.addEventListener('keydown', (e) => { if(e.key === 'Escape' && painel.classList.contains('aberto')) voltarCategoria(); });
 
   const infoVinhos = {
     'almotriga-branco': { nome:'Almotriga', origem:'Alentejo — Borba', tipo:'Branco jovem e frutado, fácil de beber', tipo_en:'Young and fruity white, easy to drink', tipo_fr:'Blanc jeune et fruité, facile à boire', tipo_es:'Blanco joven y afrutado, fácil de beber', grad:'≈ 12,5%' },
