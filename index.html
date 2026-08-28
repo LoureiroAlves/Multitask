@@ -69,9 +69,23 @@
   .foot-in .cta{ display:inline-block; margin-bottom:14px; background:var(--ink); color:#fff; font-weight:800; padding:12px 22px; border-radius:999px; }
   .foot-in .cta:hover{ background:#000; }
   .foot-in .marca{ font-family:'Playfair Display', serif; font-weight:700; color:var(--ink); }
-  /* QR no cabeçalho (leva para o amesadigital.pt) */
-  .qr-montra{ display:inline-block; padding:4px; background:#fff; border:1px solid var(--linha); border-radius:8px; line-height:0; flex:0 0 auto; }
+  /* QR no cabeçalho (leva para o amesadigital.pt) — clicável para ampliar/partilhar */
+  .qr-scan{ display:flex; align-items:center; gap:8px; background:none; border:none; padding:0; cursor:pointer; font-family:inherit; flex:0 0 auto; }
+  .qr-scan .qr-scan-label{ font-size:.72rem; font-weight:800; letter-spacing:2px; color:var(--terra); }
+  .qr-scan:hover .qr-montra{ border-color:var(--terra); }
+  .qr-montra{ display:inline-block; padding:4px; background:#fff; border:1px solid var(--linha); border-radius:8px; line-height:0; transition:border-color .15s; }
   .qr-montra img, .qr-montra canvas{ display:block; width:46px; height:46px; }
+  /* Modal do QR grande */
+  .qr-overlay{ display:none; position:fixed; inset:0; z-index:2000; background:rgba(30,20,10,.6); align-items:center; justify-content:center; padding:20px; -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px); }
+  .qr-overlay.aberto{ display:flex; }
+  .qr-modal{ position:relative; background:#fff; border-radius:22px; padding:26px 24px 24px; text-align:center; width:100%; max-width:330px; box-shadow:0 14px 44px rgba(0,0,0,.32); }
+  .qr-close{ position:absolute; top:8px; right:12px; background:none; border:none; font-size:1.3rem; line-height:1; color:var(--muted); cursor:pointer; }
+  .qr-modal-tit{ font-size:.95rem; color:var(--muted); font-weight:600; margin-bottom:16px; }
+  .qr-big{ display:inline-block; line-height:0; }
+  .qr-big img, .qr-big canvas{ display:block; width:240px; height:240px; }
+  .qr-url{ margin:16px 0 18px; font-weight:800; color:var(--ink); font-size:1.1rem; }
+  .qr-share{ background:var(--terra); color:#fff; border:none; border-radius:999px; padding:12px 28px; font-weight:800; font-size:.95rem; cursor:pointer; }
+  .qr-share:hover{ background:var(--terra-esc); }
 
   .filtros{ display:flex; gap:8px; overflow-x:auto; padding:6px 2px 4px; margin-top:18px; -webkit-overflow-scrolling:touch; }
   .filtros::-webkit-scrollbar{ height:0; }
@@ -103,7 +117,10 @@
 <header class="top">
   <div class="wrap top-in">
     <a class="logo" href="./"><span class="mark">à</span> ÀMesa</a>
-    <div id="qrMontra" class="qr-montra" title="Aponta a câmara para abrir o ÀMesa" aria-label="Código QR para abrir o ÀMesa"></div>
+    <button id="qrScanBtn" class="qr-scan" type="button" title="Ver código QR grande para scan">
+      <div id="qrMontra" class="qr-montra" aria-hidden="true"></div>
+      <span class="qr-scan-label">SCAN</span>
+    </button>
   </div>
 </header>
 
@@ -135,15 +152,42 @@
   </div>
 </footer>
 
+<div id="qrOverlay" class="qr-overlay" role="dialog" aria-modal="true" aria-label="Código QR do ÀMesa">
+  <div class="qr-modal">
+    <button id="qrClose" class="qr-close" type="button" aria-label="Fechar">✕</button>
+    <div class="qr-modal-tit">Aponta a câmara para abrir o ÀMesa</div>
+    <div id="qrBig" class="qr-big"></div>
+    <div class="qr-url">amesadigital.pt</div>
+    <button id="qrShare" class="qr-share" type="button">Partilhar</button>
+  </div>
+</div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
-  // QR code da própria montra (leva para o amesadigital.pt)
+  // QR code da própria montra (leva para o amesadigital.pt) — pequeno no cabeçalho, grande ao clicar
   (function(){
     try{
-      var box = document.getElementById('qrMontra');
-      if(!box || !window.QRCode) return;
+      if(!window.QRCode) return;
       var url = location.origin + '/';
-      new QRCode(box, { text: url, width: 46, height: 46, colorDark: '#c05a3a', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.H });
+      var box = document.getElementById('qrMontra');
+      if(box){ new QRCode(box, { text: url, width: 46, height: 46, colorDark: '#c05a3a', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.H }); }
+      var big = document.getElementById('qrBig');
+      if(big){ new QRCode(big, { text: url, width: 240, height: 240, colorDark: '#1a1a1a', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.H }); }
+      var ov = document.getElementById('qrOverlay');
+      var btn = document.getElementById('qrScanBtn');
+      var fecharBtn = document.getElementById('qrClose');
+      var shareBtn = document.getElementById('qrShare');
+      function abrir(){ if(ov) ov.classList.add('aberto'); }
+      function fechar(){ if(ov) ov.classList.remove('aberto'); }
+      if(btn) btn.addEventListener('click', abrir);
+      if(fecharBtn) fecharBtn.addEventListener('click', fechar);
+      if(ov) ov.addEventListener('click', function(e){ if(e.target === ov) fechar(); });
+      document.addEventListener('keydown', function(e){ if(e.key === 'Escape') fechar(); });
+      if(shareBtn) shareBtn.addEventListener('click', async function(){
+        var dados = { title: 'ÀMesa', text: 'Descobre restaurantes e menus no ÀMesa', url: url };
+        if(navigator.share){ try{ await navigator.share(dados); }catch(e){} }
+        else if(navigator.clipboard && navigator.clipboard.writeText){ try{ await navigator.clipboard.writeText(url); shareBtn.textContent = 'Link copiado!'; setTimeout(function(){ shareBtn.textContent = 'Partilhar'; }, 1600); }catch(e){} }
+      });
     }catch(e){}
   })();
 </script>
