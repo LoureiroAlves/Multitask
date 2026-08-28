@@ -2959,6 +2959,8 @@
       // 3. Gravar config.json
       setEstado('A guardar definições…', 'info');
       await gravarConfigJson(token);
+      // 4. Gravar também o menu (fotos de sub-menu/itens e edições ao menu) — "Guardar tudo" grava mesmo tudo
+      try{ if(window.__guardarMenuAgora){ setEstado('A guardar menu…', 'info'); const okM = await window.__guardarMenuAgora(); setEstado(okM ? '✅ Tudo guardado (aparência + menu).' : '✅ Definições guardadas.', 'ok'); } }catch(e){}
       document.getElementById('btnGuardar').disabled = false;
       return;
     }catch(err){
@@ -4516,6 +4518,17 @@
     document.getElementById('btnCarregarMenu').addEventListener('click', carregarMenu);
     document.getElementById('btnGuardarMenu').addEventListener('click', guardarMenu);
     window.__carregarMenu = carregarMenu;
+    // Gravação silenciosa do menu — usada pelo "Guardar tudo" para gravar também o menu (fotos de sub-menu/itens, edições)
+    window.__guardarMenuAgora = async function(){
+      try{
+        if(!menuData || !window.__negocio || !window.__negocio.id) return false;
+        pruneMenu();
+        const { error } = await sbc.from('negocios').update({ menu: menuData }).eq('id', window.__negocio.id);
+        if(error) return false;
+        window.__negocio.menu = JSON.parse(JSON.stringify(menuData));
+        return true;
+      }catch(e){ return false; }
+    };
     // Exposto para a pré-visualização ao vivo (garante ids estáveis para o arrasto casar as secções)
     window.__getMenuPreview = function(){ try{
       if(menuData && Array.isArray(menuData.categorias)){
