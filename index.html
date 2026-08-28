@@ -69,6 +69,9 @@
   .foot-in .cta{ display:inline-block; margin-bottom:14px; background:var(--ink); color:#fff; font-weight:800; padding:12px 22px; border-radius:999px; }
   .foot-in .cta:hover{ background:#000; }
   .foot-in .marca{ font-family:'Playfair Display', serif; font-weight:700; color:var(--ink); }
+  .qr-montra{ display:inline-block; padding:12px; background:#fff; border:1px solid var(--linha); border-radius:16px; box-shadow:0 6px 18px rgba(0,0,0,.08); line-height:0; }
+  .qr-montra img, .qr-montra canvas{ display:block; width:150px; height:150px; }
+  .qr-legenda{ margin:12px 0 18px; font-size:.85rem; color:var(--muted); font-weight:600; }
 
   .filtros{ display:flex; gap:8px; overflow-x:auto; padding:6px 2px 4px; margin-top:18px; -webkit-overflow-scrolling:touch; }
   .filtros::-webkit-scrollbar{ height:0; }
@@ -127,10 +130,24 @@
 
 <footer>
   <div class="wrap foot-in">
+    <div id="qrMontra" class="qr-montra" aria-label="Código QR para abrir o ÀMesa"></div>
+    <div class="qr-legenda">Aponta a câmara do telemóvel para abrir o ÀMesa</div>
     <div><span class="marca">ÀMesa</span> · reserva, escolhe, saboreia.</div>
   </div>
 </footer>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+  // QR code da própria montra (leva para o amesadigital.pt)
+  (function(){
+    try{
+      var box = document.getElementById('qrMontra');
+      if(!box || !window.QRCode) return;
+      var url = location.origin + '/';
+      new QRCode(box, { text: url, width: 150, height: 150, colorDark: '#c05a3a', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.H });
+    }catch(e){}
+  })();
+</script>
 <script>
   var SUPA_URL = 'https://zewiijcrkyxjkhudlplk.supabase.co';
   var SUPA_KEY = 'sb_publishable_6LP7x2v5c-c9DQkQslnUmA_g13SEjp3';
