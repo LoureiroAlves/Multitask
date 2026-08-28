@@ -3318,10 +3318,18 @@
       });
     }catch(e){}
     _desbloquearFundo();   // só agora, com a animação de saída já terminada
-    // Se estávamos numa categoria aberta a partir de uma pasta, reabre a pasta agora (a categoria já fez a saída)
+    // Se estávamos numa categoria aberta a partir de uma pasta, a pasta reaparece INSTANTÂNEA (sem reanimar — a categoria já fez a saída)
     if(window.__reabrirPasta){
       var _p = window.__reabrirPasta; window.__reabrirPasta = null;
-      setTimeout(function(){ try{ abrirCategoria(_p); painel.style.setProperty('--origin-x', (window.innerWidth / 2) + 'px'); painel.style.setProperty('--origin-y', (window.innerHeight / 2) + 'px'); }catch(e){} }, 0);
+      setTimeout(function(){ try{
+        window.__pastaInstantanea = true;                 // não refazer o efeito de entrada dos tiles
+        var _t = painel.style.transition;
+        painel.style.transition = 'none';                 // sem animação de abertura do painel
+        abrirCategoria(_p);
+        painel.classList.add('aberto');
+        void painel.offsetWidth;                          // aplica o estado aberto já
+        painel.style.transition = _t || '';
+      }catch(e){} }, 0);
     }
   }
   function _restaurarPendente(e){
@@ -3439,6 +3447,7 @@
       var _fg = target.querySelector && target.querySelector('.folder-grid');
       if(!_fg) return;
       var _fts = _fg.querySelectorAll('.tile');
+      if(window.__pastaInstantanea){ window.__pastaInstantanea = false; _fts.forEach(function(t){ t.classList.remove('tile-espera', 'tile-entra'); t.style.animationDelay = ''; }); return; }
       _fts.forEach(function(t){ t.classList.remove('tile-entra'); t.classList.add('tile-espera'); t.style.animationDelay = ''; });
       setTimeout(function(){
         _fts.forEach(function(t, i){ t.style.animationDelay = (i * 0.055) + 's'; t.classList.remove('tile-espera'); t.classList.add('tile-entra'); });
