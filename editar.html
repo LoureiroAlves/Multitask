@@ -4984,7 +4984,26 @@ amesadigital.pt</textarea>
 
     function _normTrad(s){ return String(s||'').trim().toLowerCase()
         .replace(/[áàâãä]/g,'a').replace(/[éèêë]/g,'e').replace(/[íìîï]/g,'i').replace(/[óòôõö]/g,'o').replace(/[úùûü]/g,'u').replace(/ç/g,'c')
-        .replace(/[.:;,]+$/,'').replace(/\s+/g,' '); }
+        .replace(/[()\-–—]/g,' ').replace(/[.:;,]+$/,'').replace(/\s+/g,' ').trim(); }
+
+    // Chaves do dicionário ordenadas do nome mais longo para o mais curto (para "arroz de marisco" ganhar a "arroz…")
+    var _PRATOS_KEYS = Object.keys(PRATOS).sort(function(a,b){ return b.length - a.length; });
+    // Termos-base ambíguos: mantêm o nome PT, mas NÃO forçam descrição-glossário (ex.: "espetada" pode ser de carne, camarão ou lulas)
+    var _PRATOS_AMBIG = { 'espetada':1, 'arroz':1, 'tabua':1 };
+    // Procura um prato tradicional dentro do nome. Devolve { entry, glossar } ou null.
+    //  - exato ou no início do nome  → é o prato principal → pode usar a descrição-glossário
+    //  - no meio/fim do nome         → mantém só o nome em PT (sem descrição inventada)
+    function _pratoMatch(pt){
+      var n = _normTrad(pt);
+      if(PRATOS[n]) return { entry: PRATOS[n], glossar: true };
+      for(var i=0; i<_PRATOS_KEYS.length; i++){
+        var k = _PRATOS_KEYS[i];
+        var ek = k.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+        if(new RegExp('^'+ek+'(\\s|$)').test(n)) return { entry: PRATOS[k], glossar: !_PRATOS_AMBIG[k] };
+        if(new RegExp('(^|\\s)'+ek+'(\\s|$)').test(n)) return { entry: PRATOS[k], glossar: false };
+      }
+      return null;
+    }
 
     function traduzirTexto(texto, destino){
       const chave = destino+'|'+texto;
@@ -5034,22 +5053,23 @@ amesadigital.pt</textarea>
       if(!node || typeof node !== 'object') return;
       if(ehObjIdioma(node.nome)){
         const vinho = _ehVinhoNode(node);
-        const dish = PRATOS[_normTrad(node.nome.pt)];
+        const dish = _pratoMatch(node.nome.pt);
         if(vinho){
           // marca de vinho: nunca traduzir o nome
         } else if(dish){
-          // manter o nome em PT em todos os idiomas
+          // manter o nome em PT em todos os idiomas (é nome próprio; nunca "nail"/"woodpecker")
           LANGS_TRAD.forEach(function(l){ tasks.push({ tipo:'copiar', o:node.nome, l:l, v:node.nome.pt }); });
           const temDescPt = node.desc && ehObjIdioma(node.desc) && String(node.desc.pt||'').trim();
           if(temDescPt){
             // o dono escreveu descrição própria — traduzi-la normalmente
             LANGS_TRAD.forEach(function(l){ tasks.push({ tipo:'traduzir', o:node.desc, l:l }); });
-          } else {
-            // sem descrição do dono — usar a descrição-glossário (só nos idiomas estrangeiros)
+          } else if(dish.glossar){
+            // sem descrição do dono e é o prato principal — usar a descrição-glossário (só nos idiomas estrangeiros)
             if(!node.desc || typeof node.desc !== 'object' || Array.isArray(node.desc)) node.desc = { pt:'' };
             if(node.desc.pt == null) node.desc.pt = '';
-            LANGS_TRAD.forEach(function(l){ if(dish[l]) tasks.push({ tipo:'copiar', o:node.desc, l:l, v:dish[l] }); });
+            LANGS_TRAD.forEach(function(l){ if(dish.entry[l]) tasks.push({ tipo:'copiar', o:node.desc, l:l, v:dish.entry[l] }); });
           }
+          // (prato tradicional só mencionado no meio do nome: fica o nome PT, sem descrição inventada)
         } else {
           // nome comum (não tradicional) — traduzir
           LANGS_TRAD.forEach(function(l){ tasks.push({ tipo:'traduzir', o:node.nome, l:l }); });
