@@ -5002,12 +5002,35 @@ amesadigital.pt</textarea>
       "cherne": { en:"Wreckfish", fr:"Cernier", es:"Cherna" },
       "peixe espada": { en:"Black scabbardfish", fr:"Sabre noir", es:"Pez sable negro" },
       "percebes": { en:"Goose barnacles", fr:"Pouces-pieds", es:"Percebes" },
-      "sapateira": { en:"Brown crab", fr:"Tourteau", es:"Buey de mar" }
+      "sapateira": { en:"Brown crab", fr:"Tourteau", es:"Buey de mar" },
+      // Pratos próprios com broa (não é só "cod with bread" — é o prato)
+      "bacalhau com broa": { en:"Roasted cod with cornbread crust", fr:"Morue rôtie en croûte de pain de maïs", es:"Bacalao asado con costra de pan de maíz" },
+      "bacalhau a broa": { en:"Roasted cod with cornbread crust", fr:"Morue rôtie en croûte de pain de maïs", es:"Bacalao asado con costra de pan de maíz" },
+      "sarrabulho": { en:"Minho pork & blood rice stew", fr:"Ragoût de porc au sang (Minho)", es:"Guiso de cerdo con sangre (Miño)" },
+      "papas de sarrabulho": { en:"Minho pork & blood porridge", fr:"Bouillie de porc au sang (Minho)", es:"Gachas de cerdo con sangre (Miño)" }
     };
     Object.assign(PRATOS, TERMOS);
 
+    // Correções ao nível da PALAVRA (ingredientes/acompanhamentos que o Google deixa por traduzir
+    // no meio de uma frase). Ex.: "Bacalhau com Broa" → Google "Cod with Broa" → "Cod with corn bread".
+    // Aplicam-se ao resultado da tradução automática, sem prender o nome todo em português.
+    const CORRECOES = {
+      "broa": { en:"corn bread", fr:"pain de maïs", es:"pan de maíz" }
+    };
+    function _corrigirTermos(txt, destino){
+      if(!txt) return txt;
+      Object.keys(CORRECOES).forEach(function(pt){
+        var alvo = CORRECOES[pt][destino]; if(!alvo) return;
+        txt = txt.replace(new RegExp('\\b' + pt + '\\b', 'gi'), function(m){
+          return (m.charAt(0) === m.charAt(0).toUpperCase()) ? (alvo.charAt(0).toUpperCase() + alvo.slice(1)) : alvo;
+        });
+      });
+      return txt;
+    }
+
     function _normTrad(s){ return String(s||'').trim().toLowerCase()
         .replace(/[áàâãä]/g,'a').replace(/[éèêë]/g,'e').replace(/[íìîï]/g,'i').replace(/[óòôõö]/g,'o').replace(/[úùûü]/g,'u').replace(/ç/g,'c')
+        .replace(/\bc\/\s*/g,'com ').replace(/\bs\/\s*/g,'sem ')   // abreviaturas de menu: "c/"→com, "s/"→sem
         .replace(/[()\-–—]/g,' ').replace(/[.:;,]+$/,'').replace(/\s+/g,' ').trim(); }
 
     // Chaves do dicionário ordenadas do nome mais longo para o mais curto (para "posta de vitela" ganhar a "posta")
@@ -5035,7 +5058,8 @@ amesadigital.pt</textarea>
       const url = 'https://translate.googleapis.com/translate_a/single?client=gtx&sl=pt&tl='+destino+'&dt=t&q='+encodeURIComponent(texto);
       return fetch(url).then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
         .then(data=>{
-          const out = (data && data[0] ? data[0].map(seg=>seg[0]).join('') : texto);
+          let out = (data && data[0] ? data[0].map(seg=>seg[0]).join('') : texto);
+          out = _corrigirTermos(out, destino);   // corrige ingredientes que o Google deixou em PT (ex.: "Broa")
           cacheTrad[chave] = out;
           return out;
         });
