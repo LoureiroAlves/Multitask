@@ -2634,7 +2634,9 @@
     document.documentElement.lang = lang === 'pt' ? 'pt-PT' : lang;
 
     document.querySelectorAll('[data-en]').forEach(el => {
-      if(!el.dataset.pt) el.dataset.pt = (el.tagName === 'INPUT') ? el.placeholder : el.textContent;
+      // Guardar o texto PT original UMA vez. Usar === undefined (não !) para que um PT vazio
+      // (ex.: prato tradicional só com descrição em estrangeiro) não seja depois sobreposto pelo texto de outro idioma.
+      if(el.dataset.pt === undefined) el.dataset.pt = (el.tagName === 'INPUT') ? el.placeholder : el.textContent;
       const texto = (lang === 'pt') ? el.dataset.pt : (el.dataset[lang] || el.dataset.pt);
       if(el.tagName === 'INPUT') el.placeholder = texto;
       else el.textContent = texto;
