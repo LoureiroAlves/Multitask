@@ -4913,7 +4913,6 @@ amesadigital.pt</textarea>
       "migas": { en:"Alentejo bread & garlic mash", fr:"Migas (pain à l'ail écrasé de l'Alentejo)", es:"Migas alentejanas de pan y ajo" },
       "pica pau": { en:"Sautéed beef bites with pickles", fr:"Émincé de bœuf sauté aux cornichons", es:"Bocaditos de ternera salteados con encurtidos" },
       "moelas": { en:"Stewed chicken gizzards", fr:"Gésiers de volaille mijotés", es:"Mollejas de pollo guisadas" },
-      "espetada": { en:"Skewered grilled beef", fr:"Brochette de bœuf grillé", es:"Brocheta de ternera a la parrilla" },
       "leitao": { en:"Roast suckling pig", fr:"Cochon de lait rôti", es:"Cochinillo asado" },
       "leitao da bairrada": { en:"Bairrada roast suckling pig", fr:"Cochon de lait rôti de Bairrada", es:"Cochinillo asado de Bairrada" },
       "cabrito assado": { en:"Roast kid goat", fr:"Chevreau rôti", es:"Cabrito asado" },
@@ -4982,25 +4981,46 @@ amesadigital.pt</textarea>
       "bola de berlim": { en:"Custard-filled doughnut", fr:"Beignet fourré à la crème", es:"Berlina rellena de crema" }
     };
 
+    // Termos de talho/peixaria que a tradução automática ESTRAGA (testados um a um no motor).
+    // Só entram aqui os que o Google traduz mal; tudo o resto (lombo, pescada, salmão, tamboril…)
+    // traduz-se normalmente. O nome fica em português e recebe a explicação entre parênteses.
+    const TERMOS = {
+      // Cortes de carne
+      "posta": { en:"Thick beef steak", fr:"Tranche épaisse de bœuf", es:"Filete grueso de ternera" },
+      "posta de vitela": { en:"Thick veal steak", fr:"Tranche épaisse de veau", es:"Filete grueso de ternera lechal" },
+      "vazia": { en:"Grilled sirloin steak", fr:"Faux-filet grillé", es:"Entrecot a la parrilla" },
+      "acem": { en:"Beef chuck", fr:"Paleron de bœuf", es:"Aguja de ternera" },
+      "entrecosto": { en:"Pork ribs", fr:"Travers de porc", es:"Costillas de cerdo" },
+      "faceira": { en:"Grilled pork cheek", fr:"Joue de porc grillée", es:"Carrillera de cerdo" },
+      "picanha": { en:"Top sirloin cap", fr:"Aiguillette de rumsteck", es:"Tapa de cuadril" },
+      "abanico": { en:"Grilled Iberian pork", fr:"Abanico de porc ibérique grillé", es:"Abanico ibérico a la parrilla" },
+      // Peixe e marisco
+      "dourada": { en:"Sea bream", fr:"Dorade", es:"Dorada" },
+      "raia": { en:"Skate", fr:"Raie", es:"Raya" },
+      "faneca": { en:"Pouting fish", fr:"Tacaud", es:"Faneca" },
+      "corvina": { en:"Meagre fish", fr:"Maigre", es:"Corvina" },
+      "cherne": { en:"Wreckfish", fr:"Cernier", es:"Cherna" },
+      "peixe espada": { en:"Black scabbardfish", fr:"Sabre noir", es:"Pez sable negro" },
+      "percebes": { en:"Goose barnacles", fr:"Pouces-pieds", es:"Percebes" },
+      "sapateira": { en:"Brown crab", fr:"Tourteau", es:"Buey de mar" }
+    };
+    Object.assign(PRATOS, TERMOS);
+
     function _normTrad(s){ return String(s||'').trim().toLowerCase()
         .replace(/[áàâãä]/g,'a').replace(/[éèêë]/g,'e').replace(/[íìîï]/g,'i').replace(/[óòôõö]/g,'o').replace(/[úùûü]/g,'u').replace(/ç/g,'c')
         .replace(/[()\-–—]/g,' ').replace(/[.:;,]+$/,'').replace(/\s+/g,' ').trim(); }
 
-    // Chaves do dicionário ordenadas do nome mais longo para o mais curto (para "arroz de marisco" ganhar a "arroz…")
+    // Chaves do dicionário ordenadas do nome mais longo para o mais curto (para "posta de vitela" ganhar a "posta")
     var _PRATOS_KEYS = Object.keys(PRATOS).sort(function(a,b){ return b.length - a.length; });
-    // Termos-base ambíguos: mantêm o nome PT, mas NÃO forçam descrição-glossário (ex.: "espetada" pode ser de carne, camarão ou lulas)
-    var _PRATOS_AMBIG = { 'espetada':1, 'arroz':1, 'tabua':1 };
-    // Procura um prato tradicional dentro do nome. Devolve { entry, glossar } ou null.
-    //  - exato ou no início do nome  → é o prato principal → pode usar a descrição-glossário
-    //  - no meio/fim do nome         → mantém só o nome em PT (sem descrição inventada)
+    // Procura um termo do dicionário como palavra inteira dentro do nome (exato, início, meio ou fim).
+    // Como o dicionário só tem termos que o Google estraga, qualquer correspondência recebe a explicação.
     function _pratoMatch(pt){
       var n = _normTrad(pt);
       if(PRATOS[n]) return { entry: PRATOS[n], glossar: true };
       for(var i=0; i<_PRATOS_KEYS.length; i++){
         var k = _PRATOS_KEYS[i];
         var ek = k.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
-        if(new RegExp('^'+ek+'(\\s|$)').test(n)) return { entry: PRATOS[k], glossar: !_PRATOS_AMBIG[k] };
-        if(new RegExp('(^|\\s)'+ek+'(\\s|$)').test(n)) return { entry: PRATOS[k], glossar: false };
+        if(new RegExp('(^|\\s)'+ek+'(\\s|$)').test(n)) return { entry: PRATOS[k], glossar: true };
       }
       return null;
     }
@@ -5057,19 +5077,24 @@ amesadigital.pt</textarea>
         if(vinho){
           // marca de vinho: nunca traduzir o nome
         } else if(dish){
-          // manter o nome em PT em todos os idiomas (é nome próprio; nunca "nail"/"woodpecker")
-          LANGS_TRAD.forEach(function(l){ tasks.push({ tipo:'copiar', o:node.nome, l:l, v:node.nome.pt }); });
+          // O nome fica sempre em português (é termo próprio; nunca "nail"/"empty steak").
+          // Quando é o prato/corte principal e o dono não escreveu descrição, acrescenta-se a
+          // explicação ENTRE PARÊNTESES no idioma (ex.: "Posta Bovino (Thick beef steak)").
           const temDescPt = node.desc && ehObjIdioma(node.desc) && String(node.desc.pt||'').trim();
+          LANGS_TRAD.forEach(function(l){
+            var val = node.nome.pt;
+            if(!temDescPt && dish.glossar && dish.entry[l]){
+              // evitar parênteses aninhados quando a explicação já traz "( )"
+              var g = String(dish.entry[l]).replace(/\s*\(/g, ' — ').replace(/\)/g, '').trim();
+              val = node.nome.pt + ' (' + g + ')';
+            }
+            tasks.push({ tipo:'copiar', o:node.nome, l:l, v:val });
+          });
           if(temDescPt){
             // o dono escreveu descrição própria — traduzi-la normalmente
             LANGS_TRAD.forEach(function(l){ tasks.push({ tipo:'traduzir', o:node.desc, l:l }); });
-          } else if(dish.glossar){
-            // sem descrição do dono e é o prato principal — usar a descrição-glossário (só nos idiomas estrangeiros)
-            if(!node.desc || typeof node.desc !== 'object' || Array.isArray(node.desc)) node.desc = { pt:'' };
-            if(node.desc.pt == null) node.desc.pt = '';
-            LANGS_TRAD.forEach(function(l){ if(dish.entry[l]) tasks.push({ tipo:'copiar', o:node.desc, l:l, v:dish.entry[l] }); });
           }
-          // (prato tradicional só mencionado no meio do nome: fica o nome PT, sem descrição inventada)
+          // (termo tradicional só mencionado no meio do nome: fica só o nome PT, sem parênteses)
         } else {
           // nome comum (não tradicional) — traduzir
           LANGS_TRAD.forEach(function(l){ tasks.push({ tipo:'traduzir', o:node.nome, l:l }); });
