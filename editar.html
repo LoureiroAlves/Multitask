@@ -613,6 +613,8 @@ amesadigital.pt</textarea>
         </div>
         <button type="button" id="corRepor" style="margin-top:10px; width:100%; padding:8px; border-radius:8px; border:1.5px solid var(--linha); background:var(--branco); color:var(--castanho); cursor:pointer; font-size:0.85rem;">↺ Repor cores do tema escolhido</button>
       </div>
+      <button type="button" id="reporCoresSeccoes" style="margin-top:10px; width:100%; padding:9px; border-radius:8px; border:1.5px solid var(--linha); background:var(--branco); color:var(--castanho); cursor:pointer; font-size:0.85rem;">🎨 Repor cores das secções do menu (seguir o tema)</button>
+      <div class="subtitulo" style="margin-top:4px;">Remove os fundos/cores próprios de cada secção do menu, para passarem a usar as cores do tema atual.</div>
 
       <label for="corMenuAtiva" style="margin-top:16px; display:flex; align-items:center; gap:8px; cursor:pointer;">
         <input type="checkbox" id="corMenuAtiva" style="width:auto;"> Definir a cor do texto do menu (manda sobre o modelo)
@@ -2866,6 +2868,13 @@ amesadigital.pt</textarea>
     document.getElementById('corDourado').value = b.dourado;
     document.getElementById('corBege').value = b.bege;
   });
+  { const _rcs = document.getElementById('reporCoresSeccoes');
+    if(_rcs) _rcs.addEventListener('click', async () => {
+      if(!confirm('Repor as cores das secções do menu para seguirem o tema?\n\nIsto remove os fundos/cores próprios de cada secção. (Podes voltar atrás com "Repor versão anterior" depois de gravar.)')) return;
+      _rcs.disabled = true;
+      try{ if(window.__reporCoresSeccoes) await window.__reporCoresSeccoes(); } finally { _rcs.disabled = false; }
+    });
+  }
   document.getElementById('corMenuAtiva').addEventListener('change', e => {
     document.getElementById('corMenuBox').style.display = e.target.checked ? 'flex' : 'none';
   });
@@ -4844,6 +4853,23 @@ amesadigital.pt</textarea>
       finally{ document.getElementById('btnGuardarMenu').disabled = false; }
     }
 
+    // Repor as cores das secções do menu para seguirem o tema (limpa fundos/cores próprios por secção)
+    window.__reporCoresSeccoes = async function(){
+      if(!menuData){ if(window.__negocio && window.__negocio.menu){ await carregarMenu(); } }
+      if(!menuData || !Array.isArray(menuData.categorias) || !menuData.categorias.length){ setEstadoMenu('Carrega o menu primeiro (botão "Carregar menu").', 'erro'); return false; }
+      let n = 0;
+      menuData.categorias.forEach(function(c){
+        if(c.fundo){ delete c.fundo; n++; }
+        if(c.cor){ delete c.cor; n++; }
+        if(c.corTile){ delete c.corTile; n++; }
+        if(c.estiloTile && c.estiloTile.cor){ delete c.estiloTile.cor; n++; }
+        if(c.neonCor){ delete c.neonCor; }
+      });
+      renderEditor();
+      if(window.__agendarPreview) window.__agendarPreview();
+      setEstadoMenu('Cores das secções repostas ao tema ✓ (' + n + ' ajuste(s)) — grava com "Guardar tudo".', 'ok');
+      return true;
+    };
     document.getElementById('btnCarregarMenu').addEventListener('click', carregarMenu);
     document.getElementById('btnGuardarMenu').addEventListener('click', guardarMenu);
     window.__carregarMenu = carregarMenu;
