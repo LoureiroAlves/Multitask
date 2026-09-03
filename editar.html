@@ -1937,6 +1937,7 @@ amesadigital.pt</textarea>
 
   // Pré-visualização dos layouts (cores principais para o seletor)
   const LAYOUTS_PREVIEW = {
+    'neutro': { nome:'Folha em branco',  cores:['#33373e','#7b8089','#f3f3f4'] },
     '1':  { nome:'1 — Rústico',        cores:['#4a3820','#a8712f','#f5efe2'] },
     '2':  { nome:'2 — Verde',          cores:['#26402a','#4e8d3f','#e9f2e4'] },
     '3':  { nome:'3 — Vinho',          cores:['#3f1f24','#9c2b3b','#f3e7e2'] },
@@ -1952,6 +1953,7 @@ amesadigital.pt</textarea>
   };
   // Cores principais de cada tema (para o botão "repor cores do tema")
   const TEMA_CORES_BASE = {
+    'neutro':{castanho:'#33373e',dourado:'#7b8089',bege:'#f3f3f4'},
     '1':{castanho:'#4a3820',dourado:'#a8712f',bege:'#f5efe2'}, '2':{castanho:'#26402a',dourado:'#4e8d3f',bege:'#e9f2e4'},
     '3':{castanho:'#3f1f24',dourado:'#9c2b3b',bege:'#f3e7e2'}, '4':{castanho:'#1f3550',dourado:'#2f6fb0',bege:'#e6eef7'},
     '5':{castanho:'#1a1a1a',dourado:'#c9a227',bege:'#eceae3'}, '6':{castanho:'#7a3b1f',dourado:'#d97a34',bege:'#f6e6d8'},
@@ -1959,7 +1961,7 @@ amesadigital.pt</textarea>
     '9':{castanho:'#8a3d0a',dourado:'#f2761b',bege:'#ffe9d1'}, '10':{castanho:'#2b2f36',dourado:'#546073',bege:'#ececef'},
     '11':{castanho:'#7a2843',dourado:'#d64f7c',bege:'#f9e2ea'}, '12':{castanho:'#3a3d1c',dourado:'#8a8a2e',bege:'#ecebd6'}
   };
-  let layoutSelecionado = '1';
+  let layoutSelecionado = 'neutro';
   function renderLayoutCards(){
     const box = document.getElementById('layoutCards');
     if(!box) return;
@@ -2170,7 +2172,7 @@ amesadigital.pt</textarea>
         config.agenda = Object.assign({ ativo:false, titulo:'Reservas', dias:[true,true,true,true,true,true,true], horarios:['12:00','12:30','13:00','19:30','20:00','20:30'], antecedencia:1, maxDias:30, whatsapp:'', valor:0, porPessoa:false, sinalPercent:50, pagamentoLink:'', pagamentoNota:'' }, parsed.agenda || {});
         if(!Array.isArray(config.agenda.dias) || config.agenda.dias.length !== 7) config.agenda.dias = [true,true,true,true,true,true,true];
         if(!Array.isArray(config.agenda.horarios)) config.agenda.horarios = [];
-        config.layout = parsed.layout || '1';
+        config.layout = parsed.layout || 'neutro';
         layoutSelecionado = config.layout;
         renderLayoutCards();
         config.modelo = parsed.modelo || 'lista';
@@ -2506,7 +2508,7 @@ amesadigital.pt</textarea>
       const _cw = document.getElementById('carrinhoWhats'); if(_cw) _cw.value = _c.whatsapp || ''; }
     // Cores personalizadas
     const temCores = !!(config.cores && typeof config.cores === 'object');
-    const baseC = TEMA_CORES_BASE[layoutSelecionado] || TEMA_CORES_BASE['1'];
+    const baseC = TEMA_CORES_BASE[layoutSelecionado] || TEMA_CORES_BASE['neutro'];
     document.getElementById('coresPersonalizar').checked = temCores;
     document.getElementById('coresBox').style.display = temCores ? 'block' : 'none';
     document.getElementById('corCastanho').value = (temCores && config.cores.castanho) || baseC.castanho;
@@ -2800,7 +2802,7 @@ amesadigital.pt</textarea>
     document.getElementById('coresBox').style.display = on ? 'block' : 'none';
     if(on){
       // ao ligar, parte das cores do tema atualmente selecionado
-      const b = TEMA_CORES_BASE[layoutSelecionado] || TEMA_CORES_BASE['1'];
+      const b = TEMA_CORES_BASE[layoutSelecionado] || TEMA_CORES_BASE['neutro'];
       if(!config.cores){
         document.getElementById('corCastanho').value = b.castanho;
         document.getElementById('corDourado').value = b.dourado;
@@ -2809,7 +2811,7 @@ amesadigital.pt</textarea>
     }
   });
   document.getElementById('corRepor').addEventListener('click', () => {
-    const b = TEMA_CORES_BASE[layoutSelecionado] || TEMA_CORES_BASE['1'];
+    const b = TEMA_CORES_BASE[layoutSelecionado] || TEMA_CORES_BASE['neutro'];
     document.getElementById('corCastanho').value = b.castanho;
     document.getElementById('corDourado').value = b.dourado;
     document.getElementById('corBege').value = b.bege;

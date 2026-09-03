@@ -3747,6 +3747,11 @@
 
   // ===== Layouts / temas (cores + tipos de letra) =====
   const TEMAS = {
+    'neutro': { // Folha em branco — base neutra para negócios novos (sem cor de marca; adiciona-se tema/cores por cima)
+      '--branco':'#ffffff','--bege-claro':'#fafafa','--bege':'#f3f3f4','--linha':'#e4e4e7','--linha-suave':'#efeff1',
+      '--castanho':'#33373e','--castanho-suave':'#6c717a','--castanho-claro':'#a7acb4','--dourado':'#7b8089','--dourado-escuro':'#565b63',
+      '--fonte-titulo':"'Fredoka', sans-serif",'--fonte-texto':"'Nunito', sans-serif"
+    },
     '1': { // Layout 1 — Rústico castanho (original)
       '--branco':'#ffffff','--bege-claro':'#fbf8f2','--bege':'#f5efe2','--linha':'#e6dcc8','--linha-suave':'#f0e9d8',
       '--castanho':'#4a3820','--castanho-suave':'#8a7350','--castanho-claro':'#a8987a','--dourado':'#a8712f','--dourado-escuro':'#8a5a24',
@@ -3820,7 +3825,7 @@
     }catch(e){ return hex; }
   }
   function aplicarTema(nome, cores){
-    const t = Object.assign({}, TEMAS[String(nome)] || TEMAS['1']);
+    const t = Object.assign({}, TEMAS[String(nome)] || TEMAS['neutro']);
     // Cores personalizadas: só as 3 principais; os tons restantes são derivados automaticamente
     if(cores && typeof cores === 'object'){
       if(cores.castanho){ t['--castanho']=cores.castanho; t['--castanho-suave']=_shade(cores.castanho,32); t['--castanho-claro']=_shade(cores.castanho,58); t['--intro-bg']=cores.castanho; }
@@ -4068,7 +4073,7 @@
     try{
       if(!config) return;
 
-      aplicarTema(config.layout || '1', config.cores);
+      aplicarTema(config.layout || 'neutro', config.cores);
       if(config.fonte && config.fonte !== 'auto'){ aplicarFonte(config.fonte); document.body.classList.add('fonte-titulo-custom'); }
       else { document.body.classList.remove('fonte-titulo-custom'); document.documentElement.style.setProperty('--fonte-titulo', "'Fredoka', sans-serif"); }
       if(config.fonteTexto && FONTES_TITULO[config.fonteTexto]){ document.documentElement.style.setProperty('--fonte-texto', FONTES_TITULO[config.fonteTexto]); document.body.classList.add('fonte-texto-custom'); }
