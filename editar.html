@@ -642,10 +642,17 @@ amesadigital.pt</textarea>
       <label for="fundoTipoSel" style="margin-top:16px;">Fundo do cardápio</label>
       <select id="fundoTipoSel" style="width:100%; padding:10px 12px; border-radius:10px; border:1.5px solid var(--linha); background:var(--branco); font-family:inherit; color:var(--castanho); font-size:0.95rem;">
         <option value="liso">Liso (cor clara do tema)</option>
+        <option value="cor">Cor à escolha</option>
         <option value="gradiente">Degradê suave</option>
         <option value="textura">Textura (padrão)</option>
         <option value="imagem">Imagem própria</option>
       </select>
+      <div id="fundoCorBox" style="display:none; margin-top:10px;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <input type="color" id="fundoCor" value="#ffffff" style="width:52px; height:36px; padding:0; border:none; background:none; cursor:pointer;">
+          <span class="subtitulo" style="margin:0;">Só pinta o fundo da página — não afeta os separadores das categorias.</span>
+        </div>
+      </div>
       <div id="fundoTexturaBox" style="display:none; margin-top:10px;">
         <label for="fundoTexturaSel" style="margin-top:0;">Tipo de textura</label>
         <select id="fundoTexturaSel" style="width:100%; padding:10px 12px; border-radius:10px; border:1.5px solid var(--linha); background:var(--branco); font-family:inherit; color:var(--castanho); font-size:0.95rem;">
@@ -706,6 +713,13 @@ amesadigital.pt</textarea>
       <label for="subtitulo">Subtítulo</label>
       <input type="text" id="subtitulo" placeholder="Tradição, sabor e conforto à mesa">
       <div id="estiloHSub"></div>
+
+      <label style="margin-top:12px; display:flex; align-items:center; gap:8px; cursor:pointer;">
+        <input type="checkbox" id="corCabFundoAtiva" style="width:auto;"> Cor de fundo do cabeçalho (à parte do tema e do fundo da página)
+      </label>
+      <div id="corCabFundoBox" style="display:none; margin-top:6px;">
+        <input type="color" id="corCabFundo" value="#1a1a1a" style="width:52px; height:34px; padding:0; border:none; background:none; cursor:pointer;">
+      </div>
 
       <label for="headerPadrao" style="margin-top:12px;">Base do cabeçalho (padrão)</label>
       <select id="headerPadrao" style="width:100%; padding:10px 12px; border-radius:10px; border:1.5px solid var(--linha); background:var(--branco); font-family:inherit; color:var(--castanho); font-size:0.95rem;">
@@ -1200,6 +1214,13 @@ amesadigital.pt</textarea>
         <label for="footerMostrar" style="margin:0; font-weight:700; color:var(--dourado-escuro); display:inline;">Mostrar rodapé final (ao fazer scroll até ao fim)</label>
       </div>
       <div class="subtitulo" style="margin:-6px 0 10px;">Desliga para não mostrar o bloco do fim (nome, morada, telefone e publicidade).</div>
+
+      <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+        <input type="checkbox" id="corFtrFundoAtiva" style="width:auto;"> Cor de fundo do rodapé (à parte do tema e do fundo da página)
+      </label>
+      <div id="corFtrFundoBox" style="display:none; margin:6px 0 10px;">
+        <input type="color" id="corFtrFundo" value="#1a1a1a" style="width:52px; height:34px; padding:0; border:none; background:none; cursor:pointer;">
+      </div>
 
       <label for="footerNome">Nome do restaurante</label>
       <input type="text" id="footerNome" placeholder="Nome do negócio">
@@ -2580,6 +2601,16 @@ amesadigital.pt</textarea>
     document.getElementById('fundoTipoSel').value = fundo.tipo || 'liso';
     document.getElementById('fundoImagemBox').style.display = (fundo.tipo === 'imagem') ? 'block' : 'none';
     document.getElementById('fundoTexturaBox').style.display = (fundo.tipo === 'textura') ? 'block' : 'none';
+    { const _fcb = document.getElementById('fundoCorBox'); if(_fcb) _fcb.style.display = (fundo.tipo === 'cor') ? 'block' : 'none';
+      const _fc = document.getElementById('fundoCor'); if(_fc) _fc.value = fundo.cor || '#ffffff'; }
+    { const _hf = (config.header && config.header.corFundo) || '';
+      const _a = document.getElementById('corCabFundoAtiva'); if(_a) _a.checked = !!_hf;
+      const _b = document.getElementById('corCabFundoBox'); if(_b) _b.style.display = _hf ? 'block' : 'none';
+      const _i = document.getElementById('corCabFundo'); if(_i) _i.value = _hf || '#1a1a1a'; }
+    { const _ff = (config.footer && config.footer.corFundo) || '';
+      const _a = document.getElementById('corFtrFundoAtiva'); if(_a) _a.checked = !!_ff;
+      const _b = document.getElementById('corFtrFundoBox'); if(_b) _b.style.display = _ff ? 'block' : 'none';
+      const _i = document.getElementById('corFtrFundo'); if(_i) _i.value = _ff || '#1a1a1a'; }
     { const _fa = config.fundoAnim || { ativo:true, duracao:28, intensidade:12 };
       const _ca = document.getElementById('fundoAnimAtivo'); if(_ca) _ca.checked = _fa.ativo !== false;
       const _cb = document.getElementById('fundoAnimBox'); if(_cb) _cb.style.display = (_fa.ativo !== false) ? 'block' : 'none';
@@ -2887,7 +2918,18 @@ amesadigital.pt</textarea>
   document.getElementById('fundoTipoSel').addEventListener('change', e => {
     document.getElementById('fundoImagemBox').style.display = (e.target.value === 'imagem') ? 'block' : 'none';
     document.getElementById('fundoTexturaBox').style.display = (e.target.value === 'textura') ? 'block' : 'none';
+    { const _fcb = document.getElementById('fundoCorBox'); if(_fcb) _fcb.style.display = (e.target.value === 'cor') ? 'block' : 'none'; }
+    if(window.__agendarPreview) window.__agendarPreview();
   });
+  { const _fc = document.getElementById('fundoCor'); if(_fc) _fc.addEventListener('input', function(){ if(window.__agendarPreview) window.__agendarPreview(); }); }
+  // Cor de fundo do cabeçalho
+  { const _a = document.getElementById('corCabFundoAtiva'), _i = document.getElementById('corCabFundo'), _b = document.getElementById('corCabFundoBox');
+    if(_a) _a.addEventListener('change', function(){ if(_b) _b.style.display = _a.checked ? 'block' : 'none'; if(window.__agendarPreview) window.__agendarPreview(); });
+    if(_i) _i.addEventListener('input', function(){ if(window.__agendarPreview) window.__agendarPreview(); }); }
+  // Cor de fundo do rodapé
+  { const _a = document.getElementById('corFtrFundoAtiva'), _i = document.getElementById('corFtrFundo'), _b = document.getElementById('corFtrFundoBox');
+    if(_a) _a.addEventListener('change', function(){ if(_b) _b.style.display = _a.checked ? 'block' : 'none'; if(window.__agendarPreview) window.__agendarPreview(); });
+    if(_i) _i.addEventListener('input', function(){ if(window.__agendarPreview) window.__agendarPreview(); }); }
   { const _ca = document.getElementById('fundoAnimAtivo');
     if(_ca) _ca.addEventListener('change', e => { document.getElementById('fundoAnimBox').style.display = e.target.checked ? 'block' : 'none'; });
     const _cd = document.getElementById('fundoAnimDur'), _cdv = document.getElementById('fundoAnimDurVal');
@@ -3286,6 +3328,7 @@ amesadigital.pt</textarea>
       config.header.estiloSub = lerEstilo('hSub');
       config.header.realce = false;
       config.header.mostrar = document.getElementById('headerMostrar').checked;
+      { const _a = document.getElementById('corCabFundoAtiva'), _i = document.getElementById('corCabFundo'); config.header.corFundo = (_a && _a.checked && _i) ? _i.value : ''; }
       config.mostrarTraducoes = document.getElementById('mostrarTraducoes').checked;
       config.idiomas = {
         pt: document.getElementById('idiomaPt').checked,
@@ -3360,6 +3403,7 @@ amesadigital.pt</textarea>
         textoX: config.footer.textoX ?? 50,
         textoY: config.footer.textoY ?? 50,
         mostrar: document.getElementById('footerMostrar').checked,
+        corFundo: (function(){ const _a=document.getElementById('corFtrFundoAtiva'), _i=document.getElementById('corFtrFundo'); return (_a && _a.checked && _i) ? _i.value : ''; })(),
         linhaEstilos: [lerEstilo('fNom'), lerEstilo('fMor'), lerEstilo('fTel')]
       };
       { const _wx = parseInt(document.getElementById('anuncioWaX').value, 10);
@@ -3469,6 +3513,7 @@ amesadigital.pt</textarea>
         tipo: document.getElementById('fundoTipoSel').value,
         imagem: (config.fundo && config.fundo.imagem) || '',
         textura: document.getElementById('fundoTexturaSel').value,
+        cor: (document.getElementById('fundoCor') ? document.getElementById('fundoCor').value : ((config.fundo && config.fundo.cor) || '#ffffff')),
         opacidade: parseInt((document.getElementById('fundoOpac') || {}).value, 10) || 100
       };
       { const _ca = document.getElementById('fundoAnimAtivo'), _cd = document.getElementById('fundoAnimDur'), _ci = document.getElementById('fundoAnimInt');

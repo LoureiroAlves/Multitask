@@ -272,9 +272,9 @@
   .drop-alvo{ outline:3px dashed #ffd75e !important; outline-offset:-3px; box-shadow:0 0 0 100vmax rgba(255,215,94,.10) inset !important; position:relative; }
   header{
     position:relative; z-index:50;
-    background:var(--castanho);
+    background:var(--cab-cor, var(--castanho));
     padding:calc(16px + env(safe-area-inset-top)) 16px 14px;
-    border-bottom:1px solid var(--castanho);
+    border-bottom:1px solid var(--cab-cor, var(--castanho));
     text-align:center;
   }
   /* Cabeçalho fixo no topo (o menu passa por baixo) */
@@ -284,7 +284,7 @@
   /* Botão voltar: quando o menu clássico está oculto, mostra só a seta (maior) */
   body.menu-oculto .categoria-painel-header .voltar{ font-size:1.5rem; line-height:1; padding:7px 15px; }
   /* Sem foto: garante fundo sólido para o nome se ler sempre */
-  header.sem-foto{ background:var(--castanho); }
+  header.sem-foto{ background:var(--cab-cor, var(--castanho)); }
   header.sem-foto #headerFotos{ display:none; }
   /* Pastas: categorias dentro de uma secção contentora (ex.: Take Away) */
   .cat-filhos{ display:flex; flex-direction:column; gap:10px; padding:8px 2px 6px; }
@@ -1621,7 +1621,7 @@
     margin-top:10px;
     padding:240px 16px 310px;
     border-top:none;
-    background:transparent;   /* deixa o fundo do menu continuar por baixo da publicidade */
+    background:var(--ftr-cor, transparent);   /* cor própria do rodapé; transparente = deixa o fundo do menu por baixo */
   }
   footer .nome-rest{font-family:var(--fonte-titulo); color:var(--castanho); font-size:1rem; margin-bottom:8px; font-weight:600;}
   footer a{color:var(--castanho-suave);}
@@ -4209,7 +4209,12 @@
       if(config.tileTamanho === 'pequeno') document.body.classList.add('tiles-pequeno');
       else if(config.tileTamanho === 'grande') document.body.classList.add('tiles-grande');
       document.body.classList.toggle('tiles-vidro', config.tilesVidro === true);
-      // Fundo do cardápio (liso / gradiente / imagem / textura)
+      // Cores próprias do cabeçalho e do rodapé — independentes do tema e do fundo da página
+      { const rs = document.documentElement.style;
+        if(config.header && config.header.corFundo){ rs.setProperty('--cab-cor', config.header.corFundo); } else { rs.removeProperty('--cab-cor'); }
+        if(config.footer && config.footer.corFundo){ rs.setProperty('--ftr-cor', config.footer.corFundo); } else { rs.removeProperty('--ftr-cor'); }
+      }
+      // Fundo do cardápio (liso / cor / gradiente / imagem / textura)
       document.body.classList.remove('textura-pontos','textura-grelha','textura-diagonal','textura-linho','textura-xadrez','textura-favo','textura-relevo','textura-almofada','textura-azulejo-classico','textura-azulejo-floral','textura-azulejo-geometrico');
       document.body.classList.remove('fundo-imagem','fundo-anim');
       document.documentElement.style.backgroundColor = '';
@@ -4231,7 +4236,11 @@
         const cs = getComputedStyle(document.documentElement);
         const bgClaro = (cs.getPropertyValue('--bege-claro')||'#fbf8f2').trim();
         const bg = (cs.getPropertyValue('--bege')||'#f5efe2').trim();
-        if(config.fundo.tipo === 'gradiente'){
+        if(config.fundo.tipo === 'cor'){
+          // Cor sólida SÓ no fundo da página — não toca nos tiles das categorias
+          document.body.style.background = config.fundo.cor || bgClaro;
+          document.body.style.backgroundAttachment = 'scroll';
+        } else if(config.fundo.tipo === 'gradiente'){
           document.body.style.background = 'linear-gradient(180deg, ' + bgClaro + ' 0%, ' + bg + ' 100%)';
           document.body.style.backgroundAttachment = 'scroll';
         } else if(config.fundo.tipo === 'imagem' && config.fundo.imagem){
