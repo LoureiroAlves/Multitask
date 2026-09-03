@@ -1515,6 +1515,7 @@ amesadigital.pt</textarea>
   </details>
 
   <button type="button" class="acao" id="btnGuardar">💾 Guardar tudo</button>
+  <button type="button" class="acao" id="btnReporAnterior" style="background:var(--castanho-suave, #8a7350); margin-top:8px;">↩ Repor versão anterior (antes da última gravação)</button>
   <div class="estado" id="estado"></div>
 
   <details id="secMenu" class="ed-sec" data-tab="menu">
@@ -3498,6 +3499,17 @@ amesadigital.pt</textarea>
       return config;
   }
 
+  // ===== Undo de 1 nível (repor a versão anterior à última gravação) =====
+  // Guardamos uma única cópia (config + menu antes desta gravação) dentro de config.__undo.
+  // Não cresce: é sempre só 1 nível.
+  function _stripUndo(o){ if(o && o.__undo){ o = JSON.parse(JSON.stringify(o)); delete o.__undo; } return o; }
+  async function _lerEstadoAtual(){
+    try{
+      const { data } = await sbc.from('negocios').select('config,menu').eq('id', window.__negocio.id).maybeSingle();
+      return { config:(data && data.config) || null, menu:(data && data.menu) || null };
+    }catch(e){ return { config:(window.__negocio && window.__negocio.config) || null, menu:(window.__negocio && window.__negocio.menu) || null }; }
+  }
+
   async function gravarConfigJson(token){
       if(!window.__negocio || !window.__negocio.id) throw new Error('Negócio não carregado.');
       // Nunca sobrescrever campos geridos pelo admin (visibilidade na montra, tipo, secções desligadas).
@@ -3511,6 +3523,10 @@ amesadigital.pt</textarea>
           if(fc.tipo !== undefined) config.tipo = fc.tipo;            // filtro de cozinha na montra
           if(fc.editorOff !== undefined) config.editorOff = fc.editorOff; // secções desligadas ao dono
         }
+        // Guarda 1 cópia do estado ANTERIOR (config + menu já publicados) para o "Repor versão anterior".
+        let _prevMenu = (window.__negocio && window.__negocio.menu) || null;
+        try{ const { data:fm } = await sbc.from('negocios').select('menu').eq('id', window.__negocio.id).maybeSingle(); if(fm) _prevMenu = fm.menu; }catch(e){}
+        config.__undo = { config: _stripUndo(fc || (window.__negocio && window.__negocio.config) || {}), menu: _prevMenu, ts: Date.now() };
       }catch(e){}
       const { error } = await sbc.from('negocios').update({ config: config }).eq('id', window.__negocio.id);
       if(error) throw new Error(error.message);
@@ -4760,6 +4776,14 @@ amesadigital.pt</textarea>
       try{
         pruneMenu();
         setEstadoMenu('A guardar menu…', 'info');
+        // Guarda 1 cópia do estado anterior (config + menu já publicados) para o "Repor versão anterior"
+        try{
+          const _est = await _lerEstadoAtual();
+          const _cfgUndo = _stripUndo(_est.config || {}) || {};
+          _cfgUndo.__undo = { config: _stripUndo(_est.config || {}), menu: _est.menu || null, ts: Date.now() };
+          await sbc.from('negocios').update({ config: _cfgUndo }).eq('id', window.__negocio.id);
+          if(window.__negocio.config) window.__negocio.config.__undo = _cfgUndo.__undo;
+        }catch(e){}
         const { error } = await sbc.from('negocios').update({ menu: menuData }).eq('id', window.__negocio.id);
         if(error) throw new Error(error.message);
         window.__negocio.menu = JSON.parse(JSON.stringify(menuData));
@@ -5229,6 +5253,28 @@ amesadigital.pt</textarea>
 
   document.getElementById('btnCarregar').addEventListener('click', carregarConfig);
   document.getElementById('btnGuardar').addEventListener('click', guardarTudo);
+  // Repor a versão anterior à última gravação (undo de 1 nível). A versão atual fica guardada, dá para alternar.
+  { const _br = document.getElementById('btnReporAnterior');
+    if(_br) _br.addEventListener('click', async function(){
+      if(!window.__negocio || !window.__negocio.id){ setEstado('Negócio não carregado.', 'erro'); return; }
+      const est = await _lerEstadoAtual();
+      const u = est.config && est.config.__undo;
+      if(!u || !u.config){ setEstado('Ainda não há versão anterior guardada (grava pelo menos uma vez).', 'erro'); return; }
+      if(!confirm('Repor a versão anterior à última gravação?\n\nA versão atual fica guardada — podes carregar outra vez para voltar a ela.')) return;
+      _br.disabled = true;
+      try{
+        const nova = JSON.parse(JSON.stringify(u.config));
+        // manter campos geridos pelo admin do estado atual (visibilidade, tipo, secções desligadas)
+        const ac = est.config || {};
+        ['oculto','naApp','tipo','editorOff'].forEach(function(k){ if(ac[k] !== undefined) nova[k] = ac[k]; });
+        // a "nova cópia" passa a apontar para o estado ATUAL, para poderes alternar
+        nova.__undo = { config: _stripUndo(est.config || {}), menu: est.menu || null, ts: Date.now() };
+        await sbc.from('negocios').update({ config: nova, menu: (u.menu || null) }).eq('id', window.__negocio.id);
+        setEstado('✅ Versão anterior reposta — a recarregar…', 'ok');
+        setTimeout(function(){ location.reload(); }, 900);
+      }catch(err){ setEstado('Erro ao repor: ' + (err && err.message ? err.message : err), 'erro'); _br.disabled = false; }
+    });
+  }
   { const _bd = document.getElementById('btnGuardarDock');
     if(_bd) _bd.addEventListener('click', function(){
       const _old = _bd.textContent; _bd.textContent = 'A guardar…'; _bd.disabled = true;
@@ -5271,6 +5317,7 @@ amesadigital.pt</textarea>
       try{ cfg = lerFormularioConfig(); }catch(e){ cfg = config; }
       const msg = { type: 'cardapio-preview' };
       try{ msg.config = JSON.parse(JSON.stringify(cfg)); }catch(e){ msg.config = cfg; }
+      if(msg.config && msg.config.__undo) delete msg.config.__undo;   // não enviar a cópia de segurança à pré-visualização
       const menu = (window.__getMenuPreview && window.__getMenuPreview()) || null;
       if(menu){ try{ msg.menu = JSON.parse(JSON.stringify(menu)); }catch(e){ msg.menu = menu; } }
       frame.contentWindow.postMessage(msg, '*');
