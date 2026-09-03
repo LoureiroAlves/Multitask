@@ -1528,7 +1528,9 @@ amesadigital.pt</textarea>
       <div class="subtitulo" style="margin-top:6px;">Edita o menu do cardápio (o <code>menu.json</code>). Usa o mesmo token lá em cima. Carrega, altera e guarda — as alterações aparecem no cardápio dentro de 1-2 minutos.</div>
       <button type="button" class="acao" id="btnCarregarMenu" style="background:var(--castanho); margin-top:6px;">📥 Carregar menu</button>
       <input type="file" id="fileImportMenu" accept=".json,application/json" style="display:none;">
-      <button type="button" class="acao" id="btnImportarMenu" style="background:var(--dourado-escuro); margin-top:8px;">📁 Importar menu de um ficheiro (.json)</button>
+      <button type="button" class="acao" id="btnImportarMenu" style="background:var(--dourado-escuro); margin-top:8px;">📁 Importar menu de um ficheiro (.json) — substitui tudo</button>
+      <input type="file" id="fileAdicionarMenu" accept=".json,application/json" style="display:none;">
+      <button type="button" class="acao" id="btnAdicionarMenu" style="background:var(--castanho); margin-top:8px;">➕ Adicionar secções de um ficheiro (.json) — sem apagar o resto</button>
       <div id="menuEditor" style="margin-top:14px;"></div>
       <div id="menuAcoes" style="display:none;">
         <button type="button" class="acao" id="btnTraduzirMenu" style="background:var(--dourado-escuro);">🌐 Traduzir automaticamente (PT → EN/FR/ES)</button>
@@ -5189,6 +5191,35 @@ amesadigital.pt</textarea>
           acoesEl.style.display = 'block';
           setEstadoMenu('Menu importado ✓ — revê e clica em "💾 Guardar menu" para publicar.', 'ok');
         }catch(err){ setEstadoMenu('Erro a importar: ' + err.message, 'erro'); }
+        e.target.value = '';
+      };
+      reader.onerror = function(){ setEstadoMenu('Não consegui ler o ficheiro.', 'erro'); };
+      reader.readAsText(file);
+    });
+    // Adicionar secções sem apagar o resto: funde por id (mesmo id substitui; id novo acrescenta)
+    document.getElementById('btnAdicionarMenu').addEventListener('click', function(){
+      document.getElementById('fileAdicionarMenu').click();
+    });
+    document.getElementById('fileAdicionarMenu').addEventListener('change', function(e){
+      var file = e.target.files && e.target.files[0];
+      if(!file) return;
+      var reader = new FileReader();
+      reader.onload = function(){
+        try{
+          var dados = JSON.parse(reader.result);
+          if(!dados || !Array.isArray(dados.categorias)) throw new Error('O ficheiro não parece um menu (falta "categorias").');
+          if(!menuData || !Array.isArray(menuData.categorias)){ menuData = { restaurante: (dados.restaurante||''), categorias: [] }; }
+          var atuais = menuData.categorias;
+          var novas = 0, subs = 0;
+          dados.categorias.forEach(function(nc){
+            var idx = nc.id ? atuais.findIndex(function(c){ return c.id === nc.id; }) : -1;
+            if(idx >= 0){ atuais[idx] = nc; subs++; } else { atuais.push(nc); novas++; }
+          });
+          abertaCi = null;
+          renderEditor();
+          acoesEl.style.display = 'block';
+          setEstadoMenu('Secções adicionadas ✓ (' + novas + ' nova(s), ' + subs + ' atualizada(s)) — revê e clica em "💾 Guardar menu".', 'ok');
+        }catch(err){ setEstadoMenu('Erro a adicionar: ' + err.message, 'erro'); }
         e.target.value = '';
       };
       reader.onerror = function(){ setEstadoMenu('Não consegui ler o ficheiro.', 'erro'); };
