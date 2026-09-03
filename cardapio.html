@@ -3774,9 +3774,9 @@
 
   // ===== Layouts / temas (cores + tipos de letra) =====
   const TEMAS = {
-    'neutro': { // Folha em branco — base neutra para negócios novos (sem cor de marca; adiciona-se tema/cores por cima)
-      '--branco':'#ffffff','--bege-claro':'#fafafa','--bege':'#f3f3f4','--linha':'#e4e4e7','--linha-suave':'#efeff1',
-      '--castanho':'#33373e','--castanho-suave':'#6c717a','--castanho-claro':'#a7acb4','--dourado':'#7b8089','--dourado-escuro':'#565b63',
+    'neutro': { // Folha em branco — fundos brancos puros (sem cinza por trás); texto/acento a preto neutro
+      '--branco':'#ffffff','--bege-claro':'#ffffff','--bege':'#ffffff','--linha':'#eaeaea','--linha-suave':'#f4f4f4',
+      '--castanho':'#1a1a1a','--castanho-suave':'#5c5c5c','--castanho-claro':'#9a9a9a','--dourado':'#1a1a1a','--dourado-escuro':'#000000',
       '--fonte-titulo':"'Fredoka', sans-serif",'--fonte-texto':"'Nunito', sans-serif"
     },
     '1': { // Layout 1 — Rústico castanho (original)
@@ -3861,11 +3861,13 @@
     }
     const r = document.documentElement;
     Object.keys(t).forEach(k => { if(k.indexOf('--')===0) r.style.setProperty(k, t[k]); });
-    r.style.backgroundColor = t['--castanho'];
-    r.style.setProperty('--intro-bg', t['--castanho']);
+    // Folha em branco: fundo da página branco (não o castanho); nos restantes temas, usa o castanho.
+    const _bgPag = (String(nome) === 'neutro') ? (t['--bege-claro'] || '#ffffff') : t['--castanho'];
+    r.style.backgroundColor = _bgPag;
+    r.style.setProperty('--intro-bg', _bgPag);
     const meta = document.querySelector('meta[name=theme-color]');
-    if(meta) meta.content = t['--castanho'];
-    try{ var _tcS = __slugDoEndereco() || 'geral'; localStorage.setItem('temaCor:' + _tcS, t['--castanho']); }catch(e){}
+    if(meta) meta.content = _bgPag;
+    try{ var _tcS = __slugDoEndereco() || 'geral'; localStorage.setItem('temaCor:' + _tcS, _bgPag); }catch(e){}
   }
 
   // Ícone da app (ecrã principal): gera a inicial do restaurante na sua cor, para cada negócio ter o seu próprio ícone.
