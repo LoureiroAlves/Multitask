@@ -405,8 +405,14 @@
     const emailDono = $('nEmailDono').value.trim().toLowerCase();
     if(!nome || !slug){ msg($('criarMsg'),'Preenche o nome e o slug.','erro'); return; }
     $('btnCriar').disabled = true;
-    // Folha em branco: menu vazio e config mínima (só o nome). O dono constrói tudo no editor.
-    const config = { header:{ titulo:nome, subtitulo:'', cor:'#ffffff', realce:true, fotosAtivas:true, fotos:[] }, footer:{ mostrar:false } };
+    // Folha em branco TOTAL: sem cabeçalho, sem nome, sem intro, sem rodapé, sem barra fixa.
+    // O dono liga e escreve tudo o que quiser no editor, sem base nenhuma.
+    const config = {
+      header: { titulo:'', subtitulo:'', mostrar:false, cor:'#ffffff', realce:true, fotosAtivas:false, fotos:[] },
+      footer: { mostrar:false },
+      rodape: { mostrar:false },
+      intro:  { ativo:false }
+    };
     const menu = { restaurante:'', categorias:[] };
     const { data:neg, error } = await sb.from('negocios').insert({ nome:nome, slug:slug, dono_email:emailDono || null, config:config, menu:menu }).select().single();
     if(error){ $('btnCriar').disabled = false; msg($('criarMsg'), 'Erro: ' + error.message, 'erro'); return; }
