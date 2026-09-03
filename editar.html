@@ -361,7 +361,7 @@ amesadigital.pt</textarea>
         <option value="italiano">Italiano (trattoria, tricolore, serif)</option>
       </select>
       <label style="display:flex; align-items:center; gap:8px; margin-top:10px; font-size:.92rem;">
-        <input type="checkbox" id="painelFundoLayout" style="width:auto;"> Usar o fundo do layout (versão suave) no interior das secções
+        <input type="checkbox" id="painelFundoOff" style="width:auto;"> Mostrar o fundo completo do layout nas secções (por norma usa-se a versão suave)
       </label>
       <div id="cadernoBox" style="display:none; margin-top:10px; padding:12px; border:1.5px solid var(--linha); border-radius:10px;">
         <label for="cadFolha" style="margin-top:0;">Tipo de folha</label>
@@ -2443,7 +2443,7 @@ amesadigital.pt</textarea>
     aplicarDecorUI();
     document.getElementById('jogosAtivo').checked = config.jogos !== false;
     document.getElementById('modeloSel').value = config.modelo || 'lista';
-    { const _pf = document.getElementById('painelFundoLayout'); if(_pf) _pf.checked = !!config.painelFundoLayout; }
+    { const _pf = document.getElementById('painelFundoOff'); if(_pf) _pf.checked = !!config.painelFundoOff; }
     document.getElementById('cadernoBox').style.display = (config.modelo === 'caderno') ? 'block' : 'none';
     { document.getElementById('praiaCorBox').style.display = (config.modelo === 'praia') ? 'block' : 'none';
       document.getElementById('praiaCor1').value = config.praiaCor1 || '#23417f';
@@ -3353,7 +3353,7 @@ amesadigital.pt</textarea>
       }
       config.jogos = document.getElementById('jogosAtivo').checked;
       config.modelo = document.getElementById('modeloSel').value;
-      { const _pf = document.getElementById('painelFundoLayout'); config.painelFundoLayout = !!(_pf && _pf.checked); }
+      { const _pf = document.getElementById('painelFundoOff'); config.painelFundoOff = !!(_pf && _pf.checked); }
       config.sliderCor = document.getElementById('sliderCorAtiva').checked ? document.getElementById('sliderCor').value : '';
       config.sliderCorCapa = document.getElementById('sliderCapaAtiva').checked ? document.getElementById('sliderCorCapa').value : '';
       config.sliderCorTitulo = document.getElementById('sliderTitAtiva').checked ? document.getElementById('sliderCorTitulo').value : '';

@@ -4196,7 +4196,9 @@
       document.body.classList.toggle('fundo-visivel', _tipoFundo !== 'liso');
       // "Fundo do layout (versão suave)" nas secções funciona sempre que o modelo tem fundo próprio,
       // mesmo que o fundo principal use uma textura/imagem à tua escolha.
-      document.body.classList.toggle('painel-fundo-suave', !!config.painelFundoLayout && _fundoProprio);
+      // Fundo suave do próprio layout nas secções: LIGADO por omissão em todos os layouts com fundo próprio
+      // (podes desligar por negócio com config.painelFundoOff para mostrares o fundo completo).
+      document.body.classList.toggle('painel-fundo-suave', _fundoProprio && !config.painelFundoOff);
       if(_usarFundoModelo){ document.body.style.background = ''; document.body.style.backgroundColor = ''; }
       else if(config.fundo && config.fundo.tipo){
         const cs = getComputedStyle(document.documentElement);
