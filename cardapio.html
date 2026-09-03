@@ -1529,6 +1529,9 @@
   .menu-sec-tit:first-child{ margin-top:6px; }
   .menu-sec-sub{ font-size:0.68rem; font-weight:600; opacity:.65; text-transform:none; letter-spacing:0; }
   .menu-sec-txt{ text-align:center; color:var(--castanho); font-size:0.9rem; line-height:1.5; padding:0 16px; white-space:pre-line; }
+  .menu-card > summary{ position:relative; padding-right:46px; }
+  .menu-card > summary .btn-add-menu{ position:absolute; right:12px; top:50%; transform:translateY(-50%); }
+  body.carrinho-off .menu-card > summary{ padding-right:0; }
   .card-lista{
     background:linear-gradient(180deg, #ffffff 0%, #fbf8f2 100%);
     border-radius:14px;
@@ -3166,8 +3169,11 @@
       } else if(cat.tipo === 'menus'){
         if(cat.subtitulo){ const s=document.createElement('div'); s.className='subtitulo'; _mLang(s, cat.subtitulo); sec.appendChild(s); }
         (cat.menus||[]).forEach(m => {
-          const det=document.createElement('details'); det.className='grupo-prato';
-          const sum=document.createElement('summary'); _mLang(sum, m.nome); det.appendChild(sum);
+          const det=document.createElement('details'); det.className='grupo-prato menu-card';
+          if(m.preco) det.dataset.preco = m.preco;
+          const sum=document.createElement('summary');
+          const _t=document.createElement('span'); _t.className='menu-card-tit'; _mLang(_t, m.nome); sum.appendChild(_t);
+          det.appendChild(sum);
           const lista=document.createElement('div'); lista.className='card-lista';
           if(m.preco){ const p=document.createElement('div'); p.className='menu-preco'; p.textContent=m.preco; lista.appendChild(p); }
           if(Array.isArray(m.seccoes) && m.seccoes.length){
@@ -7029,6 +7035,26 @@
           }
         });
         head.appendChild(btn);
+      });
+      // Menus de grupo/cerimónia (tipo "menus"): botão "+" no cabeçalho de cada menu
+      document.querySelectorAll('main .menu-card').forEach(det => {
+        const sum = det.querySelector('summary');
+        const tit = det.querySelector('.menu-card-tit');
+        const _existe = sum && sum.querySelector('.btn-add-lista');
+        if(!_ativo){ if(_existe) _existe.remove(); return; }
+        if(!sum || !tit) return;
+        if(_existe) return;
+        const btn = document.createElement('button');
+        btn.className = 'btn-add-lista btn-add-menu';
+        btn.type = 'button';
+        btn.textContent = '+';
+        btn.setAttribute('aria-label','Adicionar à lista');
+        btn.addEventListener('click', e => {
+          e.stopPropagation(); e.preventDefault();   // não abrir/fechar o details
+          adicionarALista(tit.textContent.trim(), det.dataset.preco || '');
+          feedbackBtn(btn);
+        });
+        sum.appendChild(btn);
       });
     };
     window.montarBotoesLista();
