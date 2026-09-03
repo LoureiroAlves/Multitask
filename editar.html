@@ -2018,6 +2018,9 @@ amesadigital.pt</textarea>
         const b = TEMA_CORES_BASE[k] || TEMA_CORES_BASE['neutro'];
         if(b){ const cc=document.getElementById('corCastanho'), cd=document.getElementById('corDourado'), cb=document.getElementById('corBege');
           if(cc) cc.value=b.castanho; if(cd) cd.value=b.dourado; if(cb) cb.value=b.bege; }
+        // Desligar as cores de texto próprias (menu e cabeçalho) para o menu seguir a paleta do novo tema
+        { const _cm=document.getElementById('corMenuAtiva'); if(_cm && _cm.checked){ _cm.checked=false; const _b=document.getElementById('corMenuBox'); if(_b) _b.style.display='none'; }
+          const _cb=document.getElementById('corCabAtiva'); if(_cb && _cb.checked){ _cb.checked=false; const _b2=document.getElementById('corCabBox'); if(_b2) _b2.style.display='none'; } }
         renderLayoutCards();
         if(window.__agendarPreview) window.__agendarPreview();
       });
