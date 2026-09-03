@@ -415,7 +415,7 @@ amesadigital.pt</textarea>
         <label style="display:block; margin-top:12px; font-weight:500; font-size:.85rem;">Foto da capa</label>
         <div style="display:flex; align-items:center; gap:8px; margin-top:6px; flex-wrap:wrap;">
           <img id="sliderCapaFotoPrev" src="" alt="" style="display:none; width:46px; height:46px; object-fit:cover; border-radius:8px; border:1px solid var(--linha);">
-          <label style="cursor:pointer; border:1px solid var(--linha); border-radius:8px; padding:7px 12px; font-size:.85rem; background:var(--branco); color:var(--castanho);">＋ foto<input type="file" id="sliderCapaFotoInput" accept="image/*" style="display:none;"></label>
+          <label style="cursor:pointer; border:1px solid var(--linha); border-radius:8px; padding:7px 12px; font-size:.85rem; background:var(--branco); color:var(--castanho);">＋ foto<input type="file" id="sliderCapaFotoInput" accept="image/*,video/*" style="display:none;"></label>
           <button type="button" id="sliderCapaFotoRemover" style="display:none; border:1px solid var(--linha); border-radius:8px; padding:7px 12px; font-size:.85rem; background:var(--branco); color:var(--castanho); cursor:pointer;">sem foto</button>
           <span class="subtitulo" style="margin:0;">Foto de fundo da primeira página ("MENU"). O texto fica claro por cima.</span>
         </div>
@@ -554,7 +554,7 @@ amesadigital.pt</textarea>
           <span style="font-size:0.82rem; color:var(--castanho-suave); display:block; margin-bottom:8px;">Se puseres uma imagem, é ela que varre o ecrã (em vez da faixa com o nome). Ideal para a arte de um patrocinador.</span>
           <img id="wipeFotoPrev" src="" alt="" style="display:none; width:130px; height:74px; object-fit:cover; border-radius:8px; border:1px solid var(--linha); margin-bottom:8px;">
           <div style="display:flex; gap:8px; align-items:center;">
-            <label style="cursor:pointer; border:1px solid var(--linha); border-radius:8px; padding:7px 12px; font-size:0.85rem; background:var(--branco); color:var(--castanho);">＋ imagem<input type="file" id="wipeFotoInput" accept="image/*" style="display:none;"></label>
+            <label style="cursor:pointer; border:1px solid var(--linha); border-radius:8px; padding:7px 12px; font-size:0.85rem; background:var(--branco); color:var(--castanho);">＋ imagem<input type="file" id="wipeFotoInput" accept="image/*,video/*" style="display:none;"></label>
             <button type="button" id="wipeFotoRemover" style="display:none; border:1px solid var(--linha); border-radius:8px; padding:7px 12px; font-size:0.85rem; background:var(--branco); color:var(--castanho); cursor:pointer;">sem imagem</button>
           </div>
         </div>
@@ -669,7 +669,7 @@ amesadigital.pt</textarea>
       </div>
       <div id="fundoImagemBox" style="display:none; margin-top:10px;">
         <div class="subtitulo">Escolhe uma imagem de fundo (fica esbatida por trás dos pratos).</div>
-        <input type="file" id="novaFotoFundo" accept="image/*" style="margin-top:8px;">
+        <input type="file" id="novaFotoFundo" accept="image/*,video/*" style="margin-top:8px;">
         <div id="fundoImagemAtual" style="font-size:0.82rem; color:var(--castanho-suave); margin-top:6px;"></div>
         <button type="button" id="removerFundoImg" style="display:none; margin-top:6px; padding:6px 12px; border:1px solid var(--linha); border-radius:8px; background:var(--branco); color:var(--castanho); cursor:pointer; font:inherit; font-size:.85rem;">✕ Remover imagem de fundo</button>
         <label for="fundoOpac" style="font-size:0.85rem; margin-top:10px; display:block;">Opacidade da foto: <span id="fundoOpacVal">100</span>%</label>
@@ -728,7 +728,7 @@ amesadigital.pt</textarea>
 
       <label>Fotos do cabeçalho (rodam automaticamente)</label>
       <div class="lista-fotos" id="listaFotosHeader"></div>
-      <input type="file" id="novaFotoHeader" accept="image/*" multiple>
+      <input type="file" id="novaFotoHeader" accept="image/*,video/*" multiple>
       <label for="headerFotoOpac" style="font-size:0.85rem; margin-top:10px; display:block;">Opacidade das fotos: <span id="headerFotoOpacVal">100</span>%</label>
       <input type="range" id="headerFotoOpac" min="10" max="100" step="1" value="100" style="width:100%;">
     </div>
@@ -862,7 +862,7 @@ amesadigital.pt</textarea>
         </select>
         <label style="margin-top:10px;">Foto própria da abertura (opcional)</label>
         <div id="introFotoAtual" class="ajuda" style="margin-top:4px;">Sem foto própria — usa a do cabeçalho.</div>
-        <input type="file" id="novaFotoIntro" accept="image/*">
+        <input type="file" id="novaFotoIntro" accept="image/*,video/*">
         <button type="button" id="removerIntroFoto" style="display:none; margin-top:6px; padding:6px 12px; border:1px solid var(--linha); border-radius:8px; background:var(--branco); color:var(--castanho); cursor:pointer; font:inherit; font-size:.85rem;">✕ Remover foto da abertura</button>
         <label for="introReveal" style="margin-top:12px;">Efeito de entrada (ao passar para o menu)</label>
         <select id="introReveal" style="width:100%; padding:10px 12px; border-radius:10px; border:1.5px solid var(--linha); background:var(--branco); font-family:inherit; color:var(--castanho); font-size:0.95rem;">
@@ -1062,12 +1062,12 @@ amesadigital.pt</textarea>
 
       <label>Fotos da barra fixa (rodam automaticamente)</label>
       <div class="lista-fotos" id="listaFotosRodape"></div>
-      <input type="file" id="novaFotoRodape" accept="image/*" multiple>
+      <input type="file" id="novaFotoRodape" accept="image/*,video/*" multiple>
 
       <div style="margin-top:18px; padding-top:14px; border-top:1px dashed var(--linha);">
         <label style="margin:0;">🧍 Imagem que salta para fora da barra (PNG transparente)</label>
         <div class="subtitulo" style="margin:4px 0 10px;">Uma imagem (ex.: mascote, produto) que assenta na barra fixa e cuja parte de cima sai por cima da página. Usa um PNG com fundo transparente para o efeito ficar bem.</div>
-        <input type="file" id="masFotoFile" accept="image/png,image/*">
+        <input type="file" id="masFotoFile" accept="image/png,image/*,video/*">
         <input type="hidden" id="masFotoUrl">
         <div id="masFotoPrev" style="margin-top:8px;"></div>
         <div class="row2" style="margin-top:10px;">
@@ -1109,7 +1109,7 @@ amesadigital.pt</textarea>
       <div class="subtitulo" style="margin:-4px 0 12px;">Um espaço só para anunciar outro negócio, no fim do menu. Ao clicar na imagem abre o link que definires — o link <b>nunca é mostrado</b>, só serve para o clique. Podes ainda pôr um ícone de WhatsApp e arrastá-lo na pré-visualização para o sítio que quiseres.</div>
 
       <label>Imagem do anúncio</label>
-      <input type="file" id="anuncioFotoFile" accept="image/*">
+      <input type="file" id="anuncioFotoFile" accept="image/*,video/*">
       <input type="hidden" id="anuncioFotoUrl">
       <div id="anuncioFotoPrev" style="margin-top:8px;"></div>
 
@@ -1138,7 +1138,7 @@ amesadigital.pt</textarea>
       <div class="subtitulo" style="margin:-4px 0 12px;">Um popup no fim de cada jogo, com a <b>mesma medida</b> do anúncio do scroll. Pode ser um anúncio <b>diferente</b> deste — escolhe a imagem, o link e o WhatsApp que quiseres.</div>
 
       <label>Imagem do anúncio</label>
-      <input type="file" id="ajgFotoFile" accept="image/*">
+      <input type="file" id="ajgFotoFile" accept="image/*,video/*">
       <input type="hidden" id="ajgFotoUrl">
       <div id="ajgFotoPrev" style="margin-top:8px;"></div>
 
@@ -1163,7 +1163,7 @@ amesadigital.pt</textarea>
       <div class="subtitulo" style="margin:-4px 0 12px;">Uma imagem de publicidade em <b>ecrã cheio</b> que aparece durante alguns segundos ao abrir o menu, e depois entra o menu (ou a abertura, se tiveres uma). O cliente pode "Saltar".</div>
 
       <label>Imagem (ecrã cheio — recomendado 9:16, vertical)</label>
-      <input type="file" id="paFotoFile" accept="image/*">
+      <input type="file" id="paFotoFile" accept="image/*,video/*">
       <input type="hidden" id="paFotoUrl">
       <div id="paFotoPrev" style="margin-top:8px;"></div>
 
@@ -1223,7 +1223,7 @@ amesadigital.pt</textarea>
 
       <label>Fotos do rodapé (rodam automaticamente)</label>
       <div class="lista-fotos" id="listaFotosFooter"></div>
-      <input type="file" id="novaFotoFooter" accept="image/*" multiple>
+      <input type="file" id="novaFotoFooter" accept="image/*,video/*" multiple>
       <label for="footerFotoOpac" style="font-size:0.85rem; margin-top:10px; display:block;">Opacidade das fotos: <span id="footerFotoOpacVal">100</span>%</label>
       <input type="range" id="footerFotoOpac" min="10" max="100" step="1" value="100" style="width:100%;">
 
@@ -1353,7 +1353,7 @@ amesadigital.pt</textarea>
       </div>
       <div style="font-size:0.78rem; color:var(--castanho-suave); margin-top:4px;">Arrasta a <strong>foto</strong> e o <strong>texto</strong> para os posicionares.</div>
       <label for="novaFotoAdj" style="margin-top:10px;">Foto do anúncio</label>
-      <input type="file" id="novaFotoAdj" accept="image/*">
+      <input type="file" id="novaFotoAdj" accept="image/*,video/*">
     </div>
   </details>
 
@@ -1638,7 +1638,46 @@ amesadigital.pt</textarea>
   try{ const _v = document.querySelector('a.voltar'); if(_v && SLUG) _v.href = 'cardapio.html?n=' + encodeURIComponent(SLUG); }catch(e){}
   try{ const _r = document.getElementById('agLinkReservas'); if(_r && SLUG) _r.href = 'reservas.html?n=' + encodeURIComponent(SLUG); }catch(e){}
   // sobe uma foto para o Supabase Storage e devolve o URL público
+  // Miniatura no editor: vídeo (autoplay mudo) ou imagem, conforme o URL
+  function _edThumb(url, css){
+    let el;
+    if(/\.(mp4|webm|mov|m4v|ogv)(\?|#|$)/i.test(String(url||''))){
+      el = document.createElement('video'); el.src = url; el.muted = true; el.autoplay = true; el.loop = true; el.playsInline = true;
+      el.setAttribute('muted',''); el.setAttribute('playsinline',''); el.setAttribute('preload','metadata');
+      try{ const p = el.play(); if(p && p.catch) p.catch(function(){}); }catch(e){}
+    } else { el = document.createElement('img'); el.src = url; }
+    if(css) el.style.cssText = css;
+    return el;
+  }
+  // Envia um vídeo tal-e-qual (não se comprime como imagem). Limite de tamanho para não encher o Storage.
+  async function _uploadVideo(file){
+    const MAXV = 20 * 1024 * 1024; // 20 MB
+    if(file.size > MAXV) throw new Error('Vídeo demasiado grande (' + (file.size/1048576).toFixed(1) + ' MB). Máximo 20 MB — corta ou comprime o vídeo.');
+    let ext = (String(file.name||'').split('.').pop() || 'mp4').toLowerCase().replace(/[^a-z0-9]/g,'') || 'mp4';
+    if(ext === 'quicktime' || ext === 'qt') ext = 'mov';
+    const nome = (SLUG || 'geral') + '/' + Date.now() + '-' + Math.random().toString(36).slice(2,7) + '.' + ext;
+    let session = (await sbc.auth.getSession()).data.session;
+    if(session){ try{ const rr = await sbc.auth.refreshSession(); if(rr.data && rr.data.session) session = rr.data.session; }catch(e){} }
+    if(!session || !session.access_token){ throw new Error('A tua sessão expirou. Sai e volta a entrar, depois tenta outra vez.'); }
+    const buf = new Uint8Array(await file.arrayBuffer());
+    const resp = await fetch(SUPA_URL + '/storage/v1/object/imagens/' + nome, {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + session.access_token, 'apikey': SUPA_KEY, 'Content-Type': file.type || ('video/' + ext), 'x-upsert': 'true' },
+      body: buf
+    });
+    if(!resp.ok){
+      let t = ''; try{ t = await resp.text(); }catch(e){}
+      if(resp.status >= 500 || /<!DOCTYPE|<html/i.test(t)){ throw new Error('O servidor de armazenamento está temporariamente indisponível (erro ' + resp.status + '). Tenta daqui a 1-2 minutos.'); }
+      let msg = t; try{ const j = JSON.parse(t); msg = j.message || j.error || t; }catch(e){}
+      throw new Error('Upload falhou: ' + (msg || resp.status));
+    }
+    return SUPA_URL + '/storage/v1/object/public/imagens/' + nome;
+  }
   async function _uploadFoto(file){
+    // Vídeo: envia tal-e-qual (o resto da app deteta pela extensão e mostra <video>)
+    if(file && (String(file.type||'').indexOf('video/') === 0 || /\.(mp4|webm|mov|m4v|ogv)$/i.test(file.name||''))){
+      return await _uploadVideo(file);
+    }
     const dados = await comprimirImagem(file);
     const bin = atob(dados.base64);
     const arr = new Uint8Array(bin.length);
@@ -2936,7 +2975,7 @@ amesadigital.pt</textarea>
         wrap.appendChild(rm); fr.appendChild(wrap);
       });
       const fl = document.createElement('label'); fl.className = 'mv-mini'; fl.style.cursor = 'pointer'; fl.textContent = '＋ foto';
-      const fi = document.createElement('input'); fi.type = 'file'; fi.accept = 'image/*'; fi.style.display = 'none';
+      const fi = document.createElement('input'); fi.type = 'file'; fi.accept = 'image/*,video/*'; fi.style.display = 'none';
       fi.addEventListener('change', async function(){ const f = fi.files && fi.files[0]; if(!f) return; setEstado('A enviar foto da caixa…', 'info'); try{ const url = await _uploadFoto(f); c.fotos.push(url); setEstado('Foto ✓', 'ok'); renderMosaicoEditor(mos, lista); _mosPrev(); }catch(e){ setEstado('Erro ao enviar foto: ' + (e && e.message ? e.message : e), 'erro'); } });
       fl.appendChild(fi); fr.appendChild(fl);
       card.appendChild(fr);
@@ -4264,9 +4303,9 @@ amesadigital.pt</textarea>
         // Foto do prato (também disponível nos pratos com tamanhos/doses)
         const pfRow=document.createElement('div'); pfRow.style.cssText='display:flex; align-items:center; gap:8px; margin:10px 0 2px; font-size:0.82rem; color:var(--castanho-suave); flex-wrap:wrap;';
         pfRow.appendChild(document.createTextNode('Foto do prato:'));
-        if(it.foto){ const pv=document.createElement('img'); pv.src=it.foto; pv.style.cssText='width:40px; height:40px; object-fit:cover; border-radius:8px; border:1px solid var(--linha);'; pfRow.appendChild(pv); }
+        if(it.foto){ const pv=_edThumb(it.foto,'width:40px; height:40px; object-fit:cover; border-radius:8px; border:1px solid var(--linha);'); pfRow.appendChild(pv); }
         const pfL=document.createElement('label'); pfL.className='mv-mini'; pfL.style.cursor='pointer'; pfL.textContent = it.foto ? 'trocar foto' : '＋ foto';
-        const pfI=document.createElement('input'); pfI.type='file'; pfI.accept='image/*'; pfI.style.display='none';
+        const pfI=document.createElement('input'); pfI.type='file'; pfI.accept='image/*,video/*'; pfI.style.display='none';
         pfI.addEventListener('change', async ()=>{ const f=pfI.files&&pfI.files[0]; if(!f) return; setEstadoMenu('A enviar foto do prato…','info'); try{ const url=await _uploadFoto(f); it.foto=url; setEstadoMenu('Foto adicionada ✓','ok'); renderEditor(); if(window.__agendarPreview) window.__agendarPreview(); }catch(e){ setEstadoMenu('Erro ao enviar foto: '+(e&&e.message?e.message:e),'erro'); } });
         pfL.appendChild(pfI); pfRow.appendChild(pfL);
         if(it.foto){ const pfR=document.createElement('button'); pfR.type='button'; pfR.className='mv-mini'; pfR.textContent='sem foto'; pfR.addEventListener('click',()=>{ delete it.foto; renderEditor(); if(window.__agendarPreview) window.__agendarPreview(); }); pfRow.appendChild(pfR); }
@@ -4302,9 +4341,9 @@ amesadigital.pt</textarea>
       mais.appendChild(mkInput(it.vinho,'ex: monte-velho-tinto', v=>{ v=v.trim(); if(v) it.vinho=v; else delete it.vinho; }));
       mais.appendChild(mkLabel('Foto do item'));
       const fRow=document.createElement('div'); fRow.style.cssText='display:flex; align-items:center; gap:8px; flex-wrap:wrap;';
-      if(it.foto){ const pv=document.createElement('img'); pv.src=it.foto; pv.style.cssText='width:44px; height:44px; object-fit:cover; border-radius:6px; border:1px solid var(--linha);'; fRow.appendChild(pv); }
+      if(it.foto){ const pv=_edThumb(it.foto,'width:44px; height:44px; object-fit:cover; border-radius:6px; border:1px solid var(--linha);'); fRow.appendChild(pv); }
       const fL=document.createElement('label'); fL.className='mv-mini'; fL.style.cursor='pointer'; fL.textContent = it.foto ? 'trocar foto' : '＋ foto';
-      const fI=document.createElement('input'); fI.type='file'; fI.accept='image/*'; fI.style.display='none';
+      const fI=document.createElement('input'); fI.type='file'; fI.accept='image/*,video/*'; fI.style.display='none';
       fI.addEventListener('change', async ()=>{ const f=fI.files&&fI.files[0]; if(!f) return; setEstadoMenu('A enviar foto do item…','info'); try{ const url=await _uploadFoto(f); it.foto=url; setEstadoMenu('Foto adicionada ✓','ok'); renderEditor(); if(window.__agendarPreview) window.__agendarPreview(); }catch(e){ setEstadoMenu('Erro ao enviar foto: '+(e&&e.message?e.message:e),'erro'); } });
       fL.appendChild(fI); fRow.appendChild(fL);
       if(it.foto){ const fR=document.createElement('button'); fR.type='button'; fR.className='mv-mini'; fR.textContent='sem foto'; fR.addEventListener('click',()=>{ delete it.foto; renderEditor(); if(window.__agendarPreview) window.__agendarPreview(); }); fRow.appendChild(fR); }
@@ -4342,9 +4381,9 @@ amesadigital.pt</textarea>
       // Foto do sub-menu (grupo)
       const gfRow=document.createElement('div'); gfRow.style.cssText='display:flex; align-items:center; gap:8px; margin:8px 0 6px; font-size:0.82rem; color:var(--castanho-suave); flex-wrap:wrap;';
       gfRow.appendChild(document.createTextNode('Foto do sub-menu:'));
-      if(g.foto){ const pv=document.createElement('img'); pv.src=g.foto; pv.style.cssText='width:40px; height:40px; object-fit:cover; border-radius:8px; border:1px solid var(--linha);'; gfRow.appendChild(pv); }
+      if(g.foto){ const pv=_edThumb(g.foto,'width:40px; height:40px; object-fit:cover; border-radius:8px; border:1px solid var(--linha);'); gfRow.appendChild(pv); }
       const gfL=document.createElement('label'); gfL.className='mv-mini'; gfL.style.cursor='pointer'; gfL.textContent = g.foto ? 'trocar foto' : '＋ foto';
-      const gfI=document.createElement('input'); gfI.type='file'; gfI.accept='image/*'; gfI.style.display='none';
+      const gfI=document.createElement('input'); gfI.type='file'; gfI.accept='image/*,video/*'; gfI.style.display='none';
       gfI.addEventListener('change', async ()=>{ const f=gfI.files&&gfI.files[0]; if(!f) return; setEstadoMenu('A enviar foto do sub-menu…','info'); try{ const url=await _uploadFoto(f); g.foto=url; setEstadoMenu('Foto adicionada ✓','ok'); renderEditor(); if(window.__agendarPreview) window.__agendarPreview(); }catch(e){ setEstadoMenu('Erro ao enviar foto: '+(e&&e.message?e.message:e),'erro'); } });
       gfL.appendChild(gfI); gfRow.appendChild(gfL);
       if(g.foto){ const gfR=document.createElement('button'); gfR.type='button'; gfR.className='mv-mini'; gfR.textContent='sem foto'; gfR.addEventListener('click',()=>{ delete g.foto; renderEditor(); if(window.__agendarPreview) window.__agendarPreview(); }); gfRow.appendChild(gfR); }
@@ -4521,9 +4560,9 @@ amesadigital.pt</textarea>
       // Foto do SEPARADOR (tile) — a que aparece no botão/tile desta categoria
       const fotoRow=document.createElement('div'); fotoRow.style.cssText='display:flex; align-items:center; gap:8px; margin:0 0 8px; font-size:0.82rem; color:var(--castanho-suave); flex-wrap:wrap;';
       fotoRow.appendChild(document.createTextNode('Foto do separador (tile):'));
-      if(cat.foto){ const pv=document.createElement('img'); pv.src=cat.foto; pv.style.cssText='width:46px; height:46px; object-fit:cover; border-radius:8px; border:1px solid var(--linha);'; fotoRow.appendChild(pv); }
+      if(cat.foto){ const pv=_edThumb(cat.foto,'width:46px; height:46px; object-fit:cover; border-radius:8px; border:1px solid var(--linha);'); fotoRow.appendChild(pv); }
       const fLbl=document.createElement('label'); fLbl.className='mv-mini'; fLbl.style.cursor='pointer'; fLbl.textContent = cat.foto ? 'trocar foto' : '＋ foto';
-      const fInp=document.createElement('input'); fInp.type='file'; fInp.accept='image/*'; fInp.style.display='none';
+      const fInp=document.createElement('input'); fInp.type='file'; fInp.accept='image/*,video/*'; fInp.style.display='none';
       fInp.addEventListener('change', async ()=>{ const f=fInp.files&&fInp.files[0]; if(!f) return; setEstadoMenu('A enviar foto do separador…','info'); try{ const url=await _uploadFoto(f); cat.foto=url; setEstadoMenu('Foto adicionada ✓','ok'); renderEditor(); if(window.__agendarPreview) window.__agendarPreview(); }catch(e){ setEstadoMenu('Erro ao enviar foto: '+e.message,'erro'); } });
       fLbl.appendChild(fInp); fotoRow.appendChild(fLbl);
       if(cat.foto){ const fRm=document.createElement('button'); fRm.type='button'; fRm.className='mv-mini'; fRm.textContent='sem foto'; fRm.addEventListener('click',()=>{ delete cat.foto; renderEditor(); if(window.__agendarPreview) window.__agendarPreview(); }); fotoRow.appendChild(fRm); }
@@ -4645,9 +4684,9 @@ amesadigital.pt</textarea>
         // Foto do sub-menu (grupo)
         { const gfRow=document.createElement('div'); gfRow.style.cssText='display:flex; align-items:center; gap:8px; margin:2px 0 8px; font-size:0.82rem; color:var(--castanho-suave); flex-wrap:wrap;';
           gfRow.appendChild(document.createTextNode('Foto do sub-menu:'));
-          if(g.foto){ const pv=document.createElement('img'); pv.src=g.foto; pv.style.cssText='width:40px; height:40px; object-fit:cover; border-radius:8px; border:1px solid var(--linha);'; gfRow.appendChild(pv); }
+          if(g.foto){ const pv=_edThumb(g.foto,'width:40px; height:40px; object-fit:cover; border-radius:8px; border:1px solid var(--linha);'); gfRow.appendChild(pv); }
           const gfL=document.createElement('label'); gfL.className='mv-mini'; gfL.style.cursor='pointer'; gfL.textContent = g.foto ? 'trocar foto' : '＋ foto';
-          const gfI=document.createElement('input'); gfI.type='file'; gfI.accept='image/*'; gfI.style.display='none';
+          const gfI=document.createElement('input'); gfI.type='file'; gfI.accept='image/*,video/*'; gfI.style.display='none';
           gfI.addEventListener('change', async ()=>{ const f=gfI.files&&gfI.files[0]; if(!f) return; setEstadoMenu('A enviar foto do sub-menu…','info'); try{ const url=await _uploadFoto(f); g.foto=url; setEstadoMenu('Foto adicionada ✓','ok'); renderEditor(); if(window.__agendarPreview) window.__agendarPreview(); }catch(e){ setEstadoMenu('Erro ao enviar foto: '+(e&&e.message?e.message:e),'erro'); } });
           gfL.appendChild(gfI); gfRow.appendChild(gfL);
           if(g.foto){ const gfR=document.createElement('button'); gfR.type='button'; gfR.className='mv-mini'; gfR.textContent='sem foto'; gfR.addEventListener('click',()=>{ delete g.foto; renderEditor(); if(window.__agendarPreview) window.__agendarPreview(); }); gfRow.appendChild(gfR); }
