@@ -5017,13 +5017,22 @@ amesadigital.pt</textarea>
     const CORRECOES = {
       "broa": { en:"corn bread", fr:"pain de maïs", es:"pan de maíz" }
     };
+    // Limpezas no resultado traduzido (palavra que o motor escolhe mal no idioma de destino).
+    // Ex.: "espetada" deve ser "skewer", não "kebab" (que sugere döner).
+    const LIMPEZA = {
+      en: [ [/\bkebabs\b/g, 'skewers'], [/\bkebab\b/g, 'skewer'] ],
+      fr: [],
+      es: [ [/\bbrochetas?\b/gi, 'brocheta'] ]
+    };
+    function _capComo(modelo, txt){ return (modelo.charAt(0) === modelo.charAt(0).toUpperCase()) ? (txt.charAt(0).toUpperCase() + txt.slice(1)) : txt; }
     function _corrigirTermos(txt, destino){
       if(!txt) return txt;
       Object.keys(CORRECOES).forEach(function(pt){
         var alvo = CORRECOES[pt][destino]; if(!alvo) return;
-        txt = txt.replace(new RegExp('\\b' + pt + '\\b', 'gi'), function(m){
-          return (m.charAt(0) === m.charAt(0).toUpperCase()) ? (alvo.charAt(0).toUpperCase() + alvo.slice(1)) : alvo;
-        });
+        txt = txt.replace(new RegExp('\\b' + pt + '\\b', 'gi'), function(m){ return _capComo(m, alvo); });
+      });
+      (LIMPEZA[destino] || []).forEach(function(par){
+        txt = txt.replace(new RegExp(par[0].source, par[0].flags.indexOf('i') >= 0 ? par[0].flags : par[0].flags + 'i'), function(m){ return _capComo(m, par[1]); });
       });
       return txt;
     }
