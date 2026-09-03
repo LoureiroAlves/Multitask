@@ -311,8 +311,20 @@
     const { data:negsRaw, error } = await sb.from('negocios').select('*').order('criado_em', { ascending:false });
     if(error){ $('lista').innerHTML = '<div class="msg erro">Erro a carregar: ' + error.message + '</div>'; return; }
     // separar a linha reservada da publicidade dos negócios reais
-    const negs = (negsRaw||[]).filter(function(n){ return n.slug !== AMESA_SLUG; })
+    const todos = (negsRaw||[]).filter(function(n){ return n.slug !== AMESA_SLUG; });
+    const negs = todos.filter(function(n){ return !n.apagado_em; })
       .sort(function(a, b){ return String(a.nome || a.slug || '').localeCompare(String(b.nome || b.slug || ''), 'pt', { sensitivity:'base' }); });
+    let lixo = todos.filter(function(n){ return !!n.apagado_em; });
+    // Limpeza automática: o que está na lixeira há mais de LIXO_DIAS é apagado de vez (com fotos)
+    { const limite = Date.now() - LIXO_DIAS*24*3600*1000; const resta = [];
+      for(const n of lixo){
+        if(new Date(n.apagado_em).getTime() < limite){
+          try{ const { data:fs } = await sb.storage.from('imagens').list(n.slug, { limit:2000 }); if(fs && fs.length) await sb.storage.from('imagens').remove(fs.map(function(f){ return n.slug + '/' + f.name; })); }catch(e){}
+          try{ await sb.from('negocios').delete().eq('id', n.id); }catch(e){}
+        } else { resta.push(n); }
+      }
+      lixo = resta.sort(function(a,b){ return new Date(b.apagado_em) - new Date(a.apagado_em); });
+    }
     NEGS_VIS = negs;
     { const _amesa = (negsRaw||[]).find(function(n){ return n.slug === AMESA_SLUG; });
       const _acfg = (_amesa && _amesa.config) || {};
@@ -330,7 +342,34 @@
     if(!negs.length){ $('lista').innerHTML = '<p style="color:#9a8b6f; font-size:.9rem;">Ainda não há negócios. Cria o primeiro acima.</p>'; return; }
     $('lista').innerHTML = '';
     negs.forEach(function(n){ $('lista').appendChild(renderNeg(n, mapaEnt[n.id] || { plano:'basico', funcoes:{}, publicidade:{} }, mapaMet[n.slug] || { menu:0, ad:0, jogos:0 })); });
+    renderLixeira(lixo);
     try{ if(window.__buildNegNav) window.__buildNegNav(); }catch(e){}
+  }
+
+  // Secção "Lixeira": negócios apagados (recuperáveis durante LIXO_DIAS)
+  function renderLixeira(lixo){
+    let box = document.getElementById('lixeiraBox');
+    if(!box){ box = document.createElement('div'); box.id = 'lixeiraBox'; box.style.marginTop = '22px'; const lista = $('lista'); if(lista && lista.parentNode) lista.parentNode.insertBefore(box, lista.nextSibling); }
+    box.innerHTML = '';
+    if(!lixo || !lixo.length) return;
+    const tit = document.createElement('div');
+    tit.style.cssText = 'font-weight:800; color:#9a8b6f; margin:0 0 8px; font-size:.9rem; cursor:pointer;';
+    tit.textContent = '🗑️ Lixeira (' + lixo.length + ') — clica para abrir';
+    const cont = document.createElement('div'); cont.style.display = 'none';
+    tit.onclick = function(){ cont.style.display = cont.style.display === 'none' ? 'block' : 'none'; };
+    box.appendChild(tit); box.appendChild(cont);
+    lixo.forEach(function(n){
+      const dias = Math.max(0, LIXO_DIAS - Math.floor((Date.now() - new Date(n.apagado_em).getTime()) / (24*3600*1000)));
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:9px 11px; border:1px solid #eadfce; border-radius:10px; background:#faf6ef; margin-bottom:7px;';
+      const info = document.createElement('div'); info.style.cssText = 'flex:1; min-width:140px;';
+      info.innerHTML = '<strong>' + (n.nome || n.slug) + '</strong> <span style="color:#9a8b6f; font-size:.8rem;">/' + n.slug + ' · apaga em ' + dias + ' dia(s)</span>';
+      const bRec = document.createElement('button'); bRec.textContent = '↩ Recuperar'; bRec.style.cssText = 'padding:7px 12px; border-radius:8px; border:1.5px solid #cdb98f; background:#fff; color:#6b4a1f; cursor:pointer; font-weight:700; font-size:.82rem;';
+      bRec.onclick = function(){ recuperar(n); };
+      const bDel = document.createElement('button'); bDel.textContent = '✕ Apagar de vez'; bDel.style.cssText = 'padding:7px 12px; border-radius:8px; border:1.5px solid #e3b4b4; background:#fff; color:#b23; cursor:pointer; font-weight:700; font-size:.82rem;';
+      bDel.onclick = function(){ apagarDefinitivo(n); };
+      row.appendChild(info); row.appendChild(bRec); row.appendChild(bDel); cont.appendChild(row);
+    });
   }
 
   function renderNeg(n, ent, met){
@@ -468,8 +507,22 @@
     if(error){ alert('Erro: ' + error.message); } else { carregar(); }
   }
 
+  const LIXO_DIAS = 30;   // dias que um negócio fica na lixeira antes de ser apagado de vez
+  // Apagar = mandar para a lixeira (fica escondido, mas dá para recuperar durante LIXO_DIAS)
   async function apagar(n){
-    if(!confirm('Apagar "' + n.nome + '"? Isto remove o negócio, as permissões e as reservas dele. Não há recuperação.')) return;
+    if(!confirm('Mandar "' + n.nome + '" para a lixeira?\n\nDeixa de aparecer, mas podes recuperá-lo nos próximos ' + LIXO_DIAS + ' dias. Depois disso é apagado definitivamente.')) return;
+    const { error } = await sb.from('negocios').update({ apagado_em: new Date().toISOString() }).eq('id', n.id);
+    if(error){ alert('Erro: ' + error.message + '\n\n(Se disser que falta a coluna "apagado_em", corre primeiro o SQL que te dei.)'); } else { carregar(); }
+  }
+  // Recuperar da lixeira
+  async function recuperar(n){
+    const { error } = await sb.from('negocios').update({ apagado_em: null }).eq('id', n.id);
+    if(error){ alert('Erro: ' + error.message); } else { carregar(); }
+  }
+  // Apagar a sério (irreversível) + limpar as fotos/vídeos do Storage
+  async function apagarDefinitivo(n){
+    if(!confirm('Apagar DEFINITIVAMENTE "' + n.nome + '"?\n\nRemove o negócio, permissões, reservas e as fotos/vídeos. NÃO há recuperação.')) return;
+    try{ const { data:files } = await sb.storage.from('imagens').list(n.slug, { limit:2000 }); if(files && files.length){ await sb.storage.from('imagens').remove(files.map(function(f){ return n.slug + '/' + f.name; })); } }catch(e){}
     const { error } = await sb.from('negocios').delete().eq('id', n.id);
     if(error){ alert('Erro: ' + error.message); } else { carregar(); }
   }

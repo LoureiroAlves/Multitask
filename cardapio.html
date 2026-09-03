@@ -4909,7 +4909,7 @@
     if(!sbC || !SLUG){ _limparEstatico(); console.log('[INFO] Sem negócio (?n=slug).'); return; }
     try{
       const { data:neg } = await sbC.from('negocios').select('*').eq('slug', SLUG).maybeSingle();
-      if(!neg){ _limparEstatico(); console.log('[INFO] Negócio não encontrado:', SLUG); return; }
+      if(!neg || neg.apagado_em){ _limparEstatico(); console.log('[INFO] Negócio não encontrado (ou na lixeira):', SLUG); return; }
       if(neg.ativo === false){ document.body.innerHTML = '<div style="font-family:sans-serif;padding:40px;text-align:center;color:#4a3820;">Este menu está temporariamente indisponível.</div>'; return; }
       const { data:ent } = await sbC.from('entitlements').select('*').eq('negocio_id', neg.id).maybeSingle();
       const funcoes = (ent && ent.funcoes) || {};
