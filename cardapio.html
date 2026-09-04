@@ -759,7 +759,7 @@
     50%{ box-shadow:0 0 0 transparent; }
   }
   /* Separador (tile) da secção com néon */
-  body.neon-fx:not(.modelo-caderno) .tile.neon-box{ box-shadow:0 0 var(--nfx1) var(--nfx-cor, var(--cat-cor, var(--dourado))), 0 0 var(--nfx2) var(--nfx-cor, var(--cat-cor, var(--dourado))); }
+  body.neon-fx:not(.modelo-caderno) .tile.neon-box{ box-shadow:0 0 var(--nfx1) var(--nfx-cor, var(--cat-cor, var(--dourado))), 0 0 var(--nfx2) var(--nfx-cor, var(--cat-cor, var(--dourado))) !important; border:1px solid var(--nfx-cor, var(--cat-cor, var(--dourado))) !important; }
   body.neon-fx .tile.neon-txt .tile-label{ text-shadow:0 0 2px #fff, 0 0 var(--nfx1) var(--nfx-cor, var(--cat-cor, var(--dourado))), 0 0 var(--nfx2) var(--nfx-cor, var(--cat-cor, var(--dourado))) !important; }
   body.neon-fx:not(.modelo-caderno) .tile.neon-box.neon-pisca{ animation:neonEdgePisca var(--tile-pisca-dur,1.4s) ease-in-out infinite; }
   body.neon-fx .tile.neon-txt.neon-pisca .tile-label{ animation:neonTxtPisca var(--tile-pisca-dur,1.4s) ease-in-out infinite; }
