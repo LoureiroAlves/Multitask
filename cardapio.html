@@ -3453,6 +3453,7 @@
         if(mainEl){ if(jogosSec && jogosSec.parentNode === mainEl) mainEl.insertBefore(s, jogosSec); else mainEl.appendChild(s); }
       });
     }catch(e){}
+    try{ if(window.__favSync) window.__favSync(); }catch(e){}   // ao voltar ao menu, corações e badge ficam certos (como o carrinho)
     _desbloquearFundo();   // só agora, com a animação de saída já terminada
   }
   function _restaurarPendente(e){
@@ -3567,6 +3568,7 @@
     target.classList.add('ativa');
     target.classList.remove('a-entrar-sub', 'a-sair-sub');   // limpa animações de sub-categoria anteriores
     painelConteudo.appendChild(target);
+    try{ if(window.__favSync) window.__favSync(); }catch(e){}
     // Se a secção é uma pasta, os separadores lá dentro entram com o mesmo efeito escalonado do menu
     (function(){
       var _fg = target.querySelector && target.querySelector('.folder-grid');
@@ -6946,19 +6948,29 @@
     favOverlay.addEventListener('click', e => { if(e.target === favOverlay) favOverlay.classList.remove('aberto'); });
     favBtn.addEventListener('click', () => { favRender(); favOverlay.classList.add('aberto'); });
     function favRender(){
-      const favs = Array.from(document.querySelectorAll('main .item.e-fav'));
+      // Fonte de verdade = o que está guardado no telemóvel (não depende de a categoria estar aberta)
+      const keys = (window.__favPratosGet ? window.__favPratosGet() : []);
       const p = document.getElementById('favPainel'); p.innerHTML = '';
       const h3 = document.createElement('h3'); h3.textContent = '♥ Os meus favoritos'; p.appendChild(h3);
-      if(!favs.length){
+      if(!keys.length){
         const v = document.createElement('div'); v.className = 'cart-vazio'; v.innerHTML = 'Ainda não guardaste pratos.<br>Toca no ♥ junto a um prato para guardar.'; p.appendChild(v);
       } else {
-        favs.forEach(function(it){
-          const nomeEl = it.querySelector('.nome'); const precoEl = it.querySelector('.preco');
+        // Mapa chave(PT) -> item no DOM (para mostrar nome traduzido e preço). Um prato só entra uma vez.
+        const mapa = {};
+        document.querySelectorAll('.item').forEach(function(it){
+          if(it.closest('#jogos')) return;
+          const ch = window.__favChaveItem ? window.__favChaveItem(it) : '';
+          if(ch && !mapa[ch]) mapa[ch] = it;
+        });
+        keys.forEach(function(chave){
+          const it = mapa[chave];
+          const nomeEl = it ? it.querySelector('.nome') : null;
+          const precoEl = it ? it.querySelector('.preco') : null;
           const row = document.createElement('div'); row.className = 'cart-linha';
-          const nn = document.createElement('span'); nn.className = 'cart-nome'; nn.textContent = nomeEl ? nomeEl.textContent.trim() : ''; row.appendChild(nn);
+          const nn = document.createElement('span'); nn.className = 'cart-nome'; nn.textContent = nomeEl ? nomeEl.textContent.trim() : chave; row.appendChild(nn);
           if(precoEl && precoEl.textContent.trim()){ const pp = document.createElement('span'); pp.className = 'cart-preco'; pp.textContent = precoEl.textContent.trim(); row.appendChild(pp); }
           const rm = document.createElement('button'); rm.className = 'fav-rem'; rm.type = 'button'; rm.textContent = '✕'; rm.setAttribute('aria-label','Remover');
-          rm.onclick = function(){ const h = it.querySelector('.fav-prato'); if(h) h.click(); favRender(); };
+          rm.onclick = function(){ if(window.__favPratosToggle) window.__favPratosToggle(chave); if(window.__favSync) window.__favSync(); favRender(); };
           row.appendChild(rm); p.appendChild(row);
         });
       }
@@ -6967,7 +6979,7 @@
       acoes.appendChild(fechar); p.appendChild(acoes);
     }
     window.__favAtualizar = function(){
-      const n = document.querySelectorAll('main .item.e-fav').length;
+      const n = (window.__favPratosOn && window.__favPratosGet) ? window.__favPratosGet().length : 0;
       const badge = favBtn.querySelector('.fav-badge'); if(badge) badge.textContent = n;
       favBtn.style.display = (n > 0 && !emJogos()) ? 'flex' : 'none';
       if(favOverlay.classList.contains('aberto')) favRender();
@@ -7155,26 +7167,50 @@
     function favPratosGet(){ try{ return JSON.parse(localStorage.getItem(_favPratosKey()) || '[]'); }catch(e){ return []; } }
     function favPratosTem(n){ return favPratosGet().indexOf(n) >= 0; }
     function favPratosToggle(n){ var a = favPratosGet(); var i = a.indexOf(n); if(i >= 0) a.splice(i,1); else a.push(n); try{ localStorage.setItem(_favPratosKey(), JSON.stringify(a)); }catch(e){} return i < 0; }
+    // Expostos para o badge/painel de favoritos usarem a MESMA fonte de verdade (o telemóvel), tal como o carrinho
+    window.__favPratosGet = favPratosGet;
+    window.__favPratosToggle = favPratosToggle;
+    // Chave (nome PT) de um item do menu
+    function _favChaveItem(item){ var nomeEl = item.querySelector('.nome'); if(!nomeEl) return ''; return (nomeEl.dataset && nomeEl.dataset.pt) ? nomeEl.dataset.pt : nomeEl.textContent.trim(); }
+    window.__favChaveItem = _favChaveItem;
     // Coração em cada prato (independente do carrinho e do idioma — usa o nome PT como chave)
     window.montarCoracoes = function(){
       if(!window.__favPratosOn){
         document.querySelectorAll('.fav-prato').forEach(function(h){ h.remove(); });
-        document.querySelectorAll('main .item.e-fav').forEach(function(it){ it.classList.remove('e-fav'); });
+        document.querySelectorAll('.item.e-fav').forEach(function(it){ it.classList.remove('e-fav'); });
         if(window.__favAtualizar) window.__favAtualizar();
         return;
       }
-      document.querySelectorAll('main .item').forEach(function(item){
+      // Percorre TODOS os pratos (no menu principal E dentro de um painel de categoria aberto)
+      document.querySelectorAll('.item').forEach(function(item){
         if(item.closest('#jogos')) return;
         const nomeEl = item.querySelector('.nome'); if(!nomeEl) return;
         const chave = (nomeEl.dataset && nomeEl.dataset.pt) ? nomeEl.dataset.pt : nomeEl.textContent.trim();
         let h = item.querySelector('.fav-prato');
         if(!h){
           h = document.createElement('button'); h.type = 'button'; h.className = 'fav-prato'; h.setAttribute('aria-label','Favorito');
-          h.addEventListener('click', function(e){ e.stopPropagation(); e.preventDefault(); const ok = favPratosToggle(h._chave); h.classList.toggle('on', ok); h.textContent = ok ? '♥' : '♡'; item.classList.toggle('e-fav', ok); if(window.__favAtualizar) window.__favAtualizar(); });
+          h.addEventListener('click', function(e){ e.stopPropagation(); e.preventDefault(); favPratosToggle(h._chave); if(window.__favSync) window.__favSync(); });
           item.appendChild(h);
         }
         h._chave = chave;
         const on = favPratosTem(chave); h.classList.toggle('on', on); h.textContent = on ? '♥' : '♡'; item.classList.toggle('e-fav', on);
+      });
+      if(window.__favAtualizar) window.__favAtualizar();
+    };
+    // Re-sincroniza o estado de TODOS os corações a partir do telemóvel (localStorage), sem os recriar.
+    // Assim, quando adicionas um favorito dentro de uma categoria e voltas ao menu, o coração e o badge
+    // ficam logo certos (tal como o carrinho) — e um prato que apareça em vários sítios fica igual em todos.
+    window.__favSync = function(){
+      if(!window.__favPratosOn){ if(window.__favAtualizar) window.__favAtualizar(); return; }
+      const set = favPratosGet();
+      document.querySelectorAll('.item').forEach(function(item){
+        if(item.closest('#jogos')) return;
+        const nomeEl = item.querySelector('.nome'); if(!nomeEl) return;
+        const chave = (nomeEl.dataset && nomeEl.dataset.pt) ? nomeEl.dataset.pt : nomeEl.textContent.trim();
+        const on = set.indexOf(chave) >= 0;
+        item.classList.toggle('e-fav', on);
+        const h = item.querySelector('.fav-prato');
+        if(h){ h.classList.toggle('on', on); h.textContent = on ? '♥' : '♡'; }
       });
       if(window.__favAtualizar) window.__favAtualizar();
     };
