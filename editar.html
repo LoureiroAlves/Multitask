@@ -703,9 +703,23 @@ amesadigital.pt</textarea>
       <!-- ADEREÇOS DO LAYOUT (SVG de linha, uma cor, a flutuar) -->
       <label style="margin-top:18px;">✨ Adereços do layout</label>
       <div class="subtitulo" style="margin-top:-2px;">Desenhos a traço, de uma só cor, que flutuam suavemente pelo menu. Servem em qualquer layout e a cor segue o tema (podes escolher outra).</div>
-      <div id="adornosGrid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(44px, 1fr)); gap:8px; margin-top:8px;"></div>
+      <label for="adModo" style="margin-top:12px;">Movimento</label>
+      <select id="adModo" style="width:100%; padding:10px 12px; border-radius:10px; border:1.5px solid var(--linha); background:var(--branco); font-family:inherit; color:var(--castanho); font-size:0.95rem;">
+        <option value="flutua">A flutuar (caem suavemente)</option>
+        <option value="fixo">Fixos — coloco onde quiser (arrastar)</option>
+      </select>
+      <div id="adFixoBox" style="display:none; margin-top:10px; padding:10px 12px; border:1.5px solid var(--linha); border-radius:10px; background:#fbf8f2;">
+        <label for="adOnde" style="margin-top:0;">Colocar em</label>
+        <select id="adOnde" style="width:100%; padding:9px 12px; border-radius:9px; border:1.5px solid var(--linha); background:var(--branco); font-family:inherit; color:var(--castanho); font-size:0.92rem;">
+          <option value="menu">Menu principal</option>
+          <option value="sub">Sub-menus</option>
+          <option value="abertura">Ecrã de abertura</option>
+        </select>
+        <div class="subtitulo" style="margin-top:8px;">Toca num desenho acima para o adicionar no sítio escolhido. Depois <b>arrasta-o na pré-visualização</b> para a posição que quiseres. Para remover, <b>toca duas vezes</b> nele na pré-visualização.</div>
+        <button type="button" id="adLimparFixos" style="margin-top:8px; padding:7px 12px; border:1.5px solid var(--linha); background:var(--branco); color:var(--castanho); border-radius:9px; font-family:inherit; font-weight:600; cursor:pointer;">Remover todos os fixos</button>
+      </div>
       <div style="margin-top:12px;">
-        <label for="adDens" style="font-size:0.85rem;">Quantidade: <span id="adDensVal">12</span></label>
+        <label id="adDensRow" for="adDens" style="font-size:0.85rem;">Quantidade: <span id="adDensVal">12</span></label>
         <input type="range" id="adDens" min="4" max="30" step="1" value="12" style="width:100%;">
         <label for="adOpac" style="font-size:0.85rem; margin-top:6px; display:block;">Transparência: <span id="adOpacVal">16</span>%</label>
         <input type="range" id="adOpac" min="4" max="50" step="1" value="16" style="width:100%;">
@@ -716,10 +730,12 @@ amesadigital.pt</textarea>
         <input type="checkbox" id="adCorAtiva"> <label for="adCorAtiva" style="margin:0; font-weight:600; color:var(--castanho);">Cor própria (por norma segue o tema)</label>
       </div>
       <div id="adCorBox" style="display:none; margin-top:6px;"><input type="color" id="adCor" value="#8a712f" style="width:56px; height:34px; border:none; background:none; cursor:pointer;"></div>
-      <label style="margin-top:12px; display:block; font-weight:600; color:var(--castanho);">Onde aparecem</label>
-      <label style="display:flex; gap:8px; align-items:center; font-size:0.9rem; margin-top:4px;"><input type="checkbox" id="adMenu" checked style="width:auto; margin:0;"> Menu principal</label>
-      <label style="display:flex; gap:8px; align-items:center; font-size:0.9rem; margin-top:4px;"><input type="checkbox" id="adSub" checked style="width:auto; margin:0;"> Sub-menus</label>
-      <label style="display:flex; gap:8px; align-items:center; font-size:0.9rem; margin-top:4px;"><input type="checkbox" id="adAbertura" checked style="width:auto; margin:0;"> Ecrã de abertura</label>
+      <div id="adOndeFlutua">
+        <label style="margin-top:12px; display:block; font-weight:600; color:var(--castanho);">Onde aparecem</label>
+        <label style="display:flex; gap:8px; align-items:center; font-size:0.9rem; margin-top:4px;"><input type="checkbox" id="adMenu" checked style="width:auto; margin:0;"> Menu principal</label>
+        <label style="display:flex; gap:8px; align-items:center; font-size:0.9rem; margin-top:4px;"><input type="checkbox" id="adSub" checked style="width:auto; margin:0;"> Sub-menus</label>
+        <label style="display:flex; gap:8px; align-items:center; font-size:0.9rem; margin-top:4px;"><input type="checkbox" id="adAbertura" checked style="width:auto; margin:0;"> Ecrã de abertura</label>
+      </div>
       <button type="button" id="adLimpar" style="margin-top:10px; padding:8px 14px; border:1.5px solid var(--linha); background:var(--branco); color:var(--castanho); border-radius:9px; font-family:inherit; font-weight:600; cursor:pointer;">Não usar adereços</button>
     </div>
   </details>
@@ -3005,7 +3021,20 @@ amesadigital.pt</textarea>
       b.title = id;
       b.style.cssText = 'aspect-ratio:1; border:1.5px solid var(--linha); background:#fff; border-radius:10px; padding:7px; cursor:pointer; color:var(--castanho); display:flex; align-items:center; justify-content:center;';
       b.innerHTML = window.adornoSVG(id, 1.6);
-      b.addEventListener('click', function(){ b.classList.toggle('on'); _adBtnEstado(b); if(window.__agendarPreview) window.__agendarPreview(); });
+      b.addEventListener('click', function(){
+        var modoEl = document.getElementById('adModo');
+        if(modoEl && modoEl.value === 'fixo'){
+          // adiciona um adereço fixo no sítio escolhido (depois arrasta na pré-visualização)
+          config.adornos = config.adornos || {};
+          if(!Array.isArray(config.adornos.fixos)) config.adornos.fixos = [];
+          var onde = (document.getElementById('adOnde') || {}).value || 'menu';
+          var tam = parseInt(document.getElementById('adTam').value, 10) || 34;
+          config.adornos.fixos.push({ id: b.dataset.id, x: 50, y: 40, tam: tam, onde: onde });
+          if(window.__agendarPreview) window.__agendarPreview();
+        } else {
+          b.classList.toggle('on'); _adBtnEstado(b); if(window.__agendarPreview) window.__agendarPreview();
+        }
+      });
       grid.appendChild(b);
     });
     // sliders → mostrar valor
@@ -3017,7 +3046,20 @@ amesadigital.pt</textarea>
     const cc = document.getElementById('adCor'); if(cc) cc.addEventListener('input', function(){ if(window.__agendarPreview) window.__agendarPreview(); });
     // botão "não usar"
     const lp = document.getElementById('adLimpar');
-    if(lp) lp.addEventListener('click', function(){ grid.querySelectorAll('.ad-btn.on').forEach(function(b){ b.classList.remove('on'); _adBtnEstado(b); }); if(window.__agendarPreview) window.__agendarPreview(); });
+    if(lp) lp.addEventListener('click', function(){ grid.querySelectorAll('.ad-btn.on').forEach(function(b){ b.classList.remove('on'); _adBtnEstado(b); }); if(config.adornos) config.adornos.fixos = []; if(window.__agendarPreview) window.__agendarPreview(); });
+    // seletor de movimento (flutua/fixo)
+    const md = document.getElementById('adModo');
+    if(md) md.addEventListener('change', function(){ _adModoUI(); if(window.__agendarPreview) window.__agendarPreview(); });
+    const lf = document.getElementById('adLimparFixos');
+    if(lf) lf.addEventListener('click', function(){ if(config.adornos) config.adornos.fixos = []; if(window.__agendarPreview) window.__agendarPreview(); });
+  }
+  function _adModoUI(){
+    const md = document.getElementById('adModo'); if(!md) return;
+    const fixo = md.value === 'fixo';
+    const fb = document.getElementById('adFixoBox'); if(fb) fb.style.display = fixo ? 'block' : 'none';
+    const of = document.getElementById('adOndeFlutua'); if(of) of.style.display = fixo ? 'none' : 'block';
+    const dr = document.getElementById('adDensRow'); if(dr) dr.style.display = fixo ? 'none' : 'block';
+    const di = document.getElementById('adDens'); if(di) di.style.display = fixo ? 'none' : 'block';
   }
   function carregarAdornos(){
     const grid = document.getElementById('adornosGrid'); if(!grid) return;
@@ -3035,6 +3077,8 @@ amesadigital.pt</textarea>
     document.getElementById('adMenu').checked = a.menu !== false;
     document.getElementById('adSub').checked = a.sub !== false;
     document.getElementById('adAbertura').checked = a.abertura !== false;
+    const md = document.getElementById('adModo'); if(md) md.value = (a.modo === 'fixo') ? 'fixo' : 'flutua';
+    _adModoUI();
   }
   initAdornos();
   { const _wca = document.getElementById('wipeCorAtiva');
@@ -3547,8 +3591,11 @@ amesadigital.pt</textarea>
       { const _g = document.getElementById('adornosGrid');
         const _sel = _g ? Array.prototype.slice.call(_g.querySelectorAll('.ad-btn.on')).map(function(b){ return b.dataset.id; }) : [];
         const _corA = document.getElementById('adCorAtiva');
+        const _fixosAtuais = (config.adornos && Array.isArray(config.adornos.fixos)) ? config.adornos.fixos : [];
         config.adornos = {
+          modo: (document.getElementById('adModo') || {}).value || 'flutua',
           motivos: _sel,
+          fixos: _fixosAtuais,
           densidade: parseInt(document.getElementById('adDens').value, 10) || 12,
           opacidade: parseInt(document.getElementById('adOpac').value, 10) || 16,
           tamanho:   parseInt(document.getElementById('adTam').value, 10) || 34,
@@ -5596,6 +5643,14 @@ amesadigital.pt</textarea>
       else if(d.type === 'decor-pos'){
         const arr = (d.ctx === 'intro') ? (decorState.intro && decorState.intro.fixas) : decorState.fixas;
         if(arr && arr[d.i]){ arr[d.i].x = d.x; arr[d.i].y = d.y; }
+      }
+      else if(d.type === 'adorno-pos'){
+        const arr = config.adornos && config.adornos.fixos;
+        if(arr && arr[d.i]){ arr[d.i].x = d.x; arr[d.i].y = d.y; }
+      }
+      else if(d.type === 'adorno-del'){
+        const arr = config.adornos && config.adornos.fixos;
+        if(arr && arr[d.i] != null){ arr.splice(d.i, 1); if(window.__agendarPreview) window.__agendarPreview(); }
       }
       else if(d.type === 'preview-pos' && d.target === 'textoLivre'){
         const ex = document.getElementById('tlX'), ey = document.getElementById('tlY');

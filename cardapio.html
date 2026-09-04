@@ -2177,6 +2177,11 @@
   .adorno-item svg{ display:block; width:100%; height:100%; }
   @keyframes adornoCai{ 0%{ transform:translateY(-16vh) rotate(0deg); } 100%{ transform:translateY(120vh) rotate(var(--ar,30deg)); } }
   @media (prefers-reduced-motion: reduce){ .adorno-item{ animation:none; } }
+  /* Adereços FIXOS (colocados à mão) */
+  .af-item{ position:absolute; transform:translate(-50%,-50%); opacity:var(--ao,.16); }
+  .af-item svg{ display:block; width:100%; height:100%; }
+  body.secao-aberta #adornosLayer .af-menu{ display:none; }
+  body:not(.secao-aberta) #adornosLayer .af-sub{ display:none; }
   /* Adereços dentro do ecrã de abertura */
   #introAdornos{ position:absolute; inset:0; z-index:1; pointer-events:none; overflow:hidden; color:var(--adorno-cor-intro, rgba(255,255,255,.9)); }
 
@@ -5368,6 +5373,29 @@
   //  ADEREÇOS DO LAYOUT (SVG de linha, uma cor, a flutuar)
   //  Funcionam em qualquer layout. config.adornos = {motivos:[], densidade, opacidade, tamanho, cor, menu, sub, abertura}
   // ==========================================================
+  function _adornoIntroHost(){
+    var iH = document.getElementById('introAdornos');
+    var intro = document.getElementById('introOverlay');
+    if(!intro) return null;
+    if(!iH){ iH = document.createElement('div'); iH.id = 'introAdornos'; intro.insertBefore(iH, intro.firstChild); }
+    return iH;
+  }
+  // Arrastar um adereço fixo (só na pré-visualização do editor) e apagar com toque duplo
+  function _adornoArrastavel(el, idx){
+    el.style.pointerEvents = 'auto'; el.style.cursor = 'move'; el.style.touchAction = 'none';
+    var drag = false, moveu = false;
+    el.onpointerdown = function(ev){ ev.preventDefault(); ev.stopPropagation(); drag = true; moveu = false; try{ el.setPointerCapture(ev.pointerId); }catch(e){} };
+    el.onpointermove = function(ev){
+      if(!drag) return; var cont = el.parentElement; if(!cont) return;
+      var r = cont.getBoundingClientRect();
+      var nx = Math.round((ev.clientX - r.left) / r.width * 100);
+      var ny = Math.round((ev.clientY - r.top) / r.height * 100);
+      nx = Math.max(0, Math.min(100, nx)); ny = Math.max(0, Math.min(100, ny));
+      el.style.left = nx + '%'; el.style.top = ny + '%'; moveu = true; el._nx = nx; el._ny = ny;
+    };
+    el.onpointerup = function(ev){ if(drag){ drag = false; if(moveu){ try{ parent.postMessage({ type:'adorno-pos', i:idx, x:el._nx, y:el._ny }, '*'); }catch(e){} } } };
+    el.ondblclick = function(ev){ ev.preventDefault(); ev.stopPropagation(); try{ parent.postMessage({ type:'adorno-del', i:idx }, '*'); }catch(e){} };
+  }
   function aplicarAdornos(config){
     var host = document.getElementById('adornosLayer');
     if(!host){ host = document.createElement('div'); host.id = 'adornosLayer'; document.body.appendChild(host); }
@@ -5376,13 +5404,40 @@
     var iH = document.getElementById('introAdornos'); if(iH) iH.innerHTML = '';
     var doc = document.documentElement;
     var a = config && config.adornos;
-    var ids = (a && Array.isArray(a.motivos)) ? a.motivos.filter(function(x){ return window.ADORNOS_SVG && window.ADORNOS_SVG[x]; }) : [];
-    if(!ids.length || !window.adornoSVG){ doc.style.removeProperty('--adorno-cor'); doc.style.removeProperty('--adorno-cor-intro'); return; }
-    var dens = Math.max(4, Math.min(40, parseInt(a.densidade, 10) || 12));
-    var op   = Math.max(2, Math.min(60, parseInt(a.opacidade, 10) || 16)) / 100;
-    var tam  = Math.max(16, Math.min(90, parseInt(a.tamanho, 10) || 34));
+    if(!a || !window.adornoSVG){ doc.style.removeProperty('--adorno-cor'); doc.style.removeProperty('--adorno-cor-intro'); return; }
+    var op  = Math.max(2, Math.min(60, parseInt(a.opacidade, 10) || 16)) / 100;
+    var tam = Math.max(16, Math.min(90, parseInt(a.tamanho, 10) || 34));
     if(a.cor && a.cor !== 'auto'){ doc.style.setProperty('--adorno-cor', a.cor); doc.style.setProperty('--adorno-cor-intro', a.cor); }
     else { doc.style.removeProperty('--adorno-cor'); doc.style.removeProperty('--adorno-cor-intro'); }
+    var prev = !!window.__PREVIEW;
+
+    // ---- Modo FIXO: adereços colocados à mão (arrastáveis na pré-visualização) ----
+    if((a.modo || 'flutua') === 'fixo'){
+      var fixos = Array.isArray(a.fixos) ? a.fixos : [];
+      if(!fixos.length) return;
+      document.body.classList.add('adornos-menu', 'adornos-sub');
+      fixos.forEach(function(f, idx){
+        if(!f || !window.ADORNOS_SVG[f.id]) return;
+        var onde = f.onde || 'menu';
+        var el = document.createElement('div');
+        el.className = 'af-item ' + (onde === 'sub' ? 'af-sub' : (onde === 'abertura' ? 'af-intro' : 'af-menu'));
+        var s = Math.max(16, Math.min(160, parseInt(f.tam, 10) || tam));
+        el.style.width = s + 'px'; el.style.height = s + 'px';
+        el.style.left = (f.x != null ? f.x : 50) + '%';
+        el.style.top  = (f.y != null ? f.y : 40) + '%';
+        el.style.setProperty('--ao', op.toFixed(3));
+        el.innerHTML = window.adornoSVG(f.id);
+        if(prev) _adornoArrastavel(el, idx);
+        if(onde === 'abertura'){ var ih = _adornoIntroHost(); if(ih) ih.appendChild(el); }
+        else host.appendChild(el);
+      });
+      return;
+    }
+
+    // ---- Modo A FLUTUAR (por defeito) ----
+    var ids = Array.isArray(a.motivos) ? a.motivos.filter(function(x){ return window.ADORNOS_SVG[x]; }) : [];
+    if(!ids.length) return;
+    var dens = Math.max(4, Math.min(40, parseInt(a.densidade, 10) || 12));
     var ondeMenu = a.menu !== false, ondeSub = a.sub !== false, ondeIntro = a.abertura !== false;
     if(ondeMenu) document.body.classList.add('adornos-menu');
     if(ondeSub)  document.body.classList.add('adornos-sub');
@@ -5402,13 +5457,7 @@
       }
     }
     if(ondeMenu || ondeSub) criar(host, dens);
-    if(ondeIntro){
-      var intro = document.getElementById('introOverlay');
-      if(intro){
-        if(!iH){ iH = document.createElement('div'); iH.id = 'introAdornos'; intro.insertBefore(iH, intro.firstChild); }
-        criar(iH, Math.min(dens, 14));
-      }
-    }
+    if(ondeIntro){ var ih2 = _adornoIntroHost(); if(ih2) criar(ih2, Math.min(dens, 14)); }
   }
 
   function aplicarDecor(config){
