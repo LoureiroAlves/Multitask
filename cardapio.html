@@ -1974,6 +1974,14 @@
     transition:transform .38s cubic-bezier(.22,1,.36,1);
   }
   #cartOverlay.aberto .cart-painel{ transform:translateY(0); }
+  /* Botão + painel de FAVORITOS (pratos) */
+  #favBtn{ position:fixed; right:14px; bottom:77px; z-index:200; width:46px; height:46px; border-radius:50%; border:none; background:#e0245e; color:#fff; font-size:1.35rem; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,0.4); display:none; align-items:center; justify-content:center; }
+  #favBtn .fav-badge{ position:absolute; top:-5px; right:-5px; background:var(--dourado); color:#fff; font-size:0.68rem; font-weight:700; min-width:18px; height:18px; border-radius:9px; display:flex; align-items:center; justify-content:center; padding:0 4px; border:2px solid var(--branco); }
+  body.cart-oculto #favBtn{ opacity:0; visibility:hidden; pointer-events:none; }
+  #favOverlay{ position:fixed; inset:0; z-index:400; background:rgba(0,0,0,0); display:flex; align-items:flex-end; justify-content:center; opacity:0; visibility:hidden; pointer-events:none; transition:background .3s ease, opacity .3s ease, visibility .3s ease; }
+  #favOverlay.aberto{ background:rgba(0,0,0,0.5); opacity:1; visibility:visible; pointer-events:auto; }
+  #favOverlay.aberto .cart-painel{ transform:translateY(0); }
+  .fav-rem{ margin-left:auto; border:none; background:transparent; color:#c0392b; font-size:1.05rem; cursor:pointer; padding:2px 8px; }
   /* Carrinho sempre legível: paleta neutra fixa dentro do painel, independente das cores do layout
      (evita texto sem contraste quando o "bege" do tema é escuro ou o "castanho" é claro). */
   .cart-painel, .esc-painel{ --castanho:#3a2c18; --castanho-suave:#7a6a52; --bege:#f4efe6; --branco:#ffffff; --linha:#e3d9c4; --dourado:#a8712f; }
@@ -4219,6 +4227,8 @@
       if(config.tileTamanho === 'pequeno') document.body.classList.add('tiles-pequeno');
       else if(config.tileTamanho === 'grande') document.body.classList.add('tiles-grande');
       document.body.classList.toggle('tiles-vidro', config.tilesVidro === true);
+      window.__favPratosOn = (config.favoritosPratos === true);   // favoritos de pratos (extra opcional)
+      try{ if(window.montarCoracoes) window.montarCoracoes(); }catch(e){}
       // Cores próprias do cabeçalho e do rodapé — independentes do tema e do fundo da página
       { const rs = document.documentElement.style;
         if(config.header && config.header.corFundo){ rs.setProperty('--cab-cor', config.header.corFundo); } else { rs.removeProperty('--cab-cor'); }
@@ -6870,6 +6880,45 @@
     overlay.addEventListener('click', e => { if(e.target === overlay) overlay.classList.remove('aberto'); });
     cartBtn.addEventListener('click', () => { render(); overlay.classList.add('aberto'); });
 
+    // ---- Botão + painel de FAVORITOS (pratos) ----
+    const favBtn = document.createElement('button');
+    favBtn.id = 'favBtn'; favBtn.setAttribute('aria-label','Os meus pratos favoritos');
+    favBtn.innerHTML = '♥<span class="fav-badge">0</span>';
+    document.body.appendChild(favBtn);
+    const favOverlay = document.createElement('div');
+    favOverlay.id = 'favOverlay';
+    favOverlay.innerHTML = '<div class="cart-painel" id="favPainel"></div>';
+    document.body.appendChild(favOverlay);
+    favOverlay.addEventListener('click', e => { if(e.target === favOverlay) favOverlay.classList.remove('aberto'); });
+    favBtn.addEventListener('click', () => { favRender(); favOverlay.classList.add('aberto'); });
+    function favRender(){
+      const favs = Array.from(document.querySelectorAll('main .item.e-fav'));
+      const p = document.getElementById('favPainel'); p.innerHTML = '';
+      const h3 = document.createElement('h3'); h3.textContent = '♥ Os meus favoritos'; p.appendChild(h3);
+      if(!favs.length){
+        const v = document.createElement('div'); v.className = 'cart-vazio'; v.innerHTML = 'Ainda não guardaste pratos.<br>Toca no ♥ junto a um prato para guardar.'; p.appendChild(v);
+      } else {
+        favs.forEach(function(it){
+          const nomeEl = it.querySelector('.nome'); const precoEl = it.querySelector('.preco');
+          const row = document.createElement('div'); row.className = 'cart-linha';
+          const nn = document.createElement('span'); nn.className = 'cart-nome'; nn.textContent = nomeEl ? nomeEl.textContent.trim() : ''; row.appendChild(nn);
+          if(precoEl && precoEl.textContent.trim()){ const pp = document.createElement('span'); pp.className = 'cart-preco'; pp.textContent = precoEl.textContent.trim(); row.appendChild(pp); }
+          const rm = document.createElement('button'); rm.className = 'fav-rem'; rm.type = 'button'; rm.textContent = '✕'; rm.setAttribute('aria-label','Remover');
+          rm.onclick = function(){ const h = it.querySelector('.fav-prato'); if(h) h.click(); favRender(); };
+          row.appendChild(rm); p.appendChild(row);
+        });
+      }
+      const acoes = document.createElement('div'); acoes.className = 'cart-acoes';
+      const fechar = document.createElement('button'); fechar.className = 'cart-fechar'; fechar.textContent = 'Fechar'; fechar.onclick = function(){ favOverlay.classList.remove('aberto'); };
+      acoes.appendChild(fechar); p.appendChild(acoes);
+    }
+    window.__favAtualizar = function(){
+      const n = document.querySelectorAll('main .item.e-fav').length;
+      const badge = favBtn.querySelector('.fav-badge'); if(badge) badge.textContent = n;
+      favBtn.style.display = (n > 0 && !emJogos()) ? 'flex' : 'none';
+      if(favOverlay.classList.contains('aberto')) favRender();
+    };
+
     function emJogos(){
       const mj = document.getElementById('modalJogo');
       if(mj && mj.classList.contains('aberto')) return true;
@@ -7054,6 +7103,12 @@
     function favPratosToggle(n){ var a = favPratosGet(); var i = a.indexOf(n); if(i >= 0) a.splice(i,1); else a.push(n); try{ localStorage.setItem(_favPratosKey(), JSON.stringify(a)); }catch(e){} return i < 0; }
     // Coração em cada prato (independente do carrinho e do idioma — usa o nome PT como chave)
     window.montarCoracoes = function(){
+      if(!window.__favPratosOn){
+        document.querySelectorAll('.fav-prato').forEach(function(h){ h.remove(); });
+        document.querySelectorAll('main .item.e-fav').forEach(function(it){ it.classList.remove('e-fav'); });
+        if(window.__favAtualizar) window.__favAtualizar();
+        return;
+      }
       document.querySelectorAll('main .item').forEach(function(item){
         if(item.closest('#jogos')) return;
         const nomeEl = item.querySelector('.nome'); if(!nomeEl) return;
@@ -7061,12 +7116,13 @@
         let h = item.querySelector('.fav-prato');
         if(!h){
           h = document.createElement('button'); h.type = 'button'; h.className = 'fav-prato'; h.setAttribute('aria-label','Favorito');
-          h.addEventListener('click', function(e){ e.stopPropagation(); e.preventDefault(); const ok = favPratosToggle(h._chave); h.classList.toggle('on', ok); h.textContent = ok ? '♥' : '♡'; item.classList.toggle('e-fav', ok); });
+          h.addEventListener('click', function(e){ e.stopPropagation(); e.preventDefault(); const ok = favPratosToggle(h._chave); h.classList.toggle('on', ok); h.textContent = ok ? '♥' : '♡'; item.classList.toggle('e-fav', ok); if(window.__favAtualizar) window.__favAtualizar(); });
           item.appendChild(h);
         }
         h._chave = chave;
         const on = favPratosTem(chave); h.classList.toggle('on', on); h.textContent = on ? '♥' : '♡'; item.classList.toggle('e-fav', on);
       });
+      if(window.__favAtualizar) window.__favAtualizar();
     };
     window.montarBotoesLista = function(){
       window.montarCoracoes();
