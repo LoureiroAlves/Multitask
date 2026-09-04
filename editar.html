@@ -3134,6 +3134,7 @@ amesadigital.pt</textarea>
   }
   function carregarAdornos(){
     const grid = document.getElementById('adornosGrid'); if(!grid) return;
+    if(grid.children.length === 0) initAdornos();   // rede de segurança: se a grelha ainda não foi construída, constrói agora
     const a = config.adornos || {};
     const sel = Array.isArray(a.motivos) ? a.motivos : [];
     grid.querySelectorAll('.ad-btn').forEach(function(b){ const on = sel.indexOf(b.dataset.id) >= 0; b.classList.toggle('on', on); _adBtnEstado(b); });
@@ -3152,6 +3153,10 @@ amesadigital.pt</textarea>
     _adModoUI();
   }
   initAdornos();
+  // Rede de segurança contra ordem de carregamento: reconstruir quando a página acabar de carregar,
+  // caso o catálogo (ADORNOS_IDS) só fique disponível depois deste script.
+  window.addEventListener('load', function(){ try{ var g = document.getElementById('adornosGrid'); if(g && g.children.length === 0) initAdornos(); }catch(e){} });
+  setTimeout(function(){ try{ var g = document.getElementById('adornosGrid'); if(g && g.children.length === 0) initAdornos(); }catch(e){} }, 800);
   { const _wca = document.getElementById('wipeCorAtiva');
     if(_wca) _wca.addEventListener('change', e => { const l = document.getElementById('wipeCorLinha'); if(l) l.style.display = e.target.checked ? 'flex' : 'none'; }); }
   { const _wt = document.getElementById('wipeTexto');
