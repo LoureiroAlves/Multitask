@@ -1610,15 +1610,21 @@ amesadigital.pt</textarea>
       </label>
       <p style="margin:4px 0 0; font-size:0.82rem; color:var(--castanho-suave);">Ligado: mostra o preço de cada item, o total e a opção de dividir a conta. Desligado: mostra só a lista do que o cliente escolheu, para mostrar ao empregado (sem preços nem total).</p>
 
-      <label style="display:flex; align-items:center; gap:8px; margin-top:14px; cursor:pointer; font-weight:600;">
-        <input type="checkbox" id="favPratosAtivo" style="width:auto; margin:0;">
-        ❤ Favoritos de pratos
-      </label>
-      <p style="margin:4px 0 0; font-size:0.82rem; color:var(--castanho-suave);">Cada prato ganha um ♥ para o cliente guardar os preferidos (no telemóvel dele), e um botão ♥ que abre a lista dos favoritos. Desligado por norma.</p>
-
       <label for="carrinhoWhats" style="display:block; margin-top:16px; font-weight:600;">📱 Encomenda por WhatsApp — número do negócio (opcional)</label>
       <input type="text" id="carrinhoWhats" placeholder="Ex.: 351 912 345 678 (com indicativo do país)" style="width:100%; padding:11px 12px; border:1.5px solid var(--linha); border-radius:10px; font-family:inherit; font-size:0.95rem; margin-top:6px;">
       <p style="margin:4px 0 0; font-size:0.82rem; color:var(--castanho-suave);">Se preencheres, aparece na lista um botão "Enviar pedido por WhatsApp": o cliente confirma, escreve o nome, e abre o WhatsApp deste número já com a lista (itens + total). Ideal para negócios de encomenda (ex.: Aurora's Cake). Deixa em branco para o carrinho normal.</p>
+    </div>
+  </details>
+
+  <!-- FAVORITOS -->
+  <details id="secFavoritos" class="ed-sec" data-tab="extras">
+    <summary>❤ Favoritos</summary>
+    <div class="bloco-conteudo">
+      <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:600;">
+        <input type="checkbox" id="favPratosAtivo" style="width:auto; margin:0;">
+        Ativar favoritos de pratos
+      </label>
+      <p style="margin:4px 0 0; font-size:0.82rem; color:var(--castanho-suave);">Cada prato ganha um ♥ para o cliente guardar os preferidos (fica no telemóvel dele), e aparece um botão ♥ flutuante que abre a lista dos favoritos. Desligado por norma.</p>
     </div>
   </details>
 
@@ -5738,7 +5744,7 @@ amesadigital.pt</textarea>
       ['aparencia','🎨 Aparência', ['secLayout','secHeader','secRodape','secAbertura']],
       ['menu','🧾 Menu', ['secMenu']],
       ['mosaico','🧩 Mosaico', ['secMosaico']],
-      ['extras','⚙️ Extras', ['secJogos','secExtras','secAgenda','secTextoLivre','secCarrinho','secFooter','secIconesTopo','secRedes']],
+      ['extras','⚙️ Extras', ['secJogos','secExtras','secAgenda','secTextoLivre','secCarrinho','secFavoritos','secFooter','secIconesTopo','secRedes']],
       ['publicidade','📣 Publicidade', ['secPreAbertura','secAnuncio','secAnuncioJogos']],
       ['partilha','🔗 Partilha / QR', ['secPartilha']],
       ['limpeza','🧹 Limpeza de fotos', ['secLimpeza']]
@@ -5746,7 +5752,7 @@ amesadigital.pt</textarea>
     var LABEL = {
       secLayout:'Layout', secHeader:'Cabeçalho', secRodape:'Rodapé (barra fixa)', secFooter:'Rodapé final (scroll)', secAbertura:'Ecrã de abertura',
       secMenu:'Menu — itens e preços', secMosaico:'Mosaico (caixas)',
-      secJogos:'Jogos', secExtras:'Decoração e fidelidade', secAgenda:'Agenda / Reservas', secTextoLivre:'Texto livre', secCarrinho:'Carrinho', secIconesTopo:'Ícones do topo', secRedes:'Redes sociais',
+      secJogos:'Jogos', secExtras:'Decoração e fidelidade', secAgenda:'Agenda / Reservas', secTextoLivre:'Texto livre', secCarrinho:'Carrinho', secFavoritos:'❤ Favoritos', secIconesTopo:'Ícones do topo', secRedes:'Redes sociais',
       secPreAbertura:'Pré-abertura', secAnuncio:'Publicidade no menu', secAnuncioJogos:'Publicidade nos jogos',
       secPartilha:'Partilhar / QR', secLimpeza:'Limpeza de fotos'
     };
