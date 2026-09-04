@@ -782,7 +782,11 @@ amesadigital.pt</textarea>
           <option value="abertura">Ecrã de abertura</option>
         </select>
         <div class="subtitulo" style="margin-top:8px;">Toca num desenho acima para o adicionar no sítio escolhido. Depois <b>arrasta-o na pré-visualização</b> para a posição que quiseres. Para remover, <b>toca duas vezes</b> nele na pré-visualização.</div>
-        <button type="button" id="adLimparFixos" style="margin-top:8px; padding:7px 12px; border:1.5px solid var(--linha); background:var(--branco); color:var(--castanho); border-radius:9px; font-family:inherit; font-weight:600; cursor:pointer;">Remover todos os fixos</button>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;">
+          <button type="button" id="adUndoFixo" style="padding:7px 12px; border:1.5px solid var(--linha); background:var(--branco); color:var(--castanho); border-radius:9px; font-family:inherit; font-weight:600; cursor:pointer;">↶ Anular último</button>
+          <button type="button" id="adLimparFixos" style="padding:7px 12px; border:1.5px solid var(--linha); background:var(--branco); color:var(--castanho); border-radius:9px; font-family:inherit; font-weight:600; cursor:pointer;">Remover todos os fixos</button>
+        </div>
+        <div id="adFixosConta" class="subtitulo" style="margin-top:6px;"></div>
       </div>
       <div style="margin-top:12px;">
         <label id="adDensRow" for="adDens" style="font-size:0.85rem;">Quantidade: <span id="adDensVal">12</span></label>
@@ -3104,6 +3108,7 @@ amesadigital.pt</textarea>
           var n = config.adornos.fixos.filter(function(x){ return (x.onde || 'menu') === onde; }).length;
           var x = 30 + (n % 5) * 10, y = 28 + (Math.floor(n / 5) % 5) * 12;
           config.adornos.fixos.push({ id: b.dataset.id, x: x, y: y, onde: onde });
+          _adFixosConta();
           if(window.__agendarPreview) window.__agendarPreview();
         } else {
           b.classList.toggle('on'); _adBtnEstado(b); if(window.__agendarPreview) window.__agendarPreview();
@@ -3125,7 +3130,14 @@ amesadigital.pt</textarea>
     const md = document.getElementById('adModo');
     if(md) md.addEventListener('change', function(){ _adModoUI(); if(window.__agendarPreview) window.__agendarPreview(); });
     const lf = document.getElementById('adLimparFixos');
-    if(lf) lf.addEventListener('click', function(){ if(config.adornos) config.adornos.fixos = []; if(window.__agendarPreview) window.__agendarPreview(); });
+    if(lf) lf.addEventListener('click', function(){ if(config.adornos) config.adornos.fixos = []; _adFixosConta(); if(window.__agendarPreview) window.__agendarPreview(); });
+    const uf = document.getElementById('adUndoFixo');
+    if(uf) uf.addEventListener('click', function(){ if(config.adornos && Array.isArray(config.adornos.fixos) && config.adornos.fixos.length){ config.adornos.fixos.pop(); _adFixosConta(); if(window.__agendarPreview) window.__agendarPreview(); } });
+  }
+  function _adFixosConta(){
+    const el = document.getElementById('adFixosConta'); if(!el) return;
+    const n = (config.adornos && Array.isArray(config.adornos.fixos)) ? config.adornos.fixos.length : 0;
+    el.textContent = n ? (n + (n === 1 ? ' adereço colocado' : ' adereços colocados')) : 'Ainda não colocaste nenhum.';
   }
   function _adModoUI(){
     const md = document.getElementById('adModo'); if(!md) return;
@@ -3154,6 +3166,7 @@ amesadigital.pt</textarea>
     document.getElementById('adAbertura').checked = a.abertura !== false;
     const md = document.getElementById('adModo'); if(md) md.value = (a.modo === 'fixo') ? 'fixo' : 'flutua';
     _adModoUI();
+    _adFixosConta();
   }
   initAdornos();
   // Rede de segurança contra ordem de carregamento: reconstruir quando a página acabar de carregar,
