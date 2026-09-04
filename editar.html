@@ -1655,7 +1655,12 @@ amesadigital.pt</textarea>
 
       <label for="carrinhoWhats" style="display:block; margin-top:16px; font-weight:600;">📱 Encomenda por WhatsApp — número do negócio (opcional)</label>
       <input type="text" id="carrinhoWhats" placeholder="Ex.: 351 912 345 678 (com indicativo do país)" style="width:100%; padding:11px 12px; border:1.5px solid var(--linha); border-radius:10px; font-family:inherit; font-size:0.95rem; margin-top:6px;">
-      <p style="margin:4px 0 0; font-size:0.82rem; color:var(--castanho-suave);">Se preencheres, aparece na lista um botão "Enviar pedido por WhatsApp": o cliente confirma, escreve o nome, e abre o WhatsApp deste número já com a lista (itens + total). Ideal para negócios de encomenda (ex.: Aurora's Cake). Deixa em branco para o carrinho normal.</p>
+      <p style="margin:4px 0 0; font-size:0.82rem; color:var(--castanho-suave);">Se preencheres o número, o botão "Enviar pedido por WhatsApp" aparece <b>quando a lista tiver um menu de grupo</b> (para reservar esses menus). Nos pratos à la carte a lista funciona normalmente (com "dividir a conta"), sem WhatsApp.</p>
+      <label style="display:flex; align-items:center; gap:8px; margin-top:12px; cursor:pointer; font-weight:600;">
+        <input type="checkbox" id="carrinhoWhatsSempre" style="width:auto; margin:0;">
+        Encomendar tudo por WhatsApp (não só menus de grupo)
+      </label>
+      <p style="margin:4px 0 0; font-size:0.82rem; color:var(--castanho-suave);">Liga isto para negócios de encomenda (ex.: Aurora's Cake), onde qualquer item da lista pode ser enviado por WhatsApp. Precisa do número acima preenchido.</p>
     </div>
   </details>
 
@@ -2634,7 +2639,8 @@ amesadigital.pt</textarea>
     { const _c = config.carrinho || { ativo:true, precos:true };
       const _ca = document.getElementById('carrinhoAtivo'); if(_ca) _ca.checked = _c.ativo !== false;
       const _cp = document.getElementById('carrinhoPrecos'); if(_cp) _cp.checked = _c.precos !== false;
-      const _cw = document.getElementById('carrinhoWhats'); if(_cw) _cw.value = _c.whatsapp || ''; }
+      const _cw = document.getElementById('carrinhoWhats'); if(_cw) _cw.value = _c.whatsapp || '';
+      const _cws = document.getElementById('carrinhoWhatsSempre'); if(_cws) _cws.checked = _c.whatsappSempre === true; }
     { const _fp = document.getElementById('favPratosAtivo'); if(_fp) _fp.checked = config.favoritosPratos === true; }
     // Cores personalizadas
     const temCores = !!(config.cores && typeof config.cores === 'object');
@@ -3644,8 +3650,8 @@ amesadigital.pt</textarea>
       config.fonteTexto = document.getElementById('fonteTextoSel').value;
       config.tileTamanho = document.getElementById('tileTamanhoSel').value;
       { const _tv = document.getElementById('tilesVidroChk'); config.tilesVidro = _tv ? _tv.checked : false; }
-      { const _ca = document.getElementById('carrinhoAtivo'), _cp = document.getElementById('carrinhoPrecos'), _cw = document.getElementById('carrinhoWhats');
-        config.carrinho = { ativo: _ca ? _ca.checked : true, precos: _cp ? _cp.checked : true, whatsapp: _cw ? _cw.value.trim() : '' }; }
+      { const _ca = document.getElementById('carrinhoAtivo'), _cp = document.getElementById('carrinhoPrecos'), _cw = document.getElementById('carrinhoWhats'), _cws = document.getElementById('carrinhoWhatsSempre');
+        config.carrinho = { ativo: _ca ? _ca.checked : true, precos: _cp ? _cp.checked : true, whatsapp: _cw ? _cw.value.trim() : '', whatsappSempre: _cws ? _cws.checked : false }; }
       { const _fp = document.getElementById('favPratosAtivo'); config.favoritosPratos = !!(_fp && _fp.checked); }
       if(document.getElementById('coresPersonalizar').checked){
         config.cores = {
