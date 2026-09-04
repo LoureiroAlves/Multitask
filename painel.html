@@ -410,6 +410,7 @@
         '<div style="margin-top:12px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">' +
           '<button class="acao" data-act="guardar">Guardar</button>' +
           '<button class="mini" data-act="magic">✉️ Enviar acesso ao dono</button>' +
+          '<button class="mini perigo" data-act="reporRating">⭐ Repor avaliações</button>' +
           '<a class="link" href="' + SITE + '/editar.html?n=' + n.slug + '" target="_blank">Abrir editor ↗</a>' +
           '<a class="link" href="' + SITE + '/' + n.slug + '" target="_blank">Ver menu ↗</a>' +
           '<a class="link" href="' + SITE + '/reservas.html?n=' + n.slug + '" target="_blank">Reservas ↗</a>' +
@@ -439,6 +440,7 @@
     div.querySelector('[data-act="apagar"]').onclick = function(){ apagar(n); };
     div.querySelector('[data-act="guardar"]').onclick = function(){ guardarEnt(n, div); };
     div.querySelector('[data-act="magic"]').onclick = function(){ enviarAcessoDono(n, div); };
+    div.querySelector('[data-act="reporRating"]').onclick = function(){ reporRating(n, div); };
     return div;
   }
 
@@ -511,6 +513,16 @@
   async function toggleAtivo(n){
     const { error } = await sb.from('negocios').update({ ativo: !n.ativo }).eq('id', n.id);
     if(error){ alert('Erro: ' + error.message); } else { carregar(); }
+  }
+
+  // Repor (zerar) as avaliações por estrelas de um negócio
+  async function reporRating(n, div){
+    const total = Number(n.rating_contagem) || 0;
+    if(!confirm('Repor as avaliações de "' + n.nome + '"?\n\nApaga a média e os ' + total + (total === 1 ? ' voto' : ' votos') + ' atuais. Não dá para desfazer.')) return;
+    const { error } = await sb.from('negocios').update({ rating_soma: 0, rating_contagem: 0 }).eq('id', n.id);
+    if(error){ alert('Erro: ' + error.message + '\n\n(Se disser que faltam as colunas "rating_*", corre primeiro o SQL das avaliações.)'); return; }
+    const msg = div && div.querySelector('[data-msg]'); if(msg){ msg.textContent = '✓ Avaliações repostas.'; msg.style.cssText = 'color:#3a7d44; font-weight:700; margin-top:8px;'; }
+    carregar();
   }
 
   const LIXO_DIAS = 30;   // dias que um negócio fica na lixeira antes de ser apagado de vez
