@@ -764,18 +764,19 @@
   body.neon-fx:not(.modelo-caderno) .tile.neon-box.neon-pisca{ animation:neonEdgePisca var(--tile-pisca-dur,1.4s) ease-in-out infinite; }
   body.neon-fx .tile.neon-txt.neon-pisca .tile-label{ animation:neonTxtPisca var(--tile-pisca-dur,1.4s) ease-in-out infinite; }
   @keyframes neonTxtPisca{ 0%,100%{ text-shadow:0 0 2px #fff, 0 0 var(--nfx1) var(--nfx-cor, var(--cat-cor, var(--dourado))), 0 0 var(--nfx2) var(--nfx-cor, var(--cat-cor, var(--dourado))); } 50%{ text-shadow:0 0 1px rgba(255,255,255,.5); } }
-  /* Conteúdo da secção aberta (só se essa secção tiver néon) */
-  body.neon-fx .categoria-painel.neon-on #painelTitulo,
-  body.neon-fx .categoria-painel.neon-on section.categoria h2,
-  body.neon-fx .categoria-painel.neon-on .grupo-prato > summary,
-  body.neon-fx .categoria-painel.neon-on .grupo-vinho > summary{ text-shadow:0 0 2px #fff, 0 0 var(--nfx1) var(--nfx-cor, var(--cat-cor, var(--dourado))) !important; }
-  body.neon-fx .categoria-painel.neon-on .categoria-painel-header{ box-shadow:0 0 var(--nfx2) var(--nfx-cor, var(--cat-cor, var(--dourado))); }
-  body.neon-fx .categoria-painel.neon-on .item .preco{ text-shadow:0 0 var(--nfx1) var(--nfx-cor, var(--cat-cor, var(--dourado))); }
-  body.neon-fx .categoria-painel.neon-on.neon-pisca .categoria-painel-header{ animation:neonEdgePisca var(--nfx-dur,1.4s) ease-in-out infinite; }
+  /* Conteúdo da secção aberta — CONTORNO do sub-menu (independente das letras) */
+  body.neon-fx .categoria-painel.neon-on-box .categoria-painel-header{ box-shadow:0 0 var(--nfx2) var(--nfx-cor, var(--cat-cor, var(--dourado))); }
+  body.neon-fx .categoria-painel.neon-on-box.neon-pisca .categoria-painel-header{ animation:neonEdgePisca var(--nfx-dur,1.4s) ease-in-out infinite; }
+  /* Conteúdo da secção aberta — LETRAS do sub-menu (independente do contorno) */
+  body.neon-fx .categoria-painel.neon-on-txt #painelTitulo,
+  body.neon-fx .categoria-painel.neon-on-txt section.categoria h2,
+  body.neon-fx .categoria-painel.neon-on-txt .grupo-prato > summary,
+  body.neon-fx .categoria-painel.neon-on-txt .grupo-vinho > summary{ text-shadow:0 0 2px #fff, 0 0 var(--nfx1) var(--nfx-cor, var(--cat-cor, var(--dourado))) !important; }
+  body.neon-fx .categoria-painel.neon-on-txt .item .preco{ text-shadow:0 0 var(--nfx1) var(--nfx-cor, var(--cat-cor, var(--dourado))); }
   /* Modelo "Deslizar": páginas com néon */
-  body.neon-fx .deck-page.neon-on{ box-shadow:0 0 var(--nfx1) var(--nfx-cor, var(--cat-cor, var(--dourado))), 0 0 var(--nfx2) var(--nfx-cor, var(--cat-cor, var(--dourado))); }
-  body.neon-fx .deck-page.neon-on.neon-pisca{ animation:neonEdgePisca var(--nfx-dur,1.4s) ease-in-out infinite; }
-  body.neon-fx .deck-page.neon-on .deck-page-tit{ text-shadow:0 0 2px #fff, 0 0 var(--nfx1) var(--nfx-cor, var(--cat-cor, var(--dourado))), 0 0 var(--nfx2) var(--nfx-cor, var(--cat-cor, var(--dourado))) !important; }
+  body.neon-fx .deck-page.neon-on-box{ box-shadow:0 0 var(--nfx1) var(--nfx-cor, var(--cat-cor, var(--dourado))), 0 0 var(--nfx2) var(--nfx-cor, var(--cat-cor, var(--dourado))); }
+  body.neon-fx .deck-page.neon-on-box.neon-pisca{ animation:neonEdgePisca var(--nfx-dur,1.4s) ease-in-out infinite; }
+  body.neon-fx .deck-page.neon-on-txt .deck-page-tit{ text-shadow:0 0 2px #fff, 0 0 var(--nfx1) var(--nfx-cor, var(--cat-cor, var(--dourado))), 0 0 var(--nfx2) var(--nfx-cor, var(--cat-cor, var(--dourado))) !important; }
 
   /* ===== Modelo "Ponte Dom Luís" (ferro industrial do Porto) — config.modelo === 'ponte' ===== */
   body.modelo-ponte{
@@ -3084,7 +3085,7 @@
   function construirMenu(menu){
     if(!menu || !Array.isArray(menu.categorias)) return;
     // Efeito néon liga-se automaticamente se alguma secção tiver néon
-    document.body.classList.toggle('neon-fx', menu.categorias.some(function(c){ return c && (c.neonOn || c.neonCaixa || c.neonTexto); }));
+    document.body.classList.toggle('neon-fx', menu.categorias.some(function(c){ return c && (c.neonOn || c.neonCaixa || c.neonTexto || c.neonPainel || c.neonPainelTexto); }));
     const grid = document.getElementById('categoriaGrid');
     const main = document.querySelector('main');
     const jogosSec = document.getElementById('jogos');
@@ -3110,9 +3111,13 @@
       if(cat.cor){ btn.style.setProperty('--cat-cor', cat.cor); btn.dataset.cor = cat.cor; }
       var _nBox = (cat.neonCaixa !== undefined) ? !!cat.neonCaixa : !!cat.neonOn;
       var _nTxt = (cat.neonTexto !== undefined) ? !!cat.neonTexto : !!cat.neonOn;
-      if(_nBox || _nTxt){
+      var _nPnl = !!cat.neonPainel;         // contorno do sub-menu (independente do tile)
+      var _nPnlT = !!cat.neonPainelTexto;   // letras do sub-menu (independente do tile)
+      if(_nBox || _nTxt || _nPnl || _nPnlT){
         if(_nBox) btn.classList.add('neon-box');
         if(_nTxt) btn.classList.add('neon-txt');
+        if(_nPnl) btn.dataset.neonpainel = '1';
+        if(_nPnlT) btn.dataset.neonpaineltxt = '1';
         btn.dataset.neonon = '1';
         if(cat.neonCor){ btn.style.setProperty('--nfx-cor', cat.neonCor); btn.dataset.neoncor = cat.neonCor; }
         if(cat.neonPiscar){ const _d = Math.max(0.3, parseFloat(cat.neonPiscar) || 1.4); btn.classList.add('neon-pisca'); btn.style.setProperty('--tile-pisca-dur', _d + 's'); btn.dataset.neonpisca = _d; }
@@ -3281,8 +3286,9 @@
       const page = document.createElement('div'); page.className = 'deck-page';
       const tileEl = grid ? grid.querySelector('.tile[data-target="' + s.id.replace(/"/g,'\\"') + '"]') : null;
       if(tileEl && tileEl.dataset.cor) page.style.setProperty('--cat-cor', tileEl.dataset.cor);
-      if(tileEl && tileEl.dataset.neonon){
-        page.classList.add('neon-on');
+      if(tileEl && (tileEl.dataset.neonpainel || tileEl.dataset.neonpaineltxt)){
+        if(tileEl.dataset.neonpainel) page.classList.add('neon-on-box');
+        if(tileEl.dataset.neonpaineltxt) page.classList.add('neon-on-txt');
         if(tileEl.dataset.neoncor) page.style.setProperty('--nfx-cor', tileEl.dataset.neoncor);
         if(tileEl.dataset.neonpisca){ page.classList.add('neon-pisca'); page.style.setProperty('--nfx-dur', tileEl.dataset.neonpisca + 's'); }
       }
@@ -3486,7 +3492,8 @@
     // Néon por secção dentro do painel: ligar + cor própria + piscar
     if(tile.dataset.neoncor) painel.style.setProperty('--nfx-cor', tile.dataset.neoncor);
     else painel.style.removeProperty('--nfx-cor');
-    painel.classList.toggle('neon-on', tile.dataset.neonon === '1');
+    painel.classList.toggle('neon-on-box', tile.dataset.neonpainel === '1');
+    painel.classList.toggle('neon-on-txt', tile.dataset.neonpaineltxt === '1');
     if(tile.dataset.neonpisca){ painel.classList.add('neon-pisca'); painel.style.setProperty('--nfx-dur', tile.dataset.neonpisca + 's'); }
     else painel.classList.remove('neon-pisca');
 

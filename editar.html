@@ -4610,16 +4610,29 @@ amesadigital.pt</textarea>
       const nPChk=document.createElement('input'); nPChk.type='checkbox'; nPChk.style.width='auto'; nPChk.checked=!!cat.neonPiscar;
       const nPNum=document.createElement('input'); nPNum.type='number'; nPNum.min='0.3'; nPNum.max='10'; nPNum.step='0.1'; nPNum.value=(cat.neonPiscar||1.4); nPNum.style.cssText='width:58px; padding:5px 6px; border:1.5px solid var(--linha); border-radius:6px; font-family:inherit;'+(cat.neonPiscar?'':'display:none;');
       nPL.appendChild(nPChk); nPL.appendChild(document.createTextNode('Piscar')); nPL.appendChild(nPNum); nPL.appendChild(document.createTextNode('seg'));
-      function _syncNeon(){ delete cat.neonOn; if(nBox.checked) cat.neonCaixa=true; else delete cat.neonCaixa; if(nTxt.checked) cat.neonTexto=true; else delete cat.neonTexto; if(window.__agendarPreview) window.__agendarPreview(); }
+      const nPnlL=document.createElement('label'); nPnlL.style.cssText='display:flex; align-items:center; gap:5px; cursor:pointer;';
+      const nPnl=document.createElement('input'); nPnl.type='checkbox'; nPnl.style.width='auto'; nPnl.checked=!!cat.neonPainel;
+      nPnlL.appendChild(nPnl); nPnlL.appendChild(document.createTextNode('✨ Néon contorno sub-menu'));
+      const nPnlTL=document.createElement('label'); nPnlTL.style.cssText='display:flex; align-items:center; gap:5px; cursor:pointer;';
+      const nPnlT=document.createElement('input'); nPnlT.type='checkbox'; nPnlT.style.width='auto'; nPnlT.checked=!!cat.neonPainelTexto;
+      nPnlTL.appendChild(nPnlT); nPnlTL.appendChild(document.createTextNode('✨ Néon letras sub-menu'));
+      function _syncNeon(){ delete cat.neonOn;
+        if(nBox.checked) cat.neonCaixa=true; else delete cat.neonCaixa;
+        if(nTxt.checked) cat.neonTexto=true; else delete cat.neonTexto;
+        if(nPnl.checked) cat.neonPainel=true; else delete cat.neonPainel;
+        if(nPnlT.checked) cat.neonPainelTexto=true; else delete cat.neonPainelTexto;
+        if(window.__agendarPreview) window.__agendarPreview(); }
       nBox.addEventListener('change', _syncNeon);
       nTxt.addEventListener('change', _syncNeon);
+      nPnl.addEventListener('change', _syncNeon);
+      nPnlT.addEventListener('change', _syncNeon);
       nCChk.addEventListener('change',()=>{ if(nCChk.checked) cat.neonCor=nCIn.value; else delete cat.neonCor; if(window.__agendarPreview) window.__agendarPreview(); });
       nCIn.addEventListener('input',()=>{ if(nCChk.checked){ cat.neonCor=nCIn.value; if(window.__agendarPreview) window.__agendarPreview(); } });
       nPChk.addEventListener('change',()=>{ if(nPChk.checked){ cat.neonPiscar=parseFloat(nPNum.value)||1.4; nPNum.style.display=''; } else { delete cat.neonPiscar; nPNum.style.display='none'; } if(window.__agendarPreview) window.__agendarPreview(); });
       nPNum.addEventListener('input',()=>{ if(nPChk.checked){ const v=parseFloat(nPNum.value); if(v) cat.neonPiscar=v; if(window.__agendarPreview) window.__agendarPreview(); } });
-      neonRow.appendChild(nBoxL); neonRow.appendChild(nTxtL); neonRow.appendChild(nCL); neonRow.appendChild(nPL);
+      neonRow.appendChild(nBoxL); neonRow.appendChild(nTxtL); neonRow.appendChild(nPnlL); neonRow.appendChild(nPnlTL); neonRow.appendChild(nCL); neonRow.appendChild(nPL);
       p.appendChild(neonRow);
-      const neonHint=document.createElement('div'); neonHint.className='subtitulo'; neonHint.style.cssText='margin:0 0 10px;'; neonHint.textContent='Néon individual: contorno da caixa e/ou letras. Sem cor própria usa a cor da secção. Podes fazê-lo piscar de X em X segundos.';
+      const neonHint=document.createElement('div'); neonHint.className='subtitulo'; neonHint.style.cssText='margin:0 0 10px;'; neonHint.textContent='Néon individual: contorno/letras do tile e contorno/letras do sub-menu, cada um à parte. Sem cor própria usa a cor da secção. Podes fazê-lo piscar.';
       p.appendChild(neonHint);
 
       // Foto do SEPARADOR (tile) — a que aparece no botão/tile desta categoria
