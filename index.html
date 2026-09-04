@@ -56,6 +56,13 @@
   .card .corpo{ padding:14px 16px 16px; display:flex; flex-direction:column; gap:4px; flex:1; }
   .card .nome{ font-family:'Playfair Display', serif; font-weight:700; font-size:1.15rem; line-height:1.2; }
   .card .sub{ font-size:.86rem; color:var(--muted); font-weight:600; min-height:1.1em; }
+  /* Avaliação por estrelas */
+  .stars{ margin-top:6px; }
+  .stars-row{ display:flex; gap:2px; }
+  .stars .star{ border:none; background:transparent; padding:0 1px; cursor:pointer; font-size:1.15rem; line-height:1; color:#d9d2c4; -webkit-tap-highlight-color:transparent; transition:transform .1s ease; }
+  .stars .star.on{ color:#f5b301; }
+  .stars .star:active{ transform:scale(1.25); }
+  .stars-info{ font-size:.74rem; color:var(--muted); font-weight:600; margin-top:2px; }
   .card .acoes{ margin-top:12px; display:flex; gap:8px; }
   .card .btn{ flex:1; text-align:center; padding:10px; border-radius:11px; font-weight:800; font-size:.88rem; }
   .card .btn-menu{ background:var(--terra); color:#fff; }
@@ -295,6 +302,52 @@
     var _fc = el.querySelector('[data-fav-chip]'); if(_fc) _fc.onclick = function(){ soFav = !soFav; renderFiltros(); aplicar(); };
   }
 
+  // ===== Avaliação por estrelas (média por restaurante, guardada no Supabase) =====
+  function ratingDe(n){
+    var s = Number(n && n.rating_soma) || 0;
+    var c = Number(n && n.rating_contagem) || 0;
+    return { soma: s, cont: c, media: c > 0 ? (s / c) : 0 };
+  }
+  function meuVoto(slug){ try{ var v = parseInt(localStorage.getItem('amesaRating:' + slug), 10); return (v >= 1 && v <= 5) ? v : 0; }catch(e){ return 0; } }
+  function estrelasHTML(slug, media, total){
+    var meu = meuVoto(slug);
+    var cheio = meu > 0 ? meu : Math.round(media);   // se já votaste, mostra o teu voto; senão a média
+    var row = '';
+    for(var i = 1; i <= 5; i++){
+      row += '<button type="button" class="star' + (i <= cheio ? ' on' : '') + '" data-star="' + i + '" data-slug="' + esc(slug) + '" aria-label="' + i + ' de 5 estrelas">★</button>';
+    }
+    var info = total > 0
+      ? (media.toFixed(1) + ' · ' + total + (total === 1 ? ' voto' : ' votos') + (meu ? ' · avaliaste' : ''))
+      : 'Sê o primeiro a avaliar';
+    return '<div class="stars-row">' + row + '</div><div class="stars-info">' + info + '</div>';
+  }
+  function estrelasContainer(slug, n){
+    var r = ratingDe(n);
+    return '<div class="stars" data-slug="' + esc(slug) + '">' + estrelasHTML(slug, r.media, r.cont) + '</div>';
+  }
+  function votarEstrelas(slug, val){
+    if(!slug || !(val >= 1 && val <= 5)) return;
+    var anterior = meuVoto(slug);   // se este telemóvel já votou, troca o voto (não soma outro)
+    var trocaVoto = (anterior >= 1 && anterior <= 5);
+    var n = TODOS.find(function(x){ return x && x.slug === slug; });
+    if(n){
+      n.rating_soma = Number(n.rating_soma) || 0;
+      n.rating_contagem = Number(n.rating_contagem) || 0;
+      if(trocaVoto){ n.rating_soma += (val - anterior); }
+      else { n.rating_soma += val; n.rating_contagem += 1; }
+    }
+    try{ localStorage.setItem('amesaRating:' + slug, String(val)); }catch(e){}
+    // re-desenha as estrelas deste cartão
+    var cont = document.querySelector('.stars[data-slug="' + slug.replace(/"/g, '\\"') + '"]');
+    if(n && cont){ var rr = ratingDe(n); cont.innerHTML = estrelasHTML(slug, rr.media, rr.cont); }
+    // envia ao servidor (p_anterior=0 = voto novo; >0 = trocou de voto, ajusta a soma sem mexer na contagem)
+    fetch(SUPA_URL + '/rest/v1/rpc/add_rating', {
+      method: 'POST',
+      headers: { apikey: SUPA_KEY, Authorization: 'Bearer ' + SUPA_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ p_slug: slug, p_estrelas: val, p_anterior: trocaVoto ? anterior : 0 })
+    }).catch(function(){});
+  }
+
   function render(lista){
     var grid = document.getElementById('grid');
     var cont = document.getElementById('contador');
@@ -322,6 +375,7 @@
             '<div class="nome">' + esc(nome) + '</div>' +
             (tipo ? '<div class="tag">' + esc(tipo) + '</div>' : '') +
             '<div class="sub">' + esc(sub) + '</div>' +
+            estrelasContainer(slug, n) +
             '<div class="acoes">' +
               '<a class="btn btn-menu" href="' + cardapio + '">Ver menu</a>' +
             '</div>' +
@@ -400,6 +454,14 @@
     if(soFav) aplicar();
   });
 
+  // Estrelas: avaliar o restaurante
+  document.addEventListener('click', function(e){
+    var st = e.target && e.target.closest ? e.target.closest('.star') : null;
+    if(!st) return;
+    e.preventDefault(); e.stopPropagation();
+    votarEstrelas(st.getAttribute('data-slug'), parseInt(st.getAttribute('data-star'), 10));
+  });
+
   // Cliques: restaurante (via card) e publicidade (via slot). Conta antes de o link navegar.
   document.addEventListener('click', function(e){
     var t = e.target;
@@ -409,9 +471,17 @@
     if(card && t.closest('a')){ var _cs = card.getAttribute('data-slug'); if(_umaVezDia('amc_' + _cs)) incMetrica(_cs, 'amesa'); }
   }, true);
 
-  fetch(SUPA_URL + '/rest/v1/negocios?select=slug,nome,config,apagado_em&order=nome.asc', {
-    headers: { apikey: SUPA_KEY, Authorization: 'Bearer ' + SUPA_KEY }
-  }).then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); })
+  (function(){
+    var hdr = { headers: { apikey: SUPA_KEY, Authorization: 'Bearer ' + SUPA_KEY } };
+    var base = SUPA_URL + '/rest/v1/negocios?order=nome.asc&select=';
+    var rico = 'slug,nome,config,apagado_em,rating_soma,rating_contagem';
+    var simples = 'slug,nome,config,apagado_em';
+    // Tenta com as colunas das estrelas; se ainda não existirem na BD, cai para o select antigo
+    return fetch(base + rico, hdr).then(function(r){
+      if(r.ok) return r.json();
+      return fetch(base + simples, hdr).then(function(r2){ if(!r2.ok) throw new Error(r2.status); return r2.json(); });
+    });
+  })()
     .then(function(dados){
       dados = dados || [];
       var reservado = dados.find(function(n){ return n && n.slug === AMESA_SLUG; });
