@@ -2216,7 +2216,7 @@ amesadigital.pt</textarea>
 
   // Esconde secções conforme o plano (funções) e esconde a publicidade ao dono
   // Secções que são SEMPRE só do administrador (nunca do dono)
-  const SEC_SO_ADMIN = ['secAnuncio', 'secAnuncioJogos', 'secLimpeza'];
+  const SEC_SO_ADMIN = ['secAnuncio', 'secAnuncioJogos', 'secAdJogos', 'secLimpeza'];
   function aplicarGating(ent){
     ent = ent || {}; const f = ent.funcoes || {};
     const admin = !!window.__admin;
