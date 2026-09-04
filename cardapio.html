@@ -239,6 +239,7 @@
 <title>Cardápio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&family=Poppins:wght@500;600;700&family=Playfair+Display:wght@600;700&family=Quicksand:wght@500;600;700&family=Montserrat:wght@500;600;700&family=Bebas+Neue&family=Lobster&family=Pacifico&family=Caveat:wght@600;700&family=Baloo+2:wght@700;800&family=Chewy&display=swap" rel="stylesheet">
+<script src="adornos.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root{
@@ -2166,6 +2167,18 @@
   /* Ao abrir uma categoria, escondem-se os adereços grandes (a neve e as luzes ficam) */
   body.secao-aberta #decorFixas{ display:none !important; }
   .idecor-fixa{ position:absolute; z-index:32; pointer-events:none; user-select:none; line-height:1; text-shadow:0 2px 6px rgba(0,0,0,.4); transform:translate(-50%,-50%); }
+
+  /* ===== Adereços do layout (linha, uma cor, a flutuar) ===== */
+  /* Camada fixa por cima do menu e dos sub-menus. A cor segue o tema (--castanho) ou uma escolhida. */
+  #adornosLayer{ position:fixed; inset:0; z-index:306; pointer-events:none; overflow:hidden; display:none; color:var(--adorno-cor, var(--castanho)); }
+  body.adornos-menu:not(.secao-aberta) #adornosLayer{ display:block; }
+  body.adornos-sub.secao-aberta #adornosLayer{ display:block; }
+  .adorno-item{ position:absolute; top:-14%; left:0; width:var(--as,34px); height:var(--as,34px); opacity:var(--ao,.16); will-change:transform; animation:adornoCai var(--ad,16s) linear infinite; animation-delay:var(--adl,0s); }
+  .adorno-item svg{ display:block; width:100%; height:100%; }
+  @keyframes adornoCai{ 0%{ transform:translateY(-16vh) rotate(0deg); } 100%{ transform:translateY(120vh) rotate(var(--ar,30deg)); } }
+  @media (prefers-reduced-motion: reduce){ .adorno-item{ animation:none; } }
+  /* Adereços dentro do ecrã de abertura */
+  #introAdornos{ position:absolute; inset:0; z-index:1; pointer-events:none; overflow:hidden; color:var(--adorno-cor-intro, rgba(255,255,255,.9)); }
 
   /* ===== Grelha de jogos (quadrados com ícones) ===== */
   .jogos-grid{ display:grid; grid-template-columns:repeat(2, 1fr); gap:12px; padding:8px 4px 4px; }
@@ -4940,6 +4953,9 @@
       // Decorações por época (novo sistema, manual)
       try{ aplicarDecor(config); }catch(e){}
 
+      // Adereços do layout (linha, a flutuar) — qualquer layout pode ter
+      try{ aplicarAdornos(config); }catch(e){}
+
       // Cartão de fidelidade
       window._fidelidade = (config.fidelidade && config.fidelidade.ativo) ? config.fidelidade : null;
       const fb = document.getElementById('linkFidelidade');
@@ -5348,6 +5364,53 @@
       if(moveu){ try{ parent.postMessage({ type:'decor-pos', ctx:ctx, i:i, x:el._nx, y:el._ny }, '*'); }catch(e){} }
     };
   }
+  // ==========================================================
+  //  ADEREÇOS DO LAYOUT (SVG de linha, uma cor, a flutuar)
+  //  Funcionam em qualquer layout. config.adornos = {motivos:[], densidade, opacidade, tamanho, cor, menu, sub, abertura}
+  // ==========================================================
+  function aplicarAdornos(config){
+    var host = document.getElementById('adornosLayer');
+    if(!host){ host = document.createElement('div'); host.id = 'adornosLayer'; document.body.appendChild(host); }
+    host.innerHTML = '';
+    document.body.classList.remove('adornos-menu', 'adornos-sub');
+    var iH = document.getElementById('introAdornos'); if(iH) iH.innerHTML = '';
+    var doc = document.documentElement;
+    var a = config && config.adornos;
+    var ids = (a && Array.isArray(a.motivos)) ? a.motivos.filter(function(x){ return window.ADORNOS_SVG && window.ADORNOS_SVG[x]; }) : [];
+    if(!ids.length || !window.adornoSVG){ doc.style.removeProperty('--adorno-cor'); doc.style.removeProperty('--adorno-cor-intro'); return; }
+    var dens = Math.max(4, Math.min(40, parseInt(a.densidade, 10) || 12));
+    var op   = Math.max(2, Math.min(60, parseInt(a.opacidade, 10) || 16)) / 100;
+    var tam  = Math.max(16, Math.min(90, parseInt(a.tamanho, 10) || 34));
+    if(a.cor && a.cor !== 'auto'){ doc.style.setProperty('--adorno-cor', a.cor); doc.style.setProperty('--adorno-cor-intro', a.cor); }
+    else { doc.style.removeProperty('--adorno-cor'); doc.style.removeProperty('--adorno-cor-intro'); }
+    var ondeMenu = a.menu !== false, ondeSub = a.sub !== false, ondeIntro = a.abertura !== false;
+    if(ondeMenu) document.body.classList.add('adornos-menu');
+    if(ondeSub)  document.body.classList.add('adornos-sub');
+    function criar(dst, n){
+      for(var i = 0; i < n; i++){
+        var id = ids[Math.floor(Math.random() * ids.length)];
+        var el = document.createElement('div'); el.className = 'adorno-item';
+        var s = Math.round(tam * (0.7 + Math.random() * 0.7));
+        el.style.setProperty('--as', s + 'px');
+        el.style.setProperty('--ao', op.toFixed(3));
+        el.style.left = (Math.random() * 100).toFixed(1) + '%';
+        el.style.setProperty('--ad', (11 + Math.random() * 12).toFixed(1) + 's');
+        el.style.setProperty('--adl', (-Math.random() * 16).toFixed(1) + 's');
+        el.style.setProperty('--ar', (Math.random() * 90 - 20).toFixed(0) + 'deg');
+        el.innerHTML = window.adornoSVG(id);
+        dst.appendChild(el);
+      }
+    }
+    if(ondeMenu || ondeSub) criar(host, dens);
+    if(ondeIntro){
+      var intro = document.getElementById('introOverlay');
+      if(intro){
+        if(!iH){ iH = document.createElement('div'); iH.id = 'introAdornos'; intro.insertBefore(iH, intro.firstChild); }
+        criar(iH, Math.min(dens, 14));
+      }
+    }
+  }
+
   function aplicarDecor(config){
     ['decorQueda','decorLuzes','decorFixas'].forEach(function(id){ const e = document.getElementById(id); if(e) e.remove(); });
     const dec = config && config.decor;

@@ -7,6 +7,7 @@
 <title>Editar — o teu negócio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="adornos.js"></script>
 <style>
   :root{
     --branco:#ffffff; --bege-claro:#fbf8f2; --bege:#f5efe2;
@@ -699,6 +700,27 @@ amesadigital.pt</textarea>
           <input type="range" id="fundoAnimInt" min="2" max="40" step="1" value="12" style="width:100%;">
         </div>
       </div>
+      <!-- ADEREÇOS DO LAYOUT (SVG de linha, uma cor, a flutuar) -->
+      <label style="margin-top:18px;">✨ Adereços do layout</label>
+      <div class="subtitulo" style="margin-top:-2px;">Desenhos a traço, de uma só cor, que flutuam suavemente pelo menu. Servem em qualquer layout e a cor segue o tema (podes escolher outra).</div>
+      <div id="adornosGrid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(44px, 1fr)); gap:8px; margin-top:8px;"></div>
+      <div style="margin-top:12px;">
+        <label for="adDens" style="font-size:0.85rem;">Quantidade: <span id="adDensVal">12</span></label>
+        <input type="range" id="adDens" min="4" max="30" step="1" value="12" style="width:100%;">
+        <label for="adOpac" style="font-size:0.85rem; margin-top:6px; display:block;">Transparência: <span id="adOpacVal">16</span>%</label>
+        <input type="range" id="adOpac" min="4" max="50" step="1" value="16" style="width:100%;">
+        <label for="adTam" style="font-size:0.85rem; margin-top:6px; display:block;">Tamanho: <span id="adTamVal">34</span>px</label>
+        <input type="range" id="adTam" min="18" max="80" step="1" value="34" style="width:100%;">
+      </div>
+      <div class="linha-pub" style="margin-top:10px;">
+        <input type="checkbox" id="adCorAtiva"> <label for="adCorAtiva" style="margin:0; font-weight:600; color:var(--castanho);">Cor própria (por norma segue o tema)</label>
+      </div>
+      <div id="adCorBox" style="display:none; margin-top:6px;"><input type="color" id="adCor" value="#8a712f" style="width:56px; height:34px; border:none; background:none; cursor:pointer;"></div>
+      <label style="margin-top:12px; display:block; font-weight:600; color:var(--castanho);">Onde aparecem</label>
+      <label style="display:flex; gap:8px; align-items:center; font-size:0.9rem; margin-top:4px;"><input type="checkbox" id="adMenu" checked style="width:auto; margin:0;"> Menu principal</label>
+      <label style="display:flex; gap:8px; align-items:center; font-size:0.9rem; margin-top:4px;"><input type="checkbox" id="adSub" checked style="width:auto; margin:0;"> Sub-menus</label>
+      <label style="display:flex; gap:8px; align-items:center; font-size:0.9rem; margin-top:4px;"><input type="checkbox" id="adAbertura" checked style="width:auto; margin:0;"> Ecrã de abertura</label>
+      <button type="button" id="adLimpar" style="margin-top:10px; padding:8px 14px; border:1.5px solid var(--linha); background:var(--branco); color:var(--castanho); border-radius:9px; font-family:inherit; font-weight:600; cursor:pointer;">Não usar adereços</button>
     </div>
   </details>
 
@@ -2533,6 +2555,7 @@ amesadigital.pt</textarea>
     aplicarDecorUI();
     document.getElementById('jogosAtivo').checked = config.jogos !== false;
     document.getElementById('modeloSel').value = config.modelo || 'lista';
+    carregarAdornos();
     { const _pf = document.getElementById('painelFundoOff'); if(_pf) _pf.checked = !!config.painelFundoOff; }
     document.getElementById('cadernoBox').style.display = (config.modelo === 'caderno') ? 'block' : 'none';
     { document.getElementById('praiaCorBox').style.display = (config.modelo === 'praia') ? 'block' : 'none';
@@ -2969,6 +2992,51 @@ amesadigital.pt</textarea>
   document.getElementById('abrirEfeitoSel').addEventListener('change', e => {
     const wb = document.getElementById('wipeBox'); if(wb) wb.style.display = (e.target.value === 'wipe') ? 'block' : 'none';
   });
+
+  // ===== Adereços do layout: construir a grelha e ligar os controlos =====
+  function _adBtnEstado(b){ const on = b.classList.contains('on'); b.style.borderColor = on ? 'var(--dourado)' : 'var(--linha)'; b.style.background = on ? '#fbf3e2' : '#fff'; }
+  function initAdornos(){
+    const grid = document.getElementById('adornosGrid');
+    if(!grid || !window.ADORNOS_IDS) return;
+    grid.innerHTML = '';
+    window.ADORNOS_IDS.forEach(function(id){
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'ad-btn'; b.dataset.id = id;
+      b.title = id;
+      b.style.cssText = 'aspect-ratio:1; border:1.5px solid var(--linha); background:#fff; border-radius:10px; padding:7px; cursor:pointer; color:var(--castanho); display:flex; align-items:center; justify-content:center;';
+      b.innerHTML = window.adornoSVG(id, 1.6);
+      b.addEventListener('click', function(){ b.classList.toggle('on'); _adBtnEstado(b); if(window.__agendarPreview) window.__agendarPreview(); });
+      grid.appendChild(b);
+    });
+    // sliders → mostrar valor
+    const liga = function(idR, idV){ const r = document.getElementById(idR), v = document.getElementById(idV); if(r && v) r.addEventListener('input', function(){ v.textContent = r.value; }); };
+    liga('adDens','adDensVal'); liga('adOpac','adOpacVal'); liga('adTam','adTamVal');
+    // cor própria
+    const ca = document.getElementById('adCorAtiva');
+    if(ca) ca.addEventListener('change', function(){ const box = document.getElementById('adCorBox'); if(box) box.style.display = ca.checked ? 'block' : 'none'; if(window.__agendarPreview) window.__agendarPreview(); });
+    const cc = document.getElementById('adCor'); if(cc) cc.addEventListener('input', function(){ if(window.__agendarPreview) window.__agendarPreview(); });
+    // botão "não usar"
+    const lp = document.getElementById('adLimpar');
+    if(lp) lp.addEventListener('click', function(){ grid.querySelectorAll('.ad-btn.on').forEach(function(b){ b.classList.remove('on'); _adBtnEstado(b); }); if(window.__agendarPreview) window.__agendarPreview(); });
+  }
+  function carregarAdornos(){
+    const grid = document.getElementById('adornosGrid'); if(!grid) return;
+    const a = config.adornos || {};
+    const sel = Array.isArray(a.motivos) ? a.motivos : [];
+    grid.querySelectorAll('.ad-btn').forEach(function(b){ const on = sel.indexOf(b.dataset.id) >= 0; b.classList.toggle('on', on); _adBtnEstado(b); });
+    const setR = function(id, val, vid){ const r = document.getElementById(id); if(r){ r.value = val; const v = document.getElementById(vid); if(v) v.textContent = val; } };
+    setR('adDens', a.densidade != null ? a.densidade : 12, 'adDensVal');
+    setR('adOpac', a.opacidade != null ? a.opacidade : 16, 'adOpacVal');
+    setR('adTam',  a.tamanho   != null ? a.tamanho   : 34, 'adTamVal');
+    const corPropria = a.cor && a.cor !== 'auto';
+    const ca = document.getElementById('adCorAtiva'); if(ca) ca.checked = !!corPropria;
+    const box = document.getElementById('adCorBox'); if(box) box.style.display = corPropria ? 'block' : 'none';
+    if(corPropria){ const cc = document.getElementById('adCor'); if(cc) cc.value = a.cor; }
+    document.getElementById('adMenu').checked = a.menu !== false;
+    document.getElementById('adSub').checked = a.sub !== false;
+    document.getElementById('adAbertura').checked = a.abertura !== false;
+  }
+  initAdornos();
   { const _wca = document.getElementById('wipeCorAtiva');
     if(_wca) _wca.addEventListener('change', e => { const l = document.getElementById('wipeCorLinha'); if(l) l.style.display = e.target.checked ? 'flex' : 'none'; }); }
   { const _wt = document.getElementById('wipeTexto');
@@ -3475,6 +3543,21 @@ amesadigital.pt</textarea>
       }
       config.jogos = document.getElementById('jogosAtivo').checked;
       config.modelo = document.getElementById('modeloSel').value;
+      // Adereços do layout
+      { const _g = document.getElementById('adornosGrid');
+        const _sel = _g ? Array.prototype.slice.call(_g.querySelectorAll('.ad-btn.on')).map(function(b){ return b.dataset.id; }) : [];
+        const _corA = document.getElementById('adCorAtiva');
+        config.adornos = {
+          motivos: _sel,
+          densidade: parseInt(document.getElementById('adDens').value, 10) || 12,
+          opacidade: parseInt(document.getElementById('adOpac').value, 10) || 16,
+          tamanho:   parseInt(document.getElementById('adTam').value, 10) || 34,
+          cor: (_corA && _corA.checked) ? document.getElementById('adCor').value : 'auto',
+          menu: document.getElementById('adMenu').checked,
+          sub: document.getElementById('adSub').checked,
+          abertura: document.getElementById('adAbertura').checked
+        };
+      }
       { const _pf = document.getElementById('painelFundoOff'); config.painelFundoOff = !!(_pf && _pf.checked); }
       config.sliderCor = document.getElementById('sliderCorAtiva').checked ? document.getElementById('sliderCor').value : '';
       config.sliderCorCapa = document.getElementById('sliderCapaAtiva').checked ? document.getElementById('sliderCorCapa').value : '';
