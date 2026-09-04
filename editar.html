@@ -3100,8 +3100,10 @@ amesadigital.pt</textarea>
           config.adornos = config.adornos || {};
           if(!Array.isArray(config.adornos.fixos)) config.adornos.fixos = [];
           var onde = (document.getElementById('adOnde') || {}).value || 'menu';
-          var tam = parseInt(document.getElementById('adTam').value, 10) || 34;
-          config.adornos.fixos.push({ id: b.dataset.id, x: 50, y: 40, tam: tam, onde: onde });
+          // desvia cada novo adereço para não empilhar todos no mesmo ponto (o tamanho segue o slider global)
+          var n = config.adornos.fixos.filter(function(x){ return (x.onde || 'menu') === onde; }).length;
+          var x = 30 + (n % 5) * 10, y = 28 + (Math.floor(n / 5) % 5) * 12;
+          config.adornos.fixos.push({ id: b.dataset.id, x: x, y: y, onde: onde });
           if(window.__agendarPreview) window.__agendarPreview();
         } else {
           b.classList.toggle('on'); _adBtnEstado(b); if(window.__agendarPreview) window.__agendarPreview();

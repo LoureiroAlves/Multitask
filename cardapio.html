@@ -5486,7 +5486,8 @@
         var onde = f.onde || 'menu';
         var el = document.createElement('div');
         el.className = 'af-item ' + (onde === 'sub' ? 'af-sub' : (onde === 'abertura' ? 'af-intro' : 'af-menu'));
-        var s = Math.max(16, Math.min(160, parseInt(f.tam, 10) || tam));
+        // O tamanho segue o slot "Tamanho" (global) para os fixos também; assim o slider funciona.
+        var s = tam;
         el.style.width = s + 'px'; el.style.height = s + 'px';
         el.style.left = (f.x != null ? f.x : 50) + '%';
         el.style.top  = (f.y != null ? f.y : 40) + '%';
