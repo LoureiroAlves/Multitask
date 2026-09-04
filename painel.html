@@ -379,8 +379,14 @@
     const div = document.createElement('div'); div.className = 'neg'; div.dataset.slug = n.slug;
     const planoBadge = '<span class="badge b-' + (ent.plano||'basico') + '">' + (ent.plano||'basico') + '</span>';
     const estadoBadge = n.ativo ? '' : ' <span class="badge b-off">suspenso</span>';
+    const _rSoma = Number(n.rating_soma) || 0, _rCont = Number(n.rating_contagem) || 0;
+    const _rMedia = _rCont > 0 ? (_rSoma / _rCont) : 0;
+    const _rEstrelas = _rCont > 0 ? ('★'.repeat(Math.round(_rMedia)) + '☆'.repeat(5 - Math.round(_rMedia))) : '☆☆☆☆☆';
+    const ratingLinha = '<div style="font-size:.75rem; color:#8a9a6f; margin-top:2px;"><span style="color:#f5b301;">' + _rEstrelas + '</span> ' +
+      (_rCont > 0 ? (_rMedia.toFixed(1) + ' · ' + _rCont + (_rCont === 1 ? ' voto' : ' votos')) : 'sem avaliações') + '</div>';
     const metLinha = '<div style="font-size:.75rem; color:#8a9a6f; margin-top:3px;">👁 ' + (met.menu||0) + ' visitas · 🔗 ' + (met.amesa||0) + ' cliques ÀMesa · 🎮 ' + (met.jogos||0) + ' jogos</div>' +
-      '<div style="font-size:.75rem; color:#8a9a6f; margin-top:2px;">📣 anúncio no menu: ' + (met.anuncio_view||0) + ' vistas · ' + (met.anuncio_click||0) + ' cliques</div>';
+      '<div style="font-size:.75rem; color:#8a9a6f; margin-top:2px;">📣 anúncio no menu: ' + (met.anuncio_view||0) + ' vistas · ' + (met.anuncio_click||0) + ' cliques</div>' +
+      ratingLinha;
     div.innerHTML =
       '<div class="neg-top">' +
         '<div><div class="neg-nome">' + n.nome + ' ' + planoBadge + estadoBadge + '</div><div class="neg-slug">/' + n.slug + '</div>' + metLinha + '</div>' +
