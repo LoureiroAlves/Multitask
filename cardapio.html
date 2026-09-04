@@ -1942,6 +1942,9 @@
   }
   .btn-add-lista:hover{ background:var(--dourado-escuro); }
   .btn-add-lista:active{ transform:scale(0.85); }
+  .fav-prato{ flex:0 0 auto; width:27px; height:27px; border-radius:50%; border:none; background:transparent; color:#c0392b; font-size:1.2rem; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; align-self:center; margin-left:2px; -webkit-tap-highlight-color:transparent; transition:transform .1s ease; }
+  .fav-prato:active{ transform:scale(0.82); }
+  .fav-prato.on{ color:#e0245e; }
 
   #cartBtn{
     position:fixed; left:14px; bottom:77px; z-index:200;
@@ -7044,7 +7047,29 @@
 
     // Adicionar botão "+" a cada prato/bebida (exceto na secção de jogos)
     // É uma função para poder voltar a correr depois de o menu ser gerado a partir do menu.json
+    // ---- Favoritos de pratos (guardados no telemóvel, por restaurante) ----
+    function _favPratosKey(){ return 'amesaFavPratos:' + (typeof SLUG !== 'undefined' ? SLUG : 'geral'); }
+    function favPratosGet(){ try{ return JSON.parse(localStorage.getItem(_favPratosKey()) || '[]'); }catch(e){ return []; } }
+    function favPratosTem(n){ return favPratosGet().indexOf(n) >= 0; }
+    function favPratosToggle(n){ var a = favPratosGet(); var i = a.indexOf(n); if(i >= 0) a.splice(i,1); else a.push(n); try{ localStorage.setItem(_favPratosKey(), JSON.stringify(a)); }catch(e){} return i < 0; }
+    // Coração em cada prato (independente do carrinho e do idioma — usa o nome PT como chave)
+    window.montarCoracoes = function(){
+      document.querySelectorAll('main .item').forEach(function(item){
+        if(item.closest('#jogos')) return;
+        const nomeEl = item.querySelector('.nome'); if(!nomeEl) return;
+        const chave = (nomeEl.dataset && nomeEl.dataset.pt) ? nomeEl.dataset.pt : nomeEl.textContent.trim();
+        let h = item.querySelector('.fav-prato');
+        if(!h){
+          h = document.createElement('button'); h.type = 'button'; h.className = 'fav-prato'; h.setAttribute('aria-label','Favorito');
+          h.addEventListener('click', function(e){ e.stopPropagation(); e.preventDefault(); const ok = favPratosToggle(h._chave); h.classList.toggle('on', ok); h.textContent = ok ? '♥' : '♡'; item.classList.toggle('e-fav', ok); });
+          item.appendChild(h);
+        }
+        h._chave = chave;
+        const on = favPratosTem(chave); h.classList.toggle('on', on); h.textContent = on ? '♥' : '♡'; item.classList.toggle('e-fav', on);
+      });
+    };
     window.montarBotoesLista = function(){
+      window.montarCoracoes();
       const _ativo = _cartCfg().ativo;
       document.querySelectorAll('main .item').forEach(item => {
         if(item.closest('#jogos')) return;

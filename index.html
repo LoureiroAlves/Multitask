@@ -45,11 +45,14 @@
   .sec-tit .cnt{ font-size:.9rem; color:var(--muted); font-weight:700; }
 
   .grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(250px, 1fr)); gap:18px; padding-bottom:20px; }
-  .card{ background:var(--card); border:1px solid var(--linha); border-radius:18px; overflow:hidden; box-shadow:0 6px 18px rgba(120,90,50,.06); transition:transform .16s ease, box-shadow .16s ease; display:flex; flex-direction:column; }
+  .card{ position:relative; background:var(--card); border:1px solid var(--linha); border-radius:18px; overflow:hidden; box-shadow:0 6px 18px rgba(120,90,50,.06); transition:transform .16s ease, box-shadow .16s ease; display:flex; flex-direction:column; }
   .card:hover{ transform:translateY(-3px); box-shadow:0 12px 26px rgba(120,90,50,.14); }
   .card .foto{ height:150px; background:var(--terra); background-size:cover; background-position:center; position:relative; display:flex; align-items:center; justify-content:center; }
   .card .foto .inicial{ font-family:'Playfair Display', serif; font-weight:700; font-size:3rem; color:rgba(255,255,255,.9); }
   .card .foto::after{ content:''; position:absolute; inset:0; background:linear-gradient(to top, rgba(0,0,0,.18), transparent 55%); }
+  .fav-btn{ position:absolute; top:10px; right:10px; z-index:3; width:36px; height:36px; border-radius:50%; border:none; cursor:pointer; background:rgba(255,255,255,.9); box-shadow:0 2px 8px rgba(0,0,0,.2); font-size:1.15rem; line-height:1; display:flex; align-items:center; justify-content:center; color:#c0392b; transition:transform .12s ease; -webkit-tap-highlight-color:transparent; }
+  .fav-btn:active{ transform:scale(.85); }
+  .fav-btn.on{ background:#c0392b; color:#fff; }
   .card .corpo{ padding:14px 16px 16px; display:flex; flex-direction:column; gap:4px; flex:1; }
   .card .nome{ font-family:'Playfair Display', serif; font-weight:700; font-size:1.15rem; line-height:1.2; }
   .card .sub{ font-size:.86rem; color:var(--muted); font-weight:600; min-height:1.1em; }
@@ -241,6 +244,12 @@
     return '';
   }
 
+  // ---- Favoritos (guardados no telemóvel de cada visitante) ----
+  var soFav = false;
+  function favGet(){ try{ return JSON.parse(localStorage.getItem('amesaFavNeg') || '[]'); }catch(e){ return []; } }
+  function favTem(slug){ return favGet().indexOf(slug) >= 0; }
+  function favToggle(slug){ var a = favGet(); var i = a.indexOf(slug); if(i >= 0) a.splice(i,1); else a.push(slug); try{ localStorage.setItem('amesaFavNeg', JSON.stringify(a)); }catch(e){} return i < 0; }
+
   var TODOS = [];
   var filtroTipo = '';
 
@@ -276,11 +285,14 @@
     TODOS.forEach(function(n){ var t = tipoDoConfig(n.config); if(t && tipos.indexOf(t) < 0) tipos.push(t); });
     tipos.sort(function(a,b){ return a.localeCompare(b); });
     var el = document.getElementById('filtros');
-    if(!tipos.length){ el.innerHTML = ''; return; }
-    var chips = ['<button class="chip' + (filtroTipo === '' ? ' on' : '') + '" data-t="">Todos</button>'];
-    tipos.forEach(function(t){ chips.push('<button class="chip' + (filtroTipo === t ? ' on' : '') + '" data-t="' + esc(t) + '">' + esc(t) + '</button>'); });
+    var temFav = favGet().length > 0;
+    var chips = [];
+    if(temFav || soFav) chips.push('<button class="chip fav-chip' + (soFav ? ' on' : '') + '" data-fav-chip="1">❤ Favoritos</button>');
+    if(temFav || soFav || tipos.length) chips.push('<button class="chip' + (filtroTipo === '' && !soFav ? ' on' : '') + '" data-t="">Todos</button>');
+    tipos.forEach(function(t){ chips.push('<button class="chip' + (filtroTipo === t && !soFav ? ' on' : '') + '" data-t="' + esc(t) + '">' + esc(t) + '</button>'); });
     el.innerHTML = chips.join('');
-    el.querySelectorAll('.chip').forEach(function(b){ b.onclick = function(){ filtroTipo = b.getAttribute('data-t'); renderFiltros(); aplicar(); }; });
+    el.querySelectorAll('.chip[data-t]').forEach(function(b){ b.onclick = function(){ soFav = false; filtroTipo = b.getAttribute('data-t'); renderFiltros(); aplicar(); }; });
+    var _fc = el.querySelector('[data-fav-chip]'); if(_fc) _fc.onclick = function(){ soFav = !soFav; renderFiltros(); aplicar(); };
   }
 
   function render(lista){
@@ -302,6 +314,7 @@
       var reservas = 'reservas.html?n=' + encodeURIComponent(slug);
       return '' +
         '<article class="card" data-slug="' + esc(slug) + '">' +
+          '<button type="button" class="fav-btn' + (favTem(slug) ? ' on' : '') + '" data-fav="' + esc(slug) + '" aria-label="Favorito">' + (favTem(slug) ? '♥' : '♡') + '</button>' +
           '<a class="foto" style="' + estiloFoto + '" href="' + cardapio + '" aria-label="' + esc(nome) + '">' +
             (foto ? '' : '<span class="inicial">' + inicial + '</span>') +
           '</a>' +
@@ -368,11 +381,24 @@
       var tipo = tipoDoConfig(n.config);
       var okBusca = !q || nome.indexOf(q) >= 0 || sub.indexOf(q) >= 0 || tipo.toLowerCase().indexOf(q) >= 0;
       var okTipo = !filtroTipo || tipo === filtroTipo;
-      return okBusca && okTipo;
+      var okFav = !soFav || favTem(String(n.slug || '').toLowerCase());
+      return okBusca && okTipo && okFav;
     }));
   }
 
   document.getElementById('busca').addEventListener('input', aplicar);
+
+  // Coração: guardar/tirar dos favoritos
+  document.addEventListener('click', function(e){
+    var fb = e.target && e.target.closest ? e.target.closest('.fav-btn') : null;
+    if(!fb) return;
+    e.preventDefault(); e.stopPropagation();
+    var slug = fb.getAttribute('data-fav');
+    var agora = favToggle(slug);
+    fb.classList.toggle('on', agora); fb.textContent = agora ? '♥' : '♡';
+    renderFiltros();
+    if(soFav) aplicar();
+  });
 
   // Cliques: restaurante (via card) e publicidade (via slot). Conta antes de o link navegar.
   document.addEventListener('click', function(e){
@@ -383,7 +409,7 @@
     if(card && t.closest('a')){ var _cs = card.getAttribute('data-slug'); if(_umaVezDia('amc_' + _cs)) incMetrica(_cs, 'amesa'); }
   }, true);
 
-  fetch(SUPA_URL + '/rest/v1/negocios?select=slug,nome,config&order=nome.asc', {
+  fetch(SUPA_URL + '/rest/v1/negocios?select=slug,nome,config,apagado_em&order=nome.asc', {
     headers: { apikey: SUPA_KEY, Authorization: 'Bearer ' + SUPA_KEY }
   }).then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); })
     .then(function(dados){
