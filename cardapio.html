@@ -1560,7 +1560,7 @@
     background:var(--branco);
     position:relative;
     display:block;
-    padding:14px 40px;
+    padding:14px var(--gsum-px, 40px);
     border-bottom:1px solid var(--linha);
     font-size:0.85rem;
     letter-spacing:2px;
@@ -1586,7 +1586,10 @@
   .grupo-prato > summary .grupo-foto, .grupo-vinho > summary .grupo-foto{ display:block; width:58px; height:58px; object-fit:cover; border-radius:10px; margin:0 auto 8px; box-shadow:0 2px 8px rgba(0,0,0,.14); }
   .vinho-tab-foto{ display:block; width:64px; height:64px; object-fit:cover; border-radius:10px; margin:6px auto 4px; box-shadow:0 2px 8px rgba(0,0,0,.14); }
   /* Foto do sub-menu (grupo) como banner largo a preencher o topo da secção */
-  .grupo-prato > summary .grupo-banner, .grupo-vinho > summary .grupo-banner{ display:block !important; width:100% !important; height:170px !important; object-fit:cover; border-radius:14px !important; margin:0 0 12px !important; box-shadow:0 3px 10px rgba(0,0,0,.16); }
+  /* Pratos: o banner "quebra" o padding lateral do summary e alinha com o bloco dos pratos (.card-lista) */
+  .grupo-prato > summary .grupo-banner{ display:block !important; width:calc(100% + var(--gsum-px, 40px) * 2) !important; height:170px !important; object-fit:cover; border-radius:14px !important; margin:0 calc(-1 * var(--gsum-px, 40px)) 12px !important; box-shadow:0 3px 10px rgba(0,0,0,.16); }
+  /* Vinhos: o summary é uma "pílula" estreita, por isso o banner fica dentro dela */
+  .grupo-vinho > summary .grupo-banner{ display:block !important; width:100% !important; height:170px !important; object-fit:cover; border-radius:14px !important; margin:0 0 12px !important; box-shadow:0 3px 10px rgba(0,0,0,.16); }
   /* Menu de Grupo — preço em destaque + descrição multi-linha */
   .menu-preco{ text-align:center; font-family:var(--fonte-titulo); color:var(--dourado); font-size:1.25rem; font-weight:700; padding:6px 0 6px; }
   .menu-desc{ white-space:pre-line; color:var(--castanho); font-size:0.92rem; line-height:1.6; padding:2px 14px 12px; text-align:center; }
