@@ -239,7 +239,7 @@
 <title>Cardápio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&family=Poppins:wght@500;600;700&family=Playfair+Display:wght@600;700&family=Quicksand:wght@500;600;700&family=Montserrat:wght@500;600;700&family=Bebas+Neue&family=Lobster&family=Pacifico&family=Caveat:wght@600;700&family=Baloo+2:wght@700;800&family=Chewy&display=swap" rel="stylesheet">
-<script src="adornos.js"></script>
+<script src="/adornos.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root{
@@ -7030,10 +7030,10 @@
       return m ? parseFloat(m[1].replace(',','.')) : 0;
     }
 
-    window.adicionarALista = function(nome, precoTxt){
+    window.adicionarALista = function(nome, precoTxt, ehMenu){
       const ex = lista.find(i => i.nome === nome && i.precoTxt === precoTxt);
       if(ex) ex.qtd++;
-      else lista.push({ nome:nome, precoTxt:precoTxt, preco:parsePreco(precoTxt), qtd:1 });
+      else lista.push({ nome:nome, precoTxt:precoTxt, preco:parsePreco(precoTxt), qtd:1, menu: !!ehMenu });
       guardar(); atualizarBadge();
     };
 
@@ -7399,7 +7399,7 @@
         btn.setAttribute('aria-label','Adicionar à lista');
         btn.addEventListener('click', e => {
           e.stopPropagation(); e.preventDefault();   // não abrir/fechar o details
-          adicionarALista(tit.textContent.trim(), det.dataset.preco || '');
+          adicionarALista(tit.textContent.trim(), det.dataset.preco || '', true);   // menu de grupo → permite reserva por WhatsApp
           feedbackBtn(btn);
         });
         sum.appendChild(btn);
