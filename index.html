@@ -328,11 +328,14 @@
   function votarEstrelas(slug, val){
     if(!slug || !(val >= 1 && val <= 5)) return;
     var anterior = meuVoto(slug);   // se este telemóvel já votou, troca o voto (não soma outro)
-    var trocaVoto = (anterior >= 1 && anterior <= 5);
     var n = TODOS.find(function(x){ return x && x.slug === slug; });
+    var contAtual = n ? (Number(n.rating_contagem) || 0) : 0;
+    // Só "troca de voto" se o negócio AINDA tiver votos. Se estiver a 0 (ex.: acabou de ser reposto),
+    // o voto guardado no telemóvel já não existe no servidor, por isso conta como voto novo.
+    var trocaVoto = (anterior >= 1 && anterior <= 5) && contAtual > 0;
     if(n){
       n.rating_soma = Number(n.rating_soma) || 0;
-      n.rating_contagem = Number(n.rating_contagem) || 0;
+      n.rating_contagem = contAtual;
       if(trocaVoto){ n.rating_soma += (val - anterior); }
       else { n.rating_soma += val; n.rating_contagem += 1; }
     }
