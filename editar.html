@@ -1030,6 +1030,23 @@ amesadigital.pt</textarea>
       <label for="promoTexto" style="display:block; margin-top:8px; font-weight:600;">Texto da promoção</label>
       <input type="text" id="promoTexto" maxlength="70" placeholder='Ex.: 50% no prato do dia' style="width:100%; padding:11px 12px; border:1.5px solid var(--linha); border-radius:10px; font-family:inherit; font-size:0.95rem; margin-top:6px;">
       <div style="font-size:0.78rem; color:var(--castanho-suave); margin-top:4px;">Curto e direto (máx. 70 caracteres). Aparece por cima da foto.</div>
+
+      <div style="display:flex; align-items:center; gap:10px; margin-top:12px; flex-wrap:wrap;">
+        <label for="promoCor" style="margin:0; font-weight:600;">Cor da promoção</label>
+        <input type="color" id="promoCor" value="#e0245e" style="width:52px; height:34px; border:none; background:none; cursor:pointer;">
+      </div>
+      <label for="promoTam" style="display:block; margin-top:12px; font-weight:600;">Tamanho do texto: <span id="promoTamVal">16</span>px</label>
+      <input type="range" id="promoTam" min="11" max="30" step="1" value="16" style="width:100%;">
+      <label for="promoFonte" style="display:block; margin-top:12px; font-weight:600;">Tipo de letra</label>
+      <select id="promoFonte" style="width:100%; padding:10px 12px; border-radius:10px; border:1.5px solid var(--linha); background:var(--branco); font-family:inherit; color:var(--castanho); font-size:0.95rem;">
+        <option value="">Padrão (forte)</option>
+        <option value="anton">Impacto (Anton)</option>
+        <option value="bebas">Condensada (Bebas Neue)</option>
+        <option value="fredoka">Redonda (Fredoka)</option>
+        <option value="playfair">Elegante (Playfair)</option>
+        <option value="pacifico">Manuscrita (Pacifico)</option>
+      </select>
+
       <div style="display:flex; align-items:center; gap:10px; margin:12px 0 0; flex-wrap:wrap;">
         <span style="font-size:0.82rem; color:var(--castanho-suave);">Foto da promoção (opcional):</span>
         <img id="promoFotoPrev" alt="" style="display:none; width:54px; height:54px; object-fit:cover; border-radius:8px; border:1px solid var(--linha);">
@@ -2703,6 +2720,10 @@ amesadigital.pt</textarea>
       promoFotoUrl = _p.foto || '';
       const _pa = document.getElementById('promoAtivo'); if(_pa) _pa.checked = _p.ativo === true;
       const _pt = document.getElementById('promoTexto'); if(_pt) _pt.value = _p.texto || '';
+      const _pc = document.getElementById('promoCor'); if(_pc) _pc.value = /^#[0-9a-fA-F]{3,8}$/.test(String(_p.cor||'')) ? _p.cor : '#e0245e';
+      const _pm = document.getElementById('promoTam'); const _pv = document.getElementById('promoTamVal');
+      { const t = (_p.tamanho >= 11 && _p.tamanho <= 30) ? _p.tamanho : 16; if(_pm) _pm.value = t; if(_pv) _pv.textContent = t; }
+      const _pfo = document.getElementById('promoFonte'); if(_pfo) _pfo.value = _p.fonte || '';
       _promoFotoUI(); }
     { const _fp = document.getElementById('favPratosAtivo'); if(_fp) _fp.checked = config.favoritosPratos === true; }
     // Cores personalizadas
@@ -2923,6 +2944,8 @@ amesadigital.pt</textarea>
     }); }
   { const _pr = document.getElementById('promoFotoRemover');
     if(_pr) _pr.addEventListener('click', () => { promoFotoUrl = ''; _promoFotoUI(); setEstado('Foto da promoção removida — Guardar para aplicar.', 'info'); }); }
+  { const _pm = document.getElementById('promoTam'), _pv = document.getElementById('promoTamVal');
+    if(_pm && _pv) _pm.addEventListener('input', () => { _pv.textContent = _pm.value; }); }
   function _anuncioPrev(){
     const box = document.getElementById('anuncioFotoPrev');
     if(!box) return;
@@ -3748,8 +3771,10 @@ amesadigital.pt</textarea>
       { const _ca = document.getElementById('carrinhoAtivo'), _cp = document.getElementById('carrinhoPrecos'), _cw = document.getElementById('carrinhoWhats'), _cws = document.getElementById('carrinhoWhatsSempre');
         config.carrinho = { ativo: _ca ? _ca.checked : true, precos: _cp ? _cp.checked : true, whatsapp: _cw ? _cw.value.trim() : '', whatsappSempre: _cws ? _cws.checked : false }; }
       // Promoção na montra
-      { const _pa = document.getElementById('promoAtivo'), _pt = document.getElementById('promoTexto');
-        config.promo = { ativo: _pa ? _pa.checked : false, texto: _pt ? _pt.value.trim() : '', foto: promoFotoUrl || '' }; }
+      { const _pa = document.getElementById('promoAtivo'), _pt = document.getElementById('promoTexto'),
+              _pc = document.getElementById('promoCor'), _pm = document.getElementById('promoTam'), _pfo = document.getElementById('promoFonte');
+        config.promo = { ativo: _pa ? _pa.checked : false, texto: _pt ? _pt.value.trim() : '', foto: promoFotoUrl || '',
+                         cor: _pc ? _pc.value : '#e0245e', tamanho: _pm ? (parseInt(_pm.value,10)||16) : 16, fonte: _pfo ? _pfo.value : '' }; }
       { const _fp = document.getElementById('favPratosAtivo'); config.favoritosPratos = !!(_fp && _fp.checked); }
       if(document.getElementById('coresPersonalizar').checked){
         config.cores = {

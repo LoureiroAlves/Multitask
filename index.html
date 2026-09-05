@@ -17,6 +17,7 @@
 <meta name="description" content="ÀMesa — descobre restaurantes e abre o menu digital de cada um. Reserva, escolhe, saboreia.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Fredoka:wght@600;700&family=Pacifico&display=swap" rel="stylesheet">
 <style>
   :root{ --bg:#faf5ec; --ink:#2e2418; --muted:#8a7a63; --terra:#c05a3a; --terra-esc:#a3452b; --gold:#c79a3e; --card:#ffffff; --linha:#eaddc8; }
   *{ box-sizing:border-box; margin:0; padding:0; }
@@ -51,8 +52,8 @@
   .card .foto .inicial{ font-family:'Playfair Display', serif; font-weight:700; font-size:3rem; color:rgba(255,255,255,.9); }
   .card .foto::after{ content:''; position:absolute; inset:0; background:linear-gradient(to top, rgba(0,0,0,.18), transparent 55%); }
   /* Promoção — bem visível para chamar a atenção */
-  .card.tem-promo{ border-color:#e0245e; box-shadow:0 0 0 2px rgba(224,36,94,.4), 0 12px 28px rgba(224,36,94,.2); }
-  .card .foto .promo-band{ position:absolute; left:0; right:0; bottom:0; z-index:3; overflow:hidden; background:linear-gradient(90deg,#e0245e,#ff5f6d); color:#fff; font-weight:800; font-size:.98rem; line-height:1.2; padding:11px 12px; text-align:center; text-shadow:0 1px 2px rgba(0,0,0,.35); box-shadow:0 -6px 14px rgba(224,36,94,.35); }
+  .card.tem-promo{ border-color:var(--promo-cor,#e0245e); box-shadow:0 0 0 2px var(--promo-cor,#e0245e), 0 12px 28px rgba(0,0,0,.16); }
+  .card .foto .promo-band{ position:absolute; left:0; right:0; bottom:0; z-index:3; overflow:hidden; background:var(--promo-cor,#e0245e); color:#fff; font-weight:800; font-size:.98rem; line-height:1.2; padding:11px 12px; text-align:center; text-shadow:0 1px 2px rgba(0,0,0,.35); box-shadow:0 -6px 14px rgba(0,0,0,.25); }
   .card .foto .promo-band::after{ content:''; position:absolute; top:0; bottom:0; left:-60%; width:38%; background:linear-gradient(90deg, transparent, rgba(255,255,255,.55), transparent); transform:skewX(-20deg); animation:promoBrilho 3.2s ease-in-out infinite; }
   @keyframes promoBrilho{ 0%{ left:-60%; } 55%,100%{ left:135%; } }
   .card .foto .promo-ribbon{ position:absolute; top:16px; left:-42px; width:150px; z-index:4; transform:rotate(-45deg); text-align:center; background:linear-gradient(90deg,#ffb300,#ff7a00); color:#fff; font-size:.66rem; font-weight:800; letter-spacing:1.5px; padding:5px 0; box-shadow:0 3px 8px rgba(0,0,0,.35); animation:promoPulsar 1.8s ease-in-out infinite; }
@@ -210,6 +211,7 @@
   })();
 </script>
 <script>
+  var FONTES_PROMO = { anton:"'Anton', sans-serif", bebas:"'Bebas Neue', sans-serif", fredoka:"'Fredoka', sans-serif", playfair:"'Playfair Display', serif", pacifico:"'Pacifico', cursive" };
   var SUPA_URL = 'https://zewiijcrkyxjkhudlplk.supabase.co';
   var SUPA_KEY = 'sb_publishable_6LP7x2v5c-c9DQkQslnUmA_g13SEjp3';
 
@@ -378,17 +380,22 @@
       var promoTxt = (promo && promo.texto) ? String(promo.texto).trim() : '';
       var promoFoto = (promo && promo.foto) ? promo.foto : '';
       if(!(promoTxt || promoFoto)) promo = null;
+      var promoCor = (promo && /^#[0-9a-fA-F]{3,8}$/.test(String(promo.cor||''))) ? promo.cor : '#e0245e';
+      var _pt2 = promo ? parseInt(promo.tamanho, 10) : 0;
+      var promoTam = (_pt2 >= 11 && _pt2 <= 30) ? _pt2 : 16;
+      var promoFonteCss = (promo && FONTES_PROMO[promo.fonte]) ? FONTES_PROMO[promo.fonte] : '';
+      var promoBandStyle = 'font-size:' + promoTam + 'px;' + (promoFonteCss ? (' font-family:' + promoFonteCss + ';') : '');
       var fotoCartao = promoFoto || foto;   // se houver foto de promoção, é essa que aparece no cartão
       var estiloFoto = fotoCartao ? ('background-image:url(\'' + esc(fotoCartao) + '\')') : (cor ? ('background:' + esc(cor)) : '');
       var cardapio = '/' + encodeURIComponent(slug);
       var reservas = 'reservas.html?n=' + encodeURIComponent(slug);
       return '' +
-        '<article class="card' + (promo ? ' tem-promo' : '') + '" data-slug="' + esc(slug) + '">' +
+        '<article class="card' + (promo ? ' tem-promo' : '') + '"' + (promo ? (' style="--promo-cor:' + promoCor + '"') : '') + ' data-slug="' + esc(slug) + '">' +
           '<button type="button" class="fav-btn' + (favTem(slug) ? ' on' : '') + '" data-fav="' + esc(slug) + '" aria-label="Favorito">' + (favTem(slug) ? '♥' : '♡') + '</button>' +
           '<a class="foto" style="' + estiloFoto + '" href="' + cardapio + '" aria-label="' + esc(nome) + '">' +
             (fotoCartao ? '' : '<span class="inicial">' + inicial + '</span>') +
             (promo ? '<span class="promo-ribbon">PROMO</span>' : '') +
-            (promoTxt ? '<div class="promo-band">' + esc(promoTxt) + '</div>' : '') +
+            (promoTxt ? '<div class="promo-band" style="' + promoBandStyle + '">' + esc(promoTxt) + '</div>' : '') +
           '</a>' +
           '<div class="corpo">' +
             '<div class="nome">' + esc(nome) + '</div>' +
