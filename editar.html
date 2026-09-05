@@ -1018,6 +1018,28 @@ amesadigital.pt</textarea>
 
   <details class="grupo" open><summary class="grupo-sum">📋 Conteúdo</summary>
 
+  <!-- PROMOÇÃO NA MONTRA -->
+  <details id="secPromo" class="ed-sec" data-tab="conteudo">
+    <summary>🏷️ Promoção (aparece na montra ÀMesa)</summary>
+    <div class="bloco-conteudo">
+      <div style="font-size:0.82rem; color:var(--castanho-suave); margin-bottom:10px;">Cria a tua própria promoção — grátis. Aparece no cartão do teu restaurante na página do amesadigital (com foto e texto por cima), para atrair clientes. Ex.: "50% no prato do dia" ou "Sobremesa grátis acima de 25€".</div>
+      <div class="lembrar" style="margin-bottom:10px;">
+        <input type="checkbox" id="promoAtivo" style="width:auto; margin:0;">
+        <label for="promoAtivo" style="margin:0; font-weight:700; color:var(--dourado-escuro); display:inline;">Mostrar promoção na montra</label>
+      </div>
+      <label for="promoTexto" style="display:block; margin-top:8px; font-weight:600;">Texto da promoção</label>
+      <input type="text" id="promoTexto" maxlength="70" placeholder='Ex.: 50% no prato do dia' style="width:100%; padding:11px 12px; border:1.5px solid var(--linha); border-radius:10px; font-family:inherit; font-size:0.95rem; margin-top:6px;">
+      <div style="font-size:0.78rem; color:var(--castanho-suave); margin-top:4px;">Curto e direto (máx. 70 caracteres). Aparece por cima da foto.</div>
+      <div style="display:flex; align-items:center; gap:10px; margin:12px 0 0; flex-wrap:wrap;">
+        <span style="font-size:0.82rem; color:var(--castanho-suave);">Foto da promoção (opcional):</span>
+        <img id="promoFotoPrev" alt="" style="display:none; width:54px; height:54px; object-fit:cover; border-radius:8px; border:1px solid var(--linha);">
+        <label class="mv-mini" style="cursor:pointer;">＋ foto<input type="file" id="promoFotoFile" accept="image/*" style="display:none;"></label>
+        <button type="button" class="mv-mini" id="promoFotoRemover" style="display:none;">sem foto</button>
+      </div>
+      <div style="font-size:0.78rem; color:var(--castanho-suave); margin-top:4px;">Se não puseres foto, o texto aparece por cima da foto normal do restaurante.</div>
+    </div>
+  </details>
+
   <!-- BARRA FIXA -->
   <details id="secRodape" class="ed-sec" data-tab="conteudo">
     <summary>Rodapé (barra fixa do fundo do ecrã, sempre visível)</summary>
@@ -2676,6 +2698,12 @@ amesadigital.pt</textarea>
       const _cp = document.getElementById('carrinhoPrecos'); if(_cp) _cp.checked = _c.precos !== false;
       const _cw = document.getElementById('carrinhoWhats'); if(_cw) _cw.value = _c.whatsapp || '';
       const _cws = document.getElementById('carrinhoWhatsSempre'); if(_cws) _cws.checked = _c.whatsappSempre === true; }
+    // Promoção na montra
+    { const _p = config.promo || {};
+      promoFotoUrl = _p.foto || '';
+      const _pa = document.getElementById('promoAtivo'); if(_pa) _pa.checked = _p.ativo === true;
+      const _pt = document.getElementById('promoTexto'); if(_pt) _pt.value = _p.texto || '';
+      _promoFotoUI(); }
     { const _fp = document.getElementById('favPratosAtivo'); if(_fp) _fp.checked = config.favoritosPratos === true; }
     // Cores personalizadas
     const temCores = !!(config.cores && typeof config.cores === 'object');
@@ -2879,6 +2907,22 @@ amesadigital.pt</textarea>
     filaMascote = f; _mascotePrev();
     setEstado('Imagem escolhida (guarda para aplicar).', 'info');
   });
+  // ---- Promoção na montra: foto (envia logo) ----
+  let promoFotoUrl = '';
+  function _promoFotoUI(){
+    const prev = document.getElementById('promoFotoPrev'), rm = document.getElementById('promoFotoRemover');
+    if(prev){ if(promoFotoUrl){ prev.src = promoFotoUrl; prev.style.display = ''; } else { prev.src = ''; prev.style.display = 'none'; } }
+    if(rm) rm.style.display = promoFotoUrl ? '' : 'none';
+  }
+  { const _pf = document.getElementById('promoFotoFile');
+    if(_pf) _pf.addEventListener('change', async e => {
+      const f = e.target.files && e.target.files[0]; if(!f) return;
+      setEstado('A enviar foto da promoção…', 'info');
+      try{ const url = await _uploadFoto(f); promoFotoUrl = url; _promoFotoUI(); setEstado('Foto da promoção adicionada ✓ — não te esqueças de Guardar.', 'ok'); }
+      catch(err){ setEstado('Erro ao enviar foto: ' + (err && err.message ? err.message : err), 'erro'); }
+    }); }
+  { const _pr = document.getElementById('promoFotoRemover');
+    if(_pr) _pr.addEventListener('click', () => { promoFotoUrl = ''; _promoFotoUI(); setEstado('Foto da promoção removida — Guardar para aplicar.', 'info'); }); }
   function _anuncioPrev(){
     const box = document.getElementById('anuncioFotoPrev');
     if(!box) return;
@@ -3703,6 +3747,9 @@ amesadigital.pt</textarea>
       { const _tv = document.getElementById('tilesVidroChk'); config.tilesVidro = _tv ? _tv.checked : false; }
       { const _ca = document.getElementById('carrinhoAtivo'), _cp = document.getElementById('carrinhoPrecos'), _cw = document.getElementById('carrinhoWhats'), _cws = document.getElementById('carrinhoWhatsSempre');
         config.carrinho = { ativo: _ca ? _ca.checked : true, precos: _cp ? _cp.checked : true, whatsapp: _cw ? _cw.value.trim() : '', whatsappSempre: _cws ? _cws.checked : false }; }
+      // Promoção na montra
+      { const _pa = document.getElementById('promoAtivo'), _pt = document.getElementById('promoTexto');
+        config.promo = { ativo: _pa ? _pa.checked : false, texto: _pt ? _pt.value.trim() : '', foto: promoFotoUrl || '' }; }
       { const _fp = document.getElementById('favPratosAtivo'); config.favoritosPratos = !!(_fp && _fp.checked); }
       if(document.getElementById('coresPersonalizar').checked){
         config.cores = {
