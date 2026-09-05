@@ -1028,6 +1028,15 @@ amesadigital.pt</textarea>
         <input type="checkbox" id="promoAtivo" style="width:auto; margin:0;">
         <label for="promoAtivo" style="margin:0; font-weight:700; color:var(--dourado-escuro); display:inline;">Mostrar promoção na montra</label>
       </div>
+      <label style="display:flex; align-items:center; gap:8px; margin-top:8px; cursor:pointer; font-size:0.92rem;">
+        <input type="checkbox" id="promoHorario" style="width:auto; margin:0;">
+        Só mostrar em certas horas (entrada / saída)
+      </label>
+      <div id="promoHorarioBox" style="display:none; margin-top:8px; gap:16px; flex-wrap:wrap; align-items:center;">
+        <label style="font-size:0.88rem; color:var(--castanho);">Entra às <input type="time" id="promoHoraIni" value="12:00" style="padding:6px 8px; border:1.5px solid var(--linha); border-radius:8px; font-family:inherit;"></label>
+        <label style="font-size:0.88rem; color:var(--castanho);">Sai às <input type="time" id="promoHoraFim" value="15:00" style="padding:6px 8px; border:1.5px solid var(--linha); border-radius:8px; font-family:inherit;"></label>
+      </div>
+      <div id="promoHorarioNota" style="display:none; font-size:0.78rem; color:var(--castanho-suave); margin-top:4px;"></div>
       <label for="promoTexto" style="display:block; margin-top:8px; font-weight:600;">Texto da promoção</label>
       <input type="text" id="promoTexto" maxlength="70" placeholder='Ex.: 50% no prato do dia' style="width:100%; padding:11px 12px; border:1.5px solid var(--linha); border-radius:10px; font-family:inherit; font-size:0.95rem; margin-top:6px;">
       <div style="font-size:0.78rem; color:var(--castanho-suave); margin-top:4px;">Curto e direto (máx. 70 caracteres). Aparece por cima da foto.</div>
@@ -2727,6 +2736,12 @@ amesadigital.pt</textarea>
       const _pm = document.getElementById('promoTam'); const _pv = document.getElementById('promoTamVal');
       { const t = (_p.tamanho >= 11 && _p.tamanho <= 30) ? _p.tamanho : 16; if(_pm) _pm.value = t; if(_pv) _pv.textContent = t; }
       const _pfo = document.getElementById('promoFonte'); if(_pfo) _pfo.value = _p.fonte || '';
+      { const _ph = document.getElementById('promoHorario'), _pi = document.getElementById('promoHoraIni'), _pff = document.getElementById('promoHoraFim');
+        const temHor = !!(_p.horaIni && _p.horaFim);
+        if(_ph) _ph.checked = temHor;
+        if(temHor){ if(_pi) _pi.value = _p.horaIni; if(_pff) _pff.value = _p.horaFim; }
+        const _phb = document.getElementById('promoHorarioBox'); if(_phb) _phb.style.display = temHor ? 'flex' : 'none';
+        _promoHorarioNota(); }
       _promoFotoUI(); }
     { const _fp = document.getElementById('favPratosAtivo'); if(_fp) _fp.checked = config.favoritosPratos === true; }
     // Cores personalizadas
@@ -2964,9 +2979,24 @@ amesadigital.pt</textarea>
     + '</div>'
     + (temPromo ? '' : '<div style="align-self:center;font-size:.78rem;color:var(--castanho-suave);margin-left:10px;max-width:150px;">Liga a promoção e escreve o texto para a veres aqui.</div>');
   }
-  { ['promoAtivo','promoTexto','promoCor','promoTam','promoFonte'].forEach(function(id){
+  function _promoHorarioNota(){
+    const ch = document.getElementById('promoHorario');
+    const box = document.getElementById('promoHorarioBox');
+    const nota = document.getElementById('promoHorarioNota');
+    const on = !!(ch && ch.checked);
+    if(box) box.style.display = on ? 'flex' : 'none';
+    if(nota){
+      if(on){
+        const i = (document.getElementById('promoHoraIni') || {}).value || '';
+        const f = (document.getElementById('promoHoraFim') || {}).value || '';
+        nota.style.display = 'block';
+        nota.textContent = (i && f) ? ('A promoção aparece na montra todos os dias entre ' + i + ' e ' + f + ' (fora disso fica escondida).') : 'Define a hora de entrada e de saída.';
+      } else { nota.style.display = 'none'; nota.textContent = ''; }
+    }
+  }
+  { ['promoAtivo','promoTexto','promoCor','promoTam','promoFonte','promoHorario','promoHoraIni','promoHoraFim'].forEach(function(id){
       const el = document.getElementById(id);
-      if(el){ el.addEventListener('input', _promoPreview); el.addEventListener('change', _promoPreview); }
+      if(el){ el.addEventListener('input', function(){ _promoHorarioNota(); _promoPreview(); }); el.addEventListener('change', function(){ _promoHorarioNota(); _promoPreview(); }); }
     }); }
   { const _pf = document.getElementById('promoFotoFile');
     if(_pf) _pf.addEventListener('change', async e => {
@@ -3806,8 +3836,11 @@ amesadigital.pt</textarea>
       // Promoção na montra
       { const _pa = document.getElementById('promoAtivo'), _pt = document.getElementById('promoTexto'),
               _pc = document.getElementById('promoCor'), _pm = document.getElementById('promoTam'), _pfo = document.getElementById('promoFonte');
+        const _ph = document.getElementById('promoHorario'), _pi = document.getElementById('promoHoraIni'), _pff = document.getElementById('promoHoraFim');
+        const _usaHor = !!(_ph && _ph.checked);
         config.promo = { ativo: _pa ? _pa.checked : false, texto: _pt ? _pt.value.trim() : '', foto: promoFotoUrl || '',
-                         cor: _pc ? _pc.value : '#e0245e', tamanho: _pm ? (parseInt(_pm.value,10)||16) : 16, fonte: _pfo ? _pfo.value : '' }; }
+                         cor: _pc ? _pc.value : '#e0245e', tamanho: _pm ? (parseInt(_pm.value,10)||16) : 16, fonte: _pfo ? _pfo.value : '',
+                         horaIni: (_usaHor && _pi) ? _pi.value : '', horaFim: (_usaHor && _pff) ? _pff.value : '' }; }
       { const _fp = document.getElementById('favPratosAtivo'); config.favoritosPratos = !!(_fp && _fp.checked); }
       if(document.getElementById('coresPersonalizar').checked){
         config.cores = {

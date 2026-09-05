@@ -112,6 +112,7 @@
   .chip{ flex:0 0 auto; padding:8px 15px; border-radius:999px; border:1.5px solid var(--linha); background:#fff; color:var(--ink); font-weight:700; font-size:.9rem; cursor:pointer; white-space:nowrap; transition:.15s; }
   .chip:hover{ border-color:var(--terra); }
   .chip.on{ background:var(--terra); border-color:var(--terra); color:#fff; }
+  .chip.promo-chip.on{ background:#e0245e; border-color:#e0245e; color:#fff; }
 
   .card .tag{ align-self:flex-start; margin-top:2px; background:#f3e7d6; color:var(--terra-esc); font-weight:800; font-size:.72rem; letter-spacing:.3px; padding:3px 9px; border-radius:999px; }
 
@@ -264,6 +265,16 @@
 
   // ---- Favoritos (guardados no telemóvel de cada visitante) ----
   var soFav = false;
+  var soPromo = false;
+  // Respeita o horário: se houver hora de início e fim, a promoção só conta dentro dessa janela (inclui janelas que passam a meia-noite).
+  function _promoDentroHorario(p){
+    if(!p || !p.horaIni || !p.horaFim) return true;
+    var toMin = function(s){ var m = /^(\d{1,2}):(\d{2})$/.exec(String(s)); return m ? (parseInt(m[1],10)*60 + parseInt(m[2],10)) : null; };
+    var a = toMin(p.horaIni), b = toMin(p.horaFim); if(a == null || b == null || a === b) return true;
+    var now = new Date(); var cur = now.getHours()*60 + now.getMinutes();
+    return (a < b) ? (cur >= a && cur < b) : (cur >= a || cur < b);
+  }
+  function temPromoAtiva(n){ try{ var p = n && n.config && n.config.promo; return !!(p && p.ativo && ((p.texto && String(p.texto).trim()) || p.foto) && _promoDentroHorario(p)); }catch(e){ return false; } }
   function favGet(){ try{ return JSON.parse(localStorage.getItem('amesaFavNeg') || '[]'); }catch(e){ return []; } }
   function favTem(slug){ return favGet().indexOf(slug) >= 0; }
   function favToggle(slug){ var a = favGet(); var i = a.indexOf(slug); if(i >= 0) a.splice(i,1); else a.push(slug); try{ localStorage.setItem('amesaFavNeg', JSON.stringify(a)); }catch(e){} return i < 0; }
@@ -304,13 +315,16 @@
     tipos.sort(function(a,b){ return a.localeCompare(b); });
     var el = document.getElementById('filtros');
     var temFav = favGet().length > 0;
+    var temPromo = TODOS.some(temPromoAtiva);
     var chips = [];
+    if(temPromo || soPromo) chips.push('<button class="chip promo-chip' + (soPromo ? ' on' : '') + '" data-promo-chip="1">🏷️ Promoções</button>');
     if(temFav || soFav) chips.push('<button class="chip fav-chip' + (soFav ? ' on' : '') + '" data-fav-chip="1">❤ Favoritos</button>');
-    if(temFav || soFav || tipos.length) chips.push('<button class="chip' + (filtroTipo === '' && !soFav ? ' on' : '') + '" data-t="">Todos</button>');
-    tipos.forEach(function(t){ chips.push('<button class="chip' + (filtroTipo === t && !soFav ? ' on' : '') + '" data-t="' + esc(t) + '">' + esc(t) + '</button>'); });
+    if(temFav || soFav || temPromo || soPromo || tipos.length) chips.push('<button class="chip' + (filtroTipo === '' && !soFav && !soPromo ? ' on' : '') + '" data-t="">Todos</button>');
+    tipos.forEach(function(t){ chips.push('<button class="chip' + (filtroTipo === t && !soFav && !soPromo ? ' on' : '') + '" data-t="' + esc(t) + '">' + esc(t) + '</button>'); });
     el.innerHTML = chips.join('');
-    el.querySelectorAll('.chip[data-t]').forEach(function(b){ b.onclick = function(){ soFav = false; filtroTipo = b.getAttribute('data-t'); renderFiltros(); aplicar(); }; });
-    var _fc = el.querySelector('[data-fav-chip]'); if(_fc) _fc.onclick = function(){ soFav = !soFav; renderFiltros(); aplicar(); };
+    el.querySelectorAll('.chip[data-t]').forEach(function(b){ b.onclick = function(){ soFav = false; soPromo = false; filtroTipo = b.getAttribute('data-t'); renderFiltros(); aplicar(); }; });
+    var _fc = el.querySelector('[data-fav-chip]'); if(_fc) _fc.onclick = function(){ soFav = !soFav; if(soFav) soPromo = false; renderFiltros(); aplicar(); };
+    var _pc = el.querySelector('[data-promo-chip]'); if(_pc) _pc.onclick = function(){ soPromo = !soPromo; if(soPromo) soFav = false; renderFiltros(); aplicar(); };
   }
 
   // ===== Avaliação por estrelas (média por restaurante, guardada no Supabase) =====
@@ -376,11 +390,10 @@
       var sub = subDoConfig(n.config);
       var tipo = tipoDoConfig(n.config);
       var inicial = esc((nome.trim()[0] || 'À').toUpperCase());
-      // Promoção do dono (grátis) — foto com texto por cima, no cartão da montra
-      var promo = (n.config && n.config.promo && n.config.promo.ativo) ? n.config.promo : null;
+      // Promoção do dono (grátis) — foto com texto por cima, no cartão da montra (respeita o horário)
+      var promo = temPromoAtiva(n) ? n.config.promo : null;
       var promoTxt = (promo && promo.texto) ? String(promo.texto).trim() : '';
       var promoFoto = (promo && promo.foto) ? promo.foto : '';
-      if(!(promoTxt || promoFoto)) promo = null;
       var promoCor = (promo && /^#[0-9a-fA-F]{3,8}$/.test(String(promo.cor||''))) ? promo.cor : '#e0245e';
       var _pt2 = promo ? parseInt(promo.tamanho, 10) : 0;
       var promoTam = (_pt2 >= 11 && _pt2 <= 30) ? _pt2 : 16;
@@ -460,7 +473,8 @@
       var okBusca = !q || nome.indexOf(q) >= 0 || sub.indexOf(q) >= 0 || tipo.toLowerCase().indexOf(q) >= 0;
       var okTipo = !filtroTipo || tipo === filtroTipo;
       var okFav = !soFav || favTem(String(n.slug || '').toLowerCase());
-      return okBusca && okTipo && okFav;
+      var okPromo = !soPromo || temPromoAtiva(n);
+      return okBusca && okTipo && okFav && okPromo;
     }));
   }
 
