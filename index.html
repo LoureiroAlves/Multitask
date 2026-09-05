@@ -280,10 +280,11 @@
     (TODOS || []).forEach(function(n){
       var cfg = n && n.config; if(!cfg) return;
       if(cfg.promoDias) temDias = true;
-      var p = _promoEfetiva(cfg);   // a promoção que vale hoje (dia próprio ou base)
-      if(!p || !p.horaIni || !p.horaFim) return;
-      var a = _hhmmToMin(p.horaIni), b = _hhmmToMin(p.horaFim); if(a == null || b == null || a === b) return;
-      [a, b].forEach(function(x){ var d = x - cur; if(d <= 0) d += 1440; if(d < best) best = d; });
+      _promoCandidatas(cfg).forEach(function(p){   // limites de todas as candidatas de hoje (dia próprio E base)
+        if(!p.horaIni || !p.horaFim) return;
+        var a = _hhmmToMin(p.horaIni), b = _hhmmToMin(p.horaFim); if(a == null || b == null || a === b) return;
+        [a, b].forEach(function(x){ var d = x - cur; if(d <= 0) d += 1440; if(d < best) best = d; });
+      });
     });
     if(temDias){ var meiaNoite = 1440 - cur; if(meiaNoite < best) best = meiaNoite; }   // à meia-noite muda o dia -> reavaliar
     if(best === Infinity) return -1;
@@ -297,17 +298,18 @@
     _promoTimer = setTimeout(function(){ _promoTick(); _agendarProxLimite(); }, ms);
   }
   function _promoTemConteudo(p){ return !!(p && ((p.texto && String(p.texto).trim()) || p.foto)); }
-  // Promoção a mostrar HOJE: se houver promoção própria para o dia da semana, usa-a; senão, a base (se ligada).
-  function _promoEfetiva(cfg){
-    if(!cfg) return null;
-    var dias = cfg.promoDias;
-    if(dias){ var d = dias[String(new Date().getDay())]; if(d && d.usar && _promoTemConteudo(d)) return d; }
-    var base = cfg.promo;
-    if(base && base.ativo && _promoTemConteudo(base)) return base;
-    return null;
+  // Candidatas a mostrar HOJE, por ordem de prioridade: 1) promoção própria do dia da semana, 2) a Base.
+  function _promoCandidatas(cfg){
+    var out = [];
+    var dias = cfg && cfg.promoDias;
+    var d = dias && dias[String(new Date().getDay())];
+    if(d && d.usar && _promoTemConteudo(d)) out.push(d);
+    var base = cfg && cfg.promo;
+    if(base && base.ativo && _promoTemConteudo(base)) out.push(base);
+    return out;
   }
-  // Promoção efetiva a decorrer AGORA (respeita também o horário de entrada/saída)
-  function _promoAtual(n){ var pe = _promoEfetiva(n && n.config); return (pe && _promoDentroHorario(pe)) ? pe : null; }
+  // A que vale AGORA: a do dia só manda dentro do seu horário; fora dele, volta a Base.
+  function _promoAtual(n){ var cs = _promoCandidatas(n && n.config); for(var i=0;i<cs.length;i++){ if(_promoDentroHorario(cs[i])) return cs[i]; } return null; }
   function temPromoAtiva(n){ try{ return !!_promoAtual(n); }catch(e){ return false; } }
   var _promoSig = '';
   function _promoSignature(){ return (TODOS || []).filter(temPromoAtiva).map(function(n){ return n.slug; }).sort().join(','); }
