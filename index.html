@@ -277,6 +277,7 @@
   function temPromoAtiva(n){ try{ var p = n && n.config && n.config.promo; return !!(p && p.ativo && ((p.texto && String(p.texto).trim()) || p.foto) && _promoDentroHorario(p)); }catch(e){ return false; } }
   var _promoSig = '';
   function _promoSignature(){ return (TODOS || []).filter(temPromoAtiva).map(function(n){ return n.slug; }).sort().join(','); }
+  function _promoTick(){ if(!TODOS || !TODOS.length) return; var s = _promoSignature(); if(s !== _promoSig){ _promoSig = s; renderFiltros(); aplicar(); } }
   function favGet(){ try{ return JSON.parse(localStorage.getItem('amesaFavNeg') || '[]'); }catch(e){ return []; } }
   function favTem(slug){ return favGet().indexOf(slug) >= 0; }
   function favToggle(slug){ var a = favGet(); var i = a.indexOf(slug); if(i >= 0) a.splice(i,1); else a.push(slug); try{ localStorage.setItem('amesaFavNeg', JSON.stringify(a)); }catch(e){} return i < 0; }
@@ -547,12 +548,11 @@
       pintarAds();        // garante a faixa de topo preenchida
       rodarAds();         // arranca o carrossel se houver mais que um anúncio
       _promoSig = _promoSignature();
-      // Reavaliar o horário das promoções de 30 em 30s — só redesenha se algo entrou/saiu da janela
-      setInterval(function(){
-        if(!TODOS || !TODOS.length) return;
-        var s = _promoSignature();
-        if(s !== _promoSig){ _promoSig = s; renderFiltros(); aplicar(); }
-      }, 30000);
+      // Reavaliar o horário das promoções: de 30 em 30s E sempre que voltas à app/ecrã
+      // (os telemóveis pausam os temporizadores em segundo plano; o visibilitychange/focus garante a atualização no regresso).
+      setInterval(_promoTick, 30000);
+      document.addEventListener('visibilitychange', function(){ if(!document.hidden) _promoTick(); });
+      window.addEventListener('focus', _promoTick);
     })
     .catch(function(err){
       document.getElementById('estado').innerHTML = 'Não foi possível carregar os restaurantes agora. Tenta atualizar a página.';
