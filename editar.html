@@ -7,6 +7,7 @@
 <title>Editar — o teu negócio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Pacifico&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
 <script>
 /* ÀMesa — Catálogo de adereços (cultura portuguesa, silhueta de uma só cor, segue o tema). Embutido. */
 (function(){
@@ -1054,6 +1055,8 @@ amesadigital.pt</textarea>
         <button type="button" class="mv-mini" id="promoFotoRemover" style="display:none;">sem foto</button>
       </div>
       <div style="font-size:0.78rem; color:var(--castanho-suave); margin-top:4px;">Se não puseres foto, o texto aparece por cima da foto normal do restaurante.</div>
+      <label style="display:block; margin-top:16px; font-weight:600;">Pré-visualização (como fica na montra)</label>
+      <div id="promoPreview" style="margin-top:6px; display:flex; justify-content:center;"></div>
     </div>
   </details>
 
@@ -2934,7 +2937,37 @@ amesadigital.pt</textarea>
     const prev = document.getElementById('promoFotoPrev'), rm = document.getElementById('promoFotoRemover');
     if(prev){ if(promoFotoUrl){ prev.src = promoFotoUrl; prev.style.display = ''; } else { prev.src = ''; prev.style.display = 'none'; } }
     if(rm) rm.style.display = promoFotoUrl ? '' : 'none';
+    _promoPreview();
   }
+  const _PROMO_FONTES = { anton:"'Anton',sans-serif", bebas:"'Bebas Neue',sans-serif", fredoka:"'Fredoka',sans-serif", playfair:"'Playfair Display',serif", pacifico:"'Pacifico',cursive" };
+  function _promoPreview(){
+    const box = document.getElementById('promoPreview'); if(!box) return;
+    const ativo = !!(document.getElementById('promoAtivo') && document.getElementById('promoAtivo').checked);
+    const txt = (document.getElementById('promoTexto') || {}).value || '';
+    const cor = (document.getElementById('promoCor') || {}).value || '#e0245e';
+    const tam = parseInt((document.getElementById('promoTam') || {}).value, 10) || 16;
+    const fam = _PROMO_FONTES[(document.getElementById('promoFonte') || {}).value] || '';
+    const _esc = function(s){ return String(s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); };
+    const nome = (config.header && config.header.titulo) || (window.__negocio && window.__negocio.nome) || 'O teu restaurante';
+    const fotoBg = promoFotoUrl || (config.header && Array.isArray(config.header.fotos) && config.header.fotos[0]) || '';
+    const temPromo = ativo && (txt || promoFotoUrl);
+    const fotoStyle = fotoBg ? ("background-image:url('" + fotoBg + "');background-size:cover;background-position:center;") : 'background:linear-gradient(135deg,#c9a06a,#7a5a2e);';
+    const band = (ativo && txt) ? ('<div style="position:absolute;left:0;right:0;bottom:0;background:' + cor + ';color:#fff;font-weight:800;text-align:center;padding:9px 8px;line-height:1.2;font-size:' + tam + 'px;' + (fam ? ('font-family:' + fam + ';') : '') + 'text-shadow:0 1px 2px rgba(0,0,0,.35);overflow:hidden;">' + _esc(txt) + '</div>') : '';
+    const ribbon = temPromo ? '<span style="position:absolute;top:14px;left:-40px;width:150px;transform:rotate(-45deg);text-align:center;background:linear-gradient(90deg,#ffb300,#ff7a00);color:#fff;font-size:.62rem;font-weight:800;letter-spacing:1.5px;padding:5px 0;box-shadow:0 3px 8px rgba(0,0,0,.35);">PROMO</span>' : '';
+    const borda = temPromo ? ('box-shadow:0 0 0 2px ' + cor + ',0 10px 24px rgba(0,0,0,.15);') : 'box-shadow:0 6px 18px rgba(120,90,50,.12);';
+    box.innerHTML = '<div style="width:230px;border:1px solid var(--linha);border-radius:16px;overflow:hidden;background:#fff;' + borda + '">'
+      + '<div style="position:relative;height:135px;' + fotoStyle + '">' + ribbon + band + '</div>'
+      + '<div style="padding:10px 12px;">'
+        + '<div style="font-family:\'Playfair Display\',serif;font-weight:700;font-size:1.05rem;color:var(--castanho);line-height:1.2;">' + _esc(nome) + '</div>'
+        + '<div style="font-size:.8rem;color:var(--castanho-suave);font-weight:600;margin-top:2px;">o teu subtítulo</div>'
+      + '</div>'
+    + '</div>'
+    + (temPromo ? '' : '<div style="align-self:center;font-size:.78rem;color:var(--castanho-suave);margin-left:10px;max-width:150px;">Liga a promoção e escreve o texto para a veres aqui.</div>');
+  }
+  { ['promoAtivo','promoTexto','promoCor','promoTam','promoFonte'].forEach(function(id){
+      const el = document.getElementById(id);
+      if(el){ el.addEventListener('input', _promoPreview); el.addEventListener('change', _promoPreview); }
+    }); }
   { const _pf = document.getElementById('promoFotoFile');
     if(_pf) _pf.addEventListener('change', async e => {
       const f = e.target.files && e.target.files[0]; if(!f) return;
