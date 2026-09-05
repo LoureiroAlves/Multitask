@@ -311,7 +311,7 @@
   function meuVoto(slug){ try{ var v = parseInt(localStorage.getItem('amesaRating:' + slug), 10); return (v >= 1 && v <= 5) ? v : 0; }catch(e){ return 0; } }
   function estrelasHTML(slug, media, total){
     var meu = meuVoto(slug);
-    var cheio = meu > 0 ? meu : Math.round(media);   // se já votaste, mostra o teu voto; senão a média
+    var cheio = Math.round(media);   // as estrelas mostram SEMPRE a média do negócio (o que as pessoas querem saber); o voto próprio fica assinalado no texto
     var row = '';
     for(var i = 1; i <= 5; i++){
       row += '<button type="button" class="star' + (i <= cheio ? ' on' : '') + '" data-star="' + i + '" data-slug="' + esc(slug) + '" aria-label="' + i + ' de 5 estrelas">★</button>';
