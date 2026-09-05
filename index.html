@@ -50,8 +50,14 @@
   .card .foto{ height:150px; background:var(--terra); background-size:cover; background-position:center; position:relative; display:flex; align-items:center; justify-content:center; }
   .card .foto .inicial{ font-family:'Playfair Display', serif; font-weight:700; font-size:3rem; color:rgba(255,255,255,.9); }
   .card .foto::after{ content:''; position:absolute; inset:0; background:linear-gradient(to top, rgba(0,0,0,.18), transparent 55%); }
-  .card .foto .promo-band{ position:absolute; left:0; right:0; bottom:0; z-index:2; background:linear-gradient(to top, rgba(0,0,0,.74), rgba(0,0,0,.22)); color:#fff; font-weight:800; font-size:.95rem; line-height:1.2; padding:10px 12px; text-align:center; text-shadow:0 1px 3px rgba(0,0,0,.7); }
-  .card .foto .promo-tag{ position:absolute; top:10px; left:10px; z-index:3; background:#e0245e; color:#fff; font-size:.66rem; font-weight:800; letter-spacing:.6px; padding:3px 8px; border-radius:7px; box-shadow:0 2px 6px rgba(0,0,0,.25); }
+  /* Promoção — bem visível para chamar a atenção */
+  .card.tem-promo{ border-color:#e0245e; box-shadow:0 0 0 2px rgba(224,36,94,.4), 0 12px 28px rgba(224,36,94,.2); }
+  .card .foto .promo-band{ position:absolute; left:0; right:0; bottom:0; z-index:3; overflow:hidden; background:linear-gradient(90deg,#e0245e,#ff5f6d); color:#fff; font-weight:800; font-size:.98rem; line-height:1.2; padding:11px 12px; text-align:center; text-shadow:0 1px 2px rgba(0,0,0,.35); box-shadow:0 -6px 14px rgba(224,36,94,.35); }
+  .card .foto .promo-band::after{ content:''; position:absolute; top:0; bottom:0; left:-60%; width:38%; background:linear-gradient(90deg, transparent, rgba(255,255,255,.55), transparent); transform:skewX(-20deg); animation:promoBrilho 3.2s ease-in-out infinite; }
+  @keyframes promoBrilho{ 0%{ left:-60%; } 55%,100%{ left:135%; } }
+  .card .foto .promo-ribbon{ position:absolute; top:16px; left:-42px; width:150px; z-index:4; transform:rotate(-45deg); text-align:center; background:linear-gradient(90deg,#ffb300,#ff7a00); color:#fff; font-size:.66rem; font-weight:800; letter-spacing:1.5px; padding:5px 0; box-shadow:0 3px 8px rgba(0,0,0,.35); animation:promoPulsar 1.8s ease-in-out infinite; }
+  @keyframes promoPulsar{ 0%,100%{ filter:brightness(1); } 50%{ filter:brightness(1.2); } }
+  @media (prefers-reduced-motion: reduce){ .card .foto .promo-band::after{ animation:none; display:none; } .card .foto .promo-ribbon{ animation:none; } }
   .fav-btn{ position:absolute; top:10px; right:10px; z-index:3; width:36px; height:36px; border-radius:50%; border:none; cursor:pointer; background:rgba(255,255,255,.9); box-shadow:0 2px 8px rgba(0,0,0,.2); font-size:1.15rem; line-height:1; display:flex; align-items:center; justify-content:center; color:#c0392b; transition:transform .12s ease; -webkit-tap-highlight-color:transparent; }
   .fav-btn:active{ transform:scale(.85); }
   .fav-btn.on{ background:#c0392b; color:#fff; }
@@ -377,11 +383,11 @@
       var cardapio = '/' + encodeURIComponent(slug);
       var reservas = 'reservas.html?n=' + encodeURIComponent(slug);
       return '' +
-        '<article class="card" data-slug="' + esc(slug) + '">' +
+        '<article class="card' + (promo ? ' tem-promo' : '') + '" data-slug="' + esc(slug) + '">' +
           '<button type="button" class="fav-btn' + (favTem(slug) ? ' on' : '') + '" data-fav="' + esc(slug) + '" aria-label="Favorito">' + (favTem(slug) ? '♥' : '♡') + '</button>' +
           '<a class="foto" style="' + estiloFoto + '" href="' + cardapio + '" aria-label="' + esc(nome) + '">' +
             (fotoCartao ? '' : '<span class="inicial">' + inicial + '</span>') +
-            (promo ? '<span class="promo-tag">PROMO</span>' : '') +
+            (promo ? '<span class="promo-ribbon">PROMO</span>' : '') +
             (promoTxt ? '<div class="promo-band">' + esc(promoTxt) + '</div>' : '') +
           '</a>' +
           '<div class="corpo">' +
