@@ -267,12 +267,31 @@
   var soFav = false;
   var soPromo = false;
   // Respeita o horário: se houver hora de início e fim, a promoção só conta dentro dessa janela (inclui janelas que passam a meia-noite).
+  function _hhmmToMin(s){ var m = /^(\d{1,2}):(\d{2})$/.exec(String(s)); return m ? (parseInt(m[1],10)*60 + parseInt(m[2],10)) : null; }
   function _promoDentroHorario(p){
     if(!p || !p.horaIni || !p.horaFim) return true;
-    var toMin = function(s){ var m = /^(\d{1,2}):(\d{2})$/.exec(String(s)); return m ? (parseInt(m[1],10)*60 + parseInt(m[2],10)) : null; };
-    var a = toMin(p.horaIni), b = toMin(p.horaFim); if(a == null || b == null || a === b) return true;
+    var a = _hhmmToMin(p.horaIni), b = _hhmmToMin(p.horaFim); if(a == null || b == null || a === b) return true;
     var now = new Date(); var cur = now.getHours()*60 + now.getMinutes();
     return (a < b) ? (cur >= a && cur < b) : (cur >= a || cur < b);
+  }
+  // Minutos até ao próximo "limite" (entrada OU saída) de qualquer promoção — para agendar a transição no minuto exato
+  function _promoProxLimiteMs(){
+    var now = new Date(); var cur = now.getHours()*60 + now.getMinutes(); var best = Infinity;
+    (TODOS || []).forEach(function(n){
+      var p = n && n.config && n.config.promo;
+      if(!p || !p.ativo || !p.horaIni || !p.horaFim) return;
+      var a = _hhmmToMin(p.horaIni), b = _hhmmToMin(p.horaFim); if(a == null || b == null || a === b) return;
+      [a, b].forEach(function(x){ var d = x - cur; if(d <= 0) d += 1440; if(d < best) best = d; });
+    });
+    if(best === Infinity) return -1;
+    return Math.max(1500, best*60000 - now.getSeconds()*1000 + 1500);   // cai ~1,5s depois do minuto exato
+  }
+  var _promoTimer = null;
+  function _agendarProxLimite(){
+    if(_promoTimer) clearTimeout(_promoTimer);
+    var ms = _promoProxLimiteMs(); if(ms < 0) return;
+    ms = Math.min(ms, 6*3600*1000);   // no máximo daqui a 6h volta a agendar
+    _promoTimer = setTimeout(function(){ _promoTick(); _agendarProxLimite(); }, ms);
   }
   function temPromoAtiva(n){ try{ var p = n && n.config && n.config.promo; return !!(p && p.ativo && ((p.texto && String(p.texto).trim()) || p.foto) && _promoDentroHorario(p)); }catch(e){ return false; } }
   var _promoSig = '';
@@ -551,8 +570,9 @@
       // Reavaliar o horário das promoções: de 30 em 30s E sempre que voltas à app/ecrã
       // (os telemóveis pausam os temporizadores em segundo plano; o visibilitychange/focus garante a atualização no regresso).
       setInterval(_promoTick, 30000);
-      document.addEventListener('visibilitychange', function(){ if(!document.hidden) _promoTick(); });
-      window.addEventListener('focus', _promoTick);
+      _agendarProxLimite();   // agenda a próxima entrada/saída no minuto exato
+      document.addEventListener('visibilitychange', function(){ if(!document.hidden){ _promoTick(); _agendarProxLimite(); } });
+      window.addEventListener('focus', function(){ _promoTick(); _agendarProxLimite(); });
     })
     .catch(function(err){
       document.getElementById('estado').innerHTML = 'Não foi possível carregar os restaurantes agora. Tenta atualizar a página.';
