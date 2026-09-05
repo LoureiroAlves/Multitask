@@ -276,13 +276,16 @@
   }
   // Minutos até ao próximo "limite" (entrada OU saída) de qualquer promoção — para agendar a transição no minuto exato
   function _promoProxLimiteMs(){
-    var now = new Date(); var cur = now.getHours()*60 + now.getMinutes(); var best = Infinity;
+    var now = new Date(); var cur = now.getHours()*60 + now.getMinutes(); var best = Infinity; var temDias = false;
     (TODOS || []).forEach(function(n){
-      var p = n && n.config && n.config.promo;
-      if(!p || !p.ativo || !p.horaIni || !p.horaFim) return;
+      var cfg = n && n.config; if(!cfg) return;
+      if(cfg.promoDias) temDias = true;
+      var p = _promoEfetiva(cfg);   // a promoção que vale hoje (dia próprio ou base)
+      if(!p || !p.horaIni || !p.horaFim) return;
       var a = _hhmmToMin(p.horaIni), b = _hhmmToMin(p.horaFim); if(a == null || b == null || a === b) return;
       [a, b].forEach(function(x){ var d = x - cur; if(d <= 0) d += 1440; if(d < best) best = d; });
     });
+    if(temDias){ var meiaNoite = 1440 - cur; if(meiaNoite < best) best = meiaNoite; }   // à meia-noite muda o dia -> reavaliar
     if(best === Infinity) return -1;
     return Math.max(1500, best*60000 - now.getSeconds()*1000 + 1500);   // cai ~1,5s depois do minuto exato
   }
@@ -293,7 +296,19 @@
     ms = Math.min(ms, 6*3600*1000);   // no máximo daqui a 6h volta a agendar
     _promoTimer = setTimeout(function(){ _promoTick(); _agendarProxLimite(); }, ms);
   }
-  function temPromoAtiva(n){ try{ var p = n && n.config && n.config.promo; return !!(p && p.ativo && ((p.texto && String(p.texto).trim()) || p.foto) && _promoDentroHorario(p)); }catch(e){ return false; } }
+  function _promoTemConteudo(p){ return !!(p && ((p.texto && String(p.texto).trim()) || p.foto)); }
+  // Promoção a mostrar HOJE: se houver promoção própria para o dia da semana, usa-a; senão, a base (se ligada).
+  function _promoEfetiva(cfg){
+    if(!cfg) return null;
+    var dias = cfg.promoDias;
+    if(dias){ var d = dias[String(new Date().getDay())]; if(d && d.usar && _promoTemConteudo(d)) return d; }
+    var base = cfg.promo;
+    if(base && base.ativo && _promoTemConteudo(base)) return base;
+    return null;
+  }
+  // Promoção efetiva a decorrer AGORA (respeita também o horário de entrada/saída)
+  function _promoAtual(n){ var pe = _promoEfetiva(n && n.config); return (pe && _promoDentroHorario(pe)) ? pe : null; }
+  function temPromoAtiva(n){ try{ return !!_promoAtual(n); }catch(e){ return false; } }
   var _promoSig = '';
   function _promoSignature(){ return (TODOS || []).filter(temPromoAtiva).map(function(n){ return n.slug; }).sort().join(','); }
   function _promoTick(){ if(!TODOS || !TODOS.length) return; var s = _promoSignature(); if(s !== _promoSig){ _promoSig = s; renderFiltros(); aplicar(); } }
@@ -412,8 +427,8 @@
       var sub = subDoConfig(n.config);
       var tipo = tipoDoConfig(n.config);
       var inicial = esc((nome.trim()[0] || 'À').toUpperCase());
-      // Promoção do dono (grátis) — foto com texto por cima, no cartão da montra (respeita o horário)
-      var promo = temPromoAtiva(n) ? n.config.promo : null;
+      // Promoção do dono (grátis) — foto com texto por cima, no cartão da montra (respeita dia + horário)
+      var promo = _promoAtual(n);
       var promoTxt = (promo && promo.texto) ? String(promo.texto).trim() : '';
       var promoFoto = (promo && promo.foto) ? promo.foto : '';
       var promoCor = (promo && /^#[0-9a-fA-F]{3,8}$/.test(String(promo.cor||''))) ? promo.cor : '#e0245e';

@@ -1024,9 +1024,21 @@ amesadigital.pt</textarea>
     <summary>🏷️ Promoção (aparece na montra ÀMesa)</summary>
     <div class="bloco-conteudo">
       <div style="font-size:0.82rem; color:var(--castanho-suave); margin-bottom:10px;">Cria a tua própria promoção — grátis. Aparece no cartão do teu restaurante na página do amesadigital (com foto e texto por cima), para atrair clientes. Ex.: "50% no prato do dia" ou "Sobremesa grátis acima de 25€".</div>
+      <label for="promoSel" style="display:block; font-weight:600;">Promoção para</label>
+      <select id="promoSel" style="width:100%; padding:10px 12px; border-radius:10px; border:1.5px solid var(--linha); background:var(--branco); font-family:inherit; color:var(--castanho); font-size:0.95rem; margin-top:6px;">
+        <option value="base">Base — todos os dias</option>
+        <option value="1">Só Segunda-feira</option>
+        <option value="2">Só Terça-feira</option>
+        <option value="3">Só Quarta-feira</option>
+        <option value="4">Só Quinta-feira</option>
+        <option value="5">Só Sexta-feira</option>
+        <option value="6">Só Sábado</option>
+        <option value="0">Só Domingo</option>
+      </select>
+      <div style="font-size:0.78rem; color:var(--castanho-suave); margin:4px 0 10px;">Podes ter uma promoção diferente por dia. Se um dia não tiver promoção própria, usa a <b>Base</b>. As alterações de cada separador guardam-se ao mudar de dia e no "Guardar tudo".</div>
       <div class="lembrar" style="margin-bottom:10px;">
         <input type="checkbox" id="promoAtivo" style="width:auto; margin:0;">
-        <label for="promoAtivo" style="margin:0; font-weight:700; color:var(--dourado-escuro); display:inline;">Mostrar promoção na montra</label>
+        <label id="promoAtivoLabel" for="promoAtivo" style="margin:0; font-weight:700; color:var(--dourado-escuro); display:inline;">Mostrar promoção na montra</label>
       </div>
       <label style="display:flex; align-items:center; gap:8px; margin-top:8px; cursor:pointer; font-size:0.92rem;">
         <input type="checkbox" id="promoHorario" style="width:auto; margin:0;">
@@ -2728,21 +2740,7 @@ amesadigital.pt</textarea>
       const _cw = document.getElementById('carrinhoWhats'); if(_cw) _cw.value = _c.whatsapp || '';
       const _cws = document.getElementById('carrinhoWhatsSempre'); if(_cws) _cws.checked = _c.whatsappSempre === true; }
     // Promoção na montra
-    { const _p = config.promo || {};
-      promoFotoUrl = _p.foto || '';
-      const _pa = document.getElementById('promoAtivo'); if(_pa) _pa.checked = _p.ativo === true;
-      const _pt = document.getElementById('promoTexto'); if(_pt) _pt.value = _p.texto || '';
-      const _pc = document.getElementById('promoCor'); if(_pc) _pc.value = /^#[0-9a-fA-F]{3,8}$/.test(String(_p.cor||'')) ? _p.cor : '#e0245e';
-      const _pm = document.getElementById('promoTam'); const _pv = document.getElementById('promoTamVal');
-      { const t = (_p.tamanho >= 11 && _p.tamanho <= 30) ? _p.tamanho : 16; if(_pm) _pm.value = t; if(_pv) _pv.textContent = t; }
-      const _pfo = document.getElementById('promoFonte'); if(_pfo) _pfo.value = _p.fonte || '';
-      { const _ph = document.getElementById('promoHorario'), _pi = document.getElementById('promoHoraIni'), _pff = document.getElementById('promoHoraFim');
-        const temHor = !!(_p.horaIni && _p.horaFim);
-        if(_ph) _ph.checked = temHor;
-        if(temHor){ if(_pi) _pi.value = _p.horaIni; if(_pff) _pff.value = _p.horaFim; }
-        const _phb = document.getElementById('promoHorarioBox'); if(_phb) _phb.style.display = temHor ? 'flex' : 'none';
-        _promoHorarioNota(); }
-      _promoFotoUI(); }
+    _promoCarregar();   // promoção base + promoções por dia
     { const _fp = document.getElementById('favPratosAtivo'); if(_fp) _fp.checked = config.favoritosPratos === true; }
     // Cores personalizadas
     const temCores = !!(config.cores && typeof config.cores === 'object');
@@ -2998,6 +2996,68 @@ amesadigital.pt</textarea>
       const el = document.getElementById(id);
       if(el){ el.addEventListener('input', function(){ _promoHorarioNota(); _promoPreview(); }); el.addEventListener('change', function(){ _promoHorarioNota(); _promoPreview(); }); }
     }); }
+  // ===== Promoções por dia: uma ficha (slot) para a Base e para cada dia da semana =====
+  var promoSlots = { base:{} };   // chaves '0'..'6' = domingo..sábado
+  var promoSel = 'base';
+  function _promoLerForm(){
+    const $ = function(id){ return document.getElementById(id); };
+    const usaHor = !!($('promoHorario') && $('promoHorario').checked);
+    return {
+      on: !!($('promoAtivo') && $('promoAtivo').checked),
+      texto: $('promoTexto') ? $('promoTexto').value.trim() : '',
+      foto: promoFotoUrl || '',
+      cor: $('promoCor') ? $('promoCor').value : '#e0245e',
+      tamanho: $('promoTam') ? (parseInt($('promoTam').value,10)||16) : 16,
+      fonte: $('promoFonte') ? $('promoFonte').value : '',
+      horaIni: (usaHor && $('promoHoraIni')) ? $('promoHoraIni').value : '',
+      horaFim: (usaHor && $('promoHoraFim')) ? $('promoHoraFim').value : ''
+    };
+  }
+  function _promoEscreverForm(o){
+    o = o || {}; const $ = function(id){ return document.getElementById(id); };
+    if($('promoAtivo')) $('promoAtivo').checked = !!o.on;
+    if($('promoTexto')) $('promoTexto').value = o.texto || '';
+    promoFotoUrl = o.foto || '';
+    if($('promoCor')) $('promoCor').value = /^#[0-9a-fA-F]{3,8}$/.test(String(o.cor||'')) ? o.cor : '#e0245e';
+    { const t = (o.tamanho >= 11 && o.tamanho <= 30) ? o.tamanho : 16; if($('promoTam')) $('promoTam').value = t; if($('promoTamVal')) $('promoTamVal').textContent = t; }
+    if($('promoFonte')) $('promoFonte').value = o.fonte || '';
+    const temHor = !!(o.horaIni && o.horaFim);
+    if($('promoHorario')) $('promoHorario').checked = temHor;
+    if(temHor){ if($('promoHoraIni')) $('promoHoraIni').value = o.horaIni; if($('promoHoraFim')) $('promoHoraFim').value = o.horaFim; }
+    _promoFotoUI(); _promoHorarioNota(); _promoAplicarSelUI(); _promoPreview();
+  }
+  function _promoAplicarSelUI(){
+    const lbl = document.getElementById('promoAtivoLabel');
+    if(lbl) lbl.textContent = (promoSel === 'base') ? 'Mostrar promoção na montra' : 'Usar promoção própria neste dia (senão usa a Base)';
+  }
+  function _promoTrocarSlot(nova){ promoSlots[promoSel] = _promoLerForm(); promoSel = nova; _promoEscreverForm(promoSlots[promoSel] || {}); }
+  { const _ps = document.getElementById('promoSel'); if(_ps) _ps.addEventListener('change', function(){ _promoTrocarSlot(_ps.value); }); }
+  function _promoCarregar(){
+    promoSlots = { base: {
+      on: !!(config.promo && config.promo.ativo === true),
+      texto: (config.promo && config.promo.texto) || '', foto: (config.promo && config.promo.foto) || '',
+      cor: (config.promo && config.promo.cor) || '#e0245e', tamanho: (config.promo && config.promo.tamanho) || 16,
+      fonte: (config.promo && config.promo.fonte) || '', horaIni: (config.promo && config.promo.horaIni) || '', horaFim: (config.promo && config.promo.horaFim) || ''
+    } };
+    const pd = config.promoDias || {};
+    ['0','1','2','3','4','5','6'].forEach(function(k){ const d = pd[k]; if(!d) return;
+      promoSlots[k] = { on: d.usar === true, texto: d.texto||'', foto: d.foto||'', cor: d.cor||'#e0245e', tamanho: d.tamanho||16, fonte: d.fonte||'', horaIni: d.horaIni||'', horaFim: d.horaFim||'' };
+    });
+    promoSel = 'base';
+    const _ps = document.getElementById('promoSel'); if(_ps) _ps.value = 'base';
+    _promoEscreverForm(promoSlots.base);
+  }
+  function _promoGuardar(){
+    promoSlots[promoSel] = _promoLerForm();
+    const b = promoSlots.base || {};
+    config.promo = { ativo: !!b.on, texto: b.texto||'', foto: b.foto||'', cor: b.cor||'#e0245e', tamanho: b.tamanho||16, fonte: b.fonte||'', horaIni: b.horaIni||'', horaFim: b.horaFim||'' };
+    const pd = {};
+    ['0','1','2','3','4','5','6'].forEach(function(k){ const s = promoSlots[k]; if(!s) return;
+      const temConteudo = (s.texto && s.texto.trim()) || s.foto;
+      if(s.on || temConteudo){ pd[k] = { usar: !!s.on, texto: s.texto||'', foto: s.foto||'', cor: s.cor||'#e0245e', tamanho: s.tamanho||16, fonte: s.fonte||'', horaIni: s.horaIni||'', horaFim: s.horaFim||'' }; }
+    });
+    config.promoDias = pd;
+  }
   { const _pf = document.getElementById('promoFotoFile');
     if(_pf) _pf.addEventListener('change', async e => {
       const f = e.target.files && e.target.files[0]; if(!f) return;
@@ -3833,14 +3893,8 @@ amesadigital.pt</textarea>
       { const _tv = document.getElementById('tilesVidroChk'); config.tilesVidro = _tv ? _tv.checked : false; }
       { const _ca = document.getElementById('carrinhoAtivo'), _cp = document.getElementById('carrinhoPrecos'), _cw = document.getElementById('carrinhoWhats'), _cws = document.getElementById('carrinhoWhatsSempre');
         config.carrinho = { ativo: _ca ? _ca.checked : true, precos: _cp ? _cp.checked : true, whatsapp: _cw ? _cw.value.trim() : '', whatsappSempre: _cws ? _cws.checked : false }; }
-      // Promoção na montra
-      { const _pa = document.getElementById('promoAtivo'), _pt = document.getElementById('promoTexto'),
-              _pc = document.getElementById('promoCor'), _pm = document.getElementById('promoTam'), _pfo = document.getElementById('promoFonte');
-        const _ph = document.getElementById('promoHorario'), _pi = document.getElementById('promoHoraIni'), _pff = document.getElementById('promoHoraFim');
-        const _usaHor = !!(_ph && _ph.checked);
-        config.promo = { ativo: _pa ? _pa.checked : false, texto: _pt ? _pt.value.trim() : '', foto: promoFotoUrl || '',
-                         cor: _pc ? _pc.value : '#e0245e', tamanho: _pm ? (parseInt(_pm.value,10)||16) : 16, fonte: _pfo ? _pfo.value : '',
-                         horaIni: (_usaHor && _pi) ? _pi.value : '', horaFim: (_usaHor && _pff) ? _pff.value : '' }; }
+      // Promoção na montra (base + por dia)
+      _promoGuardar();
       { const _fp = document.getElementById('favPratosAtivo'); config.favoritosPratos = !!(_fp && _fp.checked); }
       if(document.getElementById('coresPersonalizar').checked){
         config.cores = {
