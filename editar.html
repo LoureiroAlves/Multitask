@@ -4639,15 +4639,17 @@ amesadigital.pt</textarea>
       tit.addEventListener('input',()=>{ g.summary.pt=tit.value; });
       wrap.appendChild(tit);
 
+      // Subtítulo do sub-menu (visível) — aparece por baixo do título, ex.: "Guarnições: 1 à escolha"
+      g.subtitulo = g.subtitulo || {pt:''};
+      wrap.appendChild(mkLabel('Subtítulo do sub-menu (opcional) — ex.: Guarnições: 1 à escolha'));
+      wrap.appendChild(campoMulti(g.subtitulo,'Subtítulo'));
+
       const trd=document.createElement('details'); trd.style.cssText='border:none;background:transparent;';
-      const trs=document.createElement('summary'); trs.textContent='traduções / subtítulo';
+      const trs=document.createElement('summary'); trs.textContent='traduções do título';
       trs.style.cssText='font-size:0.75rem;padding:2px 0;color:var(--castanho-suave);';
       trd.appendChild(trs);
       trd.appendChild(mkLabel('Título noutras línguas'));
       trd.appendChild(campoTraducoes(g.summary));
-      g.subtitulo = g.subtitulo || {pt:''};
-      trd.appendChild(mkLabel('Subtítulo (opcional)'));
-      trd.appendChild(campoMulti(g.subtitulo,'Subtítulo'));
       wrap.appendChild(trd);
 
       // Foto do sub-menu (grupo)
