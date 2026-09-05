@@ -48,7 +48,8 @@
   .grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(250px, 1fr)); gap:18px; padding-bottom:20px; }
   .card{ position:relative; background:var(--card); border:1px solid var(--linha); border-radius:18px; overflow:hidden; box-shadow:0 6px 18px rgba(120,90,50,.06); transition:transform .16s ease, box-shadow .16s ease; display:flex; flex-direction:column; }
   .card:hover{ transform:translateY(-3px); box-shadow:0 12px 26px rgba(120,90,50,.14); }
-  .card .foto{ height:150px; background:var(--terra); background-size:cover; background-position:center; position:relative; display:flex; align-items:center; justify-content:center; }
+  .card{ cursor:pointer; }
+  .card .foto{ height:200px; background:var(--terra); background-size:cover; background-position:center; position:relative; display:flex; align-items:center; justify-content:center; }
   .card .foto .inicial{ font-family:'Playfair Display', serif; font-weight:700; font-size:3rem; color:rgba(255,255,255,.9); }
   .card .foto::after{ content:''; position:absolute; inset:0; background:linear-gradient(to top, rgba(0,0,0,.18), transparent 55%); }
   /* Promoção — bem visível para chamar a atenção */
@@ -399,12 +400,9 @@
           '</a>' +
           '<div class="corpo">' +
             '<div class="nome">' + esc(nome) + '</div>' +
-            (tipo ? '<div class="tag">' + esc(tipo) + '</div>' : '') +
             '<div class="sub">' + esc(sub) + '</div>' +
+            (tipo ? '<div class="tag">' + esc(tipo) + '</div>' : '') +
             estrelasContainer(slug, n) +
-            '<div class="acoes">' +
-              '<a class="btn btn-menu" href="' + cardapio + '">Ver menu</a>' +
-            '</div>' +
           '</div>' +
         '</article>';
     });
@@ -496,6 +494,16 @@
     var card = t.closest ? t.closest('.card[data-slug]') : null;
     if(card && t.closest('a')){ var _cs = card.getAttribute('data-slug'); if(_umaVezDia('amc_' + _cs)) incMetrica(_cs, 'amesa'); }
   }, true);
+
+  // Cartão todo clicável: clicar em qualquer parte (menos coração, estrelas ou links) abre o menu
+  document.addEventListener('click', function(e){
+    if(e.target.closest('.fav-btn') || e.target.closest('.stars') || e.target.closest('a')) return;
+    var card = e.target.closest ? e.target.closest('.card[data-slug]') : null;
+    if(!card) return;
+    var cs = card.getAttribute('data-slug');
+    if(_umaVezDia('amc_' + cs)) incMetrica(cs, 'amesa');
+    location.href = '/' + encodeURIComponent(cs);
+  });
 
   (function(){
     var hdr = { headers: { apikey: SUPA_KEY, Authorization: 'Bearer ' + SUPA_KEY } };
