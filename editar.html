@@ -6079,12 +6079,25 @@ amesadigital.pt</textarea>
       });
     }catch(e){}
     btn.onclick = async function(){
+      // Primeiro acesso: criar a password (a sessão do link mágico já está ativa)
+      if(modo === 'criar'){
+        const nova = passI.value;
+        if(!nova || nova.length < 6){ setMsg('A password tem de ter pelo menos 6 caracteres.'); return; }
+        btn.disabled = true; setMsg('A criar…');
+        const { error } = await sbc.auth.updateUser({ password: nova, data: { senhaDefinida: true } });
+        btn.disabled = false;
+        if(error){ setMsg('Erro: ' + error.message); return; }
+        setMsg('Password criada ✓', true);
+        modo = 'entrar'; emailI.style.display = ''; passI.placeholder = 'password'; if(toggle) toggle.style.display = ''; if(forgot) forgot.style.display = '';
+        iniciarSessao();
+        return;
+      }
       // Modo reposição: define a nova password (a sessão de recuperação já está ativa)
       if(modo === 'recuperar'){
         const nova = passI.value;
         if(!nova || nova.length < 6){ setMsg('A password tem de ter pelo menos 6 caracteres.'); return; }
         btn.disabled = true; setMsg('A guardar…');
-        const { error } = await sbc.auth.updateUser({ password: nova });
+        const { error } = await sbc.auth.updateUser({ password: nova, data: { senhaDefinida: true } });
         btn.disabled = false;
         if(error){ setMsg('Erro: ' + error.message); return; }
         setMsg('Password alterada ✓', true);
@@ -6096,7 +6109,7 @@ amesadigital.pt</textarea>
       if(!email || !pass){ setMsg('Preenche email e password.'); return; }
       btn.disabled = true; setMsg('');
       let res;
-      if(modo === 'registar') res = await sbc.auth.signUp({ email:email, password:pass });
+      if(modo === 'registar') res = await sbc.auth.signUp({ email:email, password:pass, options:{ data:{ senhaDefinida:true } } });
       else res = await sbc.auth.signInWithPassword({ email:email, password:pass });
       btn.disabled = false;
       if(res.error){ setMsg('Erro: ' + res.error.message); return; }
@@ -6104,6 +6117,19 @@ amesadigital.pt</textarea>
       iniciarSessao();
     };
     passI.addEventListener('keydown', function(e){ if(e.key === 'Enter') btn.click(); });
+    function _pedirCriarPassword(neg, email){
+      modo = 'criar';
+      ov.style.display = 'flex';
+      tit.textContent = 'Cria a tua password';
+      sub.textContent = 'Bem-vindo' + (neg && neg.nome ? (' ao ' + neg.nome) : '') + '! Define uma password para a conta ' + (email || '') + '. Vais usá-la sempre que entrares no editor.';
+      emailI.style.display = 'none';
+      passI.value = ''; passI.placeholder = 'nova password (mín. 6 caracteres)'; passI.setAttribute('autocomplete', 'new-password');
+      btn.textContent = 'Criar password e entrar';
+      if(toggle) toggle.style.display = 'none';
+      if(forgot) forgot.style.display = 'none';
+      setMsg('');
+      try{ passI.focus(); }catch(e){}
+    }
     async function iniciarSessao(){
       const { data:{ session } } = await sbc.auth.getSession();
       if(!session) return;
@@ -6114,6 +6140,10 @@ amesadigital.pt</textarea>
       try{ const a = await sbc.from('admins').select('user_id').eq('user_id', session.user.id); admin = !!(a.data && a.data.length); }catch(e){}
       const dono = (neg.dono_email || '').toLowerCase();
       if(!admin && (!dono || dono !== email)){ setMsg('Esta conta não tem acesso a este negócio. Fala com o administrador.'); await sbc.auth.signOut(); return; }
+      // Primeiro acesso do dono (entrou pelo link mágico, ainda sem password): obrigar a criar uma antes de entrar.
+      if(!admin && !(session.user.user_metadata && session.user.user_metadata.senhaDefinida === true)){
+        _pedirCriarPassword(neg, email); return;
+      }
       const { data:ent } = await sbc.from('entitlements').select('*').eq('negocio_id', neg.id).maybeSingle();
       window.__negocio = neg; window.__ent = ent || { plano:'basico', funcoes:{}, publicidade:{} };
       window.__admin = admin;
