@@ -245,6 +245,7 @@
   function fotoDoConfig(cfg){
     try{
       if(!cfg) return '';
+      if(cfg.montraFoto) return cfg.montraFoto;   // foto dedicada ao cartão da montra (opcional)
       if(cfg.header && cfg.header.fotosAtivas !== false && cfg.header.fotos && cfg.header.fotos.length) return cfg.header.fotos[0];
       if(cfg.intro && cfg.intro.foto) return cfg.intro.foto;
       if(cfg.footer && cfg.footer.fotos && cfg.footer.fotos.length) return cfg.footer.fotos[0];
