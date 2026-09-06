@@ -189,7 +189,7 @@
       try{
         var resp = await fetch(SUPA_URL + '/storage/v1/object/' + path, {
           method:'POST',
-          headers:{ apikey:SUPA_KEY, Authorization:'Bearer ' + SUPA_KEY, 'Content-Type':c.ctype, 'x-upsert':'true' },
+          headers:{ apikey:SUPA_KEY, Authorization:'Bearer ' + SUPA_KEY, 'Content-Type':c.ctype },
           body: c.blob
         });
         if(resp.ok){ return SUPA_URL + '/storage/v1/object/public/' + path; }
