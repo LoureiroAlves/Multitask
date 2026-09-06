@@ -103,6 +103,7 @@
     <div class="painel-layout">
       <nav class="side">
         <button class="side-item" data-tab="criar">➕ Criar negócio</button>
+        <button class="side-item" data-tab="registos">📥 Registos recebidos <span id="regBadge" style="display:none; margin-left:auto; background:#e0245e; color:#fff; font-size:.72rem; font-weight:800; min-width:20px; height:20px; border-radius:10px; padding:0 6px; align-items:center; justify-content:center;"></span></button>
         <button class="side-item" id="btnFormulario">📨 Formulário de registo</button>
         <button class="side-item side-sub" data-tab="duplicar">📋 Duplicar negócio</button>
         <button class="side-item" data-tab="negocios">🏪 Negócios</button>
@@ -128,6 +129,25 @@
 
       <div style="margin-top:12px;"><button class="acao" id="btnCriar">Criar negócio</button></div>
       <div id="criarMsg"></div>
+    </div>
+
+    <div class="card">
+      <h2 style="margin:0 0 8px; font-size:1.05rem;">📦 Criar a partir de ficheiro</h2>
+      <div style="font-size:.82rem; color:#9a8b6f; margin-bottom:10px;">Carrega o ficheiro <code>.json</code> que o Claude te preparou a partir de um registo. Cria o negócio já com o perfil e o menu prontos.</div>
+      <label class="acao" for="importFile" style="display:inline-block; cursor:pointer; text-align:center; background:var(--dourado, #a8712f);">📁 Escolher ficheiro .json</label>
+      <input type="file" id="importFile" accept=".json,application/json" style="display:none;">
+      <div id="importMsg" style="margin-top:8px;"></div>
+    </div>
+        </section>
+
+        <section class="tab-panel hide" data-panel="registos">
+    <div class="card">
+      <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+        <h2 style="margin:0; font-size:1.05rem;">📥 Registos recebidos</h2>
+        <button class="mini" id="regRefresh">↻ Atualizar</button>
+      </div>
+      <div style="font-size:.82rem; color:#9a8b6f; margin:6px 0 10px;">Formulários preenchidos pelos donos. Carrega em “Copiar para o Claude”, cola no chat, e o Claude prepara o ficheiro do negócio para importares acima.</div>
+      <div id="registosLista"></div>
     </div>
         </section>
 
@@ -281,6 +301,7 @@
     { const _le = $('linkEstat'); if(_le) _le.classList.remove('hide'); }
     { const _lf = $('btnLimparFotos'); if(_lf) _lf.classList.remove('hide'); }
     carregar();
+    try{ carregarRegistos(); }catch(e){}
   }
 
   // ---- Negócios ----
@@ -486,6 +507,60 @@
     else { msg($('criarMsg'), 'Negócio "' + nome + '" criado ✓. Abre o editor para começar do zero.', 'ok'); $('nNome').value=''; $('nSlug').value=''; $('nEmailDono').value=''; }
     carregar();
   }
+
+  // ===== Registos recebidos (formulários de onboarding) =====
+  function _escP(s){ return String(s==null?'':s).replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c];}); }
+  async function carregarRegistos(){
+    const box = document.getElementById('registosLista'); const badge = document.getElementById('regBadge');
+    if(!box) return;
+    const { data, error } = await sb.from('registos').select('*').eq('tratado', false).order('criado_em', { ascending:false });
+    if(error){ box.innerHTML = '<div style="color:#b3402f; font-size:.9rem;">Erro a carregar: ' + error.message + '</div>'; return; }
+    const regs = data || [];
+    if(badge){ if(regs.length){ badge.textContent = regs.length; badge.style.display='inline-flex'; } else { badge.style.display='none'; } }
+    if(!regs.length){ box.innerHTML = '<div style="color:#9a8b6f; font-size:.9rem;">Sem registos por tratar.</div>'; return; }
+    box.innerHTML = '';
+    regs.forEach(function(r){
+      const d = r.dados || {};
+      const nFotos = Array.isArray(d.fotos) ? d.fotos.length : 0;
+      const nBrand = d.brand ? Object.keys(d.brand).length : 0;
+      const dt = new Date(r.criado_em); const quando = dt.toLocaleDateString('pt-PT') + ' ' + dt.toLocaleTimeString('pt-PT', { hour:'2-digit', minute:'2-digit' });
+      const card = document.createElement('div');
+      card.style.cssText = 'border:1px solid var(--linha); border-radius:12px; padding:12px 14px; margin-bottom:10px; background:var(--bege-claro,#fbf8f2);';
+      card.innerHTML =
+        '<div style="display:flex; justify-content:space-between; align-items:baseline; gap:8px; flex-wrap:wrap;"><div style="font-weight:800; color:var(--castanho);">' + (d.nome ? _escP(d.nome) : '(sem nome)') + '</div><div style="font-size:.75rem; color:#9a8b6f;">' + quando + '</div></div>' +
+        '<div style="font-size:.8rem; color:#8a7a63; margin-top:3px;">' + (d.email ? ('✉ ' + _escP(d.email) + '  ') : '') + (d.whatsapp ? ('📞 ' + _escP(d.whatsapp) + '  ') : '') + (d.tipo ? ('🍽 ' + _escP(d.tipo) + '  ') : '') + '📷 ' + nFotos + ' menu · ' + nBrand + ' marca</div>' +
+        '<div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:8px;"><button class="mini" data-a="copiar">📋 Copiar para o Claude</button><button class="mini" data-a="tratado">✓ Marcar tratado</button><button class="mini perigo" data-a="apagar">🗑</button></div>' +
+        '<div data-rmsg style="font-size:.78rem; color:#3a7d44; margin-top:6px;"></div>';
+      card.querySelector('[data-a="copiar"]').onclick = async function(){
+        const payload = 'REGISTO ÀMesa — prepara o ficheiro do negócio a partir destes dados:\n' + JSON.stringify(d, null, 2);
+        try{ await navigator.clipboard.writeText(payload); const m=card.querySelector('[data-rmsg]'); if(m) m.textContent='Copiado ✓ — cola no chat do Claude.'; }
+        catch(e){ const m=card.querySelector('[data-rmsg]'); if(m){ m.textContent='Copia manualmente:'; const ta=document.createElement('textarea'); ta.value=payload; ta.style.cssText='width:100%;height:120px;margin-top:4px;'; m.appendChild(ta); } }
+      };
+      card.querySelector('[data-a="tratado"]').onclick = async function(){ if(!confirm('Marcar como tratado? Deixa de aparecer aqui (não apaga a foto).')) return; await sb.from('registos').update({ tratado:true }).eq('id', r.id); carregarRegistos(); };
+      card.querySelector('[data-a="apagar"]').onclick = async function(){ if(!confirm('Apagar este registo definitivamente?')) return; await sb.from('registos').delete().eq('id', r.id); carregarRegistos(); };
+      box.appendChild(card);
+    });
+  }
+  async function importarNegocioFicheiro(file){
+    const box = document.getElementById('importMsg');
+    try{
+      const o = JSON.parse(await file.text());
+      const nome = (o.nome || '').trim();
+      const slug = (o.slug || '').toLowerCase().replace(/[^a-z0-9]+/g,'');
+      if(!nome || !slug){ msg(box, 'O ficheiro tem de ter "nome" e "slug".', 'erro'); return; }
+      const { data:existe } = await sb.from('negocios').select('id').eq('slug', slug).maybeSingle();
+      if(existe){ msg(box, 'Já existe um negócio com o slug "' + slug + '". Muda o slug no ficheiro.', 'erro'); return; }
+      const config = o.config || {};
+      const menu = o.menu || { restaurante:'', categorias:[] };
+      const { data:neg, error } = await sb.from('negocios').insert({ nome:nome, slug:slug, dono_email:(o.dono_email||'').toLowerCase()||null, config:config, menu:menu }).select().single();
+      if(error){ msg(box, 'Erro: ' + error.message, 'erro'); return; }
+      await sb.from('entitlements').insert({ negocio_id:neg.id, plano:'pro', funcoes:Object.assign({},FUNCOES_TODAS), publicidade:{ ativo:true } });
+      msg(box, 'Negócio "' + nome + '" criado a partir do ficheiro ✓', 'ok');
+      carregar();
+    }catch(e){ msg(box, 'Ficheiro inválido: ' + (e && e.message ? e.message : e), 'erro'); }
+  }
+  { const fi = document.getElementById('importFile'); if(fi) fi.addEventListener('change', function(){ const f=fi.files&&fi.files[0]; fi.value=''; if(f) importarNegocioFicheiro(f); }); }
+  { const rr = document.getElementById('regRefresh'); if(rr) rr.onclick = carregarRegistos; }
 
   async function guardarEnt(n, div){
     const plano = 'pro';
