@@ -388,7 +388,9 @@
       ratingLinha;
     div.innerHTML =
       '<div class="neg-top">' +
-        '<div><div class="neg-nome">' + n.nome + ' ' + planoBadge + estadoBadge + '</div><div class="neg-slug">/' + n.slug + '</div>' + metLinha + '</div>' +
+        '<div><div class="neg-nome">' + n.nome + ' ' + planoBadge + estadoBadge + '</div><div class="neg-slug">/' + n.slug + '</div>' +
+          '<div class="neg-slug" style="margin-top:2px; color:' + (n.dono_email ? '#5a7a8a' : '#c05a3a') + ';">👤 ' + (n.dono_email ? n.dono_email : 'sem dono definido') + '</div>' +
+          metLinha + '</div>' +
         '<div style="display:flex; gap:6px; flex-wrap:wrap;">' +
           '<button class="mini" data-act="editar">⚙️ Gerir</button>' +
           '<button class="mini" data-act="qr">📱 QR</button>' +
@@ -504,7 +506,7 @@
     if(!email){ msg(box, 'Este negócio ainda não tem email de dono. Preenche o email e carrega em Guardar primeiro.', 'erro'); return; }
     const redir = QR_BASE + 'editar.html?n=' + n.slug;
     msg(box, 'A enviar link de acesso…', 'ok');
-    const { error } = await sb.auth.signInWithOtp({ email: email, options: { emailRedirectTo: redir, shouldCreateUser: true } });
+    const { error } = await sb.auth.signInWithOtp({ email: email, options: { emailRedirectTo: redir, shouldCreateUser: true, data: { negocio: n.slug, negocio_nome: n.nome } } });
     if(error){ msg(box, 'Erro: ' + error.message, 'erro'); }
     else { msg(box, 'Link de acesso enviado para ' + email + ' ✓ — ele clica no email e entra direto no editor.', 'ok'); }
   }
