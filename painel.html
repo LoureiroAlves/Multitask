@@ -544,6 +544,41 @@
       box.appendChild(card);
     });
   }
+  // Copia as fotos do cofre temporário 'registos' para o bucket definitivo 'imagens/<slug>/'
+  // e reescreve os URLs no objeto. Assim o negócio fica auto-contido e limpar o cofre não parte nada.
+  async function _migrarFotosRegistos(slug, obj){
+    const marca = '/storage/v1/object/public/registos/';
+    const achados = {};
+    (function walk(v){
+      if(typeof v === 'string'){ if(v.indexOf(marca) >= 0) achados[v] = true; return; }
+      if(Array.isArray(v)){ v.forEach(walk); return; }
+      if(v && typeof v === 'object'){ Object.keys(v).forEach(function(k){ walk(v[k]); }); }
+    })(obj);
+    const urls = Object.keys(achados);
+    if(!urls.length) return obj;
+    let session = (await sb.auth.getSession()).data.session;
+    if(session){ try{ const rr = await sb.auth.refreshSession(); if(rr.data && rr.data.session) session = rr.data.session; }catch(e){} }
+    if(!session || !session.access_token) throw new Error('sessão expirada — sai e volta a entrar');
+    const mapa = {};
+    for(let i = 0; i < urls.length; i++){
+      const url = urls[i];
+      const r = await fetch(url); if(!r.ok) throw new Error('download ' + r.status);
+      const blob = await r.blob();
+      let ext = (url.split('?')[0].split('.').pop() || 'jpg').toLowerCase(); if(!/^[a-z0-9]{1,4}$/.test(ext)) ext = 'jpg';
+      const ct = blob.type || ('image/' + (ext === 'jpg' ? 'jpeg' : ext));
+      const nome = slug + '/reg-' + Date.now() + '-' + i + '.' + ext;
+      const up = await fetch(SUPABASE_URL + '/storage/v1/object/imagens/' + nome, {
+        method:'POST',
+        headers:{ 'Authorization':'Bearer ' + session.access_token, 'apikey': SUPABASE_KEY, 'Content-Type': ct, 'x-upsert':'true' },
+        body: blob
+      });
+      if(!up.ok){ let t=''; try{ t = await up.text(); }catch(e){} throw new Error('upload ' + up.status + ' ' + t.slice(0,80)); }
+      mapa[url] = SUPABASE_URL + '/storage/v1/object/public/imagens/' + nome;
+    }
+    const s2 = JSON.stringify(obj).replace(/"([^"]*\/storage\/v1\/object\/public\/registos\/[^"]*)"/g, function(m, u){ return mapa[u] ? JSON.stringify(mapa[u]) : m; });
+    return JSON.parse(s2);
+  }
+
   async function importarNegocioFicheiro(file){
     const box = document.getElementById('importMsg');
     try{
@@ -553,8 +588,13 @@
       if(!nome || !slug){ msg(box, 'O ficheiro tem de ter "nome" e "slug".', 'erro'); return; }
       const { data:existe } = await sb.from('negocios').select('id').eq('slug', slug).maybeSingle();
       if(existe){ msg(box, 'Já existe um negócio com o slug "' + slug + '". Muda o slug no ficheiro.', 'erro'); return; }
-      const config = o.config || {};
-      const menu = o.menu || { restaurante:'', categorias:[] };
+      let config = o.config || {};
+      let menu = o.menu || { restaurante:'', categorias:[] };
+      try{
+        msg(box, 'A copiar as fotos para o armazenamento definitivo…', 'ok');
+        const migrado = await _migrarFotosRegistos(slug, { config:config, menu:menu });
+        config = migrado.config; menu = migrado.menu;
+      }catch(eMig){ msg(box, '⚠ Não consegui copiar todas as fotos (' + (eMig.message || eMig) + '). Vou criar na mesma, mas confirma as imagens depois.', 'erro'); }
       const { data:neg, error } = await sb.from('negocios').insert({ nome:nome, slug:slug, dono_email:(o.dono_email||'').toLowerCase()||null, config:config, menu:menu }).select().single();
       if(error){ msg(box, 'Erro: ' + error.message, 'erro'); return; }
       await sb.from('entitlements').insert({ negocio_id:neg.id, plano:'pro', funcoes:Object.assign({},FUNCOES_TODAS), publicidade:{ ativo:true } });
