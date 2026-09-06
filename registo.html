@@ -56,6 +56,27 @@
       <input id="nomeQR" type="text" placeholder="Ex.: Singular">
       <label>Endereço curto desejado <span class="op">(opcional — amesadigital.pt/oquê)</span></label>
       <input id="slug" type="text" placeholder="Ex.: singular" autocapitalize="off" autocorrect="off">
+
+      <label style="margin-top:16px;">Fotos da marca <span class="op">(opcional)</span></label>
+      <div class="dica" style="margin-bottom:6px;">Uma foto para cada sítio — todas opcionais.</div>
+      <div id="brandBox" style="display:flex; flex-direction:column; gap:10px;">
+        <div class="brand-row" style="display:flex; align-items:center; gap:10px;">
+          <div style="flex:1; font-weight:700; font-size:.86rem;">Cabeçalho <span class="op" style="display:block; font-weight:600;">(topo do menu)</span></div>
+          <img class="brand-thumb" data-th="cabecalho" style="display:none; width:52px; height:52px; object-fit:cover; border-radius:8px; border:1px solid var(--linha);">
+          <label class="btn sec" style="width:auto; padding:8px 12px; margin:0; cursor:pointer;">＋ foto<input type="file" accept="image/*" data-brand="cabecalho" style="display:none;"></label>
+        </div>
+        <div class="brand-row" style="display:flex; align-items:center; gap:10px;">
+          <div style="flex:1; font-weight:700; font-size:.86rem;">Ecrã de abertura <span class="op" style="display:block; font-weight:600;">(antes do menu)</span></div>
+          <img class="brand-thumb" data-th="abertura" style="display:none; width:52px; height:52px; object-fit:cover; border-radius:8px; border:1px solid var(--linha);">
+          <label class="btn sec" style="width:auto; padding:8px 12px; margin:0; cursor:pointer;">＋ foto<input type="file" accept="image/*" data-brand="abertura" style="display:none;"></label>
+        </div>
+        <div class="brand-row" style="display:flex; align-items:center; gap:10px;">
+          <div style="flex:1; font-weight:700; font-size:.86rem;">Montra ÀMesa <span class="op" style="display:block; font-weight:600;">(cartão na página amesadigital)</span></div>
+          <img class="brand-thumb" data-th="montra" style="display:none; width:52px; height:52px; object-fit:cover; border-radius:8px; border:1px solid var(--linha);">
+          <label class="btn sec" style="width:auto; padding:8px 12px; margin:0; cursor:pointer;">＋ foto<input type="file" accept="image/*" data-brand="montra" style="display:none;"></label>
+        </div>
+      </div>
+      <div id="brandEstado" class="dica" style="margin-top:4px;"></div>
     </div>
 
     <div class="card">
@@ -84,7 +105,6 @@
       <h2>Visual (opcional)</h2>
       <label>Cores / estilo que gostavas</label>
       <input id="estilo" type="text" placeholder="Ex.: tons de vinho e dourado, ar elegante">
-      <div class="dica">O logótipo e as fotos do menu envia-os como <b>anexo</b> (imagem ou PDF) na mesma conversa/email — não cabem no formulário.</div>
       <label style="margin-top:12px;">Algo que queiras destacar / notas</label>
       <textarea id="notas" placeholder="Ex.: temos menus de grupo, esplanada, pratos do dia…"></textarea>
     </div>
@@ -126,7 +146,8 @@
 <script>
   var SUPA_URL = 'https://zewiijcrkyxjkhudlplk.supabase.co';
   var SUPA_KEY = 'sb_publishable_6LP7x2v5c-c9DQkQslnUmA_g13SEjp3';
-  var fotosURLs = [];   // URLs das fotos/PDF carregados
+  var fotosURLs = [];   // URLs das fotos/PDF do menu
+  var brand = {};       // { cabecalho, abertura, montra } — fotos da marca
 
   var CAMPOS = [
     ['nome','Nome do restaurante'], ['subtitulo','Subtítulo'], ['nomeQR','Nome no QR'], ['slug','Endereço curto'],
@@ -139,7 +160,21 @@
   function _get(id){ var e=document.getElementById(id); return e ? e.value.trim() : ''; }
   function _esc(s){ return String(s||'').replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c];}); }
 
-  function recolher(){ var o={}; CAMPOS.forEach(function(c){ var v=_get(c[0]); if(v) o[c[0]]=v; }); if(fotosURLs.length) o.fotos = fotosURLs.slice(); return o; }
+  function recolher(){ var o={}; CAMPOS.forEach(function(c){ var v=_get(c[0]); if(v) o[c[0]]=v; }); if(fotosURLs.length) o.fotos = fotosURLs.slice(); var b={}; ['cabecalho','abertura','montra'].forEach(function(k){ if(brand[k]) b[k]=brand[k]; }); if(Object.keys(b).length) o.brand = b; return o; }
+
+  // ---- Fotos da marca (cabeçalho / abertura / montra) ----
+  { var bb = document.getElementById('brandBox'), best = document.getElementById('brandEstado');
+    if(bb) bb.addEventListener('change', async function(e){
+      var inp = e.target; if(!inp || inp.tagName !== 'INPUT' || !inp.getAttribute('data-brand')) return;
+      var k = inp.getAttribute('data-brand'); var f = inp.files && inp.files[0]; inp.value = '';
+      if(!f) return;
+      var btn = document.getElementById('btnConcluir'); if(btn) btn.disabled = true;
+      if(best) best.textContent = 'A enviar foto (' + k + ')…';
+      try{ var u = await _uploadFicheiro(f); brand[k] = u; var th = bb.querySelector('.brand-thumb[data-th="' + k + '"]'); if(th){ th.src = u; th.style.display = ''; } if(best) best.textContent = ''; }
+      catch(err){ if(best) best.textContent = 'Erro ao enviar: ' + (err && err.message ? err.message : err); }
+      if(btn) btn.disabled = false;
+    });
+  }
 
   // ---- Upload de fotos/PDF para o Supabase Storage (cofre 'registos', público) ----
   function _comprimir(file){
@@ -229,6 +264,11 @@
       document.getElementById('vistaResposta').classList.remove('hide');
       var html = '';
       CAMPOS.forEach(function(c){ if(o[c[0]]) html += '<b>' + _esc(c[1]) + ':</b> ' + _esc(o[c[0]]).replace(/\n/g,'<br>') + '<br>'; });
+      if(o.brand && (o.brand.cabecalho || o.brand.abertura || o.brand.montra)){
+        html += '<b>Fotos da marca:</b><br><div style="display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 8px;">';
+        [['cabecalho','Cabeçalho'],['abertura','Abertura'],['montra','Montra']].forEach(function(p){ var u=o.brand[p[0]]; if(u) html += '<a href="'+_esc(u)+'" target="_blank" title="'+p[1]+'"><img src="'+_esc(u)+'" style="width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--linha);"></a>'; });
+        html += '</div>';
+      }
       if(Array.isArray(o.fotos) && o.fotos.length){
         html += '<b>Fotos / PDF:</b> ' + o.fotos.length + ' ficheiro(s)<br><div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;">';
         o.fotos.forEach(function(u){ var pdf=/\.pdf(\?|$)/i.test(u); html += pdf ? ('<a href="'+_esc(u)+'" target="_blank" style="width:64px;height:64px;border:1px solid var(--linha);border-radius:8px;display:flex;align-items:center;justify-content:center;background:#f3e8d8;color:#7a5320;font-weight:800;font-size:.7rem;text-decoration:none;">PDF</a>') : ('<a href="'+_esc(u)+'" target="_blank"><img src="'+_esc(u)+'" style="width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--linha);"></a>'); });
