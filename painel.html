@@ -47,6 +47,10 @@
   .side-item{ display:flex; align-items:center; gap:10px; width:100%; text-align:left; border:none; background:transparent; color:var(--castanho); font-family:inherit; font-size:.92rem; font-weight:600; padding:11px 13px; border-radius:11px; cursor:pointer; text-decoration:none; transition:background .12s ease; }
   .side-item:hover{ background:var(--bege); }
   .side-item.on{ background:var(--castanho); color:#fff; }
+  .side-item.grupo-a{ border-left:3px solid #2f8a4f; }
+  .side-item.grupo-a.on{ background:#2f8a4f; }
+  .side-item.grupo-b{ border-left:3px solid #7a3fb0; }
+  .side-item.grupo-b.on{ background:#7a3fb0; }
   .side-item.side-sub{ padding-left:30px; font-size:.86rem; font-weight:500; margin-left:8px; border-left:2px solid var(--linha); border-radius:0 11px 11px 0; }
   .side-sublist{ display:none; flex-direction:column; gap:1px; margin:1px 0 6px 10px; padding-left:8px; border-left:2px solid var(--linha); max-height:46vh; overflow-y:auto; }
   .side-sublist.aberta{ display:flex; }
@@ -73,18 +77,6 @@
   <h1>🍀 Multitask — Painel</h1>
 </header>
 
-<div id="formOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:9000; align-items:center; justify-content:center; padding:18px;">
-  <div style="background:#fff; border-radius:16px; max-width:420px; width:100%; padding:20px; box-shadow:0 20px 50px rgba(0,0,0,.3);">
-    <div style="font-family:'Fredoka',sans-serif; font-weight:700; font-size:1.1rem; color:var(--castanho); margin-bottom:6px;">📨 Enviar formulário de registo</div>
-    <div style="font-size:.9rem; color:var(--castanho-suave); margin-bottom:14px;">Envia ao dono o link do formulário. Ele preenche, copia o link da resposta e envia-te de volta (com fotos do menu ou PDF).</div>
-    <button class="acao" id="formWhats" style="width:100%; background:#25d366;">Enviar por WhatsApp</button>
-    <button class="acao" id="formEmail" style="width:100%; margin-top:10px;">Enviar por email</button>
-    <button class="acao" id="formCopiar" style="width:100%; margin-top:10px; background:#fff; color:var(--castanho); border:1.5px solid var(--linha);">📋 Só copiar o link</button>
-    <div id="formOverlayMsg" style="font-size:.82rem; color:var(--castanho-suave); margin-top:8px; min-height:1em;"></div>
-    <button class="acao" id="formFechar" style="width:100%; margin-top:12px; background:transparent; color:var(--castanho-suave); box-shadow:none;">Fechar</button>
-  </div>
-</div>
-
 <div class="wrap">
   <!-- LOGIN -->
   <div class="card" id="loginCard">
@@ -102,10 +94,8 @@
   <div id="painel" class="hide">
     <div class="painel-layout">
       <nav class="side">
-        <button class="side-item" data-tab="criar">➕ Criar negócio</button>
-        <button class="side-item" data-tab="registos">📥 Registos recebidos <span id="regBadge" style="display:none; margin-left:auto; background:#e0245e; color:#fff; font-size:.72rem; font-weight:800; min-width:20px; height:20px; border-radius:10px; padding:0 6px; align-items:center; justify-content:center;"></span></button>
-        <button class="side-item" id="btnFormulario">📨 Formulário de registo</button>
-        <button class="side-item side-sub" data-tab="duplicar">📋 Duplicar negócio</button>
+        <button class="side-item grupo-a" data-tab="criar">➕ Criar negócio</button>
+        <button class="side-item grupo-b" data-tab="formulario">📨 Formulário de registo <span id="regBadge" style="display:none; margin-left:auto; background:#fff; color:#7a3fb0; font-size:.72rem; font-weight:800; min-width:20px; height:20px; border-radius:10px; padding:0 6px; align-items:center; justify-content:center;"></span></button>
         <button class="side-item" data-tab="negocios">🏪 Negócios</button>
         <div id="negSublist" class="side-sublist"></div>
         <button class="side-item" data-tab="publicidade">📢 Publicidade</button>
@@ -134,24 +124,15 @@
     <div class="card">
       <h2 style="margin:0 0 8px; font-size:1.05rem;">📦 Criar a partir de ficheiro</h2>
       <div style="font-size:.82rem; color:#9a8b6f; margin-bottom:10px;">Carrega o ficheiro <code>.json</code> que o Claude te preparou a partir de um registo. Cria o negócio já com o perfil e o menu prontos.</div>
-      <label class="acao" for="importFile" style="display:inline-block; cursor:pointer; text-align:center; background:var(--dourado, #a8712f);">📁 Escolher ficheiro .json</label>
       <input type="file" id="importFile" accept=".json,application/json" style="display:none;">
+      <label for="importFile" id="importDrop" style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; cursor:pointer; padding:22px 16px; border:2px dashed #cbb890; border-radius:14px; background:#faf5ea; color:var(--castanho); text-align:center; transition:.15s;">
+        <span style="font-size:1.8rem; line-height:1;">📁</span>
+        <span style="font-weight:800;">Escolher ficheiro .json</span>
+        <span style="font-size:.78rem; color:#9a8b6f;">ou arrasta o ficheiro para aqui</span>
+      </label>
       <div id="importMsg" style="margin-top:8px;"></div>
     </div>
-        </section>
 
-        <section class="tab-panel hide" data-panel="registos">
-    <div class="card">
-      <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
-        <h2 style="margin:0; font-size:1.05rem;">📥 Registos recebidos</h2>
-        <button class="mini" id="regRefresh">↻ Atualizar</button>
-      </div>
-      <div style="font-size:.82rem; color:#9a8b6f; margin:6px 0 10px;">Formulários preenchidos pelos donos. Carrega em “Copiar para o Claude”, cola no chat, e o Claude prepara o ficheiro do negócio para importares acima.</div>
-      <div id="registosLista"></div>
-    </div>
-        </section>
-
-        <section class="tab-panel hide" data-panel="duplicar">
     <div class="card">
       <h2 style="margin:0 0 10px; font-size:1.05rem;">📋 Duplicar negócio</h2>
       <div style="font-size:.82rem; color:#9a8b6f; margin-bottom:8px;">Copia <strong>tudo</strong> (layout, cores, secções, menu e permissões) de um negócio para um novo. Depois mudas o nome e editas o que quiseres.</div>
@@ -165,6 +146,27 @@
       <input type="email" id="dupEmail" placeholder="dono@exemplo.com">
       <div style="margin-top:12px;"><button class="acao" id="btnDuplicar">Duplicar</button></div>
       <div id="dupMsg"></div>
+    </div>
+        </section>
+
+        <section class="tab-panel hide" data-panel="formulario">
+    <div class="card" style="border-left:4px solid #7a3fb0;">
+      <h2 style="margin:0 0 8px; font-size:1.05rem;">📨 Enviar formulário a um dono</h2>
+      <div style="font-size:.82rem; color:#9a8b6f; margin-bottom:12px;">Envia ao dono o link do formulário. Ele preenche (com as fotos) e o registo aparece aqui em baixo automaticamente.</div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button class="acao" id="formWhats" style="background:#25d366; flex:1; min-width:150px;">Enviar por WhatsApp</button>
+        <button class="acao" id="formEmail" style="flex:1; min-width:150px;">Enviar por email</button>
+      </div>
+      <div style="margin-top:8px;"><button class="mini" id="formCopiar">📋 Copiar só o link</button></div>
+      <div id="formOverlayMsg" style="font-size:.82rem; color:#9a8b6f; margin-top:8px;"></div>
+    </div>
+    <div class="card">
+      <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+        <h2 style="margin:0; font-size:1.05rem;">📥 Registos recebidos</h2>
+        <button class="mini" id="regRefresh">↻ Atualizar</button>
+      </div>
+      <div style="font-size:.82rem; color:#9a8b6f; margin:6px 0 10px;">Formulários preenchidos pelos donos. Carrega em “Copiar para o Claude”, cola no chat, e o Claude prepara o ficheiro do negócio para importares em “Criar negócio”.</div>
+      <div id="registosLista"></div>
     </div>
         </section>
 
@@ -505,7 +507,8 @@
     $('btnCriar').disabled = false;
     if(e2){ msg($('criarMsg'), 'Negócio criado, mas erro nas permissões: ' + e2.message, 'erro'); }
     else { msg($('criarMsg'), 'Negócio "' + nome + '" criado ✓. Abre o editor para começar do zero.', 'ok'); $('nNome').value=''; $('nSlug').value=''; $('nEmailDono').value=''; }
-    carregar();
+    await carregar();
+    try{ if(window.__abrirNeg) window.__abrirNeg(slug); }catch(e){}
   }
 
   // ===== Registos recebidos (formulários de onboarding) =====
@@ -556,11 +559,22 @@
       if(error){ msg(box, 'Erro: ' + error.message, 'erro'); return; }
       await sb.from('entitlements').insert({ negocio_id:neg.id, plano:'pro', funcoes:Object.assign({},FUNCOES_TODAS), publicidade:{ ativo:true } });
       msg(box, 'Negócio "' + nome + '" criado a partir do ficheiro ✓', 'ok');
-      carregar();
+      await carregar();
+      try{ if(window.__abrirNeg) window.__abrirNeg(slug); }catch(e){}
     }catch(e){ msg(box, 'Ficheiro inválido: ' + (e && e.message ? e.message : e), 'erro'); }
   }
   { const fi = document.getElementById('importFile'); if(fi) fi.addEventListener('change', function(){ const f=fi.files&&fi.files[0]; fi.value=''; if(f) importarNegocioFicheiro(f); }); }
+  { const dz = document.getElementById('importDrop');
+    if(dz){
+      const on = function(e){ e.preventDefault(); dz.style.background='#f2e8d0'; dz.style.borderColor='var(--dourado,#a8712f)'; };
+      const off = function(e){ e.preventDefault(); dz.style.background='#faf5ea'; dz.style.borderColor='#cbb890'; };
+      dz.addEventListener('dragover', on); dz.addEventListener('dragenter', on);
+      dz.addEventListener('dragleave', off);
+      dz.addEventListener('drop', function(e){ off(e); const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]; if(f) importarNegocioFicheiro(f); });
+    }
+  }
   { const rr = document.getElementById('regRefresh'); if(rr) rr.onclick = carregarRegistos; }
+  window.__carregarRegistos = carregarRegistos;
 
   async function guardarEnt(n, div){
     const plano = 'pro';
@@ -946,13 +960,8 @@
 
   // ---- Enviar formulário de registo a um novo dono ----
   { const LINK_FORM = SITE + '/registo.html';
-    const MSG = 'Olá! Para pormos o teu restaurante no ÀMesa, preenche este formulário rápido: ' + LINK_FORM + ' — no fim, copia o link que aparece e envia-mo de volta, com fotos do menu (todas as secções) ou um PDF. Obrigado!';
-    const ov = $('formOverlay'), omsg = $('formOverlayMsg');
-    const abrir = function(){ if(omsg) omsg.textContent=''; if(ov) ov.style.display='flex'; };
-    const fechar = function(){ if(ov) ov.style.display='none'; };
-    if($('btnFormulario')) $('btnFormulario').onclick = abrir;
-    if($('formFechar')) $('formFechar').onclick = fechar;
-    if(ov) ov.addEventListener('click', function(e){ if(e.target === ov) fechar(); });
+    const MSG = 'Olá! Para pormos o teu restaurante no ÀMesa, preenche este formulário rápido (podes anexar as fotos do menu ou um PDF): ' + LINK_FORM + ' — quando enviares, chega-me automaticamente. Obrigado!';
+    const omsg = $('formOverlayMsg');
     if($('formWhats')) $('formWhats').onclick = function(){ window.open('https://wa.me/?text=' + encodeURIComponent(MSG), '_blank'); };
     if($('formEmail')) $('formEmail').onclick = function(){ window.location.href = 'mailto:?subject=' + encodeURIComponent('Registo no ÀMesa') + '&body=' + encodeURIComponent(MSG); };
     if($('formCopiar')) $('formCopiar').onclick = async function(){ try{ await navigator.clipboard.writeText(LINK_FORM); if(omsg) omsg.textContent = 'Link copiado ✓ — ' + LINK_FORM; }catch(e){ if(omsg) omsg.textContent = LINK_FORM; } };
@@ -983,6 +992,7 @@
       if(negSub) negSub.classList.toggle('aberta', t === 'negocios');
       if(pubSub) pubSub.classList.toggle('aberta', t === 'publicidade');
       if(t === 'negocios') _prompt();
+      if(t === 'formulario'){ try{ if(window.__carregarRegistos) window.__carregarRegistos(); }catch(e){} }
       if(t === 'publicidade') _pubAplicar();
       try{ localStorage.setItem('painelAba', t); }catch(e){}
     }
@@ -998,6 +1008,7 @@
       Array.prototype.slice.call(document.querySelectorAll('#negSublist .side-sub-neg')).forEach(function(b){ b.classList.toggle('on', b.dataset.slug === slug); });
       var pr = document.getElementById('negPrompt'); if(pr) pr.style.display = 'none';
     }
+    window.__abrirNeg = abrirNeg;
 
     // Constrói a lista de negócios na barra (chamada após carregar)
     window.__buildNegNav = function(){
