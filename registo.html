@@ -1,1 +1,168 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Registo — ÀMesa</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Nunito:wght@400;600;700;800&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  :root{ --terra:#a8712f; --terra-esc:#7a5320; --bege:#fbf7f0; --bege2:#f3e8d8; --linha:#e7d9c4; --ink:#3a2c18; --muted:#8a7a63; --branco:#fff; --ok:#2f8a4f; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:'Nunito',sans-serif; background:var(--bege); color:var(--ink); -webkit-font-smoothing:antialiased; }
+  .wrap{ max-width:640px; margin:0 auto; padding:22px 16px 60px; }
+  .topo{ text-align:center; margin:8px 0 18px; }
+  .logo{ font-family:'Playfair Display',serif; font-size:1.8rem; color:var(--terra-esc); font-weight:700; }
+  .topo p{ color:var(--muted); margin:6px 0 0; font-size:.95rem; }
+  .card{ background:var(--branco); border:1px solid var(--linha); border-radius:16px; padding:16px 16px 18px; box-shadow:0 6px 18px rgba(120,90,50,.06); margin-bottom:14px; }
+  .card h2{ font-family:'Poppins',sans-serif; font-size:1.02rem; margin:0 0 10px; color:var(--terra-esc); }
+  label{ display:block; font-weight:700; font-size:.9rem; margin:12px 0 4px; }
+  label .op{ font-weight:600; color:var(--muted); font-size:.8rem; }
+  input, textarea, select{ width:100%; padding:11px 12px; border:1.5px solid var(--linha); border-radius:10px; background:#fff; font-family:inherit; font-size:1rem; color:var(--ink); }
+  input:focus, textarea:focus, select:focus{ outline:none; border-color:var(--terra); }
+  textarea{ min-height:78px; resize:vertical; }
+  .dica{ font-size:.8rem; color:var(--muted); margin-top:4px; }
+  .btn{ display:block; width:100%; border:none; border-radius:12px; padding:15px; font-family:'Poppins',sans-serif; font-weight:700; font-size:1.02rem; cursor:pointer; background:var(--terra); color:#fff; box-shadow:0 6px 16px rgba(168,113,47,.3); }
+  .btn:active{ transform:translateY(1px); }
+  .btn.sec{ background:#fff; color:var(--terra-esc); border:1.5px solid var(--terra); box-shadow:none; margin-top:10px; }
+  .aviso{ background:#fff6ec; border:1.5px solid var(--terra); border-radius:12px; padding:12px 14px; font-size:.9rem; color:var(--terra-esc); margin-bottom:14px; }
+  .aviso b{ color:var(--terra-esc); }
+  #resultado{ display:none; }
+  .okbox{ background:#eef8f0; border:1.5px solid #b9e0c4; border-radius:12px; padding:14px; color:#245b39; }
+  .linkbox{ width:100%; padding:11px 12px; border:1.5px solid var(--linha); border-radius:10px; background:#fbf8f2; font-family:monospace; font-size:.8rem; word-break:break-all; color:#555; margin-top:8px; }
+  .resumo{ font-size:.9rem; line-height:1.6; }
+  .resumo b{ color:var(--terra-esc); }
+  .hide{ display:none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topo">
+    <div class="logo">ÀMesa</div>
+    <p>Formulário para pôr o teu restaurante online</p>
+  </div>
 
+  <!-- FORMULÁRIO -->
+  <div id="form">
+    <div class="aviso">Preenche o que souberes — <b>quase tudo é opcional</b>. No fim, carrega em <b>“Concluir”</b>, copia o link que aparece e <b>envia-o de volta</b> a quem te enviou este formulário. Junta também <b>fotos do menu (todas as secções) ou um PDF</b> — envia-as como anexo na mesma conversa/email.</div>
+
+    <div class="card">
+      <h2>Identidade</h2>
+      <label>Nome do restaurante <span class="op">(aparece na app e na montra ÀMesa)</span></label>
+      <input id="nome" type="text" placeholder="Ex.: Restaurante Singular">
+      <label>Frase/subtítulo curto <span class="op">(opcional)</span></label>
+      <input id="subtitulo" type="text" placeholder="Ex.: Cozinha tradicional • Grelhados">
+      <label>Nome para o QR code <span class="op">(opcional — se vazio, usa o nome acima)</span></label>
+      <input id="nomeQR" type="text" placeholder="Ex.: Singular">
+      <label>Endereço curto desejado <span class="op">(opcional — amesadigital.pt/oquê)</span></label>
+      <input id="slug" type="text" placeholder="Ex.: singular" autocapitalize="off" autocorrect="off">
+    </div>
+
+    <div class="card">
+      <h2>Contactos</h2>
+      <label>Email <span class="op">(será o acesso do dono ao editor)</span></label>
+      <input id="email" type="email" placeholder="dono@exemplo.com" autocapitalize="off">
+      <label>Telemóvel / WhatsApp <span class="op">(encomendas e reservas)</span></label>
+      <input id="whatsapp" type="tel" placeholder="Ex.: 351 912 345 678 (com indicativo)">
+      <label>Morada <span class="op">(opcional)</span></label>
+      <input id="morada" type="text" placeholder="Rua, número, localidade">
+    </div>
+
+    <div class="card">
+      <h2>Sobre o restaurante</h2>
+      <label>Tipo de cozinha <span class="op">(alimenta o filtro da montra)</span></label>
+      <input id="tipo" type="text" placeholder="Ex.: Português, Pizzaria, Marisqueira…">
+      <label>Horário de funcionamento <span class="op">(opcional)</span></label>
+      <textarea id="horario" placeholder="Ex.: Ter–Dom 12h–15h e 19h–23h • Segunda encerra"></textarea>
+      <label>Instagram <span class="op">(opcional)</span></label>
+      <input id="instagram" type="text" placeholder="@oteurestaurante ou link">
+      <label>Facebook <span class="op">(opcional)</span></label>
+      <input id="facebook" type="text" placeholder="Link ou nome da página">
+    </div>
+
+    <div class="card">
+      <h2>Visual (opcional)</h2>
+      <label>Cores / estilo que gostavas</label>
+      <input id="estilo" type="text" placeholder="Ex.: tons de vinho e dourado, ar elegante">
+      <div class="dica">O logótipo e as fotos do menu envia-os como <b>anexo</b> (imagem ou PDF) na mesma conversa/email — não cabem no formulário.</div>
+      <label style="margin-top:12px;">Algo que queiras destacar / notas</label>
+      <textarea id="notas" placeholder="Ex.: temos menus de grupo, esplanada, pratos do dia…"></textarea>
+    </div>
+
+    <button class="btn" id="btnConcluir">Concluir ✓</button>
+  </div>
+
+  <!-- RESULTADO -->
+  <div id="resultado">
+    <div class="okbox">
+      <div style="font-family:'Poppins',sans-serif; font-weight:700; font-size:1.05rem; margin-bottom:6px;">✓ Quase pronto!</div>
+      Copia o link abaixo e <b>envia-o de volta</b> a quem te enviou este formulário. Não te esqueças de juntar <b>fotos do menu (todas as secções) ou um PDF</b>.
+    </div>
+    <div class="linkbox" id="linkResp"></div>
+    <button class="btn" id="btnCopiar" style="margin-top:10px;">📋 Copiar link</button>
+    <button class="btn sec" id="btnWhats">Enviar por WhatsApp</button>
+    <button class="btn sec" id="btnEmail">Enviar por email</button>
+    <button class="btn sec" id="btnEditar">‹ Voltar a editar</button>
+  </div>
+
+  <!-- VISTA DE RESPOSTA (quando se abre o link já preenchido) -->
+  <div id="vistaResposta" class="hide">
+    <div class="card">
+      <h2>Respostas recebidas</h2>
+      <div class="resumo" id="resumo"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  var CAMPOS = [
+    ['nome','Nome do restaurante'], ['subtitulo','Subtítulo'], ['nomeQR','Nome no QR'], ['slug','Endereço curto'],
+    ['email','Email'], ['whatsapp','WhatsApp'], ['morada','Morada'],
+    ['tipo','Tipo de cozinha'], ['horario','Horário'], ['instagram','Instagram'], ['facebook','Facebook'],
+    ['estilo','Cores/estilo'], ['notas','Notas']
+  ];
+  function _b64e(str){ return btoa(unescape(encodeURIComponent(str))); }
+  function _b64d(b64){ return decodeURIComponent(escape(atob(b64))); }
+  function _get(id){ var e=document.getElementById(id); return e ? e.value.trim() : ''; }
+  function _esc(s){ return String(s||'').replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c];}); }
+
+  function recolher(){ var o={}; CAMPOS.forEach(function(c){ var v=_get(c[0]); if(v) o[c[0]]=v; }); return o; }
+  function linkDaResposta(o){
+    var base = location.href.split('#')[0];
+    return base + '#r=' + _b64e(JSON.stringify(o));
+  }
+
+  document.getElementById('btnConcluir').onclick = function(){
+    var o = recolher();
+    if(!o.nome){ alert('Escreve pelo menos o nome do restaurante.'); document.getElementById('nome').focus(); return; }
+    var link = linkDaResposta(o);
+    document.getElementById('linkResp').textContent = link;
+    document.getElementById('form').style.display = 'none';
+    document.getElementById('resultado').style.display = 'block';
+    window.scrollTo(0,0);
+    document.getElementById('btnCopiar').onclick = function(){
+      try{ navigator.clipboard.writeText(link); this.textContent='✓ Link copiado'; }catch(e){ this.textContent='Seleciona e copia o link acima'; }
+    };
+    var msg = 'Aqui está o registo do meu restaurante para o ÀMesa: ' + link + '\n\n(vou enviar também as fotos do menu / PDF)';
+    document.getElementById('btnWhats').onclick = function(){ window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank'); };
+    document.getElementById('btnEmail').onclick = function(){ window.location.href = 'mailto:?subject=' + encodeURIComponent('Registo ÀMesa — ' + o.nome) + '&body=' + encodeURIComponent(msg); };
+    document.getElementById('btnEditar').onclick = function(){ document.getElementById('resultado').style.display='none'; document.getElementById('form').style.display='block'; };
+  };
+
+  // Se abrir com #r=... mostra as respostas (para quem recebe o link poder ler)
+  (function(){
+    var h = location.hash || '';
+    var m = h.match(/[#&]r=([^&]+)/);
+    if(!m) return;
+    try{
+      var o = JSON.parse(_b64d(decodeURIComponent(m[1])));
+      document.getElementById('form').style.display = 'none';
+      document.getElementById('vistaResposta').classList.remove('hide');
+      var html = '';
+      CAMPOS.forEach(function(c){ if(o[c[0]]) html += '<b>' + _esc(c[1]) + ':</b> ' + _esc(o[c[0]]).replace(/\n/g,'<br>') + '<br>'; });
+      document.getElementById('resumo').innerHTML = html || '(sem dados)';
+    }catch(e){ /* link inválido — mostra o formulário normal */ }
+  })();
+</script>
+</body>
+</html>

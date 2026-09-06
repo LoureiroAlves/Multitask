@@ -73,6 +73,18 @@
   <h1>🍀 Multitask — Painel</h1>
 </header>
 
+<div id="formOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:9000; align-items:center; justify-content:center; padding:18px;">
+  <div style="background:#fff; border-radius:16px; max-width:420px; width:100%; padding:20px; box-shadow:0 20px 50px rgba(0,0,0,.3);">
+    <div style="font-family:'Fredoka',sans-serif; font-weight:700; font-size:1.1rem; color:var(--castanho); margin-bottom:6px;">📨 Enviar formulário de registo</div>
+    <div style="font-size:.9rem; color:var(--castanho-suave); margin-bottom:14px;">Envia ao dono o link do formulário. Ele preenche, copia o link da resposta e envia-te de volta (com fotos do menu ou PDF).</div>
+    <button class="acao" id="formWhats" style="width:100%; background:#25d366;">Enviar por WhatsApp</button>
+    <button class="acao" id="formEmail" style="width:100%; margin-top:10px;">Enviar por email</button>
+    <button class="acao" id="formCopiar" style="width:100%; margin-top:10px; background:#fff; color:var(--castanho); border:1.5px solid var(--linha);">📋 Só copiar o link</button>
+    <div id="formOverlayMsg" style="font-size:.82rem; color:var(--castanho-suave); margin-top:8px; min-height:1em;"></div>
+    <button class="acao" id="formFechar" style="width:100%; margin-top:12px; background:transparent; color:var(--castanho-suave); box-shadow:none;">Fechar</button>
+  </div>
+</div>
+
 <div class="wrap">
   <!-- LOGIN -->
   <div class="card" id="loginCard">
@@ -91,6 +103,7 @@
     <div class="painel-layout">
       <nav class="side">
         <button class="side-item" data-tab="criar">➕ Criar negócio</button>
+        <button class="side-item" id="btnFormulario">📨 Formulário de registo</button>
         <button class="side-item side-sub" data-tab="duplicar">📋 Duplicar negócio</button>
         <button class="side-item" data-tab="negocios">🏪 Negócios</button>
         <div id="negSublist" class="side-sublist"></div>
@@ -855,6 +868,20 @@
     $('limparOverlay').onclick = function(e){ if(e.target === $('limparOverlay')) $('limparOverlay').style.display = 'none'; };
   }
   { const _lf = $('btnLimparFotos'); if(_lf) _lf.onclick = limparFotosGlobais; }
+
+  // ---- Enviar formulário de registo a um novo dono ----
+  { const LINK_FORM = SITE + '/registo.html';
+    const MSG = 'Olá! Para pormos o teu restaurante no ÀMesa, preenche este formulário rápido: ' + LINK_FORM + ' — no fim, copia o link que aparece e envia-mo de volta, com fotos do menu (todas as secções) ou um PDF. Obrigado!';
+    const ov = $('formOverlay'), omsg = $('formOverlayMsg');
+    const abrir = function(){ if(omsg) omsg.textContent=''; if(ov) ov.style.display='flex'; };
+    const fechar = function(){ if(ov) ov.style.display='none'; };
+    if($('btnFormulario')) $('btnFormulario').onclick = abrir;
+    if($('formFechar')) $('formFechar').onclick = fechar;
+    if(ov) ov.addEventListener('click', function(e){ if(e.target === ov) fechar(); });
+    if($('formWhats')) $('formWhats').onclick = function(){ window.open('https://wa.me/?text=' + encodeURIComponent(MSG), '_blank'); };
+    if($('formEmail')) $('formEmail').onclick = function(){ window.location.href = 'mailto:?subject=' + encodeURIComponent('Registo no ÀMesa') + '&body=' + encodeURIComponent(MSG); };
+    if($('formCopiar')) $('formCopiar').onclick = async function(){ try{ await navigator.clipboard.writeText(LINK_FORM); if(omsg) omsg.textContent = 'Link copiado ✓ — ' + LINK_FORM; }catch(e){ if(omsg) omsg.textContent = LINK_FORM; } };
+  }
 
   // arranque
   verificar();
