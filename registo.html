@@ -44,7 +44,7 @@
 
   <!-- FORMULÁRIO -->
   <div id="form">
-    <div class="aviso">Preenche o que souberes — <b>quase tudo é opcional</b>. No fim, carrega em <b>“Concluir”</b>, copia o link que aparece e <b>envia-o de volta</b> a quem te enviou este formulário. Junta também <b>fotos do menu (todas as secções) ou um PDF</b> — envia-as como anexo na mesma conversa/email.</div>
+    <div class="aviso">Preenche o que souberes — <b>quase tudo é opcional</b>. Podes <b>anexar aqui as fotos do menu ou um PDF</b>. No fim, carrega em <b>“Concluir”</b>, copia o link que aparece e <b>envia-o de volta</b> a quem te enviou este formulário.</div>
 
     <div class="card">
       <h2>Identidade</h2>
@@ -89,6 +89,15 @@
       <textarea id="notas" placeholder="Ex.: temos menus de grupo, esplanada, pratos do dia…"></textarea>
     </div>
 
+    <div class="card">
+      <h2>Menu — fotos ou PDF</h2>
+      <div class="dica" style="margin-bottom:8px;">Fotografa <b>todas as secções do cardápio</b> (entradas, pratos, bebidas, sobremesas…) ou envia o <b>PDF</b>. Podes escolher vários de uma vez.</div>
+      <label class="btn sec" style="cursor:pointer; text-align:center;" for="fotosInput">＋ Adicionar fotos / PDF</label>
+      <input id="fotosInput" type="file" accept="image/*,application/pdf" multiple style="display:none;">
+      <div id="fotosEstado" class="dica" style="margin-top:8px;"></div>
+      <div id="fotosLista" style="display:flex; flex-wrap:wrap; gap:8px; margin-top:8px;"></div>
+    </div>
+
     <button class="btn" id="btnConcluir">Concluir ✓</button>
   </div>
 
@@ -96,7 +105,7 @@
   <div id="resultado">
     <div class="okbox">
       <div style="font-family:'Poppins',sans-serif; font-weight:700; font-size:1.05rem; margin-bottom:6px;">✓ Quase pronto!</div>
-      Copia o link abaixo e <b>envia-o de volta</b> a quem te enviou este formulário. Não te esqueças de juntar <b>fotos do menu (todas as secções) ou um PDF</b>.
+      Copia o link abaixo e <b>envia-o de volta</b> a quem te enviou este formulário. As fotos/PDF que carregaste <b>já seguem no link</b>.
     </div>
     <div class="linkbox" id="linkResp"></div>
     <button class="btn" id="btnCopiar" style="margin-top:10px;">📋 Copiar link</button>
@@ -115,6 +124,10 @@
 </div>
 
 <script>
+  var SUPA_URL = 'https://zewiijcrkyxjkhudlplk.supabase.co';
+  var SUPA_KEY = 'sb_publishable_6LP7x2v5c-c9DQkQslnUmA_g13SEjp3';
+  var fotosURLs = [];   // URLs das fotos/PDF carregados
+
   var CAMPOS = [
     ['nome','Nome do restaurante'], ['subtitulo','Subtítulo'], ['nomeQR','Nome no QR'], ['slug','Endereço curto'],
     ['email','Email'], ['whatsapp','WhatsApp'], ['morada','Morada'],
@@ -126,7 +139,63 @@
   function _get(id){ var e=document.getElementById(id); return e ? e.value.trim() : ''; }
   function _esc(s){ return String(s||'').replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c];}); }
 
-  function recolher(){ var o={}; CAMPOS.forEach(function(c){ var v=_get(c[0]); if(v) o[c[0]]=v; }); return o; }
+  function recolher(){ var o={}; CAMPOS.forEach(function(c){ var v=_get(c[0]); if(v) o[c[0]]=v; }); if(fotosURLs.length) o.fotos = fotosURLs.slice(); return o; }
+
+  // ---- Upload de fotos/PDF para o Supabase Storage (cofre 'registos', público) ----
+  function _comprimir(file){
+    return new Promise(function(res){
+      if(!/^image\//.test(file.type)){ res({ blob:file, ext:(file.name.split('.').pop()||'bin').toLowerCase(), ctype:file.type||'application/octet-stream' }); return; }
+      var img = new Image(); var url = URL.createObjectURL(file);
+      img.onload = function(){
+        var max = 1600, w = img.width, h = img.height;
+        if(w > max || h > max){ if(w >= h){ h = Math.round(h*max/w); w = max; } else { w = Math.round(w*max/h); h = max; } }
+        var cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+        cv.getContext('2d').drawImage(img, 0, 0, w, h);
+        URL.revokeObjectURL(url);
+        cv.toBlob(function(b){ res({ blob:b || file, ext:'jpg', ctype:'image/jpeg' }); }, 'image/jpeg', 0.85);
+      };
+      img.onerror = function(){ URL.revokeObjectURL(url); res({ blob:file, ext:(file.name.split('.').pop()||'jpg').toLowerCase(), ctype:file.type||'image/jpeg' }); };
+      img.src = url;
+    });
+  }
+  async function _uploadFicheiro(file){
+    var c = await _comprimir(file);
+    var path = 'registos/' + Date.now() + '-' + Math.random().toString(36).slice(2,7) + '.' + c.ext;
+    var resp = await fetch(SUPA_URL + '/storage/v1/object/' + path, {
+      method:'POST',
+      headers:{ apikey:SUPA_KEY, Authorization:'Bearer ' + SUPA_KEY, 'Content-Type':c.ctype, 'x-upsert':'true' },
+      body: c.blob
+    });
+    if(!resp.ok){ throw new Error('Upload falhou (' + resp.status + ')'); }
+    return SUPA_URL + '/storage/v1/object/public/' + path;
+  }
+  function _renderFotos(){
+    var box = document.getElementById('fotosLista'); if(!box) return; box.innerHTML = '';
+    fotosURLs.forEach(function(u, i){
+      var ehPdf = /\.pdf(\?|$)/i.test(u);
+      var el = document.createElement('div');
+      el.style.cssText = 'position:relative; width:64px; height:64px; border-radius:8px; overflow:hidden; border:1px solid var(--linha); background:#f3e8d8; display:flex; align-items:center; justify-content:center;';
+      el.innerHTML = ehPdf ? '<span style="font-size:.7rem; font-weight:800; color:#7a5320;">PDF</span>' : ('<img src="' + u + '" style="width:100%;height:100%;object-fit:cover;">');
+      var x = document.createElement('button'); x.type='button'; x.textContent='✕';
+      x.style.cssText = 'position:absolute; top:2px; right:2px; width:18px; height:18px; border:none; border-radius:50%; background:rgba(0,0,0,.55); color:#fff; font-size:.7rem; line-height:1; cursor:pointer;';
+      x.onclick = function(){ fotosURLs.splice(i,1); _renderFotos(); };
+      el.appendChild(x); box.appendChild(el);
+    });
+  }
+  { var fi = document.getElementById('fotosInput'), est = document.getElementById('fotosEstado');
+    if(fi) fi.addEventListener('change', async function(){
+      var files = Array.prototype.slice.call(fi.files || []); fi.value = '';
+      if(!files.length) return;
+      var btn = document.getElementById('btnConcluir'); if(btn) btn.disabled = true;
+      for(var i=0;i<files.length;i++){
+        est.textContent = 'A enviar ' + (i+1) + '/' + files.length + '…';
+        try{ var u = await _uploadFicheiro(files[i]); fotosURLs.push(u); _renderFotos(); }
+        catch(e){ est.textContent = 'Erro a enviar uma imagem: ' + (e && e.message ? e.message : e); }
+      }
+      est.textContent = fotosURLs.length + ' ficheiro(s) carregado(s) ✓';
+      if(btn) btn.disabled = false;
+    });
+  }
   function linkDaResposta(o){
     var base = location.href.split('#')[0];
     return base + '#r=' + _b64e(JSON.stringify(o));
@@ -143,7 +212,7 @@
     document.getElementById('btnCopiar').onclick = function(){
       try{ navigator.clipboard.writeText(link); this.textContent='✓ Link copiado'; }catch(e){ this.textContent='Seleciona e copia o link acima'; }
     };
-    var msg = 'Aqui está o registo do meu restaurante para o ÀMesa: ' + link + '\n\n(vou enviar também as fotos do menu / PDF)';
+    var msg = 'Aqui está o registo do meu restaurante para o ÀMesa (fotos/menu incluídos no link): ' + link;
     document.getElementById('btnWhats').onclick = function(){ window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank'); };
     document.getElementById('btnEmail').onclick = function(){ window.location.href = 'mailto:?subject=' + encodeURIComponent('Registo ÀMesa — ' + o.nome) + '&body=' + encodeURIComponent(msg); };
     document.getElementById('btnEditar').onclick = function(){ document.getElementById('resultado').style.display='none'; document.getElementById('form').style.display='block'; };
@@ -160,6 +229,11 @@
       document.getElementById('vistaResposta').classList.remove('hide');
       var html = '';
       CAMPOS.forEach(function(c){ if(o[c[0]]) html += '<b>' + _esc(c[1]) + ':</b> ' + _esc(o[c[0]]).replace(/\n/g,'<br>') + '<br>'; });
+      if(Array.isArray(o.fotos) && o.fotos.length){
+        html += '<b>Fotos / PDF:</b> ' + o.fotos.length + ' ficheiro(s)<br><div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;">';
+        o.fotos.forEach(function(u){ var pdf=/\.pdf(\?|$)/i.test(u); html += pdf ? ('<a href="'+_esc(u)+'" target="_blank" style="width:64px;height:64px;border:1px solid var(--linha);border-radius:8px;display:flex;align-items:center;justify-content:center;background:#f3e8d8;color:#7a5320;font-weight:800;font-size:.7rem;text-decoration:none;">PDF</a>') : ('<a href="'+_esc(u)+'" target="_blank"><img src="'+_esc(u)+'" style="width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--linha);"></a>'); });
+        html += '</div>';
+      }
       document.getElementById('resumo').innerHTML = html || '(sem dados)';
     }catch(e){ /* link inválido — mostra o formulário normal */ }
   })();
