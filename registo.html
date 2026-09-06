@@ -183,14 +183,21 @@
   }
   async function _uploadFicheiro(file){
     var c = await _comprimir(file);
-    var path = 'registos/' + Date.now() + '-' + Math.random().toString(36).slice(2,7) + '.' + c.ext;
-    var resp = await fetch(SUPA_URL + '/storage/v1/object/' + path, {
-      method:'POST',
-      headers:{ apikey:SUPA_KEY, Authorization:'Bearer ' + SUPA_KEY, 'Content-Type':c.ctype, 'x-upsert':'true' },
-      body: c.blob
-    });
-    if(!resp.ok){ throw new Error('Upload falhou (' + resp.status + ')'); }
-    return SUPA_URL + '/storage/v1/object/public/' + path;
+    var ultimo = 0;
+    for(var tent = 0; tent < 3; tent++){
+      var path = 'registos/' + Date.now() + '-' + Math.random().toString(36).slice(2,7) + '.' + c.ext;
+      try{
+        var resp = await fetch(SUPA_URL + '/storage/v1/object/' + path, {
+          method:'POST',
+          headers:{ apikey:SUPA_KEY, Authorization:'Bearer ' + SUPA_KEY, 'Content-Type':c.ctype, 'x-upsert':'true' },
+          body: c.blob
+        });
+        if(resp.ok){ return SUPA_URL + '/storage/v1/object/public/' + path; }
+        ultimo = resp.status;
+      }catch(e){ ultimo = 'rede'; }
+      await new Promise(function(r){ setTimeout(r, 900); });   // espera e tenta de novo (propagação/rede)
+    }
+    throw new Error('Upload falhou (' + ultimo + ')');
   }
   function _renderFotos(){
     var box = document.getElementById('fotosLista'); if(!box) return; box.innerHTML = '';
