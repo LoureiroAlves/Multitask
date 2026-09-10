@@ -1,1 +1,216 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<script>/* Domínio oficial: se abrir pelo GitHub Pages, salta para o amesadigital.pt */(function(){try{if(/github\.io$/i.test(location.hostname)){location.replace('https://amesadigital.pt'+location.pathname.replace(/^\/Multitask/i,'')+location.search+location.hash);}}catch(e){}})();</script>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calendário de reservas</title>
+<style>
+  :root{ --castanho:#3a2c18; --dourado:#a8712f; --dourado-escuro:#6b4a1f; --bege:#f5efe2; --bege-claro:#fbf8f2; --linha:#e3d9c4; --verde:#2e9b57; --vermelho:#c0392b; --azul:#2a5aa8; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; background:var(--bege-claro); color:var(--castanho); }
+  header.top{ background:var(--castanho); color:#fff; padding:14px 18px; display:flex; align-items:center; justify-content:space-between; }
+  header.top h1{ font-size:1.1rem; margin:0; }
+  header.top button{ background:rgba(255,255,255,.15); color:#fff; border:none; border-radius:8px; padding:8px 12px; cursor:pointer; font-size:.82rem; }
+  .wrap{ max-width:760px; margin:0 auto; padding:16px; }
+  .card{ background:#fff; border:1px solid var(--linha); border-radius:14px; padding:16px; margin-bottom:14px; }
+  input{ width:100%; padding:10px 12px; border:1.5px solid var(--linha); border-radius:9px; font-family:inherit; font-size:.95rem; margin-bottom:9px; }
+  label{ font-size:.82rem; font-weight:600; color:var(--dourado-escuro); display:block; margin:6px 0 4px; }
+  button.acao{ background:var(--dourado); color:#fff; border:none; border-radius:10px; padding:11px 16px; font-weight:700; cursor:pointer; }
+  .msg{ font-size:.85rem; margin-top:8px; } .msg.erro{ color:var(--vermelho); }
+  .hide{ display:none; }
 
+  /* Barra do mês */
+  .mes-bar{ display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+  .mes-bar button{ background:#fff; border:1px solid var(--linha); border-radius:9px; width:40px; height:40px; font-size:1.2rem; cursor:pointer; color:var(--castanho); }
+  .mes-bar .mes-nome{ font-weight:800; font-size:1.05rem; text-transform:capitalize; }
+
+  /* Grelha do calendário */
+  .cal{ background:#fff; border:1px solid var(--linha); border-radius:14px; padding:10px; }
+  .cal-cab, .cal-grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:5px; }
+  .cal-cab div{ text-align:center; font-size:.72rem; font-weight:700; color:#9a8b6f; padding:4px 0; }
+  .dia{ position:relative; aspect-ratio:1/1; border:1px solid transparent; border-radius:10px; display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:.92rem; cursor:default; background:#faf6ee; }
+  .dia.vazio{ background:transparent; }
+  .dia.tem{ cursor:pointer; background:#fbf8f2; border-color:var(--linha); }
+  .dia.hoje{ outline:2px solid var(--dourado); outline-offset:-2px; }
+  .dia.sel{ background:var(--castanho); color:#fff; }
+  .dia .num{ line-height:1; }
+  .dia .pts{ display:flex; gap:3px; margin-top:4px; height:7px; align-items:center; }
+  .dia .pt{ width:7px; height:7px; border-radius:50%; }
+  .pt.pend{ background:var(--dourado); }
+  .pt.conf{ background:var(--verde); }
+  .dia.sel .pt.pend{ background:#f2c879; } .dia.sel .pt.conf{ background:#7ed3a1; }
+  .dia .cnt{ position:absolute; top:3px; right:5px; font-size:.6rem; font-weight:800; color:#b6a179; }
+  .dia.sel .cnt{ color:#f0e3c8; }
+
+  .legenda{ display:flex; gap:14px; justify-content:center; margin:10px 0 0; font-size:.76rem; color:#8a7a5c; }
+  .legenda span{ display:inline-flex; align-items:center; gap:5px; }
+  .legenda i{ width:9px; height:9px; border-radius:50%; display:inline-block; }
+
+  /* Detalhe do dia */
+  .r{ border:1px solid var(--linha); border-radius:12px; padding:12px 14px; margin-bottom:10px; }
+  .r.confirmada{ border-left:4px solid var(--verde); }
+  .r.pendente{ border-left:4px solid var(--dourado); }
+  .r.cancelada{ border-left:4px solid var(--vermelho); opacity:.6; }
+  .r-top{ display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; align-items:baseline; }
+  .r-quando{ font-weight:800; font-size:1.05rem; }
+  .r-nome{ font-size:.95rem; margin-top:2px; }
+  .r-meta{ font-size:.82rem; color:#8a7a5c; margin-top:3px; }
+  .r-menu{ font-size:.85rem; color:var(--dourado-escuro); margin-top:4px; font-weight:600; }
+  .r-acoes{ display:flex; gap:6px; flex-wrap:wrap; margin-top:10px; }
+  .r-acoes button, .r-acoes a button{ border:1px solid var(--linha); background:#fff; border-radius:8px; padding:7px 11px; cursor:pointer; font-size:.82rem; }
+  .r-acoes button.ok{ color:#fff; background:var(--verde); border-color:var(--verde); }
+  .r-acoes button.no{ color:var(--vermelho); border-color:#e8c4bf; }
+  .pill{ font-size:.7rem; font-weight:700; padding:2px 8px; border-radius:20px; }
+  .pill.pendente{ background:#f6ecd6; color:var(--dourado-escuro); }
+  .pill.confirmada{ background:#e6f4ea; color:var(--verde); }
+  .pill.cancelada{ background:#fbe7e4; color:var(--vermelho); }
+</style>
+</head>
+<body>
+<header class="top">
+  <h1 id="topTit">Calendário de reservas</h1>
+  <button class="hide" id="btnSair">Sair</button>
+</header>
+<div class="wrap">
+  <div class="card" id="loginCard">
+    <h2 style="margin:0 0 8px; font-size:1.05rem;">Entrar</h2>
+    <label for="email">Email</label>
+    <input type="email" id="email" autocomplete="username">
+    <label for="pass">Password</label>
+    <input type="password" id="pass" autocomplete="current-password">
+    <button class="acao" id="btnEntrar">Entrar</button>
+    <div id="loginMsg" class="msg"></div>
+  </div>
+
+  <div id="painel" class="hide">
+    <div class="mes-bar">
+      <button id="mesPrev" aria-label="Mês anterior">‹</button>
+      <div class="mes-nome" id="mesNome"></div>
+      <button id="mesNext" aria-label="Mês seguinte">›</button>
+    </div>
+    <div class="cal">
+      <div class="cal-cab"><div>Seg</div><div>Ter</div><div>Qua</div><div>Qui</div><div>Sex</div><div>Sáb</div><div>Dom</div></div>
+      <div class="cal-grid" id="grid"></div>
+    </div>
+    <div class="legenda"><span><i style="background:var(--dourado)"></i> Pendente</span><span><i style="background:var(--verde)"></i> Confirmada</span></div>
+    <div id="detalhe" style="margin-top:14px;"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const SUPA_URL = 'https://zewiijcrkyxjkhudlplk.supabase.co';
+  const SUPA_KEY = 'sb_publishable_6LP7x2v5c-c9DQkQslnUmA_g13SEjp3';
+  const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
+  const SLUG = ((new URLSearchParams(location.search)).get('n') || '').toLowerCase().replace(/[^a-z0-9]/g,'');
+  const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const $ = id => document.getElementById(id);
+  let negocio = null, reservas = [], porDia = {};
+  const hoje = new Date(); let vAno = hoje.getFullYear(), vMes = hoje.getMonth(), diaSel = null;
+
+  function isoLocal(d){ return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
+
+  $('btnEntrar').onclick = entrar;
+  $('pass').addEventListener('keydown', e => { if(e.key==='Enter') entrar(); });
+  $('btnSair').onclick = async () => { await sb.auth.signOut(); location.reload(); };
+  $('mesPrev').onclick = () => { vMes--; if(vMes<0){ vMes=11; vAno--; } diaSel=null; $('detalhe').innerHTML=''; renderCal(); };
+  $('mesNext').onclick = () => { vMes++; if(vMes>11){ vMes=0; vAno++; } diaSel=null; $('detalhe').innerHTML=''; renderCal(); };
+
+  async function entrar(){
+    const email = $('email').value.trim(), pass = $('pass').value;
+    if(!email || !pass){ $('loginMsg').textContent='Preenche email e password.'; $('loginMsg').className='msg erro'; return; }
+    $('btnEntrar').disabled = true;
+    const { error } = await sb.auth.signInWithPassword({ email, password:pass });
+    $('btnEntrar').disabled = false;
+    if(error){ $('loginMsg').textContent='Erro: '+error.message; $('loginMsg').className='msg erro'; return; }
+    iniciar();
+  }
+
+  async function iniciar(){
+    const { data:{ session } } = await sb.auth.getSession();
+    if(!session) return;
+    if(!SLUG){ $('loginMsg').textContent='Falta ?n=slug no endereço.'; $('loginMsg').className='msg erro'; return; }
+    const { data:neg } = await sb.from('negocios').select('id,nome,slug').eq('slug', SLUG).maybeSingle();
+    if(!neg){ $('loginMsg').textContent='Negócio não encontrado.'; $('loginMsg').className='msg erro'; return; }
+    negocio = neg;
+    $('topTit').textContent = 'Reservas · ' + neg.nome;
+    $('loginCard').classList.add('hide'); $('painel').classList.remove('hide'); $('btnSair').classList.remove('hide');
+    carregar();
+  }
+
+  async function carregar(){
+    const { data, error } = await sb.from('reservas').select('*').eq('negocio_id', negocio.id).order('hora');
+    if(error){ $('detalhe').innerHTML = '<div class="msg erro">Erro: '+error.message+'</div>'; return; }
+    reservas = data || [];
+    porDia = {};
+    reservas.forEach(function(r){ (porDia[r.data] = porDia[r.data] || []).push(r); });
+    renderCal();
+    if(diaSel) renderDia(diaSel);
+  }
+
+  function renderCal(){
+    $('mesNome').textContent = MESES[vMes] + ' ' + vAno;
+    const primeiro = new Date(vAno, vMes, 1);
+    const arranque = (primeiro.getDay() + 6) % 7;   // segunda = 0
+    const dias = new Date(vAno, vMes+1, 0).getDate();
+    const hojeIso = isoLocal(hoje);
+    let html = '';
+    for(let i=0;i<arranque;i++) html += '<div class="dia vazio"></div>';
+    for(let d=1; d<=dias; d++){
+      const iso = vAno + '-' + String(vMes+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+      const rs = (porDia[iso] || []).filter(function(r){ return r.estado !== 'cancelada'; });
+      const nPend = rs.filter(function(r){ return r.estado==='pendente'; }).length;
+      const nConf = rs.filter(function(r){ return r.estado==='confirmada'; }).length;
+      let cls = 'dia'; if(rs.length) cls += ' tem'; if(iso===hojeIso) cls += ' hoje'; if(iso===diaSel) cls += ' sel';
+      let pts = '';
+      if(nPend) pts += '<span class="pt pend"></span>';
+      if(nConf) pts += '<span class="pt conf"></span>';
+      html += '<div class="'+cls+'" data-dia="'+iso+'">'
+            + (rs.length ? '<span class="cnt">'+rs.length+'</span>' : '')
+            + '<span class="num">'+d+'</span>'
+            + '<span class="pts">'+pts+'</span></div>';
+    }
+    $('grid').innerHTML = html;
+    $('grid').querySelectorAll('.dia.tem').forEach(function(el){ el.onclick = function(){ diaSel = el.getAttribute('data-dia'); renderCal(); renderDia(diaSel); }; });
+  }
+
+  function renderDia(iso){
+    const d = new Date(iso + 'T00:00:00');
+    const rs = (porDia[iso] || []).slice().sort(function(a,b){ return (a.hora||'').localeCompare(b.hora||''); });
+    let html = '<div class="card"><div style="font-weight:800; margin-bottom:10px; text-transform:capitalize;">'+d.getDate()+' de '+MESES[d.getMonth()].toLowerCase()+'</div>';
+    if(!rs.length){ html += '<div style="color:#8a7a5c; font-size:.9rem;">Sem reservas neste dia.</div></div>'; $('detalhe').innerHTML = html; return; }
+    html += '</div>';
+    rs.forEach(function(r){
+      let acoes = '';
+      if(r.estado!=='confirmada') acoes += '<button class="ok" data-a="confirmar" data-id="'+r.id+'">✔ Confirmar</button>';
+      if(r.estado!=='cancelada') acoes += '<button class="no" data-a="cancelar" data-id="'+r.id+'">✕ Recusar</button>';
+      acoes += '<a href="tel:'+esc(r.telefone||'')+'"><button>📞 Ligar</button></a>';
+      const menu = r.obs ? ('<div class="r-menu">🍽 '+esc(r.obs)+'</div>') : '';
+      html += '<div class="r '+r.estado+'">'
+        + '<div class="r-top"><span class="r-quando">'+esc(r.hora||'')+'</span><span class="pill '+r.estado+'">'+r.estado+'</span></div>'
+        + '<div class="r-nome">'+esc(r.nome||'')+' · '+(Number(r.pessoas)||1)+' pessoa(s)</div>'
+        + '<div class="r-meta">📱 '+esc(r.telefone||'')+'</div>'
+        + menu
+        + '<div class="r-acoes">'+acoes+'</div></div>';
+    });
+    $('detalhe').innerHTML = html;
+    $('detalhe').querySelectorAll('[data-a]').forEach(function(btn){ btn.onclick = function(){ accao(btn.getAttribute('data-id'), btn.getAttribute('data-a')); }; });
+  }
+
+  async function accao(id, a){
+    let patch = null;
+    if(a==='confirmar') patch = { estado:'confirmada' };
+    else if(a==='cancelar'){ if(!confirm('Recusar/cancelar esta reserva?')) return; patch = { estado:'cancelada' }; }
+    if(!patch) return;
+    const { error } = await sb.from('reservas').update(patch).eq('id', id);
+    if(error){ alert('Erro: '+error.message); return; }
+    carregar();
+  }
+
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+
+  iniciar();
+</script>
+</body>
+</html>
