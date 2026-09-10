@@ -350,7 +350,8 @@
   function tipoDoConfig(cfg){ try{ return (cfg && cfg.tipo) ? String(cfg.tipo).trim() : ''; }catch(e){ return ''; } }
 
   function renderFiltros(){
-    var tipos = [];
+    // Tipos: parte da lista completa (TIPOS_ALL, carregada à parte) + o que já veio nas páginas.
+    var tipos = (typeof TIPOS_ALL !== 'undefined' && TIPOS_ALL) ? TIPOS_ALL.slice() : [];
     TODOS.forEach(function(n){ var t = tipoDoConfig(n.config); if(t && tipos.indexOf(t) < 0) tipos.push(t); });
     tipos.sort(function(a,b){ return a.localeCompare(b); });
     var el = document.getElementById('filtros');
@@ -362,9 +363,21 @@
     if(temFav || soFav || temPromo || soPromo || tipos.length) chips.push('<button class="chip' + (filtroTipo === '' && !soFav && !soPromo ? ' on' : '') + '" data-t="">Todos</button>');
     tipos.forEach(function(t){ chips.push('<button class="chip' + (filtroTipo === t && !soFav && !soPromo ? ' on' : '') + '" data-t="' + esc(t) + '">' + esc(t) + '</button>'); });
     el.innerHTML = chips.join('');
-    el.querySelectorAll('.chip[data-t]').forEach(function(b){ b.onclick = function(){ soFav = false; soPromo = false; filtroTipo = b.getAttribute('data-t'); renderFiltros(); aplicar(); }; });
-    var _fc = el.querySelector('[data-fav-chip]'); if(_fc) _fc.onclick = function(){ soFav = !soFav; if(soFav) soPromo = false; renderFiltros(); aplicar(); };
-    var _pc = el.querySelector('[data-promo-chip]'); if(_pc) _pc.onclick = function(){ soPromo = !soPromo; if(soPromo) soFav = false; renderFiltros(); aplicar(); };
+    // Ao filtrar/pesquisar precisamos de TODOS os restaurantes carregados — só então garantimos tudo.
+    var _tudo = (typeof window.__garantirTudo === 'function') ? window.__garantirTudo : function(){ return Promise.resolve(); };
+    el.querySelectorAll('.chip[data-t]').forEach(function(b){ b.onclick = function(){
+      var t = b.getAttribute('data-t');
+      var go = function(){ soFav = false; soPromo = false; filtroTipo = t; renderFiltros(); aplicar(); };
+      if(t) _tudo().then(go); else go();   // "Todos" não força carregar tudo
+    }; });
+    var _fc = el.querySelector('[data-fav-chip]'); if(_fc) _fc.onclick = function(){
+      var novo = !soFav; var go = function(){ soFav = novo; if(soFav) soPromo = false; renderFiltros(); aplicar(); };
+      if(novo) _tudo().then(go); else go();
+    };
+    var _pc = el.querySelector('[data-promo-chip]'); if(_pc) _pc.onclick = function(){
+      var novo = !soPromo; var go = function(){ soPromo = novo; if(soPromo) soFav = false; renderFiltros(); aplicar(); };
+      if(novo) _tudo().then(go); else go();
+    };
   }
 
   // ===== Avaliação por estrelas (média por restaurante, guardada no Supabase) =====
@@ -518,7 +531,12 @@
     }));
   }
 
-  document.getElementById('busca').addEventListener('input', aplicar);
+  document.getElementById('busca').addEventListener('input', function(){
+    var q = (this.value || '').trim();
+    // Ao pesquisar, precisamos de toda a lista para procurar em tudo — carregamos só agora.
+    if(q && typeof window.__garantirTudo === 'function'){ window.__garantirTudo().then(aplicar); }
+    else aplicar();
+  });
 
   // Coração: guardar/tirar dos favoritos
   document.addEventListener('click', function(e){
@@ -559,56 +577,113 @@
     location.href = '/' + encodeURIComponent(cs);
   });
 
-  (function(){
-    var hdr = { headers: { apikey: SUPA_KEY, Authorization: 'Bearer ' + SUPA_KEY } };
-    var base = SUPA_URL + '/rest/v1/negocios?order=nome.asc&select=';
-    // MONTRA LEVE: em vez de descarregar o config inteiro de cada negócio (que engorda
-    // com carrinho, redes, secções, adornos, textura, etc.), pedimos só os sub-campos que
-    // o cartão da montra precisa. Reconstruímos o n.config abaixo para o resto do código.
-    var subcfg = 'montraFoto:config->montraFoto,header:config->header,intro:config->intro,footer:config->footer,fundo:config->fundo,tipo:config->tipo,promo:config->promo,promoDias:config->promoDias,oculto:config->oculto,ads:config->ads,adsIntervalo:config->adsIntervalo';
-    var rico = 'slug,nome,apagado_em,rating_soma,rating_contagem,' + subcfg;
-    var simples = 'slug,nome,apagado_em,' + subcfg;
-    // Tenta com as colunas das estrelas; se ainda não existirem na BD, cai para o select antigo
-    return fetch(base + rico, hdr).then(function(r){
-      if(r.ok) return r.json();
-      return fetch(base + simples, hdr).then(function(r2){ if(!r2.ok) throw new Error(r2.status); return r2.json(); });
-    });
-  })()
-    .then(function(dados){
-      dados = dados || [];
-      // Reconstrói n.config a partir dos sub-campos pedidos, para o resto do código
-      // continuar a ler n.config.header, n.config.promo, etc. sem alterações.
-      dados.forEach(function(n){
-        if(!n) return;
-        n.config = {
-          montraFoto: n.montraFoto, header: n.header, intro: n.intro, footer: n.footer,
-          fundo: n.fundo, tipo: n.tipo, promo: n.promo, promoDias: n.promoDias,
-          oculto: n.oculto, ads: n.ads, adsIntervalo: n.adsIntervalo
-        };
-      });
-      var reservado = dados.find(function(n){ return n && n.slug === AMESA_SLUG; });
-      ADS = (reservado && reservado.config && Array.isArray(reservado.config.ads))
-        ? reservado.config.ads.filter(function(a){ return a && (a.img || a.titulo); })
-        : [];
-      ADS_INT = (reservado && reservado.config && reservado.config.adsIntervalo > 0) ? reservado.config.adsIntervalo : 5;
-      // Mostra todos os negócios reais por defeito; só esconde os marcados com config.oculto === true
-      TODOS = dados.filter(function(n){ return n && n.slug && n.slug !== AMESA_SLUG && !n.apagado_em && !(n.config && n.config.oculto === true); });
+  // ================= Carregamento PAGINADO (scroll infinito) =================
+  // Em vez de trazer TODOS os restaurantes de uma vez (o que cresceria com o nº de
+  // negócios), pedimos por páginas. Ao fazer scroll, pede a próxima. Quando o utilizador
+  // pesquisa ou filtra, aí sim carregamos tudo (só nesse momento) para o resultado ser correto.
+  var _hdr = { headers: { apikey: SUPA_KEY, Authorization: 'Bearer ' + SUPA_KEY } };
+  // MONTRA LEVE: só os sub-campos do config que o cartão precisa (reconstruído em _montaConfig).
+  var _subcfg = 'montraFoto:config->montraFoto,header:config->header,intro:config->intro,footer:config->footer,fundo:config->fundo,tipo:config->tipo,promo:config->promo,promoDias:config->promoDias,oculto:config->oculto';
+  var _selRico = 'slug,nome,apagado_em,rating_soma,rating_contagem,' + _subcfg;
+  var _selSimples = 'slug,nome,apagado_em,' + _subcfg;
+  var PAGINA = 24;            // restaurantes por página
+  var _offset = 0;           // próximo índice a pedir
+  var _loadedAll = false;    // já trouxemos tudo?
+  var _loadingPage = false;  // pedido em curso (evita duplicados)
+  var _selectStr = null;     // qual o select que a BD aceita (com/sem estrelas)
+  var TIPOS_ALL = [];        // lista completa de tipos, para os filtros ficarem completos
+
+  function _montaConfig(n){
+    if(!n) return;
+    n.config = { montraFoto:n.montraFoto, header:n.header, intro:n.intro, footer:n.footer, fundo:n.fundo, tipo:n.tipo, promo:n.promo, promoDias:n.promoDias, oculto:n.oculto };
+  }
+  function _filtraReais(arr){
+    return arr.filter(function(n){ return n && n.slug && n.slug !== AMESA_SLUG && !n.apagado_em && !(n.config && n.config.oculto === true); });
+  }
+  function _semFiltro(){ return !filtroTipo && !soFav && !soPromo && !((document.getElementById('busca').value || '').trim()); }
+
+  // Anúncios da montra (negócio reservado) — pedido uma vez, à parte.
+  function _carregarReservado(){
+    var url = SUPA_URL + '/rest/v1/negocios?slug=eq.' + encodeURIComponent(AMESA_SLUG) + '&select=ads:config->ads,adsIntervalo:config->adsIntervalo';
+    return fetch(url, _hdr).then(function(r){ return r.ok ? r.json() : []; }).then(function(rows){
+      var res = (rows && rows[0]) || {};
+      ADS = Array.isArray(res.ads) ? res.ads.filter(function(a){ return a && (a.img || a.titulo); }) : [];
+      ADS_INT = (res.adsIntervalo > 0) ? res.adsIntervalo : 5;
+    }).catch(function(){ ADS = []; ADS_INT = 5; });
+  }
+  // Lista completa de tipos (muito leve: só o texto) — barra de filtros sempre completa.
+  function _carregarTipos(){
+    var url = SUPA_URL + '/rest/v1/negocios?apagado_em=is.null&slug=neq.' + encodeURIComponent(AMESA_SLUG) + '&select=tipo:config->>tipo';
+    return fetch(url, _hdr).then(function(r){ return r.ok ? r.json() : []; }).then(function(rows){
+      var set = [];
+      (rows || []).forEach(function(x){ var t = x && x.tipo ? String(x.tipo).trim() : ''; if(t && set.indexOf(t) < 0) set.push(t); });
+      TIPOS_ALL = set;
+    }).catch(function(){ TIPOS_ALL = []; });
+  }
+  function _urlPagina(sel){
+    return SUPA_URL + '/rest/v1/negocios?order=nome.asc&slug=neq.' + encodeURIComponent(AMESA_SLUG) + '&select=' + sel + '&limit=' + PAGINA + '&offset=' + _offset;
+  }
+  // Pede a próxima página de restaurantes e junta-a à lista.
+  function _pedirPagina(){
+    if(_loadingPage || _loadedAll) return Promise.resolve(false);
+    _loadingPage = true;
+    var primeiro = (_selectStr === null);
+    var sel = _selectStr || _selRico;
+    return fetch(_urlPagina(sel), _hdr).then(function(r){
+      if(r.ok){ if(primeiro) _selectStr = _selRico; return r.json(); }
+      // sem colunas de estrelas? cai para o select simples e fixa-o
+      if(primeiro){ _selectStr = _selSimples; return fetch(_urlPagina(_selSimples), _hdr).then(function(r2){ if(!r2.ok) throw new Error(r2.status); return r2.json(); }); }
+      throw new Error(r.status);
+    }).then(function(rows){
+      rows = rows || [];
+      rows.forEach(_montaConfig);
+      TODOS = TODOS.concat(_filtraReais(rows));
+      _offset += rows.length;                 // avança pelo nº de linhas do servidor
+      if(rows.length < PAGINA) _loadedAll = true;
+      _loadingPage = false;
       renderFiltros();
-      document.getElementById('adTopo').innerHTML = _adsDoBloco(0).length ? '<div class="ad-slot" data-off="0"></div>' : '';
-      aplicar();          // renderiza os cards + pinta os anúncios
-      pintarAds();        // garante a faixa de topo preenchida
-      rodarAds();         // arranca o carrossel se houver mais que um anúncio
-      _promoSig = _promoSignature();
-      // Reavaliar o horário das promoções: de 30 em 30s E sempre que voltas à app/ecrã
-      // (os telemóveis pausam os temporizadores em segundo plano; o visibilitychange/focus garante a atualização no regresso).
-      setInterval(_promoTick, 30000);
-      _agendarProxLimite();   // agenda a próxima entrada/saída no minuto exato
-      document.addEventListener('visibilitychange', function(){ if(!document.hidden){ _promoTick(); _agendarProxLimite(); } });
-      window.addEventListener('focus', function(){ _promoTick(); _agendarProxLimite(); });
-    })
-    .catch(function(err){
-      document.getElementById('estado').innerHTML = 'Não foi possível carregar os restaurantes agora. Tenta atualizar a página.';
-    });
+      aplicar();
+      return true;
+    }).catch(function(e){ _loadingPage = false; throw e; });
+  }
+  // Carrega TUDO (para pesquisa/filtros). Devolve promessa.
+  async function _garantirTudo(){
+    while(!_loadedAll){
+      if(_loadingPage){ await new Promise(function(r){ setTimeout(r, 60); }); continue; }   // espera a página em curso
+      await _pedirPagina();
+    }
+  }
+  window.__garantirTudo = _garantirTudo;
+  // Se o ecrã é grande e a 1ª página não gera scroll, pede mais até dar scroll ou acabar.
+  function _preencherEcra(){
+    if(_loadedAll || _loadingPage || !_semFiltro()) return;
+    if(document.body.offsetHeight <= window.innerHeight + 200){
+      _pedirPagina().then(function(cont){ if(cont) setTimeout(_preencherEcra, 80); }).catch(function(){});
+    }
+  }
+  // Scroll infinito: perto do fim e sem filtro/pesquisa ativos, pede a próxima página.
+  window.addEventListener('scroll', function(){
+    if(_loadedAll || _loadingPage || !_semFiltro()) return;
+    if((window.innerHeight + window.scrollY) >= (document.body.offsetHeight - 800)){ _pedirPagina().catch(function(){}); }
+  }, { passive:true });
+
+  // Arranque
+  Promise.all([_carregarReservado(), _carregarTipos()]).then(function(){
+    return _pedirPagina();
+  }).then(function(){
+    document.getElementById('adTopo').innerHTML = _adsDoBloco(0).length ? '<div class="ad-slot" data-off="0"></div>' : '';
+    pintarAds();        // garante a faixa de topo preenchida
+    rodarAds();         // arranca o carrossel se houver mais que um anúncio
+    _promoSig = _promoSignature();
+    // Reavaliar o horário das promoções: de 30 em 30s E sempre que voltas à app/ecrã.
+    setInterval(_promoTick, 30000);
+    _agendarProxLimite();
+    document.addEventListener('visibilitychange', function(){ if(!document.hidden){ _promoTick(); _agendarProxLimite(); } });
+    window.addEventListener('focus', function(){ _promoTick(); _agendarProxLimite(); });
+    _preencherEcra();
+  }).catch(function(err){
+    document.getElementById('estado').innerHTML = 'Não foi possível carregar os restaurantes agora. Tenta atualizar a página.';
+  });
 </script>
 </body>
 </html>
