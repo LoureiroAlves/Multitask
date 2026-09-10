@@ -495,7 +495,8 @@
       header: { titulo:'', subtitulo:'', mostrar:false, cor:'#ffffff', realce:true, fotosAtivas:false, fotos:[] },
       footer: { mostrar:false },
       rodape: { mostrar:false },
-      intro:  { ativo:false }
+      intro:  { ativo:false },
+      oculto: true   // nasce escondido da montra; publica-se desmarcando "Esconder da ÀMesa"
     };
     const menu = { restaurante:'', categorias:[] };
     const { data:neg, error } = await sb.from('negocios').insert({ nome:nome, slug:slug, dono_email:emailDono || null, config:config, menu:menu }).select().single();
@@ -589,6 +590,7 @@
       const { data:existe } = await sb.from('negocios').select('id').eq('slug', slug).maybeSingle();
       if(existe){ msg(box, 'Já existe um negócio com o slug "' + slug + '". Muda o slug no ficheiro.', 'erro'); return; }
       let config = o.config || {};
+      config.oculto = true;   // negócios importados nascem escondidos da montra até seres tu a publicar
       let menu = o.menu || { restaurante:'', categorias:[] };
       try{
         msg(box, 'A copiar as fotos para o armazenamento definitivo…', 'ok');
