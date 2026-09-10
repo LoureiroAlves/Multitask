@@ -5058,6 +5058,13 @@
       window.__negocioId = neg.id;
       window.__negNome = neg.nome || '';
       const config = neg.config || {};
+      // Modo pré-visualização: permitir mostrar exemplos de estilos via URL (?modelo=... &textura=...),
+      // sem mexer no negócio real. Usado no mostruário de estilos do formulário de registo.
+      if(window.__PREVIEW){ try{
+        const _q = new URLSearchParams(location.search);
+        const _pm = _q.get('modelo'); if(_pm) config.modelo = _pm;
+        const _pt = _q.get('textura'); if(_pt){ config.fundo = config.fundo || {}; config.fundo.tipo = 'textura'; config.fundo.textura = _pt; }
+      }catch(e){} }
       aplicarPlano(config, funcoes, pub);
       try{ await mostrarPreAbertura(config.preAbertura); }catch(e){}   // publicidade de ecrã cheio, antes do menu
       aplicarConfig(config);

@@ -110,6 +110,21 @@
     </div>
 
     <div class="card">
+      <h2>Estilo dos separadores <span class="op">(só para veres)</span></h2>
+      <div class="dica" style="margin-bottom:8px;">Os separadores são os “botões” de cada secção do menu. Espreita alguns estilos e, se quiseres, diz-nos qual gostaste — a escolha final afinamos contigo.</div>
+      <button type="button" class="btn sec" id="verEstilos" style="cursor:pointer; text-align:center;">👀 Ver exemplos de estilos</button>
+      <div id="estilosBox" style="display:none; margin-top:10px;">
+        <div id="estilosBtns" style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px;"></div>
+        <div style="border:1px solid var(--linha); border-radius:12px; overflow:hidden; background:#fff;">
+          <iframe id="estiloPreview" title="Exemplo de estilo" loading="lazy" style="width:100%; height:430px; border:0; display:block;"></iframe>
+        </div>
+        <div class="dica" style="margin-top:6px;">Exemplo com um menu de demonstração — o teu terá o teu próprio conteúdo.</div>
+        <label style="margin-top:10px;">Estilo que mais gostaste <span class="op">(opcional)</span></label>
+        <input id="modeloPreferido" type="text" placeholder="Ex.: Revista">
+      </div>
+    </div>
+
+    <div class="card">
       <h2>Menu — fotos ou PDF</h2>
       <div class="dica" style="margin-bottom:8px;">Fotografa <b>todas as secções do cardápio</b> (entradas, pratos, bebidas, sobremesas…) ou envia o <b>PDF</b>. Podes escolher vários de uma vez.</div>
       <label class="btn sec" style="cursor:pointer; text-align:center;" for="fotosInput">＋ Adicionar fotos / PDF</label>
@@ -141,7 +156,7 @@
     ['nome','Nome do restaurante'], ['subtitulo','Subtítulo'], ['nomeQR','Nome no QR'], ['slug','Endereço curto'],
     ['email','Email'], ['whatsapp','WhatsApp'], ['morada','Morada'],
     ['tipo','Tipo de cozinha'], ['horario','Horário'], ['instagram','Instagram'], ['facebook','Facebook'],
-    ['estilo','Cores/estilo'], ['notas','Notas']
+    ['estilo','Cores/estilo'], ['notas','Notas'], ['modeloPreferido','Estilo preferido']
   ];
   function _b64e(str){ return btoa(unescape(encodeURIComponent(str))); }
   function _b64d(b64){ return decodeURIComponent(escape(atob(b64))); }
@@ -149,6 +164,51 @@
   function _esc(s){ return String(s||'').replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c];}); }
 
   function recolher(){ var o={}; CAMPOS.forEach(function(c){ var v=_get(c[0]); if(v) o[c[0]]=v; }); if(fotosURLs.length) o.fotos = fotosURLs.slice(); var b={}; ['cabecalho','abertura','montra'].forEach(function(k){ if(brand[k]) b[k]=brand[k]; }); if(Object.keys(b).length) o.brand = b; return o; }
+
+  // Mostruário de estilos de separadores — só para o dono VER (a escolha final é do admin no editor).
+  (function(){
+    var SAMPLE = 'saocaetano';   // menu público usado só como demonstração
+    var MODELOS = [
+      {id:'elegante', nome:'Elegante'}, {id:'revista', nome:'Revista'}, {id:'foodtruck', nome:'Food Truck'},
+      {id:'azulejo', nome:'Azulejo'}, {id:'caderno', nome:'Caderno'}, {id:'ardosia', nome:'Ardósia'},
+      {id:'neon', nome:'Néon'}, {id:'praia', nome:'Praia'}
+    ];
+    var ver = document.getElementById('verEstilos');
+    var box = document.getElementById('estilosBox');
+    var btns = document.getElementById('estilosBtns');
+    var frame = document.getElementById('estiloPreview');
+    var pref = document.getElementById('modeloPreferido');
+    if(!ver || !box || !btns || !frame) return;
+    var carregado = false;
+    function pinta(id){
+      Array.prototype.forEach.call(btns.children, function(b){
+        var on = b.dataset.id === id;
+        b.style.background = on ? 'var(--castanho, #4a3820)' : '#fff';
+        b.style.color = on ? '#fff' : 'var(--castanho, #4a3820)';
+        b.style.borderColor = on ? 'var(--castanho, #4a3820)' : 'var(--linha, #e5ddcf)';
+      });
+    }
+    function mostra(m){
+      frame.src = 'cardapio.html?n=' + encodeURIComponent(SAMPLE) + '&preview=1&modelo=' + encodeURIComponent(m.id) + '&t=' + Date.now();
+      if(pref && (!pref.value || pref.dataset.auto === '1')){ pref.value = m.nome; pref.dataset.auto = '1'; }
+      pinta(m.id);
+    }
+    if(pref) pref.addEventListener('input', function(){ pref.dataset.auto = ''; });
+    ver.onclick = function(){
+      box.style.display = 'block'; ver.style.display = 'none';
+      if(!carregado){
+        carregado = true;
+        MODELOS.forEach(function(m){
+          var b = document.createElement('button');
+          b.type = 'button'; b.textContent = m.nome; b.dataset.id = m.id;
+          b.style.cssText = 'border:1.5px solid var(--linha, #e5ddcf); background:#fff; color:var(--castanho, #4a3820); border-radius:20px; padding:6px 12px; font-size:.85rem; cursor:pointer;';
+          b.onclick = function(){ mostra(m); };
+          btns.appendChild(b);
+        });
+        mostra(MODELOS[0]);
+      }
+    };
+  })();
 
   // ---- Fotos da marca (cabeçalho / abertura / montra) ----
   { var bb = document.getElementById('brandBox'), best = document.getElementById('brandEstado');
