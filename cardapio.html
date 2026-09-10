@@ -5753,7 +5753,7 @@
       }
       // Ecrã de confirmação — é uma PRÉ-RESERVA: o cliente envia o pedido ao restaurante por WhatsApp.
       const card = document.getElementById('agCard');
-      const telResto = a.whatsapp ? String(a.whatsapp).replace(/[^0-9]/g,'').replace(/^00/,'') : '';
+      const telResto = String(a.whatsapp || (window.__cartCfg && window.__cartCfg.whatsapp) || '').replace(/[^0-9]/g,'').replace(/^00/,'');
       let waMsg = 'Olá! Pedido de pré-reserva (a aguardar a vossa confirmação):\n'
         + 'Nome: ' + nome + '\n'
         + 'Telemóvel: ' + tel + '\n'
