@@ -4835,6 +4835,23 @@ amesadigital.pt</textarea>
       g.subtitulo = g.subtitulo || {pt:''};
       wrap.appendChild(mkLabel('Subtítulo do sub-menu (opcional) — ex.: Guarnições: 1 à escolha'));
       wrap.appendChild(campoMulti(g.subtitulo,'Subtítulo'));
+      // Estilo do subtítulo: tamanho + negrito
+      g.subEstilo = g.subEstilo || {};
+      { const seRow = document.createElement('div');
+        seRow.style.cssText = 'display:flex; align-items:center; gap:12px; flex-wrap:wrap; font-size:0.8rem; color:var(--castanho-suave); margin:2px 0 8px;';
+        const tL = document.createElement('label'); tL.style.cssText='display:flex; align-items:center; gap:5px;';
+        const tIn = document.createElement('input'); tIn.type='number'; tIn.min='0.6'; tIn.max='2'; tIn.step='0.05'; tIn.placeholder='auto';
+        tIn.value = (g.subEstilo.tamanho!=null ? g.subEstilo.tamanho : '');
+        tIn.style.cssText='width:66px; padding:5px 6px; border:1.5px solid var(--linha); border-radius:6px; font-family:inherit;';
+        tIn.addEventListener('input', ()=>{ const v=parseFloat(tIn.value); if(v) g.subEstilo.tamanho=v; else delete g.subEstilo.tamanho; if(window.__agendarPreview) window.__agendarPreview(); });
+        tL.appendChild(document.createTextNode('Tamanho do subtítulo')); tL.appendChild(tIn); seRow.appendChild(tL);
+        const bBtn = document.createElement('button'); bBtn.type='button'; bBtn.textContent='B';
+        bBtn.style.cssText='font-weight:800; width:32px; height:30px; border-radius:6px; border:1.5px solid var(--linha); cursor:pointer;';
+        const pintaB=()=>{ bBtn.style.background=g.subEstilo.negrito?'var(--dourado)':'var(--branco)'; bBtn.style.color=g.subEstilo.negrito?'#fff':'var(--castanho)'; }; pintaB();
+        bBtn.addEventListener('click', ()=>{ g.subEstilo.negrito=!g.subEstilo.negrito; if(!g.subEstilo.negrito) delete g.subEstilo.negrito; pintaB(); if(window.__agendarPreview) window.__agendarPreview(); });
+        bBtn.title='Negrito'; seRow.appendChild(bBtn);
+        wrap.appendChild(seRow);
+      }
 
       const trd=document.createElement('details'); trd.style.cssText='border:none;background:transparent;';
       const trs=document.createElement('summary'); trs.textContent='traduções do título';

@@ -2856,7 +2856,7 @@
     _mLang(_tit, g.summary);
     sum.appendChild(_tit);
     det.appendChild(sum);
-    if(g.subtitulo){ const s=document.createElement('div'); s.className='subtitulo'; _mLang(s, g.subtitulo); det.appendChild(s); }
+    if(g.subtitulo){ const s=document.createElement('div'); s.className='subtitulo'; _mLang(s, g.subtitulo); if(g.subEstilo){ if(g.subEstilo.tamanho) s.style.fontSize = g.subEstilo.tamanho + 'rem'; if(g.subEstilo.negrito) s.style.fontWeight = '800'; } det.appendChild(s); }
     const lista = document.createElement('div');
     lista.className = 'card-lista';
     (g.itens||[]).forEach(it => {
