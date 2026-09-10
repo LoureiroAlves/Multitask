@@ -5683,7 +5683,7 @@
         html += '<input type="tel" id="agTel" placeholder="Telemóvel">';
         html += '<textarea id="agObs" placeholder="Observações (opcional)"></textarea></div>';
         html += '<div class="ag-resumo" id="agResumo"></div>';
-        html += '<button type="button" class="ag-btn" id="agEnviar">Confirmar reserva</button>';
+        html += '<button type="button" class="ag-btn" id="agEnviar">Pedir pré-reserva</button>';
         html += '<div id="agPagamento"></div>';
       }
       html += '<button type="button" class="ag-fechar" id="agFechar">Fechar</button>';
@@ -5727,28 +5727,49 @@
       if(typeof sbC !== 'undefined' && sbC && window.__negocioId){
         if(env){ env.disabled = true; env.textContent = 'A registar…'; }
         try{
-          const { error } = await sbC.from('reservas').insert({
-            negocio_id: window.__negocioId, data: estado.diaSel, hora: estado.slotSel,
-            nome: nome, telefone: tel, pessoas: pessoas, obs: obs || null,
-            valor: total, sinal: sinal, estado: 'pendente'
+          // Reserva ATÓMICA no servidor: refaz a alocação de mesas com um bloqueio por horário,
+          // por isso duas pessoas em simultâneo já não podem ficar com a última mesa.
+          const { error } = await sbC.rpc('criar_reserva', {
+            p_negocio: window.__negocioId, p_data: estado.diaSel, p_hora: estado.slotSel,
+            p_nome: nome, p_tel: tel, p_pessoas: pessoas, p_obs: obs || null,
+            p_valor: total, p_sinal: sinal
           });
-          if(error) throw error;
-        }catch(e){ alert('Não consegui registar a reserva: ' + e.message); if(env){ env.disabled=false; env.textContent = 'Confirmar reserva'; } return; }
+          if(error){
+            if(String(error.message || '').indexOf('sem_mesa') >= 0){
+              alert('Esse horário já ficou sem mesa para ' + pessoas + ' pessoa(s). Escolhe outro.');
+              if(env){ env.disabled=false; env.textContent = 'Pedir pré-reserva'; }
+              estado.slotSel = null; render(); return;
+            }
+            throw error;
+          }
+        }catch(e){ alert('Não consegui registar a reserva: ' + e.message); if(env){ env.disabled=false; env.textContent = 'Pedir pré-reserva'; } return; }
       } else if(a.whatsapp){
         let msg = 'Olá! Quero reservar:%0ANome: ' + nome + '%0ATelemóvel: ' + tel + '%0AData: ' + d.getDate() + '/' + (d.getMonth()+1) + '/' + d.getFullYear() + '%0AHora: ' + estado.slotSel + '%0APessoas: ' + pessoas + '%0A';
         if(obs) msg += 'Obs: ' + obs + '%0A';
         window.open('https://wa.me/' + String(a.whatsapp).replace(/[^0-9]/g,'') + '?text=' + encodeURIComponent(decodeURIComponent(msg)), '_blank');
       }
-      // Ecrã de confirmação
+      // Ecrã de confirmação — é uma PRÉ-RESERVA: o cliente envia o pedido ao restaurante por WhatsApp.
       const card = document.getElementById('agCard');
-      let ok = '<h3>Reserva enviada ✓</h3>';
-      ok += '<div class="ag-resumo"><strong>' + d.getDate() + ' de ' + MESES[d.getMonth()] + '</strong> às <strong>' + estado.slotSel + '</strong> · ' + pessoas + ' pessoa(s)<br>Vamos confirmar a tua reserva em breve.';
+      const telResto = a.whatsapp ? String(a.whatsapp).replace(/[^0-9]/g,'').replace(/^00/,'') : '';
+      let waMsg = 'Olá! Pedido de pré-reserva (a aguardar a vossa confirmação):\n'
+        + 'Nome: ' + nome + '\n'
+        + 'Telemóvel: ' + tel + '\n'
+        + 'Data: ' + d.getDate() + '/' + (d.getMonth()+1) + '/' + d.getFullYear() + '\n'
+        + 'Hora: ' + estado.slotSel + '\n'
+        + 'Pessoas: ' + pessoas + '\n';
+      if(obs) waMsg += 'Obs: ' + obs + '\n';
+      if(sinal > 0) waMsg += 'Sinal (' + pct + '%): ' + sinal.toFixed(2) + '€\n';
+      waMsg += 'Obrigado!';
+      let ok = '<h3>Pré-reserva registada ✓</h3>';
+      ok += '<div class="ag-resumo"><strong>' + d.getDate() + ' de ' + MESES[d.getMonth()] + '</strong> às <strong>' + estado.slotSel + '</strong> · ' + pessoas + ' pessoa(s)<br>É uma <strong>pré-reserva</strong> — envia o pedido ao restaurante para confirmarem.';
       if(total > 0) ok += '<br>Sinal (' + pct + '%): <strong>' + sinal.toFixed(2) + '€</strong>';
       ok += '</div>';
+      if(telResto){ ok += '<button type="button" class="ag-btn" id="agWa" style="background:#25d366; color:#fff; width:100%; margin-top:4px;">📲 Enviar pedido ao restaurante</button>'; }
       if(a.pagamentoLink){ ok += '<div class="ag-passo-tit">Garante a tua reserva</div><button type="button" class="ag-btn pay" id="agPagar">💳 Pagar sinal' + (sinal > 0 ? (' (' + sinal.toFixed(2) + '€)') : '') + '</button>'; }
       if(a.pagamentoNota) ok += '<div class="ag-sub" style="margin-top:8px;">' + a.pagamentoNota + '</div>';
       ok += '<button type="button" class="ag-fechar" id="agFechar">Fechar</button>';
       card.innerHTML = ok;
+      const wab = document.getElementById('agWa'); if(wab) wab.onclick = function(){ window.open('https://wa.me/' + telResto + '?text=' + encodeURIComponent(waMsg), '_blank'); };
       const pb = document.getElementById('agPagar'); if(pb) pb.onclick = function(){ window.open(a.pagamentoLink, '_blank'); };
       const fb = document.getElementById('agFechar'); if(fb) fb.onclick = function(){ ov.classList.remove('aberto'); estado.diaSel=null; estado.slotSel=null; };
     }
