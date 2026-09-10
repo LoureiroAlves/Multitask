@@ -5596,7 +5596,8 @@
     ov.innerHTML = '<div class="ag-card" id="agCard"></div>';
     document.body.appendChild(ov);
     ov.addEventListener('click', function(e){ if(e.target === ov) ov.classList.remove('aberto'); });
-    btn.addEventListener('click', abrir);
+    btn.addEventListener('click', function(){ window.__reservaMenu = ''; abrir(); });   // botão normal: reserva sem menu do carrinho
+    window.__abrirAgenda = abrir;   // permite abrir o calendário a partir do carrinho (menu de grupo)
 
     const MESES = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
     const DOW = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
@@ -5715,6 +5716,8 @@
       const tel = ((document.getElementById('agTel') || {}).value || '').trim();
       const pessoas = estado.pessoas || 1;
       const obs = ((document.getElementById('agObs') || {}).value || '').trim();
+      const menuTxt = (window.__reservaMenu || '').trim();   // menu de grupo trazido do carrinho
+      const obsFull = (menuTxt ? ('Menu: ' + menuTxt) : '') + (obs ? ((menuTxt ? ' — ' : '') + obs) : '');
       if(!nome || !tel){ alert('Preenche o nome e o telemóvel.'); return; }
       // Revalidar disponibilidade de mesa (evita corridas)
       if(a.mesas && a.mesas.length){
@@ -5731,7 +5734,7 @@
           // por isso duas pessoas em simultâneo já não podem ficar com a última mesa.
           const { error } = await sbC.rpc('criar_reserva', {
             p_negocio: window.__negocioId, p_data: estado.diaSel, p_hora: estado.slotSel,
-            p_nome: nome, p_tel: tel, p_pessoas: pessoas, p_obs: obs || null,
+            p_nome: nome, p_tel: tel, p_pessoas: pessoas, p_obs: obsFull || null,
             p_valor: total, p_sinal: sinal
           });
           if(error){
@@ -5757,8 +5760,10 @@
         + 'Data: ' + d.getDate() + '/' + (d.getMonth()+1) + '/' + d.getFullYear() + '\n'
         + 'Hora: ' + estado.slotSel + '\n'
         + 'Pessoas: ' + pessoas + '\n';
+      if(menuTxt) waMsg += 'Menu de grupo: ' + menuTxt + '\n';
       if(obs) waMsg += 'Obs: ' + obs + '\n';
       if(sinal > 0) waMsg += 'Sinal (' + pct + '%): ' + sinal.toFixed(2) + '€\n';
+      try{ if(SLUG){ waMsg += '\n✅ Confirmar no calendário: ' + location.origin + '/calendario.html?n=' + SLUG + '\n'; } }catch(e){}
       waMsg += 'Obrigado!';
       let ok = '<h3>Pré-reserva registada ✓</h3>';
       ok += '<div class="ag-resumo"><strong>' + d.getDate() + ' de ' + MESES[d.getMonth()] + '</strong> às <strong>' + estado.slotSel + '</strong> · ' + pessoas + ' pessoa(s)<br>É uma <strong>pré-reserva</strong> — envia o pedido ao restaurante para confirmarem.';
@@ -7243,7 +7248,21 @@
       const limpar = document.getElementById('cartLimpar');
       if(limpar) limpar.onclick = () => { lista = []; guardar(); atualizarBadge(); overlay.classList.remove('aberto'); };
       const whatsBtn = document.getElementById('cartWhats');
-      if(whatsBtn) whatsBtn.onclick = () => confirmarPedidoWhats();
+      if(whatsBtn){
+        // Se há um menu de grupo no carrinho E o negócio tem reservas ativas,
+        // o botão passa a "Reservar": abre o calendário levando o menu escolhido.
+        const temMenu = lista.some(function(i){ return i.menu; });
+        if(temMenu && window._agenda){
+          whatsBtn.innerHTML = '📅 Reservar (dia e hora)';
+          whatsBtn.onclick = () => {
+            window.__reservaMenu = lista.filter(function(i){ return i.menu; })
+              .map(function(i){ return i.qtd + '× ' + i.nome; }).join(', ');
+            if(window.__abrirAgenda) window.__abrirAgenda(); else confirmarPedidoWhats();
+          };
+        } else {
+          whatsBtn.onclick = () => confirmarPedidoWhats();
+        }
+      }
       p.querySelectorAll('.cart-qtd button').forEach(b => {
         b.onclick = () => {
           const i = parseInt(b.dataset.i, 10);
