@@ -198,13 +198,41 @@
     $('detalhe').querySelectorAll('[data-a]').forEach(function(btn){ btn.onclick = function(){ accao(btn.getAttribute('data-id'), btn.getAttribute('data-a')); }; });
   }
 
+  function _telWA(t){
+    let d = String(t||'').replace(/\D/g,'');
+    if(!d) return '';
+    if(d.length===9) d = '351' + d;          // número PT sem indicativo
+    else if(d.indexOf('00')===0) d = d.slice(2);  // 00351... → 351...
+    return d;
+  }
+  function _dataPt(iso){ const d = new Date(iso+'T00:00:00'); return d.getDate() + ' de ' + MESES[d.getMonth()]; }
+  function _waUrl(r, tipo){
+    const tel = _telWA(r.telefone);
+    if(!tel) return '';
+    const nome = (r.nome||'').trim();
+    const quando = _dataPt(r.data) + (r.hora ? (' às ' + r.hora) : '');
+    const pessoas = (Number(r.pessoas)||1) + ' pessoa(s)';
+    const casa = (negocio && negocio.nome) ? negocio.nome : 'o restaurante';
+    let msg;
+    if(tipo==='confirmar'){
+      msg = 'Olá' + (nome ? ' '+nome : '') + '! A sua reserva em ' + casa + ' para ' + quando + ' (' + pessoas + ') está confirmada. Até já! 🍽️';
+    } else {
+      msg = 'Olá' + (nome ? ' '+nome : '') + '. Lamentamos, mas não conseguimos confirmar a sua reserva em ' + casa + ' para ' + quando + '. Contacte-nos para encontrarmos uma alternativa.';
+    }
+    return 'https://wa.me/' + tel + '?text=' + encodeURIComponent(msg);
+  }
+
   async function accao(id, a){
-    let patch = null;
-    if(a==='confirmar') patch = { estado:'confirmada' };
-    else if(a==='cancelar'){ if(!confirm('Recusar/cancelar esta reserva?')) return; patch = { estado:'cancelada' }; }
+    const r = reservas.find(function(x){ return String(x.id)===String(id); });
+    let patch = null, tipo = null;
+    if(a==='confirmar'){ patch = { estado:'confirmada' }; tipo = 'confirmar'; }
+    else if(a==='cancelar'){ if(!confirm('Recusar/cancelar esta reserva?')) return; patch = { estado:'cancelada' }; tipo = 'recusar'; }
     if(!patch) return;
+    // Abre já o WhatsApp com a resposta pronta (mantém a permissão do toque; o dono só carrega em enviar)
+    const url = r ? _waUrl(r, tipo) : '';
+    const win = url ? window.open(url, '_blank') : null;
     const { error } = await sb.from('reservas').update(patch).eq('id', id);
-    if(error){ alert('Erro: '+error.message); return; }
+    if(error){ alert('Erro: '+error.message); if(win){ try{ win.close(); }catch(e){} } return; }
     carregar();
   }
 
