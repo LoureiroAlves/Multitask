@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gerador de QR Code — Cardápio Parque São Caetano</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=Nunito:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" onerror="this.dataset.failed='1'"></script>
+<style>
+  :root{
+    --castanho:#4a3820; --dourado:#a8712f; --dourado-escuro:#8a5a24;
+    --branco:#ffffff; --bege:#f5efe2; --bege-claro:#fbf8f2; --linha:#e6dcc8;
+  }
+  body{
+    font-family:'Nunito',sans-serif; background:var(--bege);
+    color:var(--castanho); margin:0; padding:24px 16px 60px;
+    display:flex; flex-direction:column; align-items:center; min-height:100vh;
+  }
+  h1{
+    font-family:'Fredoka',sans-serif; color:var(--castanho); text-align:center;
+    font-size:1.4rem; margin-bottom:4px;
+  }
+  p.sub{opacity:.75; font-size:.9rem; text-align:center; max-width:420px; margin-bottom:24px;}
+  .painel{
+    background:var(--branco); color:var(--castanho); border-radius:16px;
+    padding:24px; max-width:420px; width:100%; border:1px solid var(--linha);
+  }
+  label{font-weight:700; font-size:.85rem; display:block; margin-bottom:6px;}
+  input[type=text]{
+    width:100%; padding:10px 14px; border-radius:10px; border:1px solid var(--linha);
+    font-size:.95rem; margin-bottom:14px; font-family:'Nunito',sans-serif; background:var(--bege-claro); color:var(--castanho);
+  }
+  button{
+    font-family:'Fredoka',sans-serif; background:var(--castanho); color:var(--branco);
+    border:none; padding:11px 20px; border-radius:24px; font-weight:600;
+    font-size:.95rem; cursor:pointer; width:100%; margin-bottom:8px;
+  }
+  button:hover{background:#38290f;}
+  button.secundario{background:transparent; border:2px solid var(--dourado); color:var(--dourado-escuro);}
+  #qrcode-raw{display:none;}
+  #cartaoWrap{display:flex; justify-content:center; margin:18px 0;}
+  #cartao{border-radius:14px; box-shadow:0 6px 18px rgba(74,56,32,.2); max-width:100%; height:auto;}
+  .aviso{font-size:.78rem; color:#8a7350; text-align:center; margin-top:6px;}
+  .status{font-size:.82rem; text-align:center; margin:2px 0 10px; min-height:18px; font-weight:700;}
+  .status.info{color:#8a7350;}
+  .status.erro{color:#a3372d;}
+  .status.ok{color:#3b6d11;}
+</style>
+</head>
+<body>
+  <h1>Gerador de QR Code do Cardápio</h1>
+  <p class="sub">Cole o link do cardápio já hospedado, confirme o nome do restaurante e gere um cartão com QR code pronto para imprimir nas mesas.</p>
+
+  <div class="painel">
+    <label for="nome">Nome do restaurante</label>
+    <input type="text" id="nome" value="Rest & Bar Parque São Caetano">
+
+    <label for="tagline">Frase (opcional)</label>
+    <input type="text" id="tagline" value="Aponte a câmara e veja o nosso cardápio">
+
+    <label for="url">Link do cardápio</label>
+    <input type="text" id="url" value="https://rest-bar-parque-sao-caetano.github.io/cardapio-parque-sao-caetano/cardapio.html" placeholder="https://...">
+
+    <button onclick="gerar()">Gerar Cartão com QR Code</button>
+    <button class="secundario" onclick="baixar()">Baixar PNG</button>
+    <div class="status info" id="status">A preparar...</div>
+
+    <div id="qrcode-raw"></div>
+    <div id="cartaoWrap"><canvas id="cartao" width="480" height="560"></canvas></div>
+    <div class="aviso">Dica: teste o QR com o celular antes de imprimir.</div>
+  </div>
+
+<script>
+  const CORES = {
+    castanho: '#4a3820',
+    douradoEscuro: '#8a5a24',
+    dourado: '#a8712f',
+    branco: '#ffffff',
+    begeClaro: '#fbf8f2',
+    castanhoSuave: '#8a7350'
+  };
+
+  function roundRectPath(ctx, x, y, w, h, r){
+    if (typeof r === 'number') r = {tl:r, tr:r, br:r, bl:r};
+    ctx.beginPath();
+    ctx.moveTo(x + r.tl, y);
+    ctx.lineTo(x + w - r.tr, y);
+    ctx.arcTo(x + w, y, x + w, y + r.tr, r.tr);
+    ctx.lineTo(x + w, y + h - r.br);
+    ctx.arcTo(x + w, y + h, x + w - r.br, y + h, r.br);
+    ctx.lineTo(x + r.bl, y + h);
+    ctx.arcTo(x, y + h, x, y + h - r.bl, r.bl);
+    ctx.lineTo(x, y + r.tl);
+    ctx.arcTo(x, y, x + r.tl, y, r.tl);
+    ctx.closePath();
+  }
+
+  function wrapText(ctx, text, cx, y, maxWidth, lineHeight, maxLines){
+    const words = text.split(' ');
+    let lines = [];
+    let current = '';
+    words.forEach(word => {
+      const test = current ? current + ' ' + word : word;
+      if (ctx.measureText(test).width > maxWidth && current) {
+        lines.push(current);
+        current = word;
+      } else {
+        current = test;
+      }
+    });
+    if (current) lines.push(current);
+    if (maxLines && lines.length > maxLines) {
+      lines = lines.slice(0, maxLines);
+      lines[maxLines - 1] += '…';
+    }
+    const startY = y - ((lines.length - 1) * lineHeight) / 2;
+    lines.forEach((line, i) => ctx.fillText(line, cx, startY + i * lineHeight));
+    return lines.length;
+  }
+
+  const status = document.getElementById('status');
+  function setStatus(msg, tipo){
+    status.textContent = msg;
+    status.className = 'status ' + (tipo || 'info');
+  }
+
+  let cartaoPronto = false;
+
+  // Carrega a biblioteca do QR code com CDNs alternativos, caso o primeiro falhe
+  // (bloqueadores de anúncios, firewalls ou instabilidade de rede podem impedir um CDN específico).
+  const CDNS_QRCODE = [
+    'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js',
+    'https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js',
+    'https://unpkg.com/qrcodejs@1.0.0/qrcode.min.js'
+  ];
+  let bibliotecaPromise = null;
+  function carregarBiblioteca(){
+    if (bibliotecaPromise) return bibliotecaPromise;
+    bibliotecaPromise = new Promise((resolve, reject) => {
+      if (typeof QRCode !== 'undefined') { resolve(); return; }
+      let i = 0;
+      function tentar(){
+        if (typeof QRCode !== 'undefined') { resolve(); return; }
+        if (i >= CDNS_QRCODE.length) { reject(new Error('Não foi possível carregar a biblioteca do QR code (verifica a ligação à internet ou desativa bloqueadores de anúncios).')); return; }
+        const src = CDNS_QRCODE[i++];
+        const s = document.createElement('script');
+        s.src = src;
+        s.onload = () => {
+          if (typeof QRCode !== 'undefined') resolve();
+          else tentar();
+        };
+        s.onerror = tentar;
+        document.head.appendChild(s);
+      }
+      tentar();
+    });
+    return bibliotecaPromise;
+  }
+
+  const SCALE = 4;   // alta resolução: o cartão é desenhado 4× maior (nítido para imprimir)
+
+  function gerarQRRaw(url){
+    return new Promise((resolve, reject) => {
+      const holder = document.getElementById('qrcode-raw');
+      holder.innerHTML = '';
+      new QRCode(holder, {
+        text: url,
+        width: 280 * SCALE,
+        height: 280 * SCALE,
+        colorDark: CORES.castanho,
+        colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.H
+      });
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        const c = holder.querySelector('canvas');
+        if (!c) { reject(new Error('A biblioteca do QR code não gerou uma imagem válida.')); return; }
+        resolve(c);
+      }));
+    });
+  }
+
+  async function desenharCartao(){
+    cartaoPronto = false;
+    const url = document.getElementById('url').value.trim();
+    const nome = document.getElementById('nome').value.trim() || 'Rest & Bar Parque São Caetano';
+    const tagline = document.getElementById('tagline').value.trim();
+    if(!url){ setStatus('Cola o link do cardápio para gerar o QR code.', 'erro'); return; }
+
+    setStatus('A gerar QR code...', 'info');
+
+    try {
+      await carregarBiblioteca();
+    } catch(erro) {
+      setStatus(erro.message, 'erro');
+      return;
+    }
+
+    if (document.fonts && document.fonts.load) {
+      try {
+        await Promise.all([
+          document.fonts.load('700 26px Fredoka'),
+          document.fonts.load('italic 16px Nunito')
+        ]);
+      } catch(e) { /* segue mesmo se as fontes falharem a carregar */ }
+    }
+
+    let qrCanvas;
+    try {
+      qrCanvas = await gerarQRRaw(url);
+    } catch(erro) {
+      setStatus(erro.message, 'erro');
+      return;
+    }
+
+    const canvas = document.getElementById('cartao');
+    const W = 480, H = 560;                         // dimensões lógicas (o desenho usa estas)
+    canvas.width = W * SCALE; canvas.height = H * SCALE;   // pixels reais (alta resolução)
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(SCALE, 0, 0, SCALE, 0, 0);     // desenha tudo 4× maior, nítido
+    ctx.clearRect(0,0,W,H);
+
+    // card background
+    ctx.fillStyle = CORES.branco;
+    roundRectPath(ctx, 0, 0, W, H, 22);
+    ctx.fill();
+
+    // header
+    const headerH = 118;
+    ctx.save();
+    roundRectPath(ctx, 0, 0, W, H, 22);
+    ctx.clip();
+    ctx.fillStyle = CORES.castanho;
+    ctx.fillRect(0, 0, W, headerH);
+    ctx.restore();
+
+    ctx.fillStyle = CORES.begeClaro;
+    ctx.textAlign = 'center';
+    ctx.font = '700 27px Fredoka, sans-serif';
+    wrapText(ctx, nome, W/2, headerH/2, W - 60, 32, 2);
+
+    // QR code, centered on white rounded plate
+    const qrSize = 280;
+    const qrX = (W - qrSize) / 2;
+    const qrY = headerH + 30;
+    ctx.fillStyle = '#ffffff';
+    roundRectPath(ctx, qrX - 14, qrY - 14, qrSize + 28, qrSize + 28, 16);
+    ctx.fill();
+    ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize);
+
+    // tagline
+    if (tagline){
+      ctx.fillStyle = CORES.douradoEscuro;
+      ctx.font = 'italic 600 16px Nunito, sans-serif';
+      wrapText(ctx, tagline, W/2, qrY + qrSize + 46, W - 60, 22, 2);
+    }
+
+    // footer strip
+    ctx.font = '700 13px Fredoka, sans-serif';
+    ctx.fillStyle = CORES.castanhoSuave;
+    ctx.fillText('CARDÁPIO DIGITAL', W/2, H - 20);
+
+    cartaoPronto = true;
+    setStatus('Cartão pronto ✓', 'ok');
+  }
+
+  function gerar(){
+    desenharCartao().catch(erro => setStatus('Erro inesperado: ' + erro.message, 'erro'));
+  }
+
+  function baixar(){
+    if (!cartaoPronto) {
+      setStatus('Ainda não há um cartão gerado. Clica em "Gerar Cartão com QR Code" primeiro.', 'erro');
+      return;
+    }
+    const canvas = document.getElementById('cartao');
+    const nomeArquivo = 'qrcode-cardapio-parque-sao-caetano.png';
+
+    // Suporta download attribute? (funciona em Chrome, Edge, Firefox e na maioria dos Android)
+    const suportaDownload = 'download' in document.createElement('a');
+
+    canvas.toBlob(function(blob){
+      if(!blob){
+        // fallback extremo: abre a imagem numa nova aba
+        window.open(canvas.toDataURL('image/png'), '_blank');
+        return;
+      }
+      const url = URL.createObjectURL(blob);
+
+      if (suportaDownload) {
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = nomeArquivo;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 4000);
+      } else {
+        // iOS Safari e outros que ignoram o atributo download:
+        // abre a imagem numa nova aba para guardar com "Mantenha premido > Guardar imagem"
+        const nova = window.open(url, '_blank');
+        if(!nova){
+          alert('O teu navegador bloqueou a abertura da imagem. Ativa os pop-ups ou tira uma captura de ecrã do cartão.');
+        }
+      }
+    }, 'image/png');
+  }
+
+  window.onload = gerar;
+  ['nome','tagline','url'].forEach(id => {
+    document.getElementById(id).addEventListener('change', gerar);
+  });
+</script>
+</body>
+</html>
