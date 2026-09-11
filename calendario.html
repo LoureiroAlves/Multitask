@@ -115,6 +115,8 @@
   .dot{ font-size:.66rem; font-weight:800; padding:4px 10px; border-radius:20px; flex-shrink:0; text-transform:uppercase; letter-spacing:.3px; }
   .dot.confirmada{ background:#e2f4e9; color:#1e6b3c; } .dot.pendente{ background:#fbeecb; color:#8a5a10; } .dot.cancelada{ background:#fbe7e4; color:var(--vermelho); }
   .vazio-msg{ color:#8a7a5c; font-size:.9rem; }
+  .pdf-btn{ width:100%; margin-top:12px; background:#fff; border:1.5px solid var(--linha); border-radius:12px; padding:12px; font-weight:800; color:var(--dourado-escuro); cursor:pointer; font-size:.9rem; box-shadow:0 2px 8px rgba(74,56,32,.06); }
+  .pdf-btn:disabled{ opacity:.6; }
   /* Definições de reservas */
   .def-h{ font-weight:800; font-size:1.1rem; margin-bottom:4px; }
   .subt{ font-size:.82rem; color:#8a7a5c; margin-bottom:14px; }
@@ -206,6 +208,7 @@
         <div class="cal-grid" id="grid"></div>
       </div>
       <div class="legenda"><span><i style="background:var(--dourado)"></i> Pendente</span><span><i style="background:var(--verde)"></i> Confirmada</span></div>
+      <button id="btnPdf" type="button" class="pdf-btn">🖨️ Exportar mês em PDF</button>
       <div id="detalhe" style="margin-top:14px;"></div>
     </div>
     <div id="vistaDash" class="hide"></div>
@@ -268,6 +271,7 @@
   $('tabCal').onclick = () => mostrarVista('cal');
   $('tabDash').onclick = () => mostrarVista('dash');
   $('tabDef').onclick = () => mostrarVista('def');
+  $('btnPdf').onclick = exportarPdf;
   $('mdFechar').onclick = fecharModal;
   $('mdGuardar').onclick = guardarModal;
   $('mdApagar').onclick = apagarModal;
@@ -432,6 +436,80 @@
     if(iso === hojeIso){ lEl.textContent = 'Pessoas hoje'; }
     else { const d = new Date(iso+'T00:00:00'); lEl.textContent = 'Pessoas · ' + d.getDate() + ' ' + MESES[d.getMonth()].slice(0,3); }
     nEl.style.color = (cap && n > cap) ? 'var(--vermelho)' : '';
+  }
+
+  /* ===== Exportar o mês em PDF ===== */
+  const _CDNS_JSPDF = [
+    'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
+    'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js',
+    'https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js'
+  ];
+  let _jspdfP = null;
+  function _temJsPDF(){ return (window.jspdf && window.jspdf.jsPDF) || window.jsPDF; }
+  function _carregarJsPDF(){
+    if(_jspdfP) return _jspdfP;
+    _jspdfP = new Promise(function(resolve, reject){
+      if(_temJsPDF()){ resolve(); return; }
+      let i = 0;
+      (function tentar(){
+        if(_temJsPDF()){ resolve(); return; }
+        if(i >= _CDNS_JSPDF.length){ reject(new Error('Não foi possível carregar a biblioteca de PDF.')); return; }
+        const s = document.createElement('script'); s.src = _CDNS_JSPDF[i++];
+        s.onload = function(){ _temJsPDF() ? resolve() : tentar(); }; s.onerror = tentar;
+        document.head.appendChild(s);
+      })();
+    });
+    return _jspdfP;
+  }
+  async function exportarPdf(){
+    const btn = $('btnPdf'); const _t = btn.textContent; btn.disabled = true; btn.textContent = 'A gerar PDF...';
+    try{
+      await _carregarJsPDF();
+      const JsPDF = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+      const pdf = new JsPDF({ unit:'mm', format:'a4', orientation:'portrait' });
+      const mesPrefix = vAno + '-' + String(vMes+1).padStart(2,'0');
+      const doMes = reservas.filter(function(r){ return String(r.data).indexOf(mesPrefix) === 0 && r.estado !== 'cancelada'; }).sort(_cmpR);
+      const totalPax = doMes.reduce(function(s,r){ return s + (Number(r.pessoas)||0); }, 0);
+      const M = 14, W = 210, BOTTOM = 285; let y = 18;
+      const ensure = function(h){ if(y + h > BOTTOM){ pdf.addPage(); y = 18; } };
+      pdf.setFont('helvetica','bold'); pdf.setFontSize(16); pdf.setTextColor(58,44,24);
+      pdf.text((negocio && negocio.nome) || 'Reservas', M, y); y += 7;
+      pdf.setFont('helvetica','normal'); pdf.setFontSize(12); pdf.setTextColor(120,110,90);
+      pdf.text('Reservas · ' + MESES[vMes] + ' ' + vAno, M, y); y += 6;
+      pdf.setFontSize(10);
+      pdf.text(doMes.length + ' reserva(s) · ' + totalPax + ' pessoa(s)', M, y); y += 5;
+      pdf.setDrawColor(205,185,150); pdf.line(M, y, W - M, y); y += 7;
+      if(!doMes.length){ pdf.setTextColor(120,110,90); pdf.text('Sem reservas neste mês.', M, y); }
+      let lastDay = null;
+      const WD = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+      doMes.forEach(function(r){
+        if(r.data !== lastDay){
+          lastDay = r.data;
+          const d = new Date(r.data+'T00:00:00');
+          ensure(12);
+          pdf.setFillColor(244,238,222); pdf.rect(M, y - 4, W - 2*M, 8, 'F');
+          pdf.setFont('helvetica','bold'); pdf.setFontSize(11); pdf.setTextColor(58,44,24);
+          pdf.text(WD[d.getDay()] + ', ' + d.getDate() + ' de ' + MESES[d.getMonth()].toLowerCase(), M + 2, y + 1.5);
+          y += 10;
+        }
+        ensure(8);
+        pdf.setFont('helvetica','bold'); pdf.setFontSize(10); pdf.setTextColor(40,30,20);
+        pdf.text(String(r.hora || '—'), M + 2, y);
+        pdf.setFont('helvetica','normal'); pdf.setTextColor(40,30,20);
+        let linha = (r.nome || '') + '  ·  ' + (Number(r.pessoas)||1) + ' pax';
+        if(r.telefone) linha += '  ·  ' + r.telefone;
+        pdf.text(linha, M + 18, y, { maxWidth: W - M - 18 - 26 });
+        if(r.estado === 'confirmada'){ pdf.setTextColor(46,139,87); } else { pdf.setTextColor(160,110,20); }
+        pdf.setFont('helvetica','bold'); pdf.setFontSize(8);
+        pdf.text((r.estado || '').toUpperCase(), W - M - 2, y, { align:'right' });
+        y += 5;
+        if(r.obs){ pdf.setFont('helvetica','italic'); pdf.setFontSize(8.5); pdf.setTextColor(120,100,70); pdf.text('   ' + String(r.obs), M + 18, y, { maxWidth: W - M - 18 }); y += 4; }
+        y += 1.5;
+      });
+      const fich = 'reservas-' + mesPrefix + '.pdf';
+      try{ pdf.save(fich); }catch(e){ const nova = window.open(pdf.output('bloburl'), '_blank'); if(!nova) alert('O navegador bloqueou o PDF. Ativa os pop-ups.'); }
+    }catch(err){ alert(err.message || 'Não foi possível gerar o PDF.'); }
+    finally{ btn.disabled = false; btn.textContent = _t; }
   }
 
   /* ===== Definições de reservas (config.agenda) ===== */
