@@ -251,6 +251,7 @@
   // Secções do editor que o dono pode ver (o admin liga/desliga por negócio).
   // Publicidade e Limpeza NÃO estão aqui — são sempre só do admin.
   const EDITOR_SECS_GRUPOS = [
+    ['📅 Reservas', [ ['secCalendario','Calendário / Reservas'] ]],
     ['🎨 Aparência', [ ['secLayout','Layout, cores e modelo'], ['secHeader','Cabeçalho'], ['secRodape','Rodapé (barra fixa)'], ['secAbertura','Ecrã de abertura'] ]],
     ['🧾 Menu', [ ['secMenu','Menu (itens e preços)'] ]],
     ['🧩 Mosaico', [ ['secMosaico','Mosaico (caixas)'] ]],
@@ -449,9 +450,8 @@
           '<button class="mini" data-act="magic">✉️ Enviar acesso ao dono</button>' +
           '<button class="mini perigo" data-act="reporRating">⭐ Repor avaliações</button>' +
           '<a class="link" href="' + SITE + '/editar.html?n=' + n.slug + '" target="_blank">Abrir editor ↗</a>' +
-          '<a class="link" href="' + SITE + '/calendario.html?n=' + n.slug + '" target="_blank">Calendário ↗</a>' +
+          '<a class="link" href="' + SITE + '/calendario.html?n=' + n.slug + '" target="_blank">📅 Calendário / Reservas ↗</a>' +
           '<a class="link" href="' + SITE + '/' + n.slug + '" target="_blank">Ver menu ↗</a>' +
-          '<a class="link" href="' + SITE + '/reservas.html?n=' + n.slug + '" target="_blank">Reservas ↗</a>' +
         '</div>' +
         '<div data-msg></div>' +
       '</div>';

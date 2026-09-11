@@ -284,6 +284,16 @@
         <div class="ed-home-sub">Escolhe uma secção à esquerda para começares a editar o teu negócio.</div>
       </div>
 
+  <!-- CALENDÁRIO / RESERVAS -->
+  <details id="secCalendario" class="ed-sec" data-tab="calendario">
+    <summary>📅 Calendário / Reservas</summary>
+    <div class="bloco-conteudo">
+      <div class="subtitulo" style="margin-top:6px;">Gere as reservas do teu restaurante: confirma pedidos, adiciona reservas à mão, edita ou apaga, e cria promoções por dia. Cada alteração é guardada na hora.</div>
+      <div style="margin:8px 0;"><a id="calAbrirNova" class="link" href="#" target="_blank" style="font-weight:700; color:var(--dourado-escuro);">Abrir o calendário em página inteira ↗</a></div>
+      <iframe id="calFrame" title="Calendário de reservas" loading="lazy" style="width:100%; height:78vh; min-height:520px; border:1.5px solid var(--linha); border-radius:12px; background:#fff;"></iframe>
+    </div>
+  </details>
+
   <!-- PARTILHAR / QR -->
   <details id="secPartilha" class="ed-sec" data-tab="partilha">
     <summary>🔗 Partilhar / QR code</summary>
@@ -1818,7 +1828,8 @@ amesadigital.pt</textarea>
   const REPO = '', CONFIG_PATH = 'config.json', CONFIG_API = '';
   window.__negocio = null; window.__ent = null;
   try{ const _v = document.querySelector('a.voltar'); if(_v && SLUG) _v.href = 'cardapio.html?n=' + encodeURIComponent(SLUG); }catch(e){}
-  try{ const _r = document.getElementById('agLinkReservas'); if(_r && SLUG) _r.href = 'reservas.html?n=' + encodeURIComponent(SLUG); }catch(e){}
+  try{ const _r = document.getElementById('agLinkReservas'); if(_r && SLUG) _r.href = 'calendario.html?n=' + encodeURIComponent(SLUG); }catch(e){}
+  try{ const _c = document.getElementById('calAbrirNova'); if(_c && SLUG) _c.href = 'calendario.html?n=' + encodeURIComponent(SLUG); }catch(e){}
   // sobe uma foto para o Supabase Storage e devolve o URL público
   // Miniatura no editor: vídeo (autoplay mudo) ou imagem, conforme o URL
   function _edThumb(url, css){
@@ -6276,6 +6287,7 @@ amesadigital.pt</textarea>
   (function(){
     // Estrutura da navegação: [tab, nome, [secções por ordem]]
     var NAV = [
+      ['calendario','📅 Calendário', ['secCalendario']],
       ['aparencia','🎨 Aparência', ['secLayout','secHeader','secRodape','secAbertura']],
       ['menu','🧾 Menu', ['secMenu']],
       ['promo','🏷️ Promoção', ['secPromo']],
@@ -6286,6 +6298,7 @@ amesadigital.pt</textarea>
       ['limpeza','🧹 Limpeza de fotos', ['secLimpeza']]
     ];
     var LABEL = {
+      secCalendario:'📅 Calendário / Reservas',
       secLayout:'Layout', secHeader:'Cabeçalho', secRodape:'Rodapé (barra fixa)', secFooter:'Rodapé final (scroll)', secAbertura:'Ecrã de abertura',
       secMenu:'Menu — itens e preços', secPromo:'🏷️ Promoção (montra)', secMosaico:'Mosaico (caixas)',
       secJogos:'Jogos', secExtras:'Decoração e fidelidade', secAgenda:'Agenda / Reservas', secTextoLivre:'Texto livre', secCarrinho:'Carrinho', secFavoritos:'❤ Favoritos', secIconesTopo:'Ícones do topo', secRedes:'Redes sociais',
@@ -6440,6 +6453,7 @@ amesadigital.pt</textarea>
       document.querySelectorAll('.ed-sec').forEach(function(s){ s.classList.remove('ativa'); });
       if(homeEl) homeEl.classList.remove('ativa');
       sec.classList.add('ativa');
+      if(id === 'secCalendario'){ var _cf = document.getElementById('calFrame'); if(_cf && !_cf.src && SLUG){ _cf.src = 'calendario.html?n=' + encodeURIComponent(SLUG); } }
       Object.keys(subItems).forEach(function(k){ subItems[k].classList.toggle('on', k === id); });
       if(id !== 'secMenu') _limparMenuOn();
       if(!jaAba){ NAV.forEach(function(tb){ if(tb[2].indexOf(id) >= 0) abrirAba(tb[0], false); }); }
