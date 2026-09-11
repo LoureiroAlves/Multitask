@@ -6334,7 +6334,16 @@ amesadigital.pt</textarea>
         menuListEl = list;   // as categorias do menu entram aqui (dinâmico)
       } else {
         secs.forEach(function(id){
-          var b = mkSub(LABEL[id] || id, function(){ abrirSec(id); });
+          var b;
+          if(id === 'secAgenda'){   // secção antiga de reservas — riscada e bloqueada (usa o Calendário)
+            b = document.createElement('button'); b.type = 'button'; b.className = 'ed-subitem';
+            b.innerHTML = '<s style="opacity:.7;">' + (LABEL[id] || id) + '</s> <span style="font-size:.72rem; color:#b0532e;">· antiga</span>';
+            b.disabled = true;
+            b.title = 'Secção antiga de reservas — substituída pelo Calendário.';
+            b.style.cssText = 'opacity:.55; cursor:not-allowed;';
+          } else {
+            b = mkSub(LABEL[id] || id, function(){ abrirSec(id); });
+          }
           list.appendChild(b); subItems[id] = b;
         });
       }
@@ -6449,6 +6458,7 @@ amesadigital.pt</textarea>
       }
     }
     function abrirSec(id, jaAba){
+      if(id === 'secAgenda') return;   // secção antiga bloqueada — usa o Calendário
       var sec = document.getElementById(id); if(!sec) return;
       document.querySelectorAll('.ed-sec').forEach(function(s){ s.classList.remove('ativa'); });
       if(homeEl) homeEl.classList.remove('ativa');
