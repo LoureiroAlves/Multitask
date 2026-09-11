@@ -96,8 +96,10 @@
   .kpi .n{ font-size:1.8rem; font-weight:800; line-height:1; }
   .kpi .l{ font-size:.76rem; color:#8a7a5c; font-weight:700; margin-top:5px; }
   .kpi-cap{ font-size:1rem; color:#8a7a5c; font-weight:700; }
-  .kpi.a .ic{ background:#eaf0fa; } .kpi.b .ic{ background:#e2f4e9; } .kpi.b .n{ color:var(--verde); }
-  .kpi.c .ic{ background:#fbeecb; } .kpi.c .n{ color:var(--dourado-escuro); } .kpi.d .ic{ background:#f3ecfa; }
+  .kpi.full{ grid-column:1 / -1; }
+  .kpi.a{ background:#eef4fc; border-color:#cfe0f4; } .kpi.a .ic{ background:#d5e5f7; } .kpi.a .n{ color:#2a5aa8; }
+  .kpi.c{ background:#fdf6e3; border-color:#eeddb0; } .kpi.c .ic{ background:#f7e6bd; } .kpi.c .n{ color:var(--dourado-escuro); }
+  .kpi.b{ background:#eafaf0; border-color:#bfe6cd; } .kpi.b .ic{ background:#cfeeda; } .kpi.b .n{ color:var(--verde); }
   .dash-sec{ margin-bottom:18px; }
   .dash-sec h3{ font-size:.95rem; margin:0 0 10px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
   .linha-r{ display:flex; align-items:center; gap:12px; border:1px solid var(--linha); border-radius:14px; padding:11px 13px; margin-bottom:9px; cursor:pointer; background:#fff; box-shadow:0 2px 8px rgba(74,56,32,.05); }
@@ -394,10 +396,9 @@
     const pessoasHoje = _pessoasDia(hojeIso);
 
     let html = '<div class="kpis">'
-      + _kpi(futuras.length, 'Reservas por vir', 'a', '📅')
-      + '<div class="kpi b" id="kpiPessoas"><div class="ic">👥</div><div class="n" id="kpiPessoasN">'+pessoasHoje+(cap?(' <span class="kpi-cap">/ '+cap+'</span>'):'')+'</div><div class="l" id="kpiPessoasL">Pessoas hoje</div></div>'
+      + _kpi(hojeR.length, 'Reservas hoje', 'a', '📅')
       + _kpi(futPend.length, 'Por responder', 'c', '⏳')
-      + _kpi(hojeR.length, 'Reservas hoje', 'd', '🍽️')
+      + '<div class="kpi b full" id="kpiPessoas"><div class="ic">👥</div><div class="n" id="kpiPessoasN">'+pessoasHoje+(cap?(' <span class="kpi-cap">/ '+cap+'</span>'):'')+'</div><div class="l" id="kpiPessoasL">Pessoas hoje</div></div>'
       + '</div>';
 
     html += '<div class="dash-sec"><h3>⏳ A precisar de resposta</h3>'
