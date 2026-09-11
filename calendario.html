@@ -91,8 +91,12 @@
   .kpi.conf .n{ color:var(--verde); }
   .dash-sec{ margin-bottom:18px; }
   .dash-sec h3{ font-size:.95rem; margin:0 0 9px; }
-  .linha-r{ display:flex; justify-content:space-between; align-items:center; gap:10px; border:1px solid var(--linha); border-radius:10px; padding:10px 12px; margin-bottom:8px; cursor:pointer; background:#fff; }
-  .linha-r:hover{ background:#fffaf0; }
+  .linha-r{ display:flex; justify-content:space-between; align-items:center; gap:10px; border:1px solid var(--linha); border-left:5px solid var(--linha); border-radius:10px; padding:10px 12px; margin-bottom:8px; cursor:pointer; background:#fff; }
+  .linha-r:hover{ filter:brightness(.98); }
+  .linha-r.confirmada{ border-left-color:var(--verde); background:#f3fbf6; }
+  .linha-r.pendente{ border-left-color:var(--dourado); background:#fffaef; }
+  .linha-r.cancelada{ border-left-color:var(--vermelho); background:#fdf3f2; opacity:.72; }
+  .linha-r.fds .quando{ color:#b0532e; }
   .linha-r .quando{ font-weight:800; font-size:.85rem; }
   .linha-r .quem{ font-size:.82rem; color:#5a4c39; margin-top:2px; }
   .vazio-msg{ color:#8a7a5c; font-size:.9rem; }
@@ -243,7 +247,9 @@
   function _kpi(n, l, cls){ return '<div class="kpi '+(cls||'')+'"><div class="n">'+n+'</div><div class="l">'+l+'</div></div>'; }
   function _fmtDataCurta(iso){ const d = new Date(iso+'T00:00:00'); return d.getDate() + ' ' + MESES[d.getMonth()].slice(0,3); }
   function _linhaReserva(r){
-    return '<div class="linha-r" data-id="'+r.id+'">'
+    const wd = new Date(r.data+'T00:00:00').getDay();
+    const fds = (wd===0 || wd===6) ? ' fds' : '';
+    return '<div class="linha-r '+(r.estado||'')+fds+'" data-id="'+r.id+'">'
       + '<div><div class="quando">'+_fmtDataCurta(r.data)+' · '+esc(r.hora||'')+'</div>'
       + '<div class="quem">'+esc(r.nome||'')+' · '+(Number(r.pessoas)||1)+' pessoa(s)</div></div>'
       + '<span class="pill '+r.estado+'">'+r.estado+'</span></div>';
