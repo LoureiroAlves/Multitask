@@ -5596,6 +5596,8 @@
     ov.innerHTML = '<div class="ag-card" id="agCard"></div>';
     document.body.appendChild(ov);
     ov.addEventListener('click', function(e){ if(e.target === ov) ov.classList.remove('aberto'); });
+    // Bloqueia o scroll da página por trás enquanto o painel de reservas está aberto (qualquer forma de fechar desbloqueia)
+    try{ new MutationObserver(function(){ document.body.style.overflow = ov.classList.contains('aberto') ? 'hidden' : ''; }).observe(ov, { attributes:true, attributeFilter:['class'] }); }catch(e){}
     btn.addEventListener('click', function(){ window.__reservaMenu = ''; abrir(); });   // botão normal: reserva sem menu do carrinho
     window.__abrirAgenda = abrir;   // permite abrir o calendário a partir do carrinho (menu de grupo)
 
