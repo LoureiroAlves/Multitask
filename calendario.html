@@ -65,6 +65,17 @@
   .pill.pendente{ background:#f6ecd6; color:var(--dourado-escuro); }
   .pill.confirmada{ background:#e6f4ea; color:var(--verde); }
   .pill.cancelada{ background:#fbe7e4; color:var(--vermelho); }
+  /* Nova reserva manual */
+  .dia:not(.vazio){ cursor:pointer; }
+  .nova-btn{ width:100%; border:1.5px dashed var(--dourado); background:#fff; color:var(--dourado-escuro); border-radius:12px; padding:12px; cursor:pointer; font-weight:800; font-size:.92rem; margin-bottom:12px; }
+  .nova-btn:hover{ background:#fffaf0; }
+  .nova-form{ border:1px solid var(--linha); border-radius:12px; padding:14px; margin-bottom:14px; background:#fffdf8; }
+  .nova-form label{ display:block; font-size:.76rem; color:#8a7a5c; font-weight:800; margin:9px 0 3px; }
+  .nova-form input, .nova-form select, .nova-form textarea{ width:100%; padding:9px 10px; border:1.5px solid var(--linha); border-radius:8px; font-family:inherit; font-size:.9rem; box-sizing:border-box; background:#fff; }
+  .nova-form .lin{ display:flex; gap:8px; } .nova-form .lin > div{ flex:1; }
+  .nova-form .acts{ display:flex; gap:8px; margin-top:13px; }
+  .nova-form .acts button{ flex:1; border-radius:8px; padding:10px; cursor:pointer; font-weight:800; font-size:.88rem; border:1px solid var(--linha); background:#fff; }
+  .nova-form .acts button.guardar{ background:var(--verde); color:#fff; border-color:var(--verde); }
 </style>
 </head>
 <body>
@@ -172,14 +183,53 @@
             + '<span class="pts">'+pts+'</span></div>';
     }
     $('grid').innerHTML = html;
-    $('grid').querySelectorAll('.dia.tem').forEach(function(el){ el.onclick = function(){ diaSel = el.getAttribute('data-dia'); renderCal(); renderDia(diaSel); }; });
+    $('grid').querySelectorAll('.dia:not(.vazio)').forEach(function(el){ el.onclick = function(){ diaSel = el.getAttribute('data-dia'); renderCal(); renderDia(diaSel); }; });
+  }
+
+  function _formNovaHTML(){
+    return '<div class="nova-form hide" id="novaForm">'
+      + '<div class="lin"><div><label>Hora</label><input type="time" id="nvHora" value="20:00"></div>'
+      + '<div><label>Pessoas</label><input type="number" id="nvPessoas" min="1" value="2"></div></div>'
+      + '<label>Nome</label><input type="text" id="nvNome" placeholder="Nome do cliente">'
+      + '<label>Telefone</label><input type="text" id="nvTel" placeholder="ex: 912 345 678" inputmode="tel">'
+      + '<label>Menu / notas (opcional)</label><textarea id="nvObs" rows="2" placeholder="ex: 8× Menu 1"></textarea>'
+      + '<label>Estado</label><select id="nvEstado"><option value="confirmada">Confirmada</option><option value="pendente">Pendente</option></select>'
+      + '<div class="acts"><button id="nvCancelar" type="button">Cancelar</button><button class="guardar" id="nvGuardar" type="button">Guardar reserva</button></div>'
+      + '<div class="msg" id="nvMsg" style="margin-top:8px;"></div>'
+      + '</div>';
+  }
+  function _wireNova(iso){
+    const btn = $('btnNova'), form = $('novaForm');
+    if(btn && form) btn.onclick = function(){ form.classList.toggle('hide'); if(!form.classList.contains('hide')){ var n=$('nvNome'); if(n) n.focus(); } };
+    const c = $('nvCancelar'); if(c) c.onclick = function(){ if(form) form.classList.add('hide'); };
+    const g = $('nvGuardar'); if(g) g.onclick = function(){ guardarNova(iso); };
+  }
+  async function guardarNova(iso){
+    const nome = ($('nvNome').value||'').trim();
+    const tel  = ($('nvTel').value||'').trim();
+    const hora = ($('nvHora').value||'').trim();
+    const pessoas = Math.max(1, parseInt($('nvPessoas').value,10)||1);
+    const obs  = ($('nvObs').value||'').trim();
+    const estado = $('nvEstado').value || 'confirmada';
+    const msg = $('nvMsg');
+    if(!nome){ msg.textContent='Falta o nome.'; msg.className='msg erro'; return; }
+    if(!hora){ msg.textContent='Falta a hora.'; msg.className='msg erro'; return; }
+    const g = $('nvGuardar'); g.disabled = true; msg.textContent='A guardar...'; msg.className='msg';
+    const { error } = await sb.from('reservas').insert({
+      negocio_id: negocio.id, data: iso, hora: hora, nome: nome,
+      telefone: tel, pessoas: pessoas, obs: obs || null, estado: estado
+    });
+    g.disabled = false;
+    if(error){ msg.textContent = 'Erro: ' + error.message; msg.className='msg erro'; return; }
+    carregar();
   }
 
   function renderDia(iso){
     const d = new Date(iso + 'T00:00:00');
     const rs = (porDia[iso] || []).slice().sort(function(a,b){ return (a.hora||'').localeCompare(b.hora||''); });
     let html = '<div class="card"><div style="font-weight:800; margin-bottom:10px; text-transform:capitalize;">'+d.getDate()+' de '+MESES[d.getMonth()].toLowerCase()+'</div>';
-    if(!rs.length){ html += '<div style="color:#8a7a5c; font-size:.9rem;">Sem reservas neste dia.</div></div>'; $('detalhe').innerHTML = html; return; }
+    html += '<button class="nova-btn" id="btnNova" type="button">➕ Nova reserva</button>' + _formNovaHTML();
+    if(!rs.length) html += '<div style="color:#8a7a5c; font-size:.9rem;">Sem reservas neste dia.</div>';
     html += '</div>';
     rs.forEach(function(r){
       let acoes = '';
@@ -195,6 +245,7 @@
         + '<div class="r-acoes">'+acoes+'</div></div>';
     });
     $('detalhe').innerHTML = html;
+    _wireNova(iso);
     $('detalhe').querySelectorAll('[data-a]').forEach(function(btn){ btn.onclick = function(){ accao(btn.getAttribute('data-id'), btn.getAttribute('data-a')); }; });
   }
 
