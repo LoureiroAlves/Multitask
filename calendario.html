@@ -29,9 +29,14 @@
   .cal{ background:#fff; border:1px solid var(--linha); border-radius:14px; padding:10px; }
   .cal-cab, .cal-grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:5px; }
   .cal-cab{ margin-bottom:6px; }
-  .cal-cab div{ text-align:center; font-size:.74rem; font-weight:800; color:#fff; padding:6px 0; border-radius:8px; background:var(--dourado); letter-spacing:.3px; }
-  .cal-cab div:nth-child(6){ background:#c8702f; }   /* Sábado */
-  .cal-cab div:nth-child(7){ background:#b0532e; }   /* Domingo */
+  .cal-cab div{ text-align:center; font-size:.74rem; font-weight:800; color:#fff; padding:6px 0; border-radius:8px; letter-spacing:.3px; }
+  .cal-cab div:nth-child(1){ background:#2a5aa8; }   /* Seg */
+  .cal-cab div:nth-child(2){ background:#2e9b57; }   /* Ter */
+  .cal-cab div:nth-child(3){ background:#c9971c; }   /* Qua */
+  .cal-cab div:nth-child(4){ background:#8e5bd0; }   /* Qui */
+  .cal-cab div:nth-child(5){ background:#e0662a; }   /* Sex */
+  .cal-cab div:nth-child(6){ background:#c8702f; }   /* Sáb */
+  .cal-cab div:nth-child(7){ background:#c0392b; }   /* Dom */
   .dia{ position:relative; aspect-ratio:1/1; border:1.5px solid transparent; border-radius:10px; display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:.92rem; cursor:default; background:#faf6ee; transition:transform .06s ease; }
   .dia.vazio{ background:transparent; }
   .dia.fds{ background:#fbeee2; }                                  /* fim de semana */
@@ -93,10 +98,14 @@
   .dash-sec h3{ font-size:.95rem; margin:0 0 9px; }
   .linha-r{ display:flex; justify-content:space-between; align-items:center; gap:10px; border:1px solid var(--linha); border-left:5px solid var(--linha); border-radius:10px; padding:10px 12px; margin-bottom:8px; cursor:pointer; background:#fff; }
   .linha-r:hover{ filter:brightness(.98); }
-  .linha-r.confirmada{ border-left-color:var(--verde); background:#f3fbf6; }
-  .linha-r.pendente{ border-left-color:var(--dourado); background:#fffaef; }
-  .linha-r.cancelada{ border-left-color:var(--vermelho); background:#fdf3f2; opacity:.72; }
-  .linha-r.fds .quando{ color:#b0532e; }
+  .linha-r.wd-1{ border-left-color:#2a5aa8; } .linha-r.wd-1 .quando{ color:#2a5aa8; }
+  .linha-r.wd-2{ border-left-color:#2e9b57; } .linha-r.wd-2 .quando{ color:#2e9b57; }
+  .linha-r.wd-3{ border-left-color:#c9971c; } .linha-r.wd-3 .quando{ color:#b5850f; }
+  .linha-r.wd-4{ border-left-color:#8e5bd0; } .linha-r.wd-4 .quando{ color:#8e5bd0; }
+  .linha-r.wd-5{ border-left-color:#e0662a; } .linha-r.wd-5 .quando{ color:#d0551a; }
+  .linha-r.wd-6{ border-left-color:#c8702f; } .linha-r.wd-6 .quando{ color:#c8702f; }
+  .linha-r.wd-0{ border-left-color:#c0392b; } .linha-r.wd-0 .quando{ color:#c0392b; }
+  .linha-r.cancelada{ opacity:.55; }
   .linha-r .quando{ font-weight:800; font-size:.85rem; }
   .linha-r .quem{ font-size:.82rem; color:#5a4c39; margin-top:2px; }
   .vazio-msg{ color:#8a7a5c; font-size:.9rem; }
@@ -248,8 +257,7 @@
   function _fmtDataCurta(iso){ const d = new Date(iso+'T00:00:00'); return d.getDate() + ' ' + MESES[d.getMonth()].slice(0,3); }
   function _linhaReserva(r){
     const wd = new Date(r.data+'T00:00:00').getDay();
-    const fds = (wd===0 || wd===6) ? ' fds' : '';
-    return '<div class="linha-r '+(r.estado||'')+fds+'" data-id="'+r.id+'">'
+    return '<div class="linha-r '+(r.estado||'')+' wd-'+wd+'" data-id="'+r.id+'">'
       + '<div><div class="quando">'+_fmtDataCurta(r.data)+' · '+esc(r.hora||'')+'</div>'
       + '<div class="quem">'+esc(r.nome||'')+' · '+(Number(r.pessoas)||1)+' pessoa(s)</div></div>'
       + '<span class="pill '+r.estado+'">'+r.estado+'</span></div>';
@@ -286,8 +294,8 @@
       + (hojeR.length ? hojeR.map(_linhaReserva).join('') : '<div class="vazio-msg">Sem reservas para hoje.</div>')
       + '</div>';
 
-    const prox = futuras.slice(0, 30);
-    html += '<div class="dash-sec"><h3>➡️ Próximas reservas</h3>'
+    const prox = futuras.filter(function(r){ return r.data > hojeIso; }).slice(0, 30);
+    html += '<div class="dash-sec"><h3>➡️ Próximas reservas <span style="font-weight:600; color:#8a7a5c; font-size:.82rem;">(a partir de amanhã)</span></h3>'
       + (prox.length ? prox.map(_linhaReserva).join('') : '<div class="vazio-msg">Sem reservas futuras.</div>')
       + '</div>';
 
