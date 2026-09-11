@@ -318,6 +318,7 @@
             <input type="color" id="qrCorMold2" value="#4a3820" style="width:42px; height:30px; padding:0; border:none; background:none; cursor:pointer;">
           </div>
           <label style="margin:8px 0 2px; font-size:.85rem; color:var(--castanho-suave);"><input type="checkbox" id="qrCantos" checked style="width:auto;"> Cantos estilo "scanner"</label>
+          <label style="margin:8px 0 2px; font-size:.85rem; color:var(--castanho-suave);"><input type="checkbox" id="qrAmesa" checked style="width:auto;"> Mostrar QR pequeno do amesadigital.pt</label>
           <div style="display:flex; align-items:center; gap:8px; margin:8px 0 2px; flex-wrap:wrap;">
             <label style="margin:0; font-size:.85rem; color:var(--castanho-suave);">Tipo de letra dos textos</label>
             <select id="qrFonte" style="padding:7px 10px; border-radius:8px; border:1.5px solid var(--linha); background:var(--branco); font-family:inherit; color:var(--castanho);">
@@ -1945,6 +1946,7 @@ amesadigital.pt</textarea>
         corMold1: v('qrCorMold1','#c79a3e') || '#c79a3e',
         corMold2: v('qrCorMold2','#4a3820') || '#4a3820',
         cantos: c('qrCantos', true),
+        mostrarAmesa: c('qrAmesa', true),
         fonte: v('qrFonte','fredoka'),
         textoTopo: (v('qrTextoTopo','') || '').trim(),
         topoCor: v('qrTopoCor','#4a3820') || '#4a3820', topoTam: n('qrTopoTam', 18), topoB: c('qrTopoB', false), topoI: c('qrTopoI', false),
@@ -2024,7 +2026,8 @@ amesadigital.pt</textarea>
           const qs = Math.min(footH - 20, 66);               // QR do amesadigital
           const amX = _qrPos.amesa ? _qrPos.amesa.x * W : (P + S - qs);
           const amY = _qrPos.amesa ? _qrPos.amesa.y * H : (_fy + (footH - qs) / 2 + 4);
-          if(i2){ ctx.drawImage(i2, amX, amY, qs, qs); }
+          const _mostraAmesa = opt.mostrarAmesa !== false;
+          if(i2 && _mostraAmesa){ ctx.drawImage(i2, amX, amY, qs, qs); }
           // rodapé (cada linha = um parágrafo)
           ctx.fillStyle = opt.rodapeCor; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
           ctx.font = _qrFont(opt, opt.rodapeTam, opt.rodapeB, opt.rodapeI);
@@ -2090,7 +2093,7 @@ amesadigital.pt</textarea>
       var _mold = document.getElementById('qrMoldMarca');
       var _moldCores = document.getElementById('qrMoldCores');
       var _syncMold = function(){ if(_moldCores) _moldCores.style.display = (_mold && _mold.checked) ? 'none' : 'flex'; };
-      ['qrCorQR','qrCorMold1','qrCorMold2','qrMoldMarca','qrCantos','qrFonte','qrTextoTopo','qrTopoCor','qrTopoTam','qrTopoB','qrTopoI','qrTextoNome','qrNomeCor','qrNomeTam','qrNomeB','qrNomeI','qrRodape','qrRodapeCor','qrRodapeTam','qrRodapeB','qrRodapeI'].forEach(function(id){
+      ['qrCorQR','qrCorMold1','qrCorMold2','qrMoldMarca','qrCantos','qrAmesa','qrFonte','qrTextoTopo','qrTopoCor','qrTopoTam','qrTopoB','qrTopoI','qrTextoNome','qrNomeCor','qrNomeTam','qrNomeB','qrNomeI','qrRodape','qrRodapeCor','qrRodapeTam','qrRodapeB','qrRodapeI'].forEach(function(id){
         var e = document.getElementById(id); if(!e) return;
         e.addEventListener('input', _re); e.addEventListener('change', function(){ _syncMold(); _re(); });
       });
@@ -2496,6 +2499,7 @@ amesadigital.pt</textarea>
         if(_q.corMold2) _set('qrCorMold2', _q.corMold2);
         if('moldMarca' in _q) _setc('qrMoldMarca', _q.moldMarca);
         if('cantos' in _q) _setc('qrCantos', _q.cantos);
+        if('mostrarAmesa' in _q) _setc('qrAmesa', _q.mostrarAmesa);
         if(_q.fonte) _set('qrFonte', _q.fonte);
         _set('qrTextoTopo', _q.textoTopo || '');
         if(_q.topoCor) _set('qrTopoCor', _q.topoCor); if(_q.topoTam != null) _set('qrTopoTam', _q.topoTam); if('topoB' in _q) _setc('qrTopoB', _q.topoB); if('topoI' in _q) _setc('qrTopoI', _q.topoI);
