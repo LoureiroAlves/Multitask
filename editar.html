@@ -325,8 +325,8 @@
               <option value="fredoka">Fredoka</option><option value="poppins">Poppins</option><option value="playfair">Playfair</option><option value="quicksand">Quicksand</option><option value="montserrat">Montserrat</option><option value="bebas">Bebas Neue</option><option value="lobster">Lobster</option><option value="pacifico">Pacifico</option><option value="baloo">Baloo 2</option><option value="chewy">Chewy</option>
             </select>
           </div>
-          <label style="margin-top:10px;">Texto no topo (opcional)</label>
-          <input type="text" id="qrTextoTopo" placeholder="ex: Aponta e vê o menu" style="width:100%; padding:9px; border-radius:8px; border:1.5px solid var(--linha); font-family:inherit;">
+          <label style="margin-top:10px;">Texto no topo (opcional — carrega Enter para nova linha)</label>
+          <textarea id="qrTextoTopo" rows="2" placeholder="ex: Aponta e vê o menu" style="width:100%; padding:9px; border-radius:8px; border:1.5px solid var(--linha); font-family:inherit; resize:vertical;"></textarea>
           <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:5px 0 2px;">
             <input type="color" id="qrTopoCor" value="#4a3820" title="Cor" style="width:38px; height:28px; padding:0; border:none; background:none; cursor:pointer;">
             <label style="margin:0; font-size:.78rem; color:var(--castanho-suave);">Tam.</label>
@@ -354,7 +354,7 @@ amesadigital.pt</textarea>
             <label style="margin:0; font-size:.82rem; color:var(--castanho-suave);"><input type="checkbox" id="qrRodapeI" style="width:auto;"> Itálico</label>
           </div>
           <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; margin-top:10px;">
-            <span style="font-size:.8rem; color:var(--castanho-suave);">💡 Arrasta o QR do amesadigital e o texto do rodapé na pré-visualização para os reposicionares.</span>
+            <span style="font-size:.8rem; color:var(--castanho-suave);">💡 Arrasta o texto do topo, o texto do rodapé e o QR do amesadigital na pré-visualização para os reposicionares.</span>
             <button type="button" id="qrReporPos" class="mv-mini">repor posições</button>
           </div>
         </div>
@@ -1948,7 +1948,7 @@ amesadigital.pt</textarea>
         cantos: c('qrCantos', true),
         mostrarAmesa: c('qrAmesa', true),
         fonte: v('qrFonte','fredoka'),
-        textoTopo: (v('qrTextoTopo','') || '').trim(),
+        textoTopo: (v('qrTextoTopo','') || ''),
         topoCor: v('qrTopoCor','#4a3820') || '#4a3820', topoTam: n('qrTopoTam', 18), topoB: c('qrTopoB', false), topoI: c('qrTopoI', false),
         textoNome: (v('qrTextoNome','') || '').trim(),
         nomeCor: v('qrNomeCor','#4a3820') || '#4a3820', nomeTam: n('qrNomeTam', 24), nomeB: c('qrNomeB', true), nomeI: c('qrNomeI', false),
@@ -1957,7 +1957,7 @@ amesadigital.pt</textarea>
       };
     }
     var _qrCache = { i1: null, i2: null };
-    var _qrPos = { amesa: null, rodape: null };   // posições arrastadas (fração do canto sup. esq., de W e H)
+    var _qrPos = { amesa: null, rodape: null, topo: null };   // posições arrastadas (fração do canto sup. esq., de W e H)
     function renderQR(){
       if(!qrBox || !window.QRCode) return;
       const opt = _lerQR();
@@ -1982,7 +1982,11 @@ amesadigital.pt</textarea>
           while(_rodLinhas.length && !_rodLinhas[_rodLinhas.length - 1].trim()) _rodLinhas.pop();
           const _rodLH = Math.round(opt.rodapeTam * 1.34);
           const footH = _rodLinhas.length ? (_rodLinhas.length * _rodLH + 24) : 28;   // faixa de rodapé (cresce com as linhas)
-          const topH = opt.textoTopo ? Math.max(38, Math.round(opt.topoTam) + 22) : footH; // faixa do topo — sem texto, iguala o rodapé para o QR ficar centrado
+          const _topLinhas = (opt.textoTopo || '').split('\n');
+          while(_topLinhas.length && !_topLinhas[_topLinhas.length - 1].trim()) _topLinhas.pop();
+          const _topLH = Math.round(opt.topoTam * 1.34);
+          const topH = _topLinhas.length ? (_topLinhas.length * _topLH + 24) : footH; // faixa do topo — cresce com as linhas; sem texto iguala o rodapé para o QR ficar centrado
+          let _topBox = null;
           const P = 22;                                      // margem/moldura à volta
           const W = S + P * 2, H = topH + S + footH + P * 2;
           // cores da moldura — cores da marca ou personalizadas
@@ -1999,8 +2003,18 @@ amesadigital.pt</textarea>
           // moldura colorida (degradê)
           const _grad = ctx.createLinearGradient(0, 0, W, H); _grad.addColorStop(0, cA); _grad.addColorStop(1, cB);
           ctx.lineWidth = 9; ctx.strokeStyle = _grad; _roundRect(ctx, 7, 7, W - 14, H - 14, 24); ctx.stroke();
-          // texto no topo (opcional)
-          if(opt.textoTopo){ ctx.fillStyle = opt.topoCor; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = _qrFont(opt, opt.topoTam, opt.topoB, opt.topoI); ctx.fillText(opt.textoTopo, W / 2, P + topH / 2); }
+          // texto no topo (opcional) — várias linhas, arrastável (igual ao rodapé)
+          if(_topLinhas.length){
+            ctx.fillStyle = opt.topoCor; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+            ctx.font = _qrFont(opt, opt.topoTam, opt.topoB, opt.topoI);
+            let _tpw = 0; _topLinhas.forEach(function(l){ if(l.trim()) _tpw = Math.max(_tpw, ctx.measureText(l).width); });
+            const _topBlockH = _topLinhas.length * _topLH;
+            const tpX = _qrPos.topo ? _qrPos.topo.x * W : ((W - _tpw) / 2);
+            const tpTop = _qrPos.topo ? _qrPos.topo.y * H : (P + (topH - _topBlockH) / 2);
+            let _tly = tpTop + _topLH / 2 + 1;
+            _topLinhas.forEach(function(l){ if(l.trim()) ctx.fillText(l, tpX, _tly); _tly += _topLH; });
+            _topBox = { x: tpX, y: tpTop, w: (_tpw || 60), h: _topBlockH };
+          }
           const QY = P + topH;                               // topo do QR
           // QR do restaurante
           ctx.drawImage(i1, P, QY, S, S);
@@ -2037,7 +2051,7 @@ amesadigital.pt</textarea>
           const rdTop = _qrPos.rodape ? _qrPos.rodape.y * H : (_fy + (footH - _blockH) / 2);
           let _ly = rdTop + _rodLH / 2 + 1;
           _rodLinhas.forEach(function(l){ if(l.trim()) ctx.fillText(l, rdX, _ly); _ly += _rodLH; });
-          cv._boxes = { amesa: { x: amX, y: amY, w: qs, h: qs }, rodape: { x: rdX, y: rdTop, w: (_txw || 60), h: _blockH } };
+          cv._boxes = { amesa: (i2 && _mostraAmesa) ? { x: amX, y: amY, w: qs, h: qs } : null, rodape: { x: rdX, y: rdTop, w: (_txw || 60), h: _blockH }, topo: _topBox };
           cv._dims = { W: W, H: H };
           return cv;
     }
@@ -2051,21 +2065,22 @@ amesadigital.pt</textarea>
     }
     renderQR();
     window.__renderQR = renderQR;
-    window.__setQRPos = function(a, r){ _qrPos.amesa = a || null; _qrPos.rodape = r || null; };
-    window.__getQRPos = function(){ return { amesa: _qrPos.amesa, rodape: _qrPos.rodape }; };
+    window.__setQRPos = function(a, r, t){ _qrPos.amesa = a || null; _qrPos.rodape = r || null; _qrPos.topo = t || null; };
+    window.__getQRPos = function(){ return { amesa: _qrPos.amesa, rodape: _qrPos.rodape, topo: _qrPos.topo }; };
     window.__lerQR = _lerQR;
-    window.__reporQRPos = function(){ _qrPos.amesa = null; _qrPos.rodape = null; _comporQR(); if(window.__agendarPreview) window.__agendarPreview(); };
-    // Arrastar o QR do amesadigital e o texto do rodapé na pré-visualização
+    window.__reporQRPos = function(){ _qrPos.amesa = null; _qrPos.rodape = null; _qrPos.topo = null; _comporQR(); if(window.__agendarPreview) window.__agendarPreview(); };
+    // Arrastar o texto do topo, o texto do rodapé e o QR do amesadigital na pré-visualização
     (function(){
       if(!qrBox) return;
       var drag = null;
       var _pt = function(e){ var cv = qrCanvas; var r = cv.getBoundingClientRect(); var sx = cv.width / r.width; return { x: (e.clientX - r.left) * sx, y: (e.clientY - r.top) * sx }; };
-      var _dentro = function(p, b, m){ return p.x >= b.x - m && p.x <= b.x + b.w + m && p.y >= b.y - m && p.y <= b.y + b.h + m; };
+      var _dentro = function(p, b, m){ return !!b && p.x >= b.x - m && p.x <= b.x + b.w + m && p.y >= b.y - m && p.y <= b.y + b.h + m; };
       qrBox.style.touchAction = 'none';
       qrBox.addEventListener('pointerdown', function(e){
         var cv = qrCanvas; if(!cv || !cv._boxes) return;
         var p = _pt(e); var b = cv._boxes; var hit = null;
-        if(_dentro(p, b.amesa, 8)) hit = 'amesa';
+        if(_dentro(p, b.topo, 8)) hit = 'topo';
+        else if(_dentro(p, b.amesa, 8)) hit = 'amesa';
         else if(_dentro(p, b.rodape, 8)) hit = 'rodape';
         if(!hit) return;
         e.preventDefault(); drag = { hit: hit, ox: p.x - b[hit].x, oy: p.y - b[hit].y };
@@ -2074,7 +2089,7 @@ amesadigital.pt</textarea>
       });
       qrBox.addEventListener('pointermove', function(e){
         var cv = qrCanvas;
-        if(!drag){ if(cv && cv._boxes){ var pp = _pt(e); qrBox.style.cursor = (_dentro(pp, cv._boxes.amesa, 6) || _dentro(pp, cv._boxes.rodape, 6)) ? 'grab' : ''; } return; }
+        if(!drag){ if(cv && cv._boxes){ var pp = _pt(e); qrBox.style.cursor = (_dentro(pp, cv._boxes.topo, 6) || _dentro(pp, cv._boxes.amesa, 6) || _dentro(pp, cv._boxes.rodape, 6)) ? 'grab' : ''; } return; }
         if(!cv || !cv._dims) return;
         var p = _pt(e); var nx = p.x - drag.ox, ny = p.y - drag.oy;
         nx = Math.max(4, Math.min(cv._dims.W - 20, nx)); ny = Math.max(4, Math.min(cv._dims.H - 20, ny));
@@ -2507,7 +2522,7 @@ amesadigital.pt</textarea>
         if(_q.nomeCor) _set('qrNomeCor', _q.nomeCor); if(_q.nomeTam != null) _set('qrNomeTam', _q.nomeTam); if('nomeB' in _q) _setc('qrNomeB', _q.nomeB); if('nomeI' in _q) _setc('qrNomeI', _q.nomeI);
         if(_q.rodape != null) _set('qrRodape', _q.rodape); else if(_q.rodape1 != null || _q.rodape2 != null) _set('qrRodape', ((_q.rodape1 || '') + '\n' + (_q.rodape2 || '')).replace(/^\n|\n$/g,''));
         if(_q.rodapeCor) _set('qrRodapeCor', _q.rodapeCor); if(_q.rodapeTam != null) _set('qrRodapeTam', _q.rodapeTam); if('rodapeB' in _q) _setc('qrRodapeB', _q.rodapeB); if('rodapeI' in _q) _setc('qrRodapeI', _q.rodapeI);
-        try{ if(window.__setQRPos) window.__setQRPos(_q.amesaPos || null, _q.rodapePos || null); }catch(e){}
+        try{ if(window.__setQRPos) window.__setQRPos(_q.amesaPos || null, _q.rodapePos || null, _q.topoPos || null); }catch(e){}
         if(window.__syncQRMold) window.__syncQRMold();
         if(window.__renderQR) window.__renderQR();
       }catch(e){}
@@ -4062,7 +4077,7 @@ amesadigital.pt</textarea>
         if(isNaN(config.agenda.sinalPercent)) config.agenda.sinalPercent = 50;
       }
       config.layout = layoutSelecionado;
-      try{ if(window.__lerQR){ config.qr = window.__lerQR(); var _qp = (window.__getQRPos ? window.__getQRPos() : {}); config.qr.amesaPos = _qp.amesa || null; config.qr.rodapePos = _qp.rodape || null; } }catch(e){ console.warn('QR save falhou', e); }
+      try{ if(window.__lerQR){ config.qr = window.__lerQR(); var _qp = (window.__getQRPos ? window.__getQRPos() : {}); config.qr.amesaPos = _qp.amesa || null; config.qr.rodapePos = _qp.rodape || null; config.qr.topoPos = _qp.topo || null; } }catch(e){ console.warn('QR save falhou', e); }
       return config;
   }
 
