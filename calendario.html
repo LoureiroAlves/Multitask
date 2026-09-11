@@ -41,6 +41,7 @@
   .pt.conf{ background:var(--verde); }
   .dia.sel .pt.pend{ background:#f2c879; } .dia.sel .pt.conf{ background:#7ed3a1; }
   .dia .cnt{ position:absolute; top:3px; right:5px; font-size:.6rem; font-weight:800; color:#b6a179; }
+  .dia .promo-tag{ position:absolute; top:2px; left:4px; font-size:.62rem; line-height:1; }
   .dia.sel .cnt{ color:#f0e3c8; }
 
   .legenda{ display:flex; gap:14px; justify-content:center; margin:10px 0 0; font-size:.76rem; color:#8a7a5c; }
@@ -102,6 +103,8 @@
   .nova-form .acts{ display:flex; gap:8px; margin-top:13px; }
   .nova-form .acts button{ flex:1; border-radius:8px; padding:10px; cursor:pointer; font-weight:800; font-size:.88rem; border:1px solid var(--linha); background:#fff; }
   .nova-form .acts button.guardar{ background:var(--verde); color:#fff; border-color:var(--verde); }
+  .promo-btn{ width:100%; border:1.5px dashed #e0245e; background:#fff; color:#c01e50; border-radius:12px; padding:12px; cursor:pointer; font-weight:800; font-size:.92rem; margin-bottom:12px; }
+  .promo-btn:hover{ background:#fff5f8; }
 </style>
 </head>
 <body>
@@ -198,7 +201,7 @@
     const { data:{ session } } = await sb.auth.getSession();
     if(!session) return;
     if(!SLUG){ $('loginMsg').textContent='Falta ?n=slug no endereço.'; $('loginMsg').className='msg erro'; return; }
-    const { data:neg } = await sb.from('negocios').select('id,nome,slug').eq('slug', SLUG).maybeSingle();
+    const { data:neg } = await sb.from('negocios').select('id,nome,slug,config').eq('slug', SLUG).maybeSingle();
     if(!neg){ $('loginMsg').textContent='Negócio não encontrado.'; $('loginMsg').className='msg erro'; return; }
     negocio = neg;
     $('topTit').textContent = 'Reservas · ' + neg.nome;
@@ -331,11 +334,13 @@
       const rs = (porDia[iso] || []).filter(function(r){ return r.estado !== 'cancelada'; });
       const nPend = rs.filter(function(r){ return r.estado==='pendente'; }).length;
       const nConf = rs.filter(function(r){ return r.estado==='confirmada'; }).length;
+      const temPromo = !!(((negocio && negocio.config && negocio.config.promoDatas) || {})[iso]);
       let cls = 'dia'; if(rs.length) cls += ' tem'; if(iso===hojeIso) cls += ' hoje'; if(iso===diaSel) cls += ' sel';
       let pts = '';
       if(nPend) pts += '<span class="pt pend"></span>';
       if(nConf) pts += '<span class="pt conf"></span>';
       html += '<div class="'+cls+'" data-dia="'+iso+'">'
+            + (temPromo ? '<span class="promo-tag">🏷️</span>' : '')
             + (rs.length ? '<span class="cnt">'+rs.length+'</span>' : '')
             + '<span class="num">'+d+'</span>'
             + '<span class="pts">'+pts+'</span></div>';
@@ -428,6 +433,7 @@
     const rs = (porDia[iso] || []).slice().sort(function(a,b){ return (a.hora||'').localeCompare(b.hora||''); });
     let html = '<div class="card"><div style="font-weight:800; margin-bottom:10px; text-transform:capitalize;">'+d.getDate()+' de '+MESES[d.getMonth()].toLowerCase()+'</div>';
     html += '<button class="nova-btn" id="btnNova" type="button">➕ Nova reserva</button>' + _formNovaHTML();
+    html += _promoDoDiaHTML(iso);
     if(!rs.length) html += '<div style="color:#8a7a5c; font-size:.9rem;">Sem reservas neste dia.</div>';
     html += '</div>';
     rs.forEach(function(r){
@@ -447,7 +453,71 @@
     });
     $('detalhe').innerHTML = html;
     _wireNova(iso);
+    _wirePromo(iso);
     $('detalhe').querySelectorAll('[data-a]').forEach(function(btn){ btn.onclick = function(){ accao(btn.getAttribute('data-id'), btn.getAttribute('data-a')); }; });
+  }
+
+  function _promoDoDiaHTML(iso){
+    const p = ((negocio && negocio.config && negocio.config.promoDatas) || {})[iso] || null;
+    const tem = !!(p && (p.texto||'').toString().trim());
+    const texto = tem ? esc(p.texto) : '';
+    const cor = (p && p.cor) ? esc(p.cor) : '#e0245e';
+    const tam = (p && p.tamanho) ? (parseInt(p.tamanho,10)||16) : 16;
+    const horOn = !!(p && p.horaIni && p.horaFim);
+    const hi = horOn ? esc(p.horaIni) : '12:00';
+    const hf = horOn ? esc(p.horaFim) : '15:00';
+    return '<div class="promo-wrap">'
+      + '<button class="promo-btn" id="btnPromo" type="button">🏷️ Promoção deste dia'+(tem?' ✓':'')+'</button>'
+      + '<div class="nova-form '+(tem?'':'hide')+'" id="promoForm">'
+      + '<div style="font-size:.78rem; color:#8a7a5c; margin-bottom:4px;">Aparece na montra do amesadigital só neste dia (tem prioridade sobre a promoção normal).</div>'
+      + '<label>Texto da promoção</label><input type="text" id="pmTexto" maxlength="70" value="'+texto+'" placeholder="Ex.: Menu de Natal · 25€">'
+      + '<div class="lin"><div><label>Cor</label><input type="color" id="pmCor" value="'+cor+'" style="height:40px; padding:3px;"></div>'
+      + '<div><label>Tamanho (px)</label><input type="number" id="pmTam" min="11" max="30" value="'+tam+'"></div></div>'
+      + '<label style="display:flex; gap:8px; align-items:center; font-weight:800; margin-top:10px;"><input type="checkbox" id="pmHorarioOn"'+(horOn?' checked':'')+' style="width:auto;"> Só num horário</label>'
+      + '<div class="lin '+(horOn?'':'hide')+'" id="pmHorarioBox" style="margin-top:6px;"><div><label>Entra às</label><input type="time" id="pmHoraIni" value="'+hi+'"></div>'
+      + '<div><label>Sai às</label><input type="time" id="pmHoraFim" value="'+hf+'"></div></div>'
+      + '<div class="acts">'+(tem?'<button id="pmRemover" type="button">Remover</button>':'')+'<button class="guardar" id="pmGuardar" type="button">Guardar promoção</button></div>'
+      + '<div class="msg" id="pmMsg" style="margin-top:8px;">'+(tem?'Promoção ativa neste dia.':'')+'</div>'
+      + '</div></div>';
+  }
+  function _wirePromo(iso){
+    const btn = $('btnPromo'), form = $('promoForm');
+    if(btn && form) btn.onclick = function(){ form.classList.toggle('hide'); };
+    const h = $('pmHorarioOn'); if(h) h.onchange = function(){ const b=$('pmHorarioBox'); if(b) b.classList.toggle('hide', !h.checked); };
+    const g = $('pmGuardar'); if(g) g.onclick = function(){ guardarPromo(iso); };
+    const r = $('pmRemover'); if(r) r.onclick = function(){ removerPromo(iso); };
+  }
+  async function _gravarPromoData(iso, promo){
+    const { data, error } = await sb.from('negocios').select('config').eq('id', negocio.id).maybeSingle();
+    if(error) return error;
+    const cfg = (data && data.config) || {};
+    cfg.promoDatas = cfg.promoDatas || {};
+    if(promo) cfg.promoDatas[iso] = promo; else delete cfg.promoDatas[iso];
+    const up = await sb.from('negocios').update({ config: cfg }).eq('id', negocio.id);
+    if(up.error) return up.error;
+    negocio.config = cfg;   // manter a cópia local em sincronia
+    return null;
+  }
+  async function guardarPromo(iso){
+    const texto = ($('pmTexto').value||'').trim();
+    const cor = $('pmCor').value || '#e0245e';
+    const tam = Math.max(11, Math.min(30, parseInt($('pmTam').value,10)||16));
+    const horOn = $('pmHorarioOn').checked;
+    const msg = $('pmMsg');
+    if(!texto){ msg.textContent='Escreve o texto da promoção.'; msg.className='msg erro'; return; }
+    const promo = { texto: texto, cor: cor, tamanho: tam, ativo: true };
+    if(horOn){ promo.horaIni = $('pmHoraIni').value||''; promo.horaFim = $('pmHoraFim').value||''; }
+    const g = $('pmGuardar'); g.disabled = true; msg.textContent='A guardar...'; msg.className='msg';
+    const err = await _gravarPromoData(iso, promo);
+    g.disabled = false;
+    if(err){ msg.textContent='Erro: '+err.message; msg.className='msg erro'; return; }
+    renderDia(iso);
+  }
+  async function removerPromo(iso){
+    if(!confirm('Remover a promoção deste dia?')) return;
+    const err = await _gravarPromoData(iso, null);
+    if(err){ const msg=$('pmMsg'); if(msg){ msg.textContent='Erro: '+err.message; msg.className='msg erro'; } return; }
+    renderDia(iso);
   }
 
   function _telWA(t){
