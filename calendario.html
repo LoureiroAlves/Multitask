@@ -132,6 +132,21 @@
   .modal{ background:#fff; border-radius:16px; padding:18px 18px 16px; width:100%; max-width:420px; max-height:90vh; overflow:auto; box-shadow:0 14px 44px rgba(0,0,0,.28); }
   .modal h3{ margin:0 0 12px; font-size:1.05rem; }
   .modal .fechar{ float:right; border:none; background:none; font-size:1.25rem; cursor:pointer; color:#8a7a5c; line-height:1; padding:0; }
+  /* Pop-up de aprovação */
+  .ap-tag{ font-size:.78rem; font-weight:800; color:var(--dourado-escuro); background:#fbeecb; display:inline-block; padding:5px 12px; border-radius:20px; }
+  .ap-data{ font-size:1.25rem; font-weight:800; margin:12px 0 12px; text-transform:capitalize; display:flex; align-items:center; gap:9px; flex-wrap:wrap; }
+  .ap-data .ap-wd{ font-size:.7rem; color:#fff; border-radius:8px; padding:3px 10px; text-transform:uppercase; letter-spacing:.4px; }
+  .ap-card{ background:#faf4e8; border:1px solid var(--linha); border-radius:12px; padding:13px; }
+  .ap-hora{ font-weight:800; font-size:1.1rem; }
+  .ap-nome{ font-size:.95rem; margin-top:5px; font-weight:600; }
+  .ap-meta{ font-size:.83rem; color:#8a7a5c; margin-top:3px; }
+  .ap-menu{ font-size:.85rem; color:var(--dourado-escuro); margin-top:6px; font-weight:600; }
+  .ap-estado{ font-size:.82rem; color:#8a7a5c; margin:12px 0; }
+  .ap-acts{ display:flex; gap:9px; }
+  .ap-acts button{ flex:1; border-radius:11px; padding:13px; font-weight:800; font-size:.95rem; cursor:pointer; border:1px solid var(--linha); background:#fff; }
+  .ap-ok{ background:var(--verde) !important; color:#fff; border-color:var(--verde) !important; }
+  .ap-no{ color:var(--vermelho); border-color:#e8c4bf !important; }
+  .ap-ver{ width:100%; margin-top:9px; background:none; border:none; color:#8a7a5c; font-weight:700; font-size:.85rem; cursor:pointer; padding:6px; }
   /* Nova reserva manual */
   .dia:not(.vazio){ cursor:pointer; }
   .nova-btn{ width:100%; border:1.5px dashed var(--dourado); background:#fff; color:var(--dourado-escuro); border-radius:12px; padding:12px; cursor:pointer; font-weight:800; font-size:.92rem; margin-bottom:12px; }
@@ -204,15 +219,32 @@
   </div>
 </div>
 
+<div id="modalAprovar" class="modal-bg hide">
+  <div class="modal">
+    <button class="fechar" id="apFechar" type="button" aria-label="Fechar">✕</button>
+    <div class="ap-tag">🔔 Pré-reserva a aguardar</div>
+    <div class="ap-data" id="apData"></div>
+    <div class="ap-card" id="apInfo"></div>
+    <div class="ap-estado" id="apEstado"></div>
+    <div class="ap-acts">
+      <button class="ap-ok" id="apConfirmar" type="button">✔ Confirmar</button>
+      <button class="ap-no" id="apRecusar" type="button">✕ Recusar</button>
+    </div>
+    <button class="ap-ver" id="apVer" type="button">Ver no calendário</button>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
   const SUPA_URL = 'https://zewiijcrkyxjkhudlplk.supabase.co';
   const SUPA_KEY = 'sb_publishable_6LP7x2v5c-c9DQkQslnUmA_g13SEjp3';
   const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
   const SLUG = ((new URLSearchParams(location.search)).get('n') || '').toLowerCase().replace(/[^a-z0-9]/g,'');
+  const DIA_PARAM = (((new URLSearchParams(location.search)).get('d') || '').match(/^\d{4}-\d{2}-\d{2}$/) || [''])[0];
   const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
   const $ = id => document.getElementById(id);
   let negocio = null, reservas = [], porDia = {};
+  let _primeiraCarga = true, _apId = null;
   const hoje = new Date(); let vAno = hoje.getFullYear(), vMes = hoje.getMonth(), diaSel = null;
 
   function isoLocal(d){ return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
@@ -229,6 +261,11 @@
   $('mdGuardar').onclick = guardarModal;
   $('mdApagar').onclick = apagarModal;
   $('modalEdit').onclick = (e) => { if(e.target === $('modalEdit')) fecharModal(); };
+  $('apFechar').onclick = fecharAprovar;
+  $('apVer').onclick = fecharAprovar;
+  $('apConfirmar').onclick = () => _apAcao('confirmar');
+  $('apRecusar').onclick = () => _apAcao('cancelar');
+  $('modalAprovar').onclick = (e) => { if(e.target === $('modalAprovar')) fecharAprovar(); };
 
   async function entrar(){
     const email = $('email').value.trim(), pass = $('pass').value;
@@ -261,6 +298,48 @@
     renderCal();
     if(diaSel) renderDia(diaSel);
     if(!$('vistaDash').classList.contains('hide')) renderDashboard();
+    if(_primeiraCarga){ _primeiraCarga = false; _aprovacaoInicial(); }
+  }
+
+  // Ao abrir o calendário, salta logo para o dia da pré-reserva a aguardar e mostra um pop-up
+  function _aprovacaoInicial(){
+    let alvo = null;
+    if(DIA_PARAM){
+      const doDia = reservas.filter(function(r){ return r.data === DIA_PARAM && r.estado === 'pendente'; }).sort(_cmpR);
+      alvo = doDia[0] || reservas.filter(function(r){ return r.data === DIA_PARAM; }).sort(_cmpR)[0] || null;
+      if(!alvo){ irParaDia(DIA_PARAM); return; }   // dia sem reservas: abre só o dia
+    } else {
+      const pend = reservas.filter(function(r){ return r.estado === 'pendente'; });
+      pend.sort(function(a,b){ return String(b.criado_em||b.created_at||b.data||'').localeCompare(String(a.criado_em||a.created_at||a.data||'')); });
+      alvo = pend[0] || null;
+    }
+    if(!alvo) return;
+    const d = new Date(alvo.data+'T00:00:00');
+    vAno = d.getFullYear(); vMes = d.getMonth(); diaSel = alvo.data;
+    mostrarVista('cal'); renderCal(); renderDia(alvo.data);
+    _abrirAprovacao(alvo);
+  }
+  function _abrirAprovacao(r){
+    const d = new Date(r.data+'T00:00:00');
+    const wd = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'][d.getDay()];
+    const obs = (r.obs||'').toString().trim();
+    _apId = r.id;
+    $('apData').innerHTML = '<span class="ap-wd db-'+d.getDay()+'">'+wd+'</span> '+d.getDate()+' de '+MESES[d.getMonth()].toLowerCase();
+    $('apInfo').innerHTML = '<div class="ap-hora">'+esc(r.hora||'')+' · '+(Number(r.pessoas)||1)+' pessoa(s)</div>'
+      + '<div class="ap-nome">'+esc(r.nome||'')+'</div>'
+      + '<div class="ap-meta">📱 '+esc(r.telefone||'')+'</div>'
+      + (obs ? '<div class="ap-menu">🍽 '+esc(obs)+'</div>' : '');
+    const jaConf = (r.estado === 'confirmada');
+    $('apConfirmar').style.display = jaConf ? 'none' : '';
+    $('apEstado').textContent = jaConf ? 'Esta reserva já está confirmada.' : 'A aguardar a tua aprovação.';
+    $('modalAprovar').classList.remove('hide');
+  }
+  function fecharAprovar(){ $('modalAprovar').classList.add('hide'); _apId = null; }
+  async function _apAcao(a){
+    if(!_apId) return;
+    const id = _apId;
+    fecharAprovar();
+    await accao(id, a);
   }
 
   function mostrarVista(qual){
