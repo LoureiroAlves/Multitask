@@ -5763,7 +5763,7 @@
       if(menuTxt) waMsg += 'Menu de grupo: ' + menuTxt + '\n';
       if(obs) waMsg += 'Obs: ' + obs + '\n';
       if(sinal > 0) waMsg += 'Sinal (' + pct + '%): ' + sinal.toFixed(2) + '€\n';
-      try{ if(SLUG){ waMsg += '\n✅ Confirmar no calendário: ' + location.origin + '/calendario.html?n=' + SLUG + '\n'; } }catch(e){}
+      try{ if(SLUG){ waMsg += '\n✅ Confirmar no calendário: ' + location.origin + '/calendario.html?n=' + SLUG + (estado.diaSel ? ('&d=' + estado.diaSel) : '') + '\n'; } }catch(e){}
       waMsg += 'Obrigado!';
       let ok = '<h3>Pré-reserva registada ✓</h3>';
       ok += '<div class="ag-resumo"><strong>' + d.getDate() + ' de ' + MESES[d.getMonth()] + '</strong> às <strong>' + estado.slotSel + '</strong> · ' + pessoas + ' pessoa(s)<br>É uma <strong>pré-reserva</strong> — envia o pedido ao restaurante para confirmarem.';
