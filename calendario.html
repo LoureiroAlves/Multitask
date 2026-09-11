@@ -490,6 +490,8 @@
           pdf.setFillColor(244,238,222); pdf.rect(M, y - 4, W - 2*M, 8, 'F');
           pdf.setFont('helvetica','bold'); pdf.setFontSize(11); pdf.setTextColor(58,44,24);
           pdf.text(WD[d.getDay()] + ', ' + d.getDate() + ' de ' + MESES[d.getMonth()].toLowerCase(), M + 2, y + 1.5);
+          pdf.setFontSize(10); pdf.setTextColor(90,74,40);
+          pdf.text(_pessoasDia(r.data) + ' pessoa(s)', W - M - 2, y + 1.5, { align:'right' });
           y += 10;
         }
         ensure(8);
