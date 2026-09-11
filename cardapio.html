@@ -7746,12 +7746,27 @@
     }catch(e){}
   })();
 
-  // Bloqueia o scroll da página por trás sempre que há um painel/overlay aberto (reservas, carrinho, favoritos, jogos, etc.)
+  // Bloqueia MESMO o scroll da página por trás quando há um painel/overlay aberto (reservas, carrinho, favoritos, jogos, categorias…).
+  // Usa a técnica que funciona no iOS (congela o body e repõe a posição ao fechar), pois só overflow:hidden não trava o Safari.
   (function(){
     try{
-      var _lock = function(){ document.body.style.overflow = document.querySelector('.aberto') ? 'hidden' : ''; };
-      new MutationObserver(_lock).observe(document.body, { attributes:true, attributeFilter:['class'], subtree:true });
-      _lock();
+      var _y = 0, _locked = false;
+      function _apply(){
+        var aberto = !!document.querySelector('.aberto:not(.categoria-painel)');
+        if(aberto && !_locked){
+          _y = window.scrollY || window.pageYOffset || 0;
+          var b = document.body.style;
+          b.position = 'fixed'; b.top = (-_y) + 'px'; b.left = '0'; b.right = '0'; b.width = '100%'; b.overflow = 'hidden';
+          _locked = true;
+        } else if(!aberto && _locked){
+          var s = document.body.style;
+          s.position = ''; s.top = ''; s.left = ''; s.right = ''; s.width = ''; s.overflow = '';
+          _locked = false;
+          window.scrollTo(0, _y);
+        }
+      }
+      new MutationObserver(_apply).observe(document.body, { attributes:true, attributeFilter:['class'], subtree:true });
+      _apply();
     }catch(e){}
   })();
 </script>
