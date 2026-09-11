@@ -333,8 +333,9 @@
     $('apConfirmar').style.display = jaConf ? 'none' : '';
     $('apEstado').textContent = jaConf ? 'Esta reserva já está confirmada.' : 'A aguardar a tua aprovação.';
     $('modalAprovar').classList.remove('hide');
+    document.body.style.overflow = 'hidden';
   }
-  function fecharAprovar(){ $('modalAprovar').classList.add('hide'); _apId = null; }
+  function fecharAprovar(){ $('modalAprovar').classList.add('hide'); _apId = null; document.body.style.overflow = ''; }
   async function _apAcao(a){
     if(!_apId) return;
     const id = _apId;
@@ -510,8 +511,9 @@
     $('mdEstado').value = r.estado || 'pendente';
     $('mdMsg').textContent = ''; $('mdMsg').className = 'msg';
     $('modalEdit').classList.remove('hide');
+    document.body.style.overflow = 'hidden';
   }
-  function fecharModal(){ $('modalEdit').classList.add('hide'); _mdId = null; }
+  function fecharModal(){ $('modalEdit').classList.add('hide'); _mdId = null; document.body.style.overflow = ''; }
   async function guardarModal(){
     if(!_mdId) return;
     const nome = ($('mdNome').value||'').trim();
