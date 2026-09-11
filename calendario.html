@@ -67,6 +67,24 @@
   .pill.pendente{ background:#f6ecd6; color:var(--dourado-escuro); }
   .pill.confirmada{ background:#e6f4ea; color:var(--verde); }
   .pill.cancelada{ background:#fbe7e4; color:var(--vermelho); }
+  /* Separadores Calendário / Painel */
+  .tabs{ display:flex; gap:8px; margin-bottom:14px; }
+  .tab{ flex:1; padding:10px; border:1px solid var(--linha); background:#fff; border-radius:10px; font-weight:800; cursor:pointer; color:#8a7a5c; font-size:.9rem; }
+  .tab.ativo{ background:var(--castanho); color:#fff; border-color:var(--castanho); }
+  /* Painel (dashboard) */
+  .kpis{ display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-bottom:16px; }
+  .kpi{ border:1px solid var(--linha); border-radius:12px; padding:14px; background:#fff; }
+  .kpi .n{ font-size:1.7rem; font-weight:800; line-height:1; }
+  .kpi .l{ font-size:.76rem; color:#8a7a5c; font-weight:700; margin-top:5px; }
+  .kpi.pend{ background:#fffaf0; border-color:#e7d8b4; } .kpi.pend .n{ color:var(--dourado-escuro); }
+  .kpi.conf .n{ color:var(--verde); }
+  .dash-sec{ margin-bottom:18px; }
+  .dash-sec h3{ font-size:.95rem; margin:0 0 9px; }
+  .linha-r{ display:flex; justify-content:space-between; align-items:center; gap:10px; border:1px solid var(--linha); border-radius:10px; padding:10px 12px; margin-bottom:8px; cursor:pointer; background:#fff; }
+  .linha-r:hover{ background:#fffaf0; }
+  .linha-r .quando{ font-weight:800; font-size:.85rem; }
+  .linha-r .quem{ font-size:.82rem; color:#5a4c39; margin-top:2px; }
+  .vazio-msg{ color:#8a7a5c; font-size:.9rem; }
   /* Nova reserva manual */
   .dia:not(.vazio){ cursor:pointer; }
   .nova-btn{ width:100%; border:1.5px dashed var(--dourado); background:#fff; color:var(--dourado-escuro); border-radius:12px; padding:12px; cursor:pointer; font-weight:800; font-size:.92rem; margin-bottom:12px; }
@@ -97,17 +115,24 @@
   </div>
 
   <div id="painel" class="hide">
-    <div class="mes-bar">
-      <button id="mesPrev" aria-label="Mês anterior">‹</button>
-      <div class="mes-nome" id="mesNome"></div>
-      <button id="mesNext" aria-label="Mês seguinte">›</button>
+    <div class="tabs">
+      <button id="tabCal" class="tab ativo" type="button">📅 Calendário</button>
+      <button id="tabDash" class="tab" type="button">📊 Painel</button>
     </div>
-    <div class="cal">
-      <div class="cal-cab"><div>Seg</div><div>Ter</div><div>Qua</div><div>Qui</div><div>Sex</div><div>Sáb</div><div>Dom</div></div>
-      <div class="cal-grid" id="grid"></div>
+    <div id="vistaCal">
+      <div class="mes-bar">
+        <button id="mesPrev" aria-label="Mês anterior">‹</button>
+        <div class="mes-nome" id="mesNome"></div>
+        <button id="mesNext" aria-label="Mês seguinte">›</button>
+      </div>
+      <div class="cal">
+        <div class="cal-cab"><div>Seg</div><div>Ter</div><div>Qua</div><div>Qui</div><div>Sex</div><div>Sáb</div><div>Dom</div></div>
+        <div class="cal-grid" id="grid"></div>
+      </div>
+      <div class="legenda"><span><i style="background:var(--dourado)"></i> Pendente</span><span><i style="background:var(--verde)"></i> Confirmada</span></div>
+      <div id="detalhe" style="margin-top:14px;"></div>
     </div>
-    <div class="legenda"><span><i style="background:var(--dourado)"></i> Pendente</span><span><i style="background:var(--verde)"></i> Confirmada</span></div>
-    <div id="detalhe" style="margin-top:14px;"></div>
+    <div id="vistaDash" class="hide"></div>
   </div>
 </div>
 
@@ -129,6 +154,8 @@
   $('btnSair').onclick = async () => { await sb.auth.signOut(); location.reload(); };
   $('mesPrev').onclick = () => { vMes--; if(vMes<0){ vMes=11; vAno--; } diaSel=null; $('detalhe').innerHTML=''; renderCal(); };
   $('mesNext').onclick = () => { vMes++; if(vMes>11){ vMes=0; vAno++; } diaSel=null; $('detalhe').innerHTML=''; renderCal(); };
+  $('tabCal').onclick = () => mostrarVista('cal');
+  $('tabDash').onclick = () => mostrarVista('dash');
 
   async function entrar(){
     const email = $('email').value.trim(), pass = $('pass').value;
@@ -160,6 +187,66 @@
     reservas.forEach(function(r){ (porDia[r.data] = porDia[r.data] || []).push(r); });
     renderCal();
     if(diaSel) renderDia(diaSel);
+    if(!$('vistaDash').classList.contains('hide')) renderDashboard();
+  }
+
+  function mostrarVista(qual){
+    const cal = (qual === 'cal');
+    $('vistaCal').classList.toggle('hide', !cal);
+    $('vistaDash').classList.toggle('hide', cal);
+    $('tabCal').classList.toggle('ativo', cal);
+    $('tabDash').classList.toggle('ativo', !cal);
+    if(!cal) renderDashboard();
+  }
+
+  function _cmpR(a,b){ return (a.data + (a.hora||'')).localeCompare(b.data + (b.hora||'')); }
+  function _kpi(n, l, cls){ return '<div class="kpi '+(cls||'')+'"><div class="n">'+n+'</div><div class="l">'+l+'</div></div>'; }
+  function _fmtDataCurta(iso){ const d = new Date(iso+'T00:00:00'); return d.getDate() + ' ' + MESES[d.getMonth()].slice(0,3); }
+  function _linhaReserva(r){
+    return '<div class="linha-r" data-dia="'+r.data+'">'
+      + '<div><div class="quando">'+_fmtDataCurta(r.data)+' · '+esc(r.hora||'')+'</div>'
+      + '<div class="quem">'+esc(r.nome||'')+' · '+(Number(r.pessoas)||1)+' pessoa(s)</div></div>'
+      + '<span class="pill '+r.estado+'">'+r.estado+'</span></div>';
+  }
+  function irParaDia(iso){
+    const d = new Date(iso+'T00:00:00');
+    vAno = d.getFullYear(); vMes = d.getMonth(); diaSel = iso;
+    mostrarVista('cal');
+    renderCal(); renderDia(iso);
+    const det = $('detalhe'); if(det) det.scrollIntoView({ behavior:'smooth', block:'start' });
+  }
+  function renderDashboard(){
+    const dash = $('vistaDash');
+    const hojeIso = isoLocal(hoje);
+    const ativas = reservas.filter(function(r){ return r.estado !== 'cancelada'; });
+    const futuras = ativas.filter(function(r){ return r.data >= hojeIso; }).sort(_cmpR);
+    const futConf = futuras.filter(function(r){ return r.estado === 'confirmada'; });
+    const futPend = futuras.filter(function(r){ return r.estado === 'pendente'; });
+    const pessoasFut = futConf.reduce(function(s,r){ return s + (Number(r.pessoas)||0); }, 0);
+    const hojeR = ativas.filter(function(r){ return r.data === hojeIso; }).sort(_cmpR);
+
+    let html = '<div class="kpis">'
+      + _kpi(futuras.length, 'Reservas por vir', '')
+      + _kpi(pessoasFut, 'Pessoas esperadas', 'conf')
+      + _kpi(futPend.length, 'Por responder', 'pend')
+      + _kpi(hojeR.length, 'Reservas hoje', '')
+      + '</div>';
+
+    html += '<div class="dash-sec"><h3>⏳ A precisar de resposta</h3>'
+      + (futPend.length ? futPend.map(_linhaReserva).join('') : '<div class="vazio-msg">Nada pendente. 👍</div>')
+      + '</div>';
+
+    html += '<div class="dash-sec"><h3>📆 Hoje</h3>'
+      + (hojeR.length ? hojeR.map(_linhaReserva).join('') : '<div class="vazio-msg">Sem reservas para hoje.</div>')
+      + '</div>';
+
+    const prox = futuras.slice(0, 30);
+    html += '<div class="dash-sec"><h3>➡️ Próximas reservas</h3>'
+      + (prox.length ? prox.map(_linhaReserva).join('') : '<div class="vazio-msg">Sem reservas futuras.</div>')
+      + '</div>';
+
+    dash.innerHTML = html;
+    dash.querySelectorAll('.linha-r').forEach(function(el){ el.onclick = function(){ irParaDia(el.getAttribute('data-dia')); }; });
   }
 
   function renderCal(){
