@@ -296,7 +296,7 @@
       </div>
       <div style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;">
         <button type="button" id="btnAbrirCardapio" style="padding:9px 12px; border-radius:8px; border:1.5px solid var(--linha); background:var(--branco); color:var(--castanho); cursor:pointer;">Abrir cardápio</button>
-        <button type="button" id="btnDescarregarQR" style="padding:9px 12px; border-radius:8px; border:1.5px solid var(--linha); background:var(--branco); color:var(--castanho); cursor:pointer;">Descarregar QR (JPG)</button>
+        <button type="button" id="btnDescarregarQR" style="padding:9px 12px; border-radius:8px; border:1.5px solid var(--linha); background:var(--branco); color:var(--castanho); cursor:pointer;">Descarregar QR (PDF)</button>
       </div>
       <div id="qrCardapio" style="margin-top:14px; display:flex; justify-content:center; padding:14px; background:#fff; border:1.5px solid var(--linha); border-radius:12px;"></div>
 
@@ -1902,6 +1902,7 @@ amesadigital.pt</textarea>
     const qrBox = document.getElementById('qrCardapio');
     let qrCanvas = null;
     const QR_LADO = 260, QR_COR = '#4a3820';
+    const QR_HD = 4;   // QR gerado 4× maior → cartão nítido para o PDF (o ecrã reduz sem perder qualidade)
     function _roundRect(ctx, x, y, w, h, r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
     function _wrapLines(ctx, text, maxW){
       const words = String(text).split(/\s+/); const lines = []; let cur = '';
@@ -1961,8 +1962,8 @@ amesadigital.pt</textarea>
       const tmp = document.createElement('div');
       const tmp2 = document.createElement('div');
       try{
-        new QRCode(tmp, { text: CARDAPIO_URL, width: QR_LADO, height: QR_LADO, colorDark: opt.corQR, colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.H });
-        new QRCode(tmp2, { text: AMESA_URL, width: 170, height: 170, colorDark: '#000000', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.H });
+        new QRCode(tmp, { text: CARDAPIO_URL, width: QR_LADO * QR_HD, height: QR_LADO * QR_HD, colorDark: opt.corQR, colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.H });
+        new QRCode(tmp2, { text: AMESA_URL, width: 170 * QR_HD, height: 170 * QR_HD, colorDark: '#000000', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.H });
       }catch(e){ return; }
       setTimeout(function(){
         const src = tmp.querySelector('canvas') || tmp.querySelector('img');
@@ -1972,12 +1973,8 @@ amesadigital.pt</textarea>
         toImg(src, function(i1){ toImg(src2, function(i2){ _qrCache.i1 = i1; _qrCache.i2 = i2; _comporQR(); }); });
       }, 90);
     }
-    function _comporQR(){
-        if(!qrBox || !_qrCache.i1) return;
-        const i1 = _qrCache.i1, i2 = _qrCache.i2;
-        const opt = _lerQR();
-        const nome = opt.textoNome || (document.getElementById('titulo') ? document.getElementById('titulo').value : '').trim();
-        (function(){
+    function _desenharQRCartao(cv, i1, i2, opt, nome, scale){
+          scale = scale || 1;
           const S = QR_LADO;
           const _rodLinhas = (opt.rodape || '').split('\n');
           while(_rodLinhas.length && !_rodLinhas[_rodLinhas.length - 1].trim()) _rodLinhas.pop();
@@ -1991,9 +1988,10 @@ amesadigital.pt</textarea>
           const _cores = _cfg.cores || {};
           const cA = opt.moldMarca ? (_cores.dourado || '#c79a3e') : opt.corMold1;
           const cB = opt.moldMarca ? (_cores.castanho || QR_COR) : opt.corMold2;
-          const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+          cv.width = Math.round(W * scale); cv.height = Math.round(H * scale);
           const ctx = cv.getContext('2d');
-          ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, H);   // fundo branco (para o JPEG não ficar com cantos pretos)
+          ctx.setTransform(scale, 0, 0, scale, 0, 0);            // desenha em coords lógicas; backing store maior = nítido
+          ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, H);   // fundo branco
           // cartão branco arredondado
           _roundRect(ctx, 0, 0, W, H, 30); ctx.fillStyle = '#ffffff'; ctx.fill();
           // moldura colorida (degradê)
@@ -2038,9 +2036,15 @@ amesadigital.pt</textarea>
           _rodLinhas.forEach(function(l){ if(l.trim()) ctx.fillText(l, rdX, _ly); _ly += _rodLH; });
           cv._boxes = { amesa: { x: amX, y: amY, w: qs, h: qs }, rodape: { x: rdX, y: rdTop, w: (_txw || 60), h: _blockH } };
           cv._dims = { W: W, H: H };
-          cv.style.width = '220px'; cv.style.height = (220 * (cv.height / cv.width)) + 'px';
-          qrBox.innerHTML = ''; qrBox.appendChild(cv); qrCanvas = cv;
-        })();
+          return cv;
+    }
+    function _comporQR(){
+        if(!qrBox || !_qrCache.i1) return;
+        const opt = _lerQR();
+        const nome = opt.textoNome || (document.getElementById('titulo') ? document.getElementById('titulo').value : '').trim();
+        const cv = _desenharQRCartao(document.createElement('canvas'), _qrCache.i1, _qrCache.i2, opt, nome, 1);
+        cv.style.width = '220px'; cv.style.height = (220 * (cv.height / cv.width)) + 'px';
+        qrBox.innerHTML = ''; qrBox.appendChild(cv); qrCanvas = cv;
     }
     renderQR();
     window.__renderQR = renderQR;
@@ -2103,15 +2107,69 @@ amesadigital.pt</textarea>
     });
     const btnAbrir = document.getElementById('btnAbrirCardapio');
     if(btnAbrir) btnAbrir.addEventListener('click', function(){ window.open(CARDAPIO_URL, '_blank'); });
+    // Carrega o jsPDF (para o download em PDF), com CDNs alternativos
+    const _CDNS_JSPDF = [
+      'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
+      'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js',
+      'https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js'
+    ];
+    let _jspdfPromise = null;
+    function _temJsPDF(){ return (window.jspdf && window.jspdf.jsPDF) || window.jsPDF; }
+    function _carregarJsPDF(){
+      if(_jspdfPromise) return _jspdfPromise;
+      _jspdfPromise = new Promise(function(resolve, reject){
+        if(_temJsPDF()){ resolve(); return; }
+        let i = 0;
+        (function tentar(){
+          if(_temJsPDF()){ resolve(); return; }
+          if(i >= _CDNS_JSPDF.length){ reject(new Error('Não foi possível carregar a biblioteca de PDF (verifica a ligação à internet).')); return; }
+          const s = document.createElement('script');
+          s.src = _CDNS_JSPDF[i++];
+          s.onload = function(){ _temJsPDF() ? resolve() : tentar(); };
+          s.onerror = tentar;
+          document.head.appendChild(s);
+        })();
+      });
+      return _jspdfPromise;
+    }
+    function _nomeFichQR(){
+      const t = (document.getElementById('titulo') ? document.getElementById('titulo').value : '') || 'cardapio';
+      const slug = t.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/&/g, ' e ').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+      return 'qr-' + (slug || 'cardapio') + '.pdf';
+    }
     const btnQR = document.getElementById('btnDescarregarQR');
-    if(btnQR) btnQR.addEventListener('click', function(){
-      const cv = qrCanvas || qrBox.querySelector('canvas');
-      const img = qrBox.querySelector('img');
-      let dataUrl = '';
-      if(cv){ try{ dataUrl = cv.toDataURL('image/jpeg', 0.92); }catch(e){} }
-      if(!dataUrl && img && img.src){ dataUrl = img.src; }
-      if(!dataUrl){ alert('QR ainda não está pronto — tenta novamente daqui a um instante.'); return; }
-      const a = document.createElement('a'); a.href = dataUrl; a.download = 'qr-cardapio.jpg'; document.body.appendChild(a); a.click(); a.remove();
+    if(btnQR) btnQR.addEventListener('click', async function(){
+      if(!_qrCache.i1){ alert('QR ainda não está pronto — tenta novamente daqui a um instante.'); return; }
+      const _txtOrig = btnQR.textContent;
+      btnQR.disabled = true; btnQR.textContent = 'A gerar PDF...';
+      try {
+        await _carregarJsPDF();
+        // Recompõe o cartão em alta resolução (4×) e embebe-o no PDF como PNG sem perdas
+        const opt = _lerQR();
+        const nome = opt.textoNome || (document.getElementById('titulo') ? document.getElementById('titulo').value : '').trim();
+        const hd = _desenharQRCartao(document.createElement('canvas'), _qrCache.i1, _qrCache.i2, opt, nome, 4);
+        const imgData = hd.toDataURL('image/png');
+        const JsPDF = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+        const pdf = new JsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+        const pageW = 210, pageH = 297;
+        const ratio = hd.height / hd.width;
+        let cardW = 130, cardH = cardW * ratio;
+        if(cardH > 250){ cardH = 250; cardW = cardH / ratio; }   // não passa da folha
+        const x = (pageW - cardW) / 2, y = (pageH - cardH) / 2;
+        pdf.addImage(imgData, 'PNG', x, y, cardW, cardH, undefined, 'FAST');
+        const ficheiro = _nomeFichQR();
+        try {
+          pdf.save(ficheiro);
+        } catch(e) {
+          // iOS Safari: abre o PDF numa nova aba para guardar (mantém-se PDF, nunca vira JPEG)
+          const nova = window.open(pdf.output('bloburl'), '_blank');
+          if(!nova) alert('O navegador bloqueou a abertura do PDF. Ativa os pop-ups e tenta novamente.');
+        }
+      } catch(erro) {
+        alert(erro.message || 'Não foi possível gerar o PDF.');
+      } finally {
+        btnQR.disabled = false; btnQR.textContent = _txtOrig;
+      }
     });
   })();
 
