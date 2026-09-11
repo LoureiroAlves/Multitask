@@ -112,6 +112,20 @@
   .dot{ font-size:.66rem; font-weight:800; padding:4px 10px; border-radius:20px; flex-shrink:0; text-transform:uppercase; letter-spacing:.3px; }
   .dot.confirmada{ background:#e2f4e9; color:#1e6b3c; } .dot.pendente{ background:#fbeecb; color:#8a5a10; } .dot.cancelada{ background:#fbe7e4; color:var(--vermelho); }
   .vazio-msg{ color:#8a7a5c; font-size:.9rem; }
+  /* Definições de reservas */
+  .def-h{ font-weight:800; font-size:1.1rem; margin-bottom:4px; }
+  .subt{ font-size:.82rem; color:#8a7a5c; margin-bottom:14px; }
+  .subt2{ font-size:.76rem; color:#8a7a5c; margin:2px 0 6px; }
+  .sw{ display:flex; align-items:center; gap:9px; font-size:.9rem; margin:14px 0 4px; font-weight:700; color:var(--castanho); }
+  .sw input{ width:auto; margin:0; }
+  .dias-chips{ display:flex; flex-wrap:wrap; gap:7px; margin-bottom:4px; }
+  .dia-chip{ display:flex; align-items:center; gap:5px; background:var(--bege-claro); border:1.5px solid var(--linha); border-radius:10px; padding:8px 11px; font-size:.85rem; cursor:pointer; font-weight:700; }
+  .dia-chip input{ width:auto; margin:0; }
+  .lin{ display:flex; gap:10px; } .lin > div{ flex:1; }
+  .mesa-row{ display:flex; align-items:center; gap:7px; font-size:.82rem; color:#5a4c39; margin-bottom:8px; }
+  .mesa-row input{ margin:0; }
+  .mini-btn{ background:var(--castanho); color:#fff; border:none; border-radius:9px; padding:9px 13px; cursor:pointer; font-size:.85rem; font-weight:700; margin-top:2px; }
+  .mrem{ background:#fbe7e4; color:var(--vermelho); border:none; border-radius:8px; width:32px; height:32px; cursor:pointer; font-weight:800; flex-shrink:0; }
   /* Pop-up de edição */
   .modal-bg{ position:fixed; inset:0; background:rgba(45,33,17,.5); display:flex; align-items:center; justify-content:center; padding:16px; z-index:60; }
   .modal-bg.hide{ display:none; }
@@ -153,6 +167,7 @@
     <div class="tabs">
       <button id="tabCal" class="tab ativo" type="button">📅 Calendário</button>
       <button id="tabDash" class="tab" type="button">📊 Painel</button>
+      <button id="tabDef" class="tab" type="button">⚙️ Definições</button>
     </div>
     <div id="vistaCal">
       <div class="mes-bar">
@@ -168,6 +183,7 @@
       <div id="detalhe" style="margin-top:14px;"></div>
     </div>
     <div id="vistaDash" class="hide"></div>
+    <div id="vistaDef" class="hide"></div>
   </div>
 </div>
 
@@ -208,6 +224,7 @@
   $('mesNext').onclick = () => { vMes++; if(vMes>11){ vMes=0; vAno++; } diaSel=null; $('detalhe').innerHTML=''; renderCal(); };
   $('tabCal').onclick = () => mostrarVista('cal');
   $('tabDash').onclick = () => mostrarVista('dash');
+  $('tabDef').onclick = () => mostrarVista('def');
   $('mdFechar').onclick = fecharModal;
   $('mdGuardar').onclick = guardarModal;
   $('mdApagar').onclick = apagarModal;
@@ -247,12 +264,14 @@
   }
 
   function mostrarVista(qual){
-    const cal = (qual === 'cal');
-    $('vistaCal').classList.toggle('hide', !cal);
-    $('vistaDash').classList.toggle('hide', cal);
-    $('tabCal').classList.toggle('ativo', cal);
-    $('tabDash').classList.toggle('ativo', !cal);
-    if(!cal) renderDashboard();
+    $('vistaCal').classList.toggle('hide', qual!=='cal');
+    $('vistaDash').classList.toggle('hide', qual!=='dash');
+    $('vistaDef').classList.toggle('hide', qual!=='def');
+    $('tabCal').classList.toggle('ativo', qual==='cal');
+    $('tabDash').classList.toggle('ativo', qual==='dash');
+    $('tabDef').classList.toggle('ativo', qual==='def');
+    if(qual==='dash') renderDashboard();
+    if(qual==='def') renderDefinicoes();
   }
 
   function _cmpR(a,b){ return (a.data + (a.hora||'')).localeCompare(b.data + (b.hora||'')); }
@@ -307,6 +326,96 @@
 
     dash.innerHTML = html;
     dash.querySelectorAll('.linha-r').forEach(function(el){ el.onclick = function(){ abrirModalEdicao(el.getAttribute('data-id')); }; });
+  }
+
+  /* ===== Definições de reservas (config.agenda) ===== */
+  let _dfMesas = [];
+  function renderDefinicoes(){
+    const a = (negocio && negocio.config && negocio.config.agenda) || {};
+    const dias = (Array.isArray(a.dias) && a.dias.length===7) ? a.dias : [true,true,true,true,true,true,true];
+    const hor = Array.isArray(a.horarios) ? a.horarios.join(', ') : '';
+    const on = function(v){ return v ? ' checked' : ''; };
+    const ordem = [[1,'Seg'],[2,'Ter'],[3,'Qua'],[4,'Qui'],[5,'Sex'],[6,'Sáb'],[0,'Dom']];
+    const diasHtml = ordem.map(function(o){ return '<label class="dia-chip"><input type="checkbox" data-dia="'+o[0]+'"'+on(dias[o[0]])+'> '+o[1]+'</label>'; }).join('');
+    let html = '<div class="card">'
+      + '<div class="def-h">⚙️ Definições de reservas</div>'
+      + '<div class="subt">Aqui defines como os clientes pedem reserva a partir do cardápio.</div>'
+      + '<label class="sw"><input type="checkbox" id="dfAtivo"'+on(a.ativo)+'> Ativar reservas no cardápio</label>'
+      + '<div id="dfBox"'+(a.ativo?'':' style="display:none;"')+'>'
+        + '<label>Número de WhatsApp <span style="font-weight:400; color:#8a7a5c;">(com indicativo, ex: 351912345678)</span></label>'
+        + '<input type="text" id="dfWa" value="'+esc(a.whatsapp||'')+'" inputmode="tel" placeholder="351912345678">'
+        + '<label>Dias disponíveis</label><div class="dias-chips">'+diasHtml+'</div>'
+        + '<label>Horários <span style="font-weight:400; color:#8a7a5c;">(separados por vírgula)</span></label>'
+        + '<input type="text" id="dfHor" value="'+esc(hor)+'" placeholder="12:00, 13:00, 20:00, 20:30">'
+        + '<div class="lin"><div><label>Antecedência (dias)</label><input type="number" id="dfAnt" min="0" value="'+(a.antecedencia!=null?a.antecedencia:1)+'"></div>'
+        + '<div><label>Até quantos dias</label><input type="number" id="dfMax" min="1" value="'+(a.maxDias||30)+'"></div></div>'
+        + '<label>Reservas por horário <span style="font-weight:400; color:#8a7a5c;">(0 = sem limite)</span></label>'
+        + '<input type="number" id="dfLug" min="0" value="'+(a.lugares!=null?a.lugares:0)+'">'
+        + '<label>Mesas (opcional)</label><div class="subt2">Quantas mesas de cada lotação tens. Se definires, mandam sobre o limite acima.</div>'
+        + '<div id="dfMesas"></div><button type="button" id="dfAddMesa" class="mini-btn">＋ tipo de mesa</button>'
+        + '<div class="lin" style="margin-top:12px;"><div><label>Valor da reserva (€)</label><input type="number" id="dfValor" min="0" step="0.5" value="'+(a.valor||0)+'"></div>'
+        + '<div><label>Sinal (%)</label><input type="number" id="dfSinal" min="0" max="100" step="5" value="'+(a.sinalPercent!=null?a.sinalPercent:50)+'"></div></div>'
+        + '<label class="sw"><input type="checkbox" id="dfPorPessoa"'+on(a.porPessoa)+'> O valor é por pessoa</label>'
+        + '<label>Link de pagamento do sinal (opcional)</label><input type="text" id="dfPagLink" value="'+esc(a.pagamentoLink||'')+'" placeholder="https://...">'
+        + '<label>Nota de pagamento (opcional)</label><input type="text" id="dfPagNota" value="'+esc(a.pagamentoNota||'')+'">'
+      + '</div>'
+      + '<button class="acao" id="dfGuardar" style="width:100%; margin-top:16px;">Guardar definições</button>'
+      + '<div class="msg" id="dfMsg" style="margin-top:8px;"></div>'
+      + '</div>';
+    $('vistaDef').innerHTML = html;
+    _dfMesas = Array.isArray(a.mesas) ? JSON.parse(JSON.stringify(a.mesas)) : [];
+    _renderMesas();
+    $('dfAtivo').onchange = function(){ $('dfBox').style.display = this.checked ? '' : 'none'; };
+    $('dfAddMesa').onclick = function(){ _dfMesas.push({ lugares:2, quantidade:1 }); _renderMesas(); };
+    $('dfGuardar').onclick = guardarDefinicoes;
+  }
+  function _renderMesas(){
+    const box = $('dfMesas'); if(!box) return;
+    box.innerHTML = _dfMesas.map(function(m,i){
+      return '<div class="mesa-row"><span>Mesas de</span><input type="number" min="1" value="'+(m.lugares||2)+'" data-mi="'+i+'" data-mk="lugares" style="width:62px;"><span>lug. ×</span><input type="number" min="1" value="'+(m.quantidade||1)+'" data-mi="'+i+'" data-mk="quantidade" style="width:62px;"><button type="button" data-mrem="'+i+'" class="mrem">✕</button></div>';
+    }).join('');
+    box.querySelectorAll('input[data-mi]').forEach(function(inp){ inp.onchange = function(){ const i=+inp.getAttribute('data-mi'), k=inp.getAttribute('data-mk'); _dfMesas[i][k]=parseInt(inp.value,10)||0; }; });
+    box.querySelectorAll('[data-mrem]').forEach(function(b){ b.onclick = function(){ _dfMesas.splice(+b.getAttribute('data-mrem'),1); _renderMesas(); }; });
+  }
+  async function _gravarAgenda(ag){
+    const { data, error } = await sb.from('negocios').select('config').eq('id', negocio.id).maybeSingle();
+    if(error) return error;
+    const cfg = (data && data.config) || {};
+    cfg.agenda = ag;
+    const up = await sb.from('negocios').update({ config: cfg }).eq('id', negocio.id);
+    if(up.error) return up.error;
+    negocio.config = cfg;
+    return null;
+  }
+  async function guardarDefinicoes(){
+    const prev = (negocio.config && negocio.config.agenda) || {};
+    const dias = [true,true,true,true,true,true,true];
+    $('vistaDef').querySelectorAll('input[data-dia]').forEach(function(c){ dias[+c.getAttribute('data-dia')] = c.checked; });
+    const hor = ($('dfHor').value||'').split(',').map(function(s){ return s.trim(); }).filter(Boolean);
+    let sinal = parseInt($('dfSinal').value,10); if(isNaN(sinal)) sinal = 50;
+    const ag = {
+      ativo: $('dfAtivo').checked,
+      titulo: prev.titulo || 'Reservas',
+      dias: dias,
+      horarios: hor,
+      antecedencia: parseInt($('dfAnt').value,10)||0,
+      maxDias: parseInt($('dfMax').value,10)||30,
+      lugares: parseInt($('dfLug').value,10)||0,
+      mesas: _dfMesas.filter(function(m){ return (parseInt(m.lugares,10)||0)>0 && (parseInt(m.quantidade,10)||0)>0; }).map(function(m){ return { lugares:parseInt(m.lugares,10), quantidade:parseInt(m.quantidade,10) }; }),
+      whatsapp: ($('dfWa').value||'').trim(),
+      valor: parseFloat($('dfValor').value)||0,
+      porPessoa: $('dfPorPessoa').checked,
+      sinalPercent: sinal,
+      pagamentoLink: ($('dfPagLink').value||'').trim(),
+      pagamentoNota: ($('dfPagNota').value||'').trim(),
+      corTexto: prev.corTexto || ''
+    };
+    const msg = $('dfMsg'); const g = $('dfGuardar'); g.disabled = true; msg.textContent = 'A guardar...'; msg.className = 'msg';
+    const err = await _gravarAgenda(ag);
+    g.disabled = false;
+    if(err){ msg.textContent = 'Erro: ' + err.message; msg.className = 'msg erro'; return; }
+    msg.textContent = ag.ativo ? 'Definições guardadas ✓ As reservas estão ativas no cardápio.' : 'Definições guardadas ✓ As reservas estão desativadas.';
+    msg.className = 'msg';
   }
 
   let _mdId = null;

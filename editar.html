@@ -4115,6 +4115,8 @@ amesadigital.pt</textarea>
           if(fc.naApp !== undefined) config.naApp = fc.naApp;         // legado (compatibilidade)
           if(fc.tipo !== undefined) config.tipo = fc.tipo;            // filtro de cozinha na montra
           if(fc.editorOff !== undefined) config.editorOff = fc.editorOff; // secções desligadas ao dono
+          if(fc.agenda !== undefined) config.agenda = fc.agenda;         // reservas geridas no Calendário
+          if(fc.promoDatas !== undefined) config.promoDatas = fc.promoDatas; // promoções por data (Calendário)
         }
         // Guarda 1 cópia do estado ANTERIOR (config + menu já publicados) para o "Repor versão anterior".
         let _prevMenu = (window.__negocio && window.__negocio.menu) || null;
