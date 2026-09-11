@@ -466,7 +466,12 @@
         sbox.appendChild(h);
         grp[1].forEach(function(s){
           const lab = document.createElement('label');
-          lab.innerHTML = '<input type="checkbox" data-sec="' + s[0] + '"' + (off.indexOf(s[0]) < 0 ? ' checked' : '') + '> ' + s[1];
+          const antiga = (s[0] === 'secAgenda');   // secção antiga de reservas — substituída pelo Calendário
+          const txt = antiga
+            ? '<span style="text-decoration:line-through; opacity:.55;">' + s[1] + '</span> <span style="font-size:.72rem; color:#b0532e;">(antiga — usa o Calendário)</span>'
+            : s[1];
+          lab.innerHTML = '<input type="checkbox" data-sec="' + s[0] + '"' + (off.indexOf(s[0]) < 0 ? ' checked' : '') + '> ' + txt;
+          if(antiga){ lab.title = 'Secção antiga de reservas. Já não é usada — foi substituída pelo Calendário.'; lab.style.opacity = '.85'; }
           sbox.appendChild(lab);
         });
       });
