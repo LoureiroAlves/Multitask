@@ -85,6 +85,12 @@
   .linha-r .quando{ font-weight:800; font-size:.85rem; }
   .linha-r .quem{ font-size:.82rem; color:#5a4c39; margin-top:2px; }
   .vazio-msg{ color:#8a7a5c; font-size:.9rem; }
+  /* Pop-up de edição */
+  .modal-bg{ position:fixed; inset:0; background:rgba(45,33,17,.5); display:flex; align-items:center; justify-content:center; padding:16px; z-index:60; }
+  .modal-bg.hide{ display:none; }
+  .modal{ background:#fff; border-radius:16px; padding:18px 18px 16px; width:100%; max-width:420px; max-height:90vh; overflow:auto; box-shadow:0 14px 44px rgba(0,0,0,.28); }
+  .modal h3{ margin:0 0 12px; font-size:1.05rem; }
+  .modal .fechar{ float:right; border:none; background:none; font-size:1.25rem; cursor:pointer; color:#8a7a5c; line-height:1; padding:0; }
   /* Nova reserva manual */
   .dia:not(.vazio){ cursor:pointer; }
   .nova-btn{ width:100%; border:1.5px dashed var(--dourado); background:#fff; color:var(--dourado-escuro); border-radius:12px; padding:12px; cursor:pointer; font-weight:800; font-size:.92rem; margin-bottom:12px; }
@@ -136,6 +142,23 @@
   </div>
 </div>
 
+<div id="modalEdit" class="modal-bg hide">
+  <div class="modal">
+    <button class="fechar" id="mdFechar" type="button" aria-label="Fechar">✕</button>
+    <h3>Editar reserva</h3>
+    <div class="nova-form" style="border:none; padding:0; background:none; margin:0;">
+      <div class="lin"><div><label>Hora</label><input type="time" id="mdHora"></div>
+      <div><label>Pessoas</label><input type="number" id="mdPessoas" min="1"></div></div>
+      <label>Nome</label><input type="text" id="mdNome">
+      <label>Telefone</label><input type="text" id="mdTel" inputmode="tel">
+      <label>Menu / notas</label><textarea id="mdObs" rows="2"></textarea>
+      <label>Estado</label><select id="mdEstado"><option value="confirmada">Confirmada</option><option value="pendente">Pendente</option><option value="cancelada">Cancelada</option></select>
+      <div class="acts"><button id="mdApagar" type="button" style="color:var(--vermelho); border-color:#e8c4bf;">🗑 Apagar</button><button class="guardar" id="mdGuardar" type="button">Guardar</button></div>
+      <div class="msg" id="mdMsg" style="margin-top:8px;"></div>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
   const SUPA_URL = 'https://zewiijcrkyxjkhudlplk.supabase.co';
@@ -156,6 +179,10 @@
   $('mesNext').onclick = () => { vMes++; if(vMes>11){ vMes=0; vAno++; } diaSel=null; $('detalhe').innerHTML=''; renderCal(); };
   $('tabCal').onclick = () => mostrarVista('cal');
   $('tabDash').onclick = () => mostrarVista('dash');
+  $('mdFechar').onclick = fecharModal;
+  $('mdGuardar').onclick = guardarModal;
+  $('mdApagar').onclick = apagarModal;
+  $('modalEdit').onclick = (e) => { if(e.target === $('modalEdit')) fecharModal(); };
 
   async function entrar(){
     const email = $('email').value.trim(), pass = $('pass').value;
@@ -203,7 +230,7 @@
   function _kpi(n, l, cls){ return '<div class="kpi '+(cls||'')+'"><div class="n">'+n+'</div><div class="l">'+l+'</div></div>'; }
   function _fmtDataCurta(iso){ const d = new Date(iso+'T00:00:00'); return d.getDate() + ' ' + MESES[d.getMonth()].slice(0,3); }
   function _linhaReserva(r){
-    return '<div class="linha-r" data-dia="'+r.data+'">'
+    return '<div class="linha-r" data-id="'+r.id+'">'
       + '<div><div class="quando">'+_fmtDataCurta(r.data)+' · '+esc(r.hora||'')+'</div>'
       + '<div class="quem">'+esc(r.nome||'')+' · '+(Number(r.pessoas)||1)+' pessoa(s)</div></div>'
       + '<span class="pill '+r.estado+'">'+r.estado+'</span></div>';
@@ -246,7 +273,49 @@
       + '</div>';
 
     dash.innerHTML = html;
-    dash.querySelectorAll('.linha-r').forEach(function(el){ el.onclick = function(){ irParaDia(el.getAttribute('data-dia')); }; });
+    dash.querySelectorAll('.linha-r').forEach(function(el){ el.onclick = function(){ abrirModalEdicao(el.getAttribute('data-id')); }; });
+  }
+
+  let _mdId = null;
+  function abrirModalEdicao(id){
+    const r = reservas.find(function(x){ return String(x.id)===String(id); });
+    if(!r) return;
+    _mdId = id;
+    $('mdHora').value = r.hora || '';
+    $('mdPessoas').value = Number(r.pessoas)||1;
+    $('mdNome').value = r.nome || '';
+    $('mdTel').value = r.telefone || '';
+    $('mdObs').value = r.obs || '';
+    $('mdEstado').value = r.estado || 'pendente';
+    $('mdMsg').textContent = ''; $('mdMsg').className = 'msg';
+    $('modalEdit').classList.remove('hide');
+  }
+  function fecharModal(){ $('modalEdit').classList.add('hide'); _mdId = null; }
+  async function guardarModal(){
+    if(!_mdId) return;
+    const nome = ($('mdNome').value||'').trim();
+    const tel  = ($('mdTel').value||'').trim();
+    const hora = ($('mdHora').value||'').trim();
+    const pessoas = Math.max(1, parseInt($('mdPessoas').value,10)||1);
+    const obs  = ($('mdObs').value||'').trim();
+    const estado = $('mdEstado').value || 'pendente';
+    const msg = $('mdMsg');
+    if(!nome){ msg.textContent='Falta o nome.'; msg.className='msg erro'; return; }
+    if(!hora){ msg.textContent='Falta a hora.'; msg.className='msg erro'; return; }
+    const g = $('mdGuardar'); g.disabled = true; msg.textContent='A guardar...'; msg.className='msg';
+    const { error } = await sb.from('reservas').update({
+      hora: hora, nome: nome, telefone: tel, pessoas: pessoas, obs: obs || null, estado: estado
+    }).eq('id', _mdId);
+    g.disabled = false;
+    if(error){ msg.textContent = 'Erro: ' + error.message; msg.className='msg erro'; return; }
+    fecharModal(); carregar();
+  }
+  async function apagarModal(){
+    if(!_mdId) return;
+    if(!confirm('Apagar esta reserva definitivamente? Esta ação não pode ser anulada.')) return;
+    const { error } = await sb.from('reservas').delete().eq('id', _mdId);
+    if(error){ alert('Erro: '+error.message); return; }
+    fecharModal(); carregar();
   }
 
   function renderCal(){
