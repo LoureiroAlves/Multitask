@@ -448,6 +448,7 @@
         '<div style="margin-top:12px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">' +
           '<button class="acao" data-act="guardar">Guardar</button>' +
           '<button class="mini" data-act="magic">✉️ Enviar acesso ao dono</button>' +
+          '<button class="mini" data-act="copiar">📋 Copiar acessos</button>' +
           '<button class="mini perigo" data-act="reporRating">⭐ Repor avaliações</button>' +
           '<a class="link" href="' + SITE + '/editar.html?n=' + n.slug + '" target="_blank">Abrir editor ↗</a>' +
           '<a class="link" href="' + SITE + '/calendario.html?n=' + n.slug + '" target="_blank">📅 Calendário / Reservas ↗</a>' +
@@ -483,8 +484,21 @@
     div.querySelector('[data-act="apagar"]').onclick = function(){ apagar(n); };
     div.querySelector('[data-act="guardar"]').onclick = function(){ guardarEnt(n, div); };
     div.querySelector('[data-act="magic"]').onclick = function(){ enviarAcessoDono(n, div); };
+    div.querySelector('[data-act="copiar"]').onclick = function(e){ copiarAcessos(n, e.currentTarget); };
     div.querySelector('[data-act="reporRating"]').onclick = function(){ reporRating(n, div); };
     return div;
+  }
+
+  function copiarAcessos(n, btn){
+    const msg = 'Olá! Aqui estão os teus acessos ÀMesa para o ' + (n.nome || n.slug) + ':\n'
+      + '📅 Reservas: ' + SITE + '/calendario.html?n=' + n.slug + '\n'
+      + '⚙️ Editar o menu: ' + SITE + '/editar.html?n=' + n.slug + '\n'
+      + 'Entra com o teu email' + (n.dono_email ? (' (' + n.dono_email + ')') : '') + ' e a password que recebeste.\n'
+      + 'Dica: no telemóvel, abre o link das Reservas e faz "Adicionar ao ecrã principal" para ficar como app.';
+    const ok = function(){ const t = btn.textContent; btn.textContent = '✓ Copiado!'; setTimeout(function(){ btn.textContent = t; }, 1600); };
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(msg).then(ok).catch(function(){ prompt('Copia a mensagem:', msg); });
+    } else { prompt('Copia a mensagem:', msg); }
   }
 
 
