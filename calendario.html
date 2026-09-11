@@ -3,13 +3,21 @@
 <head>
 <meta charset="UTF-8">
 <script>/* Domínio oficial: se abrir pelo GitHub Pages, salta para o amesadigital.pt */(function(){try{if(/github\.io$/i.test(location.hostname)){location.replace('https://amesadigital.pt'+location.pathname.replace(/^\/Multitask/i,'')+location.search+location.hash);}}catch(e){}})();</script>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Calendário de reservas</title>
+<meta name="theme-color" content="#3a2c18">
+<!-- Ecrã cheio quando associado ao ecrã principal (iOS) -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Reservas">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" type="image/png" href="icon-192.png">
 <style>
   :root{ --castanho:#3a2c18; --dourado:#a8712f; --dourado-escuro:#6b4a1f; --bege:#f5efe2; --bege-claro:#fbf8f2; --linha:#e3d9c4; --verde:#2e9b57; --vermelho:#c0392b; --azul:#2a5aa8; }
   *{ box-sizing:border-box; }
   body{ margin:0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; background:var(--bege-claro); color:var(--castanho); }
-  header.top{ background:linear-gradient(135deg,#6a4e26,#38290f); color:#fff; padding:18px 20px 20px; display:flex; align-items:center; justify-content:space-between; gap:12px; border-radius:0 0 20px 20px; box-shadow:0 6px 22px rgba(58,44,24,.22); }
+  header.top{ background:linear-gradient(135deg,#6a4e26,#38290f); color:#fff; padding:calc(16px + env(safe-area-inset-top)) 20px 20px; display:flex; align-items:center; justify-content:space-between; gap:12px; border-radius:0 0 20px 20px; box-shadow:0 6px 22px rgba(58,44,24,.22); }
   header.top h1{ font-size:1.2rem; margin:0; font-weight:800; }
   header.top button{ background:rgba(255,255,255,.16); color:#fff; border:none; border-radius:9px; padding:9px 13px; cursor:pointer; font-size:.82rem; font-weight:700; }
   .wrap{ max-width:760px; margin:0 auto; padding:16px; }
