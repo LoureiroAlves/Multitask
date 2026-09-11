@@ -9,7 +9,7 @@
   :root{ --castanho:#3a2c18; --dourado:#a8712f; --dourado-escuro:#6b4a1f; --bege:#f5efe2; --bege-claro:#fbf8f2; --linha:#e3d9c4; --verde:#2e9b57; --vermelho:#c0392b; --azul:#2a5aa8; }
   *{ box-sizing:border-box; }
   body{ margin:0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; background:var(--bege-claro); color:var(--castanho); }
-  header.top{ background:var(--castanho); color:#fff; padding:14px 18px; display:flex; align-items:center; justify-content:space-between; }
+  header.top{ background:linear-gradient(135deg,#5a4423,#3a2c18); color:#fff; padding:14px 18px; display:flex; align-items:center; justify-content:space-between; box-shadow:0 2px 10px rgba(58,44,24,.25); }
   header.top h1{ font-size:1.1rem; margin:0; }
   header.top button{ background:rgba(255,255,255,.15); color:#fff; border:none; border-radius:8px; padding:8px 12px; cursor:pointer; font-size:.82rem; }
   .wrap{ max-width:760px; margin:0 auto; padding:16px; }
@@ -28,19 +28,29 @@
   /* Grelha do calendário */
   .cal{ background:#fff; border:1px solid var(--linha); border-radius:14px; padding:10px; }
   .cal-cab, .cal-grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:5px; }
-  .cal-cab div{ text-align:center; font-size:.72rem; font-weight:700; color:#9a8b6f; padding:4px 0; }
-  .dia{ position:relative; aspect-ratio:1/1; border:1px solid transparent; border-radius:10px; display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:.92rem; cursor:default; background:#faf6ee; }
+  .cal-cab{ margin-bottom:6px; }
+  .cal-cab div{ text-align:center; font-size:.74rem; font-weight:800; color:#fff; padding:6px 0; border-radius:8px; background:var(--dourado); letter-spacing:.3px; }
+  .cal-cab div:nth-child(6){ background:#c8702f; }   /* Sábado */
+  .cal-cab div:nth-child(7){ background:#b0532e; }   /* Domingo */
+  .dia{ position:relative; aspect-ratio:1/1; border:1.5px solid transparent; border-radius:10px; display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:.92rem; cursor:default; background:#faf6ee; transition:transform .06s ease; }
   .dia.vazio{ background:transparent; }
-  .dia.tem{ cursor:pointer; background:#fbf8f2; border-color:var(--linha); }
-  .dia.hoje{ outline:2px solid var(--dourado); outline-offset:-2px; }
-  .dia.sel{ background:var(--castanho); color:#fff; }
-  .dia .num{ line-height:1; }
+  .dia.fds{ background:#fbeee2; }                                  /* fim de semana */
+  .dia.fds .num{ color:#b0532e; font-weight:700; }
+  .dia.tem{ cursor:pointer; border-color:var(--linha); }
+  .dia.tem:active{ transform:scale(.96); }
+  .dia.tem-pend{ background:#fdf0cf; border-color:#e7c877; }       /* dia com pendentes */
+  .dia.tem-conf{ background:#dff3e6; border-color:#8fd3aa; }       /* dia com confirmadas */
+  .dia.hoje{ outline:2.5px solid var(--dourado); outline-offset:-2px; }
+  .dia.sel{ background:var(--castanho); color:#fff; border-color:var(--castanho); box-shadow:0 4px 12px rgba(58,44,24,.3); }
+  .dia.sel .num{ color:#fff; }
+  .dia .num{ line-height:1; font-weight:600; }
   .dia .pts{ display:flex; gap:3px; margin-top:4px; height:7px; align-items:center; }
-  .dia .pt{ width:7px; height:7px; border-radius:50%; }
+  .dia .pt{ width:8px; height:8px; border-radius:50%; }
   .pt.pend{ background:var(--dourado); }
   .pt.conf{ background:var(--verde); }
   .dia.sel .pt.pend{ background:#f2c879; } .dia.sel .pt.conf{ background:#7ed3a1; }
-  .dia .cnt{ position:absolute; top:3px; right:5px; font-size:.6rem; font-weight:800; color:#b6a179; }
+  .dia .cnt{ position:absolute; top:3px; right:6px; font-size:.62rem; font-weight:800; color:#a86b2c; }
+  .dia.tem-conf .cnt{ color:#2e9b57; }
   .dia .promo-tag{ position:absolute; top:2px; left:4px; font-size:.62rem; line-height:1; }
   .dia.sel .cnt{ color:#f0e3c8; }
 
@@ -335,7 +345,13 @@
       const nPend = rs.filter(function(r){ return r.estado==='pendente'; }).length;
       const nConf = rs.filter(function(r){ return r.estado==='confirmada'; }).length;
       const temPromo = !!(((negocio && negocio.config && negocio.config.promoDatas) || {})[iso]);
-      let cls = 'dia'; if(rs.length) cls += ' tem'; if(iso===hojeIso) cls += ' hoje'; if(iso===diaSel) cls += ' sel';
+      const wd = new Date(iso+'T00:00:00').getDay();
+      let cls = 'dia';
+      if(wd===0 || wd===6) cls += ' fds';
+      if(rs.length) cls += ' tem';
+      if(nConf) cls += ' tem-conf'; else if(nPend) cls += ' tem-pend';
+      if(iso===hojeIso) cls += ' hoje';
+      if(iso===diaSel) cls += ' sel';
       let pts = '';
       if(nPend) pts += '<span class="pt pend"></span>';
       if(nConf) pts += '<span class="pt conf"></span>';
