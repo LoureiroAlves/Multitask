@@ -61,6 +61,8 @@
   .r-acoes button, .r-acoes a button{ border:1px solid var(--linha); background:#fff; border-radius:8px; padding:7px 11px; cursor:pointer; font-size:.82rem; }
   .r-acoes button.ok{ color:#fff; background:var(--verde); border-color:var(--verde); }
   .r-acoes button.no{ color:var(--vermelho); border-color:#e8c4bf; }
+  .r-acoes button.edit{ color:var(--dourado-escuro); border-color:#e7d8b4; }
+  .r-acoes button.del{ color:#8a7a5c; border-color:var(--linha); }
   .pill{ font-size:.7rem; font-weight:700; padding:2px 8px; border-radius:20px; }
   .pill.pendente{ background:#f6ecd6; color:var(--dourado-escuro); }
   .pill.confirmada{ background:#e6f4ea; color:var(--verde); }
@@ -224,6 +226,47 @@
     carregar();
   }
 
+  function _formEditarHTML(r){
+    const est = r.estado || 'pendente';
+    const sel = function(v){ return est===v ? ' selected' : ''; };
+    return '<div class="card"><div style="font-weight:800; margin-bottom:10px;">Editar reserva</div>'
+      + '<div class="nova-form">'
+      + '<div class="lin"><div><label>Hora</label><input type="time" id="edHora" value="'+esc(r.hora||'')+'"></div>'
+      + '<div><label>Pessoas</label><input type="number" id="edPessoas" min="1" value="'+(Number(r.pessoas)||1)+'"></div></div>'
+      + '<label>Nome</label><input type="text" id="edNome" value="'+esc(r.nome||'')+'">'
+      + '<label>Telefone</label><input type="text" id="edTel" value="'+esc(r.telefone||'')+'" inputmode="tel">'
+      + '<label>Menu / notas</label><textarea id="edObs" rows="2">'+esc(r.obs||'')+'</textarea>'
+      + '<label>Estado</label><select id="edEstado"><option value="confirmada"'+sel('confirmada')+'>Confirmada</option><option value="pendente"'+sel('pendente')+'>Pendente</option><option value="cancelada"'+sel('cancelada')+'>Cancelada</option></select>'
+      + '<div class="acts"><button id="edVoltar" type="button">Voltar</button><button class="guardar" id="edGuardar" type="button">Guardar alterações</button></div>'
+      + '<div class="msg" id="edMsg" style="margin-top:8px;"></div>'
+      + '</div></div>';
+  }
+  function abrirEdicao(id){
+    const r = reservas.find(function(x){ return String(x.id)===String(id); });
+    if(!r) return;
+    $('detalhe').innerHTML = _formEditarHTML(r);
+    $('edVoltar').onclick = function(){ renderDia(diaSel); };
+    $('edGuardar').onclick = function(){ guardarEdicao(id); };
+  }
+  async function guardarEdicao(id){
+    const nome = ($('edNome').value||'').trim();
+    const tel  = ($('edTel').value||'').trim();
+    const hora = ($('edHora').value||'').trim();
+    const pessoas = Math.max(1, parseInt($('edPessoas').value,10)||1);
+    const obs  = ($('edObs').value||'').trim();
+    const estado = $('edEstado').value || 'pendente';
+    const msg = $('edMsg');
+    if(!nome){ msg.textContent='Falta o nome.'; msg.className='msg erro'; return; }
+    if(!hora){ msg.textContent='Falta a hora.'; msg.className='msg erro'; return; }
+    const g = $('edGuardar'); g.disabled = true; msg.textContent='A guardar...'; msg.className='msg';
+    const { error } = await sb.from('reservas').update({
+      hora: hora, nome: nome, telefone: tel, pessoas: pessoas, obs: obs || null, estado: estado
+    }).eq('id', id);
+    g.disabled = false;
+    if(error){ msg.textContent = 'Erro: ' + error.message; msg.className='msg erro'; return; }
+    carregar();
+  }
+
   function renderDia(iso){
     const d = new Date(iso + 'T00:00:00');
     const rs = (porDia[iso] || []).slice().sort(function(a,b){ return (a.hora||'').localeCompare(b.hora||''); });
@@ -236,6 +279,8 @@
       if(r.estado!=='confirmada') acoes += '<button class="ok" data-a="confirmar" data-id="'+r.id+'">✔ Confirmar</button>';
       if(r.estado!=='cancelada') acoes += '<button class="no" data-a="cancelar" data-id="'+r.id+'">✕ Recusar</button>';
       acoes += '<a href="tel:'+esc(r.telefone||'')+'"><button>📞 Ligar</button></a>';
+      acoes += '<button class="edit" data-a="editar" data-id="'+r.id+'">✏️ Editar</button>';
+      acoes += '<button class="del" data-a="apagar" data-id="'+r.id+'">🗑 Apagar</button>';
       const menu = r.obs ? ('<div class="r-menu">🍽 '+esc(r.obs)+'</div>') : '';
       html += '<div class="r '+r.estado+'">'
         + '<div class="r-top"><span class="r-quando">'+esc(r.hora||'')+'</span><span class="pill '+r.estado+'">'+r.estado+'</span></div>'
@@ -275,6 +320,14 @@
 
   async function accao(id, a){
     const r = reservas.find(function(x){ return String(x.id)===String(id); });
+    if(a==='editar'){ abrirEdicao(id); return; }
+    if(a==='apagar'){
+      if(!confirm('Apagar esta reserva definitivamente? Esta ação não pode ser anulada.')) return;
+      const { error } = await sb.from('reservas').delete().eq('id', id);
+      if(error){ alert('Erro: '+error.message); return; }
+      carregar();
+      return;
+    }
     let patch = null, tipo = null;
     if(a==='confirmar'){ patch = { estado:'confirmada' }; tipo = 'confirmar'; }
     else if(a==='cancelar'){ if(!confirm('Recusar/cancelar esta reserva?')) return; patch = { estado:'cancelada' }; tipo = 'recusar'; }
