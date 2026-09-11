@@ -62,7 +62,7 @@
     <input type="text" id="url" value="https://rest-bar-parque-sao-caetano.github.io/cardapio-parque-sao-caetano/cardapio.html" placeholder="https://...">
 
     <button onclick="gerar()">Gerar Cartão com QR Code</button>
-    <button class="secundario" onclick="baixar()">Baixar PNG</button>
+    <button class="secundario" onclick="baixar()">Baixar PDF</button>
     <div class="status info" id="status">A preparar...</div>
 
     <div id="qrcode-raw"></div>
@@ -155,6 +155,33 @@
       tentar();
     });
     return bibliotecaPromise;
+  }
+
+  // Carrega o jsPDF (para gerar o PDF), com CDNs alternativos
+  const CDNS_JSPDF = [
+    'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
+    'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js',
+    'https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js'
+  ];
+  let jspdfPromise = null;
+  function temJsPDF(){ return (window.jspdf && window.jspdf.jsPDF) || (window.jsPDF); }
+  function carregarJsPDF(){
+    if (jspdfPromise) return jspdfPromise;
+    jspdfPromise = new Promise((resolve, reject) => {
+      if (temJsPDF()) { resolve(); return; }
+      let i = 0;
+      function tentar(){
+        if (temJsPDF()) { resolve(); return; }
+        if (i >= CDNS_JSPDF.length) { reject(new Error('Não foi possível carregar a biblioteca de PDF (verifica a ligação à internet ou desativa bloqueadores de anúncios).')); return; }
+        const s = document.createElement('script');
+        s.src = CDNS_JSPDF[i++];
+        s.onload = () => { temJsPDF() ? resolve() : tentar(); };
+        s.onerror = tentar;
+        document.head.appendChild(s);
+      }
+      tentar();
+    });
+    return jspdfPromise;
   }
 
   const SCALE = 4;   // alta resolução: o cartão é desenhado 4× maior (nítido para imprimir)
@@ -267,42 +294,53 @@
     desenharCartao().catch(erro => setStatus('Erro inesperado: ' + erro.message, 'erro'));
   }
 
-  function baixar(){
+  function nomeFicheiro(){
+    const nome = (document.getElementById('nome').value.trim() || 'cardapio')
+      .toLowerCase()
+      .normalize('NFD').replace(/[̀-ͯ]/g, '')  // tira acentos
+      .replace(/&/g, ' e ')
+      .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    return 'qrcode-' + (nome || 'cardapio');
+  }
+
+  async function baixar(){
     if (!cartaoPronto) {
       setStatus('Ainda não há um cartão gerado. Clica em "Gerar Cartão com QR Code" primeiro.', 'erro');
       return;
     }
+    setStatus('A gerar PDF...', 'info');
+    try {
+      await carregarJsPDF();
+    } catch(erro) {
+      setStatus(erro.message, 'erro');
+      return;
+    }
+
     const canvas = document.getElementById('cartao');
-    const nomeArquivo = 'qrcode-cardapio-parque-sao-caetano.png';
+    // PNG lossless do cartão em alta resolução (o PDF mantém a nitidez; não converte para JPEG)
+    const imgData = canvas.toDataURL('image/png');
 
-    // Suporta download attribute? (funciona em Chrome, Edge, Firefox e na maioria dos Android)
-    const suportaDownload = 'download' in document.createElement('a');
+    const JsPDF = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+    // Página A4 vertical, com o cartão centrado — pronto a imprimir
+    const pdf = new JsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+    const pageW = 210, pageH = 297;
+    const cardW = 120;                          // largura do cartão no papel (mm)
+    const cardH = cardW * (560 / 480);          // mantém a proporção do cartão
+    const x = (pageW - cardW) / 2;
+    const y = (pageH - cardH) / 2;
+    pdf.addImage(imgData, 'PNG', x, y, cardW, cardH, undefined, 'FAST');
 
-    canvas.toBlob(function(blob){
-      if(!blob){
-        // fallback extremo: abre a imagem numa nova aba
-        window.open(canvas.toDataURL('image/png'), '_blank');
-        return;
+    const ficheiro = nomeFicheiro() + '.pdf';
+    try {
+      pdf.save(ficheiro);   // faz o download em Chrome, Edge, Firefox e Android
+    } catch(e) {
+      // iOS Safari: abre o PDF numa nova aba para guardar/partilhar (mantém-se PDF, nunca vira JPEG)
+      const nova = window.open(pdf.output('bloburl'), '_blank');
+      if(!nova){
+        alert('O teu navegador bloqueou a abertura do PDF. Ativa os pop-ups e tenta novamente.');
       }
-      const url = URL.createObjectURL(blob);
-
-      if (suportaDownload) {
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = nomeArquivo;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        setTimeout(() => URL.revokeObjectURL(url), 4000);
-      } else {
-        // iOS Safari e outros que ignoram o atributo download:
-        // abre a imagem numa nova aba para guardar com "Mantenha premido > Guardar imagem"
-        const nova = window.open(url, '_blank');
-        if(!nova){
-          alert('O teu navegador bloqueou a abertura da imagem. Ativa os pop-ups ou tira uma captura de ecrã do cartão.');
-        }
-      }
-    }, 'image/png');
+    }
+    setStatus('PDF gerado ✓', 'ok');
   }
 
   window.onload = gerar;
