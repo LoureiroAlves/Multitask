@@ -4049,7 +4049,7 @@
       el.style.fontFamily = (est.fonte && est.fonte !== 'auto' && FONTES_TITULO[est.fonte]) ? FONTES_TITULO[est.fonte] : '';
       if(est.tamanho) el.style.fontSize = est.tamanho + 'rem';
       el.style.fontWeight = est.negrito ? '800' : '';
-      el.style.fontStyle = est.italico ? 'italic' : '';
+      el.style.fontStyle = est.italico ? 'italic' : 'normal';   // 'normal' (não '') para anular o itálico que o CSS põe por defeito no subtítulo
       // Sombra normal OU efeito 3D (letras "gordas" = camadas de sombra empilhadas)
       if(est.tridi){
         var prof = Math.max(1, Math.min(20, parseInt(est.tridiProf, 10) || 6));
