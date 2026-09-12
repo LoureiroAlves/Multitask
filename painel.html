@@ -611,6 +611,9 @@
       if(existe){ msg(box, 'Já existe um negócio com o slug "' + slug + '". Muda o slug no ficheiro.', 'erro'); return; }
       let config = o.config || {};
       config.oculto = true;   // negócios importados nascem escondidos da montra até seres tu a publicar
+      // WhatsApp das reservas (do formulário) → vai para a agenda, no sítio que o cardápio e o calendário usam
+      { var _waRes = (o.whatsappReservas || o.whatsapp || '').toString().trim();
+        if(_waRes){ config.agenda = config.agenda || {}; if(!config.agenda.whatsapp){ config.agenda.whatsapp = _waRes; } } }
       let menu = o.menu || { restaurante:'', categorias:[] };
       try{
         msg(box, 'A copiar as fotos para o armazenamento definitivo…', 'ok');

@@ -83,8 +83,10 @@
       <h2>Contactos</h2>
       <label>Email <span class="op">(será o acesso do dono ao editor)</span></label>
       <input id="email" type="email" placeholder="dono@exemplo.com" autocapitalize="off">
-      <label>Telemóvel / WhatsApp <span class="op">(encomendas e reservas)</span></label>
+      <label>Telemóvel / WhatsApp <span class="op">(contacto e encomendas)</span></label>
       <input id="whatsapp" type="tel" placeholder="Ex.: 351 912 345 678 (com indicativo)">
+      <label>WhatsApp para reservas <span class="op">(recebe os pedidos de reserva — pode ser o mesmo)</span></label>
+      <input id="whatsappReservas" type="tel" placeholder="Ex.: 351 912 345 678 (com indicativo)">
       <label>Morada <span class="op">(opcional)</span></label>
       <input id="morada" type="text" placeholder="Rua, número, localidade">
     </div>
@@ -154,7 +156,7 @@
 
   var CAMPOS = [
     ['nome','Nome do restaurante'], ['subtitulo','Subtítulo'], ['nomeQR','Nome no QR'], ['slug','Endereço curto'],
-    ['email','Email'], ['whatsapp','WhatsApp'], ['morada','Morada'],
+    ['email','Email'], ['whatsapp','WhatsApp'], ['whatsappReservas','WhatsApp reservas'], ['morada','Morada'],
     ['tipo','Tipo de cozinha'], ['horario','Horário'], ['instagram','Instagram'], ['facebook','Facebook'],
     ['estilo','Cores/estilo'], ['notas','Notas'], ['modeloPreferido','Estilo preferido']
   ];
