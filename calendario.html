@@ -49,11 +49,17 @@
   .dia.vazio{ background:transparent; }
   .dia.fds{ background:#fbeee1; }                                  /* fim de semana */
   .dia.fds .num{ color:#b0532e; }
+  .dia.futuro{ background:#eef2fb; }                               /* dias que ainda vêm (tom azulado) */
   .dia.tem{ cursor:pointer; }
   .dia.tem:active{ transform:scale(.95); }
   .dia.tem-pend{ background:#fdf1d2; border-color:#eccd7d; }       /* dia com pendentes */
   .dia.tem-conf{ background:#e2f4e9; border-color:#93d4ac; }       /* dia com confirmadas */
-  .dia.hoje{ box-shadow:0 0 0 2.5px var(--dourado) inset; }
+  .dia.passado{ background:#ececea; border-color:transparent; }    /* dias que já passaram (cinzento) */
+  .dia.passado .num{ color:#b3ada1; }
+  .dia.passado .bar i{ opacity:.35; }
+  .dia.passado .promo-tag{ opacity:.4; }
+  .dia.hoje{ box-shadow:0 0 0 3px var(--dourado) inset; background:#fdf2d6; }   /* HOJE em destaque */
+  .dia.hoje .num{ color:var(--dourado-escuro); font-weight:800; }
   .dia.sel{ background:linear-gradient(145deg,#4a3820,#2f2410); color:#fff; border-color:#2f2410; box-shadow:0 6px 16px rgba(58,44,24,.32); transform:translateY(-1px); }
   .dia.sel .num{ color:#fff; }
   .dia .num{ line-height:1; font-weight:700; }
@@ -684,6 +690,8 @@
       const wd = new Date(iso+'T00:00:00').getDay();
       let cls = 'dia';
       if(wd===0 || wd===6) cls += ' fds';
+      if(iso < hojeIso) cls += ' passado';
+      else if(iso > hojeIso) cls += ' futuro';
       if(rs.length) cls += ' tem';
       if(nConf) cls += ' tem-conf'; else if(nPend) cls += ' tem-pend';
       if(iso===hojeIso) cls += ' hoje';
@@ -697,7 +705,13 @@
             + '<span class="bar">'+bar+'</span></div>';
     }
     $('grid').innerHTML = html;
-    $('grid').querySelectorAll('.dia:not(.vazio)').forEach(function(el){ el.onclick = function(){ diaSel = el.getAttribute('data-dia'); renderCal(); renderDia(diaSel); }; });
+    $('grid').querySelectorAll('.dia:not(.vazio)').forEach(function(el){ el.onclick = function(){
+      const g = $('grid');
+      const prev = g.querySelector('.dia.sel'); if(prev && prev !== el) prev.classList.remove('sel');
+      el.classList.add('sel');
+      diaSel = el.getAttribute('data-dia');
+      renderDia(diaSel);
+    }; });
   }
 
   function _formNovaHTML(){
