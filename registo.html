@@ -128,6 +128,7 @@
         <div class="dica" style="margin-top:6px;">Pré-visualização com secções de exemplo — o cabeçalho e o rodapé vão-se atualizando com o que escreves em cima.</div>
         <label style="margin-top:10px;">Estilo que mais gostaste <span class="op">(opcional)</span></label>
         <input id="modeloPreferido" type="text" placeholder="Ex.: Revista">
+        <input id="modeloId" type="hidden">
       </div>
     </div>
 
@@ -163,7 +164,7 @@
     ['nome','Nome do restaurante'], ['subtitulo','Subtítulo'], ['nomeQR','Nome no QR'], ['slug','Endereço curto'],
     ['email','Email'], ['whatsapp','WhatsApp'], ['whatsappReservas','WhatsApp reservas'], ['morada','Morada'],
     ['tipo','Tipo de cozinha'], ['horario','Horário'], ['instagram','Instagram'], ['facebook','Facebook'],
-    ['estilo','Cores/estilo'], ['notas','Notas'], ['modeloPreferido','Estilo preferido']
+    ['estilo','Cores/estilo'], ['notas','Notas'], ['modeloPreferido','Estilo preferido'], ['modeloId','Modelo (id interno)']
   ];
   function _b64e(str){ return btoa(unescape(encodeURIComponent(str))); }
   function _b64d(b64){ return decodeURIComponent(escape(atob(b64))); }
@@ -213,6 +214,7 @@
       foot.style.background = p.footBg; foot.style.color = p.footColor;
       tiles.innerHTML = tilesHTML(p);
       pinta(m.id);
+      var hid = g('modeloId'); if(hid) hid.value = m.id;   // id interno exato (ex.: foodtruck) para a automação usar sem adivinhar
       if(pref && (!pref.value || pref.dataset.auto === '1')){ pref.value = m.nome; pref.dataset.auto = '1'; }
     }
     function live(){
