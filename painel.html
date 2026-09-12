@@ -449,6 +449,7 @@
           '<button class="acao" data-act="guardar">Guardar</button>' +
           '<button class="mini" data-act="magic">✉️ Enviar acesso ao dono</button>' +
           '<button class="mini" data-act="copiar">📋 Copiar acessos</button>' +
+          '<button class="mini" data-act="migrarFotos">📦 Migrar fotos p/ definitivo</button>' +
           '<button class="mini perigo" data-act="reporRating">⭐ Repor avaliações</button>' +
           '<a class="link" href="' + SITE + '/editar.html?n=' + n.slug + '" target="_blank">Abrir editor ↗</a>' +
           '<a class="link" href="' + SITE + '/calendario.html?n=' + n.slug + '" target="_blank">📅 Calendário / Reservas ↗</a>' +
@@ -485,6 +486,7 @@
     div.querySelector('[data-act="guardar"]').onclick = function(){ guardarEnt(n, div); };
     div.querySelector('[data-act="magic"]').onclick = function(){ enviarAcessoDono(n, div); };
     div.querySelector('[data-act="copiar"]').onclick = function(e){ copiarAcessos(n, e.currentTarget); };
+    div.querySelector('[data-act="migrarFotos"]').onclick = function(e){ migrarFotosNegocio(n, e.currentTarget); };
     div.querySelector('[data-act="reporRating"]').onclick = function(){ reporRating(n, div); };
     return div;
   }
@@ -598,6 +600,29 @@
     }
     const s2 = JSON.stringify(obj).replace(/"([^"]*\/storage\/v1\/object\/public\/registos\/[^"]*)"/g, function(m, u){ return mapa[u] ? JSON.stringify(mapa[u]) : m; });
     return JSON.parse(s2);
+  }
+
+  // Botão do painel: migra as fotos de UM negócio já criado (do cofre 'registos' para 'imagens/<slug>/')
+  async function migrarFotosNegocio(n, btn){
+    const _t = btn.textContent; btn.disabled = true; btn.textContent = 'A migrar…';
+    try{
+      const { data, error } = await sb.from('negocios').select('config,menu').eq('id', n.id).maybeSingle();
+      if(error) throw error;
+      const obj = { config: (data && data.config) || {}, menu: (data && data.menu) || null };
+      // conta quantas fotos (únicas) ainda estão no cofre 'registos'
+      const set = {};
+      JSON.stringify(obj).replace(/"([^"]*\/storage\/v1\/object\/public\/registos\/[^"]*)"/g, function(m, u){ set[u] = 1; return m; });
+      const nFotos = Object.keys(set).length;
+      if(nFotos === 0){ btn.textContent = '✓ Nada por migrar'; setTimeout(function(){ btn.textContent = _t; btn.disabled = false; }, 1800); return; }
+      const migrado = await _migrarFotosRegistos(n.slug, obj);
+      const { error:e2 } = await sb.from('negocios').update({ config: migrado.config, menu: migrado.menu }).eq('id', n.id);
+      if(e2) throw e2;
+      btn.textContent = '✓ ' + nFotos + ' foto(s) migrada(s)';
+      setTimeout(function(){ btn.textContent = _t; btn.disabled = false; }, 2400);
+    }catch(e){
+      alert('Erro ao migrar fotos: ' + (e && e.message ? e.message : e));
+      btn.textContent = _t; btn.disabled = false;
+    }
   }
 
   async function importarNegocioFicheiro(file){
