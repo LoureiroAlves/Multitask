@@ -74,6 +74,9 @@
   .dia .fer-tag{ position:absolute; top:3px; right:6px; font-size:.62rem; line-height:1; color:#c0392b; }
   .dia.sel .fer-tag{ color:#ffcf9e; }
   .dia.feriado .num{ text-decoration:underline; text-decoration-color:#c0392b; text-underline-offset:2px; }
+  .dia.fechado{ background:repeating-linear-gradient(45deg,#f4dedb,#f4dedb 5px,#fbeeec 5px,#fbeeec 10px); border-color:#e6b7af; }
+  .dia.fechado .num{ color:#b23; }
+  .dia .fechado-tag{ position:absolute; bottom:3px; right:5px; font-size:.6rem; line-height:1; }
   .dia.sel .cnt{ color:#f0d9b0; }
 
   .legenda{ display:flex; gap:14px; justify-content:center; margin:14px 0 0; font-size:.76rem; color:#8a7a5c; }
@@ -147,6 +150,9 @@
   .lin input{ min-height:46px; box-sizing:border-box; }
   .mesa-row{ display:flex; align-items:center; gap:7px; font-size:.82rem; color:#5a4c39; margin-bottom:8px; }
   .mesa-row input{ margin:0; }
+  .fecho-row{ display:flex; align-items:center; gap:7px; margin-bottom:8px; }
+  .fecho-row input{ margin:0; flex:1; min-width:0; }
+  .fecho-row span{ font-size:.82rem; color:#8a7a5c; }
   .mini-btn{ background:var(--castanho); color:#fff; border:none; border-radius:9px; padding:9px 13px; cursor:pointer; font-size:.85rem; font-weight:700; margin-top:2px; }
   .mrem{ background:#fbe7e4; color:var(--vermelho); border:none; border-radius:8px; width:32px; height:32px; cursor:pointer; font-weight:800; flex-shrink:0; }
   .wa-dest{ background:#eafaf0; border:1.5px solid #b7e6c8; border-radius:14px; padding:14px; margin-bottom:6px; }
@@ -303,6 +309,9 @@
     return map;
   }
   function _feriado(iso){ return _feriadosAno(parseInt(iso.slice(0,4),10))[iso] || null; }
+  function _agCfg(){ return (negocio && negocio.config && negocio.config.agenda) || {}; }
+  function _ferMunicipal(iso){ const a=_agCfg(); return (a.feriadoMunicipal && iso.slice(5)===a.feriadoMunicipal) ? 'Feriado municipal' : null; }
+  function _encerrado(iso){ const fs=_agCfg().fechos||[]; for(var i=0;i<fs.length;i++){ if(fs[i].de && iso>=fs[i].de && iso<=(fs[i].a||fs[i].de)) return true; } return false; }
 
   $('btnEntrar').onclick = entrar;
   $('pass').addEventListener('keydown', e => { if(e.key==='Enter') entrar(); });
@@ -581,6 +590,13 @@
         + '<label>Dias disponíveis</label><div class="dias-chips">'+diasHtml+'</div>'
         + '<label>Horários <span style="font-weight:400; color:#8a7a5c;">(separados por vírgula)</span></label>'
         + '<input type="text" id="dfHor" value="'+esc(hor)+'" placeholder="12:00, 13:00, 20:00, 20:30">'
+        + '<label>Feriado municipal <span style="font-weight:400; color:#8a7a5c;">(dia da cidade — repete todos os anos)</span></label>'
+        + '<input type="date" id="dfFerMun"'+(a.feriadoMunicipal ? (' value="'+hoje.getFullYear()+'-'+esc(a.feriadoMunicipal)+'"') : '')+'>'
+        + '<label style="margin-top:12px;">🔒 Encerramentos / férias</label>'
+        + '<div class="subt2">Períodos em que o restaurante fecha. Quem tentar reservar nessas datas vê a mensagem em baixo.</div>'
+        + '<div id="dfFechos"></div><button type="button" id="dfAddFecho" class="mini-btn">＋ período de fecho</button>'
+        + '<label style="margin-top:12px;">Mensagem quando tentam reservar num dia fechado</label>'
+        + '<textarea id="dfFechoMsg" rows="2" placeholder="Ex.: Estamos encerrados nessas datas. Obrigado e até breve!">'+esc(a.fechoMsg||'')+'</textarea>'
         + '<button type="button" id="dfMaisBtn" class="av-btn">⚙️ Opções avançadas ▾</button>'
         + '<div id="dfAvancado" class="hide">'
           + '<div class="lin"><div><label>Antecedência (dias)</label><input type="number" id="dfAnt" min="0" value="'+(a.antecedencia!=null?a.antecedencia:1)+'"></div>'
@@ -602,10 +618,22 @@
     $('vistaDef').innerHTML = html;
     _dfMesas = Array.isArray(a.mesas) ? JSON.parse(JSON.stringify(a.mesas)) : [];
     _renderMesas();
+    _dfFechos = Array.isArray(a.fechos) ? JSON.parse(JSON.stringify(a.fechos)) : [];
+    _renderFechos();
     $('dfAtivo').onchange = function(){ $('dfBox').style.display = this.checked ? '' : 'none'; };
     $('dfMaisBtn').onclick = function(){ const av=$('dfAvancado'); const aberto = av.classList.toggle('hide'); this.textContent = aberto ? '⚙️ Opções avançadas ▾' : '⚙️ Opções avançadas ▴'; };
     $('dfAddMesa').onclick = function(){ _dfMesas.push({ lugares:2, quantidade:1 }); _renderMesas(); };
+    $('dfAddFecho').onclick = function(){ _dfFechos.push({ de:'', a:'' }); _renderFechos(); };
     $('dfGuardar').onclick = guardarDefinicoes;
+  }
+  let _dfFechos = [];
+  function _renderFechos(){
+    const box = $('dfFechos'); if(!box) return;
+    box.innerHTML = _dfFechos.map(function(f,i){
+      return '<div class="fecho-row"><input type="date" value="'+(f.de||'')+'" data-fi="'+i+'" data-fk="de"><span>a</span><input type="date" value="'+(f.a||'')+'" data-fi="'+i+'" data-fk="a"><button type="button" data-frem="'+i+'" class="mrem">✕</button></div>';
+    }).join('');
+    box.querySelectorAll('input[data-fi]').forEach(function(inp){ inp.onchange = function(){ const i=+inp.getAttribute('data-fi'), k=inp.getAttribute('data-fk'); _dfFechos[i][k]=inp.value; }; });
+    box.querySelectorAll('[data-frem]').forEach(function(b){ b.onclick = function(){ _dfFechos.splice(+b.getAttribute('data-frem'),1); _renderFechos(); }; });
   }
   function _renderMesas(){
     const box = $('dfMesas'); if(!box) return;
@@ -637,6 +665,9 @@
       dias: dias,
       horarios: hor,
       capacidade: parseInt($('dfCap').value,10)||0,
+      feriadoMunicipal: (($('dfFerMun')||{}).value || '').slice(5),   // guarda só MM-DD (repete todos os anos)
+      fechos: _dfFechos.filter(function(f){ return f.de; }).map(function(f){ return { de:f.de, a:(f.a||f.de) }; }),
+      fechoMsg: (($('dfFechoMsg')||{}).value || '').trim(),
       antecedencia: parseInt($('dfAnt').value,10)||0,
       maxDias: parseInt($('dfMax').value,10)||30,
       lugares: parseInt($('dfLug').value,10)||0,
@@ -714,10 +745,12 @@
       const nPend = rs.filter(function(r){ return r.estado==='pendente'; }).length;
       const nConf = rs.filter(function(r){ return r.estado==='confirmada'; }).length;
       const temPromo = !!(((negocio && negocio.config && negocio.config.promoDatas) || {})[iso]);
-      const fer = _feriado(iso);
+      const fer = _feriado(iso) || _ferMunicipal(iso);
+      const fechado = _encerrado(iso);
       const wd = new Date(iso+'T00:00:00').getDay();
       let cls = 'dia';
       if(fer) cls += ' feriado';
+      if(fechado) cls += ' fechado';
       if(wd===0 || wd===6) cls += ' fds';
       if(iso < hojeIso) cls += ' passado';
       else if(iso > hojeIso) cls += ' futuro';
@@ -728,9 +761,11 @@
       let bar = '';
       if(nPend) bar += '<i class="pend"></i>';
       if(nConf) bar += '<i class="conf"></i>';
-      html += '<div class="'+cls+'" data-dia="'+iso+'"'+(fer?(' title="Feriado: '+esc(fer)+'"'):'')+'>'
+      const _ttl = fechado ? ' title="Encerrado"' : (fer ? (' title="Feriado: '+esc(fer)+'"') : '');
+      html += '<div class="'+cls+'" data-dia="'+iso+'"'+_ttl+'>'
             + (temPromo ? '<span class="promo-tag">🏷️</span>' : '')
             + (fer ? '<span class="fer-tag">★</span>' : '')
+            + (fechado ? '<span class="fechado-tag">🔒</span>' : '')
             + '<span class="num">'+d+'</span>'
             + '<span class="bar">'+bar+'</span></div>';
     }
@@ -828,8 +863,9 @@
     const rs = (porDia[iso] || []).slice().sort(function(a,b){ return (a.hora||'').localeCompare(b.hora||''); });
     const _wd = d.getDay();
     const _abrev = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'][_wd];
-    const _fer = _feriado(iso);
+    const _fer = _feriado(iso) || _ferMunicipal(iso);
     let html = '<div class="card"><div class="dia-tit"><span class="chip db-'+_wd+'">'+_abrev+'</span> '+d.getDate()+' de '+MESES[d.getMonth()].toLowerCase()+'</div>';
+    if(_encerrado(iso)) html += '<div style="margin:-4px 0 12px; font-size:.85rem; font-weight:700; color:#b23;">🔒 Encerrado (férias)</div>';
     if(_fer) html += '<div style="margin:-4px 0 12px; font-size:.85rem; font-weight:700; color:#c0392b;">★ Feriado: '+esc(_fer)+'</div>';
     html += '<button class="nova-btn" id="btnNova" type="button">➕ Nova reserva</button>' + _formNovaHTML();
     html += _promoDoDiaHTML(iso);

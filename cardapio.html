@@ -2152,6 +2152,8 @@
   .ag-dia.indisp{ color:var(--linha); cursor:default; }
   .ag-dia.disp{ background:var(--bege); font-weight:700; }
   .ag-dia.disp:hover{ background:var(--dourado); color:#fff; }
+  .ag-dia.fechado{ background:repeating-linear-gradient(45deg,#f1ddd9,#f1ddd9 4px,#f8ebe9 4px,#f8ebe9 8px); color:#b23; font-weight:700; cursor:pointer; position:relative; }
+  .ag-dia.fechado::after{ content:'🔒'; position:absolute; bottom:1px; right:2px; font-size:0.5rem; }
   .ag-dia.sel{ background:var(--dourado); color:#fff; box-shadow:0 2px 6px rgba(74,56,32,.3); }
   .ag-slots{ display:grid; grid-template-columns:repeat(auto-fill,minmax(72px,1fr)); gap:8px; margin-top:12px; }
   .ag-slot{ padding:9px 6px; border:1.5px solid var(--linha); border-radius:10px; background:var(--branco); color:var(--castanho); font-size:0.9rem; cursor:pointer; font-family:inherit; }
@@ -5634,6 +5636,7 @@
       const max = new Date(h); max.setDate(max.getDate() + (a.maxDias || 30));
       return d >= min && d <= max;
     }
+    function diaFechado(iso){ const fs = (cfg().fechos) || []; for(var i=0;i<fs.length;i++){ if(fs[i].de && iso >= fs[i].de && iso <= (fs[i].a || fs[i].de)) return true; } return false; }
     function abrir(){
       const h = hoje0();
       if(estado.mes === null){ estado.mes = h.getMonth(); estado.ano = h.getFullYear(); }
@@ -5660,6 +5663,10 @@
       for(let dia=1; dia<=diasNoMes; dia++){
         const d = new Date(estado.ano, estado.mes, dia);
         const disp = diaDisponivel(d); const iso = fmt(d);
+        if(disp && diaFechado(iso)){   // dia que seria reservável mas o restaurante está encerrado
+          html += '<button type="button" class="ag-dia fechado" data-fechado="' + iso + '" title="Encerrado">' + dia + '</button>';
+          continue;
+        }
         const cls = 'ag-dia ' + (disp ? 'disp' : 'indisp') + (estado.diaSel === iso ? ' sel' : '');
         html += '<button type="button" class="' + cls + '"' + (disp ? (' data-dia="' + iso + '"') : ' disabled') + '>' + dia + '</button>';
       }
@@ -5705,6 +5712,7 @@
       const p = document.getElementById('agPrev'); if(p) p.onclick = function(){ estado.mes--; if(estado.mes<0){estado.mes=11;estado.ano--;} estado.diaSel=null; estado.slotSel=null; render(); };
       const n = document.getElementById('agNext'); if(n) n.onclick = function(){ estado.mes++; if(estado.mes>11){estado.mes=0;estado.ano++;} estado.diaSel=null; estado.slotSel=null; render(); };
       document.querySelectorAll('#agCard [data-dia]').forEach(function(b){ b.onclick = async function(){ estado.diaSel = b.getAttribute('data-dia'); estado.slotSel=null; await carregarOcupadas(estado.diaSel); render(); }; });
+      document.querySelectorAll('#agCard [data-fechado]').forEach(function(b){ b.onclick = function(){ const a=cfg(); alert(a.fechoMsg || 'Estamos encerrados nesta data. Obrigado!'); }; });
       document.querySelectorAll('#agCard [data-slot]').forEach(function(b){ b.onclick = function(){ estado.slotSel = b.getAttribute('data-slot'); render(); }; });
       const pe = document.getElementById('agPessoas'); if(pe) pe.onchange = function(){ estado.pessoas = Math.max(1, parseInt(pe.value,10)||1); estado.slotSel = null; render(); };
       const f = document.getElementById('agFechar'); if(f) f.onclick = function(){ ov.classList.remove('aberto'); };
