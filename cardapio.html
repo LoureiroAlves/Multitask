@@ -5636,7 +5636,7 @@
       const max = new Date(h); max.setDate(max.getDate() + (a.maxDias || 30));
       return d >= min && d <= max;
     }
-    function diaFechado(iso){ const fs = (cfg().fechos) || []; for(var i=0;i<fs.length;i++){ if(fs[i].de && iso >= fs[i].de && iso <= (fs[i].a || fs[i].de)) return true; } return false; }
+    function diaFechado(iso){ const a = cfg(); const wd = new Date(iso+'T00:00:00').getDay(); if(Array.isArray(a.diasFecho) && a.diasFecho.indexOf(wd) >= 0) return true; const fs = a.fechos || []; for(var i=0;i<fs.length;i++){ if(fs[i].de && iso >= fs[i].de && iso <= (fs[i].a || fs[i].de)) return true; } return false; }
     function abrir(){
       const h = hoje0();
       if(estado.mes === null){ estado.mes = h.getMonth(); estado.ano = h.getFullYear(); }
@@ -5662,11 +5662,12 @@
       for(let i=0;i<inicioDow;i++) html += '<div class="ag-dia vazio"></div>';
       for(let dia=1; dia<=diasNoMes; dia++){
         const d = new Date(estado.ano, estado.mes, dia);
-        const disp = diaDisponivel(d); const iso = fmt(d);
-        if(disp && diaFechado(iso)){   // dia que seria reservável mas o restaurante está encerrado
+        const iso = fmt(d);
+        if(d >= h && diaFechado(iso)){   // encerrado (folga semanal ou férias) — de hoje em diante mostra a mensagem
           html += '<button type="button" class="ag-dia fechado" data-fechado="' + iso + '" title="Encerrado">' + dia + '</button>';
           continue;
         }
+        const disp = diaDisponivel(d);
         const cls = 'ag-dia ' + (disp ? 'disp' : 'indisp') + (estado.diaSel === iso ? ' sel' : '');
         html += '<button type="button" class="' + cls + '"' + (disp ? (' data-dia="' + iso + '"') : ' disabled') + '>' + dia + '</button>';
       }

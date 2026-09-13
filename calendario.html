@@ -311,7 +311,7 @@
   function _feriado(iso){ return _feriadosAno(parseInt(iso.slice(0,4),10))[iso] || null; }
   function _agCfg(){ return (negocio && negocio.config && negocio.config.agenda) || {}; }
   function _ferMunicipal(iso){ const a=_agCfg(); return (a.feriadoMunicipal && iso.slice(5)===a.feriadoMunicipal) ? 'Feriado municipal' : null; }
-  function _encerrado(iso){ const fs=_agCfg().fechos||[]; for(var i=0;i<fs.length;i++){ if(fs[i].de && iso>=fs[i].de && iso<=(fs[i].a||fs[i].de)) return true; } return false; }
+  function _encerrado(iso){ const a=_agCfg(); const wd=new Date(iso+'T00:00:00').getDay(); if(Array.isArray(a.diasFecho) && a.diasFecho.indexOf(wd)>=0) return true; const fs=a.fechos||[]; for(var i=0;i<fs.length;i++){ if(fs[i].de && iso>=fs[i].de && iso<=(fs[i].a||fs[i].de)) return true; } return false; }
 
   $('btnEntrar').onclick = entrar;
   $('pass').addEventListener('keydown', e => { if(e.key==='Enter') entrar(); });
@@ -573,6 +573,8 @@
     const on = function(v){ return v ? ' checked' : ''; };
     const ordem = [[1,'Seg'],[2,'Ter'],[3,'Qua'],[4,'Qui'],[5,'Sex'],[6,'Sáb'],[0,'Dom']];
     const diasHtml = ordem.map(function(o){ return '<label class="dia-chip"><input type="checkbox" data-dia="'+o[0]+'"'+on(dias[o[0]])+'> '+o[1]+'</label>'; }).join('');
+    const fech = Array.isArray(a.diasFecho) ? a.diasFecho : [];
+    const fechHtml = ordem.map(function(o){ return '<label class="dia-chip"><input type="checkbox" data-fdia="'+o[0]+'"'+(fech.indexOf(o[0])>=0?' checked':'')+'> '+o[1]+'</label>'; }).join('');
     let html = '<div class="card">'
       + '<div class="def-h">⚙️ Definições de reservas</div>'
       + '<div class="subt">Define como os clientes pedem reserva a partir do cardápio.</div>'
@@ -588,6 +590,7 @@
       + '<label class="sw"><input type="checkbox" id="dfAtivo"'+on(a.ativo)+'> Ativar reservas no cardápio</label>'
       + '<div id="dfBox"'+(a.ativo?'':' style="display:none;"')+'>'
         + '<label>Dias disponíveis</label><div class="dias-chips">'+diasHtml+'</div>'
+        + '<label>🔒 Encerra semanalmente <span style="font-weight:400; color:#8a7a5c;">(dia(s) de folga fixos)</span></label><div class="dias-chips">'+fechHtml+'</div>'
         + '<label>Horários <span style="font-weight:400; color:#8a7a5c;">(separados por vírgula)</span></label>'
         + '<input type="text" id="dfHor" value="'+esc(hor)+'" placeholder="12:00, 13:00, 20:00, 20:30">'
         + '<label>Feriado municipal <span style="font-weight:400; color:#8a7a5c;">(dia da cidade — repete todos os anos)</span></label>'
@@ -666,6 +669,7 @@
       horarios: hor,
       capacidade: parseInt($('dfCap').value,10)||0,
       feriadoMunicipal: (($('dfFerMun')||{}).value || '').slice(5),   // guarda só MM-DD (repete todos os anos)
+      diasFecho: (function(){ const o=[]; $('vistaDef').querySelectorAll('input[data-fdia]').forEach(function(c){ if(c.checked) o.push(+c.getAttribute('data-fdia')); }); return o; })(),
       fechos: _dfFechos.filter(function(f){ return f.de; }).map(function(f){ return { de:f.de, a:(f.a||f.de) }; }),
       fechoMsg: (($('dfFechoMsg')||{}).value || '').trim(),
       antecedencia: parseInt($('dfAnt').value,10)||0,
@@ -865,7 +869,7 @@
     const _abrev = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'][_wd];
     const _fer = _feriado(iso) || _ferMunicipal(iso);
     let html = '<div class="card"><div class="dia-tit"><span class="chip db-'+_wd+'">'+_abrev+'</span> '+d.getDate()+' de '+MESES[d.getMonth()].toLowerCase()+'</div>';
-    if(_encerrado(iso)) html += '<div style="margin:-4px 0 12px; font-size:.85rem; font-weight:700; color:#b23;">🔒 Encerrado (férias)</div>';
+    if(_encerrado(iso)) html += '<div style="margin:-4px 0 12px; font-size:.85rem; font-weight:700; color:#b23;">🔒 Encerrado</div>';
     if(_fer) html += '<div style="margin:-4px 0 12px; font-size:.85rem; font-weight:700; color:#c0392b;">★ Feriado: '+esc(_fer)+'</div>';
     html += '<button class="nova-btn" id="btnNova" type="button">➕ Nova reserva</button>' + _formNovaHTML();
     html += _promoDoDiaHTML(iso);

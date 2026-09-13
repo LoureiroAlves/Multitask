@@ -33,6 +33,8 @@
   .resumo{ font-size:.9rem; line-height:1.6; }
   .resumo b{ color:var(--terra-esc); }
   .hide{ display:none !important; }
+  .fs-chip{ display:inline-flex; align-items:center; gap:5px; background:var(--bege-claro,#fbf8f2); border:1.5px solid var(--linha,#e5ddcf); border-radius:9px; padding:7px 10px; font-size:.85rem; cursor:pointer; }
+  .fs-chip input{ width:auto; margin:0; }
 </style>
 </head>
 <body>
@@ -97,6 +99,22 @@
       <input id="tipo" type="text" placeholder="Ex.: Português, Pizzaria, Marisqueira…">
       <label>Horário de funcionamento <span class="op">(opcional)</span></label>
       <textarea id="horario" placeholder="Ex.: Ter–Dom 12h–15h e 19h–23h • Segunda encerra"></textarea>
+      <label>Dia(s) de encerramento semanal <span class="op">(folga fixa)</span></label>
+      <div id="fechoSemBox" style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:4px;">
+        <label class="fs-chip"><input type="checkbox" id="fs1"> Seg</label>
+        <label class="fs-chip"><input type="checkbox" id="fs2"> Ter</label>
+        <label class="fs-chip"><input type="checkbox" id="fs3"> Qua</label>
+        <label class="fs-chip"><input type="checkbox" id="fs4"> Qui</label>
+        <label class="fs-chip"><input type="checkbox" id="fs5"> Sex</label>
+        <label class="fs-chip"><input type="checkbox" id="fs6"> Sáb</label>
+        <label class="fs-chip"><input type="checkbox" id="fs0"> Dom</label>
+      </div>
+      <label>Período de férias <span class="op">(opcional — se já souberes)</span></label>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <input id="feriasDe" type="date" style="flex:1;">
+        <span style="color:#9a8b6f; font-size:.9rem;">a</span>
+        <input id="feriasA" type="date" style="flex:1;">
+      </div>
       <label>Instagram <span class="op">(opcional)</span></label>
       <input id="instagram" type="text" placeholder="@oteurestaurante ou link">
       <label>Facebook <span class="op">(opcional)</span></label>
@@ -163,7 +181,7 @@
   var CAMPOS = [
     ['nome','Nome do restaurante'], ['subtitulo','Subtítulo'], ['nomeQR','Nome no QR'], ['slug','Endereço curto'],
     ['email','Email'], ['whatsapp','WhatsApp'], ['whatsappReservas','WhatsApp reservas'], ['morada','Morada'],
-    ['tipo','Tipo de cozinha'], ['horario','Horário'], ['instagram','Instagram'], ['facebook','Facebook'],
+    ['tipo','Tipo de cozinha'], ['horario','Horário'], ['feriasDe','Férias de'], ['feriasA','Férias até'], ['instagram','Instagram'], ['facebook','Facebook'],
     ['estilo','Cores/estilo'], ['notas','Notas'], ['modeloPreferido','Estilo preferido'], ['modeloId','Modelo (id interno)']
   ];
   function _b64e(str){ return btoa(unescape(encodeURIComponent(str))); }
@@ -171,7 +189,7 @@
   function _get(id){ var e=document.getElementById(id); return e ? e.value.trim() : ''; }
   function _esc(s){ return String(s||'').replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c];}); }
 
-  function recolher(){ var o={}; CAMPOS.forEach(function(c){ var v=_get(c[0]); if(v) o[c[0]]=v; }); if(fotosURLs.length) o.fotos = fotosURLs.slice(); var b={}; ['cabecalho','abertura','montra'].forEach(function(k){ if(brand[k]) b[k]=brand[k]; }); if(Object.keys(b).length) o.brand = b; return o; }
+  function recolher(){ var o={}; CAMPOS.forEach(function(c){ var v=_get(c[0]); if(v) o[c[0]]=v; }); var _fs=[]; [1,2,3,4,5,6,0].forEach(function(w){ var c=document.getElementById('fs'+w); if(c&&c.checked) _fs.push(w); }); if(_fs.length) o.fechoSemanal=_fs.join(','); if(fotosURLs.length) o.fotos = fotosURLs.slice(); var b={}; ['cabecalho','abertura','montra'].forEach(function(k){ if(brand[k]) b[k]=brand[k]; }); if(Object.keys(b).length) o.brand = b; return o; }
 
   // Pré-visualização de estilos — maqueta própria (muda de estilo e acompanha o que se escreve no formulário).
   (function(){
