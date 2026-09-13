@@ -4847,6 +4847,7 @@
       // ===== Localização / Como chegar =====
       (function(){
         const bloco = document.getElementById('localBloco'); if(!bloco) return;
+        const _e = function(s){ return String(s||'').replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); };
         const L = (config.local && typeof config.local === 'object') ? config.local : {};
         const morada = (L.morada || '').trim()
           || ((config.rodape && config.rodape.linha3) || '').trim()
@@ -4862,7 +4863,7 @@
         bloco.style.display = 'block';
         bloco.innerHTML = '<div class="local-card">'
           + '<div class="local-tit">📍 Onde estamos</div>'
-          + (morada ? ('<div class="local-mor">' + esc(morada) + '</div>') : '')
+          + (morada ? ('<div class="local-mor">' + _e(morada) + '</div>') : '')
           + '<iframe class="local-mapa" src="' + emb + '" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>'
           + '<a class="local-btn" href="' + dir + '" target="_blank" rel="noopener">🧭 Como chegar</a>'
           + '</div>';
