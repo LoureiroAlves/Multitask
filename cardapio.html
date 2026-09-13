@@ -1730,6 +1730,13 @@
   }
   footer.tem-foto{ background:transparent; }
   footer .footer-texto{ position:relative; z-index:1; }
+  #localBloco{ padding:18px 16px calc(96px + env(safe-area-inset-bottom)); background:var(--bege-claro); }
+  #localBloco .local-card{ max-width:520px; margin:0 auto; background:var(--branco); border:1px solid var(--linha); border-radius:16px; overflow:hidden; box-shadow:0 6px 18px rgba(74,56,32,.10); }
+  #localBloco .local-tit{ font-family:var(--fonte-titulo); color:var(--castanho); font-weight:700; font-size:1.05rem; padding:14px 16px 2px; text-align:center; }
+  #localBloco .local-mor{ color:var(--castanho-suave); font-size:.88rem; text-align:center; padding:2px 16px 12px; }
+  #localBloco .local-mapa{ width:100%; height:220px; border:0; display:block; }
+  #localBloco .local-btn{ display:block; text-align:center; text-decoration:none; background:var(--dourado); color:#fff; font-weight:700; padding:13px; font-family:var(--fonte-titulo); }
+  #localBloco .local-btn:active{ opacity:.9; }
 
   /* ===== Bloco de publicidade (anúncio a outro negócio) ===== */
   .anuncio-box{ position:relative; margin:26px 14px 6px; }
@@ -2550,6 +2557,8 @@
   </div>
   <div class="footer-extras" id="footerExtras"></div>
 </footer>
+
+<div id="localBloco" style="display:none;"></div>
 
 <div class="info-fixa">
   <img id="infoFixaMascote" class="info-fixa-mascote" alt="" style="display:none;">
@@ -4834,6 +4843,30 @@
         // Só mostrar a barra fixa depois de estar preenchida (evita o "flash" ao abrir a app)
         const _bf = document.querySelector('.info-fixa'); if(_bf) _bf.style.opacity = '1';
       }
+
+      // ===== Localização / Como chegar =====
+      (function(){
+        const bloco = document.getElementById('localBloco'); if(!bloco) return;
+        const L = (config.local && typeof config.local === 'object') ? config.local : {};
+        const morada = (L.morada || '').trim()
+          || ((config.rodape && config.rodape.linha3) || '').trim()
+          || ((config.footer && config.footer.morada) || '').trim();
+        // coordenadas: campo próprio, ou extraídas de um link do Google Maps (o link, se houver, manda)
+        let coords = '';
+        if(L.lat && L.lng){ coords = L.lat + ',' + L.lng; }
+        else if(L.link){ const m = String(L.link).match(/@(-?\d+\.\d+),(-?\d+\.\d+)/) || String(L.link).match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/) || String(L.link).match(/q=(-?\d+\.\d+),(-?\d+\.\d+)/); if(m) coords = m[1] + ',' + m[2]; }
+        const alvo = coords || morada;
+        if(!alvo){ bloco.style.display = 'none'; return; }
+        const emb = 'https://maps.google.com/maps?q=' + encodeURIComponent(alvo) + '&z=16&output=embed';
+        const dir = 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(alvo);
+        bloco.style.display = 'block';
+        bloco.innerHTML = '<div class="local-card">'
+          + '<div class="local-tit">📍 Onde estamos</div>'
+          + (morada ? ('<div class="local-mor">' + esc(morada) + '</div>') : '')
+          + '<iframe class="local-mapa" src="' + emb + '" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>'
+          + '<a class="local-btn" href="' + dir + '" target="_blank" rel="noopener">🧭 Como chegar</a>'
+          + '</div>';
+      })();
 
       // Rodapé final (aparece ao fazer scroll até ao fim)
       if(config.footer){

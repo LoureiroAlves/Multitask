@@ -1610,6 +1610,12 @@ amesadigital.pt</textarea>
       <label for="redeWhatsapp">WhatsApp (número com indicativo do país)</label>
       <input type="text" id="redeWhatsapp" placeholder="Ex: 351912345678">
       <div class="ajuda" style="margin-top:4px;">Escreve o número com o indicativo do país e sem espaços (Portugal = 351). Ao tocar no ícone, abre a conversa no WhatsApp.</div>
+      <hr style="border:none; border-top:1px solid var(--linha); margin:16px 0;">
+      <label for="locMorada">📍 Morada (para o mapa "Como chegar" no cardápio)</label>
+      <input type="text" id="locMorada" placeholder="Ex.: Avenida de São Caetano nº17, 4405-821 Vila Nova de Gaia">
+      <label for="locLink" style="margin-top:10px;">Link do Google Maps <span style="font-weight:400; color:var(--castanho-suave);">(opcional — dá o pino exato)</span></label>
+      <input type="text" id="locLink" placeholder="Cola aqui o link do teu restaurante no Google Maps">
+      <div class="ajuda" style="margin-top:4px;">Se colares o link do Google Maps, o mapa fica no sítio exato. Sem link, usa a morada acima.</div>
     </div>
   </details>
 
@@ -2879,6 +2885,9 @@ amesadigital.pt</textarea>
     document.getElementById('redeInstagram').value = (config.redes && config.redes.instagram) || '';
     document.getElementById('redeFacebook').value = (config.redes && config.redes.facebook) || '';
     document.getElementById('redeWhatsapp').value = (config.redes && config.redes.whatsapp) || '';
+    { const _lc = config.local || {}; const _lm = document.getElementById('locMorada'), _ll = document.getElementById('locLink');
+      if(_lm) _lm.value = _lc.morada || (config.rodape && config.rodape.linha3) || '';
+      if(_ll) _ll.value = _lc.link || ''; }
     const fid = config.fidelidade || {};
     document.getElementById('fidAtivo').checked = !!fid.ativo;
     document.getElementById('blocoFid').style.display = fid.ativo ? 'block' : 'none';
@@ -4015,6 +4024,8 @@ amesadigital.pt</textarea>
         facebook: document.getElementById('redeFacebook').value.trim(),
         whatsapp: document.getElementById('redeWhatsapp').value.trim()
       };
+      { const _lm = document.getElementById('locMorada'), _ll = document.getElementById('locLink');
+        config.local = Object.assign({}, config.local || {}, { morada: _lm ? _lm.value.trim() : '', link: _ll ? _ll.value.trim() : '' }); }
       const _eiTit = lerEstilo('iTit'), _eiSub = lerEstilo('iSub');
       capturarIntroTextos(); capturarIntroBotoes();
       config.intro = {
