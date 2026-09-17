@@ -4845,25 +4845,20 @@
           + '</a>';
       })();
 
-      // ===== Cliente gere a sua reserva — guardada no dispositivo, reabre sempre pelo botão fixo =====
+      // ===== Cliente gere as suas reservas — LISTA no dispositivo, cada reserva com código único (uuid) =====
       (function(){
         try{
           const _slug = (typeof __slugDoEndereco === 'function' ? __slugDoEndereco() : '') || 'geral';
-          const KEY = 'minhaReserva:' + _slug;
+          const KEY = 'minhasReservas:' + _slug;          // formato novo (lista)
+          const KEY_ANTIGA = 'minhaReserva:' + _slug;      // formato antigo (uma só) — migrar
           const casa = (config.header && config.header.titulo) || 'o restaurante';
           const ag = (config.agenda && config.agenda.whatsapp) || (config.carrinho && config.carrinho.whatsapp) || '';
           const tel = String(ag).replace(/[^0-9]/g,'').replace(/^00/,'');
           const _MESES = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
 
-          function ler(){ try{ return JSON.parse(localStorage.getItem(KEY)); }catch(e){ return null; } }
-          function guardar(r){ try{ localStorage.setItem(KEY, JSON.stringify(r)); }catch(e){} atualizarBotao(); }
-          function limpar(){ try{ localStorage.removeItem(KEY); }catch(e){} atualizarBotao(); }
-          window._guardarMinhaReserva = guardar;
-
-          // Válida até 2 horas depois da hora marcada; passado esse limite, apaga-se do dispositivo
+          // Válida até 2 horas depois da hora marcada
           function valida(r){
-            if(!r) return false;
-            if(!r.rd) return true;
+            if(!r || !r.rd) return false;
             try{
               const hora = (r.rh && /^\d{1,2}:\d{2}/.test(r.rh)) ? r.rh : '23:59';
               const limite = new Date(r.rd + 'T' + hora + ':00');
@@ -4871,18 +4866,48 @@
               return new Date() < limite;
             }catch(e){ return true; }
           }
+          function _norm(r){ return r ? { rid:String(r.rid||''), rn:r.rn||'', rd:r.rd||'', rh:r.rh||'', rp:String(r.rp||'1') } : null; }
+          function _chave(r){ return r.rid || (r.rd + '|' + r.rh); }   // identidade: código único, ou dia+hora se não houver
+          function _escrever(arr){ try{ localStorage.setItem(KEY, JSON.stringify(arr)); }catch(e){} }
+          // Lê a lista (migra o formato antigo), remove as expiradas e regrava
+          function lerLista(){
+            let arr = [];
+            try{ const raw = JSON.parse(localStorage.getItem(KEY)); if(Array.isArray(raw)) arr = raw; }catch(e){}
+            if(!arr.length){
+              try{ const old = JSON.parse(localStorage.getItem(KEY_ANTIGA)); if(old && old.rd){ arr = [old]; } }catch(e){}
+            }
+            try{ localStorage.removeItem(KEY_ANTIGA); }catch(e){}
+            arr = arr.map(_norm).filter(function(r){ return r && valida(r); });
+            _escrever(arr);
+            return arr;
+          }
+          function upsert(r){
+            r = _norm(r); if(!r || !r.rd) return;
+            const arr = lerLista(); const k = _chave(r);
+            const i = arr.findIndex(function(x){ return _chave(x) === k; });
+            if(i >= 0) arr[i] = r; else arr.push(r);
+            _escrever(arr); atualizarBotao();
+          }
+          function remover(r){
+            const k = _chave(_norm(r));
+            _escrever(lerLista().filter(function(x){ return _chave(x) !== k; }));
+            atualizarBotao();
+          }
+          window._guardarMinhaReserva = upsert;
+          window._minhaReservas = lerLista;
+          window._minhaReservaDoDia = function(iso){ const l = lerLista(); for(var i=0;i<l.length;i++){ if(l[i].rd === iso) return l[i]; } return null; };
 
           function abrir(r){
-            r = r || ler(); if(!r) return;
+            if(!r) return;
             if(document.getElementById('gerirOverlay')) return;
             const rn = r.rn||'', rd = r.rd||'', rh = r.rh||'', rp = String(r.rp||'1');
             const dd = rd ? new Date(rd+'T00:00:00') : null;
             const dataFmt = dd ? (dd.getDate()+' de '+_MESES[dd.getMonth()]) : rd;
             const resumo = dataFmt + (rh?(' às '+rh):'') + ' · ' + rp + ' pessoa(s)' + (rn?(' · '+rn):'');
             const baseMsg = 'a minha reserva em ' + casa + ' (' + resumo + ')';
-            // Link do calendário no dia da reserva — para o restaurante abrir e confirmar a alteração/cancelamento
+            // Link do calendário no dia da reserva (com o código) — para o restaurante abrir e confirmar de volta
             let linkCal = '';
-            try{ if(_slug && _slug !== 'geral' && rd){ linkCal = '\n\n📅 Reserva no calendário: ' + location.origin + '/calendario.html?n=' + _slug + '&d=' + rd; } }catch(e){}
+            try{ if(_slug && _slug !== 'geral' && rd){ linkCal = '\n\n📅 Reserva no calendário: ' + location.origin + '/calendario.html?n=' + _slug + '&d=' + rd + (r.rid ? ('&rid=' + encodeURIComponent(r.rid)) : ''); } }catch(e){}
             const ov = document.createElement('div');
             ov.id = 'gerirOverlay';
             ov.style.cssText = 'position:fixed; inset:0; z-index:9000; background:rgba(0,0,0,.55); display:flex; align-items:center; justify-content:center; padding:16px;';
@@ -4907,7 +4932,7 @@
             document.body.style.overflow = 'hidden';
             const fechar = function(){ ov.remove(); document.body.style.overflow = ''; };
             const gf = document.getElementById('grFechar'); if(gf) gf.onclick = fechar;
-            const grm = document.getElementById('grRemover'); if(grm) grm.onclick = function(){ if(confirm('Remover esta reserva do teu telemóvel? O restaurante continua com ela — isto só apaga o atalho aqui.')){ limpar(); fechar(); } };
+            const grm = document.getElementById('grRemover'); if(grm) grm.onclick = function(){ if(confirm('Remover esta reserva do teu telemóvel? O restaurante continua com ela — isto só apaga o atalho aqui.')){ remover(r); fechar(); } };
             ov.addEventListener('click', function(e){ if(e.target === ov) fechar(); });
             const gc = document.getElementById('grCancelar'); if(gc) gc.onclick = function(){ window.open('https://wa.me/'+tel+'?text='+encodeURIComponent('Olá! Quero CANCELAR '+baseMsg+'. Obrigado.'+linkCal), '_blank'); };
             const gab = document.getElementById('grAlterarBtn'); if(gab) gab.onclick = function(){ const b=document.getElementById('grAlterarBox'); if(b) b.style.display = (b.style.display==='none'?'block':'none'); };
@@ -4921,29 +4946,21 @@
               window.open('https://wa.me/'+tel+'?text='+encodeURIComponent(msg), '_blank');
             };
           }
-          window._abrirMinhaReserva = function(){ abrir(mr()); };
+          window._abrirMinhaReservaDia = function(iso){ abrir(window._minhaReservaDoDia(iso)); };
 
-          // Reserva válida guardada (ou null); apaga-se sozinha se já passou +2h da hora marcada
-          function mr(){
-            let r = ler();
-            if(r && !valida(r)){ try{ localStorage.removeItem(KEY); }catch(e){} r = null; }
-            return r;
-          }
-          window._minhaReserva = mr;
-
-          // Destacar o ícone das reservas (amarelo) quando o cliente tem uma reserva por vir
+          // Destacar o ícone das reservas (amarelo) se houver alguma reserva por vir
           function atualizarBotao(){
             const ic = document.getElementById('linkAgenda');
-            if(ic) ic.classList.toggle('tem-reserva', !!mr());
+            let tem = false; try{ tem = lerLista().length > 0; }catch(e){}
+            if(ic) ic.classList.toggle('tem-reserva', tem);
           }
           window._atualizarIconeReserva = atualizarBotao;
 
-          // Chegou pelo link do WhatsApp → só guardar no dispositivo e destacar o ícone (NUNCA abre popup)
+          // Chegou pelo link do WhatsApp → guardar/atualizar ESSA reserva (por código) e destacar o ícone. NUNCA abre popup.
           const P = new URLSearchParams(location.search);
           if(P.get('rgerir') === '1'){
-            guardar({ rn:P.get('rn')||'', rd:P.get('rd')||'', rh:P.get('rh')||'', rp:P.get('rp')||'1' });   // guardar() já destaca o ícone
-            // Limpar os parâmetros do link do URL
-            try{ const u = new URL(location.href); ['rgerir','rn','rd','rh','rp'].forEach(function(k){ u.searchParams.delete(k); }); history.replaceState(null, '', u.pathname + u.search + u.hash); }catch(e){}
+            upsert({ rid:P.get('rid')||'', rn:P.get('rn')||'', rd:P.get('rd')||'', rh:P.get('rh')||'', rp:P.get('rp')||'1' });
+            try{ const u = new URL(location.href); ['rgerir','rid','rn','rd','rh','rp'].forEach(function(k){ u.searchParams.delete(k); }); history.replaceState(null, '', u.pathname + u.search + u.hash); }catch(e){}
           } else {
             atualizarBotao();
           }
@@ -5674,7 +5691,7 @@
       const inicioDow = primeiro.getDay();
       const diasNoMes = new Date(estado.ano, estado.mes+1, 0).getDate();
       const podeRecuar = (estado.ano > h.getFullYear()) || (estado.ano === h.getFullYear() && estado.mes > h.getMonth());
-      const _mr = (window._minhaReserva && window._minhaReserva()) || null;
+      const _mrDias = (window._minhaReservas ? window._minhaReservas() : []).map(function(x){ return x.rd; });
       let html = '';
       html += '<h3>' + (a.titulo || 'Reservas') + '</h3>';
       html += '<div class="ag-sub">Escolhe o dia e a hora da tua reserva</div>';
@@ -5687,7 +5704,7 @@
       for(let dia=1; dia<=diasNoMes; dia++){
         const d = new Date(estado.ano, estado.mes, dia);
         const iso = fmt(d);
-        const ehMinha = !!(_mr && _mr.rd === iso);
+        const ehMinha = _mrDias.indexOf(iso) >= 0;
         if(!ehMinha && d >= h && diaFechado(iso)){   // encerrado (folga semanal ou férias) — trancado, sem reação nenhuma
           html += '<button type="button" class="ag-dia fechado" title="Encerrado" disabled>' + dia + '</button>';
           continue;
@@ -5743,7 +5760,7 @@
       const n = document.getElementById('agNext'); if(n) n.onclick = function(){ estado.mes++; if(estado.mes>11){estado.mes=0;estado.ano++;} estado.diaSel=null; estado.slotSel=null; render(); };
       document.querySelectorAll('#agCard [data-dia]').forEach(function(b){ b.onclick = async function(){
         const iso = b.getAttribute('data-dia');
-        if(b.dataset.minha === '1' && window._abrirMinhaReserva){ window._abrirMinhaReserva(); return; }   // é o dia da reserva dele → gerir
+        if(b.dataset.minha === '1' && window._abrirMinhaReservaDia){ window._abrirMinhaReservaDia(iso); return; }   // é um dia com reserva dele → gerir
         estado.diaSel = iso; estado.slotSel=null; await carregarOcupadas(iso); render();
       }; });
       document.querySelectorAll('#agCard [data-slot]').forEach(function(b){ b.onclick = function(){ estado.slotSel = b.getAttribute('data-slot'); render(); }; });
@@ -5788,7 +5805,7 @@
       async function _gravarReserva(){
         if(_jaGravou) return true;
         if(!(typeof sbC !== 'undefined' && sbC && window.__negocioId)) return true;   // sem base de dados: nada a gravar
-        const { error } = await sbC.rpc('criar_reserva', {
+        const { data, error } = await sbC.rpc('criar_reserva', {
           p_negocio: window.__negocioId, p_data: estado.diaSel, p_hora: estado.slotSel,
           p_nome: nome, p_tel: tel, p_pessoas: pessoas, p_obs: obsFull || null,
           p_valor: total, p_sinal: sinal
@@ -5798,7 +5815,8 @@
           alert('Não consegui registar a reserva: ' + (error.message || error)); return false;
         }
         _jaGravou = true;
-        try{ if(window._guardarMinhaReserva) window._guardarMinhaReserva({ rn: nome, rd: estado.diaSel, rh: estado.slotSel, rp: pessoas }); }catch(e){}
+        const _rid = (typeof data === 'string') ? data : ((data && data.id) || '');   // criar_reserva devolve o uuid da reserva
+        try{ if(window._guardarMinhaReserva) window._guardarMinhaReserva({ rid: _rid, rn: nome, rd: estado.diaSel, rh: estado.slotSel, rp: pessoas }); }catch(e){}
         return true;
       }
 

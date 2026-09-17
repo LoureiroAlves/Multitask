@@ -1021,7 +1021,7 @@
     const casa = (negocio && negocio.nome) ? negocio.nome : 'o restaurante';
     // link para o cliente gerir (alterar/cancelar) a reserva dele
     let _gerir = '';
-    try{ if(SLUG){ _gerir = '\nGerir a tua reserva (alterar ou cancelar): ' + location.origin + '/cardapio.html?n=' + SLUG + '&rgerir=1&rn=' + encodeURIComponent(nome) + '&rd=' + (r.data||'') + '&rh=' + encodeURIComponent(r.hora||'') + '&rp=' + (Number(r.pessoas)||1); } }catch(e){}
+    try{ if(SLUG){ _gerir = '\nGerir a tua reserva (alterar ou cancelar): ' + location.origin + '/cardapio.html?n=' + SLUG + '&rgerir=1' + (r.id ? ('&rid=' + encodeURIComponent(r.id)) : '') + '&rn=' + encodeURIComponent(nome) + '&rd=' + (r.data||'') + '&rh=' + encodeURIComponent(r.hora||'') + '&rp=' + (Number(r.pessoas)||1); } }catch(e){}
     let msg;
     if(tipo==='confirmar'){
       msg = 'Olá' + (nome ? ' '+nome : '') + '! A sua reserva em ' + casa + ' para ' + quando + ' (' + pessoas + ') está confirmada. Até já! 🍽️' + _gerir;
