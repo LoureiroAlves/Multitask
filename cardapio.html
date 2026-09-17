@@ -4422,7 +4422,7 @@
       // Carrinho: ativar/desativar e mostrar preços (ou só a lista de itens para o empregado)
       {
         const _cc = config.carrinho || {};
-        window.__cartCfg = { ativo: _cc.ativo !== false, precos: _cc.precos !== false, whatsapp: (_cc.whatsapp || '').toString().replace(/\D/g,'').replace(/^00/,''), whatsappSempre: _cc.whatsappSempre === true, levantamento: _cc.levantamento !== false, antecedenciaLev: parseInt(_cc.antecedenciaLev, 10) || 60 };
+        window.__cartCfg = { ativo: _cc.ativo !== false, precos: _cc.precos !== false, whatsapp: (_cc.whatsapp || '').toString().replace(/\D/g,'').replace(/^00/,''), whatsappSempre: _cc.whatsappSempre === true, levantamento: _cc.levantamento !== false, antecedenciaLev: parseInt(_cc.antecedenciaLev, 10) || 60, horaAbre: (_cc.horaAbre || '').toString().trim(), horaFecha: (_cc.horaFecha || '').toString().trim() };
         document.body.classList.toggle('carrinho-off', window.__cartCfg.ativo === false);
         try{ if(window.montarBotoesLista) window.montarBotoesLista(); }catch(e){}
         try{ if(window.__cartRefresh) window.__cartRefresh(); }catch(e){}
@@ -7437,12 +7437,26 @@
       let total = 0; lista.forEach(it => { total += it.preco * it.qtd; });
       let resumo = '';
       lista.forEach(it => { resumo += '<div class="cart-linha"><span class="cart-nome">' + it.qtd + '× ' + it.nome + '</span><span class="cart-preco">' + (it.preco * it.qtd).toFixed(2).replace('.', ',') + '€</span></div>'; });
-      const pedeLev = _cartCfg().levantamento !== false;
-      const antMin = parseInt(_cartCfg().antecedenciaLev, 10) || 60;
+      const _ccfg = _cartCfg();
+      const pedeLev = _ccfg.levantamento !== false;
+      const antMin = parseInt(_ccfg.antecedenciaLev, 10) || 60;
       const _hhmm = function(dt){ return String(dt.getHours()).padStart(2,'0') + ':' + String(dt.getMinutes()).padStart(2,'0'); };
-      const _minDate = new Date(Date.now() + antMin*60000);
-      const _minHHMM = _hhmm(_minDate);
-      const antTxt = (antMin % 60 === 0) ? (antMin/60 + (antMin===60?' hora':' horas')) : (antMin + ' minutos');
+      const _mkHoje = function(s){ if(!/^\d{1,2}:\d{2}/.test(s||'')) return null; const pp = String(s).split(':'); const d = new Date(); d.setHours(parseInt(pp[0],10)||0, parseInt(pp[1],10)||0, 0, 0); return d; };
+      const _agora = new Date();
+      const _abre = _mkHoje((_ccfg.horaAbre||'').trim());
+      const _fecha = _mkHoje((_ccfg.horaFecha||'').trim());
+      let _pickMin, _pickMax = null, _fecharam = false, _fecharamMsg = '';
+      if(_fecha){
+        const _deadline = new Date(_fecha.getTime() - antMin*60000);   // última encomenda = fecho − antecedência
+        if(_agora.getTime() > _deadline.getTime() + 5*60000){ _fecharam = true; _fecharamMsg = 'As encomendas de hoje já fecharam (última encomenda até às ' + _hhmm(_deadline) + ').'; }
+        _pickMin = new Date(Math.max(_agora.getTime() + 15*60000, _abre ? _abre.getTime() : (_agora.getTime() + 15*60000)));
+        if(_pickMin.getTime() > _fecha.getTime()) _pickMin = new Date(_fecha.getTime());
+        _pickMax = _fecha;
+      } else {
+        _pickMin = new Date(_agora.getTime() + 15*60000);   // sem horário definido: só um pequeno intervalo a partir de agora
+      }
+      const _pickMinHHMM = _hhmm(_pickMin);
+      const _pickMaxHHMM = _pickMax ? _hhmm(_pickMax) : '';
       p.innerHTML = '<h3>Confirmar encomenda</h3>' +
         '<div class="cart-vazio" style="padding:0 0 10px; font-size:0.84rem;">Vamos abrir o WhatsApp com esta lista para enviares ao restaurante. O pedido só fica confirmado quando o restaurante responder.</div>' +
         resumo +
@@ -7450,9 +7464,11 @@
         '<label for="cartNome" style="display:block; font-size:0.82rem; color:var(--castanho-suave); margin:12px 0 4px;">O teu nome</label>' +
         '<input id="cartNome" type="text" placeholder="Ex.: Ana" autocomplete="name" style="width:100%; padding:11px 12px; border:1.5px solid var(--linha); border-radius:10px; font-family:inherit; font-size:0.95rem;">' +
         (pedeLev ? (
-          '<label for="cartHora" style="display:block; font-size:0.82rem; color:var(--castanho-suave); margin:12px 0 4px;">🕒 A que horas vais levantar? <span style="color:var(--castanho-suave);">(hoje)</span></label>' +
-          '<input id="cartHora" type="time" min="' + _minHHMM + '" value="' + _minHHMM + '" style="width:100%; padding:11px 12px; border:1.5px solid var(--linha); border-radius:10px; font-family:inherit; font-size:0.95rem;">' +
-          '<div style="font-size:0.78rem; color:var(--castanho-suave); margin-top:4px;">Marca com pelo menos ' + antTxt + ' de antecedência (a partir das ' + _minHHMM + ').</div>'
+          _fecharam
+            ? ('<div style="margin:12px 0 4px; padding:10px 12px; background:#fbe7e4; border-radius:10px; color:#b23; font-size:0.84rem; font-weight:700;">' + _fecharamMsg + '</div>')
+            : ('<label for="cartHora" style="display:block; font-size:0.82rem; color:var(--castanho-suave); margin:12px 0 4px;">🕒 A que horas vais levantar? <span style="color:var(--castanho-suave);">(hoje)</span></label>' +
+               '<input id="cartHora" type="time" min="' + _pickMinHHMM + '"' + (_pickMaxHHMM ? (' max="' + _pickMaxHHMM + '"') : '') + ' value="' + _pickMinHHMM + '" style="width:100%; padding:11px 12px; border:1.5px solid var(--linha); border-radius:10px; font-family:inherit; font-size:0.95rem;">' +
+               '<div style="font-size:0.78rem; color:var(--castanho-suave); margin-top:4px;">' + (_pickMaxHHMM ? ('Entre as ' + _pickMinHHMM + ' e as ' + _pickMaxHHMM + ' (hoje).') : ('A partir das ' + _pickMinHHMM + ' (hoje).')) + '</div>')
         ) : '') +
         '<div id="cartErro" style="display:none; color:#c0392b; font-size:0.82rem; font-weight:700; margin-top:8px;"></div>' +
         '<div class="cart-acoes"><button class="cart-fechar" id="cartVoltar">‹ Voltar</button><button class="cart-whats" id="cartEnviar">Continuar para o WhatsApp</button></div>';
@@ -7468,11 +7484,13 @@
         const nome = (inp && inp.value.trim()) || '';
         let horaLev = '';
         if(pedeLev){
+          if(_fecharam){ _erro(_fecharamMsg); return; }
           horaLev = ((document.getElementById('cartHora') || {}).value || '').trim();
           if(!horaLev){ _erro('Escolhe a hora de levantamento.'); return; }
-          const partes = horaLev.split(':'); const alvo = new Date(); alvo.setHours(parseInt(partes[0],10)||0, parseInt(partes[1],10)||0, 0, 0);
-          const minimo = new Date(Date.now() + antMin*60000);
-          if(alvo.getTime() < minimo.getTime() - 60000){ _erro('Tem de ser pelo menos ' + antTxt + ' a partir de agora (a partir das ' + _hhmm(minimo) + ').'); return; }
+          const alvo = _mkHoje(horaLev);
+          if(!alvo){ _erro('Hora inválida.'); return; }
+          if(alvo.getTime() < _pickMin.getTime() - 60000){ _erro('A hora de levantamento tem de ser a partir das ' + _pickMinHHMM + '.'); return; }
+          if(_pickMax && alvo.getTime() > _pickMax.getTime() + 60000){ _erro('A cozinha fecha às ' + _pickMaxHHMM + '. Escolhe uma hora até essa.'); return; }
         }
         let t = 0; const linhas = []; const itensJson = [];
         lista.forEach(it => { const lt = it.preco * it.qtd; t += lt; linhas.push('• ' + it.qtd + '× ' + it.nome + ' — ' + lt.toFixed(2).replace('.', ',') + '€'); itensJson.push({ nome: it.nome, qtd: it.qtd, preco: it.preco }); });

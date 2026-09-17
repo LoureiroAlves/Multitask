@@ -1704,6 +1704,23 @@ amesadigital.pt</textarea>
         Encomendar tudo por WhatsApp (não só menus de grupo)
       </label>
       <p style="margin:4px 0 0; font-size:0.82rem; color:var(--castanho-suave);">Liga isto para negócios de encomenda (ex.: Aurora's Cake), onde qualquer item da lista pode ser enviado por WhatsApp. Precisa do número acima preenchido.</p>
+
+      <div style="margin-top:16px; padding-top:14px; border-top:1px solid var(--linha);">
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:600;">
+          <input type="checkbox" id="cartLevAtivo" style="width:auto; margin:0;" checked>
+          🕒 Pedir hora de levantamento (take away)
+        </label>
+        <p style="margin:4px 0 8px; font-size:0.82rem; color:var(--castanho-suave);">O cliente escolhe a que horas levanta. A hora fica limitada ao horário da cozinha, e as encomendas fecham um pouco antes do fecho.</p>
+        <div id="cartLevBox">
+          <div style="display:flex; gap:12px; flex-wrap:wrap;">
+            <div><label for="cartAbre" style="font-size:.82rem; display:block;">Cozinha abre</label><input type="time" id="cartAbre" value="12:00" style="padding:9px 10px; border:1.5px solid var(--linha); border-radius:9px; font-family:inherit;"></div>
+            <div><label for="cartFecha" style="font-size:.82rem; display:block;">Cozinha fecha</label><input type="time" id="cartFecha" value="21:00" style="padding:9px 10px; border:1.5px solid var(--linha); border-radius:9px; font-family:inherit;"></div>
+          </div>
+          <label for="cartLevAntes" style="font-size:.82rem; display:block; margin-top:10px;">Última encomenda: minutos antes do fecho</label>
+          <input type="number" id="cartLevAntes" min="0" step="5" value="60" style="width:120px; padding:9px 10px; border:1.5px solid var(--linha); border-radius:9px; font-family:inherit;">
+          <p style="margin:4px 0 0; font-size:0.78rem; color:var(--castanho-suave);">Ex.: fecho às 21:00 e 60 min → aceita encomendas até às 20:00. A hora de levantamento pode ir até ao fecho.</p>
+        </div>
+      </div>
     </div>
   </details>
 
@@ -2759,7 +2776,11 @@ amesadigital.pt</textarea>
       const _ca = document.getElementById('carrinhoAtivo'); if(_ca) _ca.checked = _c.ativo !== false;
       const _cp = document.getElementById('carrinhoPrecos'); if(_cp) _cp.checked = _c.precos !== false;
       const _cw = document.getElementById('carrinhoWhats'); if(_cw) _cw.value = _c.whatsapp || '';
-      const _cws = document.getElementById('carrinhoWhatsSempre'); if(_cws) _cws.checked = _c.whatsappSempre === true; }
+      const _cws = document.getElementById('carrinhoWhatsSempre'); if(_cws) _cws.checked = _c.whatsappSempre === true;
+      const _cle = document.getElementById('cartLevAtivo'); if(_cle) _cle.checked = _c.levantamento !== false;
+      const _cab = document.getElementById('cartAbre'); if(_cab && _c.horaAbre) _cab.value = _c.horaAbre;
+      const _cfe = document.getElementById('cartFecha'); if(_cfe && _c.horaFecha) _cfe.value = _c.horaFecha;
+      const _cla = document.getElementById('cartLevAntes'); if(_cla) _cla.value = (_c.antecedenciaLev != null ? _c.antecedenciaLev : 60); }
     // Promoção na montra
     _promoCarregar();   // promoção base + promoções por dia
     { const _fp = document.getElementById('favPratosAtivo'); if(_fp) _fp.checked = config.favoritosPratos === true; }
@@ -3810,7 +3831,11 @@ amesadigital.pt</textarea>
       config.tileTamanho = document.getElementById('tileTamanhoSel').value;
       { const _tv = document.getElementById('tilesVidroChk'); config.tilesVidro = _tv ? _tv.checked : false; }
       { const _ca = document.getElementById('carrinhoAtivo'), _cp = document.getElementById('carrinhoPrecos'), _cw = document.getElementById('carrinhoWhats'), _cws = document.getElementById('carrinhoWhatsSempre');
-        config.carrinho = { ativo: _ca ? _ca.checked : true, precos: _cp ? _cp.checked : true, whatsapp: _cw ? _cw.value.trim() : '', whatsappSempre: _cws ? _cws.checked : false }; }
+        config.carrinho = { ativo: _ca ? _ca.checked : true, precos: _cp ? _cp.checked : true, whatsapp: _cw ? _cw.value.trim() : '', whatsappSempre: _cws ? _cws.checked : false,
+          levantamento: ((document.getElementById('cartLevAtivo') || {}).checked !== false),
+          horaAbre: ((document.getElementById('cartAbre') || {}).value || '').trim(),
+          horaFecha: ((document.getElementById('cartFecha') || {}).value || '').trim(),
+          antecedenciaLev: (parseInt((document.getElementById('cartLevAntes') || {}).value, 10) || 60) }; }
       // Promoção na montra (base + por dia)
       _promoGuardar();
       { const _fp = document.getElementById('favPratosAtivo'); config.favoritosPratos = !!(_fp && _fp.checked); }
