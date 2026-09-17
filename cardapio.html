@@ -4422,7 +4422,7 @@
       // Carrinho: ativar/desativar e mostrar preços (ou só a lista de itens para o empregado)
       {
         const _cc = config.carrinho || {};
-        window.__cartCfg = { ativo: _cc.ativo !== false, precos: _cc.precos !== false, whatsapp: (_cc.whatsapp || '').toString().replace(/\D/g,'').replace(/^00/,''), whatsappSempre: _cc.whatsappSempre === true };
+        window.__cartCfg = { ativo: _cc.ativo !== false, precos: _cc.precos !== false, whatsapp: (_cc.whatsapp || '').toString().replace(/\D/g,'').replace(/^00/,''), whatsappSempre: _cc.whatsappSempre === true, levantamento: _cc.levantamento !== false, antecedenciaLev: parseInt(_cc.antecedenciaLev, 10) || 60 };
         document.body.classList.toggle('carrinho-off', window.__cartCfg.ativo === false);
         try{ if(window.montarBotoesLista) window.montarBotoesLista(); }catch(e){}
         try{ if(window.__cartRefresh) window.__cartRefresh(); }catch(e){}
@@ -7437,12 +7437,24 @@
       let total = 0; lista.forEach(it => { total += it.preco * it.qtd; });
       let resumo = '';
       lista.forEach(it => { resumo += '<div class="cart-linha"><span class="cart-nome">' + it.qtd + '× ' + it.nome + '</span><span class="cart-preco">' + (it.preco * it.qtd).toFixed(2).replace('.', ',') + '€</span></div>'; });
+      const pedeLev = _cartCfg().levantamento !== false;
+      const antMin = parseInt(_cartCfg().antecedenciaLev, 10) || 60;
+      const _hhmm = function(dt){ return String(dt.getHours()).padStart(2,'0') + ':' + String(dt.getMinutes()).padStart(2,'0'); };
+      const _minDate = new Date(Date.now() + antMin*60000);
+      const _minHHMM = _hhmm(_minDate);
+      const antTxt = (antMin % 60 === 0) ? (antMin/60 + (antMin===60?' hora':' horas')) : (antMin + ' minutos');
       p.innerHTML = '<h3>Confirmar encomenda</h3>' +
-        '<div class="cart-vazio" style="padding:0 0 10px; font-size:0.84rem;">Vamos abrir o WhatsApp com esta lista para enviares ao negócio.</div>' +
+        '<div class="cart-vazio" style="padding:0 0 10px; font-size:0.84rem;">Vamos abrir o WhatsApp com esta lista para enviares ao restaurante. O pedido só fica confirmado quando o restaurante responder.</div>' +
         resumo +
         '<div class="cart-total"><span>Total</span><span>' + total.toFixed(2).replace('.', ',') + '€</span></div>' +
         '<label for="cartNome" style="display:block; font-size:0.82rem; color:var(--castanho-suave); margin:12px 0 4px;">O teu nome</label>' +
         '<input id="cartNome" type="text" placeholder="Ex.: Ana" autocomplete="name" style="width:100%; padding:11px 12px; border:1.5px solid var(--linha); border-radius:10px; font-family:inherit; font-size:0.95rem;">' +
+        (pedeLev ? (
+          '<label for="cartHora" style="display:block; font-size:0.82rem; color:var(--castanho-suave); margin:12px 0 4px;">🕒 A que horas vais levantar? <span style="color:var(--castanho-suave);">(hoje)</span></label>' +
+          '<input id="cartHora" type="time" min="' + _minHHMM + '" value="' + _minHHMM + '" style="width:100%; padding:11px 12px; border:1.5px solid var(--linha); border-radius:10px; font-family:inherit; font-size:0.95rem;">' +
+          '<div style="font-size:0.78rem; color:var(--castanho-suave); margin-top:4px;">Marca com pelo menos ' + antTxt + ' de antecedência (a partir das ' + _minHHMM + ').</div>'
+        ) : '') +
+        '<div id="cartErro" style="display:none; color:#c0392b; font-size:0.82rem; font-weight:700; margin-top:8px;"></div>' +
         '<div class="cart-acoes"><button class="cart-fechar" id="cartVoltar">‹ Voltar</button><button class="cart-whats" id="cartEnviar">Continuar para o WhatsApp</button></div>';
       const voltar = document.getElementById('cartVoltar');
       if(voltar) voltar.onclick = () => render();
@@ -7451,12 +7463,35 @@
       if(enviar) enviar.onclick = () => {
         const num = _cartCfg().whatsapp;
         if(!num) return;
+        const erroEl = document.getElementById('cartErro');
+        const _erro = function(t){ if(erroEl){ erroEl.textContent = t; erroEl.style.display = 'block'; } };
         const nome = (inp && inp.value.trim()) || '';
-        let t = 0; const linhas = [];
-        lista.forEach(it => { const lt = it.preco * it.qtd; t += lt; linhas.push('• ' + it.qtd + '× ' + it.nome + ' — ' + lt.toFixed(2).replace('.', ',') + '€'); });
-        const msg = 'Nova encomenda' + (nome ? ' — ' + nome : '') + ':\n' + linhas.join('\n') + '\nTotal: ' + t.toFixed(2).replace('.', ',') + '€';
+        let horaLev = '';
+        if(pedeLev){
+          horaLev = ((document.getElementById('cartHora') || {}).value || '').trim();
+          if(!horaLev){ _erro('Escolhe a hora de levantamento.'); return; }
+          const partes = horaLev.split(':'); const alvo = new Date(); alvo.setHours(parseInt(partes[0],10)||0, parseInt(partes[1],10)||0, 0, 0);
+          const minimo = new Date(Date.now() + antMin*60000);
+          if(alvo.getTime() < minimo.getTime() - 60000){ _erro('Tem de ser pelo menos ' + antTxt + ' a partir de agora (a partir das ' + _hhmm(minimo) + ').'); return; }
+        }
+        let t = 0; const linhas = []; const itensJson = [];
+        lista.forEach(it => { const lt = it.preco * it.qtd; t += lt; linhas.push('• ' + it.qtd + '× ' + it.nome + ' — ' + lt.toFixed(2).replace('.', ',') + '€'); itensJson.push({ nome: it.nome, qtd: it.qtd, preco: it.preco }); });
+        const _totalTxt = t.toFixed(2).replace('.', ',');
+        const _abrir = function(numero){
+          let msg = 'Nova encomenda (take away)' + (numero ? (' nº ' + numero) : '') + (nome ? ' — ' + nome : '') + ':\n' + linhas.join('\n') + '\nTotal: ' + _totalTxt + '€';
+          if(pedeLev && horaLev) msg += '\n🕒 Levantamento hoje às ' + horaLev;
+          msg += '\n\nA aguardar a vossa confirmação. Obrigado!';
+          const url = 'https://wa.me/' + num + '?text=' + encodeURIComponent(msg);
+          if(win){ try{ win.location = url; }catch(e){ window.open(url, '_blank'); } } else { window.open(url, '_blank'); }
+        };
         if(window.__PREVIEW){ alert('Pré-visualização: aqui abriria o WhatsApp com a encomenda.'); return; }
-        window.open('https://wa.me/' + num + '?text=' + encodeURIComponent(msg), '_blank');
+        const win = window.open('', '_blank');   // abre já a janela (preserva o gesto do toque no iOS)
+        enviar.disabled = true;
+        if(typeof sbC !== 'undefined' && sbC && window.__negocioId){
+          sbC.rpc('criar_encomenda', { p_negocio: window.__negocioId, p_nome: nome, p_tel: '', p_levant: horaLev, p_itens: itensJson, p_total: t })
+            .then(function(res){ const numero = (res && res.data && res.data[0] && res.data[0].numero) || null; _abrir(numero); })
+            .catch(function(){ _abrir(null); });
+        } else { _abrir(null); }
       };
       if(inp){ try{ inp.focus(); }catch(e){} }
     }

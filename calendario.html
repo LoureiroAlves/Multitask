@@ -227,6 +227,7 @@
       <button id="tabCal" class="tab ativo" type="button">📅 Calendário</button>
       <button id="tabDash" class="tab" type="button">📊 Painel</button>
       <button id="tabDef" class="tab" type="button">⚙️ Definições</button>
+      <button id="tabEnc" class="tab" type="button">🛍️ Encomendas</button>
     </div>
     <div id="vistaCal">
       <div class="mes-bar">
@@ -244,6 +245,7 @@
     </div>
     <div id="vistaDash" class="hide"></div>
     <div id="vistaDef" class="hide"></div>
+    <div id="vistaEncomendas" class="hide"></div>
   </div>
 </div>
 
@@ -337,6 +339,7 @@
   $('tabCal').onclick = () => mostrarVista('cal');
   $('tabDash').onclick = () => mostrarVista('dash');
   $('tabDef').onclick = () => mostrarVista('def');
+  $('tabEnc').onclick = () => mostrarVista('enc');
   $('btnPdf').onclick = exportarPdf;
   $('mdFechar').onclick = fecharModal;
   $('mdGuardar').onclick = guardarModal;
@@ -452,11 +455,43 @@
     $('vistaCal').classList.toggle('hide', qual!=='cal');
     $('vistaDash').classList.toggle('hide', qual!=='dash');
     $('vistaDef').classList.toggle('hide', qual!=='def');
+    $('vistaEncomendas').classList.toggle('hide', qual!=='enc');
     $('tabCal').classList.toggle('ativo', qual==='cal');
     $('tabDash').classList.toggle('ativo', qual==='dash');
     $('tabDef').classList.toggle('ativo', qual==='def');
+    $('tabEnc').classList.toggle('ativo', qual==='enc');
     if(qual==='dash') renderDashboard();
     if(qual==='def') renderDefinicoes();
+    if(qual==='enc') renderEncomendas();
+  }
+
+  async function renderEncomendas(){
+    const v = $('vistaEncomendas');
+    v.innerHTML = '<div class="msg">A carregar…</div>';
+    const desde = new Date(); desde.setDate(desde.getDate() - 7);
+    const { data, error } = await sb.from('encomendas').select('*').eq('negocio_id', negocio.id).gte('criado_em', desde.toISOString()).order('criado_em', { ascending:false });
+    if(error){ v.innerHTML = '<div class="msg erro">Erro: ' + esc(error.message) + '</div>'; return; }
+    const arr = data || [];
+    if(!arr.length){ v.innerHTML = '<div class="card"><div style="color:#8a7a5c; font-size:.9rem;">Ainda não há encomendas (últimos 7 dias).</div></div>'; return; }
+    let html = '<div class="card" style="margin-bottom:10px;"><div style="font-weight:800; color:var(--castanho);">🛍️ Encomendas — últimos 7 dias (' + arr.length + ')</div></div>';
+    arr.forEach(function(e){
+      const dt = new Date(e.criado_em);
+      const itens = Array.isArray(e.itens) ? e.itens : [];
+      const linhas = itens.map(function(it){ return (it.qtd||1) + '× ' + esc(it.nome||''); }).join('<br>');
+      const dia = String(dt.getDate()).padStart(2,'0') + '/' + String(dt.getMonth()+1).padStart(2,'0');
+      const hh = String(dt.getHours()).padStart(2,'0') + ':' + String(dt.getMinutes()).padStart(2,'0');
+      html += '<div class="card" style="margin-bottom:10px;">'
+        + '<div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">'
+        + '<div style="font-weight:800; color:var(--castanho);">Encomenda nº ' + (e.numero != null ? e.numero : '—') + '</div>'
+        + '<button class="enc-del" data-id="' + e.id + '" style="border:1px solid #e8c4bf; color:var(--vermelho); background:#fff; border-radius:8px; padding:5px 10px; cursor:pointer; font-family:inherit; font-weight:700; font-size:.8rem;">🗑</button>'
+        + '</div>'
+        + '<div style="font-size:.82rem; color:#8a7a5c; margin:2px 0 8px;">Recebida ' + dia + ' às ' + hh + (e.nome ? (' · ' + esc(e.nome)) : '') + (e.levantamento ? (' · 🕒 levantar às ' + esc(e.levantamento)) : '') + '</div>'
+        + '<div style="font-size:.9rem; color:var(--castanho); line-height:1.5;">' + (linhas || '—') + '</div>'
+        + (Number(e.total) > 0 ? ('<div style="margin-top:8px; font-weight:800; color:var(--castanho);">Total: ' + Number(e.total).toFixed(2).replace('.', ',') + '€</div>') : '')
+        + '</div>';
+    });
+    v.innerHTML = html;
+    v.querySelectorAll('.enc-del').forEach(function(b){ b.onclick = async function(){ if(!confirm('Apagar esta encomenda da lista?')) return; const { error } = await sb.from('encomendas').delete().eq('id', b.dataset.id); if(error){ alert('Erro: ' + error.message); return; } renderEncomendas(); }; });
   }
 
   function _cmpR(a,b){ return (a.data + (a.hora||'')).localeCompare(b.data + (b.hora||'')); }
