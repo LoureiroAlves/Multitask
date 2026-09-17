@@ -4822,55 +4822,94 @@
           + '</div>';
       })();
 
-      // ===== Cliente gere a sua reserva (alterar/cancelar) — abre via link recebido no WhatsApp =====
+      // ===== Cliente gere a sua reserva — guardada no dispositivo, reabre sempre pelo botão fixo =====
       (function(){
         try{
-          const P = new URLSearchParams(location.search);
-          if(P.get('rgerir') !== '1') return;
-          if(document.getElementById('gerirOverlay')) return;
-          const rn = P.get('rn')||'', rd = P.get('rd')||'', rh = P.get('rh')||'', rp = P.get('rp')||'1';
+          const _slug = (typeof __slugDoEndereco === 'function' ? __slugDoEndereco() : '') || 'geral';
+          const KEY = 'minhaReserva:' + _slug;
+          const casa = (config.header && config.header.titulo) || 'o restaurante';
           const ag = (config.agenda && config.agenda.whatsapp) || (config.carrinho && config.carrinho.whatsapp) || '';
           const tel = String(ag).replace(/[^0-9]/g,'').replace(/^00/,'');
           const _MESES = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
-          const dd = rd ? new Date(rd+'T00:00:00') : null;
-          const dataFmt = dd ? (dd.getDate()+' de '+_MESES[dd.getMonth()]) : rd;
-          const casa = (config.header && config.header.titulo) || 'o restaurante';
-          const resumo = dataFmt + (rh?(' às '+rh):'') + ' · ' + rp + ' pessoa(s)' + (rn?(' · '+rn):'');
-          const baseMsg = 'a minha reserva em ' + casa + ' (' + resumo + ')';
-          const ov = document.createElement('div');
-          ov.id = 'gerirOverlay';
-          ov.style.cssText = 'position:fixed; inset:0; z-index:9000; background:rgba(0,0,0,.55); display:flex; align-items:center; justify-content:center; padding:16px;';
-          ov.innerHTML = '<div style="background:#fff; border-radius:18px; max-width:420px; width:100%; max-height:92vh; overflow:auto; padding:20px 18px;">'
-            + '<h3 style="margin:0 0 4px; text-align:center; font-family:var(--fonte-titulo); color:var(--castanho);">A tua reserva</h3>'
-            + '<div style="text-align:center; color:var(--castanho-suave); font-size:.9rem; margin-bottom:14px;">' + resumo + '</div>'
-            + (tel
-              ? ('<button id="grCancelar" type="button" style="width:100%; background:#c0392b; color:#fff; border:none; border-radius:12px; padding:13px; font-weight:800; cursor:pointer; margin-bottom:10px;">❌ Pedir cancelamento</button>'
-                + '<button id="grAlterarBtn" type="button" style="width:100%; background:var(--dourado); color:#fff; border:none; border-radius:12px; padding:13px; font-weight:800; cursor:pointer;">✏️ Pedir alteração</button>'
-                + '<div id="grAlterarBox" style="display:none; margin-top:12px; border-top:1px solid var(--linha); padding-top:12px;">'
-                  + '<label style="font-size:.82rem; font-weight:700; color:var(--castanho);">Nº de pessoas</label>'
-                  + '<input id="grPessoas" type="number" min="1" value="'+(parseInt(rp,10)||1)+'" style="width:100%; padding:10px; border:1.5px solid var(--linha); border-radius:9px; margin:4px 0 10px; font-family:inherit;">'
-                  + '<label style="font-size:.82rem; font-weight:700; color:var(--castanho);">Nova hora (opcional)</label>'
-                  + '<input id="grHora" type="time" value="'+(rh||'')+'" style="width:100%; padding:10px; border:1.5px solid var(--linha); border-radius:9px; margin:4px 0 12px; font-family:inherit;">'
-                  + '<button id="grEnviarAlt" type="button" style="width:100%; background:#25d366; color:#fff; border:none; border-radius:12px; padding:13px; font-weight:800; cursor:pointer;">📲 Enviar pedido de alteração</button>'
-                + '</div>')
-              : '<div style="text-align:center; color:#b23; font-size:.9rem;">Contacta diretamente o restaurante para alterar ou cancelar.</div>')
-            + '<button id="grFechar" type="button" style="width:100%; margin-top:12px; background:none; border:none; color:var(--castanho-suave); font-weight:700; cursor:pointer; padding:8px;">Fechar</button>'
-            + '</div>';
-          document.body.appendChild(ov);
-          document.body.style.overflow = 'hidden';
-          const fechar = function(){ ov.remove(); document.body.style.overflow = ''; };
-          const gf = document.getElementById('grFechar'); if(gf) gf.onclick = fechar;
-          ov.addEventListener('click', function(e){ if(e.target === ov) fechar(); });
-          const gc = document.getElementById('grCancelar'); if(gc) gc.onclick = function(){ window.open('https://wa.me/'+tel+'?text='+encodeURIComponent('Olá! Quero CANCELAR '+baseMsg+'. Obrigado.'), '_blank'); };
-          const gab = document.getElementById('grAlterarBtn'); if(gab) gab.onclick = function(){ const b=document.getElementById('grAlterarBox'); if(b) b.style.display = (b.style.display==='none'?'block':'none'); };
-          const gea = document.getElementById('grEnviarAlt'); if(gea) gea.onclick = function(){
-            const np = Math.max(1, parseInt((document.getElementById('grPessoas')||{}).value,10)||1);
-            const nh = ((document.getElementById('grHora')||{}).value||'').trim();
-            let msg = 'Olá! Quero ALTERAR '+baseMsg+' para: '+np+' pessoa(s)';
-            if(nh) msg += ' e às '+nh;
-            msg += '. Obrigado.';
-            window.open('https://wa.me/'+tel+'?text='+encodeURIComponent(msg), '_blank');
-          };
+
+          function ler(){ try{ return JSON.parse(localStorage.getItem(KEY)); }catch(e){ return null; } }
+          function guardar(r){ try{ localStorage.setItem(KEY, JSON.stringify(r)); }catch(e){} atualizarBotao(); }
+          function limpar(){ try{ localStorage.removeItem(KEY); }catch(e){} atualizarBotao(); }
+          window._guardarMinhaReserva = guardar;
+
+          function futura(r){
+            if(!r || !r.rd) return true;
+            try{ const h = new Date(); h.setHours(0,0,0,0); return new Date(r.rd + 'T00:00:00') >= h; }catch(e){ return true; }
+          }
+
+          function abrir(r){
+            r = r || ler(); if(!r) return;
+            if(document.getElementById('gerirOverlay')) return;
+            const rn = r.rn||'', rd = r.rd||'', rh = r.rh||'', rp = String(r.rp||'1');
+            const dd = rd ? new Date(rd+'T00:00:00') : null;
+            const dataFmt = dd ? (dd.getDate()+' de '+_MESES[dd.getMonth()]) : rd;
+            const resumo = dataFmt + (rh?(' às '+rh):'') + ' · ' + rp + ' pessoa(s)' + (rn?(' · '+rn):'');
+            const baseMsg = 'a minha reserva em ' + casa + ' (' + resumo + ')';
+            const ov = document.createElement('div');
+            ov.id = 'gerirOverlay';
+            ov.style.cssText = 'position:fixed; inset:0; z-index:9000; background:rgba(0,0,0,.55); display:flex; align-items:center; justify-content:center; padding:16px;';
+            ov.innerHTML = '<div style="background:#fff; border-radius:18px; max-width:420px; width:100%; max-height:92vh; overflow:auto; padding:20px 18px;">'
+              + '<h3 style="margin:0 0 4px; text-align:center; font-family:var(--fonte-titulo); color:var(--castanho);">A tua reserva</h3>'
+              + '<div style="text-align:center; color:var(--castanho-suave); font-size:.9rem; margin-bottom:14px;">' + resumo + '</div>'
+              + (tel
+                ? ('<button id="grCancelar" type="button" style="width:100%; background:#c0392b; color:#fff; border:none; border-radius:12px; padding:13px; font-weight:800; cursor:pointer; margin-bottom:10px;">❌ Pedir cancelamento</button>'
+                  + '<button id="grAlterarBtn" type="button" style="width:100%; background:var(--dourado); color:#fff; border:none; border-radius:12px; padding:13px; font-weight:800; cursor:pointer;">✏️ Pedir alteração</button>'
+                  + '<div id="grAlterarBox" style="display:none; margin-top:12px; border-top:1px solid var(--linha); padding-top:12px;">'
+                    + '<label style="font-size:.82rem; font-weight:700; color:var(--castanho);">Nº de pessoas</label>'
+                    + '<input id="grPessoas" type="number" min="1" value="'+(parseInt(rp,10)||1)+'" style="width:100%; padding:10px; border:1.5px solid var(--linha); border-radius:9px; margin:4px 0 10px; font-family:inherit;">'
+                    + '<label style="font-size:.82rem; font-weight:700; color:var(--castanho);">Nova hora (opcional)</label>'
+                    + '<input id="grHora" type="time" value="'+(rh||'')+'" style="width:100%; padding:10px; border:1.5px solid var(--linha); border-radius:9px; margin:4px 0 12px; font-family:inherit;">'
+                    + '<button id="grEnviarAlt" type="button" style="width:100%; background:#25d366; color:#fff; border:none; border-radius:12px; padding:13px; font-weight:800; cursor:pointer;">📲 Enviar pedido de alteração</button>'
+                  + '</div>')
+                : '<div style="text-align:center; color:#b23; font-size:.9rem;">Contacta diretamente o restaurante para alterar ou cancelar.</div>')
+              + '<button id="grFechar" type="button" style="width:100%; margin-top:12px; background:none; border:none; color:var(--castanho-suave); font-weight:700; cursor:pointer; padding:8px;">Fechar</button>'
+              + '</div>';
+            document.body.appendChild(ov);
+            document.body.style.overflow = 'hidden';
+            const fechar = function(){ ov.remove(); document.body.style.overflow = ''; };
+            const gf = document.getElementById('grFechar'); if(gf) gf.onclick = fechar;
+            ov.addEventListener('click', function(e){ if(e.target === ov) fechar(); });
+            const gc = document.getElementById('grCancelar'); if(gc) gc.onclick = function(){ window.open('https://wa.me/'+tel+'?text='+encodeURIComponent('Olá! Quero CANCELAR '+baseMsg+'. Obrigado.'), '_blank'); };
+            const gab = document.getElementById('grAlterarBtn'); if(gab) gab.onclick = function(){ const b=document.getElementById('grAlterarBox'); if(b) b.style.display = (b.style.display==='none'?'block':'none'); };
+            const gea = document.getElementById('grEnviarAlt'); if(gea) gea.onclick = function(){
+              const np = Math.max(1, parseInt((document.getElementById('grPessoas')||{}).value,10)||1);
+              const nh = ((document.getElementById('grHora')||{}).value||'').trim();
+              let msg = 'Olá! Quero ALTERAR '+baseMsg+' para: '+np+' pessoa(s)';
+              if(nh) msg += ' e às '+nh;
+              msg += '. Obrigado.';
+              window.open('https://wa.me/'+tel+'?text='+encodeURIComponent(msg), '_blank');
+            };
+          }
+          window._abrirMinhaReserva = function(){ abrir(ler()); };
+
+          // Botão fixo "A minha reserva" — aparece enquanto houver uma reserva por vir
+          let btn = null;
+          function atualizarBotao(){
+            const r = ler();
+            const mostrar = !!(r && futura(r));
+            if(mostrar && !btn){
+              btn = document.createElement('button');
+              btn.id = 'btnMinhaReserva'; btn.type = 'button';
+              btn.textContent = '📅 A minha reserva';
+              btn.style.cssText = 'position:fixed; left:14px; bottom:16px; z-index:8000; background:var(--dourado,#b8860b); color:#fff; border:none; border-radius:999px; padding:11px 18px; font-family:inherit; font-weight:800; font-size:.9rem; box-shadow:0 4px 14px rgba(0,0,0,.28); cursor:pointer;';
+              btn.onclick = function(){ abrir(ler()); };
+              document.body.appendChild(btn);
+            } else if(!mostrar && btn){ btn.remove(); btn = null; }
+          }
+
+          // Chegou pelo link do WhatsApp → guardar no dispositivo e abrir já
+          const P = new URLSearchParams(location.search);
+          if(P.get('rgerir') === '1'){
+            guardar({ rn:P.get('rn')||'', rd:P.get('rd')||'', rh:P.get('rh')||'', rp:P.get('rp')||'1' });
+            abrir(ler());
+          } else {
+            atualizarBotao();
+          }
         }catch(e){}
       })();
 
@@ -5711,7 +5750,9 @@
           if(String(error.message || '').indexOf('sem_mesa') >= 0){ alert('Esse horário já ficou sem mesa para ' + pessoas + ' pessoa(s). Escolhe outro.'); return false; }
           alert('Não consegui registar a reserva: ' + (error.message || error)); return false;
         }
-        _jaGravou = true; return true;
+        _jaGravou = true;
+        try{ if(window._guardarMinhaReserva) window._guardarMinhaReserva({ rn: nome, rd: estado.diaSel, rh: estado.slotSel, rp: pessoas }); }catch(e){}
+        return true;
       }
 
       // Ecrã de confirmação — AINDA NÃO gravou. Só grava ao enviar/registar.
