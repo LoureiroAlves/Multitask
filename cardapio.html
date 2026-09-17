@@ -4837,9 +4837,16 @@
           function limpar(){ try{ localStorage.removeItem(KEY); }catch(e){} atualizarBotao(); }
           window._guardarMinhaReserva = guardar;
 
-          function futura(r){
-            if(!r || !r.rd) return true;
-            try{ const h = new Date(); h.setHours(0,0,0,0); return new Date(r.rd + 'T00:00:00') >= h; }catch(e){ return true; }
+          // Válida até 2 horas depois da hora marcada; passado esse limite, apaga-se do dispositivo
+          function valida(r){
+            if(!r) return false;
+            if(!r.rd) return true;
+            try{
+              const hora = (r.rh && /^\d{1,2}:\d{2}/.test(r.rh)) ? r.rh : '23:59';
+              const limite = new Date(r.rd + 'T' + hora + ':00');
+              limite.setHours(limite.getHours() + 2);
+              return new Date() < limite;
+            }catch(e){ return true; }
           }
 
           function abrir(r){
@@ -4867,12 +4874,14 @@
                     + '<button id="grEnviarAlt" type="button" style="width:100%; background:#25d366; color:#fff; border:none; border-radius:12px; padding:13px; font-weight:800; cursor:pointer;">📲 Enviar pedido de alteração</button>'
                   + '</div>')
                 : '<div style="text-align:center; color:#b23; font-size:.9rem;">Contacta diretamente o restaurante para alterar ou cancelar.</div>')
-              + '<button id="grFechar" type="button" style="width:100%; margin-top:12px; background:none; border:none; color:var(--castanho-suave); font-weight:700; cursor:pointer; padding:8px;">Fechar</button>'
+              + '<button id="grRemover" type="button" style="width:100%; margin-top:12px; background:none; border:1.5px solid var(--linha); border-radius:10px; color:#b23; font-weight:700; cursor:pointer; padding:9px; font-size:.85rem;">🗑 Remover do meu telemóvel</button>'
+              + '<button id="grFechar" type="button" style="width:100%; margin-top:8px; background:none; border:none; color:var(--castanho-suave); font-weight:700; cursor:pointer; padding:8px;">Fechar</button>'
               + '</div>';
             document.body.appendChild(ov);
             document.body.style.overflow = 'hidden';
             const fechar = function(){ ov.remove(); document.body.style.overflow = ''; };
             const gf = document.getElementById('grFechar'); if(gf) gf.onclick = fechar;
+            const grm = document.getElementById('grRemover'); if(grm) grm.onclick = function(){ if(confirm('Remover esta reserva do teu telemóvel? O restaurante continua com ela — isto só apaga o atalho aqui.')){ limpar(); fechar(); } };
             ov.addEventListener('click', function(e){ if(e.target === ov) fechar(); });
             const gc = document.getElementById('grCancelar'); if(gc) gc.onclick = function(){ window.open('https://wa.me/'+tel+'?text='+encodeURIComponent('Olá! Quero CANCELAR '+baseMsg+'. Obrigado.'), '_blank'); };
             const gab = document.getElementById('grAlterarBtn'); if(gab) gab.onclick = function(){ const b=document.getElementById('grAlterarBox'); if(b) b.style.display = (b.style.display==='none'?'block':'none'); };
@@ -4890,8 +4899,9 @@
           // Botão fixo "A minha reserva" — aparece enquanto houver uma reserva por vir
           let btn = null;
           function atualizarBotao(){
-            const r = ler();
-            const mostrar = !!(r && futura(r));
+            let r = ler();
+            if(r && !valida(r)){ try{ localStorage.removeItem(KEY); }catch(e){} r = null; }   // já passou +2h → apaga
+            const mostrar = !!r;
             if(mostrar && !btn){
               btn = document.createElement('button');
               btn.id = 'btnMinhaReserva'; btn.type = 'button';
