@@ -4968,14 +4968,38 @@
             atualizarBotao();
           }
 
-          // Sincronizar com o servidor: largar reservas CANCELADAS/APAGADAS (e legado sem código)
+          // ----- Reservas pelo NÚMERO de telemóvel (fiável entre dispositivos/app do ecrã principal) -----
+          function _meuTel(){ try{ return localStorage.getItem('meuTelefone:' + _slug) || ''; }catch(e){ return ''; } }
+          function _guardarTel(t){ try{ if(t) localStorage.setItem('meuTelefone:' + _slug, t); }catch(e){} }
+          window._meuTelefoneGuardado = _meuTel;
+          window._guardarMeuTelefone  = _guardarTel;
+          window._definirMeuTelefone  = function(t){ t = (t||'').trim(); if(t){ _guardarTel(t); sincronizar(); } };
+
+          // Sincronizar: se houver número guardado, traz TODAS as reservas do cliente do servidor;
+          // caso contrário, refresca só o que está no dispositivo, pelo código de cada reserva.
           function sincronizar(){
             try{
               if(typeof sbC === 'undefined' || !sbC) return;
+              const tel = _meuTel();
+              if(tel && window.__negocioId){
+                sbC.rpc('reservas_por_telefone', { p_negocio: window.__negocioId, p_tel: tel }).then(function(res){
+                  if(!res || res.error || !res.data) return;   // função SQL ainda não criada → não mexe
+                  const antes = lerLista();
+                  const nova = [];
+                  res.data.forEach(function(s){
+                    if(!s || !s.id || String(s.estado) === 'cancelada') return;
+                    const ant = antes.find(function(x){ return String(x.rid) === String(s.id); });
+                    nova.push(_norm({ rid:s.id, rn:(ant && ant.rn) || '', rd:s.data, rh:s.hora, rp:s.pessoas }));
+                  });
+                  const nova2 = nova.filter(valida);
+                  if(JSON.stringify(nova2) !== JSON.stringify(antes)){ _escrever(nova2); atualizarBotao(); if(window.__reservaRerender) window.__reservaRerender(); }
+                });
+                return;
+              }
               const ids = lerLista().map(function(r){ return r.rid; }).filter(function(x){ return x; });
-              if(!ids.length) return;   // nada com código para verificar
+              if(!ids.length) return;
               sbC.rpc('reservas_estado', { p_ids: ids }).then(function(res){
-                if(!res || res.error || !res.data) return;   // função SQL ainda não criada → não mexe
+                if(!res || res.error || !res.data) return;
                 const srv = {};
                 res.data.forEach(function(row){ if(row && row.id) srv[String(row.id)] = row; });
                 const antes = lerLista();
@@ -4983,9 +5007,7 @@
                 antes.forEach(function(r){
                   if(!r.rid) return;                              // legado sem código → largar
                   const s = srv[String(r.rid)];
-                  if(!s) return;                                  // apagada no servidor → largar
-                  if(String(s.estado) === 'cancelada') return;    // cancelada → largar
-                  // atualiza com os valores ATUAIS do servidor (dia/hora/pessoas) — reflete alterações confirmadas
+                  if(!s || String(s.estado) === 'cancelada') return;   // apagada/cancelada → largar
                   nova.push(_norm({ rid:r.rid, rn:r.rn, rd:(s.data||r.rd), rh:(s.hora||r.rh), rp:(s.pessoas!=null?s.pessoas:r.rp) }));
                 });
                 if(JSON.stringify(nova) !== JSON.stringify(antes)){ _escrever(nova); atualizarBotao(); if(window.__reservaRerender) window.__reservaRerender(); }
@@ -4994,6 +5016,9 @@
           }
           window._sincronizarReservas = sincronizar;
           sincronizar();
+          // Voltar a sincronizar quando a app/aba volta a primeiro plano (essencial na app do ecrã principal, que não recarrega)
+          document.addEventListener('visibilitychange', function(){ if(!document.hidden) sincronizar(); });
+          window.addEventListener('focus', function(){ sincronizar(); });
         }catch(e){}
       })();
 
@@ -5773,6 +5798,7 @@
         html += '<button type="button" class="ag-btn" id="agEnviar">Pedir pré-reserva</button>';
         html += '<div id="agPagamento"></div>';
       }
+      html += '<button type="button" class="ag-minhas" id="agMinhas" style="width:100%; margin-top:6px; background:none; border:1px solid var(--linha); border-radius:10px; color:var(--castanho-suave); font-family:inherit; font-weight:600; padding:9px; font-size:.82rem; cursor:pointer;">🔑 Ver as minhas reservas (com o meu número)</button>';
       html += '<button type="button" class="ag-fechar" id="agFechar">Fechar</button>';
       card.innerHTML = html;
       ligar();
@@ -5799,6 +5825,11 @@
       const pe = document.getElementById('agPessoas'); if(pe) pe.onchange = function(){ estado.pessoas = Math.max(1, parseInt(pe.value,10)||1); estado.slotSel = null; render(); };
       const f = document.getElementById('agFechar'); if(f) f.onclick = function(){ ov.classList.remove('aberto'); };
       const env = document.getElementById('agEnviar'); if(env) env.onclick = enviar;
+      const am = document.getElementById('agMinhas'); if(am) am.onclick = function(){
+        const atual = (window._meuTelefoneGuardado && window._meuTelefoneGuardado()) || '+351 ';
+        const t = prompt('Escreve o teu número de telemóvel (o mesmo com que reservaste) para ver as tuas reservas:', atual);
+        if(t && t.trim() && window._definirMeuTelefone) window._definirMeuTelefone(t.trim());
+      };
     }
     async function enviar(){
       const a = cfg();
@@ -5849,6 +5880,7 @@
         _jaGravou = true;
         const _rid = (typeof data === 'string') ? data : ((data && data.id) || '');   // criar_reserva devolve o uuid da reserva
         try{ if(window._guardarMinhaReserva) window._guardarMinhaReserva({ rid: _rid, rn: nome, rd: estado.diaSel, rh: estado.slotSel, rp: pessoas }); }catch(e){}
+        try{ if(window._guardarMeuTelefone) window._guardarMeuTelefone(tel); }catch(e){}   // lembra o número, para recuperar as reservas em qualquer dispositivo
         return true;
       }
 
