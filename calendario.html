@@ -938,7 +938,7 @@
 
   function renderDia(iso){
     const d = new Date(iso + 'T00:00:00');
-    const rs = (porDia[iso] || []).slice().sort(function(a,b){ return (a.hora||'').localeCompare(b.hora||''); });
+    const rs = (porDia[iso] || []).filter(function(r){ return r.estado !== 'cancelada'; }).sort(function(a,b){ return (a.hora||'').localeCompare(b.hora||''); });
     const _wd = d.getDay();
     const _abrev = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'][_wd];
     const _fer = _feriado(iso) || _ferMunicipal(iso);

@@ -4967,6 +4967,28 @@
           } else {
             atualizarBotao();
           }
+
+          // Sincronizar com o servidor: largar reservas CANCELADAS/APAGADAS (e legado sem código)
+          function sincronizar(){
+            try{
+              if(typeof sbC === 'undefined' || !sbC) return;
+              const ids = lerLista().map(function(r){ return r.rid; }).filter(function(x){ return x; });
+              if(!ids.length) return;   // nada com código para verificar
+              sbC.rpc('reservas_ativas', { p_ids: ids }).then(function(res){
+                if(!res || res.error || !res.data) return;   // função SQL ainda não criada → não mexe
+                const vivos = {};
+                res.data.forEach(function(row){
+                  const id = (typeof row === 'string') ? row : (row && (row.id || row.reservas_ativas || Object.values(row)[0]));
+                  if(id) vivos[String(id)] = 1;
+                });
+                const antes = lerLista();
+                const filtrada = antes.filter(function(r){ return r.rid && vivos[String(r.rid)]; });   // ficam só as confirmadas ativas pelo servidor
+                if(filtrada.length !== antes.length){ _escrever(filtrada); atualizarBotao(); if(window.__reservaRerender) window.__reservaRerender(); }
+              });
+            }catch(e){}
+          }
+          window._sincronizarReservas = sincronizar;
+          sincronizar();
         }catch(e){}
       })();
 
