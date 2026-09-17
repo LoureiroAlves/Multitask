@@ -1699,13 +1699,14 @@
   }
   footer.tem-foto{ background:transparent; }
   footer .footer-texto{ position:relative; z-index:1; }
-  #localBloco{ padding:18px 16px 6px; background:var(--bege-claro); }
-  #localBloco .local-card{ max-width:520px; margin:0 auto; background:var(--branco); border:2px solid var(--dourado); border-radius:16px; overflow:hidden; box-shadow:0 6px 18px rgba(74,56,32,.16); }
-  #localBloco .local-tit{ font-family:var(--fonte-titulo); color:var(--castanho); font-weight:700; font-size:1.05rem; padding:14px 16px 2px; text-align:center; }
-  #localBloco .local-mor{ color:var(--castanho-suave); font-size:.88rem; text-align:center; padding:2px 16px 12px; }
-  #localBloco .local-mapa{ width:100%; height:220px; border:0; display:block; }
-  #localBloco .local-btn{ display:block; text-align:center; text-decoration:none; background:var(--dourado); color:#fff; font-weight:700; padding:13px; font-family:var(--fonte-titulo); }
-  #localBloco .local-btn:active{ opacity:.9; }
+  #localBloco{ padding:14px 16px 6px; }
+  #localBloco .local-card{ max-width:520px; margin:0 auto; display:flex; align-items:center; gap:13px; background:var(--branco); border:2px solid var(--dourado); border-radius:16px; padding:14px 16px; box-shadow:0 6px 18px rgba(74,56,32,.16); text-decoration:none; color:var(--castanho); }
+  #localBloco .local-card:active{ opacity:.92; }
+  #localBloco .local-ico{ font-size:1.7rem; line-height:1; flex-shrink:0; }
+  #localBloco .local-txt{ flex:1; min-width:0; display:flex; flex-direction:column; }
+  #localBloco .local-tit{ font-family:var(--fonte-titulo); color:var(--castanho); font-weight:700; font-size:1.02rem; }
+  #localBloco .local-mor{ color:var(--castanho-suave); font-size:.84rem; margin-top:2px; }
+  #localBloco .local-seta{ font-size:1.25rem; color:var(--dourado); flex-shrink:0; }
 
   /* ===== Bloco de publicidade (anúncio a outro negócio) ===== */
   .anuncio-box{ position:relative; margin:26px 14px 6px; }
@@ -4815,15 +4816,16 @@
         else if(L.link){ const m = String(L.link).match(/@(-?\d+\.\d+),(-?\d+\.\d+)/) || String(L.link).match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/) || String(L.link).match(/q=(-?\d+\.\d+),(-?\d+\.\d+)/); if(m) coords = m[1] + ',' + m[2]; }
         const alvo = coords || morada;
         if(!alvo){ bloco.style.display = 'none'; return; }
-        const emb = 'https://maps.google.com/maps?q=' + encodeURIComponent(alvo) + '&z=16&output=embed';
-        const dir = 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(alvo);
+        // Sem mapa embutido (não pesa a app): abre o Google Maps directamente. Se houver link do dono, usa-o; senão, direções para a morada.
+        const dir = (L.link && String(L.link).trim()) || ('https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(alvo));
         bloco.style.display = 'block';
-        bloco.innerHTML = '<div class="local-card">'
-          + '<div class="local-tit">📍 Onde estamos</div>'
-          + (morada ? ('<div class="local-mor">' + _e(morada) + '</div>') : '')
-          + '<iframe class="local-mapa" src="' + emb + '" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>'
-          + '<a class="local-btn" href="' + dir + '" target="_blank" rel="noopener">🧭 Como chegar</a>'
-          + '</div>';
+        bloco.innerHTML = '<a class="local-card" href="' + _e(dir) + '" target="_blank" rel="noopener">'
+          + '<span class="local-ico">🗺️</span>'
+          + '<span class="local-txt"><span class="local-tit">Como chegar</span>'
+          + (morada ? ('<span class="local-mor">' + _e(morada) + '</span>') : '<span class="local-mor">Abrir no Google Maps</span>')
+          + '</span>'
+          + '<span class="local-seta">🧭</span>'
+          + '</a>';
       })();
 
       // ===== Cliente gere a sua reserva — guardada no dispositivo, reabre sempre pelo botão fixo =====
