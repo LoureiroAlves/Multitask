@@ -1700,13 +1700,15 @@
   footer.tem-foto{ background:transparent; }
   footer .footer-texto{ position:relative; z-index:1; }
   #localBloco{ padding:14px 16px 6px; }
-  #localBloco .local-card{ max-width:520px; margin:0 auto; display:flex; align-items:center; gap:13px; background:var(--branco); border:2px solid var(--dourado); border-radius:16px; padding:14px 16px; box-shadow:0 6px 18px rgba(74,56,32,.16); text-decoration:none; color:var(--castanho); }
-  #localBloco .local-card:active{ opacity:.92; }
-  #localBloco .local-ico{ font-size:1.7rem; line-height:1; flex-shrink:0; }
+  #localBloco .local-card{ display:block; position:relative; max-width:520px; margin:0 auto; border:2px solid var(--dourado); border-radius:16px; overflow:hidden; box-shadow:0 6px 18px rgba(74,56,32,.16); text-decoration:none; color:#fff; }
+  #localBloco .local-card:active{ opacity:.95; }
+  #localBloco .local-mapart{ display:block; width:100%; }
+  #localBloco .local-mapart svg{ display:block; width:100%; height:auto; }
+  #localBloco .local-bar{ position:absolute; left:0; right:0; bottom:0; display:flex; align-items:center; gap:10px; padding:10px 14px; background:linear-gradient(to top, rgba(0,0,0,.62), rgba(0,0,0,.12) 75%, rgba(0,0,0,0)); }
   #localBloco .local-txt{ flex:1; min-width:0; display:flex; flex-direction:column; }
-  #localBloco .local-tit{ font-family:var(--fonte-titulo); color:var(--castanho); font-weight:700; font-size:1.02rem; }
-  #localBloco .local-mor{ color:var(--castanho-suave); font-size:.84rem; margin-top:2px; }
-  #localBloco .local-seta{ font-size:1.25rem; color:var(--dourado); flex-shrink:0; }
+  #localBloco .local-tit{ font-family:var(--fonte-titulo); font-weight:700; font-size:1rem; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,.55); }
+  #localBloco .local-mor{ font-size:.82rem; color:rgba(255,255,255,.92); text-shadow:0 1px 3px rgba(0,0,0,.55); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  #localBloco .local-go{ font-size:1.5rem; font-weight:700; color:#fff; flex-shrink:0; text-shadow:0 1px 3px rgba(0,0,0,.55); }
 
   /* ===== Bloco de publicidade (anúncio a outro negócio) ===== */
   .anuncio-box{ position:relative; margin:26px 14px 6px; }
@@ -4818,13 +4820,28 @@
         if(!alvo){ bloco.style.display = 'none'; return; }
         // Sem mapa embutido (não pesa a app): abre o Google Maps directamente. Se houver link do dono, usa-o; senão, direções para a morada.
         const dir = (L.link && String(L.link).trim()) || ('https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(alvo));
+        // Ilustração de mapa (SVG leve, não é o Google Maps) — ruas 2D + pin ao centro, sem bússola
+        const _mapArt = '<svg class="" viewBox="0 0 360 170" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">'
+          + '<rect width="360" height="170" fill="#e9e9dd"/>'
+          + '<path d="M244 -5 L365 -5 L365 66 L300 84 L250 44 Z" fill="#bcd9ea"/>'
+          + '<rect x="-5" y="-5" width="120" height="52" rx="6" fill="#d0e7c3"/>'
+          + '<rect x="34" y="112" width="92" height="63" rx="6" fill="#d0e7c3"/>'
+          + '<g stroke="#d7d2c1" stroke-width="13" stroke-linecap="round" fill="none">'
+          + '<path d="M-10 38 H370"/><path d="M-10 140 H370"/><path d="M80 -10 V180"/><path d="M210 -10 V180"/><path d="M300 -10 L150 180"/></g>'
+          + '<g stroke="#fcfcf7" stroke-width="8" stroke-linecap="round" fill="none">'
+          + '<path d="M-10 38 H370"/><path d="M-10 140 H370"/><path d="M80 -10 V180"/><path d="M210 -10 V180"/><path d="M300 -10 L150 180"/></g>'
+          + '<path d="M-10 95 H370" stroke="#eccf7f" stroke-width="15" stroke-linecap="round" fill="none"/>'
+          + '<path d="M-10 95 H370" stroke="#ffe6a1" stroke-width="10" stroke-linecap="round" fill="none"/>'
+          + '<g fill="#dedecf" opacity="0.7"><rect x="92" y="48" width="46" height="34" rx="3"/><rect x="150" y="48" width="46" height="34" rx="3"/><rect x="222" y="104" width="40" height="30" rx="3"/><rect x="272" y="104" width="40" height="30" rx="3"/><rect x="92" y="104" width="34" height="30" rx="3"/></g>'
+          + '<ellipse cx="180" cy="112" rx="11" ry="3.5" fill="rgba(0,0,0,0.16)"/>'
+          + '<path d="M180 52 C166 52 156 62 156 76 C156 94 180 110 180 110 C180 110 204 94 204 76 C204 62 194 52 180 52 Z" fill="#e2574c"/>'
+          + '<circle cx="180" cy="76" r="7" fill="#fff"/></svg>';
         bloco.style.display = 'block';
-        bloco.innerHTML = '<a class="local-card" href="' + _e(dir) + '" target="_blank" rel="noopener">'
-          + '<span class="local-ico">🗺️</span>'
-          + '<span class="local-txt"><span class="local-tit">Como chegar</span>'
+        bloco.innerHTML = '<a class="local-card" href="' + _e(dir) + '" target="_blank" rel="noopener" aria-label="Como chegar — abre o Google Maps">'
+          + '<span class="local-mapart">' + _mapArt + '</span>'
+          + '<span class="local-bar"><span class="local-txt"><span class="local-tit">Como chegar</span>'
           + (morada ? ('<span class="local-mor">' + _e(morada) + '</span>') : '<span class="local-mor">Abrir no Google Maps</span>')
-          + '</span>'
-          + '<span class="local-seta">🧭</span>'
+          + '</span><span class="local-go">›</span></span>'
           + '</a>';
       })();
 
