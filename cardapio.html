@@ -4880,6 +4880,9 @@
             const dataFmt = dd ? (dd.getDate()+' de '+_MESES[dd.getMonth()]) : rd;
             const resumo = dataFmt + (rh?(' às '+rh):'') + ' · ' + rp + ' pessoa(s)' + (rn?(' · '+rn):'');
             const baseMsg = 'a minha reserva em ' + casa + ' (' + resumo + ')';
+            // Link do calendário no dia da reserva — para o restaurante abrir e confirmar a alteração/cancelamento
+            let linkCal = '';
+            try{ if(_slug && _slug !== 'geral' && rd){ linkCal = '\n\n📅 Reserva no calendário: ' + location.origin + '/calendario.html?n=' + _slug + '&d=' + rd; } }catch(e){}
             const ov = document.createElement('div');
             ov.id = 'gerirOverlay';
             ov.style.cssText = 'position:fixed; inset:0; z-index:9000; background:rgba(0,0,0,.55); display:flex; align-items:center; justify-content:center; padding:16px;';
@@ -4906,7 +4909,7 @@
             const gf = document.getElementById('grFechar'); if(gf) gf.onclick = fechar;
             const grm = document.getElementById('grRemover'); if(grm) grm.onclick = function(){ if(confirm('Remover esta reserva do teu telemóvel? O restaurante continua com ela — isto só apaga o atalho aqui.')){ limpar(); fechar(); } };
             ov.addEventListener('click', function(e){ if(e.target === ov) fechar(); });
-            const gc = document.getElementById('grCancelar'); if(gc) gc.onclick = function(){ window.open('https://wa.me/'+tel+'?text='+encodeURIComponent('Olá! Quero CANCELAR '+baseMsg+'. Obrigado.'), '_blank'); };
+            const gc = document.getElementById('grCancelar'); if(gc) gc.onclick = function(){ window.open('https://wa.me/'+tel+'?text='+encodeURIComponent('Olá! Quero CANCELAR '+baseMsg+'. Obrigado.'+linkCal), '_blank'); };
             const gab = document.getElementById('grAlterarBtn'); if(gab) gab.onclick = function(){ const b=document.getElementById('grAlterarBox'); if(b) b.style.display = (b.style.display==='none'?'block':'none'); };
             const gea = document.getElementById('grEnviarAlt'); if(gea) gea.onclick = function(){
               const np = Math.max(1, parseInt((document.getElementById('grPessoas')||{}).value,10)||1);
@@ -4914,6 +4917,7 @@
               let msg = 'Olá! Quero ALTERAR '+baseMsg+' para: '+np+' pessoa(s)';
               if(nh) msg += ' e às '+nh;
               msg += '. Obrigado.';
+              msg += linkCal;
               window.open('https://wa.me/'+tel+'?text='+encodeURIComponent(msg), '_blank');
             };
           }
@@ -4934,12 +4938,11 @@
           }
           window._atualizarIconeReserva = atualizarBotao;
 
-          // Chegou pelo link do WhatsApp → guardar no dispositivo e abrir já (uma vez só)
+          // Chegou pelo link do WhatsApp → só guardar no dispositivo e destacar o ícone (NUNCA abre popup)
           const P = new URLSearchParams(location.search);
           if(P.get('rgerir') === '1'){
-            guardar({ rn:P.get('rn')||'', rd:P.get('rd')||'', rh:P.get('rh')||'', rp:P.get('rp')||'1' });
-            abrir(ler());
-            // Limpar os parâmetros do link para que um REFRESH não volte a gravar nem a reabrir o popup
+            guardar({ rn:P.get('rn')||'', rd:P.get('rd')||'', rh:P.get('rh')||'', rp:P.get('rp')||'1' });   // guardar() já destaca o ícone
+            // Limpar os parâmetros do link do URL
             try{ const u = new URL(location.href); ['rgerir','rn','rd','rh','rp'].forEach(function(k){ u.searchParams.delete(k); }); history.replaceState(null, '', u.pathname + u.search + u.hash); }catch(e){}
           } else {
             atualizarBotao();
