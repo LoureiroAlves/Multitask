@@ -1699,8 +1699,8 @@
   }
   footer.tem-foto{ background:transparent; }
   footer .footer-texto{ position:relative; z-index:1; }
-  #localBloco{ padding:18px 16px calc(96px + env(safe-area-inset-bottom)); background:var(--bege-claro); }
-  #localBloco .local-card{ max-width:520px; margin:0 auto; background:var(--branco); border:1px solid var(--linha); border-radius:16px; overflow:hidden; box-shadow:0 6px 18px rgba(74,56,32,.10); }
+  #localBloco{ padding:18px 16px 6px; background:var(--bege-claro); }
+  #localBloco .local-card{ max-width:520px; margin:0 auto; background:var(--branco); border:2px solid var(--dourado); border-radius:16px; overflow:hidden; box-shadow:0 6px 18px rgba(74,56,32,.16); }
   #localBloco .local-tit{ font-family:var(--fonte-titulo); color:var(--castanho); font-weight:700; font-size:1.05rem; padding:14px 16px 2px; text-align:center; }
   #localBloco .local-mor{ color:var(--castanho-suave); font-size:.88rem; text-align:center; padding:2px 16px 12px; }
   #localBloco .local-mapa{ width:100%; height:220px; border:0; display:block; }
@@ -1709,7 +1709,7 @@
 
   /* ===== Bloco de publicidade (anúncio a outro negócio) ===== */
   .anuncio-box{ position:relative; margin:26px 14px 6px; }
-  .anuncio-box .anuncio-img{ display:block; width:100%; height:auto; border-radius:16px; box-shadow:0 4px 16px rgba(0,0,0,.18); }
+  .anuncio-box .anuncio-img{ display:block; width:100%; height:auto; border-radius:16px; border:2px solid var(--dourado); box-shadow:0 4px 16px rgba(0,0,0,.18); }
   .anuncio-box .anuncio-tag{ position:absolute; top:8px; left:8px; z-index:2; font-size:.62rem; font-weight:700; letter-spacing:.4px; text-transform:uppercase; color:#fff; background:rgba(0,0,0,0.55); padding:3px 8px; border-radius:6px; -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px); pointer-events:none; }
   .anuncio-box.tem-link{ cursor:pointer; }
   .anuncio-box.tem-link .anuncio-img{ cursor:pointer; }
@@ -2498,6 +2498,8 @@
   </div>
 </div>
 
+<div id="localBloco" style="display:none;"></div>
+
 <section id="anuncioBox" class="anuncio-box" style="display:none;">
   <span class="anuncio-tag">Publicidade</span>
   <img id="anuncioImg" class="anuncio-img" alt="Publicidade">
@@ -2515,8 +2517,6 @@
   </div>
   <div class="footer-extras" id="footerExtras"></div>
 </footer>
-
-<div id="localBloco" style="display:none;"></div>
 
 <div class="info-fixa">
   <img id="infoFixaMascote" class="info-fixa-mascote" alt="" style="display:none;">
