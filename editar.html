@@ -2813,7 +2813,7 @@ amesadigital.pt</textarea>
     document.getElementById('redeFacebook').value = (config.redes && config.redes.facebook) || '';
     document.getElementById('redeWhatsapp').value = (config.redes && config.redes.whatsapp) || '';
     { const _lc = config.local || {}; const _lm = document.getElementById('locMorada'), _ll = document.getElementById('locLink');
-      if(_lm) _lm.value = _lc.morada || (config.rodape && config.rodape.linha3) || '';
+      if(_lm) _lm.value = _lc.morada || '';
       if(_ll) _ll.value = _lc.link || ''; }
     const fid = config.fidelidade || {};
     document.getElementById('fidAtivo').checked = !!fid.ativo;
