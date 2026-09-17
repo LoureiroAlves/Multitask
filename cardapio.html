@@ -5776,7 +5776,7 @@
       if(estado.diaSel && estado.slotSel){
         html += '<div class="ag-passo-tit">Os teus dados</div><div class="ag-form">';
         html += '<input type="text" id="agNome" placeholder="Nome">';
-        html += '<input type="tel" id="agTel" placeholder="Telemóvel">';
+        html += '<input type="tel" id="agTel" value="+351 " placeholder="+351 912 345 678">';
         html += '<textarea id="agObs" placeholder="Observações (opcional)"></textarea></div>';
         html += '<div class="ag-resumo" id="agResumo"></div>';
         html += '<button type="button" class="ag-btn" id="agEnviar">Pedir pré-reserva</button>';
@@ -5813,7 +5813,8 @@
       const obs = ((document.getElementById('agObs') || {}).value || '').trim();
       const menuTxt = (window.__reservaMenu || '').trim();   // menu de grupo trazido do carrinho
       const obsFull = (menuTxt ? ('Menu: ' + menuTxt) : '') + (obs ? ((menuTxt ? ' — ' : '') + obs) : '');
-      if(!nome || !tel){ alert('Preenche o nome e o telemóvel.'); return; }
+      if(!nome){ alert('Preenche o nome.'); return; }
+      if(tel.replace(/\D/g,'').length < 9){ alert('Preenche o número de telemóvel.'); return; }
       // Revalidar disponibilidade de mesa (aviso amigável; a gravação faz a verificação atómica final)
       if(a.mesas && a.mesas.length){
         await carregarOcupadas(estado.diaSel);
