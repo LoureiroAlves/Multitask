@@ -96,6 +96,30 @@
     </div>
 
     <div class="card">
+      <h2>Reservas e take away</h2>
+      <label>Capacidade para reservas <span class="op">(nº de lugares — opcional)</span></label>
+      <input id="capacidade" type="number" min="0" placeholder="Ex.: 40">
+
+      <label class="fs-chip" style="display:inline-flex; margin-top:14px; cursor:pointer;"><input type="checkbox" id="fazTakeaway"> 🛍️ Faz take away (encomendas por WhatsApp)</label>
+      <div id="takeawayBox" style="display:none; margin-top:10px; border-top:1px solid #ece3d0; padding-top:10px;">
+        <label>Horário da cozinha — 1º período <span class="op">(ex.: almoço)</span></label>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <input id="cozAbre1" type="time" value="12:00" style="flex:1;">
+          <span style="color:#9a8b6f; font-size:.9rem;">às</span>
+          <input id="cozFecha1" type="time" value="15:00" style="flex:1;">
+        </div>
+        <label>2º período <span class="op">(ex.: jantar — deixa vazio se não houver)</span></label>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <input id="cozAbre2" type="time" value="19:00" style="flex:1;">
+          <span style="color:#9a8b6f; font-size:.9rem;">às</span>
+          <input id="cozFecha2" type="time" value="21:00" style="flex:1;">
+        </div>
+        <label>Última encomenda <span class="op">(minutos antes do fecho)</span></label>
+        <input id="cozAntes" type="number" min="0" step="5" value="60" placeholder="60">
+      </div>
+    </div>
+
+    <div class="card">
       <h2>Sobre o restaurante</h2>
       <label>Tipo de cozinha <span class="op">(alimenta o filtro da montra)</span></label>
       <input id="tipo" type="text" placeholder="Ex.: Português, Pizzaria, Marisqueira…">
@@ -182,7 +206,7 @@
 
   var CAMPOS = [
     ['nome','Nome do restaurante'], ['subtitulo','Subtítulo'], ['nomeQR','Nome no QR'], ['slug','Endereço curto'],
-    ['email','Email'], ['whatsapp','WhatsApp'], ['whatsappReservas','WhatsApp reservas'], ['morada','Morada'], ['mapLink','Link do mapa'],
+    ['email','Email'], ['whatsapp','WhatsApp'], ['whatsappReservas','WhatsApp reservas'], ['morada','Morada'], ['mapLink','Link do mapa'], ['capacidade','Capacidade'],
     ['tipo','Tipo de cozinha'], ['horario','Horário'], ['feriasDe','Férias de'], ['feriasA','Férias até'], ['instagram','Instagram'], ['facebook','Facebook'],
     ['estilo','Cores/estilo'], ['notas','Notas'], ['modeloPreferido','Estilo preferido'], ['modeloId','Modelo (id interno)']
   ];
@@ -191,7 +215,8 @@
   function _get(id){ var e=document.getElementById(id); return e ? e.value.trim() : ''; }
   function _esc(s){ return String(s||'').replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c];}); }
 
-  function recolher(){ var o={}; CAMPOS.forEach(function(c){ var v=_get(c[0]); if(v) o[c[0]]=v; }); var _fs=[]; [1,2,3,4,5,6,0].forEach(function(w){ var c=document.getElementById('fs'+w); if(c&&c.checked) _fs.push(w); }); if(_fs.length) o.fechoSemanal=_fs.join(','); if(fotosURLs.length) o.fotos = fotosURLs.slice(); var b={}; ['cabecalho','abertura','montra'].forEach(function(k){ if(brand[k]) b[k]=brand[k]; }); if(Object.keys(b).length) o.brand = b; return o; }
+  function recolher(){ var o={}; CAMPOS.forEach(function(c){ var v=_get(c[0]); if(v) o[c[0]]=v; }); var _fs=[]; [1,2,3,4,5,6,0].forEach(function(w){ var c=document.getElementById('fs'+w); if(c&&c.checked) _fs.push(w); }); if(_fs.length) o.fechoSemanal=_fs.join(','); var _ft=document.getElementById('fazTakeaway'); if(_ft&&_ft.checked){ o.fazTakeaway=true; o.cozAbre1=_get('cozAbre1'); o.cozFecha1=_get('cozFecha1'); o.cozAbre2=_get('cozAbre2'); o.cozFecha2=_get('cozFecha2'); o.cozAntes=_get('cozAntes'); } if(fotosURLs.length) o.fotos = fotosURLs.slice(); var b={}; ['cabecalho','abertura','montra'].forEach(function(k){ if(brand[k]) b[k]=brand[k]; }); if(Object.keys(b).length) o.brand = b; return o; }
+  (function(){ var ft=document.getElementById('fazTakeaway'); if(ft){ ft.addEventListener('change', function(){ var bx=document.getElementById('takeawayBox'); if(bx) bx.style.display = ft.checked ? 'block' : 'none'; }); } })();
 
   // Pré-visualização de estilos — maqueta própria (muda de estilo e acompanha o que se escreve no formulário).
   (function(){
