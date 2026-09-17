@@ -107,8 +107,8 @@
   .pill.confirmada{ background:#e2f4e9; color:#1e6b3c; }
   .pill.cancelada{ background:#fbe7e4; color:var(--vermelho); }
   /* Separadores Calendário / Painel */
-  .tabs{ display:flex; gap:8px; background:#efe4cf; padding:5px; border-radius:14px; margin-bottom:16px; }
-  .tab{ flex:1; padding:10px; border:none; background:transparent; border-radius:10px; font-weight:800; cursor:pointer; color:#9a7f4f; font-size:.9rem; transition:.15s; }
+  .tabs{ display:grid; grid-template-columns:1fr 1fr; gap:6px; background:#efe4cf; padding:5px; border-radius:14px; margin-bottom:16px; }
+  .tab{ white-space:nowrap; padding:12px 10px; border:none; background:transparent; border-radius:10px; font-weight:800; cursor:pointer; color:#9a7f4f; font-size:.9rem; transition:.15s; }
   .tab.ativo{ background:#fff; color:var(--castanho); box-shadow:0 2px 8px rgba(74,56,32,.12); }
   /* Painel (dashboard) */
   .kpis{ display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-bottom:18px; }
@@ -226,8 +226,8 @@
     <div class="tabs">
       <button id="tabCal" class="tab ativo" type="button">📅 Calendário</button>
       <button id="tabDash" class="tab" type="button">📊 Painel</button>
-      <button id="tabDef" class="tab" type="button">⚙️ Definições</button>
       <button id="tabEnc" class="tab" type="button">🛍️ Encomendas</button>
+      <button id="tabDef" class="tab" type="button">⚙️ Definições</button>
     </div>
     <div id="vistaCal">
       <div class="mes-bar">
