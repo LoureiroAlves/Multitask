@@ -1712,9 +1712,15 @@ amesadigital.pt</textarea>
         </label>
         <p style="margin:4px 0 8px; font-size:0.82rem; color:var(--castanho-suave);">O cliente escolhe a que horas levanta. A hora fica limitada ao horário da cozinha, e as encomendas fecham um pouco antes do fecho.</p>
         <div id="cartLevBox">
+          <div style="font-size:.8rem; font-weight:600; color:var(--castanho); margin-bottom:4px;">1º período (ex.: almoço)</div>
           <div style="display:flex; gap:12px; flex-wrap:wrap;">
-            <div><label for="cartAbre" style="font-size:.82rem; display:block;">Cozinha abre</label><input type="time" id="cartAbre" value="12:00" style="padding:9px 10px; border:1.5px solid var(--linha); border-radius:9px; font-family:inherit;"></div>
-            <div><label for="cartFecha" style="font-size:.82rem; display:block;">Cozinha fecha</label><input type="time" id="cartFecha" value="21:00" style="padding:9px 10px; border:1.5px solid var(--linha); border-radius:9px; font-family:inherit;"></div>
+            <div><label for="cartAbre" style="font-size:.82rem; display:block;">Abre</label><input type="time" id="cartAbre" value="12:00" style="padding:9px 10px; border:1.5px solid var(--linha); border-radius:9px; font-family:inherit;"></div>
+            <div><label for="cartFecha" style="font-size:.82rem; display:block;">Fecha</label><input type="time" id="cartFecha" value="15:00" style="padding:9px 10px; border:1.5px solid var(--linha); border-radius:9px; font-family:inherit;"></div>
+          </div>
+          <div style="font-size:.8rem; font-weight:600; color:var(--castanho); margin:12px 0 4px;">2º período (ex.: jantar) <span style="font-weight:400; color:var(--castanho-suave);">— deixa vazio se só houver um</span></div>
+          <div style="display:flex; gap:12px; flex-wrap:wrap;">
+            <div><label for="cartAbre2" style="font-size:.82rem; display:block;">Abre</label><input type="time" id="cartAbre2" value="19:00" style="padding:9px 10px; border:1.5px solid var(--linha); border-radius:9px; font-family:inherit;"></div>
+            <div><label for="cartFecha2" style="font-size:.82rem; display:block;">Fecha</label><input type="time" id="cartFecha2" value="21:00" style="padding:9px 10px; border:1.5px solid var(--linha); border-radius:9px; font-family:inherit;"></div>
           </div>
           <label for="cartLevAntes" style="font-size:.82rem; display:block; margin-top:10px;">Última encomenda: minutos antes do fecho</label>
           <input type="number" id="cartLevAntes" min="0" step="5" value="60" style="width:120px; padding:9px 10px; border:1.5px solid var(--linha); border-radius:9px; font-family:inherit;">
@@ -2780,6 +2786,8 @@ amesadigital.pt</textarea>
       const _cle = document.getElementById('cartLevAtivo'); if(_cle) _cle.checked = _c.levantamento !== false;
       const _cab = document.getElementById('cartAbre'); if(_cab && _c.horaAbre) _cab.value = _c.horaAbre;
       const _cfe = document.getElementById('cartFecha'); if(_cfe && _c.horaFecha) _cfe.value = _c.horaFecha;
+      const _cab2 = document.getElementById('cartAbre2'); if(_cab2) _cab2.value = _c.horaAbre2 || '';
+      const _cfe2 = document.getElementById('cartFecha2'); if(_cfe2) _cfe2.value = _c.horaFecha2 || '';
       const _cla = document.getElementById('cartLevAntes'); if(_cla) _cla.value = (_c.antecedenciaLev != null ? _c.antecedenciaLev : 60); }
     // Promoção na montra
     _promoCarregar();   // promoção base + promoções por dia
@@ -3835,6 +3843,8 @@ amesadigital.pt</textarea>
           levantamento: ((document.getElementById('cartLevAtivo') || {}).checked !== false),
           horaAbre: ((document.getElementById('cartAbre') || {}).value || '').trim(),
           horaFecha: ((document.getElementById('cartFecha') || {}).value || '').trim(),
+          horaAbre2: ((document.getElementById('cartAbre2') || {}).value || '').trim(),
+          horaFecha2: ((document.getElementById('cartFecha2') || {}).value || '').trim(),
           antecedenciaLev: (parseInt((document.getElementById('cartLevAntes') || {}).value, 10) || 60) }; }
       // Promoção na montra (base + por dia)
       _promoGuardar();
