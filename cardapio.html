@@ -235,6 +235,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Menu">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>Cardápio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -5185,6 +5186,16 @@
 
       // Agenda / Reservas
       window.__nomeRestaurante = (config.header && config.header.titulo) || '';
+      // Nome do restaurante = título da página + nome do atalho no ecrã principal (iOS)
+      try{
+        const _nomeApp = (window.__nomeRestaurante || '').trim();
+        if(_nomeApp){
+          document.title = _nomeApp;
+          let _mt = document.querySelector('meta[name="apple-mobile-web-app-title"]');
+          if(!_mt){ _mt = document.createElement('meta'); _mt.setAttribute('name','apple-mobile-web-app-title'); document.head.appendChild(_mt); }
+          _mt.setAttribute('content', _nomeApp);
+        }
+      }catch(e){}
       window._agenda = (config.agenda && config.agenda.ativo) ? config.agenda : null;
       const agb = document.getElementById('linkAgenda');
       if(agb) agb.style.display = (window._agenda && config.mostrarAgendaIcon !== false) ? 'flex' : 'none';
