@@ -693,6 +693,7 @@
     if(error) return error;
     const cfg = (data && data.config) || {};
     cfg.agenda = ag;
+    cfg.mostrarAgendaIcon = !!ag.ativo;   // o ícone das reservas segue o "Ativar reservas"
     const up = await sb.from('negocios').update({ config: cfg }).eq('id', negocio.id);
     if(up.error) return up.error;
     negocio.config = cfg;

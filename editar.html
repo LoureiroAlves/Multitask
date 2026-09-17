@@ -1466,10 +1466,11 @@ amesadigital.pt</textarea>
         <option value="festa">Festa (colorida)</option>
       </select>
       <div class="subtitulo" style="margin-top:4px;">A moldura leva o nome do negócio e a rede social. Escolhe o estilo que combina.</div>
-      <div class="lembrar" style="margin-top:8px;">
+      <div class="lembrar" style="margin-top:8px; display:none;">
         <input type="checkbox" id="mostrarAgendaIcon" checked>
         <label for="mostrarAgendaIcon" style="margin:0; font-weight:600; color:var(--castanho); display:inline;">📅 Agenda (ícone de reservas)</label>
       </div>
+      <div class="subtitulo" style="margin-top:8px;">📅 O ícone das reservas liga/desliga sozinho com o "Ativar reservas" no Calendário → Definições.</div>
       <div class="lembrar" style="margin-top:8px;">
         <input type="checkbox" id="mostrarRedes" checked>
         <label for="mostrarRedes" style="margin:0; font-weight:600; color:var(--castanho); display:inline;">📱 Redes sociais (Instagram/Facebook)</label>
@@ -4127,6 +4128,7 @@ amesadigital.pt</textarea>
           if(fc.tipo !== undefined) config.tipo = fc.tipo;            // filtro de cozinha na montra
           if(fc.editorOff !== undefined) config.editorOff = fc.editorOff; // secções desligadas ao dono
           if(fc.agenda !== undefined) config.agenda = fc.agenda;         // reservas geridas no Calendário
+          if(fc.mostrarAgendaIcon !== undefined) config.mostrarAgendaIcon = fc.mostrarAgendaIcon; // ícone das reservas segue o Calendário
           if(fc.promoDatas !== undefined) config.promoDatas = fc.promoDatas; // promoções por data (Calendário)
         }
         // Guarda 1 cópia do estado ANTERIOR (config + menu já publicados) para o "Repor versão anterior".
