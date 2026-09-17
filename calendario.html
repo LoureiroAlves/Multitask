@@ -99,6 +99,7 @@
   .r-acoes button, .r-acoes a button{ border:1px solid var(--linha); background:#fff; border-radius:9px; padding:8px 12px; cursor:pointer; font-size:.82rem; font-weight:700; }
   .r-acoes button.ok{ color:#fff; background:var(--verde); border-color:var(--verde); }
   .r-acoes button.no{ color:var(--vermelho); border-color:#e8c4bf; }
+  .r-acoes button.wa{ color:#fff; background:#25d366; border-color:#25d366; }
   .r-acoes button.edit{ color:var(--dourado-escuro); border-color:#e7d8b4; }
   .r-acoes button.del{ color:#8a7a5c; border-color:var(--linha); }
   .pill{ font-size:.68rem; font-weight:800; padding:4px 11px; border-radius:30px; text-transform:uppercase; letter-spacing:.4px; }
@@ -257,6 +258,7 @@
       <label>Telefone</label><input type="text" id="mdTel" inputmode="tel">
       <label>Menu / notas</label><textarea id="mdObs" rows="2"></textarea>
       <label>Estado</label><select id="mdEstado"><option value="confirmada">Confirmada</option><option value="pendente">Pendente</option><option value="cancelada">Cancelada</option></select>
+      <button id="mdAvisar" type="button" style="width:100%; margin-top:4px; background:#25d366; color:#fff; border:none; border-radius:9px; padding:11px; font-weight:800; cursor:pointer;">📲 Avisar cliente por WhatsApp</button>
       <div class="acts"><button id="mdApagar" type="button" style="color:var(--vermelho); border-color:#e8c4bf;">🗑 Apagar</button><button class="guardar" id="mdGuardar" type="button">Guardar</button></div>
       <div class="msg" id="mdMsg" style="margin-top:8px;"></div>
     </div>
@@ -332,6 +334,7 @@
   $('mdFechar').onclick = fecharModal;
   $('mdGuardar').onclick = guardarModal;
   $('mdApagar').onclick = apagarModal;
+  $('mdAvisar').onclick = function(){ const r = reservas.find(function(x){ return String(x.id)===String(_mdId); }); _avisarCliente(r); };
   $('modalEdit').onclick = (e) => { if(e.target === $('modalEdit')) fecharModal(); };
   $('apFechar').onclick = fecharAprovar;
   $('apVer').onclick = fecharAprovar;
@@ -919,6 +922,7 @@
       let acoes = '';
       if(r.estado!=='confirmada') acoes += '<button class="ok" data-a="confirmar" data-id="'+r.id+'">✔ Confirmar</button>';
       if(r.estado!=='cancelada') acoes += '<button class="no" data-a="cancelar" data-id="'+r.id+'">✕ Recusar</button>';
+      acoes += '<button class="wa" data-a="avisar" data-id="'+r.id+'">📲 Avisar cliente</button>';
       acoes += '<a href="tel:'+esc(r.telefone||'')+'"><button>📞 Ligar</button></a>';
       acoes += '<button class="edit" data-a="editar" data-id="'+r.id+'">✏️ Editar</button>';
       acoes += '<button class="del" data-a="apagar" data-id="'+r.id+'">🗑 Apagar</button>';
@@ -1017,14 +1021,25 @@
     let msg;
     if(tipo==='confirmar'){
       msg = 'Olá' + (nome ? ' '+nome : '') + '! A sua reserva em ' + casa + ' para ' + quando + ' (' + pessoas + ') está confirmada. Até já! 🍽️';
+    } else if(tipo==='pendente'){
+      msg = 'Olá' + (nome ? ' '+nome : '') + '! Recebemos o seu pedido de reserva em ' + casa + ' para ' + quando + ' (' + pessoas + '). Confirmamos em breve. Obrigado!';
     } else {
       msg = 'Olá' + (nome ? ' '+nome : '') + '. Lamentamos, mas não conseguimos confirmar a sua reserva em ' + casa + ' para ' + quando + '. Contacte-nos para encontrarmos uma alternativa.';
     }
     return 'https://wa.me/' + tel + '?text=' + encodeURIComponent(msg);
   }
+  // Avisar o cliente por WhatsApp a QUALQUER momento (mensagem conforme o estado atual da reserva)
+  function _avisarCliente(r){
+    if(!r){ return; }
+    const tipo = (r.estado==='confirmada') ? 'confirmar' : (r.estado==='cancelada' ? 'recusar' : 'pendente');
+    const url = _waUrl(r, tipo);
+    if(url){ window.open(url, '_blank'); }
+    else { alert('Esta reserva não tem número de telefone para avisar o cliente.'); }
+  }
 
   async function accao(id, a){
     const r = reservas.find(function(x){ return String(x.id)===String(id); });
+    if(a==='avisar'){ _avisarCliente(r); return; }
     if(a==='editar'){ abrirEdicao(id); return; }
     if(a==='apagar'){
       if(!confirm('Apagar esta reserva definitivamente? Esta ação não pode ser anulada.')) return;
