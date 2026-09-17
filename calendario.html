@@ -287,6 +287,13 @@
   const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
   const SLUG = ((new URLSearchParams(location.search)).get('n') || '').toLowerCase().replace(/[^a-z0-9]/g,'');
   const DIA_PARAM = (((new URLSearchParams(location.search)).get('d') || '').match(/^\d{4}-\d{2}-\d{2}$/) || [''])[0];
+  // Pedido do cliente vindo por link (alterar/cancelar uma reserva pelo código)
+  const _QS = new URLSearchParams(location.search);
+  const RID_PARAM  = (_QS.get('rid') || '').trim();
+  const ALT_PARAM  = _QS.get('alt') === '1';
+  const AP_PARAM   = parseInt(_QS.get('ap'), 10) || 0;
+  const AH_PARAM   = (_QS.get('ah') || '').trim();
+  const CANC_PARAM = _QS.get('canc') === '1';
   const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
   const $ = id => document.getElementById(id);
   let negocio = null, reservas = [], porDia = {};
@@ -378,6 +385,29 @@
 
   // Ao abrir o calendário, salta logo para o dia da pré-reserva a aguardar e mostra um pop-up
   function _aprovacaoInicial(){
+    // Pedido do cliente por link: abrir a reserva pelo CÓDIGO, já preenchida com a alteração/cancelamento
+    if(RID_PARAM){
+      const alvoR = reservas.find(function(x){ return String(x.id) === String(RID_PARAM); });
+      if(alvoR){
+        const dd = new Date(alvoR.data+'T00:00:00');
+        vAno = dd.getFullYear(); vMes = dd.getMonth(); diaSel = alvoR.data;
+        mostrarVista('cal'); renderCal(); renderDia(alvoR.data);
+        abrirModalEdicao(alvoR.id);
+        if(ALT_PARAM){
+          if(AP_PARAM) $('mdPessoas').value = AP_PARAM;
+          if(AH_PARAM) $('mdHora').value = AH_PARAM;
+          $('mdEstado').value = 'confirmada';
+          $('mdMsg').textContent = '✏️ O cliente pediu esta alteração: ' + (AP_PARAM || alvoR.pessoas) + ' pessoa(s)' + (AH_PARAM ? (' às ' + AH_PARAM) : '') + '. Revê e clica Guardar para confirmar.';
+          $('mdMsg').className = 'msg';
+        } else if(CANC_PARAM){
+          $('mdEstado').value = 'cancelada';
+          $('mdMsg').textContent = '❌ O cliente pediu o CANCELAMENTO desta reserva. Confirma com Guardar (ou Apagar).';
+          $('mdMsg').className = 'msg';
+        }
+        return;
+      }
+      // Não encontrada pelo código (apagada?) — segue o comportamento normal por dia
+    }
     let alvo = null;
     if(DIA_PARAM){
       const doDia = reservas.filter(function(r){ return r.data === DIA_PARAM && r.estado === 'pendente'; }).sort(_cmpR);

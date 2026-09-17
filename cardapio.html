@@ -4905,9 +4905,12 @@
             const dataFmt = dd ? (dd.getDate()+' de '+_MESES[dd.getMonth()]) : rd;
             const resumo = dataFmt + (rh?(' às '+rh):'') + ' · ' + rp + ' pessoa(s)' + (rn?(' · '+rn):'');
             const baseMsg = 'a minha reserva em ' + casa + ' (' + resumo + ')';
-            // Link do calendário no dia da reserva (com o código) — para o restaurante abrir e confirmar de volta
-            let linkCal = '';
-            try{ if(_slug && _slug !== 'geral' && rd){ linkCal = '\n\n📅 Reserva no calendário: ' + location.origin + '/calendario.html?n=' + _slug + '&d=' + rd + (r.rid ? ('&rid=' + encodeURIComponent(r.rid)) : ''); } }catch(e){}
+            // Link do calendário para o restaurante abrir a reserva (pelo código) já pronta a confirmar
+            const _temCal = !!(_slug && _slug !== 'geral' && rd);
+            function _linkCal(extra){
+              if(!_temCal) return '';
+              return '\n\n📅 Abrir no calendário: ' + location.origin + '/calendario.html?n=' + _slug + '&d=' + rd + (r.rid ? ('&rid=' + encodeURIComponent(r.rid)) : '') + (extra || '');
+            }
             const ov = document.createElement('div');
             ov.id = 'gerirOverlay';
             ov.style.cssText = 'position:fixed; inset:0; z-index:9000; background:rgba(0,0,0,.55); display:flex; align-items:center; justify-content:center; padding:16px;';
@@ -4934,7 +4937,7 @@
             const gf = document.getElementById('grFechar'); if(gf) gf.onclick = fechar;
             const grm = document.getElementById('grRemover'); if(grm) grm.onclick = function(){ if(confirm('Remover esta reserva do teu telemóvel? O restaurante continua com ela — isto só apaga o atalho aqui.')){ remover(r); fechar(); } };
             ov.addEventListener('click', function(e){ if(e.target === ov) fechar(); });
-            const gc = document.getElementById('grCancelar'); if(gc) gc.onclick = function(){ window.open('https://wa.me/'+tel+'?text='+encodeURIComponent('Olá! Quero CANCELAR '+baseMsg+'. Obrigado.'+linkCal), '_blank'); };
+            const gc = document.getElementById('grCancelar'); if(gc) gc.onclick = function(){ window.open('https://wa.me/'+tel+'?text='+encodeURIComponent('Olá! Quero CANCELAR '+baseMsg+'. Obrigado.'+_linkCal('&canc=1')), '_blank'); };
             const gab = document.getElementById('grAlterarBtn'); if(gab) gab.onclick = function(){ const b=document.getElementById('grAlterarBox'); if(b) b.style.display = (b.style.display==='none'?'block':'none'); };
             const gea = document.getElementById('grEnviarAlt'); if(gea) gea.onclick = function(){
               const np = Math.max(1, parseInt((document.getElementById('grPessoas')||{}).value,10)||1);
@@ -4942,7 +4945,7 @@
               let msg = 'Olá! Quero ALTERAR '+baseMsg+' para: '+np+' pessoa(s)';
               if(nh) msg += ' e às '+nh;
               msg += '. Obrigado.';
-              msg += linkCal;
+              msg += _linkCal('&alt=1&ap=' + np + (nh ? ('&ah=' + encodeURIComponent(nh)) : ''));
               window.open('https://wa.me/'+tel+'?text='+encodeURIComponent(msg), '_blank');
             };
           }
