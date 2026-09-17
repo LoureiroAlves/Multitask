@@ -8,37 +8,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Pacifico&family=Playfair+Display:wght@600;700&family=Poppins:wght@600&display=swap" rel="stylesheet">
-<script>
-/* ÀMesa — Catálogo de adereços (cultura portuguesa, silhueta de uma só cor, segue o tema). Embutido. */
-(function(){
-  var A = {
-    galo:'<path d="M11 20.5c-3 0-5.2-1.7-5.2-4.4 0-1.5.7-2.8 1.9-3.6-1.3-2.5-.5-5 1.4-5.8.2-1.3 1.5-1.5 2.1-.4.8-.2 1.5.4 1.5 1.3 1.9.6 3 2.3 2.8 4.4l2.3-1.3-1 2.3 2.5-.6-1.7 1.9 1.9.4-2.3 1c.2 2.7-2 4.4-5.7 4.4z"/><path d="M15 7c.2-1 1.1-.9 1.1.1.4-.9 1.3-.6 1 .3z"/><path d="M10.6 20.4h.9v2.3h-.9zM13 20.4h.9v2.3H13z"/>',
-    coracaoViana:'<path d="M12 21C5.5 15 3.2 11 3.2 7.6 3.2 4.7 7 3.3 9.4 5.7c1 1 1.7 2 2.6 3.2.9-1.2 1.6-2.2 2.6-3.2C19.6 3.3 23.4 4.7 20.8 7.6 20.8 11 18.5 15 12 21Z"/><path d="M12 4.6c-.5-1 .5-2.2 1.4-2.2-.6 1 .2 1.4.2 2.2z"/>',
-    azulejo:'<path d="M3 3h18v18H3V3Zm2 2v14h14V5H5Z"/><circle cx="12" cy="8.4" r="1.7"/><circle cx="12" cy="15.6" r="1.7"/><circle cx="8.4" cy="12" r="1.7"/><circle cx="15.6" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.4"/>',
-    andorinha:'<path d="M12 8c-2.2 0-4.3 1.1-6.2 3.1C3.9 13 2.2 13.3 1 13.2c1.6 1 3.6 1 5.4.1-.5 1.1-.3 2.4.3 3.4.4-1.5 1.5-2.7 3-3.3l2.3 2.2 2.3-2.2c1.5.6 2.6 1.8 3 3.3.6-1 .8-2.3.3-3.4 1.8.9 3.8.9 5.4-.1-1.2.1-2.9-.2-4.8-2.1C16.3 9.1 14.2 8 12 8Z"/><path d="M11 12.5h2l1 5.5-2-1.4-2 1.4z"/>',
-    cravo:'<path d="M12 11.6c-2.6 0-4.6-1.4-4.6-3.3 0-1.1.9-1.8 1.8-1.4.2-1.3 1.5-1.3 1.7 0 .3-1.1 1.8-.9 1.8.3.9-.9 2.2-.4 1.9.8 1 0 1.6 1 1.6 1.9 0 1.9-2 3-3.9 3z"/><path d="M11.6 11.6h.8v9h-.8z"/><path d="M12 16c-1.5-.4-2.9.4-3.3 1.9 1.5.2 2.9-.6 3.3-1.9z"/>',
-    sardinha:'<path d="M2 12c4-4.5 12-4.5 16.2 0C14 16.5 6 16.5 2 12Zm4.2-1.2a1 1 0 1 0 .01 0Z"/><path d="M18 12l4.3-3.1v6.2z"/>',
-    caravela:'<path d="M3 16.5h18l-2.2 3.2H5.2z"/><path d="M11.6 4h.8v12.5h-.8z"/><path d="M12 5c3 0 5.2 1 6.4 3H12zM12 9.2c3 0 5.2 1 6.4 3H12zM12 5c-3 0-5.2 1-6.4 3H12zM12 9.2c-3 0-5.2 1-6.4 3H12z"/><path d="M12.4 3h3l-1 1 1 1h-3z"/>',
-    barcoRabelo:'<path d="M3 15.2c.4 2.6 4.2 3.6 9 3.6s8.6-1 9-3.6c-2 .8-5 1.2-9 1.2s-7-.4-9-1.2Z"/><path d="M2 12l3 1 .3 2.4L2 14z"/><path d="M11.6 4h.8v11h-.8z"/><rect x="6.5" y="5" width="9" height="6"/><rect x="8" y="12.4" width="2" height="2.4" rx=".5"/><rect x="11" y="12.4" width="2" height="2.4" rx=".5"/><rect x="14" y="12.4" width="2" height="2.4" rx=".5"/>',
-    farol:'<path d="M9.2 20l1-8.5h3.6l1 8.5z"/><rect x="9" y="9.6" width="6" height="2"/><path d="M10.2 9.6h3.6l-.7-2.6h-2.2z"/><rect x="10.8" y="4.8" width="2.4" height="2"/><rect x="8" y="20" width="8" height="1.8" rx=".4"/>',
-    ancora:'<path d="M12 2.2a2.3 2.3 0 1 0 .01 0Zm0 1.3a1 1 0 1 1 0 2 1 1 0 0 1 0-2Z"/><rect x="11.2" y="5.4" width="1.6" height="13.2"/><rect x="7.8" y="7.8" width="8.4" height="1.6" rx=".8"/><path d="M12 18.8c-3.2 0-5.4-2.1-5.9-5.2l1.9.7C8.6 16.2 10 17.2 12 17.2s3.4-1 4-2.9l1.9-.7c-.5 3.1-2.7 5.2-5.9 5.2z"/>',
-    manjerico:'<path d="M8.4 15h7.2l-1 5.2h-5.2z"/><path d="M12 5.8c3.2 0 6 2 6 4.8 0 2.1-2.9 4.2-6 4.2s-6-2.1-6-4.2c0-2.8 2.8-4.8 6-4.8Z"/><rect x="11.6" y="3" width=".8" height="4"/><path d="M12.4 3h3l-1 1 1 1h-3z"/>',
-    balao:'<path d="M12 3c4 0 6.2 3 6.2 6.2 0 3.2-3.2 6.2-6.2 8-3-1.8-6.2-4.8-6.2-8C5.8 6 8 3 12 3Z"/><path d="M10.4 17.2h3.2l-.5 3.1h-2.2z"/>',
-    pastelNata:'<path d="M5 12h14l-1.5 8h-11z"/><ellipse cx="12" cy="11.8" rx="7.2" ry="2.5"/>',
-    uvas:'<circle cx="12" cy="8" r="2.1"/><circle cx="9" cy="11.4" r="2.1"/><circle cx="15" cy="11.4" r="2.1"/><circle cx="12" cy="14.4" r="2.1"/><circle cx="9.6" cy="17.4" r="2.1"/><circle cx="14.4" cy="17.4" r="2.1"/><path d="M12 6.4c0-2 1.1-3.1 3.1-3.1v1.4c-1.2 0-1.7.6-1.7 1.7z"/>',
-    bacalhau:'<path d="M2 12c5-3.6 11-3.6 15-1.4l3.2-2.2v9.2L17 14.4c-4 2.2-10 2.2-15-2.4Zm4.2-1.1a.9.9 0 1 0 .01 0Z"/>',
-    chavena:'<path d="M5 9h10.5v4A3.5 3.5 0 0 1 12 16.5H8.5A3.5 3.5 0 0 1 5 13z"/><path d="M15.5 9.8H17a2.4 2.4 0 0 1 0 4.8h-1.5v-1.5H17a.9.9 0 0 0 0-1.8h-1.5z"/><rect x="4" y="18" width="14" height="1.8" rx=".9"/>',
-    cataplana:'<path d="M4 12a8 5.2 0 0 1 16 0Z"/><path d="M4.4 12.6h15.2a8 4 0 0 1-15.2 0z"/><circle cx="12" cy="6.6" r="1.1"/><rect x="2.2" y="11.1" width="2.4" height="1.6" rx=".8"/><rect x="19.4" y="11.1" width="2.4" height="1.6" rx=".8"/>',
-    eletrico:'<path d="M5.5 7A1.5 1.5 0 0 0 4 8.5V17h16V8.5A1.5 1.5 0 0 0 18.5 7ZM6 9h4v3H6zm5 0h3v3h-3zm4 0h3v3h-3z"/><circle cx="8" cy="18.4" r="1.4"/><circle cx="16" cy="18.4" r="1.4"/><path d="M11.6 7V3h.8v4z"/><rect x="9" y="2.4" width="6" height=".9"/>',
-    torreBelem:'<path d="M7 21V9.5h10V21ZM11 21v-3.4a1 1 0 0 1 2 0V21Z"/><path d="M7 9.5V7.6h1.4v1H10v-1h1.4v1h1.4v-1h1.4v1h1.4v-1H17v1.9z"/><path d="M14 9.5V6h3v3.5z"/><path d="M13.8 6V4.8h3.4V6z"/>',
-    ponte:'<rect x="5" y="5.5" width="1.6" height="13"/><rect x="17.4" y="5.5" width="1.6" height="13"/><rect x="3" y="16.5" width="18" height="1.6"/><path d="M5 6.5c4 6.5 10 6.5 14 0v1.6C15 14 9 14 5 8.1Z"/>',
-    guitarra:'<path d="M12 22c-3.6 0-5.6-2.6-5.6-5.6 0-3 2-5.2 5.6-5.2s5.6 2.2 5.6 5.2c0 3-2 5.6-5.6 5.6Zm0-7.4a1.6 1.6 0 1 0 .01 0Z"/><rect x="11.2" y="4" width="1.6" height="8"/><path d="M9.6 2h4.8v2.6H9.6z"/><circle cx="9" cy="2.9" r=".7"/><circle cx="15" cy="2.9" r=".7"/>'
-  };
-  window.ADORNOS_SVG = A;
-  window.ADORNOS_IDS = Object.keys(A);
-  window.adornoSVG = function(id){ var inner = A[id]; if(!inner) return ''; return '<svg viewBox="0 0 24 24" width="100%" height="100%" fill="currentColor" fill-rule="evenodd">' + inner + '</svg>'; };
-})();
-</script>
 <style>
   :root{
     --branco:#ffffff; --bege-claro:#fbf8f2; --bege:#f5efe2;
@@ -742,48 +711,6 @@ amesadigital.pt</textarea>
           <input type="range" id="fundoAnimInt" min="2" max="40" step="1" value="12" style="width:100%;">
         </div>
       </div>
-      <!-- ADEREÇOS DO LAYOUT (SVG de linha, uma cor, a flutuar) -->
-      <label style="margin-top:18px;">✨ Adereços do layout</label>
-      <div class="subtitulo" style="margin-top:-2px;">Desenhos a traço, de uma só cor, que flutuam suavemente pelo menu. Servem em qualquer layout e a cor segue o tema (podes escolher outra).</div>
-      <div id="adornosGrid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(44px, 1fr)); gap:8px; margin-top:8px;"></div>
-      <label for="adModo" style="margin-top:12px;">Movimento</label>
-      <select id="adModo" style="width:100%; padding:10px 12px; border-radius:10px; border:1.5px solid var(--linha); background:var(--branco); font-family:inherit; color:var(--castanho); font-size:0.95rem;">
-        <option value="flutua">A flutuar (caem suavemente)</option>
-        <option value="fixo">Fixos — coloco onde quiser (arrastar)</option>
-      </select>
-      <div id="adFixoBox" style="display:none; margin-top:10px; padding:10px 12px; border:1.5px solid var(--linha); border-radius:10px; background:#fbf8f2;">
-        <label for="adOnde" style="margin-top:0;">Colocar em</label>
-        <select id="adOnde" style="width:100%; padding:9px 12px; border-radius:9px; border:1.5px solid var(--linha); background:var(--branco); font-family:inherit; color:var(--castanho); font-size:0.92rem;">
-          <option value="menu">Menu principal</option>
-          <option value="sub">Sub-menus</option>
-          <option value="abertura">Ecrã de abertura</option>
-        </select>
-        <div class="subtitulo" style="margin-top:8px;">Toca num desenho acima para o adicionar no sítio escolhido. Depois <b>arrasta-o na pré-visualização</b> para a posição que quiseres. Para remover, <b>toca duas vezes</b> nele na pré-visualização.</div>
-        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;">
-          <button type="button" id="adUndoFixo" style="padding:7px 12px; border:1.5px solid var(--linha); background:var(--branco); color:var(--castanho); border-radius:9px; font-family:inherit; font-weight:600; cursor:pointer;">↶ Anular último</button>
-          <button type="button" id="adLimparFixos" style="padding:7px 12px; border:1.5px solid var(--linha); background:var(--branco); color:var(--castanho); border-radius:9px; font-family:inherit; font-weight:600; cursor:pointer;">Remover todos os fixos</button>
-        </div>
-        <div id="adFixosConta" class="subtitulo" style="margin-top:6px;"></div>
-      </div>
-      <div style="margin-top:12px;">
-        <label id="adDensRow" for="adDens" style="font-size:0.85rem;">Quantidade: <span id="adDensVal">12</span></label>
-        <input type="range" id="adDens" min="4" max="30" step="1" value="12" style="width:100%;">
-        <label for="adOpac" style="font-size:0.85rem; margin-top:6px; display:block;">Transparência: <span id="adOpacVal">16</span>%</label>
-        <input type="range" id="adOpac" min="4" max="50" step="1" value="16" style="width:100%;">
-        <label for="adTam" style="font-size:0.85rem; margin-top:6px; display:block;">Tamanho: <span id="adTamVal">34</span>px</label>
-        <input type="range" id="adTam" min="18" max="80" step="1" value="34" style="width:100%;">
-      </div>
-      <div class="linha-pub" style="margin-top:10px;">
-        <input type="checkbox" id="adCorAtiva"> <label for="adCorAtiva" style="margin:0; font-weight:600; color:var(--castanho);">Cor própria (por norma segue o tema)</label>
-      </div>
-      <div id="adCorBox" style="display:none; margin-top:6px;"><input type="color" id="adCor" value="#8a712f" style="width:56px; height:34px; border:none; background:none; cursor:pointer;"></div>
-      <div id="adOndeFlutua">
-        <label style="margin-top:12px; display:block; font-weight:600; color:var(--castanho);">Onde aparecem</label>
-        <label style="display:flex; gap:8px; align-items:center; font-size:0.9rem; margin-top:4px;"><input type="checkbox" id="adMenu" checked style="width:auto; margin:0;"> Menu principal</label>
-        <label style="display:flex; gap:8px; align-items:center; font-size:0.9rem; margin-top:4px;"><input type="checkbox" id="adSub" checked style="width:auto; margin:0;"> Sub-menus</label>
-        <label style="display:flex; gap:8px; align-items:center; font-size:0.9rem; margin-top:4px;"><input type="checkbox" id="adAbertura" checked style="width:auto; margin:0;"> Ecrã de abertura</label>
-      </div>
-      <button type="button" id="adLimpar" style="margin-top:10px; padding:8px 14px; border:1.5px solid var(--linha); background:var(--branco); color:var(--castanho); border-radius:9px; font-family:inherit; font-weight:600; cursor:pointer;">Não usar adereços</button>
     </div>
   </details>
 
@@ -2769,7 +2696,6 @@ amesadigital.pt</textarea>
     aplicarDecorUI();
     document.getElementById('jogosAtivo').checked = config.jogos !== false;
     document.getElementById('modeloSel').value = config.modelo || 'lista';
-    carregarAdornos();
     { const _pf = document.getElementById('painelFundoOff'); if(_pf) _pf.checked = !!config.painelFundoOff; }
     document.getElementById('cadernoBox').style.display = (config.modelo === 'caderno') ? 'block' : 'none';
     { document.getElementById('praiaCorBox').style.display = (config.modelo === 'praia') ? 'block' : 'none';
@@ -3338,94 +3264,6 @@ amesadigital.pt</textarea>
     const wb = document.getElementById('wipeBox'); if(wb) wb.style.display = (e.target.value === 'wipe') ? 'block' : 'none';
   });
 
-  // ===== Adereços do layout: construir a grelha e ligar os controlos =====
-  function _adBtnEstado(b){ const on = b.classList.contains('on'); b.style.borderColor = on ? 'var(--dourado)' : 'var(--linha)'; b.style.background = on ? '#fbf3e2' : '#fff'; }
-  function initAdornos(){
-    const grid = document.getElementById('adornosGrid');
-    if(!grid || !window.ADORNOS_IDS) return;
-    grid.innerHTML = '';
-    window.ADORNOS_IDS.forEach(function(id){
-      const b = document.createElement('button');
-      b.type = 'button'; b.className = 'ad-btn'; b.dataset.id = id;
-      b.title = id;
-      b.style.cssText = 'aspect-ratio:1; border:1.5px solid var(--linha); background:#fff; border-radius:10px; padding:7px; cursor:pointer; color:var(--castanho); display:flex; align-items:center; justify-content:center;';
-      b.innerHTML = window.adornoSVG(id, 1.6);
-      b.addEventListener('click', function(){
-        var modoEl = document.getElementById('adModo');
-        if(modoEl && modoEl.value === 'fixo'){
-          // adiciona um adereço fixo no sítio escolhido (depois arrasta na pré-visualização)
-          config.adornos = config.adornos || {};
-          if(!Array.isArray(config.adornos.fixos)) config.adornos.fixos = [];
-          var onde = (document.getElementById('adOnde') || {}).value || 'menu';
-          // desvia cada novo adereço para não empilhar todos no mesmo ponto (o tamanho segue o slider global)
-          var n = config.adornos.fixos.filter(function(x){ return (x.onde || 'menu') === onde; }).length;
-          var x = 30 + (n % 5) * 10, y = 28 + (Math.floor(n / 5) % 5) * 12;
-          config.adornos.fixos.push({ id: b.dataset.id, x: x, y: y, onde: onde });
-          _adFixosConta();
-          if(window.__agendarPreview) window.__agendarPreview();
-        } else {
-          b.classList.toggle('on'); _adBtnEstado(b); if(window.__agendarPreview) window.__agendarPreview();
-        }
-      });
-      grid.appendChild(b);
-    });
-    // sliders → mostrar valor
-    const liga = function(idR, idV){ const r = document.getElementById(idR), v = document.getElementById(idV); if(r && v) r.addEventListener('input', function(){ v.textContent = r.value; }); };
-    liga('adDens','adDensVal'); liga('adOpac','adOpacVal'); liga('adTam','adTamVal');
-    // cor própria
-    const ca = document.getElementById('adCorAtiva');
-    if(ca) ca.addEventListener('change', function(){ const box = document.getElementById('adCorBox'); if(box) box.style.display = ca.checked ? 'block' : 'none'; if(window.__agendarPreview) window.__agendarPreview(); });
-    const cc = document.getElementById('adCor'); if(cc) cc.addEventListener('input', function(){ if(window.__agendarPreview) window.__agendarPreview(); });
-    // botão "não usar"
-    const lp = document.getElementById('adLimpar');
-    if(lp) lp.addEventListener('click', function(){ grid.querySelectorAll('.ad-btn.on').forEach(function(b){ b.classList.remove('on'); _adBtnEstado(b); }); if(config.adornos) config.adornos.fixos = []; if(window.__agendarPreview) window.__agendarPreview(); });
-    // seletor de movimento (flutua/fixo)
-    const md = document.getElementById('adModo');
-    if(md) md.addEventListener('change', function(){ _adModoUI(); if(window.__agendarPreview) window.__agendarPreview(); });
-    const lf = document.getElementById('adLimparFixos');
-    if(lf) lf.addEventListener('click', function(){ if(config.adornos) config.adornos.fixos = []; _adFixosConta(); if(window.__agendarPreview) window.__agendarPreview(); });
-    const uf = document.getElementById('adUndoFixo');
-    if(uf) uf.addEventListener('click', function(){ if(config.adornos && Array.isArray(config.adornos.fixos) && config.adornos.fixos.length){ config.adornos.fixos.pop(); _adFixosConta(); if(window.__agendarPreview) window.__agendarPreview(); } });
-  }
-  function _adFixosConta(){
-    const el = document.getElementById('adFixosConta'); if(!el) return;
-    const n = (config.adornos && Array.isArray(config.adornos.fixos)) ? config.adornos.fixos.length : 0;
-    el.textContent = n ? (n + (n === 1 ? ' adereço colocado' : ' adereços colocados')) : 'Ainda não colocaste nenhum.';
-  }
-  function _adModoUI(){
-    const md = document.getElementById('adModo'); if(!md) return;
-    const fixo = md.value === 'fixo';
-    const fb = document.getElementById('adFixoBox'); if(fb) fb.style.display = fixo ? 'block' : 'none';
-    const of = document.getElementById('adOndeFlutua'); if(of) of.style.display = fixo ? 'none' : 'block';
-    const dr = document.getElementById('adDensRow'); if(dr) dr.style.display = fixo ? 'none' : 'block';
-    const di = document.getElementById('adDens'); if(di) di.style.display = fixo ? 'none' : 'block';
-  }
-  function carregarAdornos(){
-    const grid = document.getElementById('adornosGrid'); if(!grid) return;
-    if(grid.children.length === 0) initAdornos();   // rede de segurança: se a grelha ainda não foi construída, constrói agora
-    const a = config.adornos || {};
-    const sel = Array.isArray(a.motivos) ? a.motivos : [];
-    grid.querySelectorAll('.ad-btn').forEach(function(b){ const on = sel.indexOf(b.dataset.id) >= 0; b.classList.toggle('on', on); _adBtnEstado(b); });
-    const setR = function(id, val, vid){ const r = document.getElementById(id); if(r){ r.value = val; const v = document.getElementById(vid); if(v) v.textContent = val; } };
-    setR('adDens', a.densidade != null ? a.densidade : 12, 'adDensVal');
-    setR('adOpac', a.opacidade != null ? a.opacidade : 16, 'adOpacVal');
-    setR('adTam',  a.tamanho   != null ? a.tamanho   : 34, 'adTamVal');
-    const corPropria = a.cor && a.cor !== 'auto';
-    const ca = document.getElementById('adCorAtiva'); if(ca) ca.checked = !!corPropria;
-    const box = document.getElementById('adCorBox'); if(box) box.style.display = corPropria ? 'block' : 'none';
-    if(corPropria){ const cc = document.getElementById('adCor'); if(cc) cc.value = a.cor; }
-    document.getElementById('adMenu').checked = a.menu !== false;
-    document.getElementById('adSub').checked = a.sub !== false;
-    document.getElementById('adAbertura').checked = a.abertura !== false;
-    const md = document.getElementById('adModo'); if(md) md.value = (a.modo === 'fixo') ? 'fixo' : 'flutua';
-    _adModoUI();
-    _adFixosConta();
-  }
-  initAdornos();
-  // Rede de segurança contra ordem de carregamento: reconstruir quando a página acabar de carregar,
-  // caso o catálogo (ADORNOS_IDS) só fique disponível depois deste script.
-  window.addEventListener('load', function(){ try{ var g = document.getElementById('adornosGrid'); if(g && g.children.length === 0) initAdornos(); }catch(e){} });
-  setTimeout(function(){ try{ var g = document.getElementById('adornosGrid'); if(g && g.children.length === 0) initAdornos(); }catch(e){} }, 800);
   { const _wca = document.getElementById('wipeCorAtiva');
     if(_wca) _wca.addEventListener('change', e => { const l = document.getElementById('wipeCorLinha'); if(l) l.style.display = e.target.checked ? 'flex' : 'none'; }); }
   { const _wt = document.getElementById('wipeTexto');
@@ -3932,24 +3770,6 @@ amesadigital.pt</textarea>
       }
       config.jogos = document.getElementById('jogosAtivo').checked;
       config.modelo = document.getElementById('modeloSel').value;
-      // Adereços do layout
-      { const _g = document.getElementById('adornosGrid');
-        const _sel = _g ? Array.prototype.slice.call(_g.querySelectorAll('.ad-btn.on')).map(function(b){ return b.dataset.id; }) : [];
-        const _corA = document.getElementById('adCorAtiva');
-        const _fixosAtuais = (config.adornos && Array.isArray(config.adornos.fixos)) ? config.adornos.fixos : [];
-        config.adornos = {
-          modo: (document.getElementById('adModo') || {}).value || 'flutua',
-          motivos: _sel,
-          fixos: _fixosAtuais,
-          densidade: parseInt(document.getElementById('adDens').value, 10) || 12,
-          opacidade: parseInt(document.getElementById('adOpac').value, 10) || 16,
-          tamanho:   parseInt(document.getElementById('adTam').value, 10) || 34,
-          cor: (_corA && _corA.checked) ? document.getElementById('adCor').value : 'auto',
-          menu: document.getElementById('adMenu').checked,
-          sub: document.getElementById('adSub').checked,
-          abertura: document.getElementById('adAbertura').checked
-        };
-      }
       { const _pf = document.getElementById('painelFundoOff'); config.painelFundoOff = !!(_pf && _pf.checked); }
       config.sliderCor = document.getElementById('sliderCorAtiva').checked ? document.getElementById('sliderCor').value : '';
       config.sliderCorCapa = document.getElementById('sliderCapaAtiva').checked ? document.getElementById('sliderCorCapa').value : '';
@@ -6031,14 +5851,6 @@ amesadigital.pt</textarea>
       else if(d.type === 'decor-pos'){
         const arr = (d.ctx === 'intro') ? (decorState.intro && decorState.intro.fixas) : decorState.fixas;
         if(arr && arr[d.i]){ arr[d.i].x = d.x; arr[d.i].y = d.y; }
-      }
-      else if(d.type === 'adorno-pos'){
-        const arr = config.adornos && config.adornos.fixos;
-        if(arr && arr[d.i]){ arr[d.i].x = d.x; arr[d.i].y = d.y; }
-      }
-      else if(d.type === 'adorno-del'){
-        const arr = config.adornos && config.adornos.fixos;
-        if(arr && arr[d.i] != null){ arr.splice(d.i, 1); if(window.__agendarPreview) window.__agendarPreview(); }
       }
       else if(d.type === 'preview-pos' && d.target === 'textoLivre'){
         const ex = document.getElementById('tlX'), ey = document.getElementById('tlY');

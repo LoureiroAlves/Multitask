@@ -239,37 +239,6 @@
 <title>Cardápio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&family=Poppins:wght@500;600;700&family=Playfair+Display:wght@600;700&family=Quicksand:wght@500;600;700&family=Montserrat:wght@500;600;700&family=Bebas+Neue&family=Lobster&family=Pacifico&family=Caveat:wght@600;700&family=Baloo+2:wght@700;800&family=Chewy&display=swap" rel="stylesheet">
-<script>
-/* ÀMesa — Catálogo de adereços (cultura portuguesa, silhueta de uma só cor, segue o tema). Embutido. */
-(function(){
-  var A = {
-    galo:'<path d="M11 20.5c-3 0-5.2-1.7-5.2-4.4 0-1.5.7-2.8 1.9-3.6-1.3-2.5-.5-5 1.4-5.8.2-1.3 1.5-1.5 2.1-.4.8-.2 1.5.4 1.5 1.3 1.9.6 3 2.3 2.8 4.4l2.3-1.3-1 2.3 2.5-.6-1.7 1.9 1.9.4-2.3 1c.2 2.7-2 4.4-5.7 4.4z"/><path d="M15 7c.2-1 1.1-.9 1.1.1.4-.9 1.3-.6 1 .3z"/><path d="M10.6 20.4h.9v2.3h-.9zM13 20.4h.9v2.3H13z"/>',
-    coracaoViana:'<path d="M12 21C5.5 15 3.2 11 3.2 7.6 3.2 4.7 7 3.3 9.4 5.7c1 1 1.7 2 2.6 3.2.9-1.2 1.6-2.2 2.6-3.2C19.6 3.3 23.4 4.7 20.8 7.6 20.8 11 18.5 15 12 21Z"/><path d="M12 4.6c-.5-1 .5-2.2 1.4-2.2-.6 1 .2 1.4.2 2.2z"/>',
-    azulejo:'<path d="M3 3h18v18H3V3Zm2 2v14h14V5H5Z"/><circle cx="12" cy="8.4" r="1.7"/><circle cx="12" cy="15.6" r="1.7"/><circle cx="8.4" cy="12" r="1.7"/><circle cx="15.6" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.4"/>',
-    andorinha:'<path d="M12 8c-2.2 0-4.3 1.1-6.2 3.1C3.9 13 2.2 13.3 1 13.2c1.6 1 3.6 1 5.4.1-.5 1.1-.3 2.4.3 3.4.4-1.5 1.5-2.7 3-3.3l2.3 2.2 2.3-2.2c1.5.6 2.6 1.8 3 3.3.6-1 .8-2.3.3-3.4 1.8.9 3.8.9 5.4-.1-1.2.1-2.9-.2-4.8-2.1C16.3 9.1 14.2 8 12 8Z"/><path d="M11 12.5h2l1 5.5-2-1.4-2 1.4z"/>',
-    cravo:'<path d="M12 11.6c-2.6 0-4.6-1.4-4.6-3.3 0-1.1.9-1.8 1.8-1.4.2-1.3 1.5-1.3 1.7 0 .3-1.1 1.8-.9 1.8.3.9-.9 2.2-.4 1.9.8 1 0 1.6 1 1.6 1.9 0 1.9-2 3-3.9 3z"/><path d="M11.6 11.6h.8v9h-.8z"/><path d="M12 16c-1.5-.4-2.9.4-3.3 1.9 1.5.2 2.9-.6 3.3-1.9z"/>',
-    sardinha:'<path d="M2 12c4-4.5 12-4.5 16.2 0C14 16.5 6 16.5 2 12Zm4.2-1.2a1 1 0 1 0 .01 0Z"/><path d="M18 12l4.3-3.1v6.2z"/>',
-    caravela:'<path d="M3 16.5h18l-2.2 3.2H5.2z"/><path d="M11.6 4h.8v12.5h-.8z"/><path d="M12 5c3 0 5.2 1 6.4 3H12zM12 9.2c3 0 5.2 1 6.4 3H12zM12 5c-3 0-5.2 1-6.4 3H12zM12 9.2c-3 0-5.2 1-6.4 3H12z"/><path d="M12.4 3h3l-1 1 1 1h-3z"/>',
-    barcoRabelo:'<path d="M3 15.2c.4 2.6 4.2 3.6 9 3.6s8.6-1 9-3.6c-2 .8-5 1.2-9 1.2s-7-.4-9-1.2Z"/><path d="M2 12l3 1 .3 2.4L2 14z"/><path d="M11.6 4h.8v11h-.8z"/><rect x="6.5" y="5" width="9" height="6"/><rect x="8" y="12.4" width="2" height="2.4" rx=".5"/><rect x="11" y="12.4" width="2" height="2.4" rx=".5"/><rect x="14" y="12.4" width="2" height="2.4" rx=".5"/>',
-    farol:'<path d="M9.2 20l1-8.5h3.6l1 8.5z"/><rect x="9" y="9.6" width="6" height="2"/><path d="M10.2 9.6h3.6l-.7-2.6h-2.2z"/><rect x="10.8" y="4.8" width="2.4" height="2"/><rect x="8" y="20" width="8" height="1.8" rx=".4"/>',
-    ancora:'<path d="M12 2.2a2.3 2.3 0 1 0 .01 0Zm0 1.3a1 1 0 1 1 0 2 1 1 0 0 1 0-2Z"/><rect x="11.2" y="5.4" width="1.6" height="13.2"/><rect x="7.8" y="7.8" width="8.4" height="1.6" rx=".8"/><path d="M12 18.8c-3.2 0-5.4-2.1-5.9-5.2l1.9.7C8.6 16.2 10 17.2 12 17.2s3.4-1 4-2.9l1.9-.7c-.5 3.1-2.7 5.2-5.9 5.2z"/>',
-    manjerico:'<path d="M8.4 15h7.2l-1 5.2h-5.2z"/><path d="M12 5.8c3.2 0 6 2 6 4.8 0 2.1-2.9 4.2-6 4.2s-6-2.1-6-4.2c0-2.8 2.8-4.8 6-4.8Z"/><rect x="11.6" y="3" width=".8" height="4"/><path d="M12.4 3h3l-1 1 1 1h-3z"/>',
-    balao:'<path d="M12 3c4 0 6.2 3 6.2 6.2 0 3.2-3.2 6.2-6.2 8-3-1.8-6.2-4.8-6.2-8C5.8 6 8 3 12 3Z"/><path d="M10.4 17.2h3.2l-.5 3.1h-2.2z"/>',
-    pastelNata:'<path d="M5 12h14l-1.5 8h-11z"/><ellipse cx="12" cy="11.8" rx="7.2" ry="2.5"/>',
-    uvas:'<circle cx="12" cy="8" r="2.1"/><circle cx="9" cy="11.4" r="2.1"/><circle cx="15" cy="11.4" r="2.1"/><circle cx="12" cy="14.4" r="2.1"/><circle cx="9.6" cy="17.4" r="2.1"/><circle cx="14.4" cy="17.4" r="2.1"/><path d="M12 6.4c0-2 1.1-3.1 3.1-3.1v1.4c-1.2 0-1.7.6-1.7 1.7z"/>',
-    bacalhau:'<path d="M2 12c5-3.6 11-3.6 15-1.4l3.2-2.2v9.2L17 14.4c-4 2.2-10 2.2-15-2.4Zm4.2-1.1a.9.9 0 1 0 .01 0Z"/>',
-    chavena:'<path d="M5 9h10.5v4A3.5 3.5 0 0 1 12 16.5H8.5A3.5 3.5 0 0 1 5 13z"/><path d="M15.5 9.8H17a2.4 2.4 0 0 1 0 4.8h-1.5v-1.5H17a.9.9 0 0 0 0-1.8h-1.5z"/><rect x="4" y="18" width="14" height="1.8" rx=".9"/>',
-    cataplana:'<path d="M4 12a8 5.2 0 0 1 16 0Z"/><path d="M4.4 12.6h15.2a8 4 0 0 1-15.2 0z"/><circle cx="12" cy="6.6" r="1.1"/><rect x="2.2" y="11.1" width="2.4" height="1.6" rx=".8"/><rect x="19.4" y="11.1" width="2.4" height="1.6" rx=".8"/>',
-    eletrico:'<path d="M5.5 7A1.5 1.5 0 0 0 4 8.5V17h16V8.5A1.5 1.5 0 0 0 18.5 7ZM6 9h4v3H6zm5 0h3v3h-3zm4 0h3v3h-3z"/><circle cx="8" cy="18.4" r="1.4"/><circle cx="16" cy="18.4" r="1.4"/><path d="M11.6 7V3h.8v4z"/><rect x="9" y="2.4" width="6" height=".9"/>',
-    torreBelem:'<path d="M7 21V9.5h10V21ZM11 21v-3.4a1 1 0 0 1 2 0V21Z"/><path d="M7 9.5V7.6h1.4v1H10v-1h1.4v1h1.4v-1h1.4v1h1.4v-1H17v1.9z"/><path d="M14 9.5V6h3v3.5z"/><path d="M13.8 6V4.8h3.4V6z"/>',
-    ponte:'<rect x="5" y="5.5" width="1.6" height="13"/><rect x="17.4" y="5.5" width="1.6" height="13"/><rect x="3" y="16.5" width="18" height="1.6"/><path d="M5 6.5c4 6.5 10 6.5 14 0v1.6C15 14 9 14 5 8.1Z"/>',
-    guitarra:'<path d="M12 22c-3.6 0-5.6-2.6-5.6-5.6 0-3 2-5.2 5.6-5.2s5.6 2.2 5.6 5.2c0 3-2 5.6-5.6 5.6Zm0-7.4a1.6 1.6 0 1 0 .01 0Z"/><rect x="11.2" y="4" width="1.6" height="8"/><path d="M9.6 2h4.8v2.6H9.6z"/><circle cx="9" cy="2.9" r=".7"/><circle cx="15" cy="2.9" r=".7"/>'
-  };
-  window.ADORNOS_SVG = A;
-  window.ADORNOS_IDS = Object.keys(A);
-  window.adornoSVG = function(id){ var inner = A[id]; if(!inner) return ''; return '<svg viewBox="0 0 24 24" width="100%" height="100%" fill="currentColor" fill-rule="evenodd">' + inner + '</svg>'; };
-})();
-</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root{
@@ -2207,22 +2176,6 @@
   body.secao-aberta #decorFixas{ display:none !important; }
   .idecor-fixa{ position:absolute; z-index:32; pointer-events:none; user-select:none; line-height:1; text-shadow:0 2px 6px rgba(0,0,0,.4); transform:translate(-50%,-50%); }
 
-  /* ===== Adereços do layout (linha, uma cor, a flutuar) ===== */
-  /* Camada fixa por cima do menu e dos sub-menus. A cor segue o tema (--castanho) ou uma escolhida. */
-  #adornosLayer{ position:fixed; inset:0; z-index:306; pointer-events:none; overflow:hidden; display:none; color:var(--adorno-cor, var(--castanho)); }
-  body.adornos-menu:not(.secao-aberta) #adornosLayer{ display:block; }
-  body.adornos-sub.secao-aberta #adornosLayer{ display:block; }
-  .adorno-item{ position:absolute; top:-14%; left:0; width:var(--as,34px); height:var(--as,34px); opacity:var(--ao,.16); will-change:transform; animation:adornoCai var(--ad,16s) linear infinite; animation-delay:var(--adl,0s); }
-  .adorno-item svg{ display:block; width:100%; height:100%; }
-  @keyframes adornoCai{ 0%{ transform:translateY(-16vh) rotate(0deg); } 100%{ transform:translateY(120vh) rotate(var(--ar,30deg)); } }
-  @media (prefers-reduced-motion: reduce){ .adorno-item{ animation:none; } }
-  /* Adereços FIXOS (colocados à mão) */
-  .af-item{ position:absolute; transform:translate(-50%,-50%); opacity:var(--ao,.16); }
-  .af-item svg{ display:block; width:100%; height:100%; }
-  body.secao-aberta #adornosLayer .af-menu{ display:none; }
-  body:not(.secao-aberta) #adornosLayer .af-sub{ display:none; }
-  /* Adereços dentro do ecrã de abertura */
-  #introAdornos{ position:absolute; inset:0; z-index:1; pointer-events:none; overflow:hidden; color:var(--adorno-cor-intro, rgba(255,255,255,.9)); }
 
   /* ===== Grelha de jogos (quadrados com ícones) ===== */
   .jogos-grid{ display:grid; grid-template-columns:repeat(2, 1fr); gap:12px; padding:8px 4px 4px; }
@@ -5076,8 +5029,6 @@
       // Decorações por época (novo sistema, manual)
       try{ aplicarDecor(config); }catch(e){}
 
-      // Adereços do layout (linha, a flutuar) — qualquer layout pode ter
-      try{ aplicarAdornos(config); }catch(e){}
 
       // Cartão de fidelidade
       window._fidelidade = (config.fidelidade && config.fidelidade.ativo) ? config.fidelidade : null;
@@ -5493,97 +5444,6 @@
       if(!drag) return; drag = false; try{ el.releasePointerCapture(ev.pointerId); }catch(e){}
       if(moveu){ try{ parent.postMessage({ type:'decor-pos', ctx:ctx, i:i, x:el._nx, y:el._ny }, '*'); }catch(e){} }
     };
-  }
-  // ==========================================================
-  //  ADEREÇOS DO LAYOUT (SVG de linha, uma cor, a flutuar)
-  //  Funcionam em qualquer layout. config.adornos = {motivos:[], densidade, opacidade, tamanho, cor, menu, sub, abertura}
-  // ==========================================================
-  function _adornoIntroHost(){
-    var iH = document.getElementById('introAdornos');
-    var intro = document.getElementById('introOverlay');
-    if(!intro) return null;
-    if(!iH){ iH = document.createElement('div'); iH.id = 'introAdornos'; intro.insertBefore(iH, intro.firstChild); }
-    return iH;
-  }
-  // Arrastar um adereço fixo (só na pré-visualização do editor) e apagar com toque duplo
-  function _adornoArrastavel(el, idx){
-    el.style.pointerEvents = 'auto'; el.style.cursor = 'move'; el.style.touchAction = 'none';
-    var drag = false, moveu = false;
-    el.onpointerdown = function(ev){ ev.preventDefault(); ev.stopPropagation(); drag = true; moveu = false; try{ el.setPointerCapture(ev.pointerId); }catch(e){} };
-    el.onpointermove = function(ev){
-      if(!drag) return; var cont = el.parentElement; if(!cont) return;
-      var r = cont.getBoundingClientRect();
-      var nx = Math.round((ev.clientX - r.left) / r.width * 100);
-      var ny = Math.round((ev.clientY - r.top) / r.height * 100);
-      nx = Math.max(0, Math.min(100, nx)); ny = Math.max(0, Math.min(100, ny));
-      el.style.left = nx + '%'; el.style.top = ny + '%'; moveu = true; el._nx = nx; el._ny = ny;
-    };
-    el.onpointerup = function(ev){ if(drag){ drag = false; if(moveu){ try{ parent.postMessage({ type:'adorno-pos', i:idx, x:el._nx, y:el._ny }, '*'); }catch(e){} } } };
-    el.ondblclick = function(ev){ ev.preventDefault(); ev.stopPropagation(); try{ parent.postMessage({ type:'adorno-del', i:idx }, '*'); }catch(e){} };
-  }
-  function aplicarAdornos(config){
-    var host = document.getElementById('adornosLayer');
-    if(!host){ host = document.createElement('div'); host.id = 'adornosLayer'; document.body.appendChild(host); }
-    host.innerHTML = '';
-    document.body.classList.remove('adornos-menu', 'adornos-sub');
-    var iH = document.getElementById('introAdornos'); if(iH) iH.innerHTML = '';
-    var doc = document.documentElement;
-    var a = config && config.adornos;
-    if(!a || !window.adornoSVG){ doc.style.removeProperty('--adorno-cor'); doc.style.removeProperty('--adorno-cor-intro'); return; }
-    var op  = Math.max(2, Math.min(60, parseInt(a.opacidade, 10) || 16)) / 100;
-    var tam = Math.max(16, Math.min(90, parseInt(a.tamanho, 10) || 34));
-    if(a.cor && a.cor !== 'auto'){ doc.style.setProperty('--adorno-cor', a.cor); doc.style.setProperty('--adorno-cor-intro', a.cor); }
-    else { doc.style.removeProperty('--adorno-cor'); doc.style.removeProperty('--adorno-cor-intro'); }
-    var prev = !!window.__PREVIEW;
-
-    // ---- Modo FIXO: adereços colocados à mão (arrastáveis na pré-visualização) ----
-    if((a.modo || 'flutua') === 'fixo'){
-      var fixos = Array.isArray(a.fixos) ? a.fixos : [];
-      if(!fixos.length) return;
-      document.body.classList.add('adornos-menu', 'adornos-sub');
-      fixos.forEach(function(f, idx){
-        if(!f || !window.ADORNOS_SVG[f.id]) return;
-        var onde = f.onde || 'menu';
-        var el = document.createElement('div');
-        el.className = 'af-item ' + (onde === 'sub' ? 'af-sub' : (onde === 'abertura' ? 'af-intro' : 'af-menu'));
-        // O tamanho segue o slot "Tamanho" (global) para os fixos também; assim o slider funciona.
-        var s = tam;
-        el.style.width = s + 'px'; el.style.height = s + 'px';
-        el.style.left = (f.x != null ? f.x : 50) + '%';
-        el.style.top  = (f.y != null ? f.y : 40) + '%';
-        el.style.setProperty('--ao', op.toFixed(3));
-        el.innerHTML = window.adornoSVG(f.id);
-        if(prev) _adornoArrastavel(el, idx);
-        if(onde === 'abertura'){ var ih = _adornoIntroHost(); if(ih) ih.appendChild(el); }
-        else host.appendChild(el);
-      });
-      return;
-    }
-
-    // ---- Modo A FLUTUAR (por defeito) ----
-    var ids = Array.isArray(a.motivos) ? a.motivos.filter(function(x){ return window.ADORNOS_SVG[x]; }) : [];
-    if(!ids.length) return;
-    var dens = Math.max(4, Math.min(40, parseInt(a.densidade, 10) || 12));
-    var ondeMenu = a.menu !== false, ondeSub = a.sub !== false, ondeIntro = a.abertura !== false;
-    if(ondeMenu) document.body.classList.add('adornos-menu');
-    if(ondeSub)  document.body.classList.add('adornos-sub');
-    function criar(dst, n){
-      for(var i = 0; i < n; i++){
-        var id = ids[Math.floor(Math.random() * ids.length)];
-        var el = document.createElement('div'); el.className = 'adorno-item';
-        var s = Math.round(tam * (0.7 + Math.random() * 0.7));
-        el.style.setProperty('--as', s + 'px');
-        el.style.setProperty('--ao', op.toFixed(3));
-        el.style.left = (Math.random() * 100).toFixed(1) + '%';
-        el.style.setProperty('--ad', (11 + Math.random() * 12).toFixed(1) + 's');
-        el.style.setProperty('--adl', (-Math.random() * 16).toFixed(1) + 's');
-        el.style.setProperty('--ar', (Math.random() * 90 - 20).toFixed(0) + 'deg');
-        el.innerHTML = window.adornoSVG(id);
-        dst.appendChild(el);
-      }
-    }
-    if(ondeMenu || ondeSub) criar(host, dens);
-    if(ondeIntro){ var ih2 = _adornoIntroHost(); if(ih2) criar(ih2, Math.min(dens, 14)); }
   }
 
   function aplicarDecor(config){
