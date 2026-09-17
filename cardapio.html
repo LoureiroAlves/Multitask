@@ -4834,7 +4834,7 @@
           + '<path d="M-10 95 H370" stroke="#ffe6a1" stroke-width="10" stroke-linecap="round" fill="none"/>'
           + '<g fill="#dedecf" opacity="0.7"><rect x="92" y="48" width="46" height="34" rx="3"/><rect x="150" y="48" width="46" height="34" rx="3"/><rect x="222" y="104" width="40" height="30" rx="3"/><rect x="272" y="104" width="40" height="30" rx="3"/><rect x="92" y="104" width="34" height="30" rx="3"/></g>'
           + '<ellipse cx="180" cy="112" rx="11" ry="3.5" fill="rgba(0,0,0,0.16)"/>'
-          + '<path d="M180 52 C166 52 156 62 156 76 C156 94 180 110 180 110 C180 110 204 94 204 76 C204 62 194 52 180 52 Z" fill="#e2574c"/>'
+          + '<path d="M180 52 C166 52 156 62 156 76 C156 94 180 110 180 110 C180 110 204 94 204 76 C204 62 194 52 180 52 Z" fill="var(--dourado,#c69a3f)" stroke="rgba(74,56,32,.35)" stroke-width="1.5"/>'
           + '<circle cx="180" cy="76" r="7" fill="#fff"/></svg>';
         bloco.style.display = 'block';
         bloco.innerHTML = '<a class="local-card" href="' + _e(dir) + '" target="_blank" rel="noopener" aria-label="Como chegar — abre o Google Maps">'
@@ -4934,11 +4934,13 @@
           }
           window._atualizarIconeReserva = atualizarBotao;
 
-          // Chegou pelo link do WhatsApp → guardar no dispositivo e abrir já
+          // Chegou pelo link do WhatsApp → guardar no dispositivo e abrir já (uma vez só)
           const P = new URLSearchParams(location.search);
           if(P.get('rgerir') === '1'){
             guardar({ rn:P.get('rn')||'', rd:P.get('rd')||'', rh:P.get('rh')||'', rp:P.get('rp')||'1' });
             abrir(ler());
+            // Limpar os parâmetros do link para que um REFRESH não volte a gravar nem a reabrir o popup
+            try{ const u = new URL(location.href); ['rgerir','rn','rd','rh','rp'].forEach(function(k){ u.searchParams.delete(k); }); history.replaceState(null, '', u.pathname + u.search + u.hash); }catch(e){}
           } else {
             atualizarBotao();
           }
