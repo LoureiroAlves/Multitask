@@ -7873,22 +7873,15 @@
 </script>
 
 <script>
-  /* Modo app (ecrã principal): mostra uma setinha para voltar à montra, já que não há botão do browser */
+  /* Modo app (ecrã principal): a app de um restaurante FICA no restaurante.
+     Não mostramos seta para a montra da ÀMesa — o cliente guardou o menu deste restaurante,
+     não deve ir parar à plataforma nem ver outros restaurantes. */
   (function(){
     try{
       var standalone = (window.navigator.standalone === true) ||
         (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
       if(!standalone) return;
       document.body.classList.add('pwa-standalone');
-      var b = document.createElement('button');
-      b.id = 'btnHome'; b.type = 'button';
-      b.setAttribute('aria-label', 'Voltar aos restaurantes');
-      b.textContent = '‹';
-      b.addEventListener('click', function(){
-        if(document.body.classList.contains('secao-aberta')){ return; }
-        location.href = location.origin + '/';
-      });
-      document.body.appendChild(b);
     }catch(e){}
   })();
 
