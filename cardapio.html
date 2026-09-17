@@ -4807,9 +4807,8 @@
         const bloco = document.getElementById('localBloco'); if(!bloco) return;
         const _e = function(s){ return String(s||'').replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); };
         const L = (config.local && typeof config.local === 'object') ? config.local : {};
-        const morada = (L.morada || '').trim()
-          || ((config.rodape && config.rodape.linha3) || '').trim()
-          || ((config.footer && config.footer.morada) || '').trim();
+        // Só aparece se o dono preencher a morada ou o link do Google — sem isso, o mapa desaparece
+        const morada = (L.morada || '').trim();
         // coordenadas: campo próprio, ou extraídas de um link do Google Maps (o link, se houver, manda)
         let coords = '';
         if(L.lat && L.lng){ coords = L.lat + ',' + L.lng; }
