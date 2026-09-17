@@ -1018,11 +1018,14 @@
     const quando = _dataPt(r.data) + (r.hora ? (' às ' + r.hora) : '');
     const pessoas = (Number(r.pessoas)||1) + ' pessoa(s)';
     const casa = (negocio && negocio.nome) ? negocio.nome : 'o restaurante';
+    // link para o cliente gerir (alterar/cancelar) a reserva dele
+    let _gerir = '';
+    try{ if(SLUG){ _gerir = '\nGerir a tua reserva (alterar ou cancelar): ' + location.origin + '/cardapio.html?n=' + SLUG + '&rgerir=1&rn=' + encodeURIComponent(nome) + '&rd=' + (r.data||'') + '&rh=' + encodeURIComponent(r.hora||'') + '&rp=' + (Number(r.pessoas)||1); } }catch(e){}
     let msg;
     if(tipo==='confirmar'){
-      msg = 'Olá' + (nome ? ' '+nome : '') + '! A sua reserva em ' + casa + ' para ' + quando + ' (' + pessoas + ') está confirmada. Até já! 🍽️';
+      msg = 'Olá' + (nome ? ' '+nome : '') + '! A sua reserva em ' + casa + ' para ' + quando + ' (' + pessoas + ') está confirmada. Até já! 🍽️' + _gerir;
     } else if(tipo==='pendente'){
-      msg = 'Olá' + (nome ? ' '+nome : '') + '! Recebemos o seu pedido de reserva em ' + casa + ' para ' + quando + ' (' + pessoas + '). Confirmamos em breve. Obrigado!';
+      msg = 'Olá' + (nome ? ' '+nome : '') + '! Recebemos o seu pedido de reserva em ' + casa + ' para ' + quando + ' (' + pessoas + '). Confirmamos em breve. Obrigado!' + _gerir;
     } else {
       msg = 'Olá' + (nome ? ' '+nome : '') + '. Lamentamos, mas não conseguimos confirmar a sua reserva em ' + casa + ' para ' + quando + '. Contacte-nos para encontrarmos uma alternativa.';
     }
