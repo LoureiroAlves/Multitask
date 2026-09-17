@@ -2131,6 +2131,11 @@
   .ag-dia.fechado{ background:repeating-linear-gradient(45deg,#f1ddd9,#f1ddd9 4px,#f8ebe9 4px,#f8ebe9 8px); color:#b23; font-weight:700; cursor:default; position:relative; opacity:1; }
   .ag-dia.fechado::after{ content:'🔒'; position:absolute; bottom:1px; right:2px; font-size:0.5rem; }
   .ag-dia.sel{ background:var(--dourado); color:#fff; box-shadow:0 2px 6px rgba(74,56,32,.3); }
+  .ag-dia.minha{ background:#fff3cd; color:#5a4a1f; font-weight:800; box-shadow:inset 0 0 0 2px #e6b800; position:relative; }
+  .ag-dia.minha::after{ content:'★'; position:absolute; top:0; right:2px; font-size:0.5rem; color:#e6a700; }
+  #linkAgenda.tem-reserva{ position:relative; background:rgba(255,202,40,.28); border-radius:9px; box-shadow:0 0 0 2px rgba(255,202,40,.65); }
+  #linkAgenda.tem-reserva::after{ content:''; position:absolute; top:-2px; right:-2px; width:9px; height:9px; border-radius:50%; background:#ffca28; box-shadow:0 0 0 2px #fff; animation:iconeResPulse 1.6s ease-in-out infinite; }
+  @keyframes iconeResPulse{ 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.3); } }
   .ag-slots{ display:grid; grid-template-columns:repeat(auto-fill,minmax(72px,1fr)); gap:8px; margin-top:12px; }
   .ag-slot{ padding:9px 6px; border:1.5px solid var(--linha); border-radius:10px; background:var(--branco); color:var(--castanho); font-size:0.9rem; cursor:pointer; font-family:inherit; }
   .ag-slot.sel{ background:var(--dourado); color:#fff; border-color:var(--dourado); }
@@ -4894,23 +4899,22 @@
               window.open('https://wa.me/'+tel+'?text='+encodeURIComponent(msg), '_blank');
             };
           }
-          window._abrirMinhaReserva = function(){ abrir(ler()); };
+          window._abrirMinhaReserva = function(){ abrir(mr()); };
 
-          // Botão fixo "A minha reserva" — aparece enquanto houver uma reserva por vir
-          let btn = null;
-          function atualizarBotao(){
+          // Reserva válida guardada (ou null); apaga-se sozinha se já passou +2h da hora marcada
+          function mr(){
             let r = ler();
-            if(r && !valida(r)){ try{ localStorage.removeItem(KEY); }catch(e){} r = null; }   // já passou +2h → apaga
-            const mostrar = !!r;
-            if(mostrar && !btn){
-              btn = document.createElement('button');
-              btn.id = 'btnMinhaReserva'; btn.type = 'button';
-              btn.textContent = '📅 A minha reserva';
-              btn.style.cssText = 'position:fixed; left:14px; bottom:16px; z-index:8000; background:var(--dourado,#b8860b); color:#fff; border:none; border-radius:999px; padding:11px 18px; font-family:inherit; font-weight:800; font-size:.9rem; box-shadow:0 4px 14px rgba(0,0,0,.28); cursor:pointer;';
-              btn.onclick = function(){ abrir(ler()); };
-              document.body.appendChild(btn);
-            } else if(!mostrar && btn){ btn.remove(); btn = null; }
+            if(r && !valida(r)){ try{ localStorage.removeItem(KEY); }catch(e){} r = null; }
+            return r;
           }
+          window._minhaReserva = mr;
+
+          // Destacar o ícone das reservas (amarelo) quando o cliente tem uma reserva por vir
+          function atualizarBotao(){
+            const ic = document.getElementById('linkAgenda');
+            if(ic) ic.classList.toggle('tem-reserva', !!mr());
+          }
+          window._atualizarIconeReserva = atualizarBotao;
 
           // Chegou pelo link do WhatsApp → guardar no dispositivo e abrir já
           const P = new URLSearchParams(location.search);
@@ -5647,6 +5651,7 @@
       const inicioDow = primeiro.getDay();
       const diasNoMes = new Date(estado.ano, estado.mes+1, 0).getDate();
       const podeRecuar = (estado.ano > h.getFullYear()) || (estado.ano === h.getFullYear() && estado.mes > h.getMonth());
+      const _mr = (window._minhaReserva && window._minhaReserva()) || null;
       let html = '';
       html += '<h3>' + (a.titulo || 'Reservas') + '</h3>';
       html += '<div class="ag-sub">Escolhe o dia e a hora da tua reserva</div>';
@@ -5659,13 +5664,18 @@
       for(let dia=1; dia<=diasNoMes; dia++){
         const d = new Date(estado.ano, estado.mes, dia);
         const iso = fmt(d);
-        if(d >= h && diaFechado(iso)){   // encerrado (folga semanal ou férias) — trancado, sem reação nenhuma
+        const ehMinha = !!(_mr && _mr.rd === iso);
+        if(!ehMinha && d >= h && diaFechado(iso)){   // encerrado (folga semanal ou férias) — trancado, sem reação nenhuma
           html += '<button type="button" class="ag-dia fechado" title="Encerrado" disabled>' + dia + '</button>';
           continue;
         }
         const disp = diaDisponivel(d);
-        const cls = 'ag-dia ' + (disp ? 'disp' : 'indisp') + (estado.diaSel === iso ? ' sel' : '');
-        html += '<button type="button" class="' + cls + '"' + (disp ? (' data-dia="' + iso + '"') : ' disabled') + '>' + dia + '</button>';
+        const cls = 'ag-dia ' + (disp ? 'disp' : 'indisp') + (estado.diaSel === iso ? ' sel' : '') + (ehMinha ? ' minha' : '');
+        if(ehMinha){   // dia da reserva do cliente — sempre clicável, abre a gestão da reserva
+          html += '<button type="button" class="' + cls + '" data-dia="' + iso + '" data-minha="1" title="A tua reserva">' + dia + '</button>';
+        } else {
+          html += '<button type="button" class="' + cls + '"' + (disp ? (' data-dia="' + iso + '"') : ' disabled') + '>' + dia + '</button>';
+        }
       }
       html += '</div>';
       if(estado.diaSel){
@@ -5708,7 +5718,11 @@
     function ligar(){
       const p = document.getElementById('agPrev'); if(p) p.onclick = function(){ estado.mes--; if(estado.mes<0){estado.mes=11;estado.ano--;} estado.diaSel=null; estado.slotSel=null; render(); };
       const n = document.getElementById('agNext'); if(n) n.onclick = function(){ estado.mes++; if(estado.mes>11){estado.mes=0;estado.ano++;} estado.diaSel=null; estado.slotSel=null; render(); };
-      document.querySelectorAll('#agCard [data-dia]').forEach(function(b){ b.onclick = async function(){ estado.diaSel = b.getAttribute('data-dia'); estado.slotSel=null; await carregarOcupadas(estado.diaSel); render(); }; });
+      document.querySelectorAll('#agCard [data-dia]').forEach(function(b){ b.onclick = async function(){
+        const iso = b.getAttribute('data-dia');
+        if(b.dataset.minha === '1' && window._abrirMinhaReserva){ window._abrirMinhaReserva(); return; }   // é o dia da reserva dele → gerir
+        estado.diaSel = iso; estado.slotSel=null; await carregarOcupadas(iso); render();
+      }; });
       document.querySelectorAll('#agCard [data-slot]').forEach(function(b){ b.onclick = function(){ estado.slotSel = b.getAttribute('data-slot'); render(); }; });
       const pe = document.getElementById('agPessoas'); if(pe) pe.onchange = function(){ estado.pessoas = Math.max(1, parseInt(pe.value,10)||1); estado.slotSel = null; render(); };
       const f = document.getElementById('agFechar'); if(f) f.onclick = function(){ ov.classList.remove('aberto'); };
