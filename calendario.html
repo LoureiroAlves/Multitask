@@ -146,6 +146,13 @@
   .dias-chips{ display:flex; flex-wrap:wrap; gap:7px; margin-bottom:4px; }
   .dia-chip{ display:flex; align-items:center; gap:5px; background:var(--bege-claro); border:1.5px solid var(--linha); border-radius:10px; padding:8px 11px; font-size:.85rem; cursor:pointer; font-weight:700; }
   .dia-chip input{ width:auto; margin:0; }
+  .dia-chip.hd-on{ background:#e2f4e9; border-color:#93d4ac; font-weight:800; }
+  .dia-chip.hd-sel{ outline:2px solid var(--dourado); }
+  .hd-painel{ border:1px solid var(--linha); border-radius:12px; padding:12px; margin:8px 0 4px; background:#fffdf8; }
+  .hd-tit{ font-size:.84rem; font-weight:800; margin-bottom:8px; }
+  .hd-chips{ display:flex; flex-wrap:wrap; gap:7px; }
+  .hd-chip{ display:inline-flex; align-items:center; gap:5px; background:#fff; border:1.5px solid var(--linha); border-radius:9px; padding:7px 10px; font-size:.85rem; cursor:pointer; font-weight:700; }
+  .hd-chip input{ width:auto; margin:0; }
   .lin{ display:flex; gap:10px; align-items:start; } .lin > div{ flex:1; }
   .lin input{ min-height:46px; box-sizing:border-box; }
   .mesa-row{ display:flex; align-items:center; gap:7px; font-size:.82rem; color:#5a4c39; margin-bottom:8px; }
@@ -593,6 +600,9 @@
         + '<label>🔒 Encerra semanalmente <span style="font-weight:400; color:#8a7a5c;">(dia(s) de folga fixos)</span></label><div class="dias-chips">'+fechHtml+'</div>'
         + '<label>Horários <span style="font-weight:400; color:#8a7a5c;">(separados por vírgula)</span></label>'
         + '<input type="text" id="dfHor" value="'+esc(hor)+'" placeholder="12:00, 13:00, 20:00, 20:30">'
+        + '<label>Horários por dia <span style="font-weight:400; color:#8a7a5c;">(se algum dia tem menos horas — ex.: Domingo sem jantar)</span></label>'
+        + '<div id="dfHorDiaBtns" class="dias-chips"></div>'
+        + '<div id="dfHorDiaPainel"></div>'
         + '<label>Feriado municipal <span style="font-weight:400; color:#8a7a5c;">(dia da cidade — repete todos os anos)</span></label>'
         + '<input type="date" id="dfFerMun"'+(a.feriadoMunicipal ? (' value="'+hoje.getFullYear()+'-'+esc(a.feriadoMunicipal)+'"') : '')+'>'
         + '<label style="margin-top:12px;">🔒 Encerramentos / férias</label>'
@@ -622,11 +632,41 @@
     _renderMesas();
     _dfFechos = Array.isArray(a.fechos) ? JSON.parse(JSON.stringify(a.fechos)) : [];
     _renderFechos();
+    _dfHorDia = (a.horariosDia && typeof a.horariosDia === 'object') ? JSON.parse(JSON.stringify(a.horariosDia)) : {};
+    _dfHorSel = null;
+    _renderHorDiaBtns();
     $('dfAtivo').onchange = function(){ $('dfBox').style.display = this.checked ? '' : 'none'; };
     $('dfMaisBtn').onclick = function(){ const av=$('dfAvancado'); const aberto = av.classList.toggle('hide'); this.textContent = aberto ? '⚙️ Opções avançadas ▾' : '⚙️ Opções avançadas ▴'; };
     $('dfAddMesa').onclick = function(){ _dfMesas.push({ lugares:2, quantidade:1 }); _renderMesas(); };
     $('dfAddFecho').onclick = function(){ _dfFechos.push({ de:'', a:'' }); _renderFechos(); };
     $('dfGuardar').onclick = guardarDefinicoes;
+  }
+  let _dfHorDia = {}, _dfHorSel = null;
+  const _WD_NOMES = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+  function _horGlobais(){ return (($('dfHor')||{}).value || '').split(',').map(function(s){ return s.trim(); }).filter(Boolean); }
+  function _renderHorDiaBtns(){
+    const box = $('dfHorDiaBtns'); if(!box) return;
+    const ordem = [[1,'Seg'],[2,'Ter'],[3,'Qua'],[4,'Qui'],[5,'Sex'],[6,'Sáb'],[0,'Dom']];
+    box.innerHTML = ordem.map(function(o){
+      const tem = !!_dfHorDia[o[0]];
+      return '<button type="button" class="dia-chip'+(tem?' hd-on':'')+(_dfHorSel===o[0]?' hd-sel':'')+'" data-hd="'+o[0]+'">'+o[1]+(tem?' •':'')+'</button>';
+    }).join('');
+    box.querySelectorAll('[data-hd]').forEach(function(b){ b.onclick = function(){ const w=+b.getAttribute('data-hd'); _dfHorSel = (_dfHorSel===w)?null:w; _renderHorDiaBtns(); _renderHorDiaPainel(); }; });
+  }
+  function _renderHorDiaPainel(){
+    const p = $('dfHorDiaPainel'); if(!p) return;
+    if(_dfHorSel == null){ p.innerHTML = ''; return; }
+    const globais = _horGlobais();
+    const atuais = _dfHorDia[_dfHorSel] || globais.slice();
+    p.innerHTML = '<div class="hd-painel"><div class="hd-tit">Horas disponíveis à '+_WD_NOMES[_dfHorSel]+' <span style="font-weight:400; color:#8a7a5c;">(desmarca as que não há)</span></div>'
+      + '<div class="hd-chips">' + globais.map(function(hh){ return '<label class="hd-chip"><input type="checkbox" data-hh="'+hh+'"'+(atuais.indexOf(hh)>=0?' checked':'')+'> '+hh+'</label>'; }).join('') + '</div>'
+      + '<button type="button" id="hdRepor" class="mini-btn" style="margin-top:8px;">Repor todas</button></div>';
+    p.querySelectorAll('input[data-hh]').forEach(function(inp){ inp.onchange = function(){
+      const sel = []; p.querySelectorAll('input[data-hh]').forEach(function(c){ if(c.checked) sel.push(c.getAttribute('data-hh')); });
+      if(sel.length === globais.length){ delete _dfHorDia[_dfHorSel]; } else { _dfHorDia[_dfHorSel] = sel; }
+      _renderHorDiaBtns();
+    }; });
+    const rep = $('hdRepor'); if(rep) rep.onclick = function(){ delete _dfHorDia[_dfHorSel]; _renderHorDiaPainel(); _renderHorDiaBtns(); };
   }
   let _dfFechos = [];
   function _renderFechos(){
@@ -667,6 +707,7 @@
       dias: dias,
       horarios: hor,
       capacidade: parseInt($('dfCap').value,10)||0,
+      horariosDia: _dfHorDia,
       feriadoMunicipal: (($('dfFerMun')||{}).value || '').slice(5),   // guarda só MM-DD (repete todos os anos)
       diasFecho: (function(){ const o=[]; $('vistaDef').querySelectorAll('input[data-fdia]').forEach(function(c){ if(c.checked) o.push(+c.getAttribute('data-fdia')); }); return o; })(),
       fechos: _dfFechos.filter(function(f){ return f.de; }).map(function(f){ return { de:f.de, a:(f.a||f.de) }; }),

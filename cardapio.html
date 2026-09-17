@@ -5670,6 +5670,7 @@
       const max = new Date(h); max.setDate(max.getDate() + (a.maxDias || 30));
       return d >= min && d <= max;
     }
+    function horariosDoDia(iso){ const a = cfg(); const wd = new Date(iso+'T00:00:00').getDay(); const hd = a.horariosDia || {}; return (hd[wd] && Array.isArray(hd[wd])) ? hd[wd] : (a.horarios || []); }
     function diaFechado(iso){ const a = cfg(); const wd = new Date(iso+'T00:00:00').getDay(); if(Array.isArray(a.diasFecho) && a.diasFecho.indexOf(wd) >= 0) return true; const fs = a.fechos || []; for(var i=0;i<fs.length;i++){ if(fs[i].de && iso >= fs[i].de && iso <= (fs[i].a || fs[i].de)) return true; } return false; }
     function abrir(){
       const h = hoje0();
@@ -5712,7 +5713,7 @@
         html += '<div class="ag-passo-tit">Horários disponíveis</div><div class="ag-slots">';
         const usaMesas = !!(a.mesas && a.mesas.length);
         const lug = parseInt(a.lugares, 10) || 0;
-        (a.horarios || []).forEach(function(hh){
+        horariosDoDia(estado.diaSel).forEach(function(hh){
           let cheio;
           if(usaMesas){ cheio = (cabeMesa(hh, estado.pessoas || 1) === false); }
           else { const ocup = (estado.ocupadas && estado.ocupadas[hh]) || 0; cheio = lug > 0 && ocup >= lug; }
