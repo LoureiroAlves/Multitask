@@ -1110,13 +1110,13 @@
     const err = await _gravarPromoData(iso, promo);
     g.disabled = false;
     if(err){ msg.textContent='Erro: '+err.message; msg.className='msg erro'; return; }
-    renderDia(iso);
+    renderCal(); renderDia(iso);
   }
   async function removerPromo(iso){
     if(!confirm('Remover a promoção deste dia?')) return;
     const err = await _gravarPromoData(iso, null);
     if(err){ const msg=$('pmMsg'); if(msg){ msg.textContent='Erro: '+err.message; msg.className='msg erro'; } return; }
-    renderDia(iso);
+    renderCal(); renderDia(iso);
   }
 
   function _telWA(t){
