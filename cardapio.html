@@ -5919,6 +5919,7 @@
           if(win){ win.location = url; } else { window.open(url, '_blank'); }
           const h = document.getElementById('agTit'); if(h) h.textContent = 'Pré-reserva registada ✓';
           wab.textContent = '✓ Pedido enviado';
+          setTimeout(function(){ ov.classList.remove('aberto'); estado.diaSel = null; estado.slotSel = null; }, 500);   // volta ao menu
         });
       };
       // Sem WhatsApp configurado: botão que só grava
@@ -5929,6 +5930,7 @@
           if(!gravou){ reg.disabled = false; return; }
           const h = document.getElementById('agTit'); if(h) h.textContent = 'Pré-reserva registada ✓';
           reg.textContent = '✓ Registada';
+          setTimeout(function(){ ov.classList.remove('aberto'); estado.diaSel = null; estado.slotSel = null; }, 900);   // volta ao menu
         });
       };
       // Pagar o sinal também regista a pré-reserva (compromisso forte)
@@ -7508,6 +7510,8 @@
           msg += '\n\nA aguardar a vossa confirmação. Obrigado!';
           const url = 'https://wa.me/' + num + '?text=' + encodeURIComponent(msg);
           if(win){ try{ win.location = url; }catch(e){ window.open(url, '_blank'); } } else { window.open(url, '_blank'); }
+          try{ lista = []; guardar(); atualizarBadge(); }catch(e){}   // esvazia a lista (encomenda enviada)
+          setTimeout(function(){ overlay.classList.remove('aberto'); }, 400);   // volta ao menu
         };
         if(window.__PREVIEW){ alert('Pré-visualização: aqui abriria o WhatsApp com a encomenda.'); return; }
         const win = window.open('', '_blank');   // abre já a janela (preserva o gesto do toque no iOS)
