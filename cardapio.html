@@ -2064,23 +2064,23 @@
   #cartOverlay{
     position:fixed; inset:0; z-index:400; background:rgba(0,0,0,0);
     display:flex; align-items:flex-end; justify-content:center;
-    opacity:0; visibility:hidden; pointer-events:none;
-    transition:background .3s ease, opacity .3s ease, visibility .3s ease;
+    visibility:hidden; pointer-events:none;
+    transition:background .32s ease, visibility 0s linear .38s;
   }
-  #cartOverlay.aberto{ background:rgba(0,0,0,0.5); opacity:1; visibility:visible; pointer-events:auto; }
+  #cartOverlay.aberto{ background:rgba(0,0,0,0.5); visibility:visible; pointer-events:auto; transition:background .32s ease; }
   .cart-painel{
     background:var(--branco); width:100%; max-width:520px; max-height:82vh;
     border-radius:18px 18px 0 0; padding:18px 16px 26px; overflow-y:auto;
-    transform:translateY(100%); opacity:1;
-    transition:transform .36s cubic-bezier(.22,1,.36,1);
+    transform:translateY(100%);
+    transition:transform .38s cubic-bezier(.22,1,.36,1);
   }
   #cartOverlay.aberto .cart-painel{ transform:translateY(0); }
   /* Botão + painel de FAVORITOS (pratos) */
   #favBtn{ position:fixed; right:14px; bottom:77px; z-index:200; width:46px; height:46px; border-radius:50%; border:none; background:#e0245e; color:#fff; font-size:1.35rem; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,0.4); display:none; align-items:center; justify-content:center; }
   #favBtn .fav-badge{ position:absolute; top:-5px; right:-5px; background:var(--dourado); color:#fff; font-size:0.68rem; font-weight:700; min-width:18px; height:18px; border-radius:9px; display:flex; align-items:center; justify-content:center; padding:0 4px; border:2px solid var(--branco); }
   body.cart-oculto #favBtn{ opacity:0; visibility:hidden; pointer-events:none; }
-  #favOverlay{ position:fixed; inset:0; z-index:400; background:rgba(0,0,0,0); display:flex; align-items:flex-end; justify-content:center; opacity:0; visibility:hidden; pointer-events:none; transition:background .3s ease, opacity .3s ease, visibility .3s ease; }
-  #favOverlay.aberto{ background:rgba(0,0,0,0.5); opacity:1; visibility:visible; pointer-events:auto; }
+  #favOverlay{ position:fixed; inset:0; z-index:400; background:rgba(0,0,0,0); display:flex; align-items:flex-end; justify-content:center; visibility:hidden; pointer-events:none; transition:background .32s ease, visibility 0s linear .38s; }
+  #favOverlay.aberto{ background:rgba(0,0,0,0.5); visibility:visible; pointer-events:auto; transition:background .32s ease; }
   #favOverlay.aberto .cart-painel{ transform:translateY(0); }
   .fav-rem{ margin-left:auto; border:none; background:transparent; color:#c0392b; font-size:1.05rem; cursor:pointer; padding:2px 8px; }
   /* Carrinho sempre legível: paleta neutra fixa dentro do painel, independente das cores do layout
@@ -2115,9 +2115,9 @@
   .cart-porpessoa strong{ color:var(--dourado); font-size:1.35rem; display:block; margin-top:3px; }
 
   /* Escolha de tamanho/dose */
-  #escOverlay{ position:fixed; inset:0; z-index:450; background:rgba(0,0,0,0.5); display:flex; align-items:flex-end; justify-content:center; opacity:0; visibility:hidden; pointer-events:none; transition:opacity .2s ease, visibility 0s linear .2s; }
-  #escOverlay.aberto{ opacity:1; visibility:visible; pointer-events:auto; transition:opacity .2s ease; }
-  .esc-painel{ background:var(--branco); width:100%; max-width:520px; border-radius:18px 18px 0 0; padding:18px 16px 24px; transform:translateY(100%); opacity:1; transition:transform .36s cubic-bezier(.22,1,.36,1); }
+  #escOverlay{ position:fixed; inset:0; z-index:450; background:rgba(0,0,0,0); display:flex; align-items:flex-end; justify-content:center; visibility:hidden; pointer-events:none; transition:background .32s ease, visibility 0s linear .38s; }
+  #escOverlay.aberto{ background:rgba(0,0,0,0.5); visibility:visible; pointer-events:auto; transition:background .32s ease; }
+  .esc-painel{ background:var(--branco); width:100%; max-width:520px; border-radius:18px 18px 0 0; padding:18px 16px 24px; transform:translateY(100%); transition:transform .38s cubic-bezier(.22,1,.36,1); }
   #escOverlay.aberto .esc-painel{ transform:translateY(0); }
   @keyframes apPop{ from{ transform:scale(.92); opacity:0; } to{ transform:scale(1); opacity:1; } }
   .esc-painel h3{ font-family:var(--fonte-titulo); color:var(--castanho); font-size:1.1rem; text-align:center; margin-bottom:4px; }
