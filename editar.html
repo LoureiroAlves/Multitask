@@ -621,24 +621,7 @@ amesadigital.pt</textarea>
         <option value="montserrat">Montserrat (limpa)</option>
       </select>
 
-      <label style="margin-top:16px; display:flex; align-items:center; gap:8px; cursor:pointer;">
-        <input type="checkbox" id="coresPersonalizar" style="width:auto;"> Personalizar cores (por cima do tema)
-      </label>
-      <div id="coresBox" style="display:none; gap:12px; margin-top:10px; padding:12px; border:1.5px solid var(--linha); border-radius:10px;">
-        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
-          <span style="font-size:0.9rem; color:var(--castanho);">Cor principal (fundo/topo)</span>
-          <input type="color" id="corCastanho" value="#4a3820" style="width:52px; height:34px; padding:0; border:none; background:none; cursor:pointer;">
-        </div>
-        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
-          <span style="font-size:0.9rem; color:var(--castanho);">Cor de destaque (preços/botões)</span>
-          <input type="color" id="corDourado" value="#a8712f" style="width:52px; height:34px; padding:0; border:none; background:none; cursor:pointer;">
-        </div>
-        <div style="display:flex; align-items:center; justify-content:space-between;">
-          <span style="font-size:0.9rem; color:var(--castanho);">Cor de fundo clara</span>
-          <input type="color" id="corBege" value="#f5efe2" style="width:52px; height:34px; padding:0; border:none; background:none; cursor:pointer;">
-        </div>
-        <button type="button" id="corRepor" style="margin-top:10px; width:100%; padding:8px; border-radius:8px; border:1.5px solid var(--linha); background:var(--branco); color:var(--castanho); cursor:pointer; font-size:0.85rem;">↺ Repor cores do tema escolhido</button>
-      </div>
+      <!-- (removido "Personalizar cores (por cima do tema)" — agora no bloco 🎨 Cores e Fundos) -->
       <button type="button" id="reporCoresSeccoes" style="margin-top:10px; width:100%; padding:9px; border-radius:8px; border:1.5px solid var(--linha); background:var(--branco); color:var(--castanho); cursor:pointer; font-size:0.85rem;">🎨 Repor cores das secções do menu (seguir o tema)</button>
       <div class="subtitulo" style="margin-top:4px;">Remove os fundos/cores próprios de cada secção do menu, para passarem a usar as cores do tema atual.</div>
 
@@ -2791,14 +2774,7 @@ amesadigital.pt</textarea>
     // Promoção na montra
     _promoCarregar();   // promoção base + promoções por dia
     { const _fp = document.getElementById('favPratosAtivo'); if(_fp) _fp.checked = config.favoritosPratos === true; }
-    // Cores personalizadas
-    const temCores = !!(config.cores && typeof config.cores === 'object');
-    const baseC = TEMA_CORES_BASE[layoutSelecionado] || TEMA_CORES_BASE['neutro'];
-    document.getElementById('coresPersonalizar').checked = temCores;
-    document.getElementById('coresBox').style.display = temCores ? 'block' : 'none';
-    document.getElementById('corCastanho').value = (temCores && config.cores.castanho) || baseC.castanho;
-    document.getElementById('corDourado').value = (temCores && config.cores.dourado) || baseC.dourado;
-    document.getElementById('corBege').value = (temCores && config.cores.bege) || baseC.bege;
+    /* (removido "Personalizar cores" — agora no bloco Cores e Fundos; config.cores legado mantém-se aplicado) */
     /* (removidos: corMenu/corCab — agora no bloco Cores e Fundos) */
     // (Efeito néon agora é por secção — configurado no editor de cada secção do menu.)
     // Fundo
@@ -3213,25 +3189,6 @@ amesadigital.pt</textarea>
       _rf.style.display = 'none';
       if(window.__agendarPreview) window.__agendarPreview();
     }; }
-  document.getElementById('coresPersonalizar').addEventListener('change', e => {
-    const on = e.target.checked;
-    document.getElementById('coresBox').style.display = on ? 'block' : 'none';
-    if(on){
-      // ao ligar, parte das cores do tema atualmente selecionado
-      const b = TEMA_CORES_BASE[layoutSelecionado] || TEMA_CORES_BASE['neutro'];
-      if(!config.cores){
-        document.getElementById('corCastanho').value = b.castanho;
-        document.getElementById('corDourado').value = b.dourado;
-        document.getElementById('corBege').value = b.bege;
-      }
-    }
-  });
-  document.getElementById('corRepor').addEventListener('click', () => {
-    const b = TEMA_CORES_BASE[layoutSelecionado] || TEMA_CORES_BASE['neutro'];
-    document.getElementById('corCastanho').value = b.castanho;
-    document.getElementById('corDourado').value = b.dourado;
-    document.getElementById('corBege').value = b.bege;
-  });
   { const _fp = document.getElementById('favPratosAtivo'); if(_fp) _fp.addEventListener('change', function(){ if(window.__agendarPreview) window.__agendarPreview(); }); }
   { const _rcs = document.getElementById('reporCoresSeccoes');
     if(_rcs) _rcs.addEventListener('click', async () => {
@@ -3839,15 +3796,7 @@ amesadigital.pt</textarea>
       // Promoção na montra (base + por dia)
       _promoGuardar();
       { const _fp = document.getElementById('favPratosAtivo'); config.favoritosPratos = !!(_fp && _fp.checked); }
-      if(document.getElementById('coresPersonalizar').checked){
-        config.cores = {
-          castanho: document.getElementById('corCastanho').value,
-          dourado: document.getElementById('corDourado').value,
-          bege: document.getElementById('corBege').value
-        };
-      } else {
-        config.cores = null;
-      }
+      /* config.cores: gerido agora pelo bloco "Cores e Fundos" (config.aparencia); legado mantém-se */
       /* corMenuTexto/corCabecalho: geridos agora no bloco "Cores e Fundos" (config.aparencia) */
       // (Efeito néon agora é por secção — guardado dentro de cada secção do menu, não aqui.)
       config.fundo = {
