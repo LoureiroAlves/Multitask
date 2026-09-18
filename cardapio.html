@@ -7385,13 +7385,23 @@
           const ch = window.__favChaveItem ? window.__favChaveItem(it) : '';
           if(ch && !mapa[ch]) mapa[ch] = it;
         });
+        const podeCarrinho = !!(window.__cartCfg && window.__cartCfg.ativo !== false) && typeof window.adicionarALista === 'function';
+        if(podeCarrinho){ const hint = document.createElement('div'); hint.className = 'cart-vazio'; hint.style.cssText = 'padding:0 0 10px; font-size:.8rem;'; hint.textContent = 'Toca em ＋ para juntar ao carrinho e encomendar.'; p.appendChild(hint); }
         keys.forEach(function(chave){
           const it = mapa[chave];
           const nomeEl = it ? it.querySelector('.nome') : null;
           const precoEl = it ? it.querySelector('.preco') : null;
+          const nomeTxt = nomeEl ? nomeEl.textContent.trim() : chave;
+          const precoTxt = (precoEl && precoEl.textContent.trim()) || '';
           const row = document.createElement('div'); row.className = 'cart-linha';
-          const nn = document.createElement('span'); nn.className = 'cart-nome'; nn.textContent = nomeEl ? nomeEl.textContent.trim() : chave; row.appendChild(nn);
-          if(precoEl && precoEl.textContent.trim()){ const pp = document.createElement('span'); pp.className = 'cart-preco'; pp.textContent = precoEl.textContent.trim(); row.appendChild(pp); }
+          const nn = document.createElement('span'); nn.className = 'cart-nome'; nn.textContent = nomeTxt; row.appendChild(nn);
+          if(precoTxt){ const pp = document.createElement('span'); pp.className = 'cart-preco'; pp.textContent = precoTxt; row.appendChild(pp); }
+          if(podeCarrinho){
+            const add = document.createElement('button'); add.type = 'button'; add.setAttribute('aria-label','Adicionar ao carrinho');
+            add.textContent = '＋'; add.style.cssText = 'border:none; background:#e2f4e9; color:#1e6b3c; border-radius:8px; width:30px; height:30px; font-size:1.1rem; font-weight:800; cursor:pointer; margin-right:6px; flex-shrink:0;';
+            add.onclick = function(){ try{ window.adicionarALista(nomeTxt, precoTxt, false); }catch(e){} add.textContent = '✓'; add.style.background = '#cdefd7'; setTimeout(function(){ add.textContent = '＋'; add.style.background = '#e2f4e9'; }, 900); };
+            row.appendChild(add);
+          }
           const rm = document.createElement('button'); rm.className = 'fav-rem'; rm.type = 'button'; rm.textContent = '✕'; rm.setAttribute('aria-label','Remover');
           rm.onclick = function(){ if(window.__favPratosToggle) window.__favPratosToggle(chave); if(window.__favSync) window.__favSync(); favRender(); };
           row.appendChild(rm); p.appendChild(row);
