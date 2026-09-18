@@ -5908,18 +5908,25 @@
       ok += '<button type="button" class="ag-fechar" id="agFechar">Fechar</button>';
       card.innerHTML = ok;
 
-      // Enviar por WhatsApp: abre já a janela (mantém a permissão do toque), depois grava; se falhar, fecha a janela
+      // Enviar por WhatsApp: primeiro grava (verifica a mesa); depois abre o WhatsApp.
+      // No telemóvel abre na MESMA aba (o "voltar" traz de volta a app, sem aba órfã); no computador abre aba nova.
       const wab = document.getElementById('agWa');
       if(wab) wab.onclick = function(){
-        const win = window.open('', '_blank');
         wab.disabled = true;
+        const _h = document.getElementById('agTit'); if(_h) _h.textContent = 'A registar…';
         _gravarReserva().then(function(gravou){
-          if(!gravou){ if(win){ try{ win.close(); }catch(e){} } wab.disabled = false; return; }
+          if(!gravou){ wab.disabled = false; if(_h) _h.textContent = 'Confirma o teu pedido'; return; }
           const url = 'https://wa.me/' + telResto + '?text=' + encodeURIComponent(waMsg);
-          if(win){ win.location = url; } else { window.open(url, '_blank'); }
-          const h = document.getElementById('agTit'); if(h) h.textContent = 'Pré-reserva registada ✓';
-          wab.textContent = '✓ Pedido enviado';
-          setTimeout(function(){ ov.classList.remove('aberto'); estado.diaSel = null; estado.slotSel = null; }, 500);   // volta ao menu
+          if(_h) _h.textContent = 'Pré-reserva registada ✓';
+          const _movel = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+          if(_movel){
+            wab.textContent = '✓ A abrir o WhatsApp…';
+            window.location.href = url;   // mesma aba
+          } else {
+            wab.textContent = '✓ Pedido enviado';
+            window.open(url, '_blank');
+            ov.classList.remove('aberto'); estado.diaSel = null; estado.slotSel = null;   // no PC volta logo à app
+          }
         });
       };
       // Sem WhatsApp configurado: botão que só grava
