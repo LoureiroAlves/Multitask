@@ -1700,6 +1700,21 @@
   }
   footer.tem-foto{ background:transparent; }
   footer .footer-texto{ position:relative; z-index:1; }
+  /* ===== PILOTO: Fundo do menu independente dos separadores (sobrepõe o fundo do modelo) ===== */
+  html body.fundo-claro{ background-color:#faf7f1 !important; background-image:none !important; }
+  html body.fundo-claro .categoria-painel{ background-color:#faf7f1 !important; background-image:none !important; }
+  html body.fundo-papel{ background-color:#fbf8f2 !important; background-image:none !important; }
+  html body.fundo-papel .categoria-painel{ background-color:#fbf8f2 !important; background-image:none !important; }
+  html body.fundo-ardosia{ background-color:#2b322c !important; background-image:radial-gradient(rgba(255,255,255,.05) 1px, transparent 1.4px) !important; background-size:6px 6px !important; }
+  html body.fundo-ardosia .categoria-painel{ background-color:#2b322c !important; background-image:none !important; }
+  html body.fundo-ardosia .categoria-painel-conteudo,
+  html body.fundo-ardosia .categoria-painel-conteudo .nome,
+  html body.fundo-ardosia .categoria-painel-conteudo .desc,
+  html body.fundo-ardosia .categoria-painel-conteudo .menu-desc,
+  html body.fundo-ardosia .categoria-painel-conteudo h2,
+  html body.fundo-ardosia .categoria-painel-conteudo summary,
+  html body.fundo-ardosia #painelTitulo{ color:#f2efe6 !important; }
+
   #localBloco{ padding:14px 16px 6px; }
   #localBloco .local-card{ display:block; position:relative; max-width:520px; margin:0 auto; border:2px solid var(--dourado); border-radius:16px; overflow:hidden; box-shadow:0 6px 18px rgba(74,56,32,.16); text-decoration:none; color:#fff; }
   #localBloco .local-card:active{ opacity:.95; }
@@ -4223,6 +4238,9 @@
       document.body.classList.toggle('modelo-italiano', (config.modelo || 'lista') === 'italiano');
       document.body.classList.toggle('modelo-foodtruck', (config.modelo || 'lista') === 'foodtruck');
       document.body.classList.toggle('modelo-revista', (config.modelo || 'lista') === 'revista');
+      // PILOTO — Fundo do menu independente dos separadores (opcional; vazio = segue o modelo)
+      { const _ft = (config.fundoTema || '').toString().trim();
+        ['claro','papel','ardosia'].forEach(function(x){ document.body.classList.toggle('fundo-' + x, _ft === x); }); }
       // Cores das riscas do modelo "Praia" (editáveis)
       (function(){
         const rs = document.body.style;
