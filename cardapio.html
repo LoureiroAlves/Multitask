@@ -7247,6 +7247,50 @@
     function guardar(){
       try{ localStorage.setItem(STORAGE_KEY, JSON.stringify({ ts: Date.now(), itens: lista })); }catch(e){}
     }
+
+    // ===== Encomendas guardadas no telemóvel (com código) + estado vindo do servidor =====
+    const ENC_KEY = 'minhasEncomendas:' + _cartSlug;
+    function _encLer(){ try{ const a = JSON.parse(localStorage.getItem(ENC_KEY)); return Array.isArray(a) ? a : []; }catch(e){ return []; } }
+    function _encEscrever(a){ try{ localStorage.setItem(ENC_KEY, JSON.stringify(a)); }catch(e){} }
+    function _encAtiva(o){ return o && (Date.now() - (o.criado||0)) < 12*3600*1000; }   // mostra durante ~12h
+    function _encListaValida(){ const a = _encLer().filter(_encAtiva); _encEscrever(a); return a; }
+    function _encPush(o){ const a = _encListaValida(); a.unshift(o); _encEscrever(a); }
+    function _encInfo(est){
+      if(est === 'confirmada') return { txt:'Confirmada — a preparar', cor:'#1e6b3c', bg:'#e2f4e9', ic:'✅' };
+      if(est === 'pronta')     return { txt:'Pronta para levantar!',   cor:'#8a4b10', bg:'#ffe6c2', ic:'🎉' };
+      if(est === 'cancelada')  return { txt:'Não confirmada',          cor:'#b23',   bg:'#fbe7e4', ic:'❌' };
+      return { txt:'A aguardar confirmação do restaurante', cor:'#8a5a10', bg:'#fbeecb', ic:'🕒' };
+    }
+    function _encStatusHTML(){
+      const a = _encListaValida(); if(!a.length) return '';
+      let h = '';
+      a.forEach(function(o){
+        const inf = _encInfo(o.estado);
+        const itensTxt = (o.itens||[]).map(function(it){ return (it.qtd||1)+'× '+it.nome; }).join(', ');
+        h += '<div style="border:1.5px solid '+inf.cor+'; background:'+inf.bg+'; border-radius:12px; padding:11px 13px; margin-bottom:10px;">'
+          + '<div style="font-weight:800; color:'+inf.cor+';">'+inf.ic+' Encomenda nº '+(o.numero!=null?o.numero:'—')+' — '+inf.txt+'</div>'
+          + '<div style="font-size:.8rem; color:var(--castanho-suave); margin-top:3px;">'+itensTxt+(o.levant?(' · levantar às '+o.levant):'')+'</div>'
+          + '</div>';
+      });
+      return h;
+    }
+    let _encSyncTimer = null;
+    function _encSync(){
+      try{
+        if(typeof sbC === 'undefined' || !sbC) return;
+        const ids = _encListaValida().map(function(o){ return o.id; }).filter(Boolean);
+        if(!ids.length){ if(_encSyncTimer){ clearInterval(_encSyncTimer); _encSyncTimer = null; } return; }
+        sbC.rpc('encomendas_estado', { p_ids: ids }).then(function(res){
+          if(!res || res.error || !res.data) return;   // função SQL ainda não criada → não mexe
+          const srv = {}; res.data.forEach(function(r){ if(r && r.id) srv[String(r.id)] = r; });
+          const a = _encListaValida(); let mudou = false;
+          a.forEach(function(o){ const s = srv[String(o.id)]; if(s && s.estado && s.estado !== o.estado){ o.estado = s.estado; mudou = true; } });
+          if(mudou){ _encEscrever(a); atualizarBadge(); if(overlay.classList.contains('aberto')) render(); }
+        });
+      }catch(e){}
+    }
+    function _encIniciarSync(){ if(!_encListaValida().length) return; _encSync(); if(!_encSyncTimer) _encSyncTimer = setInterval(_encSync, 5000); }
+    function _encTemAtivas(){ return _encListaValida().length > 0; }
     function parsePreco(txt){
       if(!txt) return 0;
       const m = txt.replace(/\s/g,'').match(/(\d+[.,]?\d*)/);
@@ -7272,7 +7316,11 @@
     overlay.innerHTML = '<div class="cart-painel" id="cartPainel"></div>';
     document.body.appendChild(overlay);
     overlay.addEventListener('click', e => { if(e.target === overlay) overlay.classList.remove('aberto'); });
-    cartBtn.addEventListener('click', () => { render(); overlay.classList.add('aberto'); });
+    cartBtn.addEventListener('click', () => { try{ _encSync(); }catch(e){} render(); overlay.classList.add('aberto'); });
+    // Arranca a sincronização do estado das encomendas (se houver alguma por confirmar) + ao voltar a primeiro plano
+    try{ _encIniciarSync(); atualizarBadge(); }catch(e){}
+    document.addEventListener('visibilitychange', function(){ if(!document.hidden){ try{ _encIniciarSync(); _encSync(); }catch(e){} } });
+    window.addEventListener('focus', function(){ try{ _encSync(); }catch(e){} });
 
     // ---- Botão + painel de FAVORITOS (pratos) ----
     const favBtn = document.createElement('button');
@@ -7338,13 +7386,13 @@
     window.__cartRefresh = function(){ try{ atualizarBadge(); if(overlay.classList.contains('aberto')) render(); }catch(e){} };
     function atualizarVisibilidade(){
       const total = lista.reduce((s,i)=>s+i.qtd,0);
-      if(!_cartCfg().ativo || total === 0 || emJogos()) cartBtn.classList.add('escondido');
+      if(!_cartCfg().ativo || emJogos() || (total === 0 && !_encTemAtivas())) cartBtn.classList.add('escondido');
       else cartBtn.classList.remove('escondido');
     }
     function atualizarBadge(){
       const total = lista.reduce((s,i)=>s+i.qtd,0);
       const badge = document.getElementById('cartBadge');
-      if(badge) badge.textContent = total;
+      if(badge) badge.textContent = total > 0 ? total : (_encTemAtivas() ? '•' : 0);
       atualizarVisibilidade();
     }
 
@@ -7352,10 +7400,12 @@
       const p = document.getElementById('cartPainel');
       const mostrarPrecos = _cartCfg().precos !== false;
       const titulo = mostrarPrecos ? 'A minha lista' : 'O meu pedido';
+      const _encH = _encStatusHTML();
       if(lista.length === 0){
-        p.innerHTML = '<h3>' + titulo + '</h3><div class="cart-vazio">A lista está vazia.<br>Toca no <strong>+</strong> junto a um prato ou bebida para adicionar.</div><div class="cart-acoes"><button class="cart-fechar" id="cartFechar">Fechar</button></div>';
+        const _vazioTxt = _encH ? 'Para uma nova encomenda, toca no <strong>+</strong> junto a um prato.' : 'A lista está vazia.<br>Toca no <strong>+</strong> junto a um prato ou bebida para adicionar.';
+        p.innerHTML = '<h3>' + titulo + '</h3>' + _encH + '<div class="cart-vazio">' + _vazioTxt + '</div><div class="cart-acoes"><button class="cart-fechar" id="cartFechar">Fechar</button></div>';
       } else {
-        let html = '<h3>' + titulo + '</h3>';
+        let html = '<h3>' + titulo + '</h3>' + _encH;
         if(!mostrarPrecos){ html += '<div class="cart-vazio" style="padding:2px 0 12px; font-size:0.82rem;">Mostra esta lista ao empregado para fazer o pedido.</div>'; }
         let total = 0;
         lista.forEach((it, idx) => {
@@ -7504,21 +7554,24 @@
         let t = 0; const linhas = []; const itensJson = [];
         lista.forEach(it => { const lt = it.preco * it.qtd; t += lt; linhas.push('• ' + it.qtd + '× ' + it.nome + ' — ' + lt.toFixed(2).replace('.', ',') + '€'); itensJson.push({ nome: it.nome, qtd: it.qtd, preco: it.preco }); });
         const _totalTxt = t.toFixed(2).replace('.', ',');
-        const _abrir = function(numero){
+        const _abrir = function(rec){
+          const numero = (rec && rec.numero != null) ? rec.numero : null;
           let msg = 'Nova encomenda (take away)' + (numero ? (' nº ' + numero) : '') + (nome ? ' — ' + nome : '') + ':\n' + linhas.join('\n') + '\nTotal: ' + _totalTxt + '€';
           if(pedeLev && horaLev) msg += '\n🕒 Levantamento hoje às ' + horaLev;
           msg += '\n\nA aguardar a vossa confirmação. Obrigado!';
           const url = 'https://wa.me/' + num + '?text=' + encodeURIComponent(msg);
           if(win){ try{ win.location = url; }catch(e){ window.open(url, '_blank'); } } else { window.open(url, '_blank'); }
-          try{ lista = []; guardar(); atualizarBadge(); }catch(e){}   // esvazia a lista (encomenda enviada)
-          setTimeout(function(){ overlay.classList.remove('aberto'); }, 400);   // volta ao menu
+          // guarda a encomenda no telemóvel (com código) para o cliente acompanhar o estado
+          if(rec && rec.id){ try{ _encPush({ id: rec.id, numero: rec.numero, itens: itensJson, total: t, levant: horaLev, estado:'pendente', criado: Date.now() }); _encIniciarSync(); }catch(e){} }
+          try{ lista = []; guardar(); atualizarBadge(); }catch(e){}   // esvazia a lista de compras (encomenda enviada)
+          render();   // mostra o recibo/estado da encomenda (fica visível, não desaparece)
         };
         if(window.__PREVIEW){ alert('Pré-visualização: aqui abriria o WhatsApp com a encomenda.'); return; }
         const win = window.open('', '_blank');   // abre já a janela (preserva o gesto do toque no iOS)
         enviar.disabled = true;
         if(typeof sbC !== 'undefined' && sbC && window.__negocioId){
           sbC.rpc('criar_encomenda', { p_negocio: window.__negocioId, p_nome: nome, p_tel: '', p_levant: horaLev, p_itens: itensJson, p_total: t })
-            .then(function(res){ const numero = (res && res.data && res.data[0] && res.data[0].numero) || null; _abrir(numero); })
+            .then(function(res){ const rec = (res && res.data && res.data[0]) ? res.data[0] : null; _abrir(rec); })
             .catch(function(){ _abrir(null); });
         } else { _abrir(null); }
       };
