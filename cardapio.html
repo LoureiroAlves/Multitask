@@ -1714,6 +1714,26 @@
   html body.fundo-ardosia .categoria-painel-conteudo h2,
   html body.fundo-ardosia .categoria-painel-conteudo summary,
   html body.fundo-ardosia #painelTitulo{ color:#f2efe6 !important; }
+  /* Abertura: a caixa dos separadores fica transparente para o fundo escolhido preencher também o ecrã inicial */
+  html body.fundo-claro .categoria-grid,
+  html body.fundo-papel .categoria-grid,
+  html body.fundo-ardosia .categoria-grid{ background:transparent !important; border-bottom:none !important; }
+
+  /* ===== CORES E FUNDOS — controlos individuais (mandam sobre o modelo). Só atuam quando a classe ap-* está presente ===== */
+  html body.ap-bgmain{ background-color:var(--ap-bgmain) !important; background-image:none !important; }
+  html body.ap-bgmain .categoria-grid{ background:transparent !important; border-bottom:none !important; }
+  html body.ap-bgsub .categoria-painel{ background-color:var(--ap-bgsub) !important; background-image:none !important; }
+  html body.ap-bgsub .categoria-painel-conteudo{ background-color:transparent !important; }
+  html body.ap-tit #painelTitulo,
+  html body.ap-tit .categoria-painel-conteudo h2{ color:var(--ap-tit) !important; }
+  html body.ap-sub .categoria-painel-conteudo .subtitulo,
+  html body.ap-sub .categoria-painel-conteudo .menu-desc{ color:var(--ap-sub) !important; }
+  html body.ap-pratos .categoria-painel-conteudo .nome,
+  html body.ap-pratos .categoria-painel-conteudo .desc,
+  html body.ap-pratos .categoria-painel-conteudo summary{ color:var(--ap-pratos) !important; }
+  html body.ap-voltar .categoria-painel-header,
+  html body.ap-voltar .categoria-painel-header .voltar{ color:var(--ap-voltar) !important; }
+  html body.ap-mais .btn-add-lista{ background:var(--ap-mais) !important; }
 
   #localBloco{ padding:14px 16px 6px; }
   #localBloco .local-card{ display:block; position:relative; max-width:520px; margin:0 auto; border:2px solid var(--dourado); border-radius:16px; overflow:hidden; box-shadow:0 6px 18px rgba(74,56,32,.16); text-decoration:none; color:#fff; }
@@ -4241,6 +4261,19 @@
       // PILOTO — Fundo do menu independente dos separadores (opcional; vazio = segue o modelo)
       { const _ft = (config.fundoTema || '').toString().trim();
         ['claro','papel','ardosia'].forEach(function(x){ document.body.classList.toggle('fundo-' + x, _ft === x); }); }
+      // ===== CORES E FUNDOS — controlos individuais (vazio = segue o tema/modelo) =====
+      { const _ap = (config.aparencia && typeof config.aparencia === 'object') ? config.aparencia : {};
+        const _root = document.documentElement, _b = document.body;
+        const _set = function(cls, varName, val){ val = (val || '').toString().trim(); if(val){ _root.style.setProperty(varName, val); _b.classList.add(cls); } else { _b.classList.remove(cls); } };
+        _set('ap-bgmain', '--ap-bgmain', _ap.bgMain);
+        _set('ap-bgsub',  '--ap-bgsub',  _ap.bgSub);
+        _set('ap-tit',    '--ap-tit',    _ap.titulos);
+        _set('ap-sub',    '--ap-sub',    _ap.subtitulos);
+        _set('ap-pratos', '--ap-pratos', _ap.pratos);
+        _set('ap-voltar', '--ap-voltar', _ap.voltar);
+        _set('ap-mais',   '--ap-mais',   _ap.mais);
+        { const _d = (_ap.destaque || '').toString().trim(); if(_d) _root.style.setProperty('--dourado', _d); }
+      }
       // Cores das riscas do modelo "Praia" (editáveis)
       (function(){
         const rs = document.body.style;

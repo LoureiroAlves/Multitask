@@ -374,14 +374,18 @@ amesadigital.pt</textarea>
         <option value="foodtruck">Food Truck (bilhetes, negrito, divertido)</option>
         <option value="revista">Revista (editorial, serif, fotos grandes)</option>
       </select>
-      <label for="fundoTemaSel" style="margin-top:14px;">Fundo do menu <span style="font-weight:400; color:var(--castanho-suave);">(independente dos separadores)</span></label>
-      <select id="fundoTemaSel" style="width:100%; padding:10px 12px; border-radius:10px; border:1.5px solid var(--linha); background:var(--branco); font-family:inherit; color:var(--castanho); font-size:0.95rem;">
-        <option value="">Segue o separador (por norma)</option>
-        <option value="claro">Claro (creme neutro)</option>
-        <option value="papel">Papel (branco quente)</option>
-        <option value="ardosia">Ardósia (escuro)</option>
-      </select>
-      <div class="subtitulo" style="margin-top:3px;">Muda só o fundo do menu, sem trocar o estilo dos separadores.</div>
+      <div style="margin-top:16px; padding:14px; border:1.5px solid var(--linha); border-radius:12px; background:#fbf8f2;">
+        <div style="font-weight:800; color:var(--dourado-escuro); margin-bottom:4px;">🎨 Cores e Fundos</div>
+        <div class="subtitulo" style="margin-bottom:10px;">Liga só o que quiseres mudar; o resto segue o tema/modelo. Estes controlos mandam sobre o modelo.</div>
+        <label style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin:7px 0; cursor:pointer;"><span style="display:flex; align-items:center; gap:8px; font-size:.9rem; color:var(--castanho);"><input type="checkbox" id="apBgMainOn" style="width:auto;"> Fundo do ecrã principal</span><input type="color" id="apBgMain" value="#faf7f1" style="width:52px; height:34px; padding:0; border:none; background:none; cursor:pointer; flex-shrink:0;"></label>
+        <label style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin:7px 0; cursor:pointer;"><span style="display:flex; align-items:center; gap:8px; font-size:.9rem; color:var(--castanho);"><input type="checkbox" id="apBgSubOn" style="width:auto;"> Fundo das sub-categorias</span><input type="color" id="apBgSub" value="#ffffff" style="width:52px; height:34px; padding:0; border:none; background:none; cursor:pointer; flex-shrink:0;"></label>
+        <label style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin:7px 0; cursor:pointer;"><span style="display:flex; align-items:center; gap:8px; font-size:.9rem; color:var(--castanho);"><input type="checkbox" id="apTitOn" style="width:auto;"> Cor dos títulos</span><input type="color" id="apTit" value="#4a3820" style="width:52px; height:34px; padding:0; border:none; background:none; cursor:pointer; flex-shrink:0;"></label>
+        <label style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin:7px 0; cursor:pointer;"><span style="display:flex; align-items:center; gap:8px; font-size:.9rem; color:var(--castanho);"><input type="checkbox" id="apSubOn" style="width:auto;"> Cor dos subtítulos</span><input type="color" id="apSub" value="#8a7a5c" style="width:52px; height:34px; padding:0; border:none; background:none; cursor:pointer; flex-shrink:0;"></label>
+        <label style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin:7px 0; cursor:pointer;"><span style="display:flex; align-items:center; gap:8px; font-size:.9rem; color:var(--castanho);"><input type="checkbox" id="apPratosOn" style="width:auto;"> Cor do texto dos pratos</span><input type="color" id="apPratos" value="#4a3820" style="width:52px; height:34px; padding:0; border:none; background:none; cursor:pointer; flex-shrink:0;"></label>
+        <label style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin:7px 0; cursor:pointer;"><span style="display:flex; align-items:center; gap:8px; font-size:.9rem; color:var(--castanho);"><input type="checkbox" id="apVoltarOn" style="width:auto;"> Cor da seta "voltar" / controlos</span><input type="color" id="apVoltar" value="#4a3820" style="width:52px; height:34px; padding:0; border:none; background:none; cursor:pointer; flex-shrink:0;"></label>
+        <label style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin:7px 0; cursor:pointer;"><span style="display:flex; align-items:center; gap:8px; font-size:.9rem; color:var(--castanho);"><input type="checkbox" id="apMaisOn" style="width:auto;"> Cor do botão + (carrinho)</span><input type="color" id="apMais" value="#a8712f" style="width:52px; height:34px; padding:0; border:none; background:none; cursor:pointer; flex-shrink:0;"></label>
+        <label style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin:7px 0; cursor:pointer;"><span style="display:flex; align-items:center; gap:8px; font-size:.9rem; color:var(--castanho);"><input type="checkbox" id="apDestOn" style="width:auto;"> Cor de destaque (preços/botões)</span><input type="color" id="apDest" value="#a8712f" style="width:52px; height:34px; padding:0; border:none; background:none; cursor:pointer; flex-shrink:0;"></label>
+      </div>
       <label style="display:flex; align-items:center; gap:8px; margin-top:10px; font-size:.92rem;">
         <input type="checkbox" id="painelFundoOff" style="width:auto;"> Mostrar o fundo completo do layout nas secções (por norma usa-se a versão suave)
       </label>
@@ -2727,7 +2731,9 @@ amesadigital.pt</textarea>
     aplicarDecorUI();
     document.getElementById('jogosAtivo').checked = config.jogos !== false;
     document.getElementById('modeloSel').value = config.modelo || 'lista';
-    { const _fts = document.getElementById('fundoTemaSel'); if(_fts) _fts.value = config.fundoTema || ''; }
+    { const _ap = config.aparencia || {};
+      const _ld = function(onId, colId, val){ const on = document.getElementById(onId), c = document.getElementById(colId); const v = (val||'').toString().trim(); if(on) on.checked = !!v; if(c && v) c.value = v; };
+      _ld('apBgMainOn','apBgMain', _ap.bgMain); _ld('apBgSubOn','apBgSub', _ap.bgSub); _ld('apTitOn','apTit', _ap.titulos); _ld('apSubOn','apSub', _ap.subtitulos); _ld('apPratosOn','apPratos', _ap.pratos); _ld('apVoltarOn','apVoltar', _ap.voltar); _ld('apMaisOn','apMais', _ap.mais); _ld('apDestOn','apDest', _ap.destaque); }
     { const _pf = document.getElementById('painelFundoOff'); if(_pf) _pf.checked = !!config.painelFundoOff; }
     document.getElementById('cadernoBox').style.display = (config.modelo === 'caderno') ? 'block' : 'none';
     { document.getElementById('praiaCorBox').style.display = (config.modelo === 'praia') ? 'block' : 'none';
@@ -3298,7 +3304,7 @@ amesadigital.pt</textarea>
     document.getElementById('italianoDecoBox').style.display = (e.target.value === 'italiano') ? 'block' : 'none';
     document.getElementById('bambuDecoBox').style.display = (e.target.value === 'bambu') ? 'block' : 'none';
   });
-  { const _fts = document.getElementById('fundoTemaSel'); if(_fts) _fts.addEventListener('change', function(){ if(window.__agendarPreview) window.__agendarPreview(); }); }
+  ['apBgMainOn','apBgMain','apBgSubOn','apBgSub','apTitOn','apTit','apSubOn','apSub','apPratosOn','apPratos','apVoltarOn','apVoltar','apMaisOn','apMais','apDestOn','apDest'].forEach(function(id){ const el = document.getElementById(id); if(el) el.addEventListener('input', function(){ if(window.__agendarPreview) window.__agendarPreview(); }); });
   document.getElementById('abrirEfeitoSel').addEventListener('change', e => {
     const wb = document.getElementById('wipeBox'); if(wb) wb.style.display = (e.target.value === 'wipe') ? 'block' : 'none';
   });
@@ -3809,7 +3815,9 @@ amesadigital.pt</textarea>
       }
       config.jogos = document.getElementById('jogosAtivo').checked;
       config.modelo = document.getElementById('modeloSel').value;
-      { const _fts = document.getElementById('fundoTemaSel'); config.fundoTema = _fts ? _fts.value : ''; }
+      config.fundoTema = '';   // piloto substituído pelo bloco "Cores e Fundos"
+      { const _sv = function(onId, colId){ const on = document.getElementById(onId), c = document.getElementById(colId); return (on && on.checked && c) ? c.value : ''; };
+        config.aparencia = { bgMain:_sv('apBgMainOn','apBgMain'), bgSub:_sv('apBgSubOn','apBgSub'), titulos:_sv('apTitOn','apTit'), subtitulos:_sv('apSubOn','apSub'), pratos:_sv('apPratosOn','apPratos'), voltar:_sv('apVoltarOn','apVoltar'), mais:_sv('apMaisOn','apMais'), destaque:_sv('apDestOn','apDest') }; }
       { const _pf = document.getElementById('painelFundoOff'); config.painelFundoOff = !!(_pf && _pf.checked); }
       config.sliderCor = document.getElementById('sliderCorAtiva').checked ? document.getElementById('sliderCor').value : '';
       config.sliderCorCapa = document.getElementById('sliderCapaAtiva').checked ? document.getElementById('sliderCorCapa').value : '';
