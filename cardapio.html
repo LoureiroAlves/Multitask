@@ -7267,12 +7267,26 @@
       a.forEach(function(o){
         const inf = _encInfo(o.estado);
         const itensTxt = (o.itens||[]).map(function(it){ return (it.qtd||1)+'× '+it.nome; }).join(', ');
-        h += '<div style="border:1.5px solid '+inf.cor+'; background:'+inf.bg+'; border-radius:12px; padding:11px 13px; margin-bottom:10px;">'
+        h += '<div class="enc-card" data-encid="'+o.id+'" style="position:relative; border:1.5px solid '+inf.cor+'; background:'+inf.bg+'; border-radius:12px; padding:11px 13px; margin-bottom:10px; touch-action:pan-y; will-change:transform;">'
           + '<div style="font-weight:800; color:'+inf.cor+';">'+inf.ic+' Encomenda nº '+(o.numero!=null?o.numero:'—')+' — '+inf.txt+'</div>'
           + '<div style="font-size:.8rem; color:var(--castanho-suave); margin-top:3px;">'+itensTxt+(o.levant?(' · levantar às '+o.levant):'')+'</div>'
+          + '<div style="font-size:.68rem; color:var(--castanho-suave); opacity:.7; margin-top:5px;">‹ desliza para remover</div>'
           + '</div>';
       });
       return h;
+    }
+    function _encRemover(id){
+      try{ const a = _encListaValida().filter(function(o){ return String(o.id) !== String(id); }); _encEscrever(a); atualizarBadge(); if(overlay.classList.contains('aberto')) render(); }catch(e){}
+    }
+    function _encWirePainel(){
+      const p = document.getElementById('cartPainel'); if(!p) return;
+      p.querySelectorAll('.enc-rem').forEach(function(b){ b.onclick = function(ev){ ev.stopPropagation(); _encRemover(b.dataset.encid); }; });
+      p.querySelectorAll('.enc-card').forEach(function(card){
+        let x0 = null, dx = 0;
+        card.addEventListener('touchstart', function(e){ x0 = e.touches[0].clientX; dx = 0; card.style.transition = ''; }, { passive:true });
+        card.addEventListener('touchmove', function(e){ if(x0 === null) return; dx = e.touches[0].clientX - x0; if(dx < 0){ card.style.transform = 'translateX(' + dx + 'px)'; card.style.opacity = String(Math.max(0.25, 1 + dx/220)); } }, { passive:true });
+        card.addEventListener('touchend', function(){ if(x0 === null) return; const id = card.dataset.encid; card.style.transition = 'transform .18s ease, opacity .18s ease'; if(dx < -70){ card.style.transform = 'translateX(-120%)'; card.style.opacity = '0'; setTimeout(function(){ _encRemover(id); }, 170); } else { card.style.transform = ''; card.style.opacity = ''; } x0 = null; }, { passive:true });
+      });
     }
     function _encMostrarPopup(cor, titulo, sub){
       try{
@@ -7503,6 +7517,7 @@
           guardar(); atualizarBadge(); render();
         };
       });
+      _encWirePainel();   // deslizar-para-remover em cada encomenda
     }
 
     // ---- Encomenda por WhatsApp: confirmar + enviar ----
