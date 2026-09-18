@@ -2064,10 +2064,10 @@
   #cartOverlay{
     position:fixed; inset:0; z-index:400; background:rgba(0,0,0,0);
     display:flex; align-items:flex-end; justify-content:center;
-    visibility:hidden; pointer-events:none;
-    transition:background .32s ease, visibility 0s linear .38s;
+    pointer-events:none;
+    transition:background .32s ease;
   }
-  #cartOverlay.aberto{ background:rgba(0,0,0,0.5); visibility:visible; pointer-events:auto; transition:background .32s ease; }
+  #cartOverlay.aberto{ background:rgba(0,0,0,0.5); pointer-events:auto; }
   .cart-painel{
     background:var(--branco); width:100%; max-width:520px; max-height:82vh;
     border-radius:18px 18px 0 0; padding:18px 16px 26px; overflow-y:auto;
@@ -2079,8 +2079,8 @@
   #favBtn{ position:fixed; right:14px; bottom:77px; z-index:200; width:46px; height:46px; border-radius:50%; border:none; background:#e0245e; color:#fff; font-size:1.35rem; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,0.4); display:none; align-items:center; justify-content:center; }
   #favBtn .fav-badge{ position:absolute; top:-5px; right:-5px; background:var(--dourado); color:#fff; font-size:0.68rem; font-weight:700; min-width:18px; height:18px; border-radius:9px; display:flex; align-items:center; justify-content:center; padding:0 4px; border:2px solid var(--branco); }
   body.cart-oculto #favBtn{ opacity:0; visibility:hidden; pointer-events:none; }
-  #favOverlay{ position:fixed; inset:0; z-index:400; background:rgba(0,0,0,0); display:flex; align-items:flex-end; justify-content:center; visibility:hidden; pointer-events:none; transition:background .32s ease, visibility 0s linear .38s; }
-  #favOverlay.aberto{ background:rgba(0,0,0,0.5); visibility:visible; pointer-events:auto; transition:background .32s ease; }
+  #favOverlay{ position:fixed; inset:0; z-index:400; background:rgba(0,0,0,0); display:flex; align-items:flex-end; justify-content:center; pointer-events:none; transition:background .32s ease; }
+  #favOverlay.aberto{ background:rgba(0,0,0,0.5); pointer-events:auto; }
   #favOverlay.aberto .cart-painel{ transform:translateY(0); }
   .fav-rem{ margin-left:auto; border:none; background:transparent; color:#c0392b; font-size:1.05rem; cursor:pointer; padding:2px 8px; }
   /* Carrinho sempre legível: paleta neutra fixa dentro do painel, independente das cores do layout
@@ -2115,8 +2115,8 @@
   .cart-porpessoa strong{ color:var(--dourado); font-size:1.35rem; display:block; margin-top:3px; }
 
   /* Escolha de tamanho/dose */
-  #escOverlay{ position:fixed; inset:0; z-index:450; background:rgba(0,0,0,0); display:flex; align-items:flex-end; justify-content:center; visibility:hidden; pointer-events:none; transition:background .32s ease, visibility 0s linear .38s; }
-  #escOverlay.aberto{ background:rgba(0,0,0,0.5); visibility:visible; pointer-events:auto; transition:background .32s ease; }
+  #escOverlay{ position:fixed; inset:0; z-index:450; background:rgba(0,0,0,0); display:flex; align-items:flex-end; justify-content:center; pointer-events:none; transition:background .32s ease; }
+  #escOverlay.aberto{ background:rgba(0,0,0,0.5); pointer-events:auto; }
   .esc-painel{ background:var(--branco); width:100%; max-width:520px; border-radius:18px 18px 0 0; padding:18px 16px 24px; transform:translateY(100%); transition:transform .38s cubic-bezier(.22,1,.36,1); }
   #escOverlay.aberto .esc-painel{ transform:translateY(0); }
   @keyframes apPop{ from{ transform:scale(.92); opacity:0; } to{ transform:scale(1); opacity:1; } }
@@ -2149,12 +2149,12 @@
   }
 
   /* ===== Cartão de fidelidade ===== */
-  #fidOverlay{ position:fixed; inset:0; z-index:600; background:rgba(0,0,0,0.55); display:flex; align-items:center; justify-content:center; padding:16px; opacity:0; visibility:hidden; pointer-events:none; transition:opacity .28s ease, visibility 0s linear .32s; }
-  #fidOverlay.aberto{ opacity:1; visibility:visible; pointer-events:auto; transition:opacity .28s ease; }
+  #fidOverlay{ position:fixed; inset:0; z-index:600; background:rgba(0,0,0,0.55); display:flex; align-items:center; justify-content:center; padding:16px; opacity:0; pointer-events:none; transition:opacity .28s ease; }
+  #fidOverlay.aberto{ opacity:1; pointer-events:auto; }
 
   /* ===== Agenda / Reservas ===== */
-  #agendaOverlay{ position:fixed; inset:0; z-index:620; background:rgba(0,0,0,0.55); display:flex; align-items:center; justify-content:center; padding:14px; opacity:0; visibility:hidden; pointer-events:none; transition:opacity .28s ease, visibility 0s linear .32s; }
-  #agendaOverlay.aberto{ opacity:1; visibility:visible; pointer-events:auto; transition:opacity .28s ease; }
+  #agendaOverlay{ position:fixed; inset:0; z-index:620; background:rgba(0,0,0,0.55); display:flex; align-items:center; justify-content:center; padding:14px; opacity:0; pointer-events:none; transition:opacity .28s ease; }
+  #agendaOverlay.aberto{ opacity:1; pointer-events:auto; }
   .ag-card{ background:var(--branco); width:100%; max-width:400px; max-height:92vh; overflow-y:auto; border-radius:18px; padding:18px 16px calc(18px + env(safe-area-inset-bottom)); transform:translateY(26px) scale(.94); opacity:0; transition:transform .32s cubic-bezier(.2,.9,.3,1), opacity .28s ease; }
   #agendaOverlay.aberto .ag-card{ transform:translateY(0) scale(1); opacity:1; }
   .ag-card h3{ font-family:var(--fonte-titulo); color:var(--castanho); text-align:center; margin:0 0 2px; font-size:1.3rem; }
