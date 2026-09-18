@@ -7274,6 +7274,28 @@
       });
       return h;
     }
+    function _encMostrarPopup(cor, titulo, sub){
+      try{
+        let ov = document.getElementById('encPopup'); if(ov) ov.remove();
+        ov = document.createElement('div'); ov.id = 'encPopup';
+        ov.style.cssText = 'position:fixed; inset:0; z-index:9500; background:rgba(0,0,0,.55); display:flex; align-items:center; justify-content:center; padding:18px;';
+        ov.innerHTML = '<div style="background:#fff; border-radius:18px; max-width:360px; width:100%; padding:24px 20px; text-align:center; border-top:6px solid ' + cor + ';">'
+          + '<div style="font-family:var(--fonte-titulo); font-weight:800; font-size:1.3rem; color:' + cor + '; margin-bottom:8px;">' + titulo + '</div>'
+          + '<div style="color:var(--castanho); font-size:.98rem; line-height:1.5;">' + sub + '</div>'
+          + '<button id="encPopupOk" type="button" style="margin-top:18px; width:100%; background:' + cor + '; color:#fff; border:none; border-radius:12px; padding:13px; font-weight:800; font-family:inherit; cursor:pointer;">Está bem</button>'
+          + '</div>';
+        document.body.appendChild(ov);
+        const fechar = function(){ try{ ov.remove(); }catch(e){} };
+        ov.addEventListener('click', function(e){ if(e.target === ov) fechar(); });
+        const ok = document.getElementById('encPopupOk'); if(ok) ok.onclick = fechar;
+      }catch(e){}
+    }
+    function _encAvisar(av){
+      const _n = (av.numero != null ? av.numero : '—');
+      if(av.estado === 'pronta') _encMostrarPopup('#8a4b10', '🎉 Encomenda pronta!', 'A tua encomenda nº ' + _n + ' está <strong>pronta para levantar</strong>.');
+      else if(av.estado === 'confirmada') _encMostrarPopup('#1e6b3c', '✅ Encomenda confirmada', 'O restaurante confirmou a tua encomenda nº ' + _n + '. Já está a ser preparada.');
+      else if(av.estado === 'cancelada') _encMostrarPopup('#b23', '❌ Encomenda não confirmada', 'A tua encomenda nº ' + _n + ' não foi confirmada pelo restaurante.');
+    }
     let _encSyncTimer = null;
     function _encSync(){
       try{
@@ -7283,9 +7305,10 @@
         sbC.rpc('encomendas_estado', { p_ids: ids }).then(function(res){
           if(!res || res.error || !res.data) return;   // função SQL ainda não criada → não mexe
           const srv = {}; res.data.forEach(function(r){ if(r && r.id) srv[String(r.id)] = r; });
-          const a = _encListaValida(); let mudou = false;
-          a.forEach(function(o){ const s = srv[String(o.id)]; if(s && s.estado && s.estado !== o.estado){ o.estado = s.estado; mudou = true; } });
+          const a = _encListaValida(); let mudou = false; let _aviso = null;
+          a.forEach(function(o){ const s = srv[String(o.id)]; if(s && s.estado && s.estado !== o.estado){ o.estado = s.estado; mudou = true; if(['confirmada','pronta','cancelada'].indexOf(s.estado) >= 0) _aviso = { numero:o.numero, estado:s.estado }; } });
           if(mudou){ _encEscrever(a); atualizarBadge(); if(overlay.classList.contains('aberto')) render(); }
+          if(_aviso) _encAvisar(_aviso);   // popup no telemóvel do cliente ao mudar de estado
         });
       }catch(e){}
     }
@@ -7434,7 +7457,7 @@
             '</div>';
           }
         }
-        if(_waAtivo()){ html += '<button class="cart-whats" id="cartWhats"><svg viewBox="0 0 24 24" width="18" height="18" fill="#fff" style="vertical-align:-3px;margin-right:7px;"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.149-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51l-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.71.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>Enviar pedido por WhatsApp</button>'; }
+        if(_waAtivo()){ html += '<button class="cart-whats" id="cartWhats">🛍️ Enviar pedido</button>'; }
         html += '<div class="cart-acoes"><button class="cart-fechar" id="cartFechar">Fechar</button><button class="cart-limpar" id="cartLimpar">Limpar lista</button></div>';
         p.innerHTML = html;
         if(mostrarPrecos && !_waAtivo()){
@@ -7517,7 +7540,7 @@
       const _pickMaxHHMM = _pickMax ? _hhmm(_pickMax) : '';
       const _dentroRange = function(dt){ const t = dt.getTime(); for(var i=0;i<_ranges.length;i++){ if(t >= _ranges[i].start - 60000 && t <= _ranges[i].end + 60000) return true; } return false; };
       p.innerHTML = '<h3>Confirmar encomenda</h3>' +
-        '<div class="cart-vazio" style="padding:0 0 10px; font-size:0.84rem;">Vamos abrir o WhatsApp com esta lista para enviares ao restaurante. O pedido só fica confirmado quando o restaurante responder.</div>' +
+        '<div class="cart-vazio" style="padding:0 0 10px; font-size:0.84rem;">Enviamos o teu pedido diretamente ao restaurante. Só fica confirmado quando o restaurante responder — podes acompanhar aqui.</div>' +
         resumo +
         '<div class="cart-total"><span>Total</span><span>' + total.toFixed(2).replace('.', ',') + '€</span></div>' +
         '<label for="cartNome" style="display:block; font-size:0.82rem; color:var(--castanho-suave); margin:12px 0 4px;">O teu nome</label>' +
@@ -7530,16 +7553,15 @@
                '<div style="font-size:0.78rem; color:var(--castanho-suave); margin-top:4px;">' + (_ranges.length ? ('Levantamento hoje: ' + _rangesTxt + '.') : ('A partir das ' + _pickMinHHMM + ' (hoje).')) + '</div>')
         ) : '') +
         '<div id="cartErro" style="display:none; color:#c0392b; font-size:0.82rem; font-weight:700; margin-top:8px;"></div>' +
-        '<div class="cart-acoes"><button class="cart-fechar" id="cartVoltar">‹ Voltar</button><button class="cart-whats" id="cartEnviar">Continuar para o WhatsApp</button></div>';
+        '<div class="cart-acoes"><button class="cart-fechar" id="cartVoltar">‹ Voltar</button><button class="cart-whats" id="cartEnviar">✅ Enviar pedido</button></div>';
       const voltar = document.getElementById('cartVoltar');
       if(voltar) voltar.onclick = () => render();
       const inp = document.getElementById('cartNome');
       const enviar = document.getElementById('cartEnviar');
       if(enviar) enviar.onclick = () => {
-        const num = _cartCfg().whatsapp;
-        if(!num) return;
+        const num = _cartCfg().whatsapp;   // opcional — só serve de plano B
         const erroEl = document.getElementById('cartErro');
-        const _erro = function(t){ if(erroEl){ erroEl.textContent = t; erroEl.style.display = 'block'; } };
+        const _erro = function(tt){ if(erroEl){ erroEl.innerHTML = tt; erroEl.style.display = 'block'; } };
         const nome = (inp && inp.value.trim()) || '';
         let horaLev = '';
         if(pedeLev){
@@ -7554,26 +7576,39 @@
         let t = 0; const linhas = []; const itensJson = [];
         lista.forEach(it => { const lt = it.preco * it.qtd; t += lt; linhas.push('• ' + it.qtd + '× ' + it.nome + ' — ' + lt.toFixed(2).replace('.', ',') + '€'); itensJson.push({ nome: it.nome, qtd: it.qtd, preco: it.preco }); });
         const _totalTxt = t.toFixed(2).replace('.', ',');
-        const _abrir = function(rec){
-          const numero = (rec && rec.numero != null) ? rec.numero : null;
+        const _msgWhats = function(numero){
           let msg = 'Nova encomenda (take away)' + (numero ? (' nº ' + numero) : '') + (nome ? ' — ' + nome : '') + ':\n' + linhas.join('\n') + '\nTotal: ' + _totalTxt + '€';
           if(pedeLev && horaLev) msg += '\n🕒 Levantamento hoje às ' + horaLev;
-          msg += '\n\nA aguardar a vossa confirmação. Obrigado!';
-          const url = 'https://wa.me/' + num + '?text=' + encodeURIComponent(msg);
-          if(win){ try{ win.location = url; }catch(e){ window.open(url, '_blank'); } } else { window.open(url, '_blank'); }
-          // guarda a encomenda no telemóvel (com código) para o cliente acompanhar o estado
-          if(rec && rec.id){ try{ _encPush({ id: rec.id, numero: rec.numero, itens: itensJson, total: t, levant: horaLev, estado:'pendente', criado: Date.now() }); _encIniciarSync(); }catch(e){} }
-          try{ lista = []; guardar(); atualizarBadge(); }catch(e){}   // esvazia a lista de compras (encomenda enviada)
-          render();   // mostra o recibo/estado da encomenda (fica visível, não desaparece)
+          msg += '\n\nObrigado!';
+          return msg;
         };
-        if(window.__PREVIEW){ alert('Pré-visualização: aqui abriria o WhatsApp com a encomenda.'); return; }
-        const win = window.open('', '_blank');   // abre já a janela (preserva o gesto do toque no iOS)
+        const _registado = function(rec){
+          if(rec && rec.id){ try{ _encPush({ id: rec.id, numero: rec.numero, itens: itensJson, total: t, levant: horaLev, estado:'pendente', criado: Date.now() }); _encIniciarSync(); }catch(e){} }
+          try{ lista = []; guardar(); atualizarBadge(); }catch(e){}
+          render();   // mostra o recibo/estado (a aguardar confirmação) — sem WhatsApp
+        };
+        const _falhou = function(){
+          enviar.disabled = false;
+          if(num){
+            _erro('Não consegui registar no restaurante. Podes enviar por WhatsApp:');
+            let b = document.getElementById('cartWhatsFallback');
+            if(!b){ b = document.createElement('button'); b.id = 'cartWhatsFallback'; b.className = 'cart-whats'; b.style.marginTop = '8px'; b.textContent = '📲 Enviar por WhatsApp'; if(erroEl && erroEl.parentNode) erroEl.parentNode.insertBefore(b, erroEl.nextSibling); }
+            b.onclick = function(){ try{ window.open('https://wa.me/' + num + '?text=' + encodeURIComponent(_msgWhats(null)), '_blank'); }catch(e){} _registado(null); };
+          } else {
+            _erro('Não consegui enviar a encomenda. Verifica a ligação e tenta de novo.');
+          }
+        };
+        if(window.__PREVIEW){ alert('Pré-visualização: aqui seria enviada a encomenda.'); return; }
         enviar.disabled = true;
         if(typeof sbC !== 'undefined' && sbC && window.__negocioId){
           sbC.rpc('criar_encomenda', { p_negocio: window.__negocioId, p_nome: nome, p_tel: '', p_levant: horaLev, p_itens: itensJson, p_total: t })
-            .then(function(res){ const rec = (res && res.data && res.data[0]) ? res.data[0] : null; _abrir(rec); })
-            .catch(function(){ _abrir(null); });
-        } else { _abrir(null); }
+            .then(function(res){ const rec = (res && res.data && res.data[0]) ? res.data[0] : null; if(rec && rec.id){ _registado(rec); } else { _falhou(); } })
+            .catch(function(){ _falhou(); });
+        } else {
+          // Sem base de dados neste contexto → WhatsApp é o único canal (abre já, no gesto do toque)
+          if(num){ try{ window.open('https://wa.me/' + num + '?text=' + encodeURIComponent(_msgWhats(null)), '_blank'); }catch(e){} _registado(null); }
+          else { enviar.disabled = false; _erro('Não foi possível enviar. Tenta novamente.'); }
+        }
       };
       if(inp){ try{ inp.focus(); }catch(e){} }
     }
