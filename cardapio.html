@@ -2071,17 +2071,17 @@
   .cart-painel{
     background:var(--branco); width:100%; max-width:520px; max-height:82vh;
     border-radius:18px 18px 0 0; padding:18px 16px 26px; overflow-y:auto;
-    transform:translateY(100%);
-    transition:transform .38s cubic-bezier(.22,1,.36,1);
+    transform-origin:50% 100%; transform:scale(0.05); opacity:0;
+    transition:transform .38s cubic-bezier(.22,.8,.25,1), opacity .28s ease;
   }
-  #cartOverlay.aberto .cart-painel{ transform:translateY(0); }
+  #cartOverlay.aberto .cart-painel{ transform:scale(1); opacity:1; }
   /* Botão + painel de FAVORITOS (pratos) */
   #favBtn{ position:fixed; right:14px; bottom:77px; z-index:200; width:46px; height:46px; border-radius:50%; border:none; background:#e0245e; color:#fff; font-size:1.35rem; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,0.4); display:none; align-items:center; justify-content:center; }
   #favBtn .fav-badge{ position:absolute; top:-5px; right:-5px; background:var(--dourado); color:#fff; font-size:0.68rem; font-weight:700; min-width:18px; height:18px; border-radius:9px; display:flex; align-items:center; justify-content:center; padding:0 4px; border:2px solid var(--branco); }
   body.cart-oculto #favBtn{ opacity:0; visibility:hidden; pointer-events:none; }
   #favOverlay{ position:fixed; inset:0; z-index:400; background:rgba(0,0,0,0); display:flex; align-items:flex-end; justify-content:center; pointer-events:none; transition:background .32s ease; }
   #favOverlay.aberto{ background:rgba(0,0,0,0.5); pointer-events:auto; }
-  #favOverlay.aberto .cart-painel{ transform:translateY(0); }
+  #favOverlay.aberto .cart-painel{ transform:scale(1); opacity:1; }
   .fav-rem{ margin-left:auto; border:none; background:transparent; color:#c0392b; font-size:1.05rem; cursor:pointer; padding:2px 8px; }
   /* Carrinho sempre legível: paleta neutra fixa dentro do painel, independente das cores do layout
      (evita texto sem contraste quando o "bege" do tema é escuro ou o "castanho" é claro). */
@@ -2117,9 +2117,9 @@
   /* Escolha de tamanho/dose */
   #escOverlay{ position:fixed; inset:0; z-index:450; background:rgba(0,0,0,0); display:flex; align-items:flex-end; justify-content:center; pointer-events:none; transition:background .32s ease; }
   #escOverlay.aberto{ background:rgba(0,0,0,0.5); pointer-events:auto; }
-  .esc-painel{ background:var(--branco); width:100%; max-width:520px; border-radius:18px 18px 0 0; padding:18px 16px 24px; transform:translateY(100%); transition:transform .38s cubic-bezier(.22,1,.36,1); }
-  #escOverlay.aberto .esc-painel{ transform:translateY(0); }
-  @keyframes apPop{ from{ transform:scale(.92); opacity:0; } to{ transform:scale(1); opacity:1; } }
+  .esc-painel{ background:var(--branco); width:100%; max-width:520px; border-radius:18px 18px 0 0; padding:18px 16px 24px; transform-origin:50% 100%; transform:scale(0.05); opacity:0; transition:transform .38s cubic-bezier(.22,.8,.25,1), opacity .28s ease; }
+  #escOverlay.aberto .esc-painel{ transform:scale(1); opacity:1; }
+  @keyframes apPop{ from{ transform:scale(0.05); opacity:0; } to{ transform:scale(1); opacity:1; } }
   .esc-painel h3{ font-family:var(--fonte-titulo); color:var(--castanho); font-size:1.1rem; text-align:center; margin-bottom:4px; }
   .esc-sub{ text-align:center; font-size:0.82rem; color:var(--castanho-suave); margin-bottom:14px; }
   .esc-lista{ display:flex; flex-direction:column; gap:10px; }
@@ -2149,14 +2149,14 @@
   }
 
   /* ===== Cartão de fidelidade ===== */
-  #fidOverlay{ position:fixed; inset:0; z-index:600; background:rgba(0,0,0,0.55); display:flex; align-items:center; justify-content:center; padding:16px; opacity:0; pointer-events:none; transition:opacity .28s ease; }
-  #fidOverlay.aberto{ opacity:1; pointer-events:auto; }
+  #fidOverlay{ position:fixed; inset:0; z-index:600; background:rgba(0,0,0,0); display:flex; align-items:center; justify-content:center; padding:16px; pointer-events:none; transition:background .32s ease; }
+  #fidOverlay.aberto{ background:rgba(0,0,0,0.55); pointer-events:auto; }
 
   /* ===== Agenda / Reservas ===== */
-  #agendaOverlay{ position:fixed; inset:0; z-index:620; background:rgba(0,0,0,0.55); display:flex; align-items:center; justify-content:center; padding:14px; opacity:0; pointer-events:none; transition:opacity .28s ease; }
-  #agendaOverlay.aberto{ opacity:1; pointer-events:auto; }
-  .ag-card{ background:var(--branco); width:100%; max-width:400px; max-height:92vh; overflow-y:auto; border-radius:18px; padding:18px 16px calc(18px + env(safe-area-inset-bottom)); transform:translateY(26px) scale(.94); opacity:0; transition:transform .32s cubic-bezier(.2,.9,.3,1), opacity .28s ease; }
-  #agendaOverlay.aberto .ag-card{ transform:translateY(0) scale(1); opacity:1; }
+  #agendaOverlay{ position:fixed; inset:0; z-index:620; background:rgba(0,0,0,0); display:flex; align-items:center; justify-content:center; padding:14px; pointer-events:none; transition:background .32s ease; }
+  #agendaOverlay.aberto{ background:rgba(0,0,0,0.55); pointer-events:auto; }
+  .ag-card{ background:var(--branco); width:100%; max-width:400px; max-height:92vh; overflow-y:auto; border-radius:18px; padding:18px 16px calc(18px + env(safe-area-inset-bottom)); transform:scale(0.05); opacity:0; transition:transform .38s cubic-bezier(.22,.8,.25,1), opacity .28s ease; }
+  #agendaOverlay.aberto .ag-card{ transform:scale(1); opacity:1; }
   .ag-card h3{ font-family:var(--fonte-titulo); color:var(--castanho); text-align:center; margin:0 0 2px; font-size:1.3rem; }
   .ag-sub{ text-align:center; font-size:0.82rem; color:var(--castanho-suave); margin:0 0 12px; }
   .ag-cal-top{ display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
@@ -2193,8 +2193,8 @@
   .ag-btn:disabled{ opacity:.45; cursor:default; }
   .ag-fechar{ background:none; border:none; color:var(--castanho-suave); font-size:0.9rem; cursor:pointer; display:block; margin:12px auto 0; text-decoration:underline; }
   .ag-passo-tit{ font-size:0.8rem; font-weight:700; color:var(--dourado-escuro); margin:14px 0 4px; }
-  .fid-card{ background:var(--branco); width:100%; max-width:360px; border-radius:18px; padding:20px 18px; transform:translateY(26px) scale(.94); opacity:0; transition:transform .32s cubic-bezier(.2,.9,.3,1), opacity .28s ease; }
-  #fidOverlay.aberto .fid-card{ transform:translateY(0) scale(1); opacity:1; }
+  .fid-card{ background:var(--branco); width:100%; max-width:360px; border-radius:18px; padding:20px 18px; transform:scale(0.05); opacity:0; transition:transform .38s cubic-bezier(.22,.8,.25,1), opacity .28s ease; }
+  #fidOverlay.aberto .fid-card{ transform:scale(1); opacity:1; }
   .fid-stamps{ display:grid; grid-template-columns:repeat(4, 1fr); gap:10px; margin:6px 0; }
   .fid-stamp{ aspect-ratio:1/1; border-radius:50%; border:2px dashed var(--linha); display:flex; align-items:center; justify-content:center; font-size:1.4rem; color:var(--castanho-suave); }
   .fid-stamp.on{ background:linear-gradient(180deg,#c79a3b,var(--dourado)); border-style:solid; border-color:var(--dourado); color:#fff; box-shadow:0 2px 4px rgba(74,56,32,0.2); }
@@ -4975,7 +4975,7 @@
             const ov = document.createElement('div');
             ov.id = 'gerirOverlay';
             ov.style.cssText = 'position:fixed; inset:0; z-index:9000; background:rgba(0,0,0,.55); display:flex; align-items:center; justify-content:center; padding:16px;';
-            ov.innerHTML = '<div style="background:#fff; border-radius:18px; max-width:420px; width:100%; max-height:92vh; overflow:auto; padding:20px 18px; animation:apPop .22s ease;">'
+            ov.innerHTML = '<div style="background:#fff; border-radius:18px; max-width:420px; width:100%; max-height:92vh; overflow:auto; padding:20px 18px; animation:apPop .38s cubic-bezier(.22,.8,.25,1);">'
               + '<h3 style="margin:0 0 4px; text-align:center; font-family:var(--fonte-titulo); color:var(--castanho);">A tua reserva</h3>'
               + '<div style="text-align:center; color:var(--castanho-suave); font-size:.9rem; margin-bottom:14px;">' + resumo + '</div>'
               + (tel
@@ -7360,7 +7360,7 @@
         let ov = document.getElementById('encPopup'); if(ov) ov.remove();
         ov = document.createElement('div'); ov.id = 'encPopup';
         ov.style.cssText = 'position:fixed; inset:0; z-index:9500; background:rgba(0,0,0,.55); display:flex; align-items:center; justify-content:center; padding:18px;';
-        ov.innerHTML = '<div style="background:#fff; border-radius:18px; max-width:360px; width:100%; padding:24px 20px; text-align:center; border-top:6px solid ' + cor + '; animation:apPop .22s ease;">'
+        ov.innerHTML = '<div style="background:#fff; border-radius:18px; max-width:360px; width:100%; padding:24px 20px; text-align:center; border-top:6px solid ' + cor + '; animation:apPop .38s cubic-bezier(.22,.8,.25,1);">'
           + '<div style="font-family:var(--fonte-titulo); font-weight:800; font-size:1.3rem; color:' + cor + '; margin-bottom:8px;">' + titulo + '</div>'
           + '<div style="color:var(--castanho); font-size:.98rem; line-height:1.5;">' + sub + '</div>'
           + '<button id="encPopupOk" type="button" style="margin-top:18px; width:100%; background:' + cor + '; color:#fff; border:none; border-radius:12px; padding:13px; font-weight:800; font-family:inherit; cursor:pointer;">Está bem</button>'
