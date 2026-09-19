@@ -1727,6 +1727,24 @@ amesadigital.pt</textarea>
     </div>
   </details>
 
+  <details id="secExperiencia" class="ed-sec" data-tab="extras">
+    <summary>📱 Definições da experiência (cliente)</summary>
+    <div class="bloco-conteudo">
+      <p style="margin:0 0 10px; font-size:0.82rem; color:var(--castanho-suave);">A aba "⚙️ Definições da experiência" aparece no fim do menu. Escolhe o que mostrar ao cliente.</p>
+      <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:700;">
+        <input type="checkbox" id="expAtivo" style="width:auto; margin:0;"> Mostrar a aba no cardápio
+      </label>
+      <div style="margin:10px 0 0; padding-left:10px; border-left:2px solid var(--linha);">
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin:8px 0; font-size:.92rem; color:var(--castanho);"><input type="checkbox" id="expInstalarOn" style="width:auto; margin:0;"> 📲 Adicionar ao ecrã principal</label>
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin:8px 0; font-size:.92rem; color:var(--castanho);"><input type="checkbox" id="expPartilharOn" style="width:auto; margin:0;"> 🔗 Partilhar + código QR</label>
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin:8px 0; font-size:.92rem; color:var(--castanho);"><input type="checkbox" id="expTextoOn" style="width:auto; margin:0;"> 🔠 Texto maior (acessibilidade)</label>
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin:8px 0; font-size:.92rem; color:var(--castanho);"><input type="checkbox" id="expVibracaoOn" style="width:auto; margin:0;"> 📳 Vibração ao adicionar (Android)</label>
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin:8px 0; font-size:.92rem; color:var(--castanho);"><input type="checkbox" id="expNotifOn" style="width:auto; margin:0;"> 🔔 Notificações (aviso "brevemente")</label>
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin:8px 0; font-size:.92rem; color:var(--castanho);"><input type="checkbox" id="expLimparOn" style="width:auto; margin:0;"> 🧹 Limpar as minhas escolhas</label>
+      </div>
+    </div>
+  </details>
+
   <!-- LIMPEZA DE FOTOS -->
   <details id="secLimpeza" class="ed-sec" data-tab="limpeza">
     <summary>🧹 Limpeza de fotos (avançado)</summary>
@@ -2445,6 +2463,7 @@ amesadigital.pt</textarea>
         config.tileTamanho = parsed.tileTamanho || 'normal';
         config.tilesVidro = parsed.tilesVidro === true;
         config.tileRelevo = parsed.tileRelevo !== false;
+        config.experiencia = (parsed.experiencia && typeof parsed.experiencia === 'object') ? parsed.experiencia : {};
         config.carrinho = Object.assign({ ativo:true, precos:true }, parsed.carrinho || {});
         config.cores = (parsed.cores && typeof parsed.cores === 'object') ? parsed.cores : null;
         config.fundo = Object.assign({ tipo:'liso', imagem:'', textura:'pontos' }, parsed.fundo || {});
@@ -2769,6 +2788,8 @@ amesadigital.pt</textarea>
     document.getElementById('tileTamanhoSel').value = config.tileTamanho || 'normal';
     { const _tv = document.getElementById('tilesVidroChk'); if(_tv) _tv.checked = config.tilesVidro === true; }
     { const _tr = document.getElementById('tileRelevoChk'); if(_tr) _tr.checked = config.tileRelevo !== false; }
+    { const _ex = config.experiencia || {}; const _sc = function(id, v){ const e = document.getElementById(id); if(e) e.checked = v !== false; };
+      _sc('expAtivo', _ex.ativo); _sc('expInstalarOn', _ex.instalar); _sc('expPartilharOn', _ex.partilhar); _sc('expTextoOn', _ex.texto); _sc('expVibracaoOn', _ex.vibracao); _sc('expNotifOn', _ex.notif); _sc('expLimparOn', _ex.limpar); }
     { const _c = config.carrinho || { ativo:true, precos:true };
       const _ca = document.getElementById('carrinhoAtivo'); if(_ca) _ca.checked = _c.ativo !== false;
       const _cp = document.getElementById('carrinhoPrecos'); if(_cp) _cp.checked = _c.precos !== false;
@@ -3795,6 +3816,8 @@ amesadigital.pt</textarea>
       config.tileTamanho = document.getElementById('tileTamanhoSel').value;
       { const _tv = document.getElementById('tilesVidroChk'); config.tilesVidro = _tv ? _tv.checked : false; }
       { const _tr = document.getElementById('tileRelevoChk'); config.tileRelevo = _tr ? _tr.checked : true; }
+      { const _gc = function(id){ const e = document.getElementById(id); return e ? e.checked : true; };
+        config.experiencia = { ativo:_gc('expAtivo'), instalar:_gc('expInstalarOn'), partilhar:_gc('expPartilharOn'), texto:_gc('expTextoOn'), vibracao:_gc('expVibracaoOn'), notif:_gc('expNotifOn'), limpar:_gc('expLimparOn') }; }
       { const _ca = document.getElementById('carrinhoAtivo'), _cp = document.getElementById('carrinhoPrecos'), _cw = document.getElementById('carrinhoWhats'), _cws = document.getElementById('carrinhoWhatsSempre');
         config.carrinho = { ativo: _ca ? _ca.checked : true, precos: _cp ? _cp.checked : true, whatsapp: _cw ? _cw.value.trim() : '', whatsappSempre: _cws ? _cws.checked : false,
           levantamento: ((document.getElementById('cartLevAtivo') || {}).checked !== false),
