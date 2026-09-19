@@ -1726,7 +1726,8 @@
   html body.ap-bgsub .categoria-painel{ background-color:var(--ap-bgsub) !important; background-image:none !important; }
   html body.ap-bgsub .categoria-painel-conteudo{ background-color:transparent !important; }
   html body.ap-tit #painelTitulo,
-  html body.ap-tit .categoria-painel-conteudo h2{ color:var(--ap-tit) !important; }
+  html body.ap-tit .categoria-painel-conteudo h2,
+  html body.ap-tit .categoria-grid .tile .tile-label{ color:var(--ap-tit) !important; }
   html body.ap-sub .categoria-painel-conteudo .subtitulo,
   html body.ap-sub .categoria-painel-conteudo .menu-desc,
   html body.ap-sub .categoria-painel-conteudo .grupo-prato > summary,
@@ -1735,6 +1736,8 @@
   html body.ap-subbg .categoria-painel-conteudo .grupo-vinho > summary{ background-color:var(--ap-subbg) !important; }
   html body.ap-pratos .categoria-painel-conteudo .nome,
   html body.ap-pratos .categoria-painel-conteudo .desc{ color:var(--ap-pratos) !important; }
+  html body.ap-preco .categoria-painel-conteudo .preco,
+  html body.ap-preco .categoria-painel-conteudo .preco-dose{ color:var(--ap-preco) !important; }
   html body.ap-voltar .categoria-painel-header,
   html body.ap-voltar .categoria-painel-header .voltar{ color:var(--ap-voltar) !important; }
   html body.ap-mais .btn-add-lista{ background:var(--ap-mais) !important; }
@@ -4278,6 +4281,7 @@
         _set('ap-sub',    '--ap-sub',    _ap.subtitulos);
         _set('ap-subbg',  '--ap-subbg',  _ap.subFundo);
         _set('ap-pratos', '--ap-pratos', _ap.pratos);
+        _set('ap-preco',  '--ap-preco',  _ap.precos);
         _set('ap-voltar', '--ap-voltar', _ap.voltar);
         _set('ap-mais',   '--ap-mais',   _ap.mais);
         { const _d = (_ap.destaque || '').toString().trim(); if(_d) _root.style.setProperty('--dourado', _d); }
