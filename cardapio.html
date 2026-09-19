@@ -4306,6 +4306,8 @@
       document.body.classList.toggle('sep-flat', config.tileRelevo === false);
       // Definições da experiência — que blocos o dono quer mostrar
       window.__experiencia = (config.experiencia && typeof config.experiencia === 'object') ? config.experiencia : {};
+      // Cor do QR do cliente = a mesma escolhida na secção "Partilha / QR code"
+      window.__qrCor = (config.qr && config.qr.corQR) ? config.qr.corQR : '#4a3820';
       try{ if(window.__expRefresh) window.__expRefresh(); }catch(e){}
       // PILOTO — Fundo do menu independente dos separadores (opcional; vazio = segue o modelo)
       { const _ft = (config.fundoTema || '').toString().trim();
@@ -8337,7 +8339,7 @@
       // QR do cardápio — mesma biblioteca e cores usadas nos cartões de mesa / editor
       var qc = document.getElementById('expQr');
       if(qc){
-        if(window.QRCode){ try{ qc.innerHTML = ''; new QRCode(qc, { text: location.href.split('#')[0], width: 168, height: 168, colorDark: '#4a3820', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M }); }catch(e){ qc.innerHTML = '<span style="font-size:.8rem;color:#8a7a5c;">QR indisponível</span>'; } }
+        if(window.QRCode){ try{ qc.innerHTML = ''; new QRCode(qc, { text: location.href.split('#')[0], width: 168, height: 168, colorDark: (window.__qrCor || '#4a3820'), colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M }); }catch(e){ qc.innerHTML = '<span style="font-size:.8rem;color:#8a7a5c;">QR indisponível</span>'; } }
         else { qc.innerHTML = '<span style="font-size:.8rem;color:#8a7a5c;">QR a carregar…</span>'; }
       }
       var f = document.getElementById('expFechar'); if(f) f.onclick = fechar;
