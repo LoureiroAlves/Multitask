@@ -2156,7 +2156,7 @@
   }
 
   /* ===== Definições da Experiência (⚙️) ===== */
-  #expAba{ display:flex; width:fit-content; max-width:calc(100% - 28px); align-items:center; gap:7px; margin:14px auto 22px; padding:8px 15px; border:1px solid var(--linha, #e3d9c4); border-radius:20px; background:transparent; color:var(--castanho-suave, #7a6a52); font-family:var(--fonte-titulo); font-size:.82rem; font-weight:600; letter-spacing:.3px; cursor:pointer; }
+  #expAba{ display:flex; width:fit-content; max-width:calc(100% - 28px); align-items:center; gap:7px; margin:14px auto 22px; padding:8px 16px; border:1.5px solid var(--dourado, #a8712f); border-radius:10px; background:transparent; color:var(--dourado-escuro, #8a5a1c); font-family:var(--fonte-titulo); font-size:.85rem; font-weight:600; letter-spacing:.3px; cursor:pointer; }
   #expAba:active{ transform:scale(.97); }
   body.modelo-slider #expAba{ display:none; }
   #expOverlay{ position:fixed; inset:0; z-index:640; background:rgba(0,0,0,0); display:flex; align-items:flex-end; justify-content:center; padding:0; pointer-events:none; transition:background .3s ease; }
@@ -8247,7 +8247,7 @@
 
     // Aba "Definições da experiência" — logo por baixo da última categoria do menu
     var btn = document.createElement('button');
-    btn.id = 'expAba'; btn.type = 'button'; btn.setAttribute('aria-label', 'Definições da experiência'); btn.innerHTML = '⚙️ Definições da experiência';
+    btn.id = 'expAba'; btn.type = 'button'; btn.setAttribute('aria-label', 'Definições da experiência'); btn.innerHTML = '⚙️ Definições';
     // Colocada no fundo da app — depois da publicidade (#anuncioBox) e do rodapé
     var _apos = document.getElementById('rodapeFinal') || document.getElementById('anuncioBox') || document.getElementById('categoriaGrid');
     if(_apos && _apos.parentNode){ _apos.parentNode.insertBefore(btn, _apos.nextSibling); } else { document.body.appendChild(btn); }
