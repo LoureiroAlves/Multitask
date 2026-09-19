@@ -2179,6 +2179,13 @@
   .exp-sw.on::after{ transform:translateX(20px); }
   .exp-fechar{ display:block; width:100%; margin-top:6px; border:none; background:none; color:#8a7a5c; font-size:.9rem; padding:10px; cursor:pointer; }
   .exp-nota{ text-align:center; color:#9a8c72; font-size:.76rem; margin-top:8px; }
+  .exp-btn.danger{ background:#fff; color:#c0392b; border:1.5px solid #e7c3bd; }
+  /* Texto maior (acessibilidade) */
+  body.texto-grande .categoria-painel-conteudo .nome{ font-size:1.14em !important; }
+  body.texto-grande .categoria-painel-conteudo .desc{ font-size:1.1em !important; }
+  body.texto-grande .categoria-painel-conteudo .preco, body.texto-grande .categoria-painel-conteudo .preco-dose{ font-size:1.12em !important; }
+  body.texto-grande .categoria-painel-conteudo .grupo-prato > summary, body.texto-grande .categoria-painel-conteudo .grupo-vinho > summary{ font-size:1.08em !important; }
+  body.texto-grande .tile-label{ font-size:1.1em !important; }
 
   /* ===== Cartão de fidelidade ===== */
   #fidOverlay{ position:fixed; inset:0; z-index:600; background:rgba(0,0,0,0); display:flex; align-items:flex-end; justify-content:center; padding:0; pointer-events:none; transition:background .32s ease; }
@@ -8208,6 +8215,7 @@
   })();
 </script>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
   /* ===== Definições da Experiência (⚙️): Instalar (PWA) + Vibração ===== */
   (function(){
@@ -8220,6 +8228,8 @@
     var isAndroid = /android/i.test(ua);
     function standalone(){ try{ return window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true; }catch(e){ return false; } }
     var podeVibrar = ('vibrate' in navigator) && isAndroid;
+    // Texto maior (acessibilidade) — aplica logo no arranque se estiver guardado
+    try{ if(localStorage.getItem('amesaTxtG') === '1') document.body.classList.add('texto-grande'); }catch(e){}
 
     // Vibração ao adicionar (ligada por defeito no Android); guardada no aparelho
     function vibOn(){ try{ return localStorage.getItem('amesaVib') !== '0'; }catch(e){ return true; } }
@@ -8279,14 +8289,42 @@
         + '<button class="exp-sw ' + (on ? 'on' : '') + '" id="expVibSw" role="switch" aria-checked="' + on + '"></button></div></div>';
     }
 
+    function blocoPartilhar(){
+      return '<div class="exp-bloco"><div class="exp-tit">🔗 Partilhar o cardápio</div>'
+        + '<p class="exp-txt">Mostra este código a quem está contigo, ou envia o link num toque.</p>'
+        + '<div id="expQr" style="width:180px; height:180px; margin:10px auto 4px; background:#fff; padding:6px; border-radius:10px; box-shadow:0 1px 6px rgba(0,0,0,.12); box-sizing:content-box; display:flex; align-items:center; justify-content:center;"></div>'
+        + '<button class="exp-btn" id="expShare">Partilhar link</button></div>';
+    }
+    function blocoTexto(){
+      var on = document.body.classList.contains('texto-grande');
+      return '<div class="exp-bloco"><div class="exp-tit">🔠 Texto maior</div>'
+        + '<p class="exp-txt">Aumenta o tamanho da letra do menu para ler melhor.</p>'
+        + '<div class="exp-row"><span style="font-size:.9rem;color:#3a2c18;">' + (on ? 'Ativado' : 'Desativado') + '</span>'
+        + '<button class="exp-sw ' + (on ? 'on' : '') + '" id="expTxtSw" role="switch" aria-checked="' + on + '"></button></div></div>';
+    }
+    function blocoLimpar(){
+      return '<div class="exp-bloco"><div class="exp-tit">🧹 Limpar as minhas escolhas</div>'
+        + '<p class="exp-txt">Apaga favoritos, carrinho e reservas guardados neste aparelho.</p>'
+        + '<button class="exp-btn danger" id="expLimpar">Limpar tudo</button></div>';
+    }
+
     function construir(){
       var h = '<h3>⚙️ A tua experiência</h3><div class="exp-sub">Tudo opcional. Sem registo, sem email — e podes desligar quando quiseres.</div>';
       h += blocoInstalar();
+      h += blocoPartilhar();
+      h += blocoTexto();
       h += blocoVibrar();
       h += blocoNotif();
+      h += blocoLimpar();
       h += '<div class="exp-nota">Estas opções ficam guardadas só neste aparelho.</div>';
       h += '<button class="exp-fechar" id="expFechar">Fechar</button>';
       card.innerHTML = h;
+      // QR do cardápio — mesma biblioteca e cores usadas nos cartões de mesa / editor
+      var qc = document.getElementById('expQr');
+      if(qc){
+        if(window.QRCode){ try{ qc.innerHTML = ''; new QRCode(qc, { text: location.href.split('#')[0], width: 168, height: 168, colorDark: '#4a3820', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M }); }catch(e){ qc.innerHTML = '<span style="font-size:.8rem;color:#8a7a5c;">QR indisponível</span>'; } }
+        else { qc.innerHTML = '<span style="font-size:.8rem;color:#8a7a5c;">QR a carregar…</span>'; }
+      }
       var f = document.getElementById('expFechar'); if(f) f.onclick = fechar;
       var ins = document.getElementById('expInstalar');
       if(ins) ins.onclick = function(){
@@ -8298,6 +8336,33 @@
         try{ localStorage.setItem('amesaVib', novo ? '1' : '0'); }catch(e){}
         if(novo && navigator.vibrate){ try{ navigator.vibrate(15); }catch(e){} }
         construir();
+      };
+      var sh = document.getElementById('expShare');
+      if(sh) sh.onclick = function(){
+        var url = location.href.split('#')[0];
+        var titulo = document.title || 'Cardápio';
+        if(navigator.share){ navigator.share({ title: titulo, url: url }).catch(function(){}); }
+        else if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(url).then(function(){ sh.textContent = '✓ Link copiado!'; setTimeout(function(){ sh.textContent = 'Partilhar link'; }, 1600); }).catch(function(){ try{ prompt('Copia o link:', url); }catch(e){} }); }
+        else { try{ prompt('Copia o link:', url); }catch(e){} }
+      };
+      var tsw = document.getElementById('expTxtSw');
+      if(tsw) tsw.onclick = function(){
+        var novo = !document.body.classList.contains('texto-grande');
+        document.body.classList.toggle('texto-grande', novo);
+        try{ localStorage.setItem('amesaTxtG', novo ? '1' : '0'); }catch(e){}
+        construir();
+      };
+      var lp = document.getElementById('expLimpar');
+      if(lp) lp.onclick = function(){
+        if(!confirm('Apagar favoritos, carrinho e reservas guardados neste aparelho?')) return;
+        try{
+          var slug = (typeof __slugDoEndereco === 'function' ? __slugDoEndereco() : '') || 'geral';
+          var suf = ':' + slug;
+          var rem = [];
+          for(var i = 0; i < localStorage.length; i++){ var k = localStorage.key(i); if(k && k.length >= suf.length && k.slice(-suf.length) === suf) rem.push(k); }
+          rem.forEach(function(k){ localStorage.removeItem(k); });
+        }catch(e){}
+        location.reload();
       };
     }
   })();
