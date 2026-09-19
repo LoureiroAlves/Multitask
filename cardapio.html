@@ -1569,6 +1569,7 @@
     font-weight:600;
     list-style:none;
     text-align:center;
+    border-radius:14px;
     transition:color .15s ease;
   }
   .grupo-prato summary:hover{color:var(--dourado);}
@@ -3675,9 +3676,10 @@
     else { painel.style.background = ''; painel.classList.remove('painel-pratodia'); }
 
     document.querySelectorAll('.grupo-prato, .grupo-vinho').forEach(det => { det.open = false; });
-    // Abre logo o interior (primeiro grupo), seja de pratos ou de doses/vinhos — menos um clique
-    const grupo = target.querySelector('.grupo-prato, .grupo-vinho');
-    if (grupo) grupo.open = true;
+    // Se a categoria só tem UM grupo, abre-o sozinho (menos um clique).
+    // Se tem VÁRIAS secções (ex.: vinhos, menus), nascem todas fechadas e o cliente abre a que quiser.
+    const grupos = target.querySelectorAll('.grupo-prato, .grupo-vinho');
+    if (grupos.length === 1) grupos[0].open = true;
 
     painelConteudo.scrollTop = 0;
     // Barra fixa, cabeçalho e botões saem (gerido por CSS via classe, para não conflituar com a lógica de cada um)
