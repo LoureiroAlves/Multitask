@@ -2156,8 +2156,8 @@
   }
 
   /* ===== Definições da Experiência (⚙️) ===== */
-  #expAba{ display:flex; align-items:center; justify-content:center; gap:8px; margin:12px 14px 24px; padding:13px 16px; border:1.5px dashed var(--linha, #e3d9c4); border-radius:12px; background:transparent; color:var(--castanho-suave, #7a6a52); font-family:var(--fonte-titulo); font-size:.9rem; font-weight:600; letter-spacing:.4px; cursor:pointer; }
-  #expAba:active{ transform:scale(.98); }
+  #expAba{ display:flex; width:fit-content; max-width:calc(100% - 28px); align-items:center; gap:7px; margin:14px auto 22px; padding:8px 15px; border:1px solid var(--linha, #e3d9c4); border-radius:20px; background:transparent; color:var(--castanho-suave, #7a6a52); font-family:var(--fonte-titulo); font-size:.82rem; font-weight:600; letter-spacing:.3px; cursor:pointer; }
+  #expAba:active{ transform:scale(.97); }
   body.modelo-slider #expAba{ display:none; }
   #expOverlay{ position:fixed; inset:0; z-index:640; background:rgba(0,0,0,0); display:flex; align-items:flex-end; justify-content:center; padding:0; pointer-events:none; transition:background .3s ease; }
   #expOverlay.aberto{ background:rgba(0,0,0,0.5); pointer-events:auto; }
@@ -8248,8 +8248,9 @@
     // Aba "Definições da experiência" — logo por baixo da última categoria do menu
     var btn = document.createElement('button');
     btn.id = 'expAba'; btn.type = 'button'; btn.setAttribute('aria-label', 'Definições da experiência'); btn.innerHTML = '⚙️ Definições da experiência';
-    var _grid = document.getElementById('categoriaGrid');
-    if(_grid && _grid.parentNode){ _grid.parentNode.insertBefore(btn, _grid.nextSibling); } else { document.body.appendChild(btn); }
+    // Colocada no fundo da app — depois da publicidade (#anuncioBox) e do rodapé
+    var _apos = document.getElementById('rodapeFinal') || document.getElementById('anuncioBox') || document.getElementById('categoriaGrid');
+    if(_apos && _apos.parentNode){ _apos.parentNode.insertBefore(btn, _apos.nextSibling); } else { document.body.appendChild(btn); }
     // Mostra/esconde a aba conforme o dono definiu no editor
     window.__expRefresh = function(){ try{ var any = expOn('instalar')||expOn('partilhar')||expOn('texto')||(podeVibrar&&expOn('vibracao'))||expOn('notif')||expOn('limpar'); btn.style.display = (expCfg().ativo === false || !any) ? 'none' : ''; }catch(e){} };
     window.__expRefresh();
