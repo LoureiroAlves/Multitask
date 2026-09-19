@@ -2155,6 +2155,30 @@
     color:var(--castanho); box-shadow:0 3px 0 #d9ccb0, 0 5px 12px rgba(74,56,32,0.15);
   }
 
+  /* ===== Definições da Experiência (⚙️) ===== */
+  #expBtn{ position:fixed; top:calc(env(safe-area-inset-top) + 8px); right:12px; z-index:350; width:38px; height:38px; border-radius:50%; border:none; background:rgba(0,0,0,0.34); color:#fff; font-size:1.02rem; display:flex; align-items:center; justify-content:center; cursor:pointer; -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px); box-shadow:0 2px 8px rgba(0,0,0,0.25); }
+  body.secao-aberta #expBtn{ opacity:0; visibility:hidden; pointer-events:none; }
+  #expOverlay{ position:fixed; inset:0; z-index:640; background:rgba(0,0,0,0); display:flex; align-items:flex-end; justify-content:center; padding:0; pointer-events:none; transition:background .3s ease; }
+  #expOverlay.aberto{ background:rgba(0,0,0,0.5); pointer-events:auto; }
+  .exp-card{ background:#fff; width:100%; max-width:460px; max-height:88vh; overflow-y:auto; border-radius:18px 18px 0 0; padding:18px 18px calc(20px + env(safe-area-inset-bottom)); transform:translateY(100%); }
+  #expOverlay.aberto .exp-card{ transform:translateY(0); }
+  .exp-card h3{ font-family:var(--fonte-titulo); color:#3a2c18; margin:0 0 2px; font-size:1.25rem; text-align:center; }
+  .exp-sub{ text-align:center; color:#8a7a5c; font-size:.82rem; margin:0 0 14px; }
+  .exp-bloco{ border:1px solid #ece4d4; border-radius:14px; padding:13px 14px; margin-bottom:11px; }
+  .exp-bloco .exp-tit{ font-weight:700; color:#3a2c18; font-size:.98rem; display:flex; align-items:center; gap:7px; }
+  .exp-bloco .exp-txt{ color:#6b5d45; font-size:.85rem; margin:5px 0 0; line-height:1.4; }
+  .exp-bloco.off{ opacity:.6; }
+  .exp-passo{ display:flex; align-items:center; gap:8px; color:#3a2c18; font-size:.9rem; margin-top:9px; background:#faf6ee; border-radius:9px; padding:9px 11px; }
+  .exp-btn{ display:block; width:100%; margin-top:10px; border:none; border-radius:11px; padding:12px; background:var(--dourado,#a8712f); color:#fff; font-weight:700; font-size:.95rem; cursor:pointer; }
+  .exp-row{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:10px; }
+  .exp-badge{ font-size:.72rem; font-weight:700; color:#8a7a5c; background:#f1ece0; border-radius:20px; padding:3px 9px; }
+  .exp-sw{ position:relative; width:46px; height:26px; flex-shrink:0; border-radius:20px; background:#cfc6b4; transition:background .2s ease; cursor:pointer; border:none; }
+  .exp-sw::after{ content:''; position:absolute; top:3px; left:3px; width:20px; height:20px; border-radius:50%; background:#fff; transition:transform .2s ease; box-shadow:0 1px 3px rgba(0,0,0,.3); }
+  .exp-sw.on{ background:#3b8a4f; }
+  .exp-sw.on::after{ transform:translateX(20px); }
+  .exp-fechar{ display:block; width:100%; margin-top:6px; border:none; background:none; color:#8a7a5c; font-size:.9rem; padding:10px; cursor:pointer; }
+  .exp-nota{ text-align:center; color:#9a8c72; font-size:.76rem; margin-top:8px; }
+
   /* ===== Cartão de fidelidade ===== */
   #fidOverlay{ position:fixed; inset:0; z-index:600; background:rgba(0,0,0,0); display:flex; align-items:flex-end; justify-content:center; padding:0; pointer-events:none; transition:background .32s ease; }
   #fidOverlay.aberto{ background:rgba(0,0,0,0.55); pointer-events:auto; }
@@ -7416,6 +7440,7 @@
     }
 
     window.adicionarALista = function(nome, precoTxt, ehMenu){
+      try{ if(window.__vibrar) window.__vibrar(); }catch(e){}   // vibração ao adicionar ao carrinho
       const ex = lista.find(i => i.nome === nome && i.precoTxt === precoTxt);
       if(ex) ex.qtd++;
       else lista.push({ nome:nome, precoTxt:precoTxt, preco:parsePreco(precoTxt), qtd:1, menu: !!ehMenu });
@@ -7780,7 +7805,7 @@
     function _favPratosKey(){ return 'amesaFavPratos:' + (typeof SLUG !== 'undefined' ? SLUG : 'geral'); }
     function favPratosGet(){ try{ return JSON.parse(localStorage.getItem(_favPratosKey()) || '[]'); }catch(e){ return []; } }
     function favPratosTem(n){ return favPratosGet().indexOf(n) >= 0; }
-    function favPratosToggle(n){ var a = favPratosGet(); var i = a.indexOf(n); if(i >= 0) a.splice(i,1); else a.push(n); try{ localStorage.setItem(_favPratosKey(), JSON.stringify(a)); }catch(e){} return i < 0; }
+    function favPratosToggle(n){ var a = favPratosGet(); var i = a.indexOf(n); if(i >= 0) a.splice(i,1); else { a.push(n); try{ if(window.__vibrar) window.__vibrar(); }catch(e){} }   /* vibra só ao adicionar aos favoritos */ try{ localStorage.setItem(_favPratosKey(), JSON.stringify(a)); }catch(e){} return i < 0; }
     // Expostos para o badge/painel de favoritos usarem a MESMA fonte de verdade (o telemóvel), tal como o carrinho
     window.__favPratosGet = favPratosGet;
     window.__favPratosToggle = favPratosToggle;
@@ -8179,6 +8204,100 @@
       new MutationObserver(_apply).observe(document.body, { attributes:true, attributeFilter:['class'], subtree:true });
       _apply();
     }catch(e){}
+  })();
+</script>
+
+<script>
+  /* ===== Definições da Experiência (⚙️): Instalar (PWA) + Vibração ===== */
+  (function(){
+    // Captura o pedido de instalação do Android/Chrome quando disponível
+    var _deferInstall = null;
+    window.addEventListener('beforeinstallprompt', function(e){ e.preventDefault(); _deferInstall = e; });
+
+    var ua = navigator.userAgent || '';
+    var isIOS = /iphone|ipad|ipod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    var isAndroid = /android/i.test(ua);
+    function standalone(){ try{ return window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true; }catch(e){ return false; } }
+    var podeVibrar = ('vibrate' in navigator) && isAndroid;
+
+    // Vibração ao adicionar (ligada por defeito no Android); guardada no aparelho
+    function vibOn(){ try{ return localStorage.getItem('amesaVib') !== '0'; }catch(e){ return true; } }
+    window.__vibrar = function(){ try{ if(podeVibrar && vibOn() && navigator.vibrate) navigator.vibrate(12); }catch(e){} };
+    // A vibração é chamada de dentro do adicionarALista (carrinho) e do favPratosToggle (favoritos) — só nesses dois casos.
+
+    // Botão ⚙️
+    var btn = document.createElement('button');
+    btn.id = 'expBtn'; btn.type = 'button'; btn.setAttribute('aria-label', 'Definições da experiência'); btn.textContent = '⚙️';
+    document.body.appendChild(btn);
+
+    // Overlay
+    var ov = document.createElement('div'); ov.id = 'expOverlay';
+    ov.innerHTML = '<div class="exp-card" id="expCard"></div>';
+    document.body.appendChild(ov);
+    var card = ov.querySelector('.exp-card');
+    ov.addEventListener('click', function(e){ if(e.target === ov) fechar(); });
+
+    function abrir(){ construir(); ov.classList.add('aberto'); if(card.animate){ card.animate([{transform:'translateY(100%)'},{transform:'translateY(0)'}], {duration:360, easing:'cubic-bezier(.22,.9,.3,1)'}); } }
+    function fechar(){ if(card.animate){ var a = card.animate([{transform:'translateY(0)'},{transform:'translateY(100%)'}], {duration:300, easing:'cubic-bezier(.22,.9,.3,1)'}); a.onfinish = function(){ ov.classList.remove('aberto'); }; } else { ov.classList.remove('aberto'); } }
+    btn.addEventListener('click', abrir);
+
+    function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    function blocoInstalar(){
+      if(standalone()){
+        return '<div class="exp-bloco"><div class="exp-tit">📲 Cardápio no ecrã principal</div>'
+          + '<p class="exp-txt">✓ Já tens o cardápio no ecrã principal deste aparelho. Boa!</p></div>';
+      }
+      var h = '<div class="exp-bloco"><div class="exp-tit">📲 Adicionar ao ecrã principal</div>'
+        + '<p class="exp-txt">Adiciona o cardápio ao teu ecrã para um acesso instantâneo na próxima visita — sem ler o código QR outra vez.</p>';
+      if(isIOS){
+        h += '<div class="exp-passo">1️⃣ Toca no botão <strong>Partilhar</strong> (o quadrado com a seta ⬆️) do Safari.</div>'
+          +  '<div class="exp-passo">2️⃣ Escolhe <strong>“Adicionar ao Ecrã Principal”</strong> ➕.</div>';
+      } else if(_deferInstall){
+        h += '<button class="exp-btn" id="expInstalar">➕ Adicionar à tela inicial</button>';
+      } else if(isAndroid){
+        h += '<div class="exp-passo">Abre o menu do navegador (⋮) e escolhe <strong>“Adicionar ao ecrã principal”</strong>.</div>';
+      } else {
+        h += '<div class="exp-passo">No menu do teu navegador, escolhe <strong>“Instalar”</strong> ou <strong>“Adicionar ao ecrã principal”</strong>.</div>';
+      }
+      return h + '</div>';
+    }
+
+    function blocoNotif(){
+      return '<div class="exp-bloco off"><div class="exp-tit">🔔 Notificações <span class="exp-badge">brevemente</span></div>'
+        + '<p class="exp-txt">Em breve vais poder ativar avisos de “pedido pronto” e cupões exclusivos — sem registo nem email.</p></div>';
+    }
+
+    function blocoVibrar(){
+      if(!podeVibrar) return '';
+      var on = vibOn();
+      return '<div class="exp-bloco"><div class="exp-tit">📳 Vibração ao adicionar</div>'
+        + '<p class="exp-txt">Uma pequena vibração de confirmação quando adicionas um item ao pedido.</p>'
+        + '<div class="exp-row"><span style="font-size:.9rem;color:#3a2c18;">' + (on ? 'Ativada' : 'Desativada') + '</span>'
+        + '<button class="exp-sw ' + (on ? 'on' : '') + '" id="expVibSw" role="switch" aria-checked="' + on + '"></button></div></div>';
+    }
+
+    function construir(){
+      var h = '<h3>⚙️ A tua experiência</h3><div class="exp-sub">Tudo opcional. Sem registo, sem email — e podes desligar quando quiseres.</div>';
+      h += blocoInstalar();
+      h += blocoVibrar();
+      h += blocoNotif();
+      h += '<div class="exp-nota">Estas opções ficam guardadas só neste aparelho.</div>';
+      h += '<button class="exp-fechar" id="expFechar">Fechar</button>';
+      card.innerHTML = h;
+      var f = document.getElementById('expFechar'); if(f) f.onclick = fechar;
+      var ins = document.getElementById('expInstalar');
+      if(ins) ins.onclick = function(){
+        if(_deferInstall){ _deferInstall.prompt(); _deferInstall.userChoice.then(function(){ _deferInstall = null; construir(); }); }
+      };
+      var sw = document.getElementById('expVibSw');
+      if(sw) sw.onclick = function(){
+        var novo = !vibOn();
+        try{ localStorage.setItem('amesaVib', novo ? '1' : '0'); }catch(e){}
+        if(novo && navigator.vibrate){ try{ navigator.vibrate(15); }catch(e){} }
+        construir();
+      };
+    }
   })();
 </script>
 
