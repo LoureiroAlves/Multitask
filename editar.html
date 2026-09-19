@@ -599,6 +599,12 @@ amesadigital.pt</textarea>
       </label>
       <p style="margin:4px 0 0; font-size:0.82rem; color:var(--castanho-suave);">Deixa os cartões translúcidos, deixando ver o fundo com um leve desfoque à volta.</p>
 
+      <label style="display:flex; align-items:center; gap:8px; margin-top:14px; cursor:pointer; font-weight:600;">
+        <input type="checkbox" id="tileRelevoChk" style="width:auto; margin:0;">
+        Texto dos separadores em relevo 3D
+      </label>
+      <p style="margin:4px 0 0; font-size:0.82rem; color:var(--castanho-suave);">Desliga para um texto simples e plano, sem a sombra 3D.</p>
+
       <label for="fonteSel" style="margin-top:16px;">Tipo de letra dos títulos</label>
       <select id="fonteSel" style="width:100%; padding:10px 12px; border-radius:10px; border:1.5px solid var(--linha); background:var(--branco); font-family:inherit; color:var(--castanho); font-size:0.95rem;">
         <option value="auto">Automático (o do layout)</option>
@@ -2166,6 +2172,7 @@ amesadigital.pt</textarea>
     fonteTexto: 'auto',
     tileTamanho: 'normal',
     tilesVidro: false,
+    tileRelevo: true,
     carrinho: { ativo:true, precos:true },
     cores: null,
     fundo: { tipo:'liso', imagem:'', textura:'pontos' },
@@ -2437,6 +2444,7 @@ amesadigital.pt</textarea>
         config.fonteTexto = parsed.fonteTexto || 'auto';
         config.tileTamanho = parsed.tileTamanho || 'normal';
         config.tilesVidro = parsed.tilesVidro === true;
+        config.tileRelevo = parsed.tileRelevo !== false;
         config.carrinho = Object.assign({ ativo:true, precos:true }, parsed.carrinho || {});
         config.cores = (parsed.cores && typeof parsed.cores === 'object') ? parsed.cores : null;
         config.fundo = Object.assign({ tipo:'liso', imagem:'', textura:'pontos' }, parsed.fundo || {});
@@ -2760,6 +2768,7 @@ amesadigital.pt</textarea>
     document.getElementById('fonteTextoSel').value = config.fonteTexto || 'auto';
     document.getElementById('tileTamanhoSel').value = config.tileTamanho || 'normal';
     { const _tv = document.getElementById('tilesVidroChk'); if(_tv) _tv.checked = config.tilesVidro === true; }
+    { const _tr = document.getElementById('tileRelevoChk'); if(_tr) _tr.checked = config.tileRelevo !== false; }
     { const _c = config.carrinho || { ativo:true, precos:true };
       const _ca = document.getElementById('carrinhoAtivo'); if(_ca) _ca.checked = _c.ativo !== false;
       const _cp = document.getElementById('carrinhoPrecos'); if(_cp) _cp.checked = _c.precos !== false;
@@ -3785,6 +3794,7 @@ amesadigital.pt</textarea>
       config.fonteTexto = document.getElementById('fonteTextoSel').value;
       config.tileTamanho = document.getElementById('tileTamanhoSel').value;
       { const _tv = document.getElementById('tilesVidroChk'); config.tilesVidro = _tv ? _tv.checked : false; }
+      { const _tr = document.getElementById('tileRelevoChk'); config.tileRelevo = _tr ? _tr.checked : true; }
       { const _ca = document.getElementById('carrinhoAtivo'), _cp = document.getElementById('carrinhoPrecos'), _cw = document.getElementById('carrinhoWhats'), _cws = document.getElementById('carrinhoWhatsSempre');
         config.carrinho = { ativo: _ca ? _ca.checked : true, precos: _cp ? _cp.checked : true, whatsapp: _cw ? _cw.value.trim() : '', whatsappSempre: _cws ? _cws.checked : false,
           levantamento: ((document.getElementById('cartLevAtivo') || {}).checked !== false),

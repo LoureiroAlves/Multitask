@@ -495,6 +495,8 @@
       3px 3px 1px rgba(0,0,0,0.3),
       4px 4px 3px rgba(0,0,0,0.3);
   }
+  /* Desligar o relevo 3D no texto dos separadores (config.tileRelevo === false) */
+  body.sep-flat .tile .tile-label{ text-shadow:none !important; }
 
   /* ===== Modelo "grelha de cartões" (config.modelo === 'grelha') ===== */
   body.modelo-grelha .categoria-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(102px, 1fr)); gap:10px; align-content:start; }
@@ -4268,6 +4270,8 @@
       document.body.classList.toggle('modelo-italiano', (config.modelo || 'lista') === 'italiano');
       document.body.classList.toggle('modelo-foodtruck', (config.modelo || 'lista') === 'foodtruck');
       document.body.classList.toggle('modelo-revista', (config.modelo || 'lista') === 'revista');
+      // Relevo 3D no texto dos separadores — ligado por defeito; só desliga se config.tileRelevo === false
+      document.body.classList.toggle('sep-flat', config.tileRelevo === false);
       // PILOTO — Fundo do menu independente dos separadores (opcional; vazio = segue o modelo)
       { const _ft = (config.fundoTema || '').toString().trim();
         ['claro','papel','ardosia'].forEach(function(x){ document.body.classList.toggle('fundo-' + x, _ft === x); }); }
