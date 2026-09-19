@@ -4304,6 +4304,9 @@
       document.body.classList.toggle('modelo-revista', (config.modelo || 'lista') === 'revista');
       // Relevo 3D no texto dos separadores — ligado por defeito; só desliga se config.tileRelevo === false
       document.body.classList.toggle('sep-flat', config.tileRelevo === false);
+      // Definições da experiência — que blocos o dono quer mostrar
+      window.__experiencia = (config.experiencia && typeof config.experiencia === 'object') ? config.experiencia : {};
+      try{ if(window.__expRefresh) window.__expRefresh(); }catch(e){}
       // PILOTO — Fundo do menu independente dos separadores (opcional; vazio = segue o modelo)
       { const _ft = (config.fundoTema || '').toString().trim();
         ['claro','papel','ardosia'].forEach(function(x){ document.body.classList.toggle('fundo-' + x, _ft === x); }); }
@@ -8231,9 +8234,13 @@
     // Texto maior (acessibilidade) — aplica logo no arranque se estiver guardado
     try{ if(localStorage.getItem('amesaTxtG') === '1') document.body.classList.add('texto-grande'); }catch(e){}
 
+    // Config do dono: que blocos mostrar (tudo ligado por defeito; vem do editor)
+    function expCfg(){ return (window.__experiencia && typeof window.__experiencia === 'object') ? window.__experiencia : {}; }
+    function expOn(k){ return expCfg()[k] !== false; }
+
     // Vibração ao adicionar (ligada por defeito no Android); guardada no aparelho
     function vibOn(){ try{ return localStorage.getItem('amesaVib') !== '0'; }catch(e){ return true; } }
-    window.__vibrar = function(){ try{ if(podeVibrar && vibOn() && navigator.vibrate) navigator.vibrate(12); }catch(e){} };
+    window.__vibrar = function(){ try{ if(podeVibrar && expOn('vibracao') && vibOn() && navigator.vibrate) navigator.vibrate(12); }catch(e){} };
     // A vibração é chamada de dentro do adicionarALista (carrinho) e do favPratosToggle (favoritos) — só nesses dois casos.
 
     // Aba "Definições da experiência" — logo por baixo da última categoria do menu
@@ -8241,6 +8248,9 @@
     btn.id = 'expAba'; btn.type = 'button'; btn.setAttribute('aria-label', 'Definições da experiência'); btn.innerHTML = '⚙️ Definições da experiência';
     var _grid = document.getElementById('categoriaGrid');
     if(_grid && _grid.parentNode){ _grid.parentNode.insertBefore(btn, _grid.nextSibling); } else { document.body.appendChild(btn); }
+    // Mostra/esconde a aba conforme o dono definiu no editor
+    window.__expRefresh = function(){ try{ var any = expOn('instalar')||expOn('partilhar')||expOn('texto')||(podeVibrar&&expOn('vibracao'))||expOn('notif')||expOn('limpar'); btn.style.display = (expCfg().ativo === false || !any) ? 'none' : ''; }catch(e){} };
+    window.__expRefresh();
 
     // Overlay
     var ov = document.createElement('div'); ov.id = 'expOverlay';
@@ -8256,6 +8266,7 @@
     function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
     function blocoInstalar(){
+      if(!expOn('instalar')) return '';
       if(standalone()){
         return '<div class="exp-bloco"><div class="exp-tit">📲 Cardápio no ecrã principal</div>'
           + '<p class="exp-txt">✓ Já tens o cardápio no ecrã principal deste aparelho. Boa!</p></div>';
@@ -8276,12 +8287,13 @@
     }
 
     function blocoNotif(){
+      if(!expOn('notif')) return '';
       return '<div class="exp-bloco off"><div class="exp-tit">🔔 Notificações <span class="exp-badge">brevemente</span></div>'
         + '<p class="exp-txt">Em breve vais poder ativar avisos de “pedido pronto” e cupões exclusivos — sem registo nem email.</p></div>';
     }
 
     function blocoVibrar(){
-      if(!podeVibrar) return '';
+      if(!podeVibrar || !expOn('vibracao')) return '';
       var on = vibOn();
       return '<div class="exp-bloco"><div class="exp-tit">📳 Vibração ao adicionar</div>'
         + '<p class="exp-txt">Uma pequena vibração de confirmação quando adicionas um item ao pedido.</p>'
@@ -8290,12 +8302,14 @@
     }
 
     function blocoPartilhar(){
+      if(!expOn('partilhar')) return '';
       return '<div class="exp-bloco"><div class="exp-tit">🔗 Partilhar o cardápio</div>'
         + '<p class="exp-txt">Mostra este código a quem está contigo, ou envia o link num toque.</p>'
         + '<div id="expQr" style="width:180px; height:180px; margin:10px auto 4px; background:#fff; padding:6px; border-radius:10px; box-shadow:0 1px 6px rgba(0,0,0,.12); box-sizing:content-box; display:flex; align-items:center; justify-content:center;"></div>'
         + '<button class="exp-btn" id="expShare">Partilhar link</button></div>';
     }
     function blocoTexto(){
+      if(!expOn('texto')) return '';
       var on = document.body.classList.contains('texto-grande');
       return '<div class="exp-bloco"><div class="exp-tit">🔠 Texto maior</div>'
         + '<p class="exp-txt">Aumenta o tamanho da letra do menu para ler melhor.</p>'
@@ -8303,6 +8317,7 @@
         + '<button class="exp-sw ' + (on ? 'on' : '') + '" id="expTxtSw" role="switch" aria-checked="' + on + '"></button></div></div>';
     }
     function blocoLimpar(){
+      if(!expOn('limpar')) return '';
       return '<div class="exp-bloco"><div class="exp-tit">🧹 Limpar as minhas escolhas</div>'
         + '<p class="exp-txt">Apaga favoritos, carrinho e reservas guardados neste aparelho.</p>'
         + '<button class="exp-btn danger" id="expLimpar">Limpar tudo</button></div>';
