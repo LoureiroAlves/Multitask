@@ -1728,10 +1728,13 @@
   html body.ap-tit #painelTitulo,
   html body.ap-tit .categoria-painel-conteudo h2{ color:var(--ap-tit) !important; }
   html body.ap-sub .categoria-painel-conteudo .subtitulo,
-  html body.ap-sub .categoria-painel-conteudo .menu-desc{ color:var(--ap-sub) !important; }
+  html body.ap-sub .categoria-painel-conteudo .menu-desc,
+  html body.ap-sub .categoria-painel-conteudo .grupo-prato > summary,
+  html body.ap-sub .categoria-painel-conteudo .grupo-vinho > summary{ color:var(--ap-sub) !important; }
+  html body.ap-subbg .categoria-painel-conteudo .grupo-prato > summary,
+  html body.ap-subbg .categoria-painel-conteudo .grupo-vinho > summary{ background-color:var(--ap-subbg) !important; }
   html body.ap-pratos .categoria-painel-conteudo .nome,
-  html body.ap-pratos .categoria-painel-conteudo .desc,
-  html body.ap-pratos .categoria-painel-conteudo summary{ color:var(--ap-pratos) !important; }
+  html body.ap-pratos .categoria-painel-conteudo .desc{ color:var(--ap-pratos) !important; }
   html body.ap-voltar .categoria-painel-header,
   html body.ap-voltar .categoria-painel-header .voltar{ color:var(--ap-voltar) !important; }
   html body.ap-mais .btn-add-lista{ background:var(--ap-mais) !important; }
@@ -4273,6 +4276,7 @@
         _set('ap-bgsub',  '--ap-bgsub',  _ap.bgSub);
         _set('ap-tit',    '--ap-tit',    _ap.titulos);
         _set('ap-sub',    '--ap-sub',    _ap.subtitulos);
+        _set('ap-subbg',  '--ap-subbg',  _ap.subFundo);
         _set('ap-pratos', '--ap-pratos', _ap.pratos);
         _set('ap-voltar', '--ap-voltar', _ap.voltar);
         _set('ap-mais',   '--ap-mais',   _ap.mais);
