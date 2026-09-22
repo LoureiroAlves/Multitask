@@ -2174,8 +2174,9 @@
   #modoBox{ display:none; align-items:center; gap:10px; margin:10px 14px 0; padding:9px 14px; border-radius:12px; background:var(--dourado,#a8712f); color:#fff; font-family:var(--fonte-titulo); font-weight:700; font-size:.9rem; letter-spacing:.4px; }
   body.tem-modo-box #modoBox{ display:flex; }
   #modoBox .mb-lbl{ display:flex; align-items:center; gap:7px; }
-  #modoBox .mb-acao, #modoBox .mb-trocar{ margin-left:auto; background:rgba(255,255,255,.22); border:none; color:#fff; border-radius:20px; padding:5px 12px; font-size:.78rem; font-weight:700; cursor:pointer; font-family:inherit; }
-  #modoBox .mb-acao + .mb-trocar{ margin-left:8px; }
+  #modoBox .mb-acao{ margin-left:auto; background:rgba(255,255,255,.22); border:none; color:#fff; border-radius:20px; padding:5px 12px; font-size:.78rem; font-weight:700; cursor:pointer; font-family:inherit; }
+  #modoBox .mb-hint{ margin-left:auto; font-size:.74rem; font-weight:600; opacity:.85; }
+  #modoBox .mb-acao + .mb-hint{ margin-left:8px; }
   body.modo-grupos #categoriaGrid .tile:not([data-tipo="menus"]){ display:none !important; }
   body.modo-normal #linkAgenda, body.modo-takeaway #linkAgenda{ display:none !important; }
   /* Ícones dos modos dentro da própria abertura (por cima da foto) */
@@ -8459,6 +8460,19 @@
       host.appendChild(icones(modos, function(m){ aplicarModo(m); if(window.__esconderIntro) window.__esconderIntro(); }));
     }
 
+    // Voltar ao ecrã de escolha de modo (reabre a abertura, ou o ecrã escuro)
+    function voltarEntrada(){
+      var ov = document.getElementById('introOverlay');
+      if(ov && window.__introAtiva){
+        try{ delete ov.dataset.saiu; }catch(e){}
+        ov.classList.remove('sair'); ov.style.transform = ''; ov.style.display = 'flex';
+        var im = document.getElementById('introModos');
+        if(im){ im.style.display = ''; } else { integrarNoIntro(modosAtuais); }
+      } else {
+        mostrarGate(modosAtuais);
+      }
+    }
+
     function aplicarModo(m){
       document.body.classList.remove('modo-normal','modo-takeaway','modo-grupos');
       document.body.classList.add('modo-' + m);
@@ -8477,7 +8491,7 @@
           var lbl = (m === 'takeaway') ? '🛍️ Take away' : '👥 Menus de grupo';
           var h = '<span class="mb-lbl">' + lbl + '</span>';
           if(m === 'grupos' && podeReservar()) h += '<button class="mb-acao" type="button" id="mbReservar">📅 Reservar</button>';
-          if(modosAtuais.length > 1) h += '<button class="mb-trocar" type="button" id="mbTrocar">Trocar</button>';
+          if(modosAtuais.length > 1) h += '<span class="mb-hint">‹ desliza para trocar</span>';
           box.innerHTML = h;
           document.body.classList.add('tem-modo-box');
           var _r = document.getElementById('mbReservar');
@@ -8485,8 +8499,6 @@
             if(window.__abrirAgenda && window._agenda){ try{ window.__reservaMenu = ''; }catch(e){} window.__abrirAgenda(); }
             else if(window.__waGrupo){ window.location.href = 'https://wa.me/' + window.__waGrupo + '?text=' + encodeURIComponent('Olá! Queria saber sobre os menus de grupo.'); }
           };
-          var _t = document.getElementById('mbTrocar');
-          if(_t) _t.onclick = function(){ mostrarGate(modosAtuais); };
         } else {
           box.innerHTML = ''; document.body.classList.remove('tem-modo-box');
         }
@@ -8522,6 +8534,23 @@
         else { mostrarGate(modos); }
       }catch(e){}
     };
+
+    // Gesto "voltar" — deslizar da margem esquerda para a direita reabre a escolha de modo
+    (function(){
+      var sx = 0, sy = 0, ok = false;
+      document.addEventListener('touchstart', function(e){
+        ok = false;
+        if(modosAtuais.length < 2) return;
+        if(!(document.body.classList.contains('modo-normal') || document.body.classList.contains('modo-takeaway') || document.body.classList.contains('modo-grupos'))) return;
+        if(document.body.classList.contains('secao-aberta')) return;
+        var t = e.touches[0]; if(t && t.clientX <= 26){ sx = t.clientX; sy = t.clientY; ok = true; }
+      }, { passive:true });
+      document.addEventListener('touchend', function(e){
+        if(!ok) return; ok = false;
+        var t = e.changedTouches && e.changedTouches[0]; if(!t) return;
+        if((t.clientX - sx) > 80 && Math.abs(t.clientY - sy) < 55) voltarEntrada();
+      }, { passive:true });
+    })();
   })();
 </script>
 
