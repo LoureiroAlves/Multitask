@@ -4343,7 +4343,7 @@
       // Modos de entrada (Menu / Take away / Grupos)
       window.__modosCfg = (config.modos && typeof config.modos === 'object') ? config.modos : {};
       window.__waGrupo = ((config.agenda && config.agenda.whatsapp) || (config.carrinho && config.carrinho.whatsapp) || '').toString().replace(/\D/g,'').replace(/^00/,'');
-      setTimeout(function(){ try{ if(window.__initModos) window.__initModos(); }catch(e){} }, 0);
+      (function _goModos(){ if(window.__menuOk){ try{ if(window.__initModos) window.__initModos(); }catch(e){} } else setTimeout(_goModos, 60); })();
       // PILOTO — Fundo do menu independente dos separadores (opcional; vazio = segue o modelo)
       { const _ft = (config.fundoTema || '').toString().trim();
         ['claro','papel','ardosia'].forEach(function(x){ document.body.classList.toggle('fundo-' + x, _ft === x); }); }
@@ -8473,7 +8473,7 @@
       }
     }
 
-    function aplicarModo(m){
+    function aplicarModo(m){ try{
       document.body.classList.remove('modo-normal','modo-takeaway','modo-grupos');
       document.body.classList.add('modo-' + m);
       var takeaway = (m === 'takeaway');
@@ -8504,6 +8504,7 @@
         }
       }
       try{ window.scrollTo(0, 0); }catch(e){}
+      }catch(_e){}
     }
 
     function mostrarGate(modos){
