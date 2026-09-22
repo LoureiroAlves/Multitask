@@ -2171,21 +2171,15 @@
   #modoGate .mg-opt:active{ transform:scale(.96); background:rgba(255,255,255,.15); }
   #modoGate .mg-opt .mg-ic{ font-size:2.5rem; line-height:1; }
   #modoGate .mg-opt .mg-lb{ font-size:.98rem; font-weight:700; }
-  #modoBox{ display:none; align-items:center; gap:10px; margin:10px 14px 0; padding:9px 14px; border-radius:12px; background:var(--dourado,#a8712f); color:#fff; font-family:var(--fonte-titulo); font-weight:700; font-size:.9rem; letter-spacing:.4px; }
-  body.tem-modo-box #modoBox{ display:flex; }
-  #modoBox .mb-lbl{ display:flex; align-items:center; gap:7px; }
-  #modoBox .mb-acao{ margin-left:auto; background:rgba(255,255,255,.22); border:none; color:#fff; border-radius:20px; padding:5px 12px; font-size:.78rem; font-weight:700; cursor:pointer; font-family:inherit; }
-  #modoBox .mb-hint{ margin-left:auto; font-size:.74rem; font-weight:600; opacity:.85; }
-  #modoBox .mb-acao + .mb-hint{ margin-left:8px; }
   body.modo-grupos #categoriaGrid .tile{ display:none !important; }
   body.modo-grupos #categoriaGrid .tile[data-grupo="1"]{ display:flex !important; }
   body.modo-normal #linkAgenda, body.modo-takeaway #linkAgenda{ display:none !important; }
   /* Ícones dos modos dentro da própria abertura (por cima da foto) */
   #introModos{ display:flex; justify-content:center; gap:14px; margin-top:24px; flex-wrap:wrap; position:relative; z-index:3; }
   #introModos .im-opt{ background:transparent; border:none; display:flex; flex-direction:column; align-items:center; gap:7px; cursor:pointer; font-family:var(--fonte-titulo); color:var(--dourado, #c69a3f); padding:0; }
-  #introModos .im-ic{ width:calc(60px * var(--modo-ic-scale, 1)); height:calc(60px * var(--modo-ic-scale, 1)); display:flex; align-items:center; justify-content:center; border:1.5px solid rgba(255,255,255,.34); border-radius:16px; background:rgba(0,0,0,.3); -webkit-backdrop-filter:blur(2px); backdrop-filter:blur(2px); }
+  #introModos .im-ic{ width:calc(60px * var(--ic-scale, 1)); height:calc(60px * var(--ic-scale, 1)); display:flex; align-items:center; justify-content:center; border:1.5px solid rgba(255,255,255,.34); border-radius:16px; background:rgba(0,0,0,.3); -webkit-backdrop-filter:blur(2px); backdrop-filter:blur(2px); }
   #introModos .im-ic svg{ width:62%; height:62%; }
-  #introModos .im-lb{ font-size:calc(.82rem * var(--modo-ic-scale, 1)); font-weight:600; color:#f4ead2; text-shadow:0 1px 4px rgba(0,0,0,.65); letter-spacing:.3px; }
+  #introModos .im-lb{ font-size:calc(.82rem * var(--ic-scale, 1)); font-weight:600; color:#f4ead2; text-shadow:0 1px 4px rgba(0,0,0,.65); letter-spacing:.3px; }
   #introModos .im-opt:active{ transform:scale(.94); }
   #expOverlay{ position:fixed; inset:0; z-index:640; background:rgba(0,0,0,0); display:flex; align-items:flex-end; justify-content:center; padding:0; pointer-events:none; transition:background .3s ease; }
   #expOverlay.aberto{ background:rgba(0,0,0,0.5); pointer-events:auto; }
@@ -2520,9 +2514,6 @@
     </div>
   </div>
 </header>
-
-<!-- Caixa do modo escolhido (Take away / Menus de grupo) -->
-<div id="modoBox"></div>
 
 <!-- Mosaico (bento) — módulo à parte, ativado por config.mosaico.ativo -->
 <div id="mosaicoGrid"></div>
@@ -4345,6 +4336,7 @@
       try{ if(window.__expRefresh) window.__expRefresh(); }catch(e){}
       // Modos de entrada (Menu / Take away / Grupos)
       window.__modosCfg = (config.modos && typeof config.modos === 'object') ? config.modos : {};
+      window.__modosTam = (config.modos && config.modos.tam && typeof config.modos.tam === 'object') ? config.modos.tam : {};
       window.__waGrupo = ((config.agenda && config.agenda.whatsapp) || (config.carrinho && config.carrinho.whatsapp) || '').toString().replace(/\D/g,'').replace(/^00/,'');
       (function _goModos(){ if(window.__menuOk){ try{ if(window.__initModos) window.__initModos(); }catch(e){} } else setTimeout(_goModos, 60); })();
       // PILOTO — Fundo do menu independente dos separadores (opcional; vazio = segue o modelo)
@@ -8445,6 +8437,8 @@
       modos.forEach(function(m){
         var n = IC[m]; if(!n) return;
         var b = document.createElement('button'); b.type = 'button'; b.className = 'im-opt'; b.setAttribute('data-modo', m);
+        var _sc = parseFloat((window.__modosTam || {})[m]); if(!_sc || _sc <= 0) _sc = 1;
+        b.style.setProperty('--ic-scale', _sc);
         b.innerHTML = '<span class="im-ic">' + n[1] + '</span><span class="im-lb">' + n[0] + '</span>';
         b.onclick = function(){ onPick(m); };
         wrap.appendChild(b);
@@ -8487,24 +8481,6 @@
         if(window.montarBotoesLista) window.montarBotoesLista();
         if(window.__cartRefresh) window.__cartRefresh();
       }catch(e){}
-      // Caixa por baixo do cabeçalho
-      var box = document.getElementById('modoBox');
-      if(box){
-        if(m === 'takeaway' || m === 'grupos'){
-          var lbl = (m === 'takeaway') ? '🛍️ Take away' : '👥 Menus de grupo';
-          var h = '<span class="mb-lbl">' + lbl + '</span>';
-          if(m === 'grupos' && podeReservar()) h += '<button class="mb-acao" type="button" id="mbReservar">📅 Reservar</button>';
-          box.innerHTML = h;
-          document.body.classList.add('tem-modo-box');
-          var _r = document.getElementById('mbReservar');
-          if(_r) _r.onclick = function(){
-            if(window.__abrirAgenda && window._agenda){ try{ window.__reservaMenu = ''; }catch(e){} window.__abrirAgenda(); }
-            else if(window.__waGrupo){ window.location.href = 'https://wa.me/' + window.__waGrupo + '?text=' + encodeURIComponent('Olá! Queria saber sobre os menus de grupo.'); }
-          };
-        } else {
-          box.innerHTML = ''; document.body.classList.remove('tem-modo-box');
-        }
-      }
       try{ window.scrollTo(0, 0); }catch(e){}
       }catch(_e){}
     }
@@ -8524,8 +8500,7 @@
     window.__initModos = function(){
       try{
         var cfg = window.__modosCfg || {};
-        try{ document.documentElement.style.setProperty('--modo-ic-scale', (parseFloat(cfg.tamIcon) || 1)); }catch(e){}
-        if(!cfg.ativo){ document.body.classList.remove('modo-normal','modo-takeaway','modo-grupos','tem-modo-box'); var _g=document.getElementById('modoGate'); if(_g) _g.style.display='none'; var _im=document.getElementById('introModos'); if(_im) _im.remove(); return; }
+        if(!cfg.ativo){ document.body.classList.remove('modo-normal','modo-takeaway','modo-grupos'); var _g=document.getElementById('modoGate'); if(_g) _g.style.display='none'; var _im=document.getElementById('introModos'); if(_im) _im.remove(); return; }
         var modos = [];
         if(cfg.normal) modos.push('normal');
         if(cfg.takeaway) modos.push('takeaway');

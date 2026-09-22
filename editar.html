@@ -1757,8 +1757,13 @@ amesadigital.pt</textarea>
         <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin:8px 0; font-size:.92rem; color:var(--castanho);"><input type="checkbox" id="modoTakeaway" style="width:auto; margin:0;"> 🛍️ Take away (liga o carrinho; esconde as reservas)</label>
         <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin:8px 0; font-size:.92rem; color:var(--castanho);"><input type="checkbox" id="modoGrupos" style="width:auto; margin:0;"> 👥 Menus de grupo (mostra só as categorias do tipo "menus")</label>
       </div>
-      <label style="margin-top:14px; display:block; font-weight:600; font-size:.9rem; color:var(--castanho);">Tamanho dos ícones — <span id="modoTamVal">100%</span></label>
-      <input type="range" id="modoTamIcon" min="70" max="150" value="100" step="10" style="width:100%; accent-color:var(--dourado);">
+      <div style="margin-top:14px; font-weight:700; font-size:.9rem; color:var(--castanho);">Tamanho de cada ícone</div>
+      <label style="display:block; margin-top:8px; font-size:.85rem; color:var(--castanho);">🍽️ Menu — <span id="modoTamNormalVal">100%</span></label>
+      <input type="range" id="modoTamNormal" min="70" max="160" value="100" step="10" style="width:100%; accent-color:var(--dourado);">
+      <label style="display:block; margin-top:8px; font-size:.85rem; color:var(--castanho);">🛍️ Take away — <span id="modoTamTakeawayVal">100%</span></label>
+      <input type="range" id="modoTamTakeaway" min="70" max="160" value="100" step="10" style="width:100%; accent-color:var(--dourado);">
+      <label style="display:block; margin-top:8px; font-size:.85rem; color:var(--castanho);">👥 Grupos — <span id="modoTamGruposVal">100%</span></label>
+      <input type="range" id="modoTamGrupos" min="70" max="160" value="100" step="10" style="width:100%; accent-color:var(--dourado);">
       <p style="margin:10px 0 0; font-size:0.8rem; color:var(--castanho-suave);">O ecrã de entrada só aparece se tiveres <strong>2 ou mais</strong> modos ligados (com 1, entra logo nesse). O modo "Grupos" só aparece se houver categorias do tipo "menus" no menu.</p>
     </div>
   </details>
@@ -2812,7 +2817,12 @@ amesadigital.pt</textarea>
     { const _m = config.modos || {}; const _sb = function(id, v){ const e = document.getElementById(id); if(e) e.checked = (v === true); };
       _sb('modosAtivo', _m.ativo); _sb('modoTakeaway', _m.takeaway); _sb('modoGrupos', _m.grupos);
       { const e = document.getElementById('modoNormal'); if(e) e.checked = (_m.normal !== false); }
-      { const _t = document.getElementById('modoTamIcon'); if(_t){ const v = Math.round((parseFloat(_m.tamIcon) || 1) * 100); _t.value = v; const s = document.getElementById('modoTamVal'); if(s) s.textContent = v + '%'; } } }
+      { const _tm = (_m.tam && typeof _m.tam === 'object') ? _m.tam : {};
+        [['modoTamNormal','normal'],['modoTamTakeaway','takeaway'],['modoTamGrupos','grupos']].forEach(function(p){
+          const el = document.getElementById(p[0]); if(!el) return;
+          const v = Math.round((parseFloat(_tm[p[1]]) || 1) * 100); el.value = v;
+          const s = document.getElementById(p[0] + 'Val'); if(s) s.textContent = v + '%';
+        }); } }
     { const _c = config.carrinho || { ativo:true, precos:true };
       const _ca = document.getElementById('carrinhoAtivo'); if(_ca) _ca.checked = _c.ativo !== false;
       const _cp = document.getElementById('carrinhoPrecos'); if(_cp) _cp.checked = _c.precos !== false;
@@ -3286,7 +3296,7 @@ amesadigital.pt</textarea>
     document.getElementById('bambuDecoBox').style.display = (e.target.value === 'bambu') ? 'block' : 'none';
   });
   ['apBgMainOn','apBgMain','apBgSubOn','apBgSub','apTitOn','apTit','apSubOn','apSub','apSubBgOn','apSubBg','apPratosOn','apPratos','apPrecoOn','apPreco','apVoltarOn','apVoltar','apCabSubOn','apCabSub','apRodapeOn','apRodape','apDestOn','apDest'].forEach(function(id){ const el = document.getElementById(id); if(el) el.addEventListener('input', function(){ if(window.__agendarPreview) window.__agendarPreview(); }); });
-  { const _t = document.getElementById('modoTamIcon'); if(_t) _t.addEventListener('input', function(){ const s = document.getElementById('modoTamVal'); if(s) s.textContent = this.value + '%'; if(window.__agendarPreview) window.__agendarPreview(); }); }
+  ['modoTamNormal','modoTamTakeaway','modoTamGrupos'].forEach(function(id){ const _t = document.getElementById(id); if(_t) _t.addEventListener('input', function(){ const s = document.getElementById(id + 'Val'); if(s) s.textContent = this.value + '%'; if(window.__agendarPreview) window.__agendarPreview(); }); });
   document.getElementById('abrirEfeitoSel').addEventListener('change', e => {
     const wb = document.getElementById('wipeBox'); if(wb) wb.style.display = (e.target.value === 'wipe') ? 'block' : 'none';
   });
@@ -3843,7 +3853,8 @@ amesadigital.pt</textarea>
       { const _gc = function(id){ const e = document.getElementById(id); return e ? e.checked : true; };
         config.experiencia = { ativo:_gc('expAtivo'), instalar:_gc('expInstalarOn'), partilhar:_gc('expPartilharOn'), texto:_gc('expTextoOn'), vibracao:_gc('expVibracaoOn'), notif:_gc('expNotifOn'), limpar:_gc('expLimparOn') }; }
       { const _gm = function(id){ const e = document.getElementById(id); return e ? e.checked : false; };
-        config.modos = { ativo:_gm('modosAtivo'), normal:_gm('modoNormal'), takeaway:_gm('modoTakeaway'), grupos:_gm('modoGrupos'), tamIcon: ((parseInt((document.getElementById('modoTamIcon')||{}).value, 10) || 100) / 100) }; }
+        const _tv = function(id){ return (parseInt((document.getElementById(id) || {}).value, 10) || 100) / 100; };
+        config.modos = { ativo:_gm('modosAtivo'), normal:_gm('modoNormal'), takeaway:_gm('modoTakeaway'), grupos:_gm('modoGrupos'), tam: { normal:_tv('modoTamNormal'), takeaway:_tv('modoTamTakeaway'), grupos:_tv('modoTamGrupos') } }; }
       { const _ca = document.getElementById('carrinhoAtivo'), _cp = document.getElementById('carrinhoPrecos'), _cw = document.getElementById('carrinhoWhats'), _cws = document.getElementById('carrinhoWhatsSempre');
         config.carrinho = { ativo: _ca ? _ca.checked : true, precos: _cp ? _cp.checked : true, whatsapp: _cw ? _cw.value.trim() : '', whatsappSempre: _cws ? _cws.checked : false,
           levantamento: ((document.getElementById('cartLevAtivo') || {}).checked !== false),
