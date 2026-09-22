@@ -1742,6 +1742,8 @@
   html body.ap-preco .categoria-painel-conteudo .preco-dose{ color:var(--ap-preco) !important; }
   html body.ap-voltar .categoria-painel-header,
   html body.ap-voltar .categoria-painel-header .voltar{ color:var(--ap-voltar) !important; }
+  html body.ap-cabsub .categoria-painel-header{ background-color:var(--ap-cabsub) !important; background-image:none !important; }
+  html body.ap-rodape .info-fixa{ background-color:var(--ap-rodape) !important; background-image:none !important; }
   html body.ap-mais .btn-add-lista{ background:var(--ap-mais) !important; }
 
   #localBloco{ padding:14px 16px 6px; }
@@ -4324,8 +4326,10 @@
         _set('ap-pratos', '--ap-pratos', _ap.pratos);
         _set('ap-preco',  '--ap-preco',  _ap.precos);
         _set('ap-voltar', '--ap-voltar', _ap.voltar);
-        _set('ap-mais',   '--ap-mais',   _ap.mais);
-        { const _d = (_ap.destaque || '').toString().trim(); if(_d) _root.style.setProperty('--dourado', _d); }
+        _set('ap-cabsub', '--ap-cabsub', _ap.cabSub);
+        _set('ap-rodape', '--ap-rodape', _ap.rodape);
+        // "Cor do +" — atinge só o botão + (--ap-mais), sem mexer no --dourado global (que o cabeçalho de alguns modelos usa)
+        _set('ap-mais',   '--ap-mais',   _ap.destaque || _ap.mais);
       }
       // Cores das riscas do modelo "Praia" (editáveis)
       (function(){
