@@ -3852,7 +3852,8 @@ amesadigital.pt</textarea>
         config.experiencia = { ativo:_gc('expAtivo'), instalar:_gc('expInstalarOn'), partilhar:_gc('expPartilharOn'), texto:_gc('expTextoOn'), vibracao:_gc('expVibracaoOn'), notif:_gc('expNotifOn'), limpar:_gc('expLimparOn') }; }
       { const _gm = function(id){ const e = document.getElementById(id); return e ? e.checked : false; };
         const _tv = function(id){ return (parseInt((document.getElementById(id) || {}).value, 10) || 100) / 100; };
-        config.modos = { ativo:_gm('modosAtivo'), normal:_gm('modoNormal'), takeaway:_gm('modoTakeaway'), grupos:_gm('modoGrupos'), tam: { normal:_tv('modoTamNormal'), takeaway:_tv('modoTamTakeaway'), grupos:_tv('modoTamGrupos') } }; }
+        const _mpos = (config.modos && config.modos.pos) ? config.modos.pos : {};
+        config.modos = { ativo:_gm('modosAtivo'), normal:_gm('modoNormal'), takeaway:_gm('modoTakeaway'), grupos:_gm('modoGrupos'), tam: { normal:_tv('modoTamNormal'), takeaway:_tv('modoTamTakeaway'), grupos:_tv('modoTamGrupos') }, pos:_mpos }; }
       { const _ca = document.getElementById('carrinhoAtivo'), _cp = document.getElementById('carrinhoPrecos'), _cw = document.getElementById('carrinhoWhats'), _cws = document.getElementById('carrinhoWhatsSempre');
         config.carrinho = { ativo: _ca ? _ca.checked : true, precos: _cp ? _cp.checked : true, whatsapp: _cw ? _cw.value.trim() : '', whatsappSempre: _cws ? _cws.checked : false,
           levantamento: ((document.getElementById('cartLevAtivo') || {}).checked !== false),
@@ -6011,6 +6012,7 @@ amesadigital.pt</textarea>
         else if(d.alvo === 'botao'){ document.getElementById('introPosBotaoX').value = d.x; document.getElementById('introPosBotaoY').value = d.y; }
         else if(typeof d.alvo === 'string' && d.alvo.indexOf('texto:') === 0 && window.__setIntroTextoPos){ window.__setIntroTextoPos(parseInt(d.alvo.slice(6), 10), d.x, d.y); }
         else if(typeof d.alvo === 'string' && d.alvo.indexOf('botaolivre:') === 0 && window.__setIntroBotaoLivrePos){ window.__setIntroBotaoLivrePos(parseInt(d.alvo.slice(11), 10), d.x, d.y); }
+        else if(typeof d.alvo === 'string' && d.alvo.indexOf('modo:') === 0){ const _mm = d.alvo.slice(5); if(!config.modos || typeof config.modos !== 'object') config.modos = {}; if(!config.modos.pos || typeof config.modos.pos !== 'object') config.modos.pos = {}; config.modos.pos[_mm] = { x:d.x, y:d.y }; if(window.__agendarPreview) window.__agendarPreview(); }
       }
       else if(d.type === 'editar-ir'){
         const map = { htitulo:'titulo', hsub:'subtitulo', hfoto:'novaFotoHeader', fundo:'fundoTipoSel', ifundo:'introFundo', nome:'introTitulo', sub:'introSubtitulo', botao:'introBotao', inome:'introTitulo', isub:'introSubtitulo', ibotao:'introBotao' };

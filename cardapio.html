@@ -2174,13 +2174,13 @@
   body.modo-grupos #categoriaGrid .tile{ display:none !important; }
   body.modo-grupos #categoriaGrid .tile[data-grupo="1"]{ display:flex !important; }
   body.modo-normal #linkAgenda, body.modo-takeaway #linkAgenda{ display:none !important; }
-  /* Ícones dos modos dentro da própria abertura (por cima da foto) */
-  #introModos{ display:flex; justify-content:center; gap:14px; margin-top:24px; flex-wrap:wrap; position:relative; z-index:3; }
-  #introModos .im-opt{ background:transparent; border:none; display:flex; flex-direction:column; align-items:center; gap:7px; cursor:pointer; font-family:var(--fonte-titulo); color:var(--dourado, #c69a3f); padding:0; }
-  #introModos .im-ic{ width:calc(60px * var(--ic-scale, 1)); height:calc(60px * var(--ic-scale, 1)); display:flex; align-items:center; justify-content:center; border:1.5px solid rgba(255,255,255,.34); border-radius:16px; background:rgba(0,0,0,.3); -webkit-backdrop-filter:blur(2px); backdrop-filter:blur(2px); }
-  #introModos .im-ic svg{ width:62%; height:62%; }
-  #introModos .im-lb{ font-size:calc(.82rem * var(--ic-scale, 1)); font-weight:600; color:#f4ead2; text-shadow:0 1px 4px rgba(0,0,0,.65); letter-spacing:.3px; }
-  #introModos .im-opt:active{ transform:scale(.94); }
+  /* Ícones dos modos dentro da própria abertura (por cima da foto), posicionáveis */
+  #introModosWrap{ position:absolute; inset:0; pointer-events:none; z-index:4; }
+  #introModosWrap .im-opt{ position:absolute; left:50%; top:58%; transform:translate(-50%,-50%) translate(var(--mx,0px), var(--my,0px)); pointer-events:auto; background:transparent; border:none; display:flex; flex-direction:column; align-items:center; gap:7px; cursor:pointer; font-family:var(--fonte-titulo); color:var(--dourado, #c69a3f); padding:0; touch-action:none; }
+  #introModosWrap .im-ic{ width:calc(60px * var(--ic-scale, 1)); height:calc(60px * var(--ic-scale, 1)); display:flex; align-items:center; justify-content:center; border:1.5px solid rgba(255,255,255,.34); border-radius:16px; background:rgba(0,0,0,.3); -webkit-backdrop-filter:blur(2px); backdrop-filter:blur(2px); }
+  #introModosWrap .im-ic svg{ width:62%; height:62%; }
+  #introModosWrap .im-lb{ font-size:calc(.82rem * var(--ic-scale, 1)); font-weight:600; color:#f4ead2; text-shadow:0 1px 4px rgba(0,0,0,.65); letter-spacing:.3px; }
+  #introModosWrap .im-opt:active{ filter:brightness(1.15); }
   #expOverlay{ position:fixed; inset:0; z-index:640; background:rgba(0,0,0,0); display:flex; align-items:flex-end; justify-content:center; padding:0; pointer-events:none; transition:background .3s ease; }
   #expOverlay.aberto{ background:rgba(0,0,0,0.5); pointer-events:auto; }
   .exp-card{ background:#fff; width:100%; max-width:460px; max-height:88vh; overflow-y:auto; border-radius:18px 18px 0 0; padding:18px 18px calc(20px + env(safe-area-inset-bottom)); transform:translateY(100%); }
@@ -5474,6 +5474,44 @@
     };
   }
 
+  // Ícones de "modos" (Menu / Take away / Grupos) posicionáveis sobre a abertura
+  var IC_MODOS = {
+    normal: ['Menu', '<svg viewBox="0 0 46 48" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M13 8v9"/><path d="M18.5 8v9"/><path d="M24 8v9"/><path d="M13 17h11"/><path d="M18.5 17v23"/><path d="M32 8c7 5 7 17 0 21z"/><path d="M32 29v11"/></g></svg>'],
+    takeaway: ['Take away', '<svg viewBox="0 0 46 48" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M16 15c0-8 6.5-8 6.5 0"/><path d="M23.5 15c0-8 6.5-8 6.5 0"/><path d="M9 15h28l-3.5 26H12.5z"/><path d="M9 23h28"/></g></svg>'],
+    grupos: ['Grupos', '<svg viewBox="0 0 46 48" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="16" cy="15" r="6"/><path d="M6 39 Q16 24 26 39"/><circle cx="30" cy="15" r="6"/><path d="M20 39 Q30 24 40 39"/></g></svg>']
+  };
+  window.__renderIntroModos = function(preview){
+    try{
+      var ov = document.getElementById('introOverlay'); if(!ov) return;
+      var old = document.getElementById('introModosWrap'); if(old) old.remove();
+      var cfg = window.__modosCfg || {};
+      if(!cfg.ativo) return;
+      var _temGr = function(){ return !!document.querySelector('#categoriaGrid .tile[data-grupo="1"]'); };
+      var modos = [];
+      if(cfg.normal) modos.push('normal');
+      if(cfg.takeaway) modos.push('takeaway');
+      if(cfg.grupos && (preview || _temGr())) modos.push('grupos');
+      if(!modos.length) return;
+      var pos = cfg.pos || {}, tam = cfg.tam || {};
+      var wrap = document.createElement('div'); wrap.id = 'introModosWrap';
+      modos.forEach(function(m, i){
+        var n = IC_MODOS[m]; if(!n) return;
+        var b = document.createElement(preview ? 'div' : 'button'); if(!preview) b.type = 'button';
+        b.className = 'im-opt'; b.setAttribute('data-modo', m);
+        var sc = parseFloat(tam[m]) || 1; b.style.setProperty('--ic-scale', sc);
+        var p = pos[m];
+        var dx = (p && p.x != null) ? parseFloat(p.x) : ((i - (modos.length - 1) / 2) * 98);
+        var dy = (p && p.y != null) ? parseFloat(p.y) : 0;
+        b.style.setProperty('--mx', dx + 'px'); b.style.setProperty('--my', dy + 'px');
+        b.innerHTML = '<span class="im-ic">' + n[1] + '</span><span class="im-lb">' + n[0] + '</span>';
+        if(preview){ _introArrastavel(b, '--mx', '--my', 'modo:' + m); }
+        else { b.onclick = function(){ if(window.__modoEscolher) window.__modoEscolher(m); }; }
+        wrap.appendChild(b);
+      });
+      ov.appendChild(wrap);
+    }catch(e){}
+  };
+
   window.__mostrarIntroPreview = false;
   window.__lastPreviewCfg = null;
   window.__preverIntro = function(config, mostrar){
@@ -5499,6 +5537,8 @@
     if(sEl) envolverAnim(sEl, intro.animSub||'subir', 0.5);
     renderIntroTextosLivres(config, true);
     renderIntroBotoesLivres(config, true);
+    window.__modosCfg = (config.modos && typeof config.modos === 'object') ? config.modos : {};
+    if(window.__renderIntroModos) window.__renderIntroModos(true);
     aplicarDecorIntro(config, true);
     const fotos = (config.header && config.header.fotos) || [];
     const fotoIntro = (intro.foto && String(intro.foto).trim()) ? intro.foto : ((config.header && config.header.fotosAtivas !== false && fotos.length) ? fotos[0] : null);
@@ -8426,35 +8466,17 @@
     function temGrupos(){ return !!document.querySelector('#categoriaGrid .tile[data-grupo="1"]'); }
     function podeReservar(){ return !!(window.__abrirAgenda && window._agenda) || !!window.__waGrupo; }
 
-    var IC = {
-      normal: ['Menu', '<svg viewBox="0 0 46 48" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M13 8v9"/><path d="M18.5 8v9"/><path d="M24 8v9"/><path d="M13 17h11"/><path d="M18.5 17v23"/><path d="M32 8c7 5 7 17 0 21z"/><path d="M32 29v11"/></g></svg>'],
-      takeaway: ['Take away', '<svg viewBox="0 0 46 48" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M16 15c0-8 6.5-8 6.5 0"/><path d="M23.5 15c0-8 6.5-8 6.5 0"/><path d="M9 15h28l-3.5 26H12.5z"/><path d="M9 23h28"/></g></svg>'],
-      grupos: ['Grupos', '<svg viewBox="0 0 46 48" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="16" cy="15" r="6"/><path d="M6 39 Q16 24 26 39"/><circle cx="30" cy="15" r="6"/><path d="M20 39 Q30 24 40 39"/></g></svg>']
-    };
+    // Os ícones são desenhados por window.__renderIntroModos (definido junto ao _introArrastavel),
+    // partilhado pela pré-visualização do editor e pelo cardápio real.
 
-    function icones(modos, onPick){
-      var wrap = document.createElement('div'); wrap.id = 'introModos'; wrap.className = 'ent ent-subir';
-      modos.forEach(function(m){
-        var n = IC[m]; if(!n) return;
-        var b = document.createElement('button'); b.type = 'button'; b.className = 'im-opt'; b.setAttribute('data-modo', m);
-        var _sc = parseFloat((window.__modosTam || {})[m]); if(!_sc || _sc <= 0) _sc = 1;
-        b.style.setProperty('--ic-scale', _sc);
-        b.innerHTML = '<span class="im-ic">' + n[1] + '</span><span class="im-lb">' + n[0] + '</span>';
-        b.onclick = function(){ onPick(m); };
-        wrap.appendChild(b);
-      });
-      return wrap;
-    }
+    window.__modoEscolher = function(m){ aplicarModo(m); if(window.__esconderIntro) window.__esconderIntro(); };
 
     function integrarNoIntro(modos){
       modosAtuais = modos;
       var ov = document.getElementById('introOverlay');
-      var content = document.getElementById('introContent');
-      var host = (content && getComputedStyle(content).display !== 'none') ? content : ov;
-      if(!host){ mostrarGate(modos); return; }
+      if(!ov){ mostrarGate(modos); return; }
       var btn = document.getElementById('introBtn'); if(btn) btn.style.display = 'none';
-      var old = document.getElementById('introModos'); if(old) old.remove();
-      host.appendChild(icones(modos, function(m){ aplicarModo(m); if(window.__esconderIntro) window.__esconderIntro(); }));
+      if(window.__renderIntroModos) window.__renderIntroModos(false);
     }
 
     // Voltar ao ecrã de escolha de modo (reabre a abertura, ou o ecrã escuro)
@@ -8463,7 +8485,7 @@
       if(ov && window.__introAtiva){
         try{ delete ov.dataset.saiu; }catch(e){}
         ov.classList.remove('sair'); ov.style.transform = ''; ov.style.display = 'flex';
-        var im = document.getElementById('introModos');
+        var im = document.getElementById('introModosWrap');
         if(im){ im.style.display = ''; } else { integrarNoIntro(modosAtuais); }
       } else {
         mostrarGate(modosAtuais);
@@ -8500,7 +8522,7 @@
     window.__initModos = function(){
       try{
         var cfg = window.__modosCfg || {};
-        if(!cfg.ativo){ document.body.classList.remove('modo-normal','modo-takeaway','modo-grupos'); var _g=document.getElementById('modoGate'); if(_g) _g.style.display='none'; var _im=document.getElementById('introModos'); if(_im) _im.remove(); return; }
+        if(!cfg.ativo){ document.body.classList.remove('modo-normal','modo-takeaway','modo-grupos'); var _g=document.getElementById('modoGate'); if(_g) _g.style.display='none'; var _im=document.getElementById('introModosWrap'); if(_im) _im.remove(); return; }
         var modos = [];
         if(cfg.normal) modos.push('normal');
         if(cfg.takeaway) modos.push('takeaway');
@@ -8526,8 +8548,8 @@
         if(!ov || !window.__introAtiva){ ov = null; return false; }
         try{ delete ov.dataset.saiu; }catch(e){}
         ov.classList.remove('sair');
-        if(!document.getElementById('introModos')) integrarNoIntro(modosAtuais);
-        else document.getElementById('introModos').style.display = '';
+        if(!document.getElementById('introModosWrap')) integrarNoIntro(modosAtuais);
+        else document.getElementById('introModosWrap').style.display = '';
         ov.style.display = 'flex'; ov.style.transition = 'none'; ov.style.transform = 'translateX(-100%)';
         w = window.innerWidth || document.documentElement.clientWidth || 360;
         return true;
