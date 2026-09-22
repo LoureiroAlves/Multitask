@@ -2161,6 +2161,23 @@
   #expAba{ display:flex; width:fit-content; max-width:calc(100% - 28px); align-items:center; gap:7px; margin:14px auto 22px; padding:8px 16px; border:1.5px solid var(--dourado, #a8712f); border-radius:10px; background:transparent; color:var(--dourado-escuro, #8a5a1c); font-family:var(--fonte-titulo); font-size:.85rem; font-weight:600; letter-spacing:.3px; cursor:pointer; }
   #expAba:active{ transform:scale(.97); }
   body.modelo-slider #expAba{ display:none; }
+
+  /* ===== Modos de entrada (Menu / Take away / Grupos) ===== */
+  #modoGate{ position:fixed; inset:0; z-index:9600; background:linear-gradient(160deg, var(--castanho,#3a2c18), #241a0e); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px; padding:28px calc(24px + env(safe-area-inset-right)) 28px calc(24px + env(safe-area-inset-left)); text-align:center; }
+  #modoGate .mg-tit{ font-family:var(--fonte-titulo); color:#fff; font-size:1.4rem; font-weight:800; margin:0; }
+  #modoGate .mg-sub{ color:rgba(255,255,255,.78); font-size:.9rem; margin:-8px 0 8px; }
+  #modoGate .mg-opts{ display:flex; flex-wrap:wrap; gap:14px; justify-content:center; max-width:460px; }
+  #modoGate .mg-opt{ width:132px; min-height:120px; border-radius:18px; background:rgba(255,255,255,.08); border:1.5px solid rgba(255,255,255,.2); color:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; cursor:pointer; padding:16px 10px; font-family:var(--fonte-titulo); }
+  #modoGate .mg-opt:active{ transform:scale(.96); background:rgba(255,255,255,.15); }
+  #modoGate .mg-opt .mg-ic{ font-size:2.5rem; line-height:1; }
+  #modoGate .mg-opt .mg-lb{ font-size:.98rem; font-weight:700; }
+  #modoBox{ display:none; align-items:center; gap:10px; margin:10px 14px 0; padding:9px 14px; border-radius:12px; background:var(--dourado,#a8712f); color:#fff; font-family:var(--fonte-titulo); font-weight:700; font-size:.9rem; letter-spacing:.4px; }
+  body.tem-modo-box #modoBox{ display:flex; }
+  #modoBox .mb-lbl{ display:flex; align-items:center; gap:7px; }
+  #modoBox .mb-acao, #modoBox .mb-trocar{ margin-left:auto; background:rgba(255,255,255,.22); border:none; color:#fff; border-radius:20px; padding:5px 12px; font-size:.78rem; font-weight:700; cursor:pointer; font-family:inherit; }
+  #modoBox .mb-acao + .mb-trocar{ margin-left:8px; }
+  body.modo-grupos #categoriaGrid .tile:not([data-tipo="menus"]){ display:none !important; }
+  body.modo-normal #linkAgenda, body.modo-takeaway #linkAgenda{ display:none !important; }
   #expOverlay{ position:fixed; inset:0; z-index:640; background:rgba(0,0,0,0); display:flex; align-items:flex-end; justify-content:center; padding:0; pointer-events:none; transition:background .3s ease; }
   #expOverlay.aberto{ background:rgba(0,0,0,0.5); pointer-events:auto; }
   .exp-card{ background:#fff; width:100%; max-width:460px; max-height:88vh; overflow-y:auto; border-radius:18px 18px 0 0; padding:18px 18px calc(20px + env(safe-area-inset-bottom)); transform:translateY(100%); }
@@ -2494,6 +2511,9 @@
     </div>
   </div>
 </header>
+
+<!-- Caixa do modo escolhido (Take away / Menus de grupo) -->
+<div id="modoBox"></div>
 
 <!-- Mosaico (bento) — módulo à parte, ativado por config.mosaico.ativo -->
 <div id="mosaicoGrid"></div>
@@ -3272,6 +3292,7 @@
       const btn = document.createElement('button');
       btn.className = 'tile tile-espera'; btn.type = 'button';
       btn.setAttribute('data-target', cat.id);
+      btn.dataset.tipo = cat.tipo || 'comida';   // usado pelos "modos" (Grupos mostra só tipo=menus)
       const emoji = document.createElement('span'); emoji.className='tile-emoji'; emoji.textContent = cat.emoji || '';
       const label = document.createElement('span'); label.className='tile-label'; _mLang(label, cat.tile);
       btn.appendChild(emoji); btn.appendChild(label);
@@ -4311,6 +4332,10 @@
       // Cor do QR do cliente = a mesma escolhida na secção "Partilha / QR code"
       window.__qrCor = (config.qr && config.qr.corQR) ? config.qr.corQR : '#4a3820';
       try{ if(window.__expRefresh) window.__expRefresh(); }catch(e){}
+      // Modos de entrada (Menu / Take away / Grupos)
+      window.__modosCfg = (config.modos && typeof config.modos === 'object') ? config.modos : {};
+      window.__waGrupo = ((config.agenda && config.agenda.whatsapp) || (config.carrinho && config.carrinho.whatsapp) || '').toString().replace(/\D/g,'').replace(/^00/,'');
+      setTimeout(function(){ try{ if(window.__initModos) window.__initModos(); }catch(e){} }, 0);
       // PILOTO — Fundo do menu independente dos separadores (opcional; vazio = segue o modelo)
       { const _ft = (config.fundoTema || '').toString().trim();
         ['claro','papel','ardosia'].forEach(function(x){ document.body.classList.toggle('fundo-' + x, _ft === x); }); }
@@ -8387,6 +8412,77 @@
         location.reload();
       };
     }
+  })();
+</script>
+
+<script>
+  /* ===== Modos de entrada: Menu / Take away / Grupos ===== */
+  (function(){
+    var modosAtuais = [];
+
+    function temGrupos(){ return !!document.querySelector('#categoriaGrid .tile[data-tipo="menus"]'); }
+    function podeReservar(){ return !!(window.__abrirAgenda && window._agenda) || !!window.__waGrupo; }
+
+    function aplicarModo(m){
+      document.body.classList.remove('modo-normal','modo-takeaway','modo-grupos');
+      document.body.classList.add('modo-' + m);
+      var takeaway = (m === 'takeaway');
+      // Carrinho: ligado só no take away
+      try{
+        if(window.__cartCfg) window.__cartCfg.ativo = takeaway;
+        document.body.classList.toggle('carrinho-off', !takeaway);
+        if(window.montarBotoesLista) window.montarBotoesLista();
+        if(window.__cartRefresh) window.__cartRefresh();
+      }catch(e){}
+      // Caixa por baixo do cabeçalho
+      var box = document.getElementById('modoBox');
+      if(box){
+        if(m === 'takeaway' || m === 'grupos'){
+          var lbl = (m === 'takeaway') ? '🛍️ Take away' : '👥 Menus de grupo';
+          var h = '<span class="mb-lbl">' + lbl + '</span>';
+          if(m === 'grupos' && podeReservar()) h += '<button class="mb-acao" type="button" id="mbReservar">📅 Reservar</button>';
+          if(modosAtuais.length > 1) h += '<button class="mb-trocar" type="button" id="mbTrocar">Trocar</button>';
+          box.innerHTML = h;
+          document.body.classList.add('tem-modo-box');
+          var _r = document.getElementById('mbReservar');
+          if(_r) _r.onclick = function(){
+            if(window.__abrirAgenda && window._agenda){ try{ window.__reservaMenu = ''; }catch(e){} window.__abrirAgenda(); }
+            else if(window.__waGrupo){ window.location.href = 'https://wa.me/' + window.__waGrupo + '?text=' + encodeURIComponent('Olá! Queria saber sobre os menus de grupo.'); }
+          };
+          var _t = document.getElementById('mbTrocar');
+          if(_t) _t.onclick = function(){ mostrarGate(modosAtuais); };
+        } else {
+          box.innerHTML = ''; document.body.classList.remove('tem-modo-box');
+        }
+      }
+      try{ window.scrollTo(0, 0); }catch(e){}
+    }
+
+    function mostrarGate(modos){
+      modosAtuais = modos;
+      var g = document.getElementById('modoGate');
+      if(!g){ g = document.createElement('div'); g.id = 'modoGate'; document.body.appendChild(g); }
+      var ic = { normal:['🍽️','Menu'], takeaway:['🛍️','Take away'], grupos:['👥','Grupos'] };
+      var h = '<div class="mg-tit">Bem-vindo 👋</div><div class="mg-sub">Como queres ver o menu?</div><div class="mg-opts">';
+      modos.forEach(function(m){ var n = ic[m]; h += '<button class="mg-opt" type="button" data-modo="' + m + '"><span class="mg-ic">' + n[0] + '</span><span class="mg-lb">' + n[1] + '</span></button>'; });
+      h += '</div>';
+      g.innerHTML = h; g.style.display = 'flex';
+      Array.prototype.forEach.call(g.querySelectorAll('.mg-opt'), function(b){ b.onclick = function(){ aplicarModo(b.getAttribute('data-modo')); g.style.display = 'none'; }; });
+    }
+
+    window.__initModos = function(){
+      try{
+        var cfg = window.__modosCfg || {};
+        if(!cfg.ativo){ document.body.classList.remove('modo-normal','modo-takeaway','modo-grupos','tem-modo-box'); var _g=document.getElementById('modoGate'); if(_g) _g.style.display='none'; return; }
+        var modos = [];
+        if(cfg.normal) modos.push('normal');
+        if(cfg.takeaway) modos.push('takeaway');
+        if(cfg.grupos && temGrupos()) modos.push('grupos');
+        if(!modos.length) return;
+        if(modos.length === 1){ modosAtuais = modos; aplicarModo(modos[0]); return; }
+        mostrarGate(modos);
+      }catch(e){}
+    };
   })();
 </script>
 
