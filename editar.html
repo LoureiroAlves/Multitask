@@ -4940,6 +4940,10 @@ amesadigital.pt</textarea>
         const trdF=document.createElement('details'); trdF.style.cssText='border:none;background:transparent;margin-top:10px;';
         const trsF=document.createElement('summary'); trsF.textContent='traduções do título'; trsF.style.cssText='font-size:0.75rem;color:var(--castanho-suave);';
         trdF.appendChild(trsF); trdF.appendChild(campoTraducoes(cat.tile)); p.appendChild(trdF);
+        { const gW=document.createElement('label'); gW.style.cssText='display:flex;align-items:center;gap:8px;margin-top:12px;font-size:.82rem;color:var(--castanho);cursor:pointer;';
+          const gC=document.createElement('input'); gC.type='checkbox'; gC.style.width='auto'; gC.checked = cat.modoGrupo===true;
+          gC.addEventListener('change',()=>{ cat.modoGrupo=gC.checked; if(window.__agendarPreview) window.__agendarPreview(); });
+          gW.appendChild(gC); gW.appendChild(document.createTextNode('Aparece no modo "Grupos" (menus de grupo)')); p.appendChild(gW); }
         return p;
       }
 
@@ -5172,6 +5176,12 @@ amesadigital.pt</textarea>
       [['comida','Pratos e preços (normal)'],['vinhos','Vinhos & Bebidas (grupos + doses)'],['menus','Menu de Grupo (menus com preço)']].forEach(([v,t])=>{ const o=document.createElement('option'); o.value=v; o.textContent=t; if(cat.tipo===v) o.selected=true; sel.appendChild(o); });
       sel.addEventListener('change',()=>{ cat.tipo=sel.value; if(cat.tipo==='comida' && cat.grupos.length===0) cat.grupos.push({summary:{pt:''},itens:[]}); if(cat.tipo==='menus' && !cat.menus) cat.menus=[]; renderEditor(); });
       tp.appendChild(sel); p.appendChild(tp);
+
+      const grpWrap=document.createElement('label'); grpWrap.style.cssText='display:flex;align-items:center;gap:8px;margin-top:10px;font-size:.82rem;color:var(--castanho);cursor:pointer;';
+      const grpChk=document.createElement('input'); grpChk.type='checkbox'; grpChk.style.width='auto'; grpChk.checked = cat.modoGrupo===true;
+      grpChk.addEventListener('change',()=>{ cat.modoGrupo=grpChk.checked; if(window.__agendarPreview) window.__agendarPreview(); });
+      grpWrap.appendChild(grpChk); grpWrap.appendChild(document.createTextNode('Aparece no modo "Grupos" (menus de grupo)'));
+      p.appendChild(grpWrap);
 
       return p;
     }
