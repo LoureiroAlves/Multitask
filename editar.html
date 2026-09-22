@@ -934,6 +934,27 @@ amesadigital.pt</textarea>
           <div id="introBotoesLivres"></div>
           <button type="button" class="acao" id="btnAddIntroBotao" style="background:var(--dourado-escuro); margin-top:8px;">＋ Adicionar botão</button>
         </div>
+
+        <div style="margin-top:16px; border-top:1px dotted var(--linha); padding-top:12px;">
+          <div style="font-weight:800; color:var(--dourado-escuro); margin-bottom:6px;">🚪 Ecrã de entrada (modos)</div>
+          <p style="margin:0 0 10px; font-size:0.82rem; color:var(--castanho-suave);">O cliente escolhe como ver o menu, tocando num ícone aqui na abertura. Liga os modos que este negócio oferece.</p>
+          <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:700;">
+            <input type="checkbox" id="modosAtivo" style="width:auto; margin:0;"> Ativar ícones de modo na abertura
+          </label>
+          <div style="margin:10px 0 0; padding-left:10px; border-left:2px solid var(--linha);">
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin:8px 0; font-size:.92rem; color:var(--castanho);"><input type="checkbox" id="modoNormal" style="width:auto; margin:0;"> 🍽️ Menu normal (sem carrinho nem reservas)</label>
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin:8px 0; font-size:.92rem; color:var(--castanho);"><input type="checkbox" id="modoTakeaway" style="width:auto; margin:0;"> 🛍️ Take away (liga o carrinho; esconde as reservas)</label>
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin:8px 0; font-size:.92rem; color:var(--castanho);"><input type="checkbox" id="modoGrupos" style="width:auto; margin:0;"> 👥 Menus de grupo (mostra só as categorias marcadas)</label>
+          </div>
+          <div style="margin-top:14px; font-weight:700; font-size:.9rem; color:var(--castanho);">Tamanho de cada ícone</div>
+          <label style="display:block; margin-top:8px; font-size:.85rem; color:var(--castanho);">🍽️ Menu — <span id="modoTamNormalVal">100%</span></label>
+          <input type="range" id="modoTamNormal" min="70" max="160" value="100" step="10" style="width:100%; accent-color:var(--dourado);">
+          <label style="display:block; margin-top:8px; font-size:.85rem; color:var(--castanho);">🛍️ Take away — <span id="modoTamTakeawayVal">100%</span></label>
+          <input type="range" id="modoTamTakeaway" min="70" max="160" value="100" step="10" style="width:100%; accent-color:var(--dourado);">
+          <label style="display:block; margin-top:8px; font-size:.85rem; color:var(--castanho);">👥 Grupos — <span id="modoTamGruposVal">100%</span></label>
+          <input type="range" id="modoTamGrupos" min="70" max="160" value="100" step="10" style="width:100%; accent-color:var(--dourado);">
+          <p style="margin:10px 0 0; font-size:0.8rem; color:var(--castanho-suave);">Aparece se tiveres <strong>2 ou mais</strong> modos ligados (com 1, entra logo nesse). O "Grupos" só aparece se marcares categorias/pastas com "Aparece no modo Grupos" (no Menu).</p>
+        </div>
       </div>
     </div>
   </details>
@@ -1742,29 +1763,6 @@ amesadigital.pt</textarea>
         <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin:8px 0; font-size:.92rem; color:var(--castanho);"><input type="checkbox" id="expNotifOn" style="width:auto; margin:0;"> 🔔 Notificações (aviso "brevemente")</label>
         <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin:8px 0; font-size:.92rem; color:var(--castanho);"><input type="checkbox" id="expLimparOn" style="width:auto; margin:0;"> 🧹 Limpar as minhas escolhas</label>
       </div>
-    </div>
-  </details>
-
-  <details id="secModos" class="ed-sec" data-tab="extras">
-    <summary>🚪 Ecrã de entrada (modos)</summary>
-    <div class="bloco-conteudo">
-      <p style="margin:0 0 10px; font-size:0.82rem; color:var(--castanho-suave);">Um ecrã inicial onde o cliente escolhe como ver o menu. Liga os modos que este negócio oferece.</p>
-      <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:700;">
-        <input type="checkbox" id="modosAtivo" style="width:auto; margin:0;"> Ativar ecrã de entrada com modos
-      </label>
-      <div style="margin:10px 0 0; padding-left:10px; border-left:2px solid var(--linha);">
-        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin:8px 0; font-size:.92rem; color:var(--castanho);"><input type="checkbox" id="modoNormal" style="width:auto; margin:0;"> 🍽️ Menu normal (sem carrinho nem reservas)</label>
-        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin:8px 0; font-size:.92rem; color:var(--castanho);"><input type="checkbox" id="modoTakeaway" style="width:auto; margin:0;"> 🛍️ Take away (liga o carrinho; esconde as reservas)</label>
-        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin:8px 0; font-size:.92rem; color:var(--castanho);"><input type="checkbox" id="modoGrupos" style="width:auto; margin:0;"> 👥 Menus de grupo (mostra só as categorias do tipo "menus")</label>
-      </div>
-      <div style="margin-top:14px; font-weight:700; font-size:.9rem; color:var(--castanho);">Tamanho de cada ícone</div>
-      <label style="display:block; margin-top:8px; font-size:.85rem; color:var(--castanho);">🍽️ Menu — <span id="modoTamNormalVal">100%</span></label>
-      <input type="range" id="modoTamNormal" min="70" max="160" value="100" step="10" style="width:100%; accent-color:var(--dourado);">
-      <label style="display:block; margin-top:8px; font-size:.85rem; color:var(--castanho);">🛍️ Take away — <span id="modoTamTakeawayVal">100%</span></label>
-      <input type="range" id="modoTamTakeaway" min="70" max="160" value="100" step="10" style="width:100%; accent-color:var(--dourado);">
-      <label style="display:block; margin-top:8px; font-size:.85rem; color:var(--castanho);">👥 Grupos — <span id="modoTamGruposVal">100%</span></label>
-      <input type="range" id="modoTamGrupos" min="70" max="160" value="100" step="10" style="width:100%; accent-color:var(--dourado);">
-      <p style="margin:10px 0 0; font-size:0.8rem; color:var(--castanho-suave);">O ecrã de entrada só aparece se tiveres <strong>2 ou mais</strong> modos ligados (com 1, entra logo nesse). O modo "Grupos" só aparece se houver categorias do tipo "menus" no menu.</p>
     </div>
   </details>
 
@@ -6172,7 +6170,7 @@ amesadigital.pt</textarea>
       ['menu','🧾 Menu', ['secMenu']],
       ['promo','🏷️ Promoção', ['secPromo']],
       ['mosaico','🧩 Mosaico', ['secMosaico']],
-      ['extras','⚙️ Extras', ['secJogos','secExtras','secAgenda','secTextoLivre','secCarrinho','secFavoritos','secExperiencia','secModos','secFooter','secIconesTopo','secRedes']],
+      ['extras','⚙️ Extras', ['secJogos','secExtras','secAgenda','secTextoLivre','secCarrinho','secFavoritos','secExperiencia','secFooter','secIconesTopo','secRedes']],
       ['publicidade','📣 Publicidade', ['secPreAbertura','secAnuncio','secAnuncioJogos']],
       ['partilha','🔗 Partilha / QR', ['secPartilha']],
       ['limpeza','🧹 Limpeza de fotos', ['secLimpeza']]
@@ -6181,7 +6179,7 @@ amesadigital.pt</textarea>
       secCalendario:'📅 Calendário / Reservas',
       secLayout:'Layout', secHeader:'Cabeçalho', secRodape:'Rodapé (barra fixa)', secFooter:'Rodapé final (scroll)', secAbertura:'Ecrã de abertura',
       secMenu:'Menu — itens e preços', secPromo:'🏷️ Promoção (montra)', secMosaico:'Mosaico (caixas)',
-      secJogos:'Jogos', secExtras:'Decoração e fidelidade', secAgenda:'Agenda / Reservas', secTextoLivre:'Texto livre', secCarrinho:'Carrinho', secFavoritos:'❤ Favoritos', secExperiencia:'📱 Definições da experiência', secModos:'🚪 Ecrã de entrada', secIconesTopo:'Ícones do topo', secRedes:'Redes sociais / Google Maps',
+      secJogos:'Jogos', secExtras:'Decoração e fidelidade', secAgenda:'Agenda / Reservas', secTextoLivre:'Texto livre', secCarrinho:'Carrinho', secFavoritos:'❤ Favoritos', secExperiencia:'📱 Definições da experiência', secIconesTopo:'Ícones do topo', secRedes:'Redes sociais / Google Maps',
       secPreAbertura:'Pré-abertura', secAnuncio:'Publicidade no menu', secAnuncioJogos:'Publicidade nos jogos',
       secPartilha:'Partilhar / QR', secLimpeza:'Limpeza de fotos'
     };
