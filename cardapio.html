@@ -2177,7 +2177,8 @@
   #modoBox .mb-acao{ margin-left:auto; background:rgba(255,255,255,.22); border:none; color:#fff; border-radius:20px; padding:5px 12px; font-size:.78rem; font-weight:700; cursor:pointer; font-family:inherit; }
   #modoBox .mb-hint{ margin-left:auto; font-size:.74rem; font-weight:600; opacity:.85; }
   #modoBox .mb-acao + .mb-hint{ margin-left:8px; }
-  body.modo-grupos #categoriaGrid .tile:not([data-grupo="1"]):not([data-tipo="menus"]){ display:none !important; }
+  body.modo-grupos #categoriaGrid .tile{ display:none !important; }
+  body.modo-grupos #categoriaGrid .tile[data-grupo="1"]{ display:flex !important; }
   body.modo-normal #linkAgenda, body.modo-takeaway #linkAgenda{ display:none !important; }
   /* Ícones dos modos dentro da própria abertura (por cima da foto) */
   #introModos{ display:flex; justify-content:center; gap:14px; margin-top:24px; flex-wrap:wrap; position:relative; z-index:3; }
@@ -3293,6 +3294,7 @@
     const _cats = menu.categorias;
     _cats.forEach(function(c, i){ if(c && (!c.id || !String(c.id).trim())) c.id = 'sec' + i; });
     const _folderIds = {}; _cats.forEach(function(c){ if(c && c.contentor && c.id) _folderIds[c.id] = true; });
+    const _grupoFolders = {}; _cats.forEach(function(c){ if(c && c.contentor && c.id && c.modoGrupo) _grupoFolders[c.id] = true; });   // pastas marcadas para o modo "Grupos"
     const _ehFilho = function(c){ return !!(c && c.pai && _folderIds[c.pai]); };
     const _filhosDe = function(fid){ return _cats.filter(function(c){ return c && c.pai === fid && !c.contentor; }); };
     // Constrói o botão (tile) de uma categoria — usado no menu principal E dentro das pastas (mesmo aspeto do layout)
@@ -3301,7 +3303,7 @@
       btn.className = 'tile tile-espera'; btn.type = 'button';
       btn.setAttribute('data-target', cat.id);
       btn.dataset.tipo = cat.tipo || 'comida';   // usado pelos "modos"
-      if(cat.modoGrupo) btn.dataset.grupo = '1';   // categoria/pasta marcada para o modo "Grupos"
+      if(cat.modoGrupo && !cat.contentor) btn.dataset.grupo = '1';   // categoria (não-pasta) marcada para o modo "Grupos"
       const emoji = document.createElement('span'); emoji.className='tile-emoji'; emoji.textContent = cat.emoji || '';
       const label = document.createElement('span'); label.className='tile-label'; _mLang(label, cat.tile);
       btn.appendChild(emoji); btn.appendChild(label);
@@ -3334,7 +3336,7 @@
       const btn = _mTile(cat);
       if(cat.ocultarMenu){ btn.classList.add('tile-oculto'); }
       // Categoria dentro de uma pasta: não aparece como tile de topo (só dentro da pasta), mas fica no DOM para abrir
-      if(_ehFilho(cat)){ btn.classList.add('tile-oculto', 'tile-filho'); }
+      if(_ehFilho(cat)){ btn.classList.add('tile-oculto', 'tile-filho'); if(_grupoFolders[cat.pai]) btn.dataset.grupo = '1'; }   // filha de pasta "Grupos" → aparece direto no modo Grupos
       grid.appendChild(btn);
       const sec = document.createElement('section');
       sec.className = 'categoria'; sec.id = cat.id;
@@ -8429,7 +8431,7 @@
   (function(){
     var modosAtuais = [];
 
-    function temGrupos(){ return !!document.querySelector('#categoriaGrid .tile[data-grupo="1"], #categoriaGrid .tile[data-tipo="menus"]'); }
+    function temGrupos(){ return !!document.querySelector('#categoriaGrid .tile[data-grupo="1"]'); }
     function podeReservar(){ return !!(window.__abrirAgenda && window._agenda) || !!window.__waGrupo; }
 
     var IC = {
