@@ -1014,6 +1014,12 @@ amesadigital.pt</textarea>
       </div>
       <div class="subtitulo" style="margin:-6px 0 10px;">Desliga para não mostrar a barra fixa no fundo do ecrã.</div>
 
+      <label style="display:flex; align-items:center; gap:8px; margin:0 0 6px; cursor:pointer; font-weight:600;">
+        <input type="checkbox" id="rodapeModoMapa" style="width:auto; margin:0;">
+        Usar a barra como mapa "Como chegar" (clicável)
+      </label>
+      <div class="subtitulo" style="margin:-2px 0 12px;">A barra passa a ser uma faixa com o mapa e a morada; ao tocar, abre o Google Maps. Precisa de morada ou link do mapa preenchidos (em Redes sociais / Google Maps). As linhas de texto abaixo ficam ocultas enquanto este modo estiver ligado.</div>
+
       <label for="linha1">Linha 1</label>
       <input type="text" id="linha1" placeholder="Ex: Contamos contigo!">
       <div id="estiloLinha1"></div>
@@ -2566,6 +2572,7 @@ amesadigital.pt</textarea>
     renderIntroBotoes();
     document.getElementById('blocoIntro').style.display = (config.intro && config.intro.ativo) ? 'block' : 'none';
     document.getElementById('rodapeMostrar').checked = config.rodape.mostrar !== false;
+    { const _mm = document.getElementById('rodapeModoMapa'); if(_mm) _mm.checked = config.rodape.modoMapa === true; }
     document.getElementById('linha1').value = config.rodape.linha1 || '';
     { const _bp = document.getElementById('barraPadrao'); if(_bp) _bp.value = config.rodape.padrao || 'nenhum'; }
     document.getElementById('linha2').value = config.rodape.linha2 || '';
@@ -3263,6 +3270,7 @@ amesadigital.pt</textarea>
     document.getElementById('bambuDecoBox').style.display = (e.target.value === 'bambu') ? 'block' : 'none';
   });
   ['apBgMainOn','apBgMain','apBgSubOn','apBgSub','apTitOn','apTit','apSubOn','apSub','apSubBgOn','apSubBg','apPratosOn','apPratos','apPrecoOn','apPreco','apVoltarOn','apVoltar','apCabSubOn','apCabSub','apRodapeOn','apRodape','apDestOn','apDest'].forEach(function(id){ const el = document.getElementById(id); if(el) el.addEventListener('input', function(){ if(window.__agendarPreview) window.__agendarPreview(); }); });
+  { const _mm = document.getElementById('rodapeModoMapa'); if(_mm) _mm.addEventListener('change', function(){ if(window.__agendarPreview) window.__agendarPreview(); }); }
   document.getElementById('abrirEfeitoSel').addEventListener('change', e => {
     const wb = document.getElementById('wipeBox'); if(wb) wb.style.display = (e.target.value === 'wipe') ? 'block' : 'none';
   });
@@ -3624,6 +3632,7 @@ amesadigital.pt</textarea>
         if(_es.tamanho) config.header.subtituloTamanho = _es.tamanho; }
       config.rodape.linha1 = document.getElementById('linha1').value.trim();
       config.rodape.mostrar = document.getElementById('rodapeMostrar').checked;
+      { const _mm = document.getElementById('rodapeModoMapa'); config.rodape.modoMapa = _mm ? _mm.checked : false; }
       { const _bp = document.getElementById('barraPadrao'); if(_bp) config.rodape.padrao = _bp.value; }
       config.rodape.linha2 = document.getElementById('linha2').value.trim();
       config.rodape.linha3 = document.getElementById('linha3').value.trim();

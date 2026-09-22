@@ -1950,6 +1950,17 @@
     opacity:0;
     transition:opacity .3s ease, transform .42s cubic-bezier(.22,.8,.25,1);
   }
+  /* Barra fixa em modo "Como chegar" (mapa clicável) */
+  .info-fixa.barra-mapa{ padding:0 !important; overflow:hidden; }
+  .info-fixa.barra-mapa > *:not(.barra-mapa-link){ display:none !important; }
+  .barra-mapa-link{ position:absolute; inset:0; display:block; text-decoration:none; }
+  .barra-mapa-link .bm-art{ position:absolute; inset:0; }
+  .barra-mapa-link .bm-art svg{ width:100%; height:100%; display:block; }
+  .barra-mapa-link .bm-bar{ position:absolute; inset:0; display:flex; align-items:center; gap:8px; padding:0 16px calc(env(safe-area-inset-bottom)); background:linear-gradient(to top, rgba(0,0,0,.62), rgba(0,0,0,.12) 70%, rgba(0,0,0,0)); }
+  .barra-mapa-link .bm-txt{ flex:1; min-width:0; display:flex; flex-direction:column; }
+  .barra-mapa-link .bm-tit{ font-family:var(--fonte-titulo); font-weight:700; color:#fff; font-size:1rem; text-shadow:0 1px 3px rgba(0,0,0,.6); }
+  .barra-mapa-link .bm-mor{ color:rgba(255,255,255,.92); font-size:.78rem; text-shadow:0 1px 3px rgba(0,0,0,.6); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .barra-mapa-link .bm-go{ color:#fff; font-size:1.5rem; flex-shrink:0; text-shadow:0 1px 3px rgba(0,0,0,.6); }
   /* Imagem PNG que "salta" para cima, para fora da barra fixa (ex.: mascote a espreitar) */
   .info-fixa-mascote{
     position:absolute;
@@ -4957,6 +4968,26 @@
           + (morada ? ('<span class="local-mor">' + _e(morada) + '</span>') : '<span class="local-mor">Abrir no Google Maps</span>')
           + '</span><span class="local-go">›</span></span>'
           + '</a>';
+
+        // Opção: usar a BARRA FIXA de baixo como faixa "Como chegar" (clicável)
+        try{
+          const barra = document.querySelector('.info-fixa');
+          if(barra){
+            const modoMapa = !!(config.rodape && config.rodape.modoMapa);
+            barra.classList.toggle('barra-mapa', modoMapa);
+            const _old = barra.querySelector('.barra-mapa-link'); if(_old) _old.remove();
+            if(modoMapa){
+              const _mapSlice = _mapArt.replace('xMidYMid meet', 'xMidYMid slice');
+              const _a = document.createElement('a');
+              _a.className = 'barra-mapa-link'; _a.href = dir; _a.target = '_blank'; _a.rel = 'noopener'; _a.setAttribute('aria-label', 'Como chegar — abre o Google Maps');
+              _a.innerHTML = '<span class="bm-art">' + _mapSlice + '</span>'
+                + '<span class="bm-bar"><span class="bm-txt"><span class="bm-tit">Como chegar</span>'
+                + (morada ? ('<span class="bm-mor">' + _e(morada) + '</span>') : '<span class="bm-mor">Abrir no Google Maps</span>')
+                + '</span><span class="bm-go">›</span></span>';
+              barra.appendChild(_a);
+            }
+          }
+        }catch(e){}
       })();
 
       // ===== Cliente gere as suas reservas — LISTA no dispositivo, cada reserva com código único (uuid) =====
