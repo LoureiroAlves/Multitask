@@ -953,6 +953,7 @@ amesadigital.pt</textarea>
           <input type="range" id="modoTamTakeaway" min="70" max="160" value="100" step="10" style="width:100%; accent-color:var(--dourado);">
           <label style="display:block; margin-top:8px; font-size:.85rem; color:var(--castanho);">👥 Grupos — <span id="modoTamGruposVal">100%</span></label>
           <input type="range" id="modoTamGrupos" min="70" max="160" value="100" step="10" style="width:100%; accent-color:var(--dourado);">
+          <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin:12px 0 0; font-size:.92rem; color:var(--castanho);"><input type="checkbox" id="modoVerBotao" style="width:auto; margin:0;"> Manter também o botão antigo "Ver menu"</label>
           <p style="margin:10px 0 0; font-size:0.8rem; color:var(--castanho-suave);">Aparece se tiveres <strong>2 ou mais</strong> modos ligados (com 1, entra logo nesse). O "Grupos" só aparece se marcares categorias/pastas com "Aparece no modo Grupos" (no Menu).</p>
         </div>
       </div>
@@ -2813,7 +2814,7 @@ amesadigital.pt</textarea>
     { const _ex = config.experiencia || {}; const _sc = function(id, v){ const e = document.getElementById(id); if(e) e.checked = v !== false; };
       _sc('expAtivo', _ex.ativo); _sc('expInstalarOn', _ex.instalar); _sc('expPartilharOn', _ex.partilhar); _sc('expTextoOn', _ex.texto); _sc('expVibracaoOn', _ex.vibracao); _sc('expNotifOn', _ex.notif); _sc('expLimparOn', _ex.limpar); }
     { const _m = config.modos || {}; const _sb = function(id, v){ const e = document.getElementById(id); if(e) e.checked = (v === true); };
-      _sb('modosAtivo', _m.ativo); _sb('modoTakeaway', _m.takeaway); _sb('modoGrupos', _m.grupos);
+      _sb('modosAtivo', _m.ativo); _sb('modoTakeaway', _m.takeaway); _sb('modoGrupos', _m.grupos); _sb('modoVerBotao', _m.verBotao);
       { const e = document.getElementById('modoNormal'); if(e) e.checked = (_m.normal !== false); }
       { const _tm = (_m.tam && typeof _m.tam === 'object') ? _m.tam : {};
         [['modoTamNormal','normal'],['modoTamTakeaway','takeaway'],['modoTamGrupos','grupos']].forEach(function(p){
@@ -3853,7 +3854,7 @@ amesadigital.pt</textarea>
       { const _gm = function(id){ const e = document.getElementById(id); return e ? e.checked : false; };
         const _tv = function(id){ return (parseInt((document.getElementById(id) || {}).value, 10) || 100) / 100; };
         const _mpos = (config.modos && config.modos.pos) ? config.modos.pos : {};
-        config.modos = { ativo:_gm('modosAtivo'), normal:_gm('modoNormal'), takeaway:_gm('modoTakeaway'), grupos:_gm('modoGrupos'), tam: { normal:_tv('modoTamNormal'), takeaway:_tv('modoTamTakeaway'), grupos:_tv('modoTamGrupos') }, pos:_mpos }; }
+        config.modos = { ativo:_gm('modosAtivo'), normal:_gm('modoNormal'), takeaway:_gm('modoTakeaway'), grupos:_gm('modoGrupos'), verBotao:_gm('modoVerBotao'), tam: { normal:_tv('modoTamNormal'), takeaway:_tv('modoTamTakeaway'), grupos:_tv('modoTamGrupos') }, pos:_mpos }; }
       { const _ca = document.getElementById('carrinhoAtivo'), _cp = document.getElementById('carrinhoPrecos'), _cw = document.getElementById('carrinhoWhats'), _cws = document.getElementById('carrinhoWhatsSempre');
         config.carrinho = { ativo: _ca ? _ca.checked : true, precos: _cp ? _cp.checked : true, whatsapp: _cw ? _cw.value.trim() : '', whatsappSempre: _cws ? _cws.checked : false,
           levantamento: ((document.getElementById('cartLevAtivo') || {}).checked !== false),

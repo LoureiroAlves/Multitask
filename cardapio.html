@@ -5492,6 +5492,8 @@
       if(cfg.takeaway) modos.push('takeaway');
       if(cfg.grupos && (preview || _temGr())) modos.push('grupos');
       if(!modos.length) return;
+      // Esconde o botão antigo "Ver menu" quando há ícones de modo (a não ser que o dono o queira manter)
+      var _vb = document.getElementById('introBtn'); if(_vb) _vb.style.display = cfg.verBotao ? '' : 'none';
       var pos = cfg.pos || {}, tam = cfg.tam || {};
       var wrap = document.createElement('div'); wrap.id = 'introModosWrap';
       modos.forEach(function(m, i){
@@ -8475,7 +8477,6 @@
       modosAtuais = modos;
       var ov = document.getElementById('introOverlay');
       if(!ov){ mostrarGate(modos); return; }
-      var btn = document.getElementById('introBtn'); if(btn) btn.style.display = 'none';
       if(window.__renderIntroModos) window.__renderIntroModos(false);
     }
 
