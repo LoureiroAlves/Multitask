@@ -2177,7 +2177,7 @@
   #modoBox .mb-acao{ margin-left:auto; background:rgba(255,255,255,.22); border:none; color:#fff; border-radius:20px; padding:5px 12px; font-size:.78rem; font-weight:700; cursor:pointer; font-family:inherit; }
   #modoBox .mb-hint{ margin-left:auto; font-size:.74rem; font-weight:600; opacity:.85; }
   #modoBox .mb-acao + .mb-hint{ margin-left:8px; }
-  body.modo-grupos #categoriaGrid .tile:not([data-tipo="menus"]){ display:none !important; }
+  body.modo-grupos #categoriaGrid .tile:not([data-grupo="1"]):not([data-tipo="menus"]){ display:none !important; }
   body.modo-normal #linkAgenda, body.modo-takeaway #linkAgenda{ display:none !important; }
   /* Ícones dos modos dentro da própria abertura (por cima da foto) */
   #introModos{ display:flex; justify-content:center; gap:14px; margin-top:24px; flex-wrap:wrap; position:relative; z-index:3; }
@@ -3300,7 +3300,8 @@
       const btn = document.createElement('button');
       btn.className = 'tile tile-espera'; btn.type = 'button';
       btn.setAttribute('data-target', cat.id);
-      btn.dataset.tipo = cat.tipo || 'comida';   // usado pelos "modos" (Grupos mostra só tipo=menus)
+      btn.dataset.tipo = cat.tipo || 'comida';   // usado pelos "modos"
+      if(cat.modoGrupo) btn.dataset.grupo = '1';   // categoria/pasta marcada para o modo "Grupos"
       const emoji = document.createElement('span'); emoji.className='tile-emoji'; emoji.textContent = cat.emoji || '';
       const label = document.createElement('span'); label.className='tile-label'; _mLang(label, cat.tile);
       btn.appendChild(emoji); btn.appendChild(label);
@@ -8428,7 +8429,7 @@
   (function(){
     var modosAtuais = [];
 
-    function temGrupos(){ return !!document.querySelector('#categoriaGrid .tile[data-tipo="menus"]'); }
+    function temGrupos(){ return !!document.querySelector('#categoriaGrid .tile[data-grupo="1"], #categoriaGrid .tile[data-tipo="menus"]'); }
     function podeReservar(){ return !!(window.__abrirAgenda && window._agenda) || !!window.__waGrupo; }
 
     var IC = {
@@ -8491,7 +8492,6 @@
           var lbl = (m === 'takeaway') ? '🛍️ Take away' : '👥 Menus de grupo';
           var h = '<span class="mb-lbl">' + lbl + '</span>';
           if(m === 'grupos' && podeReservar()) h += '<button class="mb-acao" type="button" id="mbReservar">📅 Reservar</button>';
-          if(modosAtuais.length > 1) h += '<span class="mb-hint">‹ desliza para trocar</span>';
           box.innerHTML = h;
           document.body.classList.add('tem-modo-box');
           var _r = document.getElementById('mbReservar');
@@ -8536,21 +8536,59 @@
       }catch(e){}
     };
 
-    // Gesto "voltar" — deslizar da margem esquerda para a direita reabre a escolha de modo
+    // Gesto "voltar" — arrastar da margem esquerda faz a abertura entrar pela esquerda (como o iOS)
     (function(){
-      var sx = 0, sy = 0, ok = false;
+      var sx = 0, sy = 0, w = 0, armado = false, arrastando = false, ov = null;
+      function podeVoltar(){
+        return modosAtuais.length >= 2
+          && (document.body.classList.contains('modo-normal') || document.body.classList.contains('modo-takeaway') || document.body.classList.contains('modo-grupos'))
+          && !document.body.classList.contains('secao-aberta');
+      }
+      function prepararIntro(){
+        ov = document.getElementById('introOverlay');
+        if(!ov || !window.__introAtiva){ ov = null; return false; }
+        try{ delete ov.dataset.saiu; }catch(e){}
+        ov.classList.remove('sair');
+        if(!document.getElementById('introModos')) integrarNoIntro(modosAtuais);
+        else document.getElementById('introModos').style.display = '';
+        ov.style.display = 'flex'; ov.style.transition = 'none'; ov.style.transform = 'translateX(-100%)';
+        w = window.innerWidth || document.documentElement.clientWidth || 360;
+        return true;
+      }
       document.addEventListener('touchstart', function(e){
-        ok = false;
-        if(modosAtuais.length < 2) return;
-        if(!(document.body.classList.contains('modo-normal') || document.body.classList.contains('modo-takeaway') || document.body.classList.contains('modo-grupos'))) return;
-        if(document.body.classList.contains('secao-aberta')) return;
-        var t = e.touches[0]; if(t && t.clientX <= 26){ sx = t.clientX; sy = t.clientY; ok = true; }
+        armado = false; arrastando = false; ov = null;
+        if(!podeVoltar()) return;
+        var t = e.touches[0]; if(t && t.clientX <= 24){ sx = t.clientX; sy = t.clientY; armado = true; }
       }, { passive:true });
-      document.addEventListener('touchend', function(e){
-        if(!ok) return; ok = false;
-        var t = e.changedTouches && e.changedTouches[0]; if(!t) return;
-        if((t.clientX - sx) > 80 && Math.abs(t.clientY - sy) < 55) voltarEntrada();
-      }, { passive:true });
+      document.addEventListener('touchmove', function(e){
+        if(!armado) return;
+        var t = e.touches[0]; if(!t) return;
+        var dx = t.clientX - sx, dy = t.clientY - sy;
+        if(!arrastando){
+          if(Math.abs(dy) > 14 && Math.abs(dy) > Math.abs(dx)){ armado = false; return; }
+          if(dx > 12 && dx > Math.abs(dy)){ if(!prepararIntro()){ armado = false; return; } arrastando = true; }
+          else return;
+        }
+        var x = Math.max(0, Math.min(dx, w));
+        ov.style.transform = 'translateX(' + (x - w) + 'px)';
+        try{ e.preventDefault(); }catch(_){}
+      }, { passive:false });
+      function terminar(e){
+        if(!arrastando){ armado = false; return; }
+        arrastando = false; armado = false;
+        var t = (e.changedTouches && e.changedTouches[0]);
+        var dx = t ? (t.clientX - sx) : 0;
+        ov.style.transition = 'transform .28s ease';
+        if(dx > w * 0.4){
+          ov.style.transform = 'translateX(0)';
+          var _o1 = ov; setTimeout(function(){ if(_o1){ _o1.style.transition = ''; _o1.style.transform = ''; } }, 300);
+        } else {
+          ov.style.transform = 'translateX(-100%)';
+          var _o2 = ov; setTimeout(function(){ if(_o2 && _o2.style.transform === 'translateX(-100%)'){ _o2.style.display = 'none'; _o2.style.transition = ''; _o2.style.transform = ''; } }, 300);
+        }
+      }
+      document.addEventListener('touchend', terminar, { passive:true });
+      document.addEventListener('touchcancel', terminar, { passive:true });
     })();
   })();
 </script>
