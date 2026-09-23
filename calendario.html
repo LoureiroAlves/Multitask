@@ -547,6 +547,18 @@
       tx:(b.tx!=null?b.tx:6), ty:(b.ty!=null?b.ty:62), subX:(b.subX!=null?b.subX:6), subY:(b.subY!=null?b.subY:78),
       estilo:Object.assign({}, b.estilo||{}), estiloSub:Object.assign({}, b.estiloSub||{}) };
   }
+  // Encontra o dia mais recente (anterior a "iso") que teve prato com caixas
+  function _pdDataAnterior(iso){
+    var datas = (negocio&&negocio.config&&negocio.config.pratoDatas)||{};
+    var keys = Object.keys(datas).filter(function(k){
+      return k!==iso && datas[k] && Array.isArray(datas[k].caixas) && datas[k].caixas.length;
+    }).sort();   // ordem crescente por data (ISO ordena bem)
+    // preferir o dia mais recente ANTES de hoje; se não houver, o mais recente que exista
+    var antes = keys.filter(function(k){ return k < iso; });
+    var escolha = antes.length ? antes[antes.length-1] : (keys.length ? keys[keys.length-1] : null);
+    if(!escolha) return null;
+    return { data: escolha, caixas: datas[escolha].caixas.map(_pdMapCaixa) };
+  }
   var _PD_FONTES = [['','Padrão'],['fredoka','Fredoka'],['poppins','Poppins'],['playfair','Playfair'],['quicksand','Quicksand'],['montserrat','Montserrat'],['bebas','Bebas Neue'],['lobster','Lobster'],['pacifico','Pacifico'],['baloo','Baloo 2'],['chewy','Chewy']];
   var _PD_FONTES_CSS = { fredoka:"'Fredoka',sans-serif", poppins:"'Poppins',sans-serif", playfair:"'Playfair Display',serif", quicksand:"'Quicksand',sans-serif", montserrat:"'Montserrat',sans-serif", bebas:"'Bebas Neue',sans-serif", lobster:"'Lobster',cursive", pacifico:"'Pacifico',cursive", baloo:"'Baloo 2',sans-serif", chewy:"'Chewy',cursive" };
   function _pdAplicarEstilo(el, e){
@@ -659,6 +671,7 @@
       + '<div class="nova-form '+(tem?'':'hide')+'" id="pratoForm">'
       + '<div style="font-size:.78rem;color:#8a7a5c;margin-bottom:4px;">Uma ou várias caixas em destaque por baixo do cabeçalho, só neste dia. Com mais que uma, vão rodando.</div>'
       + '<label style="display:flex;align-items:center;gap:8px;margin:6px 0;font-weight:700;color:#8a5a10;cursor:pointer;"><input type="checkbox" id="pd_ativo"'+(pd.ativo?' checked':'')+' style="width:auto;"> Mostrar no cardápio neste dia</label>'
+      + (function(){ var a=_pdDataAnterior(iso); if(!a) return ''; return '<button type="button" id="pd_copiar" style="width:100%;margin:2px 0 8px;background:#eef6ec;border:1.5px solid #bcd8b4;border-radius:10px;padding:10px;cursor:pointer;font-weight:700;color:#3f7a34;">📋 Copiar do último dia ('+a.data.split("-").reverse().join("/")+') — '+a.caixas.length+(a.caixas.length===1?' caixa':' caixas')+'</button>'; })()
       + '<div id="pd_lista"></div>'
       + '<button type="button" id="pd_add" style="width:100%;margin-top:10px;background:#f3ead8;border:1.5px dashed #d9c9a8;border-radius:10px;padding:11px;cursor:pointer;font-weight:700;color:#8a5a10;">＋ Adicionar caixa</button>'
       + '<div class="acts"><button id="pd_remover" type="button"'+(tem?'':' style="display:none;"')+'>Remover</button><button class="guardar" id="pd_guardar" type="button">💾 Guardar prato do dia</button></div>'
@@ -672,6 +685,7 @@
     _pdCaixas = (Array.isArray(pd.caixas)&&pd.caixas.length) ? pd.caixas.map(_pdMapCaixa) : [ _pdNovaCaixa() ];
     _pdRenderLista(); _pdSegVis();
     var add=$('pd_add'); if(add) add.onclick=function(){ _pdCaixas.push(_pdNovaHerdada()); _pdRenderLista(); _pdSegVis(); };
+    var cp=$('pd_copiar'); if(cp) cp.onclick=function(){ var a=_pdDataAnterior(iso); if(!a||!a.caixas.length) return; _pdCaixas = a.caixas; var at=$('pd_ativo'); if(at) at.checked=true; _pdRenderLista(); _pdSegVis(); var msg=$('pd_msg'); if(msg){ msg.textContent='Trazido do dia '+a.data.split("-").reverse().join("/")+'. Ajusta o que precisares e grava.'; msg.className='msg'; } };
     var g=$('pd_guardar'); if(g) g.onclick=function(){ guardarPrato(iso); };
     var r=$('pd_remover'); if(r) r.onclick=function(){ removerPrato(iso); };
   }
