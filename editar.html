@@ -991,8 +991,8 @@ amesadigital.pt</textarea>
 
   <details class="grupo" open><summary class="grupo-sum">📋 Conteúdo</summary>
 
-  <!-- PROMOÇÃO NA MONTRA -->
-  <details id="secPromo" class="ed-sec" data-tab="conteudo">
+  <!-- PROMOÇÃO NA MONTRA — migrada para o painel de Gestão (aba Promoções). Secção escondida aqui. -->
+  <details id="secPromo" class="ed-sec" data-tab="conteudo" style="display:none !important;">
     <summary>🏷️ Promoção (aparece na montra ÀMesa)</summary>
     <div class="bloco-conteudo">
       <div style="font-size:0.82rem; color:var(--castanho-suave); margin-bottom:10px;">Cria a tua própria promoção — grátis. Aparece no cartão do teu restaurante na página do amesadigital (com foto e texto por cima), para atrair clientes. Ex.: "50% no prato do dia" ou "Sobremesa grátis acima de 25€".</div>
@@ -2864,8 +2864,7 @@ amesadigital.pt</textarea>
       const _cab2 = document.getElementById('cartAbre2'); if(_cab2) _cab2.value = _c.horaAbre2 || '';
       const _cfe2 = document.getElementById('cartFecha2'); if(_cfe2) _cfe2.value = _c.horaFecha2 || '';
       const _cla = document.getElementById('cartLevAntes'); if(_cla) _cla.value = (_c.antecedenciaLev != null ? _c.antecedenciaLev : 60); }
-    // Promoção na montra
-    _promoCarregar();   // promoção base + promoções por dia
+    // Promoção na montra — migrada para o painel de Gestão (Promoções). O editor já não a carrega/guarda.
     { const _fp = document.getElementById('favPratosAtivo'); if(_fp) _fp.checked = config.favoritosPratos === true; }
     /* (removido "Personalizar cores" — agora no bloco Cores e Fundos; config.cores legado mantém-se aplicado) */
     /* (removidos: corMenu/corCab — agora no bloco Cores e Fundos) */
@@ -3912,8 +3911,7 @@ amesadigital.pt</textarea>
           horaAbre2: ((document.getElementById('cartAbre2') || {}).value || '').trim(),
           horaFecha2: ((document.getElementById('cartFecha2') || {}).value || '').trim(),
           antecedenciaLev: (parseInt((document.getElementById('cartLevAntes') || {}).value, 10) || 60) }; }
-      // Promoção na montra (base + por dia)
-      _promoGuardar();
+      // Promoção na montra — migrada para o painel de Gestão. O editor NÃO toca em config.promo/promoDias.
       { const _fp = document.getElementById('favPratosAtivo'); config.favoritosPratos = !!(_fp && _fp.checked); }
       /* config.cores: gerido agora pelo bloco "Cores e Fundos" (config.aparencia); legado mantém-se */
       /* corMenuTexto/corCabecalho: geridos agora no bloco "Cores e Fundos" (config.aparencia) */
@@ -6230,7 +6228,6 @@ amesadigital.pt</textarea>
       ['calendario','📅 Calendário', ['secCalendario']],
       ['aparencia','🎨 Aparência', ['secLayout','secHeader','secRodape','secAbertura']],
       ['menu','🧾 Menu', ['secMenu']],
-      ['promo','🏷️ Promoção', ['secPromo']],
       ['mosaico','🧩 Mosaico', ['secMosaico']],
       ['extras','⚙️ Extras', ['secJogos','secExtras','secAgenda','secTextoLivre','secCarrinho','secFavoritos','secExperiencia','secFooter','secIconesTopo','secRedes']],
       ['publicidade','📣 Publicidade', ['secPreAbertura','secAnuncio','secAnuncioJogos']],
@@ -6240,7 +6237,7 @@ amesadigital.pt</textarea>
     var LABEL = {
       secCalendario:'📅 Calendário / Reservas',
       secLayout:'Layout', secHeader:'Cabeçalho', secRodape:'Rodapé (barra fixa)', secFooter:'Rodapé final (scroll)', secAbertura:'Ecrã de abertura',
-      secMenu:'Menu — itens e preços', secPromo:'🏷️ Promoção (montra)', secMosaico:'Mosaico (caixas)',
+      secMenu:'Menu — itens e preços', secMosaico:'Mosaico (caixas)',
       secJogos:'Jogos', secExtras:'Decoração e fidelidade', secAgenda:'Agenda / Reservas', secTextoLivre:'Texto livre', secCarrinho:'Carrinho', secFavoritos:'❤ Favoritos', secExperiencia:'📱 Definições da experiência', secIconesTopo:'Ícones do topo', secRedes:'Redes sociais / Google Maps',
       secPreAbertura:'Pré-abertura', secAnuncio:'Publicidade no menu', secAnuncioJogos:'Publicidade nos jogos',
       secPartilha:'Partilhar / QR', secLimpeza:'Limpeza de fotos'
