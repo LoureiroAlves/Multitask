@@ -5500,14 +5500,14 @@
   function _introArrastavelModo(el, alvo){
     if(!el) return;
     el.style.cursor = 'move'; el.style.touchAction = 'none';
-    var wrap = el.parentNode;
+    var wrap = null;
     var sx=0, sy=0, bx=0, by=0, drag=false, moveu=false, gh=null, gv=null;
     var TH = 9;   // limiar do íman (px)
-    function outros(){ return Array.prototype.filter.call(wrap.querySelectorAll('.im-opt'), function(s){ return s !== el; }); }
+    function outros(){ if(!wrap) return []; return Array.prototype.filter.call(wrap.querySelectorAll('.im-opt'), function(s){ return s !== el; }); }
     function pv(s, v){ return parseFloat(s.style.getPropertyValue(v)) || 0; }
     function limparGuias(){ if(gh){ gh.remove(); gh=null; } if(gv){ gv.remove(); gv=null; } }
     el.onclick = function(ev){ ev.stopPropagation(); ev.preventDefault(); };
-    el.onpointerdown = function(ev){ ev.preventDefault(); ev.stopPropagation(); drag=true; moveu=false; sx=ev.clientX; sy=ev.clientY; bx=pv(el,'--mx'); by=pv(el,'--my'); try{ el.setPointerCapture(ev.pointerId); }catch(e){} };
+    el.onpointerdown = function(ev){ ev.preventDefault(); ev.stopPropagation(); wrap = el.parentNode; drag=true; moveu=false; sx=ev.clientX; sy=ev.clientY; bx=pv(el,'--mx'); by=pv(el,'--my'); try{ el.setPointerCapture(ev.pointerId); }catch(e){} };
     el.onpointermove = function(ev){ if(!drag) return;
       if(Math.abs(ev.clientX-sx)>4 || Math.abs(ev.clientY-sy)>4) moveu=true;
       var x = bx + (ev.clientX - sx), y = by + (ev.clientY - sy);
