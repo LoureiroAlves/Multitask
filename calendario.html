@@ -509,7 +509,11 @@
         if(data && data.erro) throw new Error(data.erro);
         $('ntRes').innerHTML = '✅ Enviado a <strong>' + ((data && data.enviados) || 0) + '</strong> de ' + ((data && data.total) || 0) + ' aparelho(s).';
         $('ntTit').value = ''; $('ntMsg').value = '';
-      }catch(e){ $('ntRes').innerHTML = '<span style="color:#b23b2e;">Erro ao enviar: ' + (e.message || e) + '</span>'; }
+      }catch(e){
+        let det = (e && e.message) ? e.message : String(e);
+        try{ if(e && e.context && typeof e.context.json === 'function'){ const b = await e.context.json(); if(b && (b.erro || b.detalhe)) det = (b.erro || '') + (b.detalhe ? (' — ' + b.detalhe) : ''); } }catch(_){}
+        $('ntRes').innerHTML = '<span style="color:#b23b2e;">Erro ao enviar: ' + det + '</span>';
+      }
       btn.disabled = false; btn.textContent = _t;
     };
   }
