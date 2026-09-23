@@ -707,6 +707,7 @@
     var sel=await sb.from('negocios').select('config').eq('id',negocio.id).maybeSingle();
     if(sel.error){ g.disabled=false; msg.textContent='Erro: '+sel.error.message; msg.className='msg erro'; return; }
     var cfg=(sel.data&&sel.data.config)||{}; cfg.pratoDatas=cfg.pratoDatas||{};
+    delete cfg.pratoDia;   // limpa o legado (evita caixa fantasma no cardápio)
     if(novo.ativo && caixas.length){ cfg.pratoDatas[iso]=novo; } else { delete cfg.pratoDatas[iso]; }
     var up=await sb.from('negocios').update({ config:cfg }).eq('id',negocio.id);
     g.disabled=false;
