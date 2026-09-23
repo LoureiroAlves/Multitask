@@ -2180,10 +2180,10 @@
   body.modo-cerimonias #categoriaGrid .tile[data-cerimonia="1"]{ display:flex !important; }
   body.modo-normal #linkAgenda, body.modo-takeaway #linkAgenda{ display:none !important; }
   /* Ícones dos modos dentro da própria abertura (por cima da foto), posicionáveis */
-  /* Puxar para atualizar */
-  #ptr-ind{ position:fixed; top:0; left:50%; margin-left:-19px; width:38px; height:38px; border-radius:50%; background:rgba(0,0,0,.5); -webkit-backdrop-filter:blur(5px); backdrop-filter:blur(5px); display:flex; align-items:center; justify-content:center; z-index:99998; transform:translateY(-120%); opacity:0; box-shadow:0 4px 12px rgba(0,0,0,.25); pointer-events:none; }
-  #ptr-ind .ptr-spin{ width:19px; height:19px; border-radius:50%; border:2.5px solid rgba(255,255,255,.35); border-top-color:#fff; transition:transform .2s ease; }
-  #ptr-ind.on .ptr-spin{ transform:rotate(180deg); }
+  /* Puxar para atualizar — o conteúdo desliza e o círculo aparece por trás */
+  #ptr-ind{ position:fixed; top:18px; left:50%; margin-left:-18px; width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; z-index:1; opacity:0; pointer-events:none; }
+  #ptr-ind .ptr-spin{ width:22px; height:22px; border-radius:50%; border:2.5px solid rgba(255,255,255,.28); border-top-color:rgba(255,255,255,.9); transition:transform .15s ease; }
+  #ptr-ind.on .ptr-spin{ transform:rotate(150deg); }
   #ptr-ind.spin .ptr-spin{ animation:ptrSpin .7s linear infinite; }
   @keyframes ptrSpin{ to{ transform:rotate(360deg); } }
   /* Promoção do dia no cardápio (por baixo do cabeçalho) — com destaque */
@@ -8870,13 +8870,13 @@
 </script>
 
 <script>
-  /* ===== Puxar o topo para atualizar (pull-to-refresh) ===== */
+  /* ===== Puxar o topo para atualizar — arrasta o conteúdo e o círculo fica por trás ===== */
   (function(){
     if(window.__PREVIEW) return;
     var ind = document.createElement('div'); ind.id = 'ptr-ind'; ind.innerHTML = '<div class="ptr-spin"></div>';
-    document.body.appendChild(ind);
-    var startY = 0, pulling = false, dist = 0, pronto = false, arefrescar = false;
-    var TH = 72;   // distância para disparar
+    document.documentElement.appendChild(ind);   // no <html>, para NÃO se mexer quando o body é arrastado
+    var startY = 0, pulling = false, dist = 0, pronto = false, arefrescar = false, bgPosto = false;
+    var TH = 70, MAXP = 100;
     function noTopo(){ return (window.scrollY || document.documentElement.scrollTop || 0) <= 0; }
     function bloqueado(){
       if(document.body.classList.contains('scroll-lock')) return true;
@@ -8884,13 +8884,15 @@
       var ov = document.getElementById('introOverlay'); if(ov && ov.style.display !== 'none' && window.__introAtiva && !ov.dataset.saiu) return true;
       return false;
     }
-    function reset(){ ind.classList.remove('on','spin'); ind.style.transition = 'transform .3s ease, opacity .3s ease'; ind.style.transform = 'translateY(-120%)'; ind.style.opacity = '0'; setTimeout(function(){ ind.style.transition = ''; }, 320); }
+    function garantirFundo(){ if(bgPosto) return; try{ var bg = getComputedStyle(document.body).backgroundColor; if(bg && bg !== 'rgba(0, 0, 0, 0)' && bg !== 'transparent') document.documentElement.style.backgroundColor = bg; }catch(e){} bgPosto = true; }
+    function mover(px, anim){ document.body.style.transition = anim ? 'transform .32s cubic-bezier(.22,1,.36,1)' : 'none'; document.body.style.transform = px > 0 ? ('translateY(' + px + 'px)') : ''; }
+    function reset(){ mover(0, true); ind.style.transition = 'opacity .3s ease'; ind.style.opacity = '0'; ind.classList.remove('on','spin'); setTimeout(function(){ document.body.style.transition = ''; ind.style.transition = ''; }, 340); }
     function disparar(){
-      arefrescar = true; ind.classList.remove('on'); ind.classList.add('spin');
-      ind.style.transition = 'transform .25s ease'; ind.style.transform = 'translateY(16px)'; ind.style.opacity = '1';
+      arefrescar = true; ind.classList.remove('on'); ind.classList.add('spin'); ind.style.opacity = '1';
+      mover(52, true);   // deixa uma faixa aberta a mostrar o círculo a rodar
       Promise.resolve().then(function(){ return window.__refrescarDados ? window.__refrescarDados() : null; })
         .catch(function(){})
-        .then(function(){ setTimeout(function(){ arefrescar = false; reset(); }, 550); });
+        .then(function(){ setTimeout(function(){ arefrescar = false; reset(); }, 600); });
     }
     document.addEventListener('touchstart', function(e){
       if(arefrescar){ pulling = false; return; }
@@ -8901,11 +8903,12 @@
       if(!pulling || arefrescar) return;
       var t = e.touches[0]; if(!t) return;
       dist = t.clientY - startY;
-      if(dist <= 0 || !noTopo()){ pulling = false; ind.style.transform = 'translateY(-120%)'; ind.style.opacity = '0'; return; }
-      var pull = Math.min(dist * 0.55, 96);
-      ind.style.transform = 'translateY(' + (pull - 42) + 'px)';
-      ind.style.opacity = String(Math.min(1, pull / 55));
-      pronto = dist >= TH; ind.classList.toggle('on', pronto);
+      if(dist <= 0 || !noTopo()){ pulling = false; mover(0, false); ind.style.opacity = '0'; return; }
+      garantirFundo();
+      var pull = Math.min(dist * 0.5, MAXP);   // resistência (arrasta ~metade do dedo)
+      mover(pull, false);
+      ind.style.opacity = String(Math.min(1, pull / 45));
+      pronto = pull >= TH; ind.classList.toggle('on', pronto);
       if(dist > 6){ try{ e.preventDefault(); }catch(_){} }
     }, { passive:false });
     function fim(){ if(!pulling) return; pulling = false; if(pronto && !arefrescar) disparar(); else reset(); pronto = false; }
