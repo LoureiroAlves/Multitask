@@ -538,6 +538,14 @@
     return SUPA_URL + '/storage/v1/object/public/imagens/' + nome;
   }
   function _pdNovaCaixa(){ return { titulo:'', subtitulo:'', foto:'', escurecer:0, caixaTexto:false, tx:6, ty:62, subX:6, subY:78, estilo:{}, estiloSub:{} }; }
+  // Nova caixa que HERDA a posição e os estilos da 1ª caixa (só o conteúdo fica por preencher)
+  function _pdNovaHerdada(){
+    var b = _pdCaixas[0];
+    if(!b) return _pdNovaCaixa();
+    return { titulo:'', subtitulo:'', foto:'', escurecer:(parseInt(b.escurecer,10)||0), caixaTexto:!!b.caixaTexto,
+      tx:(b.tx!=null?b.tx:6), ty:(b.ty!=null?b.ty:62), subX:(b.subX!=null?b.subX:6), subY:(b.subY!=null?b.subY:78),
+      estilo:Object.assign({}, b.estilo||{}), estiloSub:Object.assign({}, b.estiloSub||{}) };
+  }
   var _PD_FONTES = [['','Padrão'],['fredoka','Fredoka'],['poppins','Poppins'],['playfair','Playfair'],['quicksand','Quicksand'],['montserrat','Montserrat'],['bebas','Bebas Neue'],['lobster','Lobster'],['pacifico','Pacifico'],['baloo','Baloo 2'],['chewy','Chewy']];
   var _PD_FONTES_CSS = { fredoka:"'Fredoka',sans-serif", poppins:"'Poppins',sans-serif", playfair:"'Playfair Display',serif", quicksand:"'Quicksand',sans-serif", montserrat:"'Montserrat',sans-serif", bebas:"'Bebas Neue',sans-serif", lobster:"'Lobster',cursive", pacifico:"'Pacifico',cursive", baloo:"'Baloo 2',sans-serif", chewy:"'Chewy',cursive" };
   function _pdAplicarEstilo(el, e){
@@ -652,7 +660,7 @@
     var pd=((negocio&&negocio.config&&negocio.config.pratoDatas)||{})[iso]||{};
     _pdCaixas = (Array.isArray(pd.caixas)&&pd.caixas.length) ? pd.caixas.map(_pdMapCaixa) : [ _pdNovaCaixa() ];
     _pdRenderLista(); _pdSegVis();
-    var add=$('pd_add'); if(add) add.onclick=function(){ _pdCaixas.push(_pdNovaCaixa()); _pdRenderLista(); _pdSegVis(); };
+    var add=$('pd_add'); if(add) add.onclick=function(){ _pdCaixas.push(_pdNovaHerdada()); _pdRenderLista(); _pdSegVis(); };
     var g=$('pd_guardar'); if(g) g.onclick=function(){ guardarPrato(iso); };
     var r=$('pd_remover'); if(r) r.onclick=function(){ removerPrato(iso); };
   }
