@@ -1131,7 +1131,7 @@
       + '<div class="lin '+(horOn?'':'hide')+'" id="pmHorarioBox" style="margin-top:6px;"><div><label>Entra às</label><input type="time" id="pmHoraIni" value="'+hi+'"></div>'
       + '<div><label>Sai às</label><input type="time" id="pmHoraFim" value="'+hf+'"></div></div>'
       + '<label style="display:block;margin-top:10px;">Pré-visualização (como fica na montra)</label><div id="pmPrev" style="margin-top:6px;"></div>'
-      + '<div class="acts">'+(tem?'<button id="pmRemover" type="button">Remover</button>':'')+'<button class="guardar" id="pmGuardar" type="button">📣 Publicar promoção</button></div>'
+      + '<div class="acts"><button id="pmRemover" type="button"'+(tem?'':' style="display:none;"')+'>Remover</button><button class="guardar" id="pmGuardar" type="button">📣 Publicar promoção</button></div>'
       + '<div class="msg" id="pmMsg" style="margin-top:8px;">'+(tem?'Promoção ativa neste dia.':'')+'</div>'
       + '</div></div>';
   }
@@ -1184,6 +1184,7 @@
     if(err){ g.disabled = false; msg.textContent='Erro: '+err.message; msg.className='msg erro'; return; }
     // Publicado no à mesa + no cardápio (config.promoDatas). Envia também push automaticamente.
     msg.textContent = 'Promoção publicada ✓'; msg.className = 'msg';
+    { const rmb = $('pmRemover'); if(rmb) rmb.style.display = ''; }
     try{
       const corpoPush = texto.replace(/\s+/g,' ').trim();
       const { data, error } = await sb.functions.invoke('enviar-push', { body:{ negocio: negocio.id, titulo:(negocio.nome || 'Promoção'), corpo: corpoPush, url: _linkCardapio() } });
