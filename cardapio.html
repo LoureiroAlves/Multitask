@@ -5524,13 +5524,19 @@
       if(Math.abs(ev.clientX-sx)>4 || Math.abs(ev.clientY-sy)>4) moveu=true;
       var x = bx + (ev.clientX - sx), y = by + (ev.clientY - sy);
       var outs = outros();
-      var snapY = null, snapX = null;
-      outs.forEach(function(s){ var oy = pv(s,'--my'); if(Math.abs(y-oy) <= TH){ snapY = oy; } });
-      if(snapY != null) y = snapY;
-      var xs = outs.map(function(s){ return pv(s,'--mx'); }).sort(function(a,b){ return a-b; });
-      if(xs.length >= 2){ var d = xs[1]-xs[0]; [xs[0]-d, (xs[0]+xs[1])/2, xs[1]+d].forEach(function(c){ if(Math.abs(x-c) <= TH+3){ snapX = c; } }); }
-      else if(xs.length === 1){ if(Math.abs(x-xs[0]) <= TH){ snapX = xs[0]; } }
-      if(snapX != null) x = snapX;
+      var xs = outs.map(function(s){ return pv(s,'--mx'); });
+      var ys = outs.map(function(s){ return pv(s,'--my'); });
+      // Íman simétrico: alinha ao mesmo eixo de outro ícone, ou a espaçamento igual (serve para linha OU coluna)
+      function _snap(val, arr){
+        for(var k=0;k<arr.length;k++){ if(Math.abs(val-arr[k]) <= TH) return arr[k]; }           // alinhar (mesma coluna/linha)
+        if(arr.length >= 2){ var a = arr.slice().sort(function(p,q){ return p-q; }); var d = a[1]-a[0];
+          var cs = [a[0]-d, (a[0]+a[1])/2, a[1]+d];
+          for(var j=0;j<cs.length;j++){ if(Math.abs(val-cs[j]) <= TH+3) return cs[j]; }           // espaçamento igual
+        }
+        return null;
+      }
+      var snapX = _snap(x, xs); if(snapX != null) x = snapX;
+      var snapY = _snap(y, ys); if(snapY != null) y = snapY;
       el.style.setProperty('--mx', x+'px'); el.style.setProperty('--my', y+'px');
       limparGuias();
       var W = wrap.clientWidth, H = wrap.clientHeight;
