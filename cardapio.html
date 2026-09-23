@@ -4422,7 +4422,8 @@
           var horaTxt = (p.horaIni && p.horaFim) ? ('🕒 ' + _esc(p.horaIni) + '–' + _esc(p.horaFim)) : '';
           el.style.setProperty('--pd-cor', cor);
           el.style.setProperty('--pd-bg', _suave(cor));
-          el.innerHTML = '<div class="promo-cartao"><span class="promo-emoji">🏷️</span><div class="promo-corpo"><span class="promo-selo">Promoção de hoje</span><div class="promo-txt" style="font-size:' + tam + 'px;">' + _esc(texto) + '</div>' + (horaTxt ? ('<span class="promo-hora">' + horaTxt + '</span>') : '') + '</div></div>';
+          var textoHtml = _esc(texto).replace(/\r?\n/g, '<br>');
+          el.innerHTML = '<div class="promo-cartao"><span class="promo-emoji">🏷️</span><div class="promo-corpo"><span class="promo-selo">Promoção de hoje</span><div class="promo-txt" style="font-size:' + tam + 'px;">' + textoHtml + '</div>' + (horaTxt ? ('<span class="promo-hora">' + horaTxt + '</span>') : '') + '</div></div>';
           el.style.display = '';
         }catch(e){}
       };
