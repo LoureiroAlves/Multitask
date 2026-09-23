@@ -2177,7 +2177,8 @@
   /* Ícones dos modos dentro da própria abertura (por cima da foto), posicionáveis */
   #introModosWrap{ position:absolute; inset:0; pointer-events:none; z-index:4; }
   #introModosWrap .im-opt{ position:absolute; left:50%; top:58%; transform:translate(-50%,-50%) translate(var(--mx,0px), var(--my,0px)); pointer-events:auto; background:transparent; border:none; display:flex; flex-direction:column; align-items:center; gap:7px; cursor:pointer; font-family:var(--fonte-titulo); color:var(--dourado, #c69a3f); padding:0; touch-action:none; }
-  #introModosWrap .im-inner{ display:flex; flex-direction:column; align-items:center; gap:7px; animation:imEntra .55s cubic-bezier(.22,1,.36,1) both; animation-delay:var(--ic-delay, 0ms); }
+  #introModosWrap .im-inner{ display:flex; flex-direction:column; align-items:center; gap:7px; }
+  #introModosWrap .im-inner.im-anima{ animation:imEntra .55s cubic-bezier(.22,1,.36,1) both; animation-delay:var(--ic-delay, 0ms); }
   #introModosWrap .im-ic{ width:calc(60px * var(--ic-scale, 1)); height:calc(60px * var(--ic-scale, 1)); display:flex; align-items:center; justify-content:center; border:1.5px solid rgba(255,255,255,.34); border-radius:16px; background:rgba(0,0,0,.3); -webkit-backdrop-filter:blur(2px); backdrop-filter:blur(2px); }
   #introModosWrap .im-ic svg{ width:62%; height:62%; }
   #introModosWrap .im-lb{ font-size:calc(.82rem * var(--ic-scale, 1)); font-weight:600; color:#f4ead2; text-shadow:0 1px 4px rgba(0,0,0,.65); letter-spacing:.3px; }
@@ -5508,7 +5509,7 @@
         var dy = (p && p.y != null) ? parseFloat(p.y) : 0;
         b.style.setProperty('--mx', dx + 'px'); b.style.setProperty('--my', dy + 'px');
         b.style.setProperty('--ic-delay', (i * 220) + 'ms');
-        b.innerHTML = '<span class="im-inner"><span class="im-ic">' + n[1] + '</span><span class="im-lb">' + n[0] + '</span></span>';
+        b.innerHTML = '<span class="im-inner' + (preview ? '' : ' im-anima') + '"><span class="im-ic">' + n[1] + '</span><span class="im-lb">' + n[0] + '</span></span>';
         if(preview){ _introArrastavel(b, '--mx', '--my', 'modo:' + m); }
         else { b.onclick = function(){ if(window.__modoEscolher) window.__modoEscolher(m); }; }
         wrap.appendChild(b);
@@ -8531,10 +8532,11 @@
         if(cfg.normal) modos.push('normal');
         if(cfg.takeaway) modos.push('takeaway');
         if(cfg.grupos && temGrupos()) modos.push('grupos');
-        if(!modos.length) return;
-        if(modos.length === 1){ modosAtuais = modos; aplicarModo(modos[0]); return; }
+        if(!modos.length){ var _w0 = document.getElementById('introModosWrap'); if(_w0) _w0.remove(); return; }
         var ov = document.getElementById('introOverlay');
-        if(window.__introAtiva && ov && !ov.dataset.saiu && ov.style.display !== 'none'){ integrarNoIntro(modos); }
+        var introViva = window.__introAtiva && ov && !ov.dataset.saiu && ov.style.display !== 'none';
+        if(introViva){ integrarNoIntro(modos); }               // desenha o(s) ícone(s) sobre a abertura, mesmo que só haja 1
+        else if(modos.length === 1){ modosAtuais = modos; aplicarModo(modos[0]); }
         else { mostrarGate(modos); }
       }catch(e){}
     };
