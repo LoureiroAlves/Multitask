@@ -3223,7 +3223,7 @@
   window.__renderPratoDia = function(cfg){
     try{
       var grid = document.getElementById('pratoDiaGrid'); if(!grid) return;
-      if(window.__pratoTimer){ clearInterval(window.__pratoTimer); window.__pratoTimer = null; }
+      if(window.__pratoTimer){ clearTimeout(window.__pratoTimer); clearInterval(window.__pratoTimer); window.__pratoTimer = null; }
       var _pdDia = new Date();
       var _pdIso = _pdDia.getFullYear() + '-' + String(_pdDia.getMonth()+1).padStart(2,'0') + '-' + String(_pdDia.getDate()).padStart(2,'0');
       var _pdDatas = (cfg && cfg.pratoDatas && typeof cfg.pratoDatas === 'object') ? cfg.pratoDatas : {};
@@ -3236,16 +3236,20 @@
       var on = !!(pd && pd.ativo && lista.length);
       document.body.classList.toggle('pratodia-on', on);
       if(!on){ grid.innerHTML = ''; return; }
+      // pré-carrega as fotos para não piscar cinzento ao trocar de caixa
+      lista.forEach(function(c){ var fs = (c && Array.isArray(c.fotos) && c.fotos.length) ? c.fotos : (c && c.foto ? [c.foto] : []); fs.forEach(function(u){ if(u){ var im = new Image(); im.src = u; } }); });
       var idx = 0;
+      function _seg(i){ var s = (lista[i] && lista[i].seg != null) ? lista[i].seg : pd.seg; return Math.max(2, parseInt(s, 10) || 6); }
       function mostrar(i){ _mosBuildInto(grid, [_mapa(lista[i])], null); }
       mostrar(0);
       if(lista.length > 1){
-        var seg = Math.max(2, parseInt(pd.seg, 10) || 6);
-        window.__pratoTimer = setInterval(function(){
-          idx = (idx + 1) % lista.length;
-          grid.style.opacity = '0';
-          setTimeout(function(){ mostrar(idx); grid.style.opacity = '1'; }, 260);
-        }, seg * 1000);
+        var _tick = function(){
+          window.__pratoTimer = setTimeout(function(){
+            grid.style.opacity = '0';
+            setTimeout(function(){ idx = (idx + 1) % lista.length; mostrar(idx); grid.style.opacity = '1'; _tick(); }, 260);
+          }, _seg(idx) * 1000);
+        };
+        _tick();
       }
     }catch(e){}
   };
