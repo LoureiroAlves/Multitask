@@ -5593,6 +5593,23 @@
     }catch(e){ return false; }
   };
 
+  // Atualização automática leve: refresca só a promoção e o prato do dia (não reconstrói o menu)
+  (function(){
+    if(window.__PREVIEW) return;
+    setInterval(async function(){
+      try{
+        if(!(typeof sbC !== 'undefined' && sbC && SLUG)) return;
+        if(document.hidden) return;   // separador em segundo plano — não gasta pedidos
+        if(document.querySelector('.categoria-painel.aberto, #cartOverlay.aberto, #favOverlay.aberto, #agendaOverlay.aberto, #escOverlay.aberto, #expOverlay.aberto, #fidOverlay.aberto')) return;   // não perturbar quem está a usar algo
+        var r = await sbC.from('negocios').select('config').eq('slug', SLUG).maybeSingle();
+        var cfg = r && r.data && r.data.config; if(!cfg) return;
+        window.__cfgPromo = cfg;
+        try{ if(window.__renderPromoDia) window.__renderPromoDia(cfg); }catch(e){}
+        try{ if(window.__renderPratoDia) window.__renderPratoDia(cfg); }catch(e){}
+      }catch(e){}
+    }, 90000);
+  })();
+
   // ---- Métricas: visitas ao menu e vistas à publicidade (1 por dispositivo/dia) ----
   (function registarMetricas(){
     if(window.__PREVIEW || !sbC || !SLUG) return;
