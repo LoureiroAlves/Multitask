@@ -626,37 +626,57 @@
     box.querySelectorAll('.pd-foto').forEach(function(el){ el.addEventListener('change', async function(e){ var f=e.target.files&&e.target.files[0]; if(!f) return; var i=+el.dataset.i; $('pd_msg').textContent='A enviar foto...'; try{ var url=await _pdUpload(f); _pdCaixas[i].foto=url; $('pd_msg').textContent='Foto adicionada - Guardar para aplicar.'; _pdRenderLista(); }catch(err){ $('pd_msg').innerHTML='<span style="color:#b23b2e;">Erro: '+(err.message||err)+'</span>'; } }); });
   }
   function _pdSegVis(){ var w=$('pd_segWrap'); if(w) w.style.display = _pdCaixas.length>1?'flex':'none'; }
-  function renderPratoDia(){
-    var v=$('vistaPrato');
-    var pd=(negocio&&negocio.config&&negocio.config.pratoDia)||{};
-    var _pdMap = function(c){ return { titulo:c.titulo||'', subtitulo:c.subtitulo||'', foto:c.foto||'', escurecer:parseInt(c.escurecer,10)||0, caixaTexto:!!c.caixaTexto, tx:(c.tx!=null?c.tx:6), ty:(c.ty!=null?c.ty:62), subX:(c.subX!=null?c.subX:6), subY:(c.subY!=null?c.subY:78), estilo:(c.estilo&&typeof c.estilo==='object')?Object.assign({},c.estilo):{}, estiloSub:(c.estiloSub&&typeof c.estiloSub==='object')?Object.assign({},c.estiloSub):{} }; };
-    _pdCaixas = (Array.isArray(pd.caixas)&&pd.caixas.length) ? pd.caixas.map(_pdMap) : ((pd.titulo||pd.subtitulo||pd.foto) ? [ _pdMap(pd) ] : [ _pdNovaCaixa() ]);
+  function _pdMapCaixa(c){ return { titulo:c.titulo||'', subtitulo:c.subtitulo||'', foto:c.foto||'', escurecer:parseInt(c.escurecer,10)||0, caixaTexto:!!c.caixaTexto, tx:(c.tx!=null?c.tx:6), ty:(c.ty!=null?c.ty:62), subX:(c.subX!=null?c.subX:6), subY:(c.subY!=null?c.subY:78), estilo:(c.estilo&&typeof c.estilo==='object')?Object.assign({},c.estilo):{}, estiloSub:(c.estiloSub&&typeof c.estiloSub==='object')?Object.assign({},c.estiloSub):{} }; }
+  // Editor do prato do dia, dentro do painel de um DIA (como as promoções)
+  function _pratoDoDiaHTML(iso){
+    var pd = ((negocio&&negocio.config&&negocio.config.pratoDatas)||{})[iso] || {};
+    var tem = !!(pd.ativo || (Array.isArray(pd.caixas)&&pd.caixas.length));
     var seg = Math.max(2, parseInt(pd.seg,10)||6);
-    v.innerHTML =
-      '<div style="background:#fff;border:1.5px solid #eadfc6;border-radius:14px;padding:16px;">'
-      + '<h3 style="margin:0 0 6px;">Prato do dia</h3>'
-      + '<div style="font-size:.82rem;color:#8a7a5c;margin-bottom:10px;">Uma ou varias caixas em destaque logo por baixo do cabecalho. Com mais que uma, vao rodando.</div>'
-      + '<label style="display:flex;align-items:center;gap:8px;margin:6px 0;font-weight:700;color:#8a5a10;cursor:pointer;"><input type="checkbox" id="pd_ativo"'+(pd.ativo?' checked':'')+' style="width:auto;"> Mostrar no cardapio</label>'
+    return '<div class="promo-wrap">'
+      + '<button class="promo-btn" id="btnPrato" type="button" style="border-color:#8a5a10;color:#8a5a10;background:#fff;">🍽️ Prato do dia deste dia'+(tem?' ✓':'')+'</button>'
+      + '<div class="nova-form '+(tem?'':'hide')+'" id="pratoForm">'
+      + '<div style="font-size:.78rem;color:#8a7a5c;margin-bottom:4px;">Uma ou várias caixas em destaque por baixo do cabeçalho, só neste dia. Com mais que uma, vão rodando.</div>'
+      + '<label style="display:flex;align-items:center;gap:8px;margin:6px 0;font-weight:700;color:#8a5a10;cursor:pointer;"><input type="checkbox" id="pd_ativo"'+(pd.ativo?' checked':'')+' style="width:auto;"> Mostrar no cardápio neste dia</label>'
       + '<div id="pd_segWrap" style="display:none;align-items:center;gap:8px;margin-top:6px;font-size:.9rem;color:#5a4a2c;">Trocar a cada <input type="number" id="pd_seg" min="2" max="60" value="'+seg+'" style="width:64px;padding:6px 8px;border:1.5px solid #e0d3b5;border-radius:8px;"> segundos</div>'
       + '<div id="pd_lista"></div>'
-      + '<button type="button" id="pd_add" style="width:100%;margin-top:10px;background:#f3ead8;border:1.5px dashed #d9c9a8;border-radius:10px;padding:11px;cursor:pointer;font-weight:700;color:#8a5a10;"> + Adicionar caixa</button>'
-      + '<button id="pd_guardar" class="pdf-btn" style="width:100%;margin-top:12px;">Guardar prato do dia</button>'
-      + '<div id="pd_msg" style="margin-top:8px;font-size:.9rem;"></div>'
-      + '</div>';
+      + '<button type="button" id="pd_add" style="width:100%;margin-top:10px;background:#f3ead8;border:1.5px dashed #d9c9a8;border-radius:10px;padding:11px;cursor:pointer;font-weight:700;color:#8a5a10;">＋ Adicionar caixa</button>'
+      + '<div class="acts"><button id="pd_remover" type="button"'+(tem?'':' style="display:none;"')+'>Remover</button><button class="guardar" id="pd_guardar" type="button">💾 Guardar prato do dia</button></div>'
+      + '<div class="msg" id="pd_msg" style="margin-top:8px;"></div>'
+      + '</div></div>';
+  }
+  function _wirePrato(iso){
+    var btn=$('btnPrato'), form=$('pratoForm');
+    if(btn&&form) btn.onclick=function(){ form.classList.toggle('hide'); };
+    var pd=((negocio&&negocio.config&&negocio.config.pratoDatas)||{})[iso]||{};
+    _pdCaixas = (Array.isArray(pd.caixas)&&pd.caixas.length) ? pd.caixas.map(_pdMapCaixa) : [ _pdNovaCaixa() ];
     _pdRenderLista(); _pdSegVis();
-    $('pd_add').addEventListener('click', function(){ _pdCaixas.push(_pdNovaCaixa()); _pdRenderLista(); _pdSegVis(); });
-    $('pd_guardar').addEventListener('click', async function(){
-      var b=$('pd_guardar'); b.disabled=true; var _t=b.textContent; b.textContent='A guardar...'; $('pd_msg').textContent='';
-      var caixas=_pdCaixas.filter(function(c){ return (c.titulo&&c.titulo.trim())||(c.subtitulo&&c.subtitulo.trim())||c.foto; }).map(function(c){ return { titulo:(c.titulo||'').trim(), subtitulo:(c.subtitulo||'').trim(), foto:c.foto||'', escurecer:parseInt(c.escurecer,10)||0, caixaTexto:!!c.caixaTexto, tx:(c.tx!=null?c.tx:6), ty:(c.ty!=null?c.ty:62), subX:(c.subX!=null?c.subX:6), subY:(c.subY!=null?c.subY:78), estilo:c.estilo||{}, estiloSub:c.estiloSub||{} }; });
-      var novo={ ativo:$('pd_ativo').checked, seg:Math.max(2,Math.min(60,parseInt(($('pd_seg')||{}).value,10)||6)), caixas:caixas };
-      var sel=await sb.from('negocios').select('config').eq('id',negocio.id).maybeSingle();
-      if(sel.error){ b.disabled=false; b.textContent=_t; $('pd_msg').innerHTML='<span style="color:#b23b2e;">Erro: '+sel.error.message+'</span>'; return; }
-      var cfg=(sel.data&&sel.data.config)||{}; cfg.pratoDia=novo;
-      var up=await sb.from('negocios').update({ config:cfg }).eq('id',negocio.id);
-      b.disabled=false; b.textContent=_t;
-      if(up.error){ $('pd_msg').innerHTML='<span style="color:#b23b2e;">Erro: '+up.error.message+'</span>'; return; }
-      negocio.config=cfg; $('pd_msg').innerHTML='<span style="color:#1e6b3c;">Prato do dia guardado</span>';
-    });
+    var add=$('pd_add'); if(add) add.onclick=function(){ _pdCaixas.push(_pdNovaCaixa()); _pdRenderLista(); _pdSegVis(); };
+    var g=$('pd_guardar'); if(g) g.onclick=function(){ guardarPrato(iso); };
+    var r=$('pd_remover'); if(r) r.onclick=function(){ removerPrato(iso); };
+  }
+  async function guardarPrato(iso){
+    var msg=$('pd_msg'), g=$('pd_guardar'); g.disabled=true; msg.textContent='A guardar...'; msg.className='msg';
+    var caixas=_pdCaixas.filter(function(c){ return (c.titulo&&c.titulo.trim())||(c.subtitulo&&c.subtitulo.trim())||c.foto; }).map(function(c){ return { titulo:(c.titulo||'').trim(), subtitulo:(c.subtitulo||'').trim(), foto:c.foto||'', escurecer:parseInt(c.escurecer,10)||0, caixaTexto:!!c.caixaTexto, tx:(c.tx!=null?c.tx:6), ty:(c.ty!=null?c.ty:62), subX:(c.subX!=null?c.subX:6), subY:(c.subY!=null?c.subY:78), estilo:c.estilo||{}, estiloSub:c.estiloSub||{} }; });
+    var novo={ ativo:$('pd_ativo').checked, seg:Math.max(2,Math.min(60,parseInt(($('pd_seg')||{}).value,10)||6)), caixas:caixas };
+    var sel=await sb.from('negocios').select('config').eq('id',negocio.id).maybeSingle();
+    if(sel.error){ g.disabled=false; msg.textContent='Erro: '+sel.error.message; msg.className='msg erro'; return; }
+    var cfg=(sel.data&&sel.data.config)||{}; cfg.pratoDatas=cfg.pratoDatas||{};
+    if(novo.ativo && caixas.length){ cfg.pratoDatas[iso]=novo; } else { delete cfg.pratoDatas[iso]; }
+    var up=await sb.from('negocios').update({ config:cfg }).eq('id',negocio.id);
+    g.disabled=false;
+    if(up.error){ msg.textContent='Erro: '+up.error.message; msg.className='msg erro'; return; }
+    negocio.config=cfg; msg.textContent='Prato do dia guardado ✓'; msg.className='msg';
+    { var rmb=$('pd_remover'); if(rmb) rmb.style.display = (novo.ativo&&caixas.length)?'':'none'; }
+    renderCal();
+  }
+  async function removerPrato(iso){
+    if(!confirm('Remover o prato do dia deste dia?')) return;
+    var sel=await sb.from('negocios').select('config').eq('id',negocio.id).maybeSingle();
+    if(sel.error){ return; }
+    var cfg=(sel.data&&sel.data.config)||{}; cfg.pratoDatas=cfg.pratoDatas||{}; delete cfg.pratoDatas[iso];
+    var up=await sb.from('negocios').update({ config:cfg }).eq('id',negocio.id);
+    if(up.error){ return; }
+    negocio.config=cfg; renderCal(); renderDia(iso);
   }
 
   function _encEstadoInfo(est){
@@ -1222,6 +1242,7 @@
     if(_fer) html += '<div style="margin:-4px 0 12px; font-size:.85rem; font-weight:700; color:#c0392b;">★ Feriado: '+esc(_fer)+'</div>';
     html += '<button class="nova-btn" id="btnNova" type="button">➕ Nova reserva</button>' + _formNovaHTML();
     html += _promoDoDiaHTML(iso);
+    html += _pratoDoDiaHTML(iso);
     if(!rs.length) html += '<div style="color:#8a7a5c; font-size:.9rem;">Sem reservas neste dia.</div>';
     html += '</div>';
     rs.forEach(function(r){
@@ -1243,6 +1264,7 @@
     $('detalhe').innerHTML = html;
     _wireNova(iso);
     _wirePromo(iso);
+    _wirePrato(iso);
     $('detalhe').querySelectorAll('[data-a]').forEach(function(btn){ btn.onclick = function(){ accao(btn.getAttribute('data-id'), btn.getAttribute('data-a')); }; });
   }
 
