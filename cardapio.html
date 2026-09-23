@@ -5533,8 +5533,11 @@
       // Íman simétrico: alinha ao mesmo eixo de outro ícone, ou a espaçamento igual (serve para linha OU coluna)
       function _snap(val, arr){
         for(var k=0;k<arr.length;k++){ if(Math.abs(val-arr[k]) <= TH) return arr[k]; }           // alinhar (mesma coluna/linha)
-        if(arr.length >= 2){ var a = arr.slice().sort(function(p,q){ return p-q; }); var d = a[1]-a[0];
-          var cs = [a[0]-d, (a[0]+a[1])/2, a[1]+d];
+        if(arr.length >= 2){ var a = arr.slice().sort(function(p,q){ return p-q; });
+          var cs = [];
+          for(var i=0;i<a.length-1;i++){ cs.push((a[i] + a[i+1]) / 2); }                          // meio entre adjacentes (inserir)
+          cs.push(a[0] - (a[1] - a[0]));                                                          // estender à esquerda com o mesmo passo
+          cs.push(a[a.length-1] + (a[a.length-1] - a[a.length-2]));                               // estender à direita com o mesmo passo
           for(var j=0;j<cs.length;j++){ if(Math.abs(val-cs[j]) <= TH+3) return cs[j]; }           // espaçamento igual
         }
         return null;
