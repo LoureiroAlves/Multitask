@@ -2195,6 +2195,9 @@
   #introModosWrap .im-ic svg{ width:62%; height:62%; }
   #introModosWrap .im-lb{ font-size:calc(.82rem * var(--ic-scale, 1)); font-weight:600; color:#f4ead2; text-shadow:0 1px 4px rgba(0,0,0,.65); letter-spacing:.3px; }
   #introModosWrap .im-opt:active{ filter:brightness(1.15); }
+  #introModosWrap .im-guia{ position:absolute; background:rgba(120,200,255,.9); pointer-events:none; z-index:6; box-shadow:0 0 4px rgba(120,200,255,.7); }
+  #introModosWrap .im-guia-h{ left:0; right:0; height:1px; }
+  #introModosWrap .im-guia-v{ top:0; bottom:0; width:1px; }
   @keyframes imSubir{ from{ opacity:0; transform:translateY(44px); } to{ opacity:1; transform:translateY(0); } }
   @keyframes imDescer{ from{ opacity:0; transform:translateY(-44px); } to{ opacity:1; transform:translateY(0); } }
   @keyframes imFade{ from{ opacity:0; } to{ opacity:1; } }
@@ -5493,6 +5496,42 @@
     };
   }
 
+  // Arrasto dos ícones de modo com ímanes (mesma altura + espaçamento igual) e linhas-guia
+  function _introArrastavelModo(el, alvo){
+    if(!el) return;
+    el.style.cursor = 'move'; el.style.touchAction = 'none';
+    var wrap = el.parentNode;
+    var sx=0, sy=0, bx=0, by=0, drag=false, moveu=false, gh=null, gv=null;
+    var TH = 9;   // limiar do íman (px)
+    function outros(){ return Array.prototype.filter.call(wrap.querySelectorAll('.im-opt'), function(s){ return s !== el; }); }
+    function pv(s, v){ return parseFloat(s.style.getPropertyValue(v)) || 0; }
+    function limparGuias(){ if(gh){ gh.remove(); gh=null; } if(gv){ gv.remove(); gv=null; } }
+    el.onclick = function(ev){ ev.stopPropagation(); ev.preventDefault(); };
+    el.onpointerdown = function(ev){ ev.preventDefault(); ev.stopPropagation(); drag=true; moveu=false; sx=ev.clientX; sy=ev.clientY; bx=pv(el,'--mx'); by=pv(el,'--my'); try{ el.setPointerCapture(ev.pointerId); }catch(e){} };
+    el.onpointermove = function(ev){ if(!drag) return;
+      if(Math.abs(ev.clientX-sx)>4 || Math.abs(ev.clientY-sy)>4) moveu=true;
+      var x = bx + (ev.clientX - sx), y = by + (ev.clientY - sy);
+      var outs = outros();
+      var snapY = null, snapX = null;
+      outs.forEach(function(s){ var oy = pv(s,'--my'); if(Math.abs(y-oy) <= TH){ snapY = oy; } });
+      if(snapY != null) y = snapY;
+      var xs = outs.map(function(s){ return pv(s,'--mx'); }).sort(function(a,b){ return a-b; });
+      if(xs.length >= 2){ var d = xs[1]-xs[0]; [xs[0]-d, (xs[0]+xs[1])/2, xs[1]+d].forEach(function(c){ if(Math.abs(x-c) <= TH+3){ snapX = c; } }); }
+      else if(xs.length === 1){ if(Math.abs(x-xs[0]) <= TH){ snapX = xs[0]; } }
+      if(snapX != null) x = snapX;
+      el.style.setProperty('--mx', x+'px'); el.style.setProperty('--my', y+'px');
+      limparGuias();
+      var W = wrap.clientWidth, H = wrap.clientHeight;
+      if(snapY != null){ gh = document.createElement('div'); gh.className='im-guia im-guia-h'; gh.style.top = (0.58*H + y)+'px'; wrap.appendChild(gh); }
+      if(snapX != null){ gv = document.createElement('div'); gv.className='im-guia im-guia-v'; gv.style.left = (0.5*W + x)+'px'; wrap.appendChild(gv); }
+      try{ ev.preventDefault(); }catch(_){}
+    };
+    el.onpointerup = function(ev){ if(!drag) return; drag=false; limparGuias();
+      if(moveu){ var nx=Math.round(pv(el,'--mx')), ny=Math.round(pv(el,'--my')); try{ parent.postMessage({ type:'preview-intro-pos', alvo:alvo, x:nx, y:ny }, '*'); }catch(e){} }
+      else { try{ parent.postMessage({ type:'editar-ir', alvo:alvo }, '*'); }catch(e){} }
+    };
+  }
+
   // Ícones de "modos" (Menu / Take away / Grupos) posicionáveis sobre a abertura
   var IC_MODOS = {
     normal: ['Menu', '<svg viewBox="0 0 46 48" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M13 8v9"/><path d="M18.5 8v9"/><path d="M24 8v9"/><path d="M13 17h11"/><path d="M18.5 17v23"/><path d="M32 8c7 5 7 17 0 21z"/><path d="M32 29v11"/></g></svg>'],
@@ -5529,7 +5568,7 @@
         b.style.setProperty('--mx', dx + 'px'); b.style.setProperty('--my', dy + 'px');
         b.style.setProperty('--ic-delay', (baseDelay + i * 220) + 'ms');
         b.innerHTML = '<span class="im-inner' + (preview ? '' : ' im-anima ' + animCls) + '"><span class="im-ic">' + n[1] + '</span><span class="im-lb">' + n[0] + '</span></span>';
-        if(preview){ _introArrastavel(b, '--mx', '--my', 'modo:' + m); }
+        if(preview){ _introArrastavelModo(b, 'modo:' + m); }
         else { b.onclick = function(){ if(window.__modoEscolher) window.__modoEscolher(m); }; }
         wrap.appendChild(b);
       });
