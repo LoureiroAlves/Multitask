@@ -399,7 +399,10 @@
   // Limpeza automática semanal do prato do dia e das promoções (corre ao abrir a Gestão)
   async function _limparSemanaAntiga(){
     try{
-      var cfg = negocio && negocio.config; if(!cfg) return;
+      // lê SEMPRE a config fresca da base de dados (nunca escreve por cima de definições recentes)
+      var sel=await sb.from('negocios').select('config').eq('id', negocio.id).maybeSingle();
+      if(sel.error) return;
+      var cfg=(sel.data&&sel.data.config)||{};
       var seg=_isoSegundaDestaSemana();
       var m1=_purgaMapaAntigo(cfg.pratoDatas, seg);
       var m2=_purgaMapaAntigo(cfg.promoDatas, seg);
@@ -407,6 +410,8 @@
       if(m1||m2){
         var up=await sb.from('negocios').update({ config:cfg }).eq('id', negocio.id);
         if(!up.error) negocio.config=cfg;
+      } else {
+        negocio.config=cfg;   // mantém a cópia local em dia
       }
     }catch(e){}
   }
@@ -1025,7 +1030,17 @@
       + '<button class="acao" id="dfGuardar" style="width:100%; margin-top:16px;">Guardar definições</button>'
       + '<div class="msg" id="dfMsg" style="margin-top:8px;"></div>'
       + '</div>';
+    html += '<div class="def-card" style="margin-top:14px;">'
+      + '<div class="def-h">🛟 Cópia de segurança das definições</div>'
+      + '<div style="font-size:.82rem;color:#6a5a3c;margin:2px 0 10px;">Descarrega um ficheiro com todas as definições deste negócio. Guarda-o antes de cada atualização. Se precisares, podes repor a partir desse ficheiro.</div>'
+      + '<button type="button" id="dfExportar" style="width:100%;background:#eef6ec;border:1.5px solid #bcd8b4;border-radius:10px;padding:11px;cursor:pointer;font-weight:700;color:#3f7a34;margin-bottom:8px;">⬇️ Descarregar cópia de segurança</button>'
+      + '<label for="dfImportFile" style="display:block;text-align:center;background:#fff;border:1.5px solid #e0d3b5;border-radius:10px;padding:11px;cursor:pointer;font-weight:700;color:#8a5a10;">⬆️ Repor a partir de um ficheiro…</label>'
+      + '<input type="file" id="dfImportFile" accept="application/json,.json" style="display:none;">'
+      + '<div class="msg" id="dfBkMsg" style="margin-top:8px;"></div>'
+      + '</div>';
     $('vistaDef').innerHTML = html;
+    { var _ex=$('dfExportar'); if(_ex) _ex.onclick=_exportarConfig;
+      var _im=$('dfImportFile'); if(_im) _im.onchange=function(){ if(this.files&&this.files[0]) _importarConfig(this.files[0], this); }; }
     _dfMesas = Array.isArray(a.mesas) ? JSON.parse(JSON.stringify(a.mesas)) : [];
     _renderMesas();
     _dfFechos = Array.isArray(a.fechos) ? JSON.parse(JSON.stringify(a.fechos)) : [];
@@ -1093,6 +1108,37 @@
     if(up.error) return up.error;
     negocio.config = cfg;
     return null;
+  }
+  // ===== Cópia de segurança / reposição das definições (config do negócio) =====
+  async function _exportarConfig(){
+    var msg=$('dfBkMsg'); if(msg){ msg.textContent='A preparar cópia...'; msg.className='msg'; }
+    try{
+      var sel=await sb.from('negocios').select('config,nome,slug').eq('id',negocio.id).maybeSingle();
+      if(sel.error) throw sel.error;
+      var pacote={ tipo:'amesa-backup', versao:1, exportadoEm:new Date().toISOString(), negocioId:negocio.id, slug:sel.data.slug, nome:sel.data.nome, config:(sel.data.config||{}) };
+      var blob=new Blob([JSON.stringify(pacote,null,2)],{type:'application/json'});
+      var url=URL.createObjectURL(blob);
+      var d=new Date(); var stamp=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+      var a=document.createElement('a'); a.href=url; a.download='amesa-'+(sel.data.slug||'negocio')+'-'+stamp+'.json'; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function(){ URL.revokeObjectURL(url); },2000);
+      if(msg){ msg.textContent='Cópia descarregada ✓ Guarda este ficheiro num sítio seguro.'; msg.className='msg'; }
+    }catch(e){ if(msg){ msg.textContent='Erro ao exportar: '+(e.message||e); msg.className='msg erro'; } }
+  }
+  async function _importarConfig(file, inputEl){
+    var msg=$('dfBkMsg'); if(msg){ msg.textContent='A ler ficheiro...'; msg.className='msg'; }
+    try{
+      var txt=await file.text(); var pac=JSON.parse(txt);
+      var cfgNova = (pac && pac.config && typeof pac.config==='object') ? pac.config : (pac && typeof pac==='object' && pac.agenda ? pac : null);
+      if(!cfgNova) throw new Error('ficheiro inválido');
+      var quando = pac.exportadoEm ? (' de '+new Date(pac.exportadoEm).toLocaleString('pt-PT')) : '';
+      if(!confirm('Repor TODAS as definições deste negócio a partir da cópia'+quando+'?\n\nIsto substitui as definições atuais. As reservas e encomendas já feitas não são afetadas.')) { if(inputEl) inputEl.value=''; if(msg){msg.textContent='';} return; }
+      var up=await sb.from('negocios').update({ config:cfgNova }).eq('id',negocio.id);
+      if(up.error) throw up.error;
+      negocio.config=cfgNova;
+      if(msg){ msg.textContent='Definições repostas ✓ A atualizar...'; msg.className='msg'; }
+      renderDefinicoes(); renderCal();
+    }catch(e){ if(msg){ msg.textContent='Erro ao importar: '+(e.message||e); msg.className='msg erro'; } }
+    if(inputEl) inputEl.value='';
   }
   async function guardarDefinicoes(){
     const prev = (negocio.config && negocio.config.agenda) || {};

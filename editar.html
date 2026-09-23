@@ -4040,6 +4040,7 @@ amesadigital.pt</textarea>
           if(fc.agenda !== undefined) config.agenda = fc.agenda;         // reservas geridas no Calendário
           if(fc.mostrarAgendaIcon !== undefined) config.mostrarAgendaIcon = fc.mostrarAgendaIcon; // ícone das reservas segue o Calendário
           if(fc.promoDatas !== undefined) config.promoDatas = fc.promoDatas; // promoções por data (Calendário)
+          if(fc.pratoDatas !== undefined) config.pratoDatas = fc.pratoDatas; // prato do dia por data (Calendário)
         }
         // Guarda 1 cópia do estado ANTERIOR (config + menu já publicados) para o "Repor versão anterior".
         let _prevMenu = (window.__negocio && window.__negocio.menu) || null;
@@ -5868,9 +5869,10 @@ amesadigital.pt</textarea>
       _br.disabled = true;
       try{
         const nova = JSON.parse(JSON.stringify(u.config));
-        // manter campos geridos pelo admin do estado atual (visibilidade, tipo, secções desligadas)
+        // manter campos geridos pelo admin/Calendário do estado atual (visibilidade, tipo, secções,
+        // reservas, promoções e prato do dia) — repor a versão do editor NÃO deve apagar estas definições
         const ac = est.config || {};
-        ['oculto','naApp','tipo','editorOff'].forEach(function(k){ if(ac[k] !== undefined) nova[k] = ac[k]; });
+        ['oculto','naApp','tipo','editorOff','agenda','mostrarAgendaIcon','promoDatas','pratoDatas','pratoDia'].forEach(function(k){ if(ac[k] !== undefined) nova[k] = ac[k]; });
         // a "nova cópia" passa a apontar para o estado ATUAL, para poderes alternar
         nova.__undo = { config: _stripUndo(est.config || {}), menu: est.menu || null, ts: Date.now() };
         await sbc.from('negocios').update({ config: nova, menu: (u.menu || null) }).eq('id', window.__negocio.id);
