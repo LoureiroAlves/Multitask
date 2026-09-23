@@ -3251,7 +3251,14 @@
         var tmp = document.createElement('div');
         _mosBuildInto(tmp, [_mapaSlide(c)], null);
         var box = tmp.firstChild;
-        if(box){ box.style.position = 'absolute'; box.style.top = '0'; box.style.left = '0'; box.style.right = '0'; box.style.bottom = '0'; box.style.minHeight = '0'; box.style.margin = '0'; box.style.borderRadius = '0'; box.style.boxShadow = 'none'; box.style.willChange = 'transform'; box.style.transition = 'transform .5s cubic-bezier(.4,0,.2,1)'; }
+        if(box){
+          // remove o degradê escuro do fundo (dava uma faixa escura na parte de baixo)
+          var _sh = box.querySelector('.mos-shade'); if(_sh) _sh.remove();
+          // altura EXPLÍCITA (não só top/bottom:0) para o iOS antigo preencher a foto até ao fundo
+          box.style.position = 'absolute'; box.style.top = '0'; box.style.left = '0'; box.style.width = '100%'; box.style.height = '100%'; box.style.minHeight = '0'; box.style.margin = '0'; box.style.padding = '0'; box.style.boxSizing = 'border-box'; box.style.borderRadius = '0'; box.style.boxShadow = 'none'; box.style.willChange = 'transform'; box.style.transition = 'transform .5s cubic-bezier(.4,0,.2,1)';
+          // garante que as fotos preenchem em qualquer iOS
+          box.querySelectorAll('.mos-foto').forEach(function(im){ im.style.width='100%'; im.style.height='100%'; im.style.objectFit='cover'; im.style.position='absolute'; im.style.top='0'; im.style.left='0'; });
+        }
         return box;
       }
       function _aplicarNeon(c){
