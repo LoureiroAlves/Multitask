@@ -2177,6 +2177,13 @@
   body.modo-cerimonias #categoriaGrid .tile[data-cerimonia="1"]{ display:flex !important; }
   body.modo-normal #linkAgenda, body.modo-takeaway #linkAgenda{ display:none !important; }
   /* Ícones dos modos dentro da própria abertura (por cima da foto), posicionáveis */
+  /* Promoção do dia no cardápio (por baixo do cabeçalho) */
+  #promoDia{ margin:10px 14px 0; }
+  #promoDia .promo-cartao{ display:flex; align-items:center; gap:10px; border-radius:14px; padding:12px 14px; background:var(--pd-bg,#fff0f5); border:1.5px solid var(--pd-cor,#e0245e); box-shadow:0 3px 12px rgba(0,0,0,.06); animation:promoEntra .5s cubic-bezier(.22,1,.36,1) both; }
+  #promoDia .promo-emoji{ font-size:1.5rem; line-height:1; flex:0 0 auto; }
+  #promoDia .promo-txt{ font-family:var(--fonte-titulo); font-weight:800; color:var(--pd-cor,#e0245e); line-height:1.2; }
+  #promoDia .promo-hora{ display:block; font-family:var(--fonte-base); font-weight:600; font-size:.72rem; color:#8a7a5c; margin-top:2px; }
+  @keyframes promoEntra{ from{ opacity:0; transform:translateY(-10px); } to{ opacity:1; transform:translateY(0); } }
   #introModosWrap{ position:absolute; inset:0; pointer-events:none; z-index:4; }
   #introModosWrap .im-opt{ position:absolute; left:50%; top:58%; transform:translate(-50%,-50%) translate(var(--mx,0px), var(--my,0px)); pointer-events:auto; background:transparent; border:none; cursor:pointer; font-family:var(--fonte-titulo); padding:0; touch-action:none; }
   /* Estilo PÍLULA — ícone + texto na horizontal, dentro de cápsula */
@@ -2549,6 +2556,9 @@
     </div>
   </div>
 </header>
+
+<!-- Promoção do dia (vinda do calendário) — aparece logo por baixo do cabeçalho -->
+<div id="promoDia" style="display:none;"></div>
 
 <!-- Mosaico (bento) — módulo à parte, ativado por config.mosaico.ativo -->
 <div id="mosaicoGrid"></div>
@@ -4378,6 +4388,37 @@
         return u;
       };
       try{ if(window.__expRefresh) window.__expRefresh(); }catch(e){}
+      // Promoção do dia (vinda do calendário) — aparece por baixo do cabeçalho, só no dia (e no horário, se definido)
+      window.__cfgPromo = config;
+      window.__renderPromoDia = function(cfg){
+        try{
+          var el = document.getElementById('promoDia'); if(!el) return;
+          var pd = (cfg && cfg.promoDatas && typeof cfg.promoDatas === 'object') ? cfg.promoDatas : null;
+          function _off(){ el.style.display = 'none'; el.innerHTML = ''; }
+          if(!pd){ _off(); return; }
+          var d = new Date();
+          var iso = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+          var p = pd[iso];
+          var texto = (p && p.texto) ? String(p.texto).trim() : '';
+          if(!p || p.ativo === false || !texto){ _off(); return; }
+          if(p.horaIni && p.horaFim){
+            var now = d.getHours()*60 + d.getMinutes();
+            var _m = function(s){ var a = String(s).split(':'); return (parseInt(a[0],10)||0)*60 + (parseInt(a[1],10)||0); };
+            if(!(now >= _m(p.horaIni) && now <= _m(p.horaFim))){ _off(); return; }
+          }
+          var cor = p.cor || '#e0245e';
+          var tam = parseInt(p.tamanho, 10) || 16;
+          var _esc = function(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
+          var _suave = function(hex){ try{ var h = String(hex).replace('#',''); if(h.length===3) h = h.split('').map(function(c){return c+c;}).join(''); var r=parseInt(h.slice(0,2),16), g=parseInt(h.slice(2,4),16), b=parseInt(h.slice(4,6),16); return 'rgba('+r+','+g+','+b+',0.08)'; }catch(e){ return '#fff0f5'; } };
+          var horaTxt = (p.horaIni && p.horaFim) ? ('🕒 ' + _esc(p.horaIni) + '–' + _esc(p.horaFim)) : '';
+          el.style.setProperty('--pd-cor', cor);
+          el.style.setProperty('--pd-bg', _suave(cor));
+          el.innerHTML = '<div class="promo-cartao"><span class="promo-emoji">🏷️</span><div><div class="promo-txt" style="font-size:' + tam + 'px;">' + _esc(texto) + '</div>' + (horaTxt ? ('<span class="promo-hora">' + horaTxt + '</span>') : '') + '</div></div>';
+          el.style.display = '';
+        }catch(e){}
+      };
+      window.__renderPromoDia(config);
+      if(!window.__promoTimer){ window.__promoTimer = setInterval(function(){ try{ window.__renderPromoDia(window.__cfgPromo); }catch(e){} }, 60000); }
       // Modos de entrada (Menu / Take away / Grupos)
       window.__modosCfg = (config.modos && typeof config.modos === 'object') ? config.modos : {};
       window.__modosTam = (config.modos && config.modos.tam && typeof config.modos.tam === 'object') ? config.modos.tam : {};
