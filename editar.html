@@ -953,6 +953,11 @@ amesadigital.pt</textarea>
           <input type="range" id="modoTamTakeaway" min="70" max="160" value="100" step="10" style="width:100%; accent-color:var(--dourado);">
           <label style="display:block; margin-top:8px; font-size:.85rem; color:var(--castanho);">👥 Grupos — <span id="modoTamGruposVal">100%</span></label>
           <input type="range" id="modoTamGrupos" min="70" max="160" value="100" step="10" style="width:100%; accent-color:var(--dourado);">
+          <label style="display:block; margin-top:14px; font-size:.85rem; color:var(--castanho);">Estilo dos ícones</label>
+          <select id="modoEstilo" style="width:100%; padding:9px; border-radius:10px; border:1px solid #d9c9a8;">
+            <option value="pilula">Pílula — ícone + texto lado a lado</option>
+            <option value="quadrado">Quadrado — ícone com legenda por baixo</option>
+          </select>
           <label style="display:block; margin-top:14px; font-size:.85rem; color:var(--castanho);">Animação de entrada dos ícones</label>
           <select id="modoAnim" style="width:100%; padding:9px; border-radius:10px; border:1px solid #d9c9a8;">
             <option value="subir">De baixo para cima</option>
@@ -2832,6 +2837,7 @@ amesadigital.pt</textarea>
           const v = Math.round((parseFloat(_tm[p[1]]) || 1) * 100); el.value = v;
           const s = document.getElementById(p[0] + 'Val'); if(s) s.textContent = v + '%';
         }); }
+      { const _es = document.getElementById('modoEstilo'); if(_es) _es.value = _m.estilo || 'pilula'; }
       { const _an = document.getElementById('modoAnim'); if(_an) _an.value = _m.anim || 'subir'; }
       { const _en = document.getElementById('modoEntrada'); if(_en){ const v = parseFloat(_m.entrada) || 0; _en.value = v; const s = document.getElementById('modoEntradaVal'); if(s) s.textContent = v.toFixed(1).replace('.', ',') + ' s'; } } }
     { const _c = config.carrinho || { ativo:true, precos:true };
@@ -3310,6 +3316,7 @@ amesadigital.pt</textarea>
   ['modoTamNormal','modoTamTakeaway','modoTamGrupos'].forEach(function(id){ const _t = document.getElementById(id); if(_t) _t.addEventListener('input', function(){ const s = document.getElementById(id + 'Val'); if(s) s.textContent = this.value + '%'; if(window.__agendarPreview) window.__agendarPreview(); }); });
   { const _me = document.getElementById('modoEntrada'); if(_me) _me.addEventListener('input', function(){ const s = document.getElementById('modoEntradaVal'); if(s) s.textContent = (parseFloat(this.value)||0).toFixed(1).replace('.', ',') + ' s'; if(window.__agendarPreview) window.__agendarPreview(); }); }
   { const _ma = document.getElementById('modoAnim'); if(_ma) _ma.addEventListener('change', function(){ if(window.__agendarPreview) window.__agendarPreview(); }); }
+  { const _me2 = document.getElementById('modoEstilo'); if(_me2) _me2.addEventListener('change', function(){ if(window.__agendarPreview) window.__agendarPreview(); }); }
   document.getElementById('abrirEfeitoSel').addEventListener('change', e => {
     const wb = document.getElementById('wipeBox'); if(wb) wb.style.display = (e.target.value === 'wipe') ? 'block' : 'none';
   });
@@ -3869,8 +3876,9 @@ amesadigital.pt</textarea>
         const _tv = function(id){ return (parseInt((document.getElementById(id) || {}).value, 10) || 100) / 100; };
         const _mpos = (config.modos && config.modos.pos) ? config.modos.pos : {};
         const _anim = (document.getElementById('modoAnim') || {}).value || 'subir';
+        const _estilo = (document.getElementById('modoEstilo') || {}).value || 'pilula';
         const _entrada = parseFloat((document.getElementById('modoEntrada') || {}).value) || 0;
-        config.modos = { ativo:_gm('modosAtivo'), normal:_gm('modoNormal'), takeaway:_gm('modoTakeaway'), grupos:_gm('modoGrupos'), verBotao:_gm('modoVerBotao'), anim:_anim, entrada:_entrada, tam: { normal:_tv('modoTamNormal'), takeaway:_tv('modoTamTakeaway'), grupos:_tv('modoTamGrupos') }, pos:_mpos }; }
+        config.modos = { ativo:_gm('modosAtivo'), normal:_gm('modoNormal'), takeaway:_gm('modoTakeaway'), grupos:_gm('modoGrupos'), verBotao:_gm('modoVerBotao'), estilo:_estilo, anim:_anim, entrada:_entrada, tam: { normal:_tv('modoTamNormal'), takeaway:_tv('modoTamTakeaway'), grupos:_tv('modoTamGrupos') }, pos:_mpos }; }
       { const _ca = document.getElementById('carrinhoAtivo'), _cp = document.getElementById('carrinhoPrecos'), _cw = document.getElementById('carrinhoWhats'), _cws = document.getElementById('carrinhoWhatsSempre');
         config.carrinho = { ativo: _ca ? _ca.checked : true, precos: _cp ? _cp.checked : true, whatsapp: _cw ? _cw.value.trim() : '', whatsappSempre: _cws ? _cws.checked : false,
           levantamento: ((document.getElementById('cartLevAtivo') || {}).checked !== false),
