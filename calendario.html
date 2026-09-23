@@ -677,6 +677,8 @@
   }
   async function guardarPrato(iso){
     var msg=$('pd_msg'), g=$('pd_guardar'); g.disabled=true; msg.textContent='A guardar...'; msg.className='msg';
+    // sincroniza os campos do formulário para o array (garante o tempo de cada caixa)
+    document.querySelectorAll('#pd_lista .pd-seg').forEach(function(el){ if(_pdCaixas[+el.dataset.i]) _pdCaixas[+el.dataset.i].seg = Math.max(2, Math.min(60, parseInt(el.value,10)||6)); });
     var caixas=_pdCaixas.filter(function(c){ return (c.titulo&&c.titulo.trim())||(c.subtitulo&&c.subtitulo.trim())||c.foto; }).map(function(c){ return { titulo:(c.titulo||'').trim(), subtitulo:(c.subtitulo||'').trim(), foto:c.foto||'', escurecer:parseInt(c.escurecer,10)||0, caixaTexto:!!c.caixaTexto, seg:Math.max(2,Math.min(60,parseInt(c.seg,10)||6)), neonAtivo:!!c.neonAtivo, neonCor:c.neonCor||'#19e9ff', neonPiscar:!!c.neonPiscar, tx:(c.tx!=null?c.tx:6), ty:(c.ty!=null?c.ty:62), subX:(c.subX!=null?c.subX:6), subY:(c.subY!=null?c.subY:78), estilo:c.estilo||{}, estiloSub:c.estiloSub||{} }; });
     var novo={ ativo:$('pd_ativo').checked, caixas:caixas };
     var sel=await sb.from('negocios').select('config').eq('id',negocio.id).maybeSingle();
