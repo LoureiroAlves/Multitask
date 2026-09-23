@@ -2178,7 +2178,15 @@
   #introModosWrap{ position:absolute; inset:0; pointer-events:none; z-index:4; }
   #introModosWrap .im-opt{ position:absolute; left:50%; top:58%; transform:translate(-50%,-50%) translate(var(--mx,0px), var(--my,0px)); pointer-events:auto; background:transparent; border:none; display:flex; flex-direction:column; align-items:center; gap:7px; cursor:pointer; font-family:var(--fonte-titulo); color:var(--dourado, #c69a3f); padding:0; touch-action:none; }
   #introModosWrap .im-inner{ display:flex; flex-direction:column; align-items:center; gap:7px; }
-  #introModosWrap .im-inner.im-anima{ animation:imEntra .55s cubic-bezier(.22,1,.36,1) both; animation-delay:var(--ic-delay, 0ms); }
+  .im-inner.im-anima{ animation:imEntra .55s cubic-bezier(.22,1,.36,1) both; animation-delay:var(--ic-delay, 0ms); }
+  /* Ecrã sem foto: mesma linha de ícones novos */
+  #modoGate .mg-icons{ display:flex; gap:22px; flex-wrap:wrap; justify-content:center; }
+  #modoGate .im-opt{ background:transparent; border:none; display:flex; flex-direction:column; align-items:center; gap:7px; cursor:pointer; font-family:var(--fonte-titulo); color:var(--dourado, #c69a3f); padding:0; }
+  #modoGate .im-inner{ display:flex; flex-direction:column; align-items:center; gap:7px; }
+  #modoGate .im-ic{ width:calc(66px * var(--ic-scale, 1)); height:calc(66px * var(--ic-scale, 1)); display:flex; align-items:center; justify-content:center; border:1.5px solid rgba(255,255,255,.34); border-radius:16px; background:rgba(0,0,0,.28); }
+  #modoGate .im-ic svg{ width:62%; height:62%; }
+  #modoGate .im-lb{ font-size:calc(.9rem * var(--ic-scale, 1)); font-weight:600; color:#f4ead2; letter-spacing:.3px; }
+  #modoGate .im-opt:active{ filter:brightness(1.15); }
   #introModosWrap .im-ic{ width:calc(60px * var(--ic-scale, 1)); height:calc(60px * var(--ic-scale, 1)); display:flex; align-items:center; justify-content:center; border:1.5px solid rgba(255,255,255,.34); border-radius:16px; background:rgba(0,0,0,.3); -webkit-backdrop-filter:blur(2px); backdrop-filter:blur(2px); }
   #introModosWrap .im-ic svg{ width:62%; height:62%; }
   #introModosWrap .im-lb{ font-size:calc(.82rem * var(--ic-scale, 1)); font-weight:600; color:#f4ead2; text-shadow:0 1px 4px rgba(0,0,0,.65); letter-spacing:.3px; }
@@ -5483,6 +5491,7 @@
     takeaway: ['Take away', '<svg viewBox="0 0 46 48" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M16 15c0-8 6.5-8 6.5 0"/><path d="M23.5 15c0-8 6.5-8 6.5 0"/><path d="M9 15h28l-3.5 26H12.5z"/><path d="M9 23h28"/></g></svg>'],
     grupos: ['Grupos', '<svg viewBox="0 0 46 48" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="16" cy="15" r="6"/><path d="M6 39 Q16 24 26 39"/><circle cx="30" cy="15" r="6"/><path d="M20 39 Q30 24 40 39"/></g></svg>']
   };
+  window.__IC_MODOS = IC_MODOS;
   window.__renderIntroModos = function(preview){
     try{
       var ov = document.getElementById('introOverlay'); if(!ov) return;
@@ -5586,6 +5595,7 @@
     const _ov = document.getElementById('introOverlay'); if(_ov) _ov.style.display = 'none';
     window.addEventListener('message', function(e){
       const d = e.data || {};
+      if(d.type === 'preview-intro' || d.type === 'cardapio-preview' || d.type === 'preview-preabertura'){ window.__ehPreview = true; }
       if(d.type === 'preview-intro'){
         window.__mostrarIntroPreview = !!d.mostrar;
         window.__preverIntro(window.__lastPreviewCfg, window.__mostrarIntroPreview);
@@ -8516,16 +8526,23 @@
       modosAtuais = modos;
       var g = document.getElementById('modoGate');
       if(!g){ g = document.createElement('div'); g.id = 'modoGate'; document.body.appendChild(g); }
-      var ic = { normal:['🍽️','Menu'], takeaway:['🛍️','Take away'], grupos:['👥','Grupos'] };
-      var h = '<div class="mg-tit">Bem-vindo 👋</div><div class="mg-sub">Como queres ver o menu?</div><div class="mg-opts">';
-      modos.forEach(function(m){ var n = ic[m]; h += '<button class="mg-opt" type="button" data-modo="' + m + '"><span class="mg-ic">' + n[0] + '</span><span class="mg-lb">' + n[1] + '</span></button>'; });
+      var IC = window.__IC_MODOS || {};
+      var tam = window.__modosTam || ((window.__modosCfg || {}).tam) || {};
+      var h = '<div class="mg-tit">Bem-vindo 👋</div><div class="mg-sub">Como queres ver o menu?</div><div class="mg-icons">';
+      modos.forEach(function(m, i){
+        var n = IC[m]; if(!n) return;
+        var sc = parseFloat(tam[m]) || 1;
+        h += '<button class="im-opt" type="button" data-modo="' + m + '" style="--ic-scale:' + sc + '; --ic-delay:' + (i * 220) + 'ms">'
+           + '<span class="im-inner im-anima"><span class="im-ic">' + n[1] + '</span><span class="im-lb">' + n[0] + '</span></span></button>';
+      });
       h += '</div>';
       g.innerHTML = h; g.style.display = 'flex';
-      Array.prototype.forEach.call(g.querySelectorAll('.mg-opt'), function(b){ b.onclick = function(){ aplicarModo(b.getAttribute('data-modo')); g.style.display = 'none'; }; });
+      Array.prototype.forEach.call(g.querySelectorAll('.im-opt'), function(b){ b.onclick = function(){ aplicarModo(b.getAttribute('data-modo')); g.style.display = 'none'; }; });
     }
 
     window.__initModos = function(){
       try{
+        if(window.__ehPreview) return;   // na pré-visualização os ícones são desenhados pelo renderizador da abertura
         var cfg = window.__modosCfg || {};
         if(!cfg.ativo){ document.body.classList.remove('modo-normal','modo-takeaway','modo-grupos'); var _g=document.getElementById('modoGate'); if(_g) _g.style.display='none'; var _im=document.getElementById('introModosWrap'); if(_im) _im.remove(); return; }
         var modos = [];
