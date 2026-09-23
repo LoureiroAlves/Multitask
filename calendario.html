@@ -1117,7 +1117,7 @@
       + '<button class="promo-btn" id="btnPromo" type="button">🏷️ Promoção deste dia'+(tem?' ✓':'')+'</button>'
       + '<div class="nova-form '+(tem?'':'hide')+'" id="promoForm">'
       + '<div style="font-size:.78rem; color:#8a7a5c; margin-bottom:4px;">Aparece na montra do amesadigital só neste dia (tem prioridade sobre a promoção normal).</div>'
-      + '<label>Texto da promoção</label><input type="text" id="pmTexto" maxlength="70" value="'+texto+'" placeholder="Ex.: Menu de Natal · 25€">'
+      + '<label>Texto da promoção</label><textarea id="pmTexto" maxlength="300" rows="3" placeholder="Ex.: Menu de Natal · 25€&#10;(carrega Enter para mudar de linha)" style="width:100%;box-sizing:border-box;font-family:inherit;resize:vertical;">'+texto+'</textarea>'
       + '<div class="lin"><div><label>Cor</label><input type="color" id="pmCor" value="'+cor+'" style="height:40px; padding:3px;"></div>'
       + '<div><label>Tamanho (px)</label><input type="number" id="pmTam" min="11" max="30" value="'+tam+'"></div></div>'
       + '<label style="display:flex; gap:8px; align-items:center; font-weight:800; margin-top:10px;"><input type="checkbox" id="pmHorarioOn"'+(horOn?' checked':'')+' style="width:auto;"> Só num horário</label>'
