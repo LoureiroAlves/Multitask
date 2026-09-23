@@ -1113,6 +1113,7 @@
   .mos-box.mos-multi .mos-foto{ opacity:0; transition:opacity 1s ease; }
   .mos-box.mos-multi .mos-foto.ativa{ opacity:1; }
   .mos-box .mos-shade{ position:absolute; inset:0; z-index:1; background:linear-gradient(to top, rgba(0,0,0,.5), rgba(0,0,0,.04) 55%); pointer-events:none; }
+  .mos-box .mos-dark{ position:absolute; inset:0; z-index:1; pointer-events:none; }
   /* Néon à volta da caixa (só o contorno/brilho — não toca no texto) */
   .mos-box.mos-neon{ border:2.5px solid var(--mos-neon-cor,#19e9ff); box-shadow:0 0 8px var(--mos-neon-cor,#19e9ff), 0 0 18px var(--mos-neon-cor,#19e9ff); }
   .mos-box.mos-neon.mos-neon-pisca{ animation:mosNeonPisca var(--mos-neon-dur,1.4s) ease-in-out infinite; }
@@ -3141,6 +3142,8 @@
         if(_fotos.length > 1) b.classList.add('mos-multi');
         _fotos.forEach(function(fu, fi){ if(!fu) return; const im = _mkMedia(fu, 'mos-foto' + (fi === 0 ? ' ativa' : ''), ''); b.appendChild(im); });
         const sh = document.createElement('span'); sh.className = 'mos-shade'; b.appendChild(sh);
+        var _esc = Math.max(0, Math.min(100, parseInt(c.escurecer, 10) || 0));
+        if(_esc > 0){ const dk = document.createElement('span'); dk.className = 'mos-dark'; dk.style.background = 'rgba(0,0,0,' + (_esc/100) + ')'; b.appendChild(dk); }
         if(_fotos.length > 1){ _mosRotacaoCaixa(b, Math.max(1, parseInt(c.fotoSeg, 10) || 5) * 1000); }
       }
       const est = c.estilo || {};
@@ -4424,7 +4427,7 @@
           el.style.setProperty('--pd-bg', _suave(cor));
           if(p.corMold) el.style.setProperty('--pd-mold', p.corMold); else el.style.removeProperty('--pd-mold');
           var textoHtml = _esc(texto).replace(/\r?\n/g, '<br>');
-          el.innerHTML = '<div class="promo-cartao"><span class="promo-emoji">🏷️</span><div class="promo-corpo"><span class="promo-selo">Promoção de hoje</span><div class="promo-txt" style="font-size:' + tam + 'px;">' + textoHtml + '</div>' + (horaTxt ? ('<span class="promo-hora">' + horaTxt + '</span>') : '') + '</div></div>';
+          el.innerHTML = '<div class="promo-cartao"><div class="promo-corpo"><span class="promo-selo">Promoção de hoje</span><div class="promo-txt" style="font-size:' + tam + 'px;">' + textoHtml + '</div>' + (horaTxt ? ('<span class="promo-hora">' + horaTxt + '</span>') : '') + '</div></div>';
           el.style.display = '';
         }catch(e){}
       };

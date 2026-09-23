@@ -3426,6 +3426,12 @@ amesadigital.pt</textarea>
       fi.addEventListener('change', async function(){ const f = fi.files && fi.files[0]; if(!f) return; setEstado('A enviar foto da caixa…', 'info'); try{ const url = await _uploadFoto(f); c.fotos.push(url); setEstado('Foto ✓', 'ok'); renderMosaicoEditor(mos, lista); _mosPrev(); }catch(e){ setEstado('Erro ao enviar foto: ' + (e && e.message ? e.message : e), 'erro'); } });
       fl.appendChild(fi); fr.appendChild(fl);
       card.appendChild(fr);
+      { const dr = document.createElement('div'); dr.style.cssText = 'display:flex; align-items:center; gap:8px; margin-top:8px; font-size:.82rem; color:var(--castanho-suave);';
+        dr.appendChild(document.createTextNode('Escurecer foto'));
+        const din = document.createElement('input'); din.type = 'range'; din.min = '0'; din.max = '85'; din.step = '5'; din.value = (parseInt(c.escurecer, 10) || 0); din.style.cssText = 'flex:1; accent-color:var(--dourado);';
+        const dval = document.createElement('span'); dval.textContent = (parseInt(c.escurecer, 10) || 0) + '%'; dval.style.minWidth = '34px';
+        din.addEventListener('input', function(){ c.escurecer = parseInt(din.value, 10) || 0; dval.textContent = c.escurecer + '%'; _mosPrev(); });
+        dr.appendChild(din); dr.appendChild(dval); card.appendChild(dr); }
       if(c.fotos.length > 1){
         const ir = document.createElement('div'); ir.style.cssText = 'display:flex; align-items:center; gap:8px; margin-top:8px; font-size:.82rem; color:var(--castanho-suave);';
         ir.appendChild(document.createTextNode('Trocar a cada'));
