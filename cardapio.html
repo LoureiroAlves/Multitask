@@ -3247,7 +3247,7 @@
       // Camada de recorte: os slides deslizam aqui dentro. A máscara força o WebKit/iOS a
       // recortar mesmo os filhos com transform (senão a foto escapava pelos cantos arredondados).
       var clip = document.createElement('div');
-      clip.style.cssText = 'position:absolute;inset:0;overflow:hidden;border-radius:22px;-webkit-mask-image:-webkit-radial-gradient(#fff,#000);-webkit-mask-image:radial-gradient(#fff,#000);transform:translateZ(0);';
+      clip.style.cssText = 'position:absolute;inset:0;overflow:hidden;border-radius:22px;transform:translateZ(0);-webkit-transform:translateZ(0);isolation:isolate;';
       vp.appendChild(clip);
       function _mapaSlide(c){ var m = _mapa(c); m.neonAtivo = false; return m; }   // o neon fica na moldura
       function _buildSlide(c){
