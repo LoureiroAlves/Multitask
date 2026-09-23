@@ -376,7 +376,39 @@
     negocio = neg;
     $('topTit').textContent = 'Gestão · ' + neg.nome;
     $('loginCard').classList.add('hide'); $('painel').classList.remove('hide'); $('btnSair').classList.remove('hide');
+    await _limparSemanaAntiga();
     carregar();
+  }
+
+  // ISO da 2ª feira desta semana (início da semana)
+  function _isoSegundaDestaSemana(){
+    var d=new Date(); var off=(d.getDay()+6)%7;   // 0=segunda ... 6=domingo
+    d.setDate(d.getDate()-off); d.setHours(0,0,0,0);
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  }
+  // Apaga entradas de semanas anteriores, mas mantém sempre o dia mais recente (para "Copiar do último dia")
+  function _purgaMapaAntigo(mapa, segunda){
+    if(!mapa || typeof mapa!=='object') return false;
+    var antigas=Object.keys(mapa).filter(function(k){ return k < segunda; }).sort();  // crescente
+    if(!antigas.length) return false;
+    var manter=antigas[antigas.length-1];   // o mais recente das anteriores fica como base para copiar
+    var mudou=false;
+    antigas.forEach(function(k){ if(k!==manter){ delete mapa[k]; mudou=true; } });
+    return mudou;
+  }
+  // Limpeza automática semanal do prato do dia e das promoções (corre ao abrir a Gestão)
+  async function _limparSemanaAntiga(){
+    try{
+      var cfg = negocio && negocio.config; if(!cfg) return;
+      var seg=_isoSegundaDestaSemana();
+      var m1=_purgaMapaAntigo(cfg.pratoDatas, seg);
+      var m2=_purgaMapaAntigo(cfg.promoDatas, seg);
+      if(cfg.pratoDia){ delete cfg.pratoDia; m1=true; }   // limpa também restos legado
+      if(m1||m2){
+        var up=await sb.from('negocios').update({ config:cfg }).eq('id', negocio.id);
+        if(!up.error) negocio.config=cfg;
+      }
+    }catch(e){}
   }
 
   async function carregar(){
