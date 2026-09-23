@@ -3231,7 +3231,7 @@
       var pd = _pdDatas[_pdIso] || null;   // prioridade: prato do dia desta DATA
       // legado (config.pratoDia): só usar se realmente tiver caixas — ignora restos vazios com ativo:true
       if(!pd && cfg && cfg.pratoDia && Array.isArray(cfg.pratoDia.caixas) && cfg.pratoDia.caixas.length) pd = cfg.pratoDia;
-      function _mapa(c){ var f = (c && Array.isArray(c.fotos) && c.fotos.length) ? c.fotos : (c && c.foto ? [c.foto] : []); return { tam: (c && c.tam) || 'l', titulo: (c && c.titulo) || '', subtitulo: (c && c.subtitulo) || '', cor: (c && c.cor) || '', escurecer: (c && c.escurecer) || 0, caixaTexto: !!(c && c.caixaTexto), fotos: f, estilo: (c && c.estilo) || {}, estiloSub: (c && c.estiloSub) || {}, tx:(c&&c.tx!=null?c.tx:null), ty:(c&&c.ty!=null?c.ty:null), subX:(c&&c.subX!=null?c.subX:null), subY:(c&&c.subY!=null?c.subY:null), neonAtivo:!!(c&&c.neonAtivo), neonCor:(c&&c.neonCor)||'#19e9ff', neonPiscar:(c&&c.neonPiscar)?1.4:'', fotoPosX:(c&&c.fotoPosX!=null?c.fotoPosX:50), fotoPosY:(c&&c.fotoPosY!=null?c.fotoPosY:50) }; }
+      function _mapa(c){ var f = (c && Array.isArray(c.fotos) && c.fotos.length) ? c.fotos : (c && c.foto ? [c.foto] : []); return { tam: (c && c.tam) || 'l', titulo: (c && c.titulo) || '', subtitulo: (c && c.subtitulo) || '', cor: (c && c.cor) || '', escurecer: (c && c.escurecer) || 0, caixaTexto: !!(c && c.caixaTexto), fotos: f, estilo: (c && c.estilo) || {}, estiloSub: (c && c.estiloSub) || {}, tx:(c&&c.tx!=null?c.tx:null), ty:(c&&c.ty!=null?c.ty:null), subX:(c&&c.subX!=null?c.subX:null), subY:(c&&c.subY!=null?c.subY:null), neonAtivo:!!(c&&c.neonAtivo), neonCor:(c&&c.neonCor)||'#19e9ff', neonPiscar:(c&&c.neonPiscar)?1.4:'' }; }
       function _temConteudo(c){ if(!c) return false; var f = (Array.isArray(c.fotos) && c.fotos.length) || c.foto; return !!((c.titulo && String(c.titulo).trim()) || (c.subtitulo && String(c.subtitulo).trim()) || f); }
       // Aceita a nova lista de caixas OU o formato antigo (uma só caixa)
       var lista = (pd && Array.isArray(pd.caixas) && pd.caixas.length) ? pd.caixas : ((pd && _temConteudo(pd)) ? [pd] : []);
@@ -3244,22 +3244,13 @@
       // Moldura fixa (com o neon) e, lá dentro, os conteúdos (foto+texto) deslizam da direita para a esquerda
       grid.innerHTML = '';
       var vp = document.createElement('div');
-      vp.style.cssText = 'position:relative;border-radius:22px;height:140px;box-shadow:0 4px 14px rgba(0,0,0,.14);';
+      vp.style.cssText = 'position:relative;overflow:hidden;border-radius:22px;height:140px;box-shadow:0 4px 14px rgba(0,0,0,.14);';
       grid.appendChild(vp);
-      // Camada de recorte: os slides deslizam aqui dentro. A máscara força o WebKit/iOS a
-      // recortar mesmo os filhos com transform (senão a foto escapava pelos cantos arredondados).
-      var clip = document.createElement('div');
-      clip.style.cssText = 'position:absolute;inset:0;overflow:hidden;border-radius:22px;transform:translateZ(0);-webkit-transform:translateZ(0);isolation:isolate;';
-      vp.appendChild(clip);
       function _mapaSlide(c){ var m = _mapa(c); m.neonAtivo = false; return m; }   // o neon fica na moldura
       function _buildSlide(c){
         var tmp = document.createElement('div');
         _mosBuildInto(tmp, [_mapaSlide(c)], null);
         var box = tmp.firstChild;
-        if(box){ var _fpx=(c&&c.fotoPosX!=null?c.fotoPosX:50), _fpy=(c&&c.fotoPosY!=null?c.fotoPosY:50); box.querySelectorAll('.mos-foto').forEach(function(im){ im.style.objectPosition = _fpx + '% ' + _fpy + '%'; }); }
-        // Remove o degradê fixo (mos-shade): no prato do dia o texto pode estar em qualquer sítio,
-        // por isso essa barra escura em baixo ficava sem uso. A leitura fica pela "caixa atrás do texto" + escurecer.
-        if(box){ var _sh = box.querySelector('.mos-shade'); if(_sh) _sh.remove(); }
         if(box){ box.style.position = 'absolute'; box.style.top = '0'; box.style.left = '0'; box.style.right = '0'; box.style.bottom = '0'; box.style.minHeight = '0'; box.style.margin = '0'; box.style.borderRadius = '0'; box.style.boxShadow = 'none'; box.style.willChange = 'transform'; box.style.transition = 'transform .5s cubic-bezier(.4,0,.2,1)'; }
         return box;
       }
@@ -3271,7 +3262,7 @@
       }
       function _seg(i){ var s = (lista[i] && lista[i].seg != null) ? lista[i].seg : pd.seg; return Math.max(2, parseInt(s, 10) || 6); }
       var idx = 0;
-      var cur = _buildSlide(lista[0]); if(cur){ cur.style.transform = 'translateX(0)'; clip.appendChild(cur); }
+      var cur = _buildSlide(lista[0]); if(cur){ cur.style.transform = 'translateX(0)'; vp.appendChild(cur); }
       _aplicarNeon(lista[0]);
       if(lista.length > 1){
         var _tick = function(){
@@ -3280,7 +3271,7 @@
             var next = _buildSlide(lista[ni]);
             if(!next){ idx = ni; _tick(); return; }
             next.style.transform = 'translateX(100%)';
-            clip.appendChild(next);
+            vp.appendChild(next);
             void next.offsetWidth;   // força o reflow para a animação arrancar
             _aplicarNeon(lista[ni]);
             if(cur) cur.style.transform = 'translateX(-100%)';
