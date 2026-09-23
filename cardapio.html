@@ -2181,7 +2181,7 @@
   #promoDia{ margin:12px 14px 2px; }
   #promoDia .promo-cartao{ position:relative; overflow:hidden; display:flex; align-items:center; gap:13px; border-radius:16px; padding:15px 17px;
     background:linear-gradient(135deg, rgba(255,255,255,.16), rgba(0,0,0,.16)), var(--pd-cor,#e0245e);
-    color:#fff; box-shadow:0 8px 24px -8px var(--pd-cor,#e0245e), 0 2px 6px rgba(0,0,0,.12);
+    color:#fff; border:2px solid var(--pd-mold, rgba(255,255,255,.55)); box-shadow:0 8px 24px -8px var(--pd-cor,#e0245e), 0 2px 6px rgba(0,0,0,.12), inset 0 0 0 1px rgba(0,0,0,.06);
     animation:promoEntra .5s cubic-bezier(.22,1,.36,1) both, promoPulsa 2.6s ease-in-out 1s infinite; }
   #promoDia .promo-cartao::after{ content:''; position:absolute; top:0; left:-60%; width:45%; height:100%; transform:skewX(-20deg);
     background:linear-gradient(90deg, transparent, rgba(255,255,255,.35), transparent); animation:promoBrilho 3.4s ease-in-out 1.2s infinite; }
@@ -4422,6 +4422,7 @@
           var horaTxt = (p.horaIni && p.horaFim) ? ('🕒 ' + _esc(p.horaIni) + '–' + _esc(p.horaFim)) : '';
           el.style.setProperty('--pd-cor', cor);
           el.style.setProperty('--pd-bg', _suave(cor));
+          if(p.corMold) el.style.setProperty('--pd-mold', p.corMold); else el.style.removeProperty('--pd-mold');
           var textoHtml = _esc(texto).replace(/\r?\n/g, '<br>');
           el.innerHTML = '<div class="promo-cartao"><span class="promo-emoji">🏷️</span><div class="promo-corpo"><span class="promo-selo">Promoção de hoje</span><div class="promo-txt" style="font-size:' + tam + 'px;">' + textoHtml + '</div>' + (horaTxt ? ('<span class="promo-hora">' + horaTxt + '</span>') : '') + '</div></div>';
           el.style.display = '';

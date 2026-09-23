@@ -1109,6 +1109,7 @@
     const tem = !!(p && (p.texto||'').toString().trim());
     const texto = tem ? esc(p.texto) : '';
     const cor = (p && p.cor) ? esc(p.cor) : '#e0245e';
+    const corMold = (p && p.corMold) ? esc(p.corMold) : '#ffffff';
     const tam = (p && p.tamanho) ? (parseInt(p.tamanho,10)||16) : 16;
     const horOn = !!(p && p.horaIni && p.horaFim);
     const hi = horOn ? esc(p.horaIni) : '12:00';
@@ -1118,7 +1119,8 @@
       + '<div class="nova-form '+(tem?'':'hide')+'" id="promoForm">'
       + '<div style="font-size:.78rem; color:#8a7a5c; margin-bottom:4px;">Aparece na montra do amesadigital só neste dia (tem prioridade sobre a promoção normal).</div>'
       + '<label>Texto da promoção</label><textarea id="pmTexto" maxlength="300" rows="3" placeholder="Ex.: Menu de Natal · 25€&#10;(carrega Enter para mudar de linha)" style="width:100%;box-sizing:border-box;font-family:inherit;resize:vertical;">'+texto+'</textarea>'
-      + '<div class="lin"><div><label>Cor</label><input type="color" id="pmCor" value="'+cor+'" style="height:40px; padding:3px;"></div>'
+      + '<div class="lin"><div><label>Cor do fundo</label><input type="color" id="pmCor" value="'+cor+'" style="height:40px; padding:3px;"></div>'
+      + '<div><label>Cor da moldura</label><input type="color" id="pmCorMold" value="'+corMold+'" style="height:40px; padding:3px;"></div>'
       + '<div><label>Tamanho (px)</label><input type="number" id="pmTam" min="11" max="30" value="'+tam+'"></div></div>'
       + '<label style="display:flex; gap:8px; align-items:center; font-weight:800; margin-top:10px;"><input type="checkbox" id="pmHorarioOn"'+(horOn?' checked':'')+' style="width:auto;"> Só num horário</label>'
       + '<div class="lin '+(horOn?'':'hide')+'" id="pmHorarioBox" style="margin-top:6px;"><div><label>Entra às</label><input type="time" id="pmHoraIni" value="'+hi+'"></div>'
@@ -1148,11 +1150,12 @@
   async function guardarPromo(iso){
     const texto = ($('pmTexto').value||'').trim();
     const cor = $('pmCor').value || '#e0245e';
+    const corMold = ($('pmCorMold') && $('pmCorMold').value) || '#ffffff';
     const tam = Math.max(11, Math.min(30, parseInt($('pmTam').value,10)||16));
     const horOn = $('pmHorarioOn').checked;
     const msg = $('pmMsg');
     if(!texto){ msg.textContent='Escreve o texto da promoção.'; msg.className='msg erro'; return; }
-    const promo = { texto: texto, cor: cor, tamanho: tam, ativo: true };
+    const promo = { texto: texto, cor: cor, corMold: corMold, tamanho: tam, ativo: true };
     if(horOn){ promo.horaIni = $('pmHoraIni').value||''; promo.horaFim = $('pmHoraFim').value||''; }
     const g = $('pmGuardar'); g.disabled = true; msg.textContent='A guardar...'; msg.className='msg';
     const err = await _gravarPromoData(iso, promo);
