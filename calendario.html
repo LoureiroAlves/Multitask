@@ -484,10 +484,14 @@
   async function renderNotif(){
     const v = $('vistaNotif');
     const link = _linkCardapio();
+    const hojeIso = (function(){ const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); })();
+    const promoHoje = ((negocio && negocio.config && negocio.config.promoDatas) || {})[hojeIso];
+    const temPromo = !!(promoHoje && (promoHoje.texto || '').toString().trim());
     v.innerHTML =
       '<div style="background:#fff;border:1.5px solid #eadfc6;border-radius:14px;padding:16px;">'
       + '<h3 style="margin:0 0 6px;">🔔 Enviar aviso / promoção</h3>'
       + '<p style="font-size:.86rem;color:#7a6a4c;margin:0 0 12px;">Chega aos clientes que ativaram as notificações no telemóvel (sem registo). <span id="ntCount">…</span></p>'
+      + (temPromo ? '<button id="ntUsarPromo" type="button" style="width:100%;box-sizing:border-box;padding:11px;margin-bottom:12px;border:1.5px dashed #e0245e;background:#fff5f8;color:#c01e50;border-radius:10px;font-weight:800;cursor:pointer;">🏷️ Usar a promoção de hoje</button>' : '')
       + '<label style="font-size:.85rem;color:#5a4a2c;">Título</label>'
       + '<input id="ntTit" maxlength="60" placeholder="Ex.: Hoje há novidades 🍽️" style="width:100%;box-sizing:border-box;padding:10px;border:1.5px solid #e0d3b5;border-radius:9px;margin:4px 0 10px;font-family:inherit;">'
       + '<label style="font-size:.85rem;color:#5a4a2c;">Mensagem</label>'
@@ -498,6 +502,7 @@
       + '<div id="ntRes" style="margin-top:10px;font-size:.9rem;"></div>'
       + '</div>';
     try{ const { count } = await sb.from('push_subs').select('*', { count:'exact', head:true }).eq('negocio_id', negocio.id); $('ntCount').textContent = (count || 0) + ' aparelho(s) subscrito(s).'; }catch(e){ $('ntCount').textContent = ''; }
+    if(temPromo){ const bp = $('ntUsarPromo'); if(bp) bp.onclick = function(){ $('ntTit').value = 'Promoção de hoje'; $('ntMsg').value = (promoHoje.texto || '').toString().trim(); $('ntTit').focus(); }; }
     $('ntEnviar').onclick = async function(){
       const tit = $('ntTit').value.trim(), msg = $('ntMsg').value.trim(), url = $('ntUrl').value.trim();
       if(!tit && !msg){ alert('Escreve pelo menos um título ou uma mensagem.'); return; }
