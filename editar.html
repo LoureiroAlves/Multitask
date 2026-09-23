@@ -945,6 +945,7 @@ amesadigital.pt</textarea>
             <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin:8px 0; font-size:.92rem; color:var(--castanho);"><input type="checkbox" id="modoNormal" style="width:auto; margin:0;"> 🍽️ Menu normal (sem carrinho nem reservas)</label>
             <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin:8px 0; font-size:.92rem; color:var(--castanho);"><input type="checkbox" id="modoTakeaway" style="width:auto; margin:0;"> 🛍️ Take away (liga o carrinho; esconde as reservas)</label>
             <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin:8px 0; font-size:.92rem; color:var(--castanho);"><input type="checkbox" id="modoGrupos" style="width:auto; margin:0;"> 👥 Menus de grupo (mostra só as categorias marcadas)</label>
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin:8px 0; font-size:.92rem; color:var(--castanho);"><input type="checkbox" id="modoCerimonias" style="width:auto; margin:0;"> 🥂 Cerimónias (mostra só as categorias marcadas)</label>
           </div>
           <div style="margin-top:14px; font-weight:700; font-size:.9rem; color:var(--castanho);">Tamanho de cada ícone</div>
           <label style="display:block; margin-top:8px; font-size:.85rem; color:var(--castanho);">🍽️ Menu — <span id="modoTamNormalVal">100%</span></label>
@@ -953,6 +954,8 @@ amesadigital.pt</textarea>
           <input type="range" id="modoTamTakeaway" min="70" max="160" value="100" step="10" style="width:100%; accent-color:var(--dourado);">
           <label style="display:block; margin-top:8px; font-size:.85rem; color:var(--castanho);">👥 Grupos — <span id="modoTamGruposVal">100%</span></label>
           <input type="range" id="modoTamGrupos" min="70" max="160" value="100" step="10" style="width:100%; accent-color:var(--dourado);">
+          <label style="display:block; margin-top:8px; font-size:.85rem; color:var(--castanho);">🥂 Cerimónias — <span id="modoTamCerimoniasVal">100%</span></label>
+          <input type="range" id="modoTamCerimonias" min="70" max="160" value="100" step="10" style="width:100%; accent-color:var(--dourado);">
           <label style="display:block; margin-top:14px; font-size:.85rem; color:var(--castanho);">Estilo dos ícones</label>
           <select id="modoEstilo" style="width:100%; padding:9px; border-radius:10px; border:1px solid #d9c9a8;">
             <option value="pilula">Pílula — ícone + texto lado a lado</option>
@@ -2829,10 +2832,10 @@ amesadigital.pt</textarea>
     { const _ex = config.experiencia || {}; const _sc = function(id, v){ const e = document.getElementById(id); if(e) e.checked = v !== false; };
       _sc('expAtivo', _ex.ativo); _sc('expInstalarOn', _ex.instalar); _sc('expPartilharOn', _ex.partilhar); _sc('expTextoOn', _ex.texto); _sc('expVibracaoOn', _ex.vibracao); _sc('expNotifOn', _ex.notif); _sc('expLimparOn', _ex.limpar); }
     { const _m = config.modos || {}; const _sb = function(id, v){ const e = document.getElementById(id); if(e) e.checked = (v === true); };
-      _sb('modosAtivo', _m.ativo); _sb('modoTakeaway', _m.takeaway); _sb('modoGrupos', _m.grupos); _sb('modoVerBotao', _m.verBotao);
+      _sb('modosAtivo', _m.ativo); _sb('modoTakeaway', _m.takeaway); _sb('modoGrupos', _m.grupos); _sb('modoCerimonias', _m.cerimonias); _sb('modoVerBotao', _m.verBotao);
       { const e = document.getElementById('modoNormal'); if(e) e.checked = (_m.normal !== false); }
       { const _tm = (_m.tam && typeof _m.tam === 'object') ? _m.tam : {};
-        [['modoTamNormal','normal'],['modoTamTakeaway','takeaway'],['modoTamGrupos','grupos']].forEach(function(p){
+        [['modoTamNormal','normal'],['modoTamTakeaway','takeaway'],['modoTamGrupos','grupos'],['modoTamCerimonias','cerimonias']].forEach(function(p){
           const el = document.getElementById(p[0]); if(!el) return;
           const v = Math.round((parseFloat(_tm[p[1]]) || 1) * 100); el.value = v;
           const s = document.getElementById(p[0] + 'Val'); if(s) s.textContent = v + '%';
@@ -3313,7 +3316,7 @@ amesadigital.pt</textarea>
     document.getElementById('bambuDecoBox').style.display = (e.target.value === 'bambu') ? 'block' : 'none';
   });
   ['apBgMainOn','apBgMain','apBgSubOn','apBgSub','apTitOn','apTit','apSubOn','apSub','apSubBgOn','apSubBg','apPratosOn','apPratos','apPrecoOn','apPreco','apVoltarOn','apVoltar','apCabSubOn','apCabSub','apRodapeOn','apRodape','apDestOn','apDest'].forEach(function(id){ const el = document.getElementById(id); if(el) el.addEventListener('input', function(){ if(window.__agendarPreview) window.__agendarPreview(); }); });
-  ['modoTamNormal','modoTamTakeaway','modoTamGrupos'].forEach(function(id){ const _t = document.getElementById(id); if(_t) _t.addEventListener('input', function(){ const s = document.getElementById(id + 'Val'); if(s) s.textContent = this.value + '%'; if(window.__agendarPreview) window.__agendarPreview(); }); });
+  ['modoTamNormal','modoTamTakeaway','modoTamGrupos','modoTamCerimonias'].forEach(function(id){ const _t = document.getElementById(id); if(_t) _t.addEventListener('input', function(){ const s = document.getElementById(id + 'Val'); if(s) s.textContent = this.value + '%'; if(window.__agendarPreview) window.__agendarPreview(); }); });
   { const _me = document.getElementById('modoEntrada'); if(_me) _me.addEventListener('input', function(){ const s = document.getElementById('modoEntradaVal'); if(s) s.textContent = (parseFloat(this.value)||0).toFixed(1).replace('.', ',') + ' s'; if(window.__agendarPreview) window.__agendarPreview(); }); }
   { const _ma = document.getElementById('modoAnim'); if(_ma) _ma.addEventListener('change', function(){ if(window.__agendarPreview) window.__agendarPreview(); }); }
   { const _me2 = document.getElementById('modoEstilo'); if(_me2) _me2.addEventListener('change', function(){ if(window.__agendarPreview) window.__agendarPreview(); }); }
@@ -3878,7 +3881,7 @@ amesadigital.pt</textarea>
         const _anim = (document.getElementById('modoAnim') || {}).value || 'subir';
         const _estilo = (document.getElementById('modoEstilo') || {}).value || 'pilula';
         const _entrada = parseFloat((document.getElementById('modoEntrada') || {}).value) || 0;
-        config.modos = { ativo:_gm('modosAtivo'), normal:_gm('modoNormal'), takeaway:_gm('modoTakeaway'), grupos:_gm('modoGrupos'), verBotao:_gm('modoVerBotao'), estilo:_estilo, anim:_anim, entrada:_entrada, tam: { normal:_tv('modoTamNormal'), takeaway:_tv('modoTamTakeaway'), grupos:_tv('modoTamGrupos') }, pos:_mpos }; }
+        config.modos = { ativo:_gm('modosAtivo'), normal:_gm('modoNormal'), takeaway:_gm('modoTakeaway'), grupos:_gm('modoGrupos'), cerimonias:_gm('modoCerimonias'), verBotao:_gm('modoVerBotao'), estilo:_estilo, anim:_anim, entrada:_entrada, tam: { normal:_tv('modoTamNormal'), takeaway:_tv('modoTamTakeaway'), grupos:_tv('modoTamGrupos'), cerimonias:_tv('modoTamCerimonias') }, pos:_mpos }; }
       { const _ca = document.getElementById('carrinhoAtivo'), _cp = document.getElementById('carrinhoPrecos'), _cw = document.getElementById('carrinhoWhats'), _cws = document.getElementById('carrinhoWhatsSempre');
         config.carrinho = { ativo: _ca ? _ca.checked : true, precos: _cp ? _cp.checked : true, whatsapp: _cw ? _cw.value.trim() : '', whatsappSempre: _cws ? _cws.checked : false,
           levantamento: ((document.getElementById('cartLevAtivo') || {}).checked !== false),
@@ -4979,6 +4982,10 @@ amesadigital.pt</textarea>
           const gC=document.createElement('input'); gC.type='checkbox'; gC.style.width='auto'; gC.checked = cat.modoGrupo===true;
           gC.addEventListener('change',()=>{ cat.modoGrupo=gC.checked; if(window.__agendarPreview) window.__agendarPreview(); });
           gW.appendChild(gC); gW.appendChild(document.createTextNode('Aparece no modo "Grupos" (menus de grupo)')); p.appendChild(gW); }
+        { const cW=document.createElement('label'); cW.style.cssText='display:flex;align-items:center;gap:8px;margin-top:8px;font-size:.82rem;color:var(--castanho);cursor:pointer;';
+          const cC=document.createElement('input'); cC.type='checkbox'; cC.style.width='auto'; cC.checked = cat.modoCerimonia===true;
+          cC.addEventListener('change',()=>{ cat.modoCerimonia=cC.checked; if(window.__agendarPreview) window.__agendarPreview(); });
+          cW.appendChild(cC); cW.appendChild(document.createTextNode('Aparece no modo "Cerimónias"')); p.appendChild(cW); }
         return p;
       }
 
@@ -5217,6 +5224,12 @@ amesadigital.pt</textarea>
       grpChk.addEventListener('change',()=>{ cat.modoGrupo=grpChk.checked; if(window.__agendarPreview) window.__agendarPreview(); });
       grpWrap.appendChild(grpChk); grpWrap.appendChild(document.createTextNode('Aparece no modo "Grupos" (menus de grupo)'));
       p.appendChild(grpWrap);
+
+      const cerWrap=document.createElement('label'); cerWrap.style.cssText='display:flex;align-items:center;gap:8px;margin-top:8px;font-size:.82rem;color:var(--castanho);cursor:pointer;';
+      const cerChk=document.createElement('input'); cerChk.type='checkbox'; cerChk.style.width='auto'; cerChk.checked = cat.modoCerimonia===true;
+      cerChk.addEventListener('change',()=>{ cat.modoCerimonia=cerChk.checked; if(window.__agendarPreview) window.__agendarPreview(); });
+      cerWrap.appendChild(cerChk); cerWrap.appendChild(document.createTextNode('Aparece no modo "Cerimónias"'));
+      p.appendChild(cerWrap);
 
       return p;
     }

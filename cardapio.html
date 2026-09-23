@@ -2173,6 +2173,8 @@
   #modoGate .mg-opt .mg-lb{ font-size:.98rem; font-weight:700; }
   body.modo-grupos #categoriaGrid .tile{ display:none !important; }
   body.modo-grupos #categoriaGrid .tile[data-grupo="1"]{ display:flex !important; }
+  body.modo-cerimonias #categoriaGrid .tile{ display:none !important; }
+  body.modo-cerimonias #categoriaGrid .tile[data-cerimonia="1"]{ display:flex !important; }
   body.modo-normal #linkAgenda, body.modo-takeaway #linkAgenda{ display:none !important; }
   /* Ícones dos modos dentro da própria abertura (por cima da foto), posicionáveis */
   #introModosWrap{ position:absolute; inset:0; pointer-events:none; z-index:4; }
@@ -3320,6 +3322,7 @@
     _cats.forEach(function(c, i){ if(c && (!c.id || !String(c.id).trim())) c.id = 'sec' + i; });
     const _folderIds = {}; _cats.forEach(function(c){ if(c && c.contentor && c.id) _folderIds[c.id] = true; });
     const _grupoFolders = {}; _cats.forEach(function(c){ if(c && c.contentor && c.id && c.modoGrupo) _grupoFolders[c.id] = true; });   // pastas marcadas para o modo "Grupos"
+    const _cerimoniaFolders = {}; _cats.forEach(function(c){ if(c && c.contentor && c.id && c.modoCerimonia) _cerimoniaFolders[c.id] = true; });   // pastas marcadas para o modo "Cerimónias"
     const _ehFilho = function(c){ return !!(c && c.pai && _folderIds[c.pai]); };
     const _filhosDe = function(fid){ return _cats.filter(function(c){ return c && c.pai === fid && !c.contentor; }); };
     // Constrói o botão (tile) de uma categoria — usado no menu principal E dentro das pastas (mesmo aspeto do layout)
@@ -3329,6 +3332,7 @@
       btn.setAttribute('data-target', cat.id);
       btn.dataset.tipo = cat.tipo || 'comida';   // usado pelos "modos"
       if(cat.modoGrupo && !cat.contentor) btn.dataset.grupo = '1';   // categoria (não-pasta) marcada para o modo "Grupos"
+      if(cat.modoCerimonia && !cat.contentor) btn.dataset.cerimonia = '1';   // categoria marcada para o modo "Cerimónias"
       const emoji = document.createElement('span'); emoji.className='tile-emoji'; emoji.textContent = cat.emoji || '';
       const label = document.createElement('span'); label.className='tile-label'; _mLang(label, cat.tile);
       btn.appendChild(emoji); btn.appendChild(label);
@@ -3361,7 +3365,7 @@
       const btn = _mTile(cat);
       if(cat.ocultarMenu){ btn.classList.add('tile-oculto'); }
       // Categoria dentro de uma pasta: não aparece como tile de topo (só dentro da pasta), mas fica no DOM para abrir
-      if(_ehFilho(cat)){ btn.classList.add('tile-oculto', 'tile-filho'); if(_grupoFolders[cat.pai]) btn.dataset.grupo = '1'; }   // filha de pasta "Grupos" → aparece direto no modo Grupos
+      if(_ehFilho(cat)){ btn.classList.add('tile-oculto', 'tile-filho'); if(_grupoFolders[cat.pai]) btn.dataset.grupo = '1'; if(_cerimoniaFolders[cat.pai]) btn.dataset.cerimonia = '1'; }   // filha de pasta "Grupos"/"Cerimónias" → aparece direto nesse modo
       grid.appendChild(btn);
       const sec = document.createElement('section');
       sec.className = 'categoria'; sec.id = cat.id;
@@ -5554,7 +5558,8 @@
   var IC_MODOS = {
     normal: ['Menu', '<svg viewBox="0 0 46 48" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M13 8v9"/><path d="M18.5 8v9"/><path d="M24 8v9"/><path d="M13 17h11"/><path d="M18.5 17v23"/><path d="M32 8c7 5 7 17 0 21z"/><path d="M32 29v11"/></g></svg>'],
     takeaway: ['Take away', '<svg viewBox="0 0 46 48" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M16 15c0-8 6.5-8 6.5 0"/><path d="M23.5 15c0-8 6.5-8 6.5 0"/><path d="M9 15h28l-3.5 26H12.5z"/><path d="M9 23h28"/></g></svg>'],
-    grupos: ['Grupos', '<svg viewBox="0 0 46 48" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="16" cy="15" r="6"/><path d="M6 39 Q16 24 26 39"/><circle cx="30" cy="15" r="6"/><path d="M20 39 Q30 24 40 39"/></g></svg>']
+    grupos: ['Grupos', '<svg viewBox="0 0 46 48" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="16" cy="15" r="6"/><path d="M6 39 Q16 24 26 39"/><circle cx="30" cy="15" r="6"/><path d="M20 39 Q30 24 40 39"/></g></svg>'],
+    cerimonias: ['Cerimónias', '<svg viewBox="0 0 46 48" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 8 L20 22 L17 34"/><path d="M11 38 h12"/><path d="M31 8 L26 22 L29 34"/><path d="M23 38 h12"/><path d="M19 21 h8"/></g></svg>']
   };
   window.__IC_MODOS = IC_MODOS;
   window.__renderIntroModos = function(preview){
@@ -5564,10 +5569,12 @@
       var cfg = window.__modosCfg || {};
       if(!cfg.ativo) return;
       var _temGr = function(){ return !!document.querySelector('#categoriaGrid .tile[data-grupo="1"]'); };
+      var _temCer = function(){ return !!document.querySelector('#categoriaGrid .tile[data-cerimonia="1"]'); };
       var modos = [];
       if(cfg.normal) modos.push('normal');
       if(cfg.takeaway) modos.push('takeaway');
       if(cfg.grupos && (preview || _temGr())) modos.push('grupos');
+      if(cfg.cerimonias && (preview || _temCer())) modos.push('cerimonias');
       if(!modos.length) return;
       // Esconde o botão antigo "Ver menu" quando há ícones de modo (a não ser que o dono o queira manter)
       var _vb = document.getElementById('introBtn'); if(_vb) _vb.style.display = cfg.verBotao ? '' : 'none';
@@ -8548,6 +8555,7 @@
     var modosAtuais = [];
 
     function temGrupos(){ return !!document.querySelector('#categoriaGrid .tile[data-grupo="1"]'); }
+    function temCerimonias(){ return !!document.querySelector('#categoriaGrid .tile[data-cerimonia="1"]'); }
     function podeReservar(){ return !!(window.__abrirAgenda && window._agenda) || !!window.__waGrupo; }
 
     // Os ícones são desenhados por window.__renderIntroModos (definido junto ao _introArrastavel),
@@ -8576,7 +8584,7 @@
     }
 
     function aplicarModo(m){ try{
-      document.body.classList.remove('modo-normal','modo-takeaway','modo-grupos');
+      document.body.classList.remove('modo-normal','modo-takeaway','modo-grupos','modo-cerimonias');
       document.body.classList.add('modo-' + m);
       var takeaway = (m === 'takeaway');
       // Carrinho: ligado só no take away
@@ -8617,11 +8625,12 @@
       try{
         if(window.__ehPreview) return;   // na pré-visualização os ícones são desenhados pelo renderizador da abertura
         var cfg = window.__modosCfg || {};
-        if(!cfg.ativo){ document.body.classList.remove('modo-normal','modo-takeaway','modo-grupos'); var _g=document.getElementById('modoGate'); if(_g) _g.style.display='none'; var _im=document.getElementById('introModosWrap'); if(_im) _im.remove(); return; }
+        if(!cfg.ativo){ document.body.classList.remove('modo-normal','modo-takeaway','modo-grupos','modo-cerimonias'); var _g=document.getElementById('modoGate'); if(_g) _g.style.display='none'; var _im=document.getElementById('introModosWrap'); if(_im) _im.remove(); return; }
         var modos = [];
         if(cfg.normal) modos.push('normal');
         if(cfg.takeaway) modos.push('takeaway');
         if(cfg.grupos && temGrupos()) modos.push('grupos');
+        if(cfg.cerimonias && temCerimonias()) modos.push('cerimonias');
         if(!modos.length){ var _w0 = document.getElementById('introModosWrap'); if(_w0) _w0.remove(); return; }
         var ov = document.getElementById('introOverlay');
         var introViva = window.__introAtiva && ov && !ov.dataset.saiu && ov.style.display !== 'none';
@@ -8636,7 +8645,7 @@
       var sx = 0, sy = 0, w = 0, armado = false, arrastando = false, ov = null;
       function podeVoltar(){
         return modosAtuais.length >= 2
-          && (document.body.classList.contains('modo-normal') || document.body.classList.contains('modo-takeaway') || document.body.classList.contains('modo-grupos'))
+          && (document.body.classList.contains('modo-normal') || document.body.classList.contains('modo-takeaway') || document.body.classList.contains('modo-grupos') || document.body.classList.contains('modo-cerimonias'))
           && !document.body.classList.contains('secao-aberta');
       }
       function prepararIntro(){
