@@ -227,6 +227,7 @@
       <button id="tabCal" class="tab ativo" type="button">📅 Calendário</button>
       <button id="tabDash" class="tab" type="button">📊 Painel</button>
       <button id="tabEnc" class="tab" type="button">🛍️ Encomendas</button>
+      <button id="tabPrato" class="tab" type="button">🍽️ Prato do dia</button>
       <button id="tabNotif" class="tab" type="button">🔔 Avisar</button>
       <button id="tabDef" class="tab" type="button">⚙️ Definições</button>
     </div>
@@ -247,6 +248,7 @@
     <div id="vistaDash" class="hide"></div>
     <div id="vistaDef" class="hide"></div>
     <div id="vistaEncomendas" class="hide"></div>
+    <div id="vistaPrato" class="hide"></div>
     <div id="vistaNotif" class="hide"></div>
   </div>
 </div>
@@ -342,6 +344,7 @@
   $('tabDash').onclick = () => mostrarVista('dash');
   $('tabDef').onclick = () => mostrarVista('def');
   $('tabEnc').onclick = () => mostrarVista('enc');
+  $('tabPrato').onclick = () => mostrarVista('prato');
   $('tabNotif').onclick = () => mostrarVista('notif');
   $('btnPdf').onclick = exportarPdf;
   $('mdFechar').onclick = fecharModal;
@@ -459,14 +462,17 @@
     $('vistaDash').classList.toggle('hide', qual!=='dash');
     $('vistaDef').classList.toggle('hide', qual!=='def');
     $('vistaEncomendas').classList.toggle('hide', qual!=='enc');
+    $('vistaPrato').classList.toggle('hide', qual!=='prato');
     $('vistaNotif').classList.toggle('hide', qual!=='notif');
     $('tabCal').classList.toggle('ativo', qual==='cal');
     $('tabDash').classList.toggle('ativo', qual==='dash');
     $('tabDef').classList.toggle('ativo', qual==='def');
     $('tabEnc').classList.toggle('ativo', qual==='enc');
+    $('tabPrato').classList.toggle('ativo', qual==='prato');
     $('tabNotif').classList.toggle('ativo', qual==='notif');
     if(qual==='dash') renderDashboard();
     if(qual==='def') renderDefinicoes();
+    if(qual==='prato') renderPratoDia();
     if(qual==='notif') renderNotif();
     if(_encTimer){ clearInterval(_encTimer); _encTimer = null; }
     if(qual==='enc'){
@@ -522,6 +528,59 @@
       btn.disabled = false; btn.textContent = _t;
     };
   }
+  // ===== Prato do dia — caixa estilo mosaico, gerida aqui =====
+  var _pdFoto = '';
+  async function _pdUpload(file){
+    var dataUrl = await new Promise(function(res, rej){ var img = new Image(); img.onload = function(){ var c = document.createElement('canvas'); var sc = Math.min(1, 1400 / img.width); c.width = Math.round(img.width * sc); c.height = Math.round(img.height * sc); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); res(c.toDataURL('image/jpeg', 0.85)); }; img.onerror = rej; img.src = URL.createObjectURL(file); });
+    var b64 = dataUrl.split(',')[1], bin = atob(b64), arr = new Uint8Array(bin.length);
+    for(var i=0;i<bin.length;i++) arr[i] = bin.charCodeAt(i);
+    var nome = (SLUG || 'geral') + '/' + Date.now() + '-' + Math.random().toString(36).slice(2,7) + '.jpg';
+    var session = (await sb.auth.getSession()).data.session;
+    if(!session || !session.access_token) throw new Error('A tua sessão expirou. Sai e volta a entrar.');
+    var resp = await fetch(SUPA_URL + '/storage/v1/object/imagens/' + nome, { method:'POST', headers:{ 'Authorization':'Bearer ' + session.access_token, 'apikey':SUPA_KEY, 'Content-Type':'image/jpeg', 'x-upsert':'true' }, body:arr });
+    if(!resp.ok) throw new Error('Falha ao enviar a foto (' + resp.status + ').');
+    return SUPA_URL + '/storage/v1/object/public/imagens/' + nome;
+  }
+  function _pdFotoUI(){ var prev = $('pd_fotoPrev'), rm = $('pd_fotoRem'); if(prev){ if(_pdFoto){ prev.src = _pdFoto; prev.style.display = ''; } else { prev.src = ''; prev.style.display = 'none'; } } if(rm) rm.style.display = _pdFoto ? '' : 'none'; }
+  function renderPratoDia(){
+    var v = $('vistaPrato');
+    var pd = (negocio && negocio.config && negocio.config.pratoDia) || {};
+    _pdFoto = pd.foto || '';
+    var esc0 = parseInt(pd.escurecer, 10) || 0;
+    v.innerHTML =
+      '<div style="background:#fff;border:1.5px solid #eadfc6;border-radius:14px;padding:16px;">'
+      + '<h3 style="margin:0 0 6px;">🍽️ Prato do dia</h3>'
+      + '<div style="font-size:.82rem;color:#8a7a5c;margin-bottom:10px;">Aparece como uma caixa em destaque logo por baixo do cabeçalho do teu cardápio, quando ativa.</div>'
+      + '<label style="display:flex;align-items:center;gap:8px;margin:6px 0;font-weight:700;color:#8a5a10;cursor:pointer;"><input type="checkbox" id="pd_ativo"'+(pd.ativo?' checked':'')+' style="width:auto;"> Mostrar o prato do dia no cardápio</label>'
+      + '<label style="font-weight:600;display:block;margin-top:10px;">Título</label>'
+      + '<input type="text" id="pd_tit" maxlength="60" value="'+esc(pd.titulo||'')+'" placeholder="Ex.: Bacalhau à Brás" style="width:100%;box-sizing:border-box;padding:11px;border:1.5px solid #e0d3b5;border-radius:10px;margin-top:6px;font-family:inherit;">'
+      + '<label style="font-weight:600;display:block;margin-top:10px;">Descrição / preço</label>'
+      + '<textarea id="pd_sub" maxlength="140" rows="2" placeholder="Ex.: com salada · 9,50€" style="width:100%;box-sizing:border-box;padding:10px;border:1.5px solid #e0d3b5;border-radius:10px;margin-top:6px;font-family:inherit;resize:vertical;">'+esc(pd.subtitulo||'')+'</textarea>'
+      + '<div style="display:flex;align-items:center;gap:10px;margin:12px 0 0;flex-wrap:wrap;"><span style="font-size:.82rem;color:#8a7a5c;">Foto:</span><img id="pd_fotoPrev" alt="" style="display:none;width:54px;height:54px;object-fit:cover;border-radius:8px;border:1px solid #e0d3b5;"><label style="cursor:pointer;background:#f3ead8;border:1px solid #e0d3b5;border-radius:8px;padding:6px 10px;font-size:.85rem;">＋ foto<input type="file" id="pd_fotoFile" accept="image/*" style="display:none;"></label><button type="button" id="pd_fotoRem" style="display:none;background:none;border:1px solid #e0d3b5;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:.85rem;">sem foto</button></div>'
+      + '<label style="display:block;margin-top:12px;font-size:.9rem;color:#5a4a2c;">Escurecer foto — <span id="pd_escVal">'+esc0+'</span>%</label>'
+      + '<input type="range" id="pd_esc" min="0" max="85" step="5" value="'+esc0+'" style="width:100%;accent-color:var(--dourado,#c79a3e);">'
+      + '<label style="display:flex;align-items:center;gap:8px;margin-top:10px;cursor:pointer;font-size:.92rem;"><input type="checkbox" id="pd_plate"'+(pd.caixaTexto?' checked':'')+' style="width:auto;"> Caixa atrás do texto (melhor leitura)</label>'
+      + '<button id="pd_guardar" class="pdf-btn" style="width:100%;margin-top:14px;">💾 Guardar prato do dia</button>'
+      + '<div id="pd_msg" style="margin-top:8px;font-size:.9rem;"></div>'
+      + '</div>';
+    _pdFotoUI();
+    $('pd_esc').addEventListener('input', function(){ $('pd_escVal').textContent = this.value; });
+    $('pd_fotoFile').addEventListener('change', async function(e){ var f = e.target.files && e.target.files[0]; if(!f) return; $('pd_msg').textContent = 'A enviar foto…'; try{ var url = await _pdUpload(f); _pdFoto = url; _pdFotoUI(); $('pd_msg').textContent = 'Foto adicionada ✓ — Guardar para aplicar.'; }catch(err){ $('pd_msg').innerHTML = '<span style="color:#b23b2e;">Erro: ' + (err.message||err) + '</span>'; } });
+    $('pd_fotoRem').addEventListener('click', function(){ _pdFoto = ''; _pdFotoUI(); $('pd_msg').textContent = 'Foto removida — Guardar para aplicar.'; });
+    $('pd_guardar').addEventListener('click', async function(){
+      var b = $('pd_guardar'); b.disabled = true; var _t = b.textContent; b.textContent = 'A guardar…'; $('pd_msg').textContent = '';
+      var novo = { ativo: $('pd_ativo').checked, titulo: ($('pd_tit').value||'').trim(), subtitulo: ($('pd_sub').value||'').trim(), foto: _pdFoto || '', escurecer: parseInt($('pd_esc').value,10)||0, caixaTexto: $('pd_plate').checked };
+      var sel = await sb.from('negocios').select('config').eq('id', negocio.id).maybeSingle();
+      if(sel.error){ b.disabled=false; b.textContent=_t; $('pd_msg').innerHTML = '<span style="color:#b23b2e;">Erro: ' + sel.error.message + '</span>'; return; }
+      var cfg = (sel.data && sel.data.config) || {}; cfg.pratoDia = novo;
+      var up = await sb.from('negocios').update({ config: cfg }).eq('id', negocio.id);
+      b.disabled = false; b.textContent = _t;
+      if(up.error){ $('pd_msg').innerHTML = '<span style="color:#b23b2e;">Erro: ' + up.error.message + '</span>'; return; }
+      negocio.config = cfg;
+      $('pd_msg').innerHTML = '<span style="color:#1e6b3c;">Prato do dia guardado ✓</span>';
+    });
+  }
+
   function _encEstadoInfo(est){
     if(est === 'confirmada') return { txt:'Confirmada', cor:'#1e6b3c', bg:'#e2f4e9' };
     if(est === 'pronta')     return { txt:'Pronta', cor:'#8a4b10', bg:'#ffe6c2' };

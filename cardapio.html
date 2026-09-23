@@ -1098,6 +1098,10 @@
   /* Banner atrás do texto/conteúdo (fica por baixo das letras) */
   .sec-banner-png.atras{ z-index:-1; }
 
+  /* ===== Prato do dia — caixa estilo mosaico, logo após o cabeçalho ===== */
+  #pratoDiaGrid{ display:none; }
+  body.pratodia-on #pratoDiaGrid{ display:grid; grid-template-columns:1fr; gap:0; max-width:640px; margin:12px auto 2px; padding:0 14px; }
+  #pratoDiaGrid .mos-box.tam-l, #pratoDiaGrid .mos-box.tam-g, #pratoDiaGrid .mos-box.tam-p{ grid-column:span 1; }
   /* ===== Mosaico (bento, estilo widgets do iPhone) ===== */
   #mosaicoGrid{ display:none; }
   body.mosaico-on #mosaicoGrid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; max-width:640px; margin:0 auto; padding:14px 14px 6px; }
@@ -2575,6 +2579,9 @@
   </div>
 </header>
 
+<!-- Prato do dia (gerido na Gestão) — caixa estilo mosaico, logo após o cabeçalho -->
+<div id="pratoDiaGrid"></div>
+
 <!-- Promoção do dia (vinda do calendário) — aparece logo por baixo do cabeçalho -->
 <div id="promoDia" style="display:none;"></div>
 
@@ -3212,6 +3219,19 @@
   };
   // Mosaico dentro de uma secção (usa o id da secção para o arrasto no editor)
   window.renderMosaicoSeccao = function(grid, caixas, catId){ _mosBuildInto(grid, caixas, catId); };
+  // Prato do dia — uma caixa estilo mosaico, logo após o cabeçalho (gerida na Gestão)
+  window.__renderPratoDia = function(cfg){
+    try{
+      var grid = document.getElementById('pratoDiaGrid'); if(!grid) return;
+      var pd = cfg && cfg.pratoDia;
+      var _fotos = (pd && Array.isArray(pd.fotos) && pd.fotos.length) ? pd.fotos : (pd && pd.foto ? [pd.foto] : []);
+      var tem = !!(pd && pd.ativo && ((pd.titulo && String(pd.titulo).trim()) || _fotos.length));
+      document.body.classList.toggle('pratodia-on', tem);
+      if(!tem){ grid.innerHTML = ''; return; }
+      var caixa = { tam: pd.tam || 'l', titulo: pd.titulo || '', subtitulo: pd.subtitulo || '', cor: pd.cor || '', escurecer: pd.escurecer || 0, caixaTexto: pd.caixaTexto === true, fotos: _fotos, estilo: pd.estilo || {}, estiloSub: pd.estiloSub || {} };
+      _mosBuildInto(grid, [caixa], null);
+    }catch(e){}
+  };
   // Tocar numa caixa que aponta para uma secção abre essa secção (reutiliza o menu)
   document.addEventListener('click', function(e){
     const mb = e.target && e.target.closest ? e.target.closest('.mos-box[data-target]') : null;
@@ -4441,6 +4461,7 @@
         }catch(e){}
       };
       window.__renderPromoDia(config);
+      try{ if(window.__renderPratoDia) window.__renderPratoDia(config); }catch(e){}
       if(!window.__promoTimer){ window.__promoTimer = setInterval(function(){ try{ window.__renderPromoDia(window.__cfgPromo); }catch(e){} }, 60000); }
       // Modos de entrada (Menu / Take away / Grupos)
       window.__modosCfg = (config.modos && typeof config.modos === 'object') ? config.modos : {};
@@ -5538,8 +5559,9 @@
       const { data:neg } = await sbC.from('negocios').select('config,menu,nome,ativo,apagado_em').eq('slug', SLUG).maybeSingle();
       if(!neg || neg.apagado_em || neg.ativo === false) return false;
       const config = neg.config || {};
-      // Promoção do dia (novo banner)
+      // Promoção do dia (novo banner) + Prato do dia
       try{ window.__cfgPromo = config; if(window.__renderPromoDia) window.__renderPromoDia(config); }catch(e){}
+      try{ if(window.__renderPratoDia) window.__renderPratoDia(config); }catch(e){}
       // Menu (novos pratos/categorias)
       const menu = neg.menu || {}; if(!Array.isArray(menu.categorias)) menu.categorias = [];
       window._menu = menu;
