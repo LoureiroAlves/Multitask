@@ -1164,6 +1164,9 @@
     const cfg = (data && data.config) || {};
     cfg.promoDatas = cfg.promoDatas || {};
     if(promo) cfg.promoDatas[iso] = promo; else delete cfg.promoDatas[iso];
+    // As promoções passaram a ser todas por DATA — limpar a base/por-dia-da-semana legada (senão a montra cairia nela)
+    if(cfg.promo) delete cfg.promo;
+    if(cfg.promoDias) delete cfg.promoDias;
     const up = await sb.from('negocios').update({ config: cfg }).eq('id', negocio.id);
     if(up.error) return up.error;
     negocio.config = cfg;   // manter a cópia local em sincronia
