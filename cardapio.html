@@ -8599,11 +8599,11 @@
     function aplicarModo(m){ try{
       document.body.classList.remove('modo-normal','modo-takeaway','modo-grupos','modo-cerimonias');
       document.body.classList.add('modo-' + m);
-      var takeaway = (m === 'takeaway');
-      // Carrinho: ligado só no take away
+      // Carrinho / "+": ligado no Take away, Grupos e Cerimónias (contacto por WhatsApp); desligado só no Menu normal
+      var comCarrinho = (m === 'takeaway' || m === 'grupos' || m === 'cerimonias');
       try{
-        if(window.__cartCfg) window.__cartCfg.ativo = takeaway;
-        document.body.classList.toggle('carrinho-off', !takeaway);
+        if(window.__cartCfg) window.__cartCfg.ativo = comCarrinho;
+        document.body.classList.toggle('carrinho-off', !comCarrinho);
         if(window.montarBotoesLista) window.montarBotoesLista();
         if(window.__cartRefresh) window.__cartRefresh();
       }catch(e){}
