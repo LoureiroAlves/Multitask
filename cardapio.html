@@ -8571,13 +8571,14 @@
       }catch(e){}
     };
 
-    // Gesto "voltar" — arrastar da margem esquerda faz a abertura entrar pela esquerda (como o iOS)
+    // Gesto "voltar" — o menu e a abertura deslizam JUNTOS (lado a lado), com uma pequena folga entre eles
     (function(){
-      var sx = 0, sy = 0, w = 0, armado = false, arrastando = false, ov = null;
+      var GAP = 12;   // folga (px) entre as duas páginas, para não parecer que uma passa por cima da outra
+      var sx = 0, sy = 0, w = 0, armado = false, arrastando = false, ov = null, body = document.body;
       function podeVoltar(){
         return modosAtuais.length >= 2
-          && (document.body.classList.contains('modo-normal') || document.body.classList.contains('modo-takeaway') || document.body.classList.contains('modo-grupos'))
-          && !document.body.classList.contains('secao-aberta');
+          && (body.classList.contains('modo-normal') || body.classList.contains('modo-takeaway') || body.classList.contains('modo-grupos'))
+          && !body.classList.contains('secao-aberta');
       }
       function prepararIntro(){
         ov = document.getElementById('introOverlay');
@@ -8586,7 +8587,11 @@
         ov.classList.remove('sair');
         if(!document.getElementById('introModosWrap')) integrarNoIntro(modosAtuais);
         else document.getElementById('introModosWrap').style.display = '';
-        ov.style.display = 'flex'; ov.style.transition = 'none'; ov.style.transform = 'translateX(-100%)';
+        // Estaciona a abertura imediatamente à esquerda do menu, com a folga. Ao transformar o body,
+        // como a abertura é fixed dentro dele, ambos se movem juntos.
+        ov.style.display = 'flex'; ov.style.transition = 'none';
+        ov.style.transform = 'translateX(calc(-100% - ' + GAP + 'px))';
+        body.style.transition = 'none';
         w = window.innerWidth || document.documentElement.clientWidth || 360;
         return true;
       }
@@ -8604,8 +8609,8 @@
           if(dx > 12 && dx > Math.abs(dy)){ if(!prepararIntro()){ armado = false; return; } arrastando = true; }
           else return;
         }
-        var x = Math.max(0, Math.min(dx, w));
-        ov.style.transform = 'translateX(' + (x - w) + 'px)';
+        var x = Math.max(0, Math.min(dx, w + GAP));
+        body.style.transform = 'translateX(' + x + 'px)';   // move o menu E a abertura em conjunto
         try{ e.preventDefault(); }catch(_){}
       }, { passive:false });
       function terminar(e){
@@ -8613,13 +8618,22 @@
         arrastando = false; armado = false;
         var t = (e.changedTouches && e.changedTouches[0]);
         var dx = t ? (t.clientX - sx) : 0;
-        ov.style.transition = 'transform .28s ease';
+        body.style.transition = 'transform .28s ease';
         if(dx > w * 0.4){
-          ov.style.transform = 'translateX(0)';
-          var _o1 = ov; setTimeout(function(){ if(_o1){ _o1.style.transition = ''; _o1.style.transform = ''; } }, 300);
+          // completar: leva ambos até a abertura ocupar o ecrã
+          body.style.transform = 'translateX(' + (w + GAP) + 'px)';
+          setTimeout(function(){
+            if(!ov) return;
+            ov.style.transition = 'none'; ov.style.transform = '';      // abertura assume a posição normal
+            body.style.transition = 'none'; body.style.transform = '';  // sem salto: a abertura já cobria o ecrã
+          }, 300);
         } else {
-          ov.style.transform = 'translateX(-100%)';
-          var _o2 = ov; setTimeout(function(){ if(_o2 && _o2.style.transform === 'translateX(-100%)'){ _o2.style.display = 'none'; _o2.style.transition = ''; _o2.style.transform = ''; } }, 300);
+          // cancelar: volta ao menu e esconde a abertura
+          body.style.transform = 'translateX(0)';
+          setTimeout(function(){
+            if(ov){ ov.style.display = 'none'; ov.style.transition = ''; ov.style.transform = ''; }
+            body.style.transition = ''; body.style.transform = '';
+          }, 300);
         }
       }
       document.addEventListener('touchend', terminar, { passive:true });
