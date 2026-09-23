@@ -5605,15 +5605,6 @@
         wrap.appendChild(b);
       });
       ov.appendChild(wrap);
-      // Pílula: igualar todas à largura do texto mais comprido (fica o mais compacto possível, sem desalinhar)
-      if((cfg.estilo || 'pilula') === 'pilula'){
-        try{
-          var _inn = wrap.querySelectorAll('.im-inner'), _mx = 0;
-          _inn.forEach(function(el){ el.style.minWidth = 'auto'; });
-          _inn.forEach(function(el){ var w = el.getBoundingClientRect().width; if(w > _mx) _mx = w; });
-          if(_mx > 0) _inn.forEach(function(el){ el.style.minWidth = Math.ceil(_mx) + 'px'; });
-        }catch(_e){}
-      }
     }catch(e){}
   };
 
@@ -8655,14 +8646,6 @@
       h += '</div>';
       g.innerHTML = h; g.style.display = 'flex';
       Array.prototype.forEach.call(g.querySelectorAll('.im-opt'), function(b){ b.onclick = function(){ var _m = b.getAttribute('data-modo'); aplicarModo(_m); g.style.display = 'none'; if(_m === 'reservas'){ setTimeout(function(){ try{ if(window.__abrirAgenda) window.__abrirAgenda(); }catch(e){} }, 60); } }; });
-      if((_cfg.estilo || 'pilula') === 'pilula'){
-        try{
-          var _in = g.querySelectorAll('.im-inner'), _mw = 0;
-          Array.prototype.forEach.call(_in, function(el){ el.style.minWidth = 'auto'; });
-          Array.prototype.forEach.call(_in, function(el){ var w = el.getBoundingClientRect().width; if(w > _mw) _mw = w; });
-          if(_mw > 0) Array.prototype.forEach.call(_in, function(el){ el.style.minWidth = Math.ceil(_mw) + 'px'; });
-        }catch(_e){}
-      }
     }
 
     window.__initModos = function(){
