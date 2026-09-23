@@ -1120,6 +1120,8 @@
   /* Pisca só na moldura (border + brilho à volta); o interior do mosaico fica intacto */
   @keyframes mosNeonPisca{ 0%,100%{ border-color:var(--mos-neon-cor,#19e9ff); box-shadow:0 0 8px var(--mos-neon-cor,#19e9ff), 0 0 18px var(--mos-neon-cor,#19e9ff); } 50%{ border-color:transparent; box-shadow:0 0 0 transparent; } }
   .mos-box .mos-txt{ position:absolute; z-index:2; max-width:90%; }   /* posicionado por left/top (arrastável na pré-visualização) */
+  .mos-box.mos-plate .mos-tit, .mos-box.mos-plate .mos-sub{ background:rgba(0,0,0,.45); -webkit-backdrop-filter:blur(2px); backdrop-filter:blur(2px); padding:5px 9px; border-radius:10px; width:-moz-fit-content; width:fit-content; max-width:100%; }
+  .mos-box.mos-plate .mos-sub{ margin-top:5px; }
   .mos-box .mos-tit{ font-family:var(--fonte-titulo); font-size:1.15rem; line-height:1.1; }
   .mos-box .mos-sub{ font-size:.86rem; line-height:1.2; opacity:.95; margin-top:2px; }
   body.modelo-slider .deck-page > .sec-foto-banner{ margin-bottom:14px; }
@@ -3130,6 +3132,7 @@
       if(!c) return;
       const b = document.createElement(c.link ? 'button' : 'div');
       b.className = 'mos-box tam-' + (c.tam || 'p');
+      if(c.caixaTexto) b.classList.add('mos-plate');
       if(c.link){ b.type = 'button'; b.setAttribute('data-target', c.link); }
       if(c.cor) b.style.background = c.cor;
       if(c.neonAtivo){

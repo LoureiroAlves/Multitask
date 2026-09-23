@@ -3432,6 +3432,10 @@ amesadigital.pt</textarea>
         const dval = document.createElement('span'); dval.textContent = (parseInt(c.escurecer, 10) || 0) + '%'; dval.style.minWidth = '34px';
         din.addEventListener('input', function(){ c.escurecer = parseInt(din.value, 10) || 0; dval.textContent = c.escurecer + '%'; _mosPrev(); });
         dr.appendChild(din); dr.appendChild(dval); card.appendChild(dr); }
+      { const pl = document.createElement('label'); pl.style.cssText = 'display:flex; align-items:center; gap:8px; margin-top:8px; font-size:.82rem; color:var(--castanho); cursor:pointer;';
+        const pc = document.createElement('input'); pc.type = 'checkbox'; pc.style.width = 'auto'; pc.checked = c.caixaTexto === true;
+        pc.addEventListener('change', function(){ c.caixaTexto = pc.checked; _mosPrev(); });
+        pl.appendChild(pc); pl.appendChild(document.createTextNode('Caixa atrás do texto (melhor leitura)')); card.appendChild(pl); }
       if(c.fotos.length > 1){
         const ir = document.createElement('div'); ir.style.cssText = 'display:flex; align-items:center; gap:8px; margin-top:8px; font-size:.82rem; color:var(--castanho-suave);';
         ir.appendChild(document.createTextNode('Trocar a cada'));
