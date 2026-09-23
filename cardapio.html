@@ -6079,7 +6079,17 @@
         html += '<div class="ag-passo-tit">Horários disponíveis</div><div class="ag-slots">';
         const usaMesas = !!(a.mesas && a.mesas.length);
         const lug = parseInt(a.lugares, 10) || 0;
-        horariosDoDia(estado.diaSel).forEach(function(hh){
+        // Se for hoje, esconde os horários que já passaram (com uma margem de antecedência)
+        let _slots = horariosDoDia(estado.diaSel);
+        if(estado.diaSel === fmt(h)){
+          const margem = parseInt(a.antecedenciaMin, 10) || 30;   // minutos de folga antes do horário
+          const agora = new Date(); const agoraMin = agora.getHours()*60 + agora.getMinutes() + margem;
+          _slots = _slots.filter(function(hh){ const p = String(hh).split(':'); return (parseInt(p[0],10)*60 + parseInt(p[1],10)) > agoraMin; });
+        }
+        if(!_slots.length){
+          html += '<div style="grid-column:1/-1; font-size:0.85rem; color:var(--castanho-suave); padding:6px 0;">Sem horários disponíveis para este dia.</div>';
+        }
+        _slots.forEach(function(hh){
           let cheio;
           if(usaMesas){ cheio = (cabeMesa(hh, estado.pessoas || 1) === false); }
           else { const ocup = (estado.ocupadas && estado.ocupadas[hh]) || 0; cheio = lug > 0 && ocup >= lug; }
@@ -7950,13 +7960,19 @@
 
     // Devolve lista de opções [{label, preco}] se o item tiver vários tamanhos/doses; senão null
     function opcoesDoItem(item, precoEl){
-      let seg = item.nextElementSibling;
-      if(!(seg && seg.classList && seg.classList.contains('tabela-doses'))){
-        seg = item.querySelector ? item.querySelector('.tabela-doses') : null;
+      // 1) tabela dentro do próprio item; 2) tabela-doses irmã direta; 3) tabela dentro do .item-doses seguinte
+      // (nas sangrias, o nome e a tabela de doses são itens separados: um .item seguido de um .item-doses)
+      let tabela = item.querySelector ? item.querySelector('.tabela-doses') : null;
+      if(!tabela){
+        const sib = item.nextElementSibling;
+        if(sib && sib.classList){
+          if(sib.classList.contains('tabela-doses')) tabela = sib;
+          else if(sib.classList.contains('item-doses') && !sib.querySelector('.nome')) tabela = sib.querySelector('.tabela-doses');
+        }
       }
-      if(seg && seg.classList && seg.classList.contains('tabela-doses')){
-        const doses = Array.from(seg.querySelectorAll('.dose')).map(td => td.textContent.trim());
-        const precos = Array.from(seg.querySelectorAll('.preco-dose')).map(td => td.textContent.trim());
+      if(tabela){
+        const doses = Array.from(tabela.querySelectorAll('.dose')).map(td => td.textContent.trim());
+        const precos = Array.from(tabela.querySelectorAll('.preco-dose')).map(td => td.textContent.trim());
         if(doses.length) return doses.map((d, i) => ({ label:d, preco:precos[i] || '' }));
       }
       const precoTxt = precoEl ? precoEl.textContent.trim() : '';
