@@ -5563,7 +5563,8 @@
     normal: ['Menu', '<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 12V19"/><path d="M19 12V19"/><path d="M23 12V19"/><path d="M15 19H23"/><path d="M19 19V37"/><path d="M30 12C35 15 35 23 30 26"/><path d="M30 26V37"/></g></svg>'],
     takeaway: ['Take away', '<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M14 18H34L32 37H16Z"/><path d="M19 18C19 12 29 12 29 18"/></g></svg>'],
     grupos: ['Grupos', '<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="20" cy="17" r="4.5"/><path d="M14 37 Q20 28 26 37"/><circle cx="28" cy="17" r="4.5"/><path d="M22 37 Q28 28 34 37"/></g></svg>'],
-    cerimonias: ['Cerimónias', '<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 13 Q19 23 23 13"/><path d="M19 22V37"/><path d="M14 37H24"/><path d="M25 13 Q29 23 33 13"/><path d="M29 22V37"/><path d="M24 37H34"/></g></svg>']
+    cerimonias: ['Cerimónias', '<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 13 Q19 23 23 13"/><path d="M19 22V37"/><path d="M14 37H24"/><path d="M25 13 Q29 23 33 13"/><path d="M29 22V37"/><path d="M24 37H34"/></g></svg>'],
+    reservas: ['Reservas', '<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><rect x="12" y="14" width="24" height="22" rx="3"/><path d="M12 21H36"/><path d="M18 11V16"/><path d="M30 11V16"/><path d="M18 28H24"/></g></svg>']
   };
   window.__IC_MODOS = IC_MODOS;
   window.__renderIntroModos = function(preview){
@@ -5579,6 +5580,7 @@
       if(cfg.takeaway) modos.push('takeaway');
       if(cfg.grupos && (preview || _temGr())) modos.push('grupos');
       if(cfg.cerimonias && (preview || _temCer())) modos.push('cerimonias');
+      if(cfg.reservas && (preview || !!window._agenda)) modos.push('reservas');
       if(!modos.length) return;
       // Esconde o botão antigo "Ver menu" quando há ícones de modo (a não ser que o dono o queira manter)
       var _vb = document.getElementById('introBtn'); if(_vb) _vb.style.display = cfg.verBotao ? '' : 'none';
@@ -8590,7 +8592,11 @@
     // Os ícones são desenhados por window.__renderIntroModos (definido junto ao _introArrastavel),
     // partilhado pela pré-visualização do editor e pelo cardápio real.
 
-    window.__modoEscolher = function(m){ aplicarModo(m); if(window.__esconderIntro) window.__esconderIntro(); };
+    window.__modoEscolher = function(m){
+      aplicarModo(m);
+      if(window.__esconderIntro) window.__esconderIntro();
+      if(m === 'reservas'){ setTimeout(function(){ try{ if(window.__abrirAgenda) window.__abrirAgenda(); }catch(e){} }, 380); }   // abre o calendário por cima do menu
+    };
 
     function integrarNoIntro(modos){
       modosAtuais = modos;
@@ -8613,10 +8619,11 @@
     }
 
     function aplicarModo(m){ try{
+      var vista = (m === 'reservas') ? 'normal' : m;   // "Reservas" é uma ação: o menu por trás é o normal
       document.body.classList.remove('modo-normal','modo-takeaway','modo-grupos','modo-cerimonias');
-      document.body.classList.add('modo-' + m);
+      document.body.classList.add('modo-' + vista);
       // Carrinho / "+": ligado no Take away, Grupos e Cerimónias (contacto por WhatsApp); desligado só no Menu normal
-      var comCarrinho = (m === 'takeaway' || m === 'grupos' || m === 'cerimonias');
+      var comCarrinho = (vista === 'takeaway' || vista === 'grupos' || vista === 'cerimonias');
       try{
         if(window.__cartCfg) window.__cartCfg.ativo = comCarrinho;
         document.body.classList.toggle('carrinho-off', !comCarrinho);
@@ -8647,7 +8654,7 @@
       });
       h += '</div>';
       g.innerHTML = h; g.style.display = 'flex';
-      Array.prototype.forEach.call(g.querySelectorAll('.im-opt'), function(b){ b.onclick = function(){ aplicarModo(b.getAttribute('data-modo')); g.style.display = 'none'; }; });
+      Array.prototype.forEach.call(g.querySelectorAll('.im-opt'), function(b){ b.onclick = function(){ var _m = b.getAttribute('data-modo'); aplicarModo(_m); g.style.display = 'none'; if(_m === 'reservas'){ setTimeout(function(){ try{ if(window.__abrirAgenda) window.__abrirAgenda(); }catch(e){} }, 60); } }; });
       if((_cfg.estilo || 'pilula') === 'pilula'){
         try{
           var _in = g.querySelectorAll('.im-inner'), _mw = 0;
@@ -8668,11 +8675,12 @@
         if(cfg.takeaway) modos.push('takeaway');
         if(cfg.grupos && temGrupos()) modos.push('grupos');
         if(cfg.cerimonias && temCerimonias()) modos.push('cerimonias');
+        if(cfg.reservas && !!window._agenda) modos.push('reservas');
         if(!modos.length){ var _w0 = document.getElementById('introModosWrap'); if(_w0) _w0.remove(); return; }
         var ov = document.getElementById('introOverlay');
         var introViva = window.__introAtiva && ov && !ov.dataset.saiu && ov.style.display !== 'none';
         if(introViva){ integrarNoIntro(modos); }               // desenha o(s) ícone(s) sobre a abertura, mesmo que só haja 1
-        else if(modos.length === 1){ modosAtuais = modos; aplicarModo(modos[0]); }
+        else if(modos.length === 1){ modosAtuais = modos; aplicarModo(modos[0]); if(modos[0] === 'reservas'){ setTimeout(function(){ try{ if(window.__abrirAgenda) window.__abrirAgenda(); }catch(e){} }, 60); } }
         else { mostrarGate(modos); }
       }catch(e){}
     };
