@@ -227,6 +227,7 @@
       <button id="tabCal" class="tab ativo" type="button">📅 Calendário</button>
       <button id="tabDash" class="tab" type="button">📊 Painel</button>
       <button id="tabEnc" class="tab" type="button">🛍️ Encomendas</button>
+      <button id="tabNotif" class="tab" type="button">🔔 Avisar</button>
       <button id="tabDef" class="tab" type="button">⚙️ Definições</button>
     </div>
     <div id="vistaCal">
@@ -246,6 +247,7 @@
     <div id="vistaDash" class="hide"></div>
     <div id="vistaDef" class="hide"></div>
     <div id="vistaEncomendas" class="hide"></div>
+    <div id="vistaNotif" class="hide"></div>
   </div>
 </div>
 
@@ -340,6 +342,7 @@
   $('tabDash').onclick = () => mostrarVista('dash');
   $('tabDef').onclick = () => mostrarVista('def');
   $('tabEnc').onclick = () => mostrarVista('enc');
+  $('tabNotif').onclick = () => mostrarVista('notif');
   $('btnPdf').onclick = exportarPdf;
   $('mdFechar').onclick = fecharModal;
   $('mdGuardar').onclick = guardarModal;
@@ -456,12 +459,15 @@
     $('vistaDash').classList.toggle('hide', qual!=='dash');
     $('vistaDef').classList.toggle('hide', qual!=='def');
     $('vistaEncomendas').classList.toggle('hide', qual!=='enc');
+    $('vistaNotif').classList.toggle('hide', qual!=='notif');
     $('tabCal').classList.toggle('ativo', qual==='cal');
     $('tabDash').classList.toggle('ativo', qual==='dash');
     $('tabDef').classList.toggle('ativo', qual==='def');
     $('tabEnc').classList.toggle('ativo', qual==='enc');
+    $('tabNotif').classList.toggle('ativo', qual==='notif');
     if(qual==='dash') renderDashboard();
     if(qual==='def') renderDefinicoes();
+    if(qual==='notif') renderNotif();
     if(_encTimer){ clearInterval(_encTimer); _encTimer = null; }
     if(qual==='enc'){
       renderEncomendas();
@@ -469,6 +475,44 @@
     }
   }
 
+  function _linkCardapio(){
+    var b = location.href.split('#')[0].split('?')[0];
+    var u = /cardapio\.html$/i.test(b) ? b : (/\/$/.test(b) ? b + 'cardapio.html' : b.replace(/\/[^\/]*$/, '/') + 'cardapio.html');
+    if(typeof SLUG !== 'undefined' && SLUG) u += '?n=' + encodeURIComponent(SLUG);
+    return u;
+  }
+  async function renderNotif(){
+    const v = $('vistaNotif');
+    const link = _linkCardapio();
+    v.innerHTML =
+      '<div style="background:#fff;border:1.5px solid #eadfc6;border-radius:14px;padding:16px;">'
+      + '<h3 style="margin:0 0 6px;">🔔 Enviar aviso / promoção</h3>'
+      + '<p style="font-size:.86rem;color:#7a6a4c;margin:0 0 12px;">Chega aos clientes que ativaram as notificações no telemóvel (sem registo). <span id="ntCount">…</span></p>'
+      + '<label style="font-size:.85rem;color:#5a4a2c;">Título</label>'
+      + '<input id="ntTit" maxlength="60" placeholder="Ex.: Hoje há novidades 🍽️" style="width:100%;box-sizing:border-box;padding:10px;border:1.5px solid #e0d3b5;border-radius:9px;margin:4px 0 10px;font-family:inherit;">'
+      + '<label style="font-size:.85rem;color:#5a4a2c;">Mensagem</label>'
+      + '<textarea id="ntMsg" maxlength="180" rows="3" placeholder="Ex.: Polvo à lagareiro e vinho da casa. Vem provar!" style="width:100%;box-sizing:border-box;padding:10px;border:1.5px solid #e0d3b5;border-radius:9px;margin:4px 0 10px;font-family:inherit;resize:vertical;"></textarea>'
+      + '<label style="font-size:.85rem;color:#5a4a2c;">Ao tocar, abre</label>'
+      + '<input id="ntUrl" value="' + link + '" style="width:100%;box-sizing:border-box;padding:10px;border:1.5px solid #e0d3b5;border-radius:9px;margin:4px 0 12px;font-family:inherit;font-size:.82rem;">'
+      + '<button id="ntEnviar" class="pdf-btn" style="width:100%;">📣 Enviar a todos</button>'
+      + '<div id="ntRes" style="margin-top:10px;font-size:.9rem;"></div>'
+      + '</div>';
+    try{ const { count } = await sb.from('push_subs').select('*', { count:'exact', head:true }).eq('negocio_id', negocio.id); $('ntCount').textContent = (count || 0) + ' aparelho(s) subscrito(s).'; }catch(e){ $('ntCount').textContent = ''; }
+    $('ntEnviar').onclick = async function(){
+      const tit = $('ntTit').value.trim(), msg = $('ntMsg').value.trim(), url = $('ntUrl').value.trim();
+      if(!tit && !msg){ alert('Escreve pelo menos um título ou uma mensagem.'); return; }
+      const btn = $('ntEnviar'); btn.disabled = true; const _t = btn.textContent; btn.textContent = 'A enviar…';
+      $('ntRes').textContent = '';
+      try{
+        const { data, error } = await sb.functions.invoke('enviar-push', { body: { negocio: negocio.id, titulo: tit || (negocio.nome || 'Novidade'), corpo: msg, url: url || _linkCardapio() } });
+        if(error) throw error;
+        if(data && data.erro) throw new Error(data.erro);
+        $('ntRes').innerHTML = '✅ Enviado a <strong>' + ((data && data.enviados) || 0) + '</strong> de ' + ((data && data.total) || 0) + ' aparelho(s).';
+        $('ntTit').value = ''; $('ntMsg').value = '';
+      }catch(e){ $('ntRes').innerHTML = '<span style="color:#b23b2e;">Erro ao enviar: ' + (e.message || e) + '</span>'; }
+      btn.disabled = false; btn.textContent = _t;
+    };
+  }
   function _encEstadoInfo(est){
     if(est === 'confirmada') return { txt:'Confirmada', cor:'#1e6b3c', bg:'#e2f4e9' };
     if(est === 'pronta')     return { txt:'Pronta', cor:'#8a4b10', bg:'#ffe6c2' };

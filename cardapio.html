@@ -8437,6 +8437,57 @@
     window.__vibrar = function(){ try{ if(podeVibrar && expOn('vibracao') && vibOn() && navigator.vibrate) navigator.vibrate(12); }catch(e){} };
     // A vibração é chamada de dentro do adicionarALista (carrinho) e do favPratosToggle (favoritos) — só nesses dois casos.
 
+    // ---- Notificações push (sem registo: só "Permitir") ----
+    var __VAPID_PUB = 'BOXUnQlON7ETx2-D9E9A3nPONd4xdujOUp2UFFpMGe_0V00njcbxAL-4ETDVpHG7s68Jz1tARbDJ83X75-2irg4';
+    var __swReg = null;
+    function pushSuportado(){ return ('serviceWorker' in navigator) && ('PushManager' in window) && ('Notification' in window); }
+    function _b64ToU8(base64){ var pad = '='.repeat((4 - base64.length % 4) % 4); var b = (base64 + pad).replace(/-/g,'+').replace(/_/g,'/'); var raw = atob(b); var arr = new Uint8Array(raw.length); for(var i=0;i<raw.length;i++) arr[i] = raw.charCodeAt(i); return arr; }
+    function registarSW(){ if(!('serviceWorker' in navigator)) return Promise.resolve(null); return navigator.serviceWorker.register('/sw.js').then(function(r){ __swReg = r; return r; }).catch(function(){ return null; }); }
+    try{ registarSW(); }catch(e){}
+    function estadoPush(){
+      if(!pushSuportado()) return Promise.resolve('indisponivel');
+      var p = __swReg ? Promise.resolve(__swReg) : registarSW();
+      return p.then(function(r){ if(!r) return 'indisponivel'; return r.pushManager.getSubscription().then(function(s){ if(s) return 'on'; return (Notification.permission === 'denied') ? 'bloqueado' : 'off'; }); }).catch(function(){ return 'indisponivel'; });
+    }
+    function ativarPush(){
+      if(!pushSuportado()) return Promise.reject(new Error('sem_suporte'));
+      var p = __swReg ? Promise.resolve(__swReg) : registarSW();
+      return p.then(function(r){ if(!r) throw new Error('sem_sw'); __swReg = r;
+        return Notification.requestPermission().then(function(perm){ if(perm !== 'granted') throw new Error('sem_permissao');
+          return r.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: _b64ToU8(__VAPID_PUB) }).then(function(sub){
+            var j = sub.toJSON() || {}; var k = j.keys || {};
+            if(typeof sbC !== 'undefined' && sbC && window.__negocioId){ return sbC.rpc('guardar_push_sub', { p_negocio: window.__negocioId, p_endpoint: sub.endpoint, p_p256dh: k.p256dh || '', p_auth: k.auth || '' }).then(function(){ return true; }); }
+            return true;
+          });
+        });
+      });
+    }
+    function desativarPush(){
+      var p = __swReg ? Promise.resolve(__swReg) : registarSW();
+      return p.then(function(r){ if(!r) return; return r.pushManager.getSubscription().then(function(s){ if(!s) return; var ep = s.endpoint; return s.unsubscribe().then(function(){ if(typeof sbC !== 'undefined' && sbC && window.__negocioId){ return sbC.rpc('remover_push_sub', { p_negocio: window.__negocioId, p_endpoint: ep }); } }); }); }).catch(function(){});
+    }
+    function _montarNotif(){
+      var wrap = document.getElementById('expNotif'); if(!wrap) return;
+      if(isIOS && !standalone()){ wrap.innerHTML = '<div class="exp-tit">🔔 Notificações</div><p class="exp-txt">No iPhone, adiciona primeiro o cardápio ao <strong>ecrã principal</strong> (em cima) para poderes receber avisos.</p>'; return; }
+      if(!pushSuportado()){ wrap.innerHTML = '<div class="exp-tit">🔔 Notificações</div><p class="exp-txt">Este telemóvel ou navegador não suporta notificações.</p>'; return; }
+      estadoPush().then(function(st){
+        var on = (st === 'on');
+        var aviso = (st === 'bloqueado') ? '<p class="exp-txt" style="color:#b23b2e;">As notificações estão bloqueadas nas definições do navegador. Ativa-as aí para poderes ligar.</p>' : '';
+        wrap.innerHTML = '<div class="exp-tit">🔔 Notificações</div>'
+          + '<p class="exp-txt">Recebe avisos de promoções, pedido pronto e reservas confirmadas. Sem registo nem email.</p>'
+          + '<div class="exp-row"><span style="font-size:.9rem;color:#3a2c18;">' + (on ? 'Ativadas' : 'Desativadas') + '</span>'
+          + '<button class="exp-sw ' + (on ? 'on' : '') + '" id="expNotifSw" role="switch" aria-checked="' + on + '"' + (st === 'bloqueado' ? ' disabled' : '') + '></button></div>' + aviso;
+        var sw = document.getElementById('expNotifSw');
+        if(sw && st !== 'bloqueado') sw.onclick = function(){
+          sw.disabled = true;
+          (on ? desativarPush() : ativarPush()).then(function(){ _montarNotif(); }, function(err){
+            _montarNotif();
+            if(err && String(err.message) === 'sem_permissao'){ try{ alert('Para receberes avisos, tens de tocar em “Permitir”.'); }catch(e){} }
+          });
+        };
+      });
+    }
+
     // Aba "Definições da experiência" — logo por baixo da última categoria do menu
     var btn = document.createElement('button');
     btn.id = 'expAba'; btn.type = 'button'; btn.setAttribute('aria-label', 'Definições da experiência'); btn.innerHTML = '⚙️ Definições';
@@ -8483,8 +8534,8 @@
 
     function blocoNotif(){
       if(!expOn('notif')) return '';
-      return '<div class="exp-bloco off"><div class="exp-tit">🔔 Notificações <span class="exp-badge">brevemente</span></div>'
-        + '<p class="exp-txt">Em breve vais poder ativar avisos de “pedido pronto” e cupões exclusivos — sem registo nem email.</p></div>';
+      // Contentor preenchido por _montarNotif() (assíncrono: verifica permissão/subscrição)
+      return '<div class="exp-bloco" id="expNotif"><div class="exp-tit">🔔 Notificações</div><p class="exp-txt">A verificar…</p></div>';
     }
 
     function blocoVibrar(){
@@ -8529,6 +8580,7 @@
       h += '<div class="exp-nota">Estas opções ficam guardadas só neste aparelho.</div>';
       h += '<button class="exp-fechar" id="expFechar">Fechar</button>';
       card.innerHTML = h;
+      try{ _montarNotif(); }catch(e){}
       // QR do cardápio — mesma biblioteca e cores usadas nos cartões de mesa / editor
       var qc = document.getElementById('expQr');
       if(qc){
