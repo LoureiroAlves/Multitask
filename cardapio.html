@@ -3242,8 +3242,13 @@
       // Moldura fixa (com o neon) e, lá dentro, os conteúdos (foto+texto) deslizam da direita para a esquerda
       grid.innerHTML = '';
       var vp = document.createElement('div');
-      vp.style.cssText = 'position:relative;overflow:hidden;border-radius:22px;height:140px;box-shadow:0 4px 14px rgba(0,0,0,.14);';
+      vp.style.cssText = 'position:relative;border-radius:22px;height:140px;box-shadow:0 4px 14px rgba(0,0,0,.14);';
       grid.appendChild(vp);
+      // Camada de recorte: os slides deslizam aqui dentro. A máscara força o WebKit/iOS a
+      // recortar mesmo os filhos com transform (senão a foto escapava pelos cantos arredondados).
+      var clip = document.createElement('div');
+      clip.style.cssText = 'position:absolute;inset:0;overflow:hidden;border-radius:22px;-webkit-mask-image:-webkit-radial-gradient(#fff,#000);-webkit-mask-image:radial-gradient(#fff,#000);transform:translateZ(0);';
+      vp.appendChild(clip);
       function _mapaSlide(c){ var m = _mapa(c); m.neonAtivo = false; return m; }   // o neon fica na moldura
       function _buildSlide(c){
         var tmp = document.createElement('div');
@@ -3261,7 +3266,7 @@
       }
       function _seg(i){ var s = (lista[i] && lista[i].seg != null) ? lista[i].seg : pd.seg; return Math.max(2, parseInt(s, 10) || 6); }
       var idx = 0;
-      var cur = _buildSlide(lista[0]); if(cur){ cur.style.transform = 'translateX(0)'; vp.appendChild(cur); }
+      var cur = _buildSlide(lista[0]); if(cur){ cur.style.transform = 'translateX(0)'; clip.appendChild(cur); }
       _aplicarNeon(lista[0]);
       if(lista.length > 1){
         var _tick = function(){
@@ -3270,7 +3275,7 @@
             var next = _buildSlide(lista[ni]);
             if(!next){ idx = ni; _tick(); return; }
             next.style.transform = 'translateX(100%)';
-            vp.appendChild(next);
+            clip.appendChild(next);
             void next.offsetWidth;   // força o reflow para a animação arrancar
             _aplicarNeon(lista[ni]);
             if(cur) cur.style.transform = 'translateX(-100%)';
