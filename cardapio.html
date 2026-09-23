@@ -3255,6 +3255,9 @@
         _mosBuildInto(tmp, [_mapaSlide(c)], null);
         var box = tmp.firstChild;
         if(box){ var _fpx=(c&&c.fotoPosX!=null?c.fotoPosX:50), _fpy=(c&&c.fotoPosY!=null?c.fotoPosY:50); box.querySelectorAll('.mos-foto').forEach(function(im){ im.style.objectPosition = _fpx + '% ' + _fpy + '%'; }); }
+        // Remove o degradê fixo (mos-shade): no prato do dia o texto pode estar em qualquer sítio,
+        // por isso essa barra escura em baixo ficava sem uso. A leitura fica pela "caixa atrás do texto" + escurecer.
+        if(box){ var _sh = box.querySelector('.mos-shade'); if(_sh) _sh.remove(); }
         if(box){ box.style.position = 'absolute'; box.style.top = '0'; box.style.left = '0'; box.style.right = '0'; box.style.bottom = '0'; box.style.minHeight = '0'; box.style.margin = '0'; box.style.borderRadius = '0'; box.style.boxShadow = 'none'; box.style.willChange = 'transform'; box.style.transition = 'transform .5s cubic-bezier(.4,0,.2,1)'; }
         return box;
       }

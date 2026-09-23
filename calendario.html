@@ -621,8 +621,7 @@
     box.setAttribute('style', 'position:relative;height:132px;max-width:362px;margin:6px auto 0;border-radius:22px;overflow:hidden;' + bg + neon);
     var escv = parseInt(c.escurecer,10)||0;
     var plate = c.caixaTexto ? 'background:rgba(0,0,0,.45);padding:3px 8px;border-radius:8px;' : '';
-    box.innerHTML = '<span style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.5),rgba(0,0,0,.04) 55%);pointer-events:none;"></span>'
-      + (escv>0 ? '<span style="position:absolute;inset:0;background:rgba(0,0,0,' + (escv/100) + ');pointer-events:none;"></span>' : '')
+    box.innerHTML = (escv>0 ? '<span style="position:absolute;inset:0;background:rgba(0,0,0,' + (escv/100) + ');pointer-events:none;"></span>' : '')
       + '<div class="pd-dtit" style="position:absolute;left:' + (c.tx!=null?c.tx:6) + '%;top:' + (c.ty!=null?c.ty:62) + '%;color:#fff;font-family:var(--fonte-titulo,inherit);font-size:1.15rem;line-height:1.1;text-shadow:0 1px 3px rgba(0,0,0,.5);cursor:move;max-width:90%;' + plate + '">' + esc(c.titulo||'Título') + '</div>'
       + '<div class="pd-dsub" style="position:absolute;left:' + (c.subX!=null?c.subX:(c.tx!=null?c.tx:6)) + '%;top:' + (c.subY!=null?c.subY:((c.ty!=null?c.ty:62)+16)) + '%;color:#fff;font-size:.86rem;line-height:1.2;white-space:pre-line;text-shadow:0 1px 3px rgba(0,0,0,.5);cursor:move;max-width:90%;' + plate + '">' + esc(c.subtitulo||'') + '</div>';
     _pdAplicarEstilo(box.querySelector('.pd-dtit'), c.estilo);
