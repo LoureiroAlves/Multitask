@@ -4,13 +4,13 @@
 <meta charset="UTF-8">
 <script>/* Domínio oficial: se abrir pelo GitHub Pages, salta para o amesadigital.pt */(function(){try{if(/github\.io$/i.test(location.hostname)){location.replace('https://amesadigital.pt'+location.pathname.replace(/^\/Multitask/i,'')+location.search+location.hash);}}catch(e){}})();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Calendário de reservas</title>
+<title>Gestão do negócio</title>
 <meta name="theme-color" content="#3a2c18">
 <!-- Ecrã cheio quando associado ao ecrã principal (iOS) -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Reservas">
+<meta name="apple-mobile-web-app-title" content="Gestão">
 <link rel="apple-touch-icon" href="icon-reservas-180.png">
 <link rel="icon" type="image/png" href="icon-reservas-192.png">
 <style>
@@ -208,7 +208,7 @@
 </head>
 <body>
 <header class="top">
-  <h1 id="topTit">Calendário de reservas</h1>
+  <h1 id="topTit">Gestão</h1>
   <button class="hide" id="btnSair">Sair</button>
 </header>
 <div class="wrap">
@@ -372,7 +372,7 @@
     const { data:neg } = await sb.from('negocios').select('id,nome,slug,config').eq('slug', SLUG).maybeSingle();
     if(!neg){ $('loginMsg').textContent='Negócio não encontrado.'; $('loginMsg').className='msg erro'; return; }
     negocio = neg;
-    $('topTit').textContent = 'Reservas · ' + neg.nome;
+    $('topTit').textContent = 'Gestão · ' + neg.nome;
     $('loginCard').classList.add('hide'); $('painel').classList.remove('hide'); $('btnSair').classList.remove('hide');
     carregar();
   }
