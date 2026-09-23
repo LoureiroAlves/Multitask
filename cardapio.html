@@ -1102,6 +1102,7 @@
   #pratoDiaGrid{ display:none; }
   body.pratodia-on #pratoDiaGrid{ display:grid; grid-template-columns:1fr; gap:0; max-width:640px; margin:12px auto 2px; padding:0 14px; transition:opacity .26s ease; }
   #pratoDiaGrid .mos-box.tam-l, #pratoDiaGrid .mos-box.tam-g, #pratoDiaGrid .mos-box.tam-p{ grid-column:span 1; }
+  #pratoDiaGrid .pd-neon-pisca{ animation:mosNeonPisca var(--mos-neon-dur,1.4s) ease-in-out infinite; }
   /* ===== Mosaico (bento, estilo widgets do iPhone) ===== */
   #mosaicoGrid{ display:none; }
   body.mosaico-on #mosaicoGrid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; max-width:640px; margin:0 auto; padding:14px 14px 6px; }
@@ -3238,15 +3239,44 @@
       if(!on){ grid.innerHTML = ''; return; }
       // pré-carrega as fotos para não piscar cinzento ao trocar de caixa
       lista.forEach(function(c){ var fs = (c && Array.isArray(c.fotos) && c.fotos.length) ? c.fotos : (c && c.foto ? [c.foto] : []); fs.forEach(function(u){ if(u){ var im = new Image(); im.src = u; } }); });
-      var idx = 0;
+      // Moldura fixa (com o neon) e, lá dentro, os conteúdos (foto+texto) deslizam da direita para a esquerda
+      grid.innerHTML = '';
+      var vp = document.createElement('div');
+      vp.style.cssText = 'position:relative;overflow:hidden;border-radius:22px;height:140px;box-shadow:0 4px 14px rgba(0,0,0,.14);';
+      grid.appendChild(vp);
+      function _mapaSlide(c){ var m = _mapa(c); m.neonAtivo = false; return m; }   // o neon fica na moldura
+      function _buildSlide(c){
+        var tmp = document.createElement('div');
+        _mosBuildInto(tmp, [_mapaSlide(c)], null);
+        var box = tmp.firstChild;
+        if(box){ box.style.position = 'absolute'; box.style.top = '0'; box.style.left = '0'; box.style.right = '0'; box.style.bottom = '0'; box.style.minHeight = '0'; box.style.margin = '0'; box.style.borderRadius = '0'; box.style.boxShadow = 'none'; box.style.willChange = 'transform'; box.style.transition = 'transform .5s cubic-bezier(.4,0,.2,1)'; }
+        return box;
+      }
+      function _aplicarNeon(c){
+        var nc = (c && c.neonCor) || '#19e9ff';
+        vp.classList.remove('pd-neon-pisca');
+        if(c && c.neonAtivo){ vp.style.border = '2.5px solid ' + nc; vp.style.setProperty('--mos-neon-cor', nc); vp.style.boxShadow = '0 0 8px ' + nc + ', 0 0 18px ' + nc; if(c.neonPiscar) vp.classList.add('pd-neon-pisca'); }
+        else { vp.style.border = 'none'; vp.style.boxShadow = '0 4px 14px rgba(0,0,0,.14)'; }
+      }
       function _seg(i){ var s = (lista[i] && lista[i].seg != null) ? lista[i].seg : pd.seg; return Math.max(2, parseInt(s, 10) || 6); }
-      function mostrar(i){ _mosBuildInto(grid, [_mapa(lista[i])], null); }
-      mostrar(0);
+      var idx = 0;
+      var cur = _buildSlide(lista[0]); if(cur){ cur.style.transform = 'translateX(0)'; vp.appendChild(cur); }
+      _aplicarNeon(lista[0]);
       if(lista.length > 1){
         var _tick = function(){
           window.__pratoTimer = setTimeout(function(){
-            grid.style.opacity = '0';
-            setTimeout(function(){ idx = (idx + 1) % lista.length; mostrar(idx); grid.style.opacity = '1'; _tick(); }, 260);
+            var ni = (idx + 1) % lista.length;
+            var next = _buildSlide(lista[ni]);
+            if(!next){ idx = ni; _tick(); return; }
+            next.style.transform = 'translateX(100%)';
+            vp.appendChild(next);
+            void next.offsetWidth;   // força o reflow para a animação arrancar
+            _aplicarNeon(lista[ni]);
+            if(cur) cur.style.transform = 'translateX(-100%)';
+            next.style.transform = 'translateX(0)';
+            var _old = cur; cur = next; idx = ni;
+            setTimeout(function(){ if(_old && _old.parentNode) _old.parentNode.removeChild(_old); }, 560);
+            _tick();
           }, _seg(idx) * 1000);
         };
         _tick();
