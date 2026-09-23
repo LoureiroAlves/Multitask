@@ -11,6 +11,8 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Gestão">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Poppins:wght@600;800&family=Playfair+Display:wght@700;800&family=Quicksand:wght@600;700&family=Montserrat:wght@700;800&family=Bebas+Neue&family=Lobster&family=Pacifico&family=Baloo+2:wght@700;800&family=Chewy&display=swap" rel="stylesheet">
 <link rel="apple-touch-icon" href="icon-reservas-180.png">
 <link rel="icon" type="image/png" href="icon-reservas-192.png">
 <style>
@@ -227,7 +229,6 @@
       <button id="tabCal" class="tab ativo" type="button">📅 Calendário</button>
       <button id="tabDash" class="tab" type="button">📊 Painel</button>
       <button id="tabEnc" class="tab" type="button">🛍️ Encomendas</button>
-      <button id="tabPrato" class="tab" type="button">🍽️ Prato do dia</button>
       <button id="tabNotif" class="tab" type="button">🔔 Avisar</button>
       <button id="tabDef" class="tab" type="button">⚙️ Definições</button>
     </div>
@@ -248,7 +249,6 @@
     <div id="vistaDash" class="hide"></div>
     <div id="vistaDef" class="hide"></div>
     <div id="vistaEncomendas" class="hide"></div>
-    <div id="vistaPrato" class="hide"></div>
     <div id="vistaNotif" class="hide"></div>
   </div>
 </div>
@@ -344,7 +344,6 @@
   $('tabDash').onclick = () => mostrarVista('dash');
   $('tabDef').onclick = () => mostrarVista('def');
   $('tabEnc').onclick = () => mostrarVista('enc');
-  $('tabPrato').onclick = () => mostrarVista('prato');
   $('tabNotif').onclick = () => mostrarVista('notif');
   $('btnPdf').onclick = exportarPdf;
   $('mdFechar').onclick = fecharModal;
@@ -462,17 +461,14 @@
     $('vistaDash').classList.toggle('hide', qual!=='dash');
     $('vistaDef').classList.toggle('hide', qual!=='def');
     $('vistaEncomendas').classList.toggle('hide', qual!=='enc');
-    $('vistaPrato').classList.toggle('hide', qual!=='prato');
     $('vistaNotif').classList.toggle('hide', qual!=='notif');
     $('tabCal').classList.toggle('ativo', qual==='cal');
     $('tabDash').classList.toggle('ativo', qual==='dash');
     $('tabDef').classList.toggle('ativo', qual==='def');
     $('tabEnc').classList.toggle('ativo', qual==='enc');
-    $('tabPrato').classList.toggle('ativo', qual==='prato');
     $('tabNotif').classList.toggle('ativo', qual==='notif');
     if(qual==='dash') renderDashboard();
     if(qual==='def') renderDefinicoes();
-    if(qual==='prato') renderPratoDia();
     if(qual==='notif') renderNotif();
     if(_encTimer){ clearInterval(_encTimer); _encTimer = null; }
     if(qual==='enc'){
@@ -541,7 +537,42 @@
     if(!resp.ok) throw new Error('Falha ao enviar a foto (' + resp.status + ').');
     return SUPA_URL + '/storage/v1/object/public/imagens/' + nome;
   }
-  function _pdNovaCaixa(){ return { titulo:'', subtitulo:'', foto:'', escurecer:0, caixaTexto:false, tx:6, ty:62, subX:6, subY:78 }; }
+  function _pdNovaCaixa(){ return { titulo:'', subtitulo:'', foto:'', escurecer:0, caixaTexto:false, tx:6, ty:62, subX:6, subY:78, estilo:{}, estiloSub:{} }; }
+  var _PD_FONTES = [['','Padrão'],['fredoka','Fredoka'],['poppins','Poppins'],['playfair','Playfair'],['quicksand','Quicksand'],['montserrat','Montserrat'],['bebas','Bebas Neue'],['lobster','Lobster'],['pacifico','Pacifico'],['baloo','Baloo 2'],['chewy','Chewy']];
+  var _PD_FONTES_CSS = { fredoka:"'Fredoka',sans-serif", poppins:"'Poppins',sans-serif", playfair:"'Playfair Display',serif", quicksand:"'Quicksand',sans-serif", montserrat:"'Montserrat',sans-serif", bebas:"'Bebas Neue',sans-serif", lobster:"'Lobster',cursive", pacifico:"'Pacifico',cursive", baloo:"'Baloo 2',sans-serif", chewy:"'Chewy',cursive" };
+  function _pdAplicarEstilo(el, e){
+    if(!el || !e) return;
+    if(e.cor) el.style.color = e.cor;
+    if(e.fonte && _PD_FONTES_CSS[e.fonte]) el.style.fontFamily = _PD_FONTES_CSS[e.fonte];
+    if(e.tamanho) el.style.fontSize = e.tamanho + 'rem';
+    if(e.negrito) el.style.fontWeight = '800';
+    if(e.contorno){ el.style.setProperty('-webkit-text-stroke', (e.contornoLargura||1) + 'px ' + (e.contornoCor||'#000000')); el.style.paintOrder = 'stroke fill'; }
+  }
+  function _pdEstiloHTML(i, which){
+    var c = _pdCaixas[i]; var e = (which === 'tit' ? c.estilo : c.estiloSub) || {};
+    var tam = (e.tamanho != null ? e.tamanho : (which === 'tit' ? 1.15 : 0.86));
+    var opts = _PD_FONTES.map(function(o){ return '<option value="' + o[0] + '"' + ((e.fonte||'') === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('');
+    return '<div style="border-left:3px solid #eadfc6;padding-left:8px;margin-top:8px;">'
+      + '<div style="font-size:.78rem;color:#8a7a5c;font-weight:700;">Estilo do ' + (which === 'tit' ? 'título' : 'subtítulo') + '</div>'
+      + '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:6px;"><select class="pd-'+which+'-fonte" data-i="'+i+'" style="flex:1;min-width:120px;padding:7px;border:1.5px solid #e0d3b5;border-radius:8px;font-family:inherit;">'+opts+'</select>'
+      + '<label style="font-size:.78rem;color:#5a4a2c;display:flex;align-items:center;gap:4px;">Cor <input type="color" class="pd-'+which+'-cor" data-i="'+i+'" value="'+(e.cor||'#ffffff')+'" style="width:34px;height:26px;padding:0;border:none;background:none;cursor:pointer;"></label></div>'
+      + '<label style="display:block;font-size:.78rem;color:#5a4a2c;margin-top:6px;">Tamanho — <span class="pd-'+which+'-tamv" data-i="'+i+'">'+tam+'</span></label>'
+      + '<input type="range" class="pd-'+which+'-tam" data-i="'+i+'" min="0.7" max="2.6" step="0.05" value="'+tam+'" style="width:100%;accent-color:var(--dourado,#c79a3e);">'
+      + '<div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin-top:6px;">'
+      + '<label style="font-size:.82rem;display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" class="pd-'+which+'-neg" data-i="'+i+'"'+(e.negrito?' checked':'')+' style="width:auto;"> Negrito</label>'
+      + '<label style="font-size:.82rem;display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" class="pd-'+which+'-cont" data-i="'+i+'"'+(e.contorno?' checked':'')+' style="width:auto;"> Contorno</label>'
+      + '<label style="font-size:.78rem;color:#5a4a2c;display:flex;align-items:center;gap:4px;">Cor <input type="color" class="pd-'+which+'-contcor" data-i="'+i+'" value="'+(e.contornoCor||'#000000')+'" style="width:34px;height:26px;padding:0;border:none;background:none;cursor:pointer;"></label>'
+      + '</div></div>';
+  }
+  function _pdWireEstilo(box, which){
+    function obj(el){ var c = _pdCaixas[+el.dataset.i]; var k = which==='tit'?'estilo':'estiloSub'; c[k] = c[k] || {}; return c[k]; }
+    box.querySelectorAll('.pd-'+which+'-fonte').forEach(function(el){ el.addEventListener('change', function(){ obj(el).fonte = el.value; _pdPrevRender(+el.dataset.i); }); });
+    box.querySelectorAll('.pd-'+which+'-cor').forEach(function(el){ el.addEventListener('input', function(){ obj(el).cor = el.value; _pdPrevRender(+el.dataset.i); }); });
+    box.querySelectorAll('.pd-'+which+'-tam').forEach(function(el){ el.addEventListener('input', function(){ obj(el).tamanho = parseFloat(el.value); var s=box.querySelector('.pd-'+which+'-tamv[data-i="'+el.dataset.i+'"]'); if(s) s.textContent = el.value; _pdPrevRender(+el.dataset.i); }); });
+    box.querySelectorAll('.pd-'+which+'-neg').forEach(function(el){ el.addEventListener('change', function(){ obj(el).negrito = el.checked; _pdPrevRender(+el.dataset.i); }); });
+    box.querySelectorAll('.pd-'+which+'-cont').forEach(function(el){ el.addEventListener('change', function(){ obj(el).contorno = el.checked; _pdPrevRender(+el.dataset.i); }); });
+    box.querySelectorAll('.pd-'+which+'-contcor').forEach(function(el){ el.addEventListener('input', function(){ obj(el).contornoCor = el.value; _pdPrevRender(+el.dataset.i); }); });
+  }
   function _pdDrag(el, box, i, which){
     if(!el) return; el.style.touchAction = 'none';
     var drag = false;
@@ -561,6 +592,8 @@
       + (escv>0 ? '<span style="position:absolute;inset:0;background:rgba(0,0,0,' + (escv/100) + ');pointer-events:none;"></span>' : '')
       + '<div class="pd-dtit" style="position:absolute;left:' + (c.tx!=null?c.tx:6) + '%;top:' + (c.ty!=null?c.ty:62) + '%;color:#fff;font-weight:800;font-size:1.05rem;line-height:1.15;text-shadow:0 1px 3px rgba(0,0,0,.5);cursor:move;max-width:90%;' + plate + '">' + esc(c.titulo||'Título') + '</div>'
       + '<div class="pd-dsub" style="position:absolute;left:' + (c.subX!=null?c.subX:(c.tx!=null?c.tx:6)) + '%;top:' + (c.subY!=null?c.subY:((c.ty!=null?c.ty:62)+16)) + '%;color:#fff;font-size:.85rem;line-height:1.2;white-space:pre-line;text-shadow:0 1px 3px rgba(0,0,0,.5);cursor:move;max-width:90%;' + plate + '">' + esc(c.subtitulo||'') + '</div>';
+    _pdAplicarEstilo(box.querySelector('.pd-dtit'), c.estilo);
+    _pdAplicarEstilo(box.querySelector('.pd-dsub'), c.estiloSub);
     _pdDrag(box.querySelector('.pd-dtit'), box, i, 'tit');
     _pdDrag(box.querySelector('.pd-dsub'), box, i, 'sub');
   }
@@ -569,7 +602,9 @@
     return '<div style="border:1px solid #eadfc6;border-radius:12px;padding:12px;margin-top:10px;background:#fffdf8;">'
       + '<div style="display:flex;justify-content:space-between;align-items:center;"><strong style="color:#8a5a10;">Caixa '+(i+1)+'</strong><button type="button" class="pd-del" data-i="'+i+'" style="background:none;border:1px solid #e0d3b5;border-radius:8px;padding:4px 9px;cursor:pointer;font-size:.8rem;color:#b23b2e;">remover</button></div>'
       + '<label style="font-size:.82rem;color:#5a4a2c;display:block;margin-top:8px;">Titulo</label><input type="text" class="pd-tit" data-i="'+i+'" maxlength="60" value="'+esc(c.titulo||'')+'" placeholder="Ex.: Bacalhau a Bras" style="width:100%;box-sizing:border-box;padding:9px;border:1.5px solid #e0d3b5;border-radius:9px;margin-top:4px;font-family:inherit;">'
+      + _pdEstiloHTML(i, 'tit')
       + '<label style="font-size:.82rem;color:#5a4a2c;display:block;margin-top:8px;">Descricao / preco</label><textarea class="pd-sub" data-i="'+i+'" maxlength="140" rows="2" placeholder="Ex.: com salada - 9,50 euros" style="width:100%;box-sizing:border-box;padding:9px;border:1.5px solid #e0d3b5;border-radius:9px;margin-top:4px;font-family:inherit;resize:vertical;">'+esc(c.subtitulo||'')+'</textarea>'
+      + _pdEstiloHTML(i, 'sub')
       + '<div style="display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap;"><span style="font-size:.8rem;color:#8a7a5c;">Foto:</span>'+(c.foto?'<img src="'+esc(c.foto)+'" style="width:46px;height:46px;object-fit:cover;border-radius:8px;border:1px solid #e0d3b5;">':'')+'<label style="cursor:pointer;background:#f3ead8;border:1px solid #e0d3b5;border-radius:8px;padding:5px 9px;font-size:.82rem;"> + foto<input type="file" class="pd-foto" data-i="'+i+'" accept="image/*" style="display:none;"></label>'+(c.foto?'<button type="button" class="pd-fotorem" data-i="'+i+'" style="background:none;border:1px solid #e0d3b5;border-radius:8px;padding:5px 9px;cursor:pointer;font-size:.82rem;">sem foto</button>':'')+'</div>'
       + '<label style="display:block;margin-top:10px;font-size:.82rem;color:#5a4a2c;">Escurecer foto - <span class="pd-escv" data-i="'+i+'">'+(parseInt(c.escurecer,10)||0)+'</span>%</label><input type="range" class="pd-esc" data-i="'+i+'" min="0" max="85" step="5" value="'+(parseInt(c.escurecer,10)||0)+'" style="width:100%;accent-color:var(--dourado,#c79a3e);">'
       + '<label style="display:flex;align-items:center;gap:8px;margin-top:8px;cursor:pointer;font-size:.9rem;"><input type="checkbox" class="pd-plate" data-i="'+i+'"'+(c.caixaTexto?' checked':'')+' style="width:auto;"> Caixa atras do texto</label>'
@@ -585,6 +620,7 @@
     box.querySelectorAll('.pd-sub').forEach(function(el){ el.addEventListener('input', function(){ _pdCaixas[+el.dataset.i].subtitulo = el.value; _pdPrevRender(+el.dataset.i); }); });
     box.querySelectorAll('.pd-esc').forEach(function(el){ el.addEventListener('input', function(){ _pdCaixas[+el.dataset.i].escurecer = parseInt(el.value,10)||0; var s=box.querySelector('.pd-escv[data-i="'+el.dataset.i+'"]'); if(s) s.textContent = el.value; _pdPrevRender(+el.dataset.i); }); });
     box.querySelectorAll('.pd-plate').forEach(function(el){ el.addEventListener('change', function(){ _pdCaixas[+el.dataset.i].caixaTexto = el.checked; _pdPrevRender(+el.dataset.i); }); });
+    _pdWireEstilo(box, 'tit'); _pdWireEstilo(box, 'sub');
     box.querySelectorAll('.pd-del').forEach(function(el){ el.addEventListener('click', function(){ _pdCaixas.splice(+el.dataset.i,1); _pdRenderLista(); _pdSegVis(); }); });
     box.querySelectorAll('.pd-fotorem').forEach(function(el){ el.addEventListener('click', function(){ _pdCaixas[+el.dataset.i].foto=''; _pdRenderLista(); }); });
     box.querySelectorAll('.pd-foto').forEach(function(el){ el.addEventListener('change', async function(e){ var f=e.target.files&&e.target.files[0]; if(!f) return; var i=+el.dataset.i; $('pd_msg').textContent='A enviar foto...'; try{ var url=await _pdUpload(f); _pdCaixas[i].foto=url; $('pd_msg').textContent='Foto adicionada - Guardar para aplicar.'; _pdRenderLista(); }catch(err){ $('pd_msg').innerHTML='<span style="color:#b23b2e;">Erro: '+(err.message||err)+'</span>'; } }); });
@@ -593,7 +629,7 @@
   function renderPratoDia(){
     var v=$('vistaPrato');
     var pd=(negocio&&negocio.config&&negocio.config.pratoDia)||{};
-    var _pdMap = function(c){ return { titulo:c.titulo||'', subtitulo:c.subtitulo||'', foto:c.foto||'', escurecer:parseInt(c.escurecer,10)||0, caixaTexto:!!c.caixaTexto, tx:(c.tx!=null?c.tx:6), ty:(c.ty!=null?c.ty:62), subX:(c.subX!=null?c.subX:6), subY:(c.subY!=null?c.subY:78) }; };
+    var _pdMap = function(c){ return { titulo:c.titulo||'', subtitulo:c.subtitulo||'', foto:c.foto||'', escurecer:parseInt(c.escurecer,10)||0, caixaTexto:!!c.caixaTexto, tx:(c.tx!=null?c.tx:6), ty:(c.ty!=null?c.ty:62), subX:(c.subX!=null?c.subX:6), subY:(c.subY!=null?c.subY:78), estilo:(c.estilo&&typeof c.estilo==='object')?Object.assign({},c.estilo):{}, estiloSub:(c.estiloSub&&typeof c.estiloSub==='object')?Object.assign({},c.estiloSub):{} }; };
     _pdCaixas = (Array.isArray(pd.caixas)&&pd.caixas.length) ? pd.caixas.map(_pdMap) : ((pd.titulo||pd.subtitulo||pd.foto) ? [ _pdMap(pd) ] : [ _pdNovaCaixa() ]);
     var seg = Math.max(2, parseInt(pd.seg,10)||6);
     v.innerHTML =
@@ -611,7 +647,7 @@
     $('pd_add').addEventListener('click', function(){ _pdCaixas.push(_pdNovaCaixa()); _pdRenderLista(); _pdSegVis(); });
     $('pd_guardar').addEventListener('click', async function(){
       var b=$('pd_guardar'); b.disabled=true; var _t=b.textContent; b.textContent='A guardar...'; $('pd_msg').textContent='';
-      var caixas=_pdCaixas.filter(function(c){ return (c.titulo&&c.titulo.trim())||(c.subtitulo&&c.subtitulo.trim())||c.foto; }).map(function(c){ return { titulo:(c.titulo||'').trim(), subtitulo:(c.subtitulo||'').trim(), foto:c.foto||'', escurecer:parseInt(c.escurecer,10)||0, caixaTexto:!!c.caixaTexto, tx:(c.tx!=null?c.tx:6), ty:(c.ty!=null?c.ty:62), subX:(c.subX!=null?c.subX:6), subY:(c.subY!=null?c.subY:78) }; });
+      var caixas=_pdCaixas.filter(function(c){ return (c.titulo&&c.titulo.trim())||(c.subtitulo&&c.subtitulo.trim())||c.foto; }).map(function(c){ return { titulo:(c.titulo||'').trim(), subtitulo:(c.subtitulo||'').trim(), foto:c.foto||'', escurecer:parseInt(c.escurecer,10)||0, caixaTexto:!!c.caixaTexto, tx:(c.tx!=null?c.tx:6), ty:(c.ty!=null?c.ty:62), subX:(c.subX!=null?c.subX:6), subY:(c.subY!=null?c.subY:78), estilo:c.estilo||{}, estiloSub:c.estiloSub||{} }; });
       var novo={ ativo:$('pd_ativo').checked, seg:Math.max(2,Math.min(60,parseInt(($('pd_seg')||{}).value,10)||6)), caixas:caixas };
       var sel=await sb.from('negocios').select('config').eq('id',negocio.id).maybeSingle();
       if(sel.error){ b.disabled=false; b.textContent=_t; $('pd_msg').innerHTML='<span style="color:#b23b2e;">Erro: '+sel.error.message+'</span>'; return; }
