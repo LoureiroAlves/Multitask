@@ -2177,13 +2177,22 @@
   body.modo-cerimonias #categoriaGrid .tile[data-cerimonia="1"]{ display:flex !important; }
   body.modo-normal #linkAgenda, body.modo-takeaway #linkAgenda{ display:none !important; }
   /* Ícones dos modos dentro da própria abertura (por cima da foto), posicionáveis */
-  /* Promoção do dia no cardápio (por baixo do cabeçalho) */
-  #promoDia{ margin:10px 14px 0; }
-  #promoDia .promo-cartao{ display:flex; align-items:center; gap:10px; border-radius:14px; padding:12px 14px; background:var(--pd-bg,#fff0f5); border:1.5px solid var(--pd-cor,#e0245e); box-shadow:0 3px 12px rgba(0,0,0,.06); animation:promoEntra .5s cubic-bezier(.22,1,.36,1) both; }
-  #promoDia .promo-emoji{ font-size:1.5rem; line-height:1; flex:0 0 auto; }
-  #promoDia .promo-txt{ font-family:var(--fonte-titulo); font-weight:800; color:var(--pd-cor,#e0245e); line-height:1.2; }
-  #promoDia .promo-hora{ display:block; font-family:var(--fonte-base); font-weight:600; font-size:.72rem; color:#8a7a5c; margin-top:2px; }
-  @keyframes promoEntra{ from{ opacity:0; transform:translateY(-10px); } to{ opacity:1; transform:translateY(0); } }
+  /* Promoção do dia no cardápio (por baixo do cabeçalho) — com destaque */
+  #promoDia{ margin:12px 14px 2px; }
+  #promoDia .promo-cartao{ position:relative; overflow:hidden; display:flex; align-items:center; gap:13px; border-radius:16px; padding:15px 17px;
+    background:linear-gradient(135deg, rgba(255,255,255,.16), rgba(0,0,0,.16)), var(--pd-cor,#e0245e);
+    color:#fff; box-shadow:0 8px 24px -8px var(--pd-cor,#e0245e), 0 2px 6px rgba(0,0,0,.12);
+    animation:promoEntra .5s cubic-bezier(.22,1,.36,1) both, promoPulsa 2.6s ease-in-out 1s infinite; }
+  #promoDia .promo-cartao::after{ content:''; position:absolute; top:0; left:-60%; width:45%; height:100%; transform:skewX(-20deg);
+    background:linear-gradient(90deg, transparent, rgba(255,255,255,.35), transparent); animation:promoBrilho 3.4s ease-in-out 1.2s infinite; }
+  #promoDia .promo-emoji{ font-size:1.9rem; line-height:1; flex:0 0 auto; filter:drop-shadow(0 1px 2px rgba(0,0,0,.25)); }
+  #promoDia .promo-corpo{ position:relative; z-index:1; }
+  #promoDia .promo-selo{ display:inline-block; font-family:var(--fonte-titulo); font-weight:800; font-size:.62rem; letter-spacing:1.5px; text-transform:uppercase; background:rgba(255,255,255,.22); padding:2px 8px; border-radius:20px; margin-bottom:4px; }
+  #promoDia .promo-txt{ font-family:var(--fonte-titulo); font-weight:800; color:#fff; line-height:1.18; text-shadow:0 1px 3px rgba(0,0,0,.22); }
+  #promoDia .promo-hora{ display:block; font-family:var(--fonte-base); font-weight:600; font-size:.74rem; color:rgba(255,255,255,.9); margin-top:3px; }
+  @keyframes promoEntra{ from{ opacity:0; transform:translateY(-12px) scale(.98); } to{ opacity:1; transform:translateY(0) scale(1); } }
+  @keyframes promoPulsa{ 0%,100%{ box-shadow:0 8px 24px -8px var(--pd-cor,#e0245e), 0 2px 6px rgba(0,0,0,.12); } 50%{ box-shadow:0 12px 30px -6px var(--pd-cor,#e0245e), 0 2px 6px rgba(0,0,0,.12); } }
+  @keyframes promoBrilho{ 0%{ left:-60%; } 60%,100%{ left:130%; } }
   #introModosWrap{ position:absolute; inset:0; pointer-events:none; z-index:4; }
   #introModosWrap .im-opt{ position:absolute; left:50%; top:58%; transform:translate(-50%,-50%) translate(var(--mx,0px), var(--my,0px)); pointer-events:auto; background:transparent; border:none; cursor:pointer; font-family:var(--fonte-titulo); padding:0; touch-action:none; }
   /* Estilo PÍLULA — ícone + texto na horizontal, dentro de cápsula */
@@ -4413,7 +4422,7 @@
           var horaTxt = (p.horaIni && p.horaFim) ? ('🕒 ' + _esc(p.horaIni) + '–' + _esc(p.horaFim)) : '';
           el.style.setProperty('--pd-cor', cor);
           el.style.setProperty('--pd-bg', _suave(cor));
-          el.innerHTML = '<div class="promo-cartao"><span class="promo-emoji">🏷️</span><div><div class="promo-txt" style="font-size:' + tam + 'px;">' + _esc(texto) + '</div>' + (horaTxt ? ('<span class="promo-hora">' + horaTxt + '</span>') : '') + '</div></div>';
+          el.innerHTML = '<div class="promo-cartao"><span class="promo-emoji">🏷️</span><div class="promo-corpo"><span class="promo-selo">Promoção de hoje</span><div class="promo-txt" style="font-size:' + tam + 'px;">' + _esc(texto) + '</div>' + (horaTxt ? ('<span class="promo-hora">' + horaTxt + '</span>') : '') + '</div></div>';
           el.style.display = '';
         }catch(e){}
       };
