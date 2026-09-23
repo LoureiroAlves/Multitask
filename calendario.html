@@ -552,8 +552,8 @@
     var c = _pdCaixas[i]; var e = (which === 'tit' ? c.estilo : c.estiloSub) || {};
     var tam = (e.tamanho != null ? e.tamanho : (which === 'tit' ? 1.15 : 0.86));
     var opts = _PD_FONTES.map(function(o){ return '<option value="' + o[0] + '"' + ((e.fonte||'') === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('');
-    return '<div style="border-left:3px solid #eadfc6;padding-left:8px;margin-top:8px;">'
-      + '<div style="font-size:.78rem;color:#8a7a5c;font-weight:700;">Estilo do ' + (which === 'tit' ? 'título' : 'subtítulo') + '</div>'
+    return '<details style="margin-top:6px;border-left:3px solid #eadfc6;padding-left:8px;">'
+      + '<summary style="cursor:pointer;font-size:.8rem;color:#8a5a10;font-weight:700;">🎨 Estilo do ' + (which === 'tit' ? 'título' : 'subtítulo') + '</summary>'
       + '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:6px;"><select class="pd-'+which+'-fonte" data-i="'+i+'" style="flex:1;min-width:120px;padding:7px;border:1.5px solid #e0d3b5;border-radius:8px;font-family:inherit;">'+opts+'</select>'
       + '<label style="font-size:.78rem;color:#5a4a2c;display:flex;align-items:center;gap:4px;">Cor <input type="color" class="pd-'+which+'-cor" data-i="'+i+'" value="'+(e.cor||'#ffffff')+'" style="width:34px;height:26px;padding:0;border:none;background:none;cursor:pointer;"></label></div>'
       + '<label style="display:block;font-size:.78rem;color:#5a4a2c;margin-top:6px;">Tamanho — <span class="pd-'+which+'-tamv" data-i="'+i+'">'+tam+'</span></label>'
@@ -562,7 +562,7 @@
       + '<label style="font-size:.82rem;display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" class="pd-'+which+'-neg" data-i="'+i+'"'+(e.negrito?' checked':'')+' style="width:auto;"> Negrito</label>'
       + '<label style="font-size:.82rem;display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" class="pd-'+which+'-cont" data-i="'+i+'"'+(e.contorno?' checked':'')+' style="width:auto;"> Contorno</label>'
       + '<label style="font-size:.78rem;color:#5a4a2c;display:flex;align-items:center;gap:4px;">Cor <input type="color" class="pd-'+which+'-contcor" data-i="'+i+'" value="'+(e.contornoCor||'#000000')+'" style="width:34px;height:26px;padding:0;border:none;background:none;cursor:pointer;"></label>'
-      + '</div></div>';
+      + '</div></details>';
   }
   function _pdWireEstilo(box, which){
     function obj(el){ var c = _pdCaixas[+el.dataset.i]; var k = which==='tit'?'estilo':'estiloSub'; c[k] = c[k] || {}; return c[k]; }
@@ -601,6 +601,10 @@
     var c = _pdCaixas[i];
     return '<div style="border:1px solid #eadfc6;border-radius:12px;padding:12px;margin-top:10px;background:#fffdf8;">'
       + '<div style="display:flex;justify-content:space-between;align-items:center;"><strong style="color:#8a5a10;">Caixa '+(i+1)+'</strong><button type="button" class="pd-del" data-i="'+i+'" style="background:none;border:1px solid #e0d3b5;border-radius:8px;padding:4px 9px;cursor:pointer;font-size:.8rem;color:#b23b2e;">remover</button></div>'
+      + '<div style="position:sticky;top:4px;z-index:3;background:#fffdf8;margin:6px -12px 0;padding:4px 12px 8px;">'
+      +   '<div style="font-size:.74rem;color:#8a7a5c;">Pre-visualizacao (telemovel; arrasta o titulo e o subtitulo):</div>'
+      +   '<div class="pd-prev" data-i="'+i+'" style="position:relative;height:132px;max-width:362px;margin:5px auto 0;border-radius:22px;overflow:hidden;background:#8a6a3a;"></div>'
+      + '</div>'
       + '<label style="font-size:.82rem;color:#5a4a2c;display:block;margin-top:8px;">Titulo</label><input type="text" class="pd-tit" data-i="'+i+'" maxlength="60" value="'+esc(c.titulo||'')+'" placeholder="Ex.: Bacalhau a Bras" style="width:100%;box-sizing:border-box;padding:9px;border:1.5px solid #e0d3b5;border-radius:9px;margin-top:4px;font-family:inherit;">'
       + _pdEstiloHTML(i, 'tit')
       + '<label style="font-size:.82rem;color:#5a4a2c;display:block;margin-top:8px;">Descricao / preco</label><textarea class="pd-sub" data-i="'+i+'" maxlength="140" rows="2" placeholder="Ex.: com salada - 9,50 euros" style="width:100%;box-sizing:border-box;padding:9px;border:1.5px solid #e0d3b5;border-radius:9px;margin-top:4px;font-family:inherit;resize:vertical;">'+esc(c.subtitulo||'')+'</textarea>'
@@ -608,8 +612,6 @@
       + '<div style="display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap;"><span style="font-size:.8rem;color:#8a7a5c;">Foto:</span>'+(c.foto?'<img src="'+esc(c.foto)+'" style="width:46px;height:46px;object-fit:cover;border-radius:8px;border:1px solid #e0d3b5;">':'')+'<label style="cursor:pointer;background:#f3ead8;border:1px solid #e0d3b5;border-radius:8px;padding:5px 9px;font-size:.82rem;"> + foto<input type="file" class="pd-foto" data-i="'+i+'" accept="image/*" style="display:none;"></label>'+(c.foto?'<button type="button" class="pd-fotorem" data-i="'+i+'" style="background:none;border:1px solid #e0d3b5;border-radius:8px;padding:5px 9px;cursor:pointer;font-size:.82rem;">sem foto</button>':'')+'</div>'
       + '<label style="display:block;margin-top:10px;font-size:.82rem;color:#5a4a2c;">Escurecer foto - <span class="pd-escv" data-i="'+i+'">'+(parseInt(c.escurecer,10)||0)+'</span>%</label><input type="range" class="pd-esc" data-i="'+i+'" min="0" max="85" step="5" value="'+(parseInt(c.escurecer,10)||0)+'" style="width:100%;accent-color:var(--dourado,#c79a3e);">'
       + '<label style="display:flex;align-items:center;gap:8px;margin-top:8px;cursor:pointer;font-size:.9rem;"><input type="checkbox" class="pd-plate" data-i="'+i+'"'+(c.caixaTexto?' checked':'')+' style="width:auto;"> Caixa atras do texto</label>'
-      + '<div style="font-size:.78rem;color:#8a7a5c;margin-top:10px;">Pre-visualizacao (tamanho do telemovel; arrasta o titulo e o subtitulo):</div>'
-      + '<div class="pd-prev" data-i="'+i+'" style="position:relative;height:132px;max-width:362px;margin:6px auto 0;border-radius:22px;overflow:hidden;background:#8a6a3a;"></div>'
       + '</div>';
   }
   function _pdRenderLista(){
