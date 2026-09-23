@@ -2243,7 +2243,6 @@
   body.texto-grande .categoria-painel-conteudo .desc{ font-size:1.1em !important; }
   body.texto-grande .categoria-painel-conteudo .preco, body.texto-grande .categoria-painel-conteudo .preco-dose{ font-size:1.12em !important; }
   body.texto-grande .categoria-painel-conteudo .grupo-prato > summary, body.texto-grande .categoria-painel-conteudo .grupo-vinho > summary{ font-size:1.08em !important; }
-  body.texto-grande .tile-label{ font-size:1.1em !important; }
 
   /* ===== Cartão de fidelidade ===== */
   #fidOverlay{ position:fixed; inset:0; z-index:600; background:rgba(0,0,0,0); display:flex; align-items:flex-end; justify-content:center; padding:0; pointer-events:none; transition:background .32s ease; }
@@ -4369,8 +4368,15 @@
       document.body.classList.toggle('sep-flat', config.tileRelevo === false);
       // Definições da experiência — que blocos o dono quer mostrar
       window.__experiencia = (config.experiencia && typeof config.experiencia === 'object') ? config.experiencia : {};
-      // Cor do QR do cliente = a mesma escolhida na secção "Partilha / QR code"
-      window.__qrCor = (config.qr && config.qr.corQR) ? config.qr.corQR : '#4a3820';
+      // Cor do QR do cliente = a mesma escolhida na secção "Partilha / QR code" (por defeito preto, como lá)
+      window.__qrCor = (config.qr && config.qr.corQR) ? config.qr.corQR : '#000000';
+      // Link canónico do cardápio — construído tal como na secção "Partilha / QR code"
+      window.__linkCardapio = function(){
+        var _b = location.href.split('#')[0].split('?')[0];
+        var u = /cardapio\.html$/i.test(_b) ? _b : (/\/$/.test(_b) ? _b + 'cardapio.html' : _b.replace(/\/[^\/]*$/, '/') + 'cardapio.html');
+        try{ if(typeof SLUG !== 'undefined' && SLUG) u += '?n=' + encodeURIComponent(SLUG); }catch(e){}
+        return u;
+      };
       try{ if(window.__expRefresh) window.__expRefresh(); }catch(e){}
       // Modos de entrada (Menu / Take away / Grupos)
       window.__modosCfg = (config.modos && typeof config.modos === 'object') ? config.modos : {};
@@ -8526,7 +8532,7 @@
       // QR do cardápio — mesma biblioteca e cores usadas nos cartões de mesa / editor
       var qc = document.getElementById('expQr');
       if(qc){
-        if(window.QRCode){ try{ qc.innerHTML = ''; new QRCode(qc, { text: location.href.split('#')[0], width: 168, height: 168, colorDark: (window.__qrCor || '#4a3820'), colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M }); }catch(e){ qc.innerHTML = '<span style="font-size:.8rem;color:#8a7a5c;">QR indisponível</span>'; } }
+        if(window.QRCode){ try{ qc.innerHTML = ''; var _qurl = (window.__linkCardapio ? window.__linkCardapio() : location.href.split('#')[0]); new QRCode(qc, { text: _qurl, width: 168, height: 168, colorDark: (window.__qrCor || '#000000'), colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M }); }catch(e){ qc.innerHTML = '<span style="font-size:.8rem;color:#8a7a5c;">QR indisponível</span>'; } }
         else { qc.innerHTML = '<span style="font-size:.8rem;color:#8a7a5c;">QR a carregar…</span>'; }
       }
       var f = document.getElementById('expFechar'); if(f) f.onclick = fechar;
@@ -8543,7 +8549,7 @@
       };
       var sh = document.getElementById('expShare');
       if(sh) sh.onclick = function(){
-        var url = location.href.split('#')[0];
+        var url = (window.__linkCardapio ? window.__linkCardapio() : location.href.split('#')[0]);
         var titulo = document.title || 'Cardápio';
         if(navigator.share){ navigator.share({ title: titulo, url: url }).catch(function(){}); }
         else if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(url).then(function(){ sh.textContent = '✓ Link copiado!'; setTimeout(function(){ sh.textContent = 'Partilhar link'; }, 1600); }).catch(function(){ try{ prompt('Copia o link:', url); }catch(e){} }); }
