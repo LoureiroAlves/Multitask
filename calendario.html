@@ -537,12 +537,13 @@
     if(!resp.ok) throw new Error('Falha ao enviar a foto (' + resp.status + ').');
     return SUPA_URL + '/storage/v1/object/public/imagens/' + nome;
   }
-  function _pdNovaCaixa(){ return { titulo:'', subtitulo:'', foto:'', escurecer:0, caixaTexto:false, seg:6, tx:6, ty:62, subX:6, subY:78, estilo:{}, estiloSub:{} }; }
+  function _pdNovaCaixa(){ return { titulo:'', subtitulo:'', foto:'', escurecer:0, caixaTexto:false, seg:6, neonAtivo:false, neonCor:'#19e9ff', neonPiscar:false, tx:6, ty:62, subX:6, subY:78, estilo:{}, estiloSub:{} }; }
   // Nova caixa que HERDA a posição e os estilos da 1ª caixa (só o conteúdo fica por preencher)
   function _pdNovaHerdada(){
     var b = _pdCaixas[0];
     if(!b) return _pdNovaCaixa();
     return { titulo:'', subtitulo:'', foto:'', escurecer:(parseInt(b.escurecer,10)||0), caixaTexto:!!b.caixaTexto, seg:(parseInt(b.seg,10)||6),
+      neonAtivo:!!b.neonAtivo, neonCor:b.neonCor||'#19e9ff', neonPiscar:!!b.neonPiscar,
       tx:(b.tx!=null?b.tx:6), ty:(b.ty!=null?b.ty:62), subX:(b.subX!=null?b.subX:6), subY:(b.subY!=null?b.subY:78),
       estilo:Object.assign({}, b.estilo||{}), estiloSub:Object.assign({}, b.estiloSub||{}) };
   }
@@ -593,7 +594,8 @@
     var box = document.querySelector('.pd-prev[data-i="' + i + '"]'); if(!box) return;
     var c = _pdCaixas[i];
     var bg = c.foto ? ("background-image:url('" + c.foto + "');background-size:cover;background-position:center;") : "background:linear-gradient(135deg,#c9a06a,#7a5a2e);";
-    box.setAttribute('style', 'position:relative;height:132px;max-width:362px;margin:6px auto 0;border-radius:22px;overflow:hidden;' + bg);
+    var neon = c.neonAtivo ? ('border:2.5px solid ' + (c.neonCor||'#19e9ff') + ';box-shadow:0 0 8px ' + (c.neonCor||'#19e9ff') + ',0 0 18px ' + (c.neonCor||'#19e9ff') + ';') : '';
+    box.setAttribute('style', 'position:relative;height:132px;max-width:362px;margin:6px auto 0;border-radius:22px;overflow:hidden;' + bg + neon);
     var escv = parseInt(c.escurecer,10)||0;
     var plate = c.caixaTexto ? 'background:rgba(0,0,0,.45);padding:3px 8px;border-radius:8px;' : '';
     box.innerHTML = '<span style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.5),rgba(0,0,0,.04) 55%);pointer-events:none;"></span>'
@@ -621,6 +623,11 @@
       + '<label style="display:block;margin-top:10px;font-size:.82rem;color:#5a4a2c;">Escurecer foto - <span class="pd-escv" data-i="'+i+'">'+(parseInt(c.escurecer,10)||0)+'</span>%</label><input type="range" class="pd-esc" data-i="'+i+'" min="0" max="85" step="5" value="'+(parseInt(c.escurecer,10)||0)+'" style="width:100%;accent-color:var(--dourado,#c79a3e);">'
       + '<label style="display:flex;align-items:center;gap:8px;margin-top:8px;cursor:pointer;font-size:.9rem;"><input type="checkbox" class="pd-plate" data-i="'+i+'"'+(c.caixaTexto?' checked':'')+' style="width:auto;"> Caixa atras do texto</label>'
       + '<label style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:.82rem;color:#5a4a2c;">Tempo visivel <input type="number" class="pd-seg" data-i="'+i+'" min="2" max="60" value="'+(parseInt(c.seg,10)||6)+'" style="width:70px;padding:6px 8px;border:1.5px solid #e0d3b5;border-radius:8px;"> segundos</label>'
+      + '<div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin-top:10px;">'
+      +   '<label style="font-size:.82rem;display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" class="pd-neon" data-i="'+i+'"'+(c.neonAtivo?' checked':'')+' style="width:auto;"> Contorno neon</label>'
+      +   '<label style="font-size:.78rem;color:#5a4a2c;display:flex;align-items:center;gap:4px;">Cor <input type="color" class="pd-neoncor" data-i="'+i+'" value="'+(c.neonCor||'#19e9ff')+'" style="width:34px;height:26px;padding:0;border:none;background:none;cursor:pointer;"></label>'
+      +   '<label style="font-size:.82rem;display:flex;align-items:center;gap:6px;cursor:pointer;"><input type="checkbox" class="pd-neonpisca" data-i="'+i+'"'+(c.neonPiscar?' checked':'')+' style="width:auto;"> A piscar</label>'
+      + '</div>'
       + '</div>';
   }
   function _pdRenderLista(){
@@ -632,13 +639,16 @@
     box.querySelectorAll('.pd-esc').forEach(function(el){ el.addEventListener('input', function(){ _pdCaixas[+el.dataset.i].escurecer = parseInt(el.value,10)||0; var s=box.querySelector('.pd-escv[data-i="'+el.dataset.i+'"]'); if(s) s.textContent = el.value; _pdPrevRender(+el.dataset.i); }); });
     box.querySelectorAll('.pd-plate').forEach(function(el){ el.addEventListener('change', function(){ _pdCaixas[+el.dataset.i].caixaTexto = el.checked; _pdPrevRender(+el.dataset.i); }); });
     box.querySelectorAll('.pd-seg').forEach(function(el){ el.addEventListener('input', function(){ _pdCaixas[+el.dataset.i].seg = Math.max(2, Math.min(60, parseInt(el.value,10)||6)); }); });
+    box.querySelectorAll('.pd-neon').forEach(function(el){ el.addEventListener('change', function(){ _pdCaixas[+el.dataset.i].neonAtivo = el.checked; _pdPrevRender(+el.dataset.i); }); });
+    box.querySelectorAll('.pd-neoncor').forEach(function(el){ el.addEventListener('input', function(){ _pdCaixas[+el.dataset.i].neonCor = el.value; _pdPrevRender(+el.dataset.i); }); });
+    box.querySelectorAll('.pd-neonpisca').forEach(function(el){ el.addEventListener('change', function(){ _pdCaixas[+el.dataset.i].neonPiscar = el.checked; _pdPrevRender(+el.dataset.i); }); });
     _pdWireEstilo(box, 'tit'); _pdWireEstilo(box, 'sub');
     box.querySelectorAll('.pd-del').forEach(function(el){ el.addEventListener('click', function(){ _pdCaixas.splice(+el.dataset.i,1); _pdRenderLista(); _pdSegVis(); }); });
     box.querySelectorAll('.pd-fotorem').forEach(function(el){ el.addEventListener('click', function(){ _pdCaixas[+el.dataset.i].foto=''; _pdRenderLista(); }); });
     box.querySelectorAll('.pd-foto').forEach(function(el){ el.addEventListener('change', async function(e){ var f=e.target.files&&e.target.files[0]; if(!f) return; var i=+el.dataset.i; $('pd_msg').textContent='A enviar foto...'; try{ var url=await _pdUpload(f); _pdCaixas[i].foto=url; $('pd_msg').textContent='Foto adicionada - Guardar para aplicar.'; _pdRenderLista(); }catch(err){ $('pd_msg').innerHTML='<span style="color:#b23b2e;">Erro: '+(err.message||err)+'</span>'; } }); });
   }
   function _pdSegVis(){ var w=$('pd_segWrap'); if(w) w.style.display = _pdCaixas.length>1?'flex':'none'; }
-  function _pdMapCaixa(c){ return { titulo:c.titulo||'', subtitulo:c.subtitulo||'', foto:c.foto||'', escurecer:parseInt(c.escurecer,10)||0, caixaTexto:!!c.caixaTexto, seg:(parseInt(c.seg,10)||6), tx:(c.tx!=null?c.tx:6), ty:(c.ty!=null?c.ty:62), subX:(c.subX!=null?c.subX:6), subY:(c.subY!=null?c.subY:78), estilo:(c.estilo&&typeof c.estilo==='object')?Object.assign({},c.estilo):{}, estiloSub:(c.estiloSub&&typeof c.estiloSub==='object')?Object.assign({},c.estiloSub):{} }; }
+  function _pdMapCaixa(c){ return { titulo:c.titulo||'', subtitulo:c.subtitulo||'', foto:c.foto||'', escurecer:parseInt(c.escurecer,10)||0, caixaTexto:!!c.caixaTexto, seg:(parseInt(c.seg,10)||6), neonAtivo:!!c.neonAtivo, neonCor:c.neonCor||'#19e9ff', neonPiscar:!!c.neonPiscar, tx:(c.tx!=null?c.tx:6), ty:(c.ty!=null?c.ty:62), subX:(c.subX!=null?c.subX:6), subY:(c.subY!=null?c.subY:78), estilo:(c.estilo&&typeof c.estilo==='object')?Object.assign({},c.estilo):{}, estiloSub:(c.estiloSub&&typeof c.estiloSub==='object')?Object.assign({},c.estiloSub):{} }; }
   // Editor do prato do dia, dentro do painel de um DIA (como as promoções)
   function _pratoDoDiaHTML(iso){
     var pd = ((negocio&&negocio.config&&negocio.config.pratoDatas)||{})[iso] || {};
@@ -667,7 +677,7 @@
   }
   async function guardarPrato(iso){
     var msg=$('pd_msg'), g=$('pd_guardar'); g.disabled=true; msg.textContent='A guardar...'; msg.className='msg';
-    var caixas=_pdCaixas.filter(function(c){ return (c.titulo&&c.titulo.trim())||(c.subtitulo&&c.subtitulo.trim())||c.foto; }).map(function(c){ return { titulo:(c.titulo||'').trim(), subtitulo:(c.subtitulo||'').trim(), foto:c.foto||'', escurecer:parseInt(c.escurecer,10)||0, caixaTexto:!!c.caixaTexto, seg:Math.max(2,Math.min(60,parseInt(c.seg,10)||6)), tx:(c.tx!=null?c.tx:6), ty:(c.ty!=null?c.ty:62), subX:(c.subX!=null?c.subX:6), subY:(c.subY!=null?c.subY:78), estilo:c.estilo||{}, estiloSub:c.estiloSub||{} }; });
+    var caixas=_pdCaixas.filter(function(c){ return (c.titulo&&c.titulo.trim())||(c.subtitulo&&c.subtitulo.trim())||c.foto; }).map(function(c){ return { titulo:(c.titulo||'').trim(), subtitulo:(c.subtitulo||'').trim(), foto:c.foto||'', escurecer:parseInt(c.escurecer,10)||0, caixaTexto:!!c.caixaTexto, seg:Math.max(2,Math.min(60,parseInt(c.seg,10)||6)), neonAtivo:!!c.neonAtivo, neonCor:c.neonCor||'#19e9ff', neonPiscar:!!c.neonPiscar, tx:(c.tx!=null?c.tx:6), ty:(c.ty!=null?c.ty:62), subX:(c.subX!=null?c.subX:6), subY:(c.subY!=null?c.subY:78), estilo:c.estilo||{}, estiloSub:c.estiloSub||{} }; });
     var novo={ ativo:$('pd_ativo').checked, caixas:caixas };
     var sel=await sb.from('negocios').select('config').eq('id',negocio.id).maybeSingle();
     if(sel.error){ g.disabled=false; msg.textContent='Erro: '+sel.error.message; msg.className='msg erro'; return; }
