@@ -2178,7 +2178,11 @@
   #introModosWrap{ position:absolute; inset:0; pointer-events:none; z-index:4; }
   #introModosWrap .im-opt{ position:absolute; left:50%; top:58%; transform:translate(-50%,-50%) translate(var(--mx,0px), var(--my,0px)); pointer-events:auto; background:transparent; border:none; display:flex; flex-direction:column; align-items:center; gap:7px; cursor:pointer; font-family:var(--fonte-titulo); color:var(--dourado, #c69a3f); padding:0; touch-action:none; }
   #introModosWrap .im-inner{ display:flex; flex-direction:column; align-items:center; gap:7px; }
-  .im-inner.im-anima{ animation:imEntra .55s cubic-bezier(.22,1,.36,1) both; animation-delay:var(--ic-delay, 0ms); }
+  .im-inner.im-anima{ animation-duration:.55s; animation-timing-function:cubic-bezier(.22,1,.36,1); animation-fill-mode:both; animation-delay:var(--ic-delay, 0ms); animation-name:imSubir; }
+  .im-inner.im-anima.anim-descer{ animation-name:imDescer; }
+  .im-inner.im-anima.anim-fade{ animation-name:imFade; }
+  .im-inner.im-anima.anim-zoom{ animation-name:imZoom; }
+  .im-inner.im-anima.anim-rodar{ animation-name:imRodar; }
   /* Ecrã sem foto: mesma linha de ícones novos */
   #modoGate .mg-icons{ display:flex; gap:22px; flex-wrap:wrap; justify-content:center; }
   #modoGate .im-opt{ background:transparent; border:none; display:flex; flex-direction:column; align-items:center; gap:7px; cursor:pointer; font-family:var(--fonte-titulo); color:var(--dourado, #c69a3f); padding:0; }
@@ -2191,7 +2195,11 @@
   #introModosWrap .im-ic svg{ width:62%; height:62%; }
   #introModosWrap .im-lb{ font-size:calc(.82rem * var(--ic-scale, 1)); font-weight:600; color:#f4ead2; text-shadow:0 1px 4px rgba(0,0,0,.65); letter-spacing:.3px; }
   #introModosWrap .im-opt:active{ filter:brightness(1.15); }
-  @keyframes imEntra{ from{ opacity:0; transform:translateY(44px); } to{ opacity:1; transform:translateY(0); } }
+  @keyframes imSubir{ from{ opacity:0; transform:translateY(44px); } to{ opacity:1; transform:translateY(0); } }
+  @keyframes imDescer{ from{ opacity:0; transform:translateY(-44px); } to{ opacity:1; transform:translateY(0); } }
+  @keyframes imFade{ from{ opacity:0; } to{ opacity:1; } }
+  @keyframes imZoom{ from{ opacity:0; transform:scale(.35); } to{ opacity:1; transform:scale(1); } }
+  @keyframes imRodar{ from{ opacity:0; transform:rotate(-22deg) scale(.5); } to{ opacity:1; transform:rotate(0) scale(1); } }
   #expOverlay{ position:fixed; inset:0; z-index:640; background:rgba(0,0,0,0); display:flex; align-items:flex-end; justify-content:center; padding:0; pointer-events:none; transition:background .3s ease; }
   #expOverlay.aberto{ background:rgba(0,0,0,0.5); pointer-events:auto; }
   .exp-card{ background:#fff; width:100%; max-width:460px; max-height:88vh; overflow-y:auto; border-radius:18px 18px 0 0; padding:18px 18px calc(20px + env(safe-area-inset-bottom)); transform:translateY(100%); }
@@ -5507,6 +5515,8 @@
       // Esconde o botão antigo "Ver menu" quando há ícones de modo (a não ser que o dono o queira manter)
       var _vb = document.getElementById('introBtn'); if(_vb) _vb.style.display = cfg.verBotao ? '' : 'none';
       var pos = cfg.pos || {}, tam = cfg.tam || {};
+      var baseDelay = Math.max(0, Math.round((parseFloat(cfg.entrada) || 0) * 1000));   // momento de entrada (ms)
+      var animCls = 'anim-' + (cfg.anim || 'subir');
       var wrap = document.createElement('div'); wrap.id = 'introModosWrap';
       modos.forEach(function(m, i){
         var n = IC_MODOS[m]; if(!n) return;
@@ -5517,8 +5527,8 @@
         var dx = (p && p.x != null) ? parseFloat(p.x) : ((i - (modos.length - 1) / 2) * 98);
         var dy = (p && p.y != null) ? parseFloat(p.y) : 0;
         b.style.setProperty('--mx', dx + 'px'); b.style.setProperty('--my', dy + 'px');
-        b.style.setProperty('--ic-delay', (i * 220) + 'ms');
-        b.innerHTML = '<span class="im-inner' + (preview ? '' : ' im-anima') + '"><span class="im-ic">' + n[1] + '</span><span class="im-lb">' + n[0] + '</span></span>';
+        b.style.setProperty('--ic-delay', (baseDelay + i * 220) + 'ms');
+        b.innerHTML = '<span class="im-inner' + (preview ? '' : ' im-anima ' + animCls) + '"><span class="im-ic">' + n[1] + '</span><span class="im-lb">' + n[0] + '</span></span>';
         if(preview){ _introArrastavel(b, '--mx', '--my', 'modo:' + m); }
         else { b.onclick = function(){ if(window.__modoEscolher) window.__modoEscolher(m); }; }
         wrap.appendChild(b);
@@ -8527,13 +8537,16 @@
       var g = document.getElementById('modoGate');
       if(!g){ g = document.createElement('div'); g.id = 'modoGate'; document.body.appendChild(g); }
       var IC = window.__IC_MODOS || {};
-      var tam = window.__modosTam || ((window.__modosCfg || {}).tam) || {};
+      var _cfg = window.__modosCfg || {};
+      var tam = window.__modosTam || _cfg.tam || {};
+      var baseDelay = Math.max(0, Math.round((parseFloat(_cfg.entrada) || 0) * 1000));
+      var animCls = 'anim-' + (_cfg.anim || 'subir');
       var h = '<div class="mg-tit">Bem-vindo 👋</div><div class="mg-sub">Como queres ver o menu?</div><div class="mg-icons">';
       modos.forEach(function(m, i){
         var n = IC[m]; if(!n) return;
         var sc = parseFloat(tam[m]) || 1;
-        h += '<button class="im-opt" type="button" data-modo="' + m + '" style="--ic-scale:' + sc + '; --ic-delay:' + (i * 220) + 'ms">'
-           + '<span class="im-inner im-anima"><span class="im-ic">' + n[1] + '</span><span class="im-lb">' + n[0] + '</span></span></button>';
+        h += '<button class="im-opt" type="button" data-modo="' + m + '" style="--ic-scale:' + sc + '; --ic-delay:' + (baseDelay + i * 220) + 'ms">'
+           + '<span class="im-inner im-anima ' + animCls + '"><span class="im-ic">' + n[1] + '</span><span class="im-lb">' + n[0] + '</span></span></button>';
       });
       h += '</div>';
       g.innerHTML = h; g.style.display = 'flex';

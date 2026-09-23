@@ -953,6 +953,16 @@ amesadigital.pt</textarea>
           <input type="range" id="modoTamTakeaway" min="70" max="160" value="100" step="10" style="width:100%; accent-color:var(--dourado);">
           <label style="display:block; margin-top:8px; font-size:.85rem; color:var(--castanho);">👥 Grupos — <span id="modoTamGruposVal">100%</span></label>
           <input type="range" id="modoTamGrupos" min="70" max="160" value="100" step="10" style="width:100%; accent-color:var(--dourado);">
+          <label style="display:block; margin-top:14px; font-size:.85rem; color:var(--castanho);">Animação de entrada dos ícones</label>
+          <select id="modoAnim" style="width:100%; padding:9px; border-radius:10px; border:1px solid #d9c9a8;">
+            <option value="subir">De baixo para cima</option>
+            <option value="descer">De cima para baixo</option>
+            <option value="fade">Aparecer suave (fade)</option>
+            <option value="zoom">Zoom / pop</option>
+            <option value="rodar">Rodar a entrar</option>
+          </select>
+          <label style="display:block; margin-top:12px; font-size:.85rem; color:var(--castanho);">Momento de entrada — <span id="modoEntradaVal">0,0 s</span> depois de a abertura começar</label>
+          <input type="range" id="modoEntrada" min="0" max="4" value="0" step="0.2" style="width:100%; accent-color:var(--dourado);">
           <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin:12px 0 0; font-size:.92rem; color:var(--castanho);"><input type="checkbox" id="modoVerBotao" style="width:auto; margin:0;"> Manter também o botão antigo "Ver menu"</label>
           <p style="margin:10px 0 0; font-size:0.8rem; color:var(--castanho-suave);">Aparece se tiveres <strong>2 ou mais</strong> modos ligados (com 1, entra logo nesse). O "Grupos" só aparece se marcares categorias/pastas com "Aparece no modo Grupos" (no Menu).</p>
         </div>
@@ -2821,7 +2831,9 @@ amesadigital.pt</textarea>
           const el = document.getElementById(p[0]); if(!el) return;
           const v = Math.round((parseFloat(_tm[p[1]]) || 1) * 100); el.value = v;
           const s = document.getElementById(p[0] + 'Val'); if(s) s.textContent = v + '%';
-        }); } }
+        }); }
+      { const _an = document.getElementById('modoAnim'); if(_an) _an.value = _m.anim || 'subir'; }
+      { const _en = document.getElementById('modoEntrada'); if(_en){ const v = parseFloat(_m.entrada) || 0; _en.value = v; const s = document.getElementById('modoEntradaVal'); if(s) s.textContent = v.toFixed(1).replace('.', ',') + ' s'; } } }
     { const _c = config.carrinho || { ativo:true, precos:true };
       const _ca = document.getElementById('carrinhoAtivo'); if(_ca) _ca.checked = _c.ativo !== false;
       const _cp = document.getElementById('carrinhoPrecos'); if(_cp) _cp.checked = _c.precos !== false;
@@ -3296,6 +3308,8 @@ amesadigital.pt</textarea>
   });
   ['apBgMainOn','apBgMain','apBgSubOn','apBgSub','apTitOn','apTit','apSubOn','apSub','apSubBgOn','apSubBg','apPratosOn','apPratos','apPrecoOn','apPreco','apVoltarOn','apVoltar','apCabSubOn','apCabSub','apRodapeOn','apRodape','apDestOn','apDest'].forEach(function(id){ const el = document.getElementById(id); if(el) el.addEventListener('input', function(){ if(window.__agendarPreview) window.__agendarPreview(); }); });
   ['modoTamNormal','modoTamTakeaway','modoTamGrupos'].forEach(function(id){ const _t = document.getElementById(id); if(_t) _t.addEventListener('input', function(){ const s = document.getElementById(id + 'Val'); if(s) s.textContent = this.value + '%'; if(window.__agendarPreview) window.__agendarPreview(); }); });
+  { const _me = document.getElementById('modoEntrada'); if(_me) _me.addEventListener('input', function(){ const s = document.getElementById('modoEntradaVal'); if(s) s.textContent = (parseFloat(this.value)||0).toFixed(1).replace('.', ',') + ' s'; if(window.__agendarPreview) window.__agendarPreview(); }); }
+  { const _ma = document.getElementById('modoAnim'); if(_ma) _ma.addEventListener('change', function(){ if(window.__agendarPreview) window.__agendarPreview(); }); }
   document.getElementById('abrirEfeitoSel').addEventListener('change', e => {
     const wb = document.getElementById('wipeBox'); if(wb) wb.style.display = (e.target.value === 'wipe') ? 'block' : 'none';
   });
@@ -3854,7 +3868,9 @@ amesadigital.pt</textarea>
       { const _gm = function(id){ const e = document.getElementById(id); return e ? e.checked : false; };
         const _tv = function(id){ return (parseInt((document.getElementById(id) || {}).value, 10) || 100) / 100; };
         const _mpos = (config.modos && config.modos.pos) ? config.modos.pos : {};
-        config.modos = { ativo:_gm('modosAtivo'), normal:_gm('modoNormal'), takeaway:_gm('modoTakeaway'), grupos:_gm('modoGrupos'), verBotao:_gm('modoVerBotao'), tam: { normal:_tv('modoTamNormal'), takeaway:_tv('modoTamTakeaway'), grupos:_tv('modoTamGrupos') }, pos:_mpos }; }
+        const _anim = (document.getElementById('modoAnim') || {}).value || 'subir';
+        const _entrada = parseFloat((document.getElementById('modoEntrada') || {}).value) || 0;
+        config.modos = { ativo:_gm('modosAtivo'), normal:_gm('modoNormal'), takeaway:_gm('modoTakeaway'), grupos:_gm('modoGrupos'), verBotao:_gm('modoVerBotao'), anim:_anim, entrada:_entrada, tam: { normal:_tv('modoTamNormal'), takeaway:_tv('modoTamTakeaway'), grupos:_tv('modoTamGrupos') }, pos:_mpos }; }
       { const _ca = document.getElementById('carrinhoAtivo'), _cp = document.getElementById('carrinhoPrecos'), _cw = document.getElementById('carrinhoWhats'), _cws = document.getElementById('carrinhoWhatsSempre');
         config.carrinho = { ativo: _ca ? _ca.checked : true, precos: _cp ? _cp.checked : true, whatsapp: _cw ? _cw.value.trim() : '', whatsappSempre: _cws ? _cws.checked : false,
           levantamento: ((document.getElementById('cartLevAtivo') || {}).checked !== false),
