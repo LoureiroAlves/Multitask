@@ -1100,7 +1100,7 @@
 
   /* ===== Prato do dia — caixa estilo mosaico, logo após o cabeçalho ===== */
   #pratoDiaGrid{ display:none; }
-  body.pratodia-on #pratoDiaGrid{ display:grid; grid-template-columns:1fr; gap:0; max-width:640px; margin:12px auto 2px; padding:0 14px; }
+  body.pratodia-on #pratoDiaGrid{ display:grid; grid-template-columns:1fr; gap:0; max-width:640px; margin:12px auto 2px; padding:0 14px; transition:opacity .26s ease; }
   #pratoDiaGrid .mos-box.tam-l, #pratoDiaGrid .mos-box.tam-g, #pratoDiaGrid .mos-box.tam-p{ grid-column:span 1; }
   /* ===== Mosaico (bento, estilo widgets do iPhone) ===== */
   #mosaicoGrid{ display:none; }
@@ -3223,13 +3223,27 @@
   window.__renderPratoDia = function(cfg){
     try{
       var grid = document.getElementById('pratoDiaGrid'); if(!grid) return;
+      if(window.__pratoTimer){ clearInterval(window.__pratoTimer); window.__pratoTimer = null; }
       var pd = cfg && cfg.pratoDia;
-      var _fotos = (pd && Array.isArray(pd.fotos) && pd.fotos.length) ? pd.fotos : (pd && pd.foto ? [pd.foto] : []);
-      var tem = !!(pd && pd.ativo && ((pd.titulo && String(pd.titulo).trim()) || _fotos.length));
-      document.body.classList.toggle('pratodia-on', tem);
-      if(!tem){ grid.innerHTML = ''; return; }
-      var caixa = { tam: pd.tam || 'l', titulo: pd.titulo || '', subtitulo: pd.subtitulo || '', cor: pd.cor || '', escurecer: pd.escurecer || 0, caixaTexto: pd.caixaTexto === true, fotos: _fotos, estilo: pd.estilo || {}, estiloSub: pd.estiloSub || {} };
-      _mosBuildInto(grid, [caixa], null);
+      function _mapa(c){ var f = (c && Array.isArray(c.fotos) && c.fotos.length) ? c.fotos : (c && c.foto ? [c.foto] : []); return { tam: (c && c.tam) || 'l', titulo: (c && c.titulo) || '', subtitulo: (c && c.subtitulo) || '', cor: (c && c.cor) || '', escurecer: (c && c.escurecer) || 0, caixaTexto: !!(c && c.caixaTexto), fotos: f, estilo: (c && c.estilo) || {}, estiloSub: (c && c.estiloSub) || {}, tx:(c&&c.tx!=null?c.tx:null), ty:(c&&c.ty!=null?c.ty:null), subX:(c&&c.subX!=null?c.subX:null), subY:(c&&c.subY!=null?c.subY:null) }; }
+      function _temConteudo(c){ if(!c) return false; var f = (Array.isArray(c.fotos) && c.fotos.length) || c.foto; return !!((c.titulo && String(c.titulo).trim()) || (c.subtitulo && String(c.subtitulo).trim()) || f); }
+      // Aceita a nova lista de caixas OU o formato antigo (uma só caixa)
+      var lista = (pd && Array.isArray(pd.caixas) && pd.caixas.length) ? pd.caixas : (pd ? [pd] : []);
+      lista = lista.filter(_temConteudo);
+      var on = !!(pd && pd.ativo && lista.length);
+      document.body.classList.toggle('pratodia-on', on);
+      if(!on){ grid.innerHTML = ''; return; }
+      var idx = 0;
+      function mostrar(i){ _mosBuildInto(grid, [_mapa(lista[i])], null); }
+      mostrar(0);
+      if(lista.length > 1){
+        var seg = Math.max(2, parseInt(pd.seg, 10) || 6);
+        window.__pratoTimer = setInterval(function(){
+          idx = (idx + 1) % lista.length;
+          grid.style.opacity = '0';
+          setTimeout(function(){ mostrar(idx); grid.style.opacity = '1'; }, 260);
+        }, seg * 1000);
+      }
     }catch(e){}
   };
   // Tocar numa caixa que aponta para uma secção abre essa secção (reutiliza o menu)

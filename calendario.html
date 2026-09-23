@@ -529,55 +529,97 @@
     };
   }
   // ===== Prato do dia — caixa estilo mosaico, gerida aqui =====
-  var _pdFoto = '';
+  var _pdCaixas = [];
   async function _pdUpload(file){
     var dataUrl = await new Promise(function(res, rej){ var img = new Image(); img.onload = function(){ var c = document.createElement('canvas'); var sc = Math.min(1, 1400 / img.width); c.width = Math.round(img.width * sc); c.height = Math.round(img.height * sc); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); res(c.toDataURL('image/jpeg', 0.85)); }; img.onerror = rej; img.src = URL.createObjectURL(file); });
     var b64 = dataUrl.split(',')[1], bin = atob(b64), arr = new Uint8Array(bin.length);
     for(var i=0;i<bin.length;i++) arr[i] = bin.charCodeAt(i);
     var nome = (SLUG || 'geral') + '/' + Date.now() + '-' + Math.random().toString(36).slice(2,7) + '.jpg';
     var session = (await sb.auth.getSession()).data.session;
-    if(!session || !session.access_token) throw new Error('A tua sessão expirou. Sai e volta a entrar.');
+    if(!session || !session.access_token) throw new Error('A tua sessao expirou. Sai e volta a entrar.');
     var resp = await fetch(SUPA_URL + '/storage/v1/object/imagens/' + nome, { method:'POST', headers:{ 'Authorization':'Bearer ' + session.access_token, 'apikey':SUPA_KEY, 'Content-Type':'image/jpeg', 'x-upsert':'true' }, body:arr });
     if(!resp.ok) throw new Error('Falha ao enviar a foto (' + resp.status + ').');
     return SUPA_URL + '/storage/v1/object/public/imagens/' + nome;
   }
-  function _pdFotoUI(){ var prev = $('pd_fotoPrev'), rm = $('pd_fotoRem'); if(prev){ if(_pdFoto){ prev.src = _pdFoto; prev.style.display = ''; } else { prev.src = ''; prev.style.display = 'none'; } } if(rm) rm.style.display = _pdFoto ? '' : 'none'; }
+  function _pdNovaCaixa(){ return { titulo:'', subtitulo:'', foto:'', escurecer:0, caixaTexto:false, tx:6, ty:62, subX:6, subY:78 }; }
+  function _pdDrag(el, box, i, which){
+    if(!el) return; el.style.touchAction = 'none';
+    var drag = false;
+    el.addEventListener('pointerdown', function(ev){ ev.preventDefault(); ev.stopPropagation(); drag = true; try{ el.setPointerCapture(ev.pointerId); }catch(e){} });
+    el.addEventListener('pointermove', function(ev){ if(!drag) return; var r = box.getBoundingClientRect(); var x = Math.max(1, Math.min(92, ((ev.clientX - r.left) / r.width) * 100)); var y = Math.max(2, Math.min(90, ((ev.clientY - r.top) / r.height) * 100)); el.style.left = x + '%'; el.style.top = y + '%'; if(which === 'tit'){ _pdCaixas[i].tx = Math.round(x); _pdCaixas[i].ty = Math.round(y); } else { _pdCaixas[i].subX = Math.round(x); _pdCaixas[i].subY = Math.round(y); } });
+    el.addEventListener('pointerup', function(){ drag = false; });
+    el.addEventListener('pointercancel', function(){ drag = false; });
+  }
+  function _pdPrevRender(i){
+    var box = document.querySelector('.pd-prev[data-i="' + i + '"]'); if(!box) return;
+    var c = _pdCaixas[i];
+    var bg = c.foto ? ("background-image:url('" + c.foto + "');background-size:cover;background-position:center;") : "background:linear-gradient(135deg,#c9a06a,#7a5a2e);";
+    box.setAttribute('style', 'position:relative;height:150px;border-radius:12px;overflow:hidden;margin-top:10px;' + bg);
+    var escv = parseInt(c.escurecer,10)||0;
+    var plate = c.caixaTexto ? 'background:rgba(0,0,0,.45);padding:3px 8px;border-radius:8px;' : '';
+    box.innerHTML = '<span style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.5),rgba(0,0,0,.04) 55%);pointer-events:none;"></span>'
+      + (escv>0 ? '<span style="position:absolute;inset:0;background:rgba(0,0,0,' + (escv/100) + ');pointer-events:none;"></span>' : '')
+      + '<div class="pd-dtit" style="position:absolute;left:' + (c.tx!=null?c.tx:6) + '%;top:' + (c.ty!=null?c.ty:62) + '%;color:#fff;font-weight:800;font-size:1.05rem;line-height:1.15;text-shadow:0 1px 3px rgba(0,0,0,.5);cursor:move;max-width:90%;' + plate + '">' + esc(c.titulo||'Título') + '</div>'
+      + '<div class="pd-dsub" style="position:absolute;left:' + (c.subX!=null?c.subX:(c.tx!=null?c.tx:6)) + '%;top:' + (c.subY!=null?c.subY:((c.ty!=null?c.ty:62)+16)) + '%;color:#fff;font-size:.85rem;line-height:1.2;white-space:pre-line;text-shadow:0 1px 3px rgba(0,0,0,.5);cursor:move;max-width:90%;' + plate + '">' + esc(c.subtitulo||'') + '</div>';
+    _pdDrag(box.querySelector('.pd-dtit'), box, i, 'tit');
+    _pdDrag(box.querySelector('.pd-dsub'), box, i, 'sub');
+  }
+  function _pdCardHTML(i){
+    var c = _pdCaixas[i];
+    return '<div style="border:1px solid #eadfc6;border-radius:12px;padding:12px;margin-top:10px;background:#fffdf8;">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;"><strong style="color:#8a5a10;">Caixa '+(i+1)+'</strong><button type="button" class="pd-del" data-i="'+i+'" style="background:none;border:1px solid #e0d3b5;border-radius:8px;padding:4px 9px;cursor:pointer;font-size:.8rem;color:#b23b2e;">remover</button></div>'
+      + '<label style="font-size:.82rem;color:#5a4a2c;display:block;margin-top:8px;">Titulo</label><input type="text" class="pd-tit" data-i="'+i+'" maxlength="60" value="'+esc(c.titulo||'')+'" placeholder="Ex.: Bacalhau a Bras" style="width:100%;box-sizing:border-box;padding:9px;border:1.5px solid #e0d3b5;border-radius:9px;margin-top:4px;font-family:inherit;">'
+      + '<label style="font-size:.82rem;color:#5a4a2c;display:block;margin-top:8px;">Descricao / preco</label><textarea class="pd-sub" data-i="'+i+'" maxlength="140" rows="2" placeholder="Ex.: com salada - 9,50 euros" style="width:100%;box-sizing:border-box;padding:9px;border:1.5px solid #e0d3b5;border-radius:9px;margin-top:4px;font-family:inherit;resize:vertical;">'+esc(c.subtitulo||'')+'</textarea>'
+      + '<div style="display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap;"><span style="font-size:.8rem;color:#8a7a5c;">Foto:</span>'+(c.foto?'<img src="'+esc(c.foto)+'" style="width:46px;height:46px;object-fit:cover;border-radius:8px;border:1px solid #e0d3b5;">':'')+'<label style="cursor:pointer;background:#f3ead8;border:1px solid #e0d3b5;border-radius:8px;padding:5px 9px;font-size:.82rem;"> + foto<input type="file" class="pd-foto" data-i="'+i+'" accept="image/*" style="display:none;"></label>'+(c.foto?'<button type="button" class="pd-fotorem" data-i="'+i+'" style="background:none;border:1px solid #e0d3b5;border-radius:8px;padding:5px 9px;cursor:pointer;font-size:.82rem;">sem foto</button>':'')+'</div>'
+      + '<label style="display:block;margin-top:10px;font-size:.82rem;color:#5a4a2c;">Escurecer foto - <span class="pd-escv" data-i="'+i+'">'+(parseInt(c.escurecer,10)||0)+'</span>%</label><input type="range" class="pd-esc" data-i="'+i+'" min="0" max="85" step="5" value="'+(parseInt(c.escurecer,10)||0)+'" style="width:100%;accent-color:var(--dourado,#c79a3e);">'
+      + '<label style="display:flex;align-items:center;gap:8px;margin-top:8px;cursor:pointer;font-size:.9rem;"><input type="checkbox" class="pd-plate" data-i="'+i+'"'+(c.caixaTexto?' checked':'')+' style="width:auto;"> Caixa atras do texto</label>'
+      + '<div style="font-size:.78rem;color:#8a7a5c;margin-top:10px;">Pre-visualizacao (arrasta o titulo e o subtitulo para os posicionar):</div>'
+      + '<div class="pd-prev" data-i="'+i+'" style="position:relative;height:150px;border-radius:12px;overflow:hidden;margin-top:6px;background:#8a6a3a;"></div>'
+      + '</div>';
+  }
+  function _pdRenderLista(){
+    var box = $('pd_lista'); if(!box) return;
+    box.innerHTML = _pdCaixas.map(function(_,i){ return _pdCardHTML(i); }).join('');
+    _pdCaixas.forEach(function(_, i){ _pdPrevRender(i); });
+    box.querySelectorAll('.pd-tit').forEach(function(el){ el.addEventListener('input', function(){ _pdCaixas[+el.dataset.i].titulo = el.value; _pdPrevRender(+el.dataset.i); }); });
+    box.querySelectorAll('.pd-sub').forEach(function(el){ el.addEventListener('input', function(){ _pdCaixas[+el.dataset.i].subtitulo = el.value; _pdPrevRender(+el.dataset.i); }); });
+    box.querySelectorAll('.pd-esc').forEach(function(el){ el.addEventListener('input', function(){ _pdCaixas[+el.dataset.i].escurecer = parseInt(el.value,10)||0; var s=box.querySelector('.pd-escv[data-i="'+el.dataset.i+'"]'); if(s) s.textContent = el.value; _pdPrevRender(+el.dataset.i); }); });
+    box.querySelectorAll('.pd-plate').forEach(function(el){ el.addEventListener('change', function(){ _pdCaixas[+el.dataset.i].caixaTexto = el.checked; _pdPrevRender(+el.dataset.i); }); });
+    box.querySelectorAll('.pd-del').forEach(function(el){ el.addEventListener('click', function(){ _pdCaixas.splice(+el.dataset.i,1); _pdRenderLista(); _pdSegVis(); }); });
+    box.querySelectorAll('.pd-fotorem').forEach(function(el){ el.addEventListener('click', function(){ _pdCaixas[+el.dataset.i].foto=''; _pdRenderLista(); }); });
+    box.querySelectorAll('.pd-foto').forEach(function(el){ el.addEventListener('change', async function(e){ var f=e.target.files&&e.target.files[0]; if(!f) return; var i=+el.dataset.i; $('pd_msg').textContent='A enviar foto...'; try{ var url=await _pdUpload(f); _pdCaixas[i].foto=url; $('pd_msg').textContent='Foto adicionada - Guardar para aplicar.'; _pdRenderLista(); }catch(err){ $('pd_msg').innerHTML='<span style="color:#b23b2e;">Erro: '+(err.message||err)+'</span>'; } }); });
+  }
+  function _pdSegVis(){ var w=$('pd_segWrap'); if(w) w.style.display = _pdCaixas.length>1?'flex':'none'; }
   function renderPratoDia(){
-    var v = $('vistaPrato');
-    var pd = (negocio && negocio.config && negocio.config.pratoDia) || {};
-    _pdFoto = pd.foto || '';
-    var esc0 = parseInt(pd.escurecer, 10) || 0;
+    var v=$('vistaPrato');
+    var pd=(negocio&&negocio.config&&negocio.config.pratoDia)||{};
+    var _pdMap = function(c){ return { titulo:c.titulo||'', subtitulo:c.subtitulo||'', foto:c.foto||'', escurecer:parseInt(c.escurecer,10)||0, caixaTexto:!!c.caixaTexto, tx:(c.tx!=null?c.tx:6), ty:(c.ty!=null?c.ty:62), subX:(c.subX!=null?c.subX:6), subY:(c.subY!=null?c.subY:78) }; };
+    _pdCaixas = (Array.isArray(pd.caixas)&&pd.caixas.length) ? pd.caixas.map(_pdMap) : ((pd.titulo||pd.subtitulo||pd.foto) ? [ _pdMap(pd) ] : [ _pdNovaCaixa() ]);
+    var seg = Math.max(2, parseInt(pd.seg,10)||6);
     v.innerHTML =
       '<div style="background:#fff;border:1.5px solid #eadfc6;border-radius:14px;padding:16px;">'
-      + '<h3 style="margin:0 0 6px;">🍽️ Prato do dia</h3>'
-      + '<div style="font-size:.82rem;color:#8a7a5c;margin-bottom:10px;">Aparece como uma caixa em destaque logo por baixo do cabeçalho do teu cardápio, quando ativa.</div>'
-      + '<label style="display:flex;align-items:center;gap:8px;margin:6px 0;font-weight:700;color:#8a5a10;cursor:pointer;"><input type="checkbox" id="pd_ativo"'+(pd.ativo?' checked':'')+' style="width:auto;"> Mostrar o prato do dia no cardápio</label>'
-      + '<label style="font-weight:600;display:block;margin-top:10px;">Título</label>'
-      + '<input type="text" id="pd_tit" maxlength="60" value="'+esc(pd.titulo||'')+'" placeholder="Ex.: Bacalhau à Brás" style="width:100%;box-sizing:border-box;padding:11px;border:1.5px solid #e0d3b5;border-radius:10px;margin-top:6px;font-family:inherit;">'
-      + '<label style="font-weight:600;display:block;margin-top:10px;">Descrição / preço</label>'
-      + '<textarea id="pd_sub" maxlength="140" rows="2" placeholder="Ex.: com salada · 9,50€" style="width:100%;box-sizing:border-box;padding:10px;border:1.5px solid #e0d3b5;border-radius:10px;margin-top:6px;font-family:inherit;resize:vertical;">'+esc(pd.subtitulo||'')+'</textarea>'
-      + '<div style="display:flex;align-items:center;gap:10px;margin:12px 0 0;flex-wrap:wrap;"><span style="font-size:.82rem;color:#8a7a5c;">Foto:</span><img id="pd_fotoPrev" alt="" style="display:none;width:54px;height:54px;object-fit:cover;border-radius:8px;border:1px solid #e0d3b5;"><label style="cursor:pointer;background:#f3ead8;border:1px solid #e0d3b5;border-radius:8px;padding:6px 10px;font-size:.85rem;">＋ foto<input type="file" id="pd_fotoFile" accept="image/*" style="display:none;"></label><button type="button" id="pd_fotoRem" style="display:none;background:none;border:1px solid #e0d3b5;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:.85rem;">sem foto</button></div>'
-      + '<label style="display:block;margin-top:12px;font-size:.9rem;color:#5a4a2c;">Escurecer foto — <span id="pd_escVal">'+esc0+'</span>%</label>'
-      + '<input type="range" id="pd_esc" min="0" max="85" step="5" value="'+esc0+'" style="width:100%;accent-color:var(--dourado,#c79a3e);">'
-      + '<label style="display:flex;align-items:center;gap:8px;margin-top:10px;cursor:pointer;font-size:.92rem;"><input type="checkbox" id="pd_plate"'+(pd.caixaTexto?' checked':'')+' style="width:auto;"> Caixa atrás do texto (melhor leitura)</label>'
-      + '<button id="pd_guardar" class="pdf-btn" style="width:100%;margin-top:14px;">💾 Guardar prato do dia</button>'
+      + '<h3 style="margin:0 0 6px;">Prato do dia</h3>'
+      + '<div style="font-size:.82rem;color:#8a7a5c;margin-bottom:10px;">Uma ou varias caixas em destaque logo por baixo do cabecalho. Com mais que uma, vao rodando.</div>'
+      + '<label style="display:flex;align-items:center;gap:8px;margin:6px 0;font-weight:700;color:#8a5a10;cursor:pointer;"><input type="checkbox" id="pd_ativo"'+(pd.ativo?' checked':'')+' style="width:auto;"> Mostrar no cardapio</label>'
+      + '<div id="pd_segWrap" style="display:none;align-items:center;gap:8px;margin-top:6px;font-size:.9rem;color:#5a4a2c;">Trocar a cada <input type="number" id="pd_seg" min="2" max="60" value="'+seg+'" style="width:64px;padding:6px 8px;border:1.5px solid #e0d3b5;border-radius:8px;"> segundos</div>'
+      + '<div id="pd_lista"></div>'
+      + '<button type="button" id="pd_add" style="width:100%;margin-top:10px;background:#f3ead8;border:1.5px dashed #d9c9a8;border-radius:10px;padding:11px;cursor:pointer;font-weight:700;color:#8a5a10;"> + Adicionar caixa</button>'
+      + '<button id="pd_guardar" class="pdf-btn" style="width:100%;margin-top:12px;">Guardar prato do dia</button>'
       + '<div id="pd_msg" style="margin-top:8px;font-size:.9rem;"></div>'
       + '</div>';
-    _pdFotoUI();
-    $('pd_esc').addEventListener('input', function(){ $('pd_escVal').textContent = this.value; });
-    $('pd_fotoFile').addEventListener('change', async function(e){ var f = e.target.files && e.target.files[0]; if(!f) return; $('pd_msg').textContent = 'A enviar foto…'; try{ var url = await _pdUpload(f); _pdFoto = url; _pdFotoUI(); $('pd_msg').textContent = 'Foto adicionada ✓ — Guardar para aplicar.'; }catch(err){ $('pd_msg').innerHTML = '<span style="color:#b23b2e;">Erro: ' + (err.message||err) + '</span>'; } });
-    $('pd_fotoRem').addEventListener('click', function(){ _pdFoto = ''; _pdFotoUI(); $('pd_msg').textContent = 'Foto removida — Guardar para aplicar.'; });
+    _pdRenderLista(); _pdSegVis();
+    $('pd_add').addEventListener('click', function(){ _pdCaixas.push(_pdNovaCaixa()); _pdRenderLista(); _pdSegVis(); });
     $('pd_guardar').addEventListener('click', async function(){
-      var b = $('pd_guardar'); b.disabled = true; var _t = b.textContent; b.textContent = 'A guardar…'; $('pd_msg').textContent = '';
-      var novo = { ativo: $('pd_ativo').checked, titulo: ($('pd_tit').value||'').trim(), subtitulo: ($('pd_sub').value||'').trim(), foto: _pdFoto || '', escurecer: parseInt($('pd_esc').value,10)||0, caixaTexto: $('pd_plate').checked };
-      var sel = await sb.from('negocios').select('config').eq('id', negocio.id).maybeSingle();
-      if(sel.error){ b.disabled=false; b.textContent=_t; $('pd_msg').innerHTML = '<span style="color:#b23b2e;">Erro: ' + sel.error.message + '</span>'; return; }
-      var cfg = (sel.data && sel.data.config) || {}; cfg.pratoDia = novo;
-      var up = await sb.from('negocios').update({ config: cfg }).eq('id', negocio.id);
-      b.disabled = false; b.textContent = _t;
-      if(up.error){ $('pd_msg').innerHTML = '<span style="color:#b23b2e;">Erro: ' + up.error.message + '</span>'; return; }
-      negocio.config = cfg;
-      $('pd_msg').innerHTML = '<span style="color:#1e6b3c;">Prato do dia guardado ✓</span>';
+      var b=$('pd_guardar'); b.disabled=true; var _t=b.textContent; b.textContent='A guardar...'; $('pd_msg').textContent='';
+      var caixas=_pdCaixas.filter(function(c){ return (c.titulo&&c.titulo.trim())||(c.subtitulo&&c.subtitulo.trim())||c.foto; }).map(function(c){ return { titulo:(c.titulo||'').trim(), subtitulo:(c.subtitulo||'').trim(), foto:c.foto||'', escurecer:parseInt(c.escurecer,10)||0, caixaTexto:!!c.caixaTexto, tx:(c.tx!=null?c.tx:6), ty:(c.ty!=null?c.ty:62), subX:(c.subX!=null?c.subX:6), subY:(c.subY!=null?c.subY:78) }; });
+      var novo={ ativo:$('pd_ativo').checked, seg:Math.max(2,Math.min(60,parseInt(($('pd_seg')||{}).value,10)||6)), caixas:caixas };
+      var sel=await sb.from('negocios').select('config').eq('id',negocio.id).maybeSingle();
+      if(sel.error){ b.disabled=false; b.textContent=_t; $('pd_msg').innerHTML='<span style="color:#b23b2e;">Erro: '+sel.error.message+'</span>'; return; }
+      var cfg=(sel.data&&sel.data.config)||{}; cfg.pratoDia=novo;
+      var up=await sb.from('negocios').update({ config:cfg }).eq('id',negocio.id);
+      b.disabled=false; b.textContent=_t;
+      if(up.error){ $('pd_msg').innerHTML='<span style="color:#b23b2e;">Erro: '+up.error.message+'</span>'; return; }
+      negocio.config=cfg; $('pd_msg').innerHTML='<span style="color:#1e6b3c;">Prato do dia guardado</span>';
     });
   }
 
