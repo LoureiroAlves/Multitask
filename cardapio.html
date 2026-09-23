@@ -4414,19 +4414,19 @@
       window.__renderPromoDia = function(cfg){
         try{
           var el = document.getElementById('promoDia'); if(!el) return;
-          var pd = (cfg && cfg.promoDatas && typeof cfg.promoDatas === 'object') ? cfg.promoDatas : null;
+          cfg = cfg || {};
           function _off(){ el.style.display = 'none'; el.innerHTML = ''; }
-          if(!pd){ _off(); return; }
           var d = new Date();
           var iso = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
-          var p = pd[iso];
-          var texto = (p && p.texto) ? String(p.texto).trim() : '';
-          if(!p || p.ativo === false || !texto){ _off(); return; }
-          if(p.horaIni && p.horaFim){
-            var now = d.getHours()*60 + d.getMinutes();
-            var _m = function(s){ var a = String(s).split(':'); return (parseInt(a[0],10)||0)*60 + (parseInt(a[1],10)||0); };
-            if(!(now >= _m(p.horaIni) && now <= _m(p.horaFim))){ _off(); return; }
-          }
+          var wd = String(d.getDay());
+          var now = d.getHours()*60 + d.getMinutes();
+          var _m = function(s){ var a = String(s).split(':'); return (parseInt(a[0],10)||0)*60 + (parseInt(a[1],10)||0); };
+          function _dentroHora(o){ if(o.horaIni && o.horaFim){ return (now >= _m(o.horaIni) && now <= _m(o.horaFim)); } return true; }
+          // Promoção por DATA (gerida no calendário)
+          var pDatas = (cfg.promoDatas && typeof cfg.promoDatas === 'object') ? cfg.promoDatas : {};
+          var p = pDatas[iso];
+          if(!p || p.ativo === false || !(p.texto && String(p.texto).trim()) || !_dentroHora(p)){ _off(); return; }
+          var texto = String(p.texto).trim();
           var cor = p.cor || '#e0245e';
           var tam = parseInt(p.tamanho, 10) || 16;
           var _esc = function(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
