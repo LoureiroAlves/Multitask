@@ -6183,6 +6183,43 @@
     window.__abrirAgenda = abrir;   // permite abrir o calendário a partir do carrinho (menu de grupo)
     window.__reservaRerender = function(){ try{ if(ov.classList.contains('aberto')) render(); }catch(e){} };   // re-desenhar após sincronização com o servidor
 
+    // Arrastar a folha para baixo (pela pega/topo) para fechar
+    (function(){
+      var card = ov.querySelector('#agCard'); if(!card) return;
+      var y0=0, dy=0, drag=false;
+      card.addEventListener('pointerdown', function(e){
+        if(e.pointerType==='mouse' && e.button!==0) return;
+        if(card.scrollTop > 4) return;                                  // só quando o conteúdo está no topo
+        if((e.clientY - card.getBoundingClientRect().top) > 64) return; // só a faixa da pega/cabeçalho
+        drag=true; y0=e.clientY; dy=0; card.style.transition='none';
+        try{ card.setPointerCapture(e.pointerId); }catch(_){}
+      });
+      card.addEventListener('pointermove', function(e){
+        if(!drag) return;
+        dy = e.clientY - y0; if(dy<0) dy=0;
+        card.style.transform = 'translateY('+dy+'px)';
+      });
+      function fim(){
+        if(!drag) return; drag=false;
+        card.style.transition='transform .28s cubic-bezier(.22,.9,.3,1)';
+        if(dy > 110){
+          card.style.transform='translateY(100%)';
+          var done=function(){
+            card.removeEventListener('transitionend', done);
+            ov.classList.remove('aberto');
+            requestAnimationFrame(function(){ try{ card.getAnimations().forEach(function(a){ a.cancel(); }); }catch(_){}; card.style.transition=''; card.style.transform=''; });
+            try{ estado.diaSel=null; estado.slotSel=null; }catch(_){}
+          };
+          card.addEventListener('transitionend', done);
+        } else {
+          card.style.transform='translateY(0)';
+          setTimeout(function(){ card.style.transition=''; card.style.transform=''; }, 300);
+        }
+      }
+      card.addEventListener('pointerup', fim);
+      card.addEventListener('pointercancel', fim);
+    })();
+
     const MESES = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
     const DOW = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
     let estado = { mes:null, ano:null, diaSel:null, slotSel:null, ocupadas:{}, reservasDia:{}, pessoas:2 };
