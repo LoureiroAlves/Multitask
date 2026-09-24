@@ -174,7 +174,7 @@
   /* Pop-up de edição */
   .modal-bg{ position:fixed; inset:0; background:rgba(45,33,17,.5); display:flex; align-items:flex-end; justify-content:center; padding:0; z-index:60; }
   .modal-bg.hide{ display:none; }
-  .modal{ background:linear-gradient(180deg,#fffdf9,#fff); border-radius:22px 22px 0 0; border-top:3px solid var(--dourado,#a8712f); padding:18px 18px calc(16px + env(safe-area-inset-bottom)); width:100%; max-width:440px; max-height:90vh; overflow:auto; box-shadow:0 -12px 40px rgba(0,0,0,.30); }
+  .modal{ background:linear-gradient(180deg,#fffdf9,#fff); border-radius:22px 22px 0 0; border-top:3px solid var(--dourado,#a8712f); padding:18px 18px calc(16px + env(safe-area-inset-bottom)); margin-bottom:calc(-1 * env(safe-area-inset-bottom)); width:100%; max-width:440px; max-height:90vh; overflow:auto; box-shadow:0 -12px 40px rgba(0,0,0,.30); }
   .modal-bg:not(.hide) .modal{ animation:sheetUp .36s cubic-bezier(.2,.9,.3,1); }
   @keyframes sheetUp{ from{ transform:translateY(100%); } to{ transform:translateY(0); } }
   .modal h3{ margin:0 0 12px; font-size:1.05rem; }
@@ -1661,7 +1661,7 @@
   var D='#4a3820', S='#8a7350', L='#e6dcc8', G='#a8712f', GE='#7a5320';
   var ov=document.createElement('div'); ov.id='amModal';
   ov.style.cssText='position:fixed;inset:0;z-index:12000;display:none;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.5);padding:0;opacity:0;transition:opacity .28s ease;';
-  ov.innerHTML='<div id="amCard" style="background:linear-gradient(180deg,#fffdf9,#fff);width:100%;max-width:440px;border-radius:22px 22px 0 0;border-top:3px solid '+G+';box-shadow:0 -12px 40px rgba(0,0,0,.30);padding:20px 18px calc(20px + env(safe-area-inset-bottom));transform:translateY(100%);transition:transform .36s cubic-bezier(.2,.9,.3,1);will-change:transform;font-family:inherit;">'
+  ov.innerHTML='<div id="amCard" style="background:linear-gradient(180deg,#fffdf9,#fff);width:100%;max-width:440px;border-radius:22px 22px 0 0;border-top:3px solid '+G+';box-shadow:0 -12px 40px rgba(0,0,0,.30);padding:20px 18px calc(20px + env(safe-area-inset-bottom));margin-bottom:calc(-1 * env(safe-area-inset-bottom));transform:translateY(100%);transition:transform .36s cubic-bezier(.2,.9,.3,1);will-change:transform;font-family:inherit;">'
     +'<div id="amTit" style="color:'+D+';font-size:1.12rem;font-weight:800;text-align:center;margin-bottom:6px;"></div>'
     +'<div id="amMsg" style="color:'+S+';font-size:.9rem;line-height:1.4;text-align:center;margin-bottom:12px;white-space:pre-line;"></div>'
     +'<input id="amInput" style="display:none;width:100%;box-sizing:border-box;padding:12px 13px;border:1.5px solid '+L+';border-radius:12px;font-family:inherit;font-size:1rem;color:'+D+';background:#fff;margin-bottom:14px;">'
