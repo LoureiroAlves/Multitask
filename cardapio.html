@@ -2307,6 +2307,8 @@
   .ag-dia.minha::after{ content:'★'; position:absolute; top:0; right:2px; font-size:0.5rem; color:#e6a700; }
   #linkAgenda.tem-reserva{ position:relative; background:rgba(255,202,40,.28); border-radius:9px; box-shadow:0 0 0 2px rgba(255,202,40,.65); }
   #linkAgenda.tem-reserva::after{ content:''; position:absolute; top:-2px; right:-2px; width:9px; height:9px; border-radius:50%; background:#ffca28; box-shadow:0 0 0 2px #fff; animation:iconeResPulse 1.6s ease-in-out infinite; }
+  #linkAgenda.res-pendente{ position:relative; background:rgba(255,202,40,.28); border-radius:9px; box-shadow:0 0 0 2px rgba(255,202,40,.65); }
+  #linkAgenda.res-pendente::after{ content:''; position:absolute; top:-2px; right:-2px; width:9px; height:9px; border-radius:50%; background:#ffca28; box-shadow:0 0 0 2px #fff; animation:iconeResPulse 1.6s ease-in-out infinite; }
   @keyframes iconeResPulse{ 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.3); } }
   .ag-slots{ display:grid; grid-template-columns:repeat(auto-fill,minmax(72px,1fr)); gap:8px; margin-top:12px; }
   .ag-slot{ padding:10px 6px; border:1.5px solid var(--linha); border-radius:11px; background:linear-gradient(180deg,#fff,#fdf9f0); color:var(--castanho); font-size:0.9rem; font-weight:600; cursor:pointer; font-family:inherit; box-shadow:0 1px 2px rgba(74,56,32,.1); transition:border-color .15s, box-shadow .15s, transform .1s; }
@@ -6178,8 +6180,16 @@
     ov.innerHTML = '<div class="ag-card" id="agCard"></div>';
     document.body.appendChild(ov);
     (window.__ovAnim||(window.__ovAnim=function(cont,sel){ var pn=cont.querySelector(sel); if(!pn) return; var an=null,was=cont.classList.contains('aberto'); new MutationObserver(function(){ var open=cont.classList.contains('aberto'); if(open!==was){ was=open; if(an){try{an.cancel();}catch(e){}} if(pn.animate){ an=pn.animate(open?[{transform:'translateY(100%)'},{transform:'translateY(0)'}]:[{transform:'translateY(0)'},{transform:'translateY(100%)'}],{duration:open?380:320,easing:'cubic-bezier(.22,.9,.3,1)'}); } } var a=document.querySelector('#cartOverlay.aberto,#favOverlay.aberto,#agendaOverlay.aberto,#fidOverlay.aberto,#escOverlay.aberto,.categoria-painel.aberto'); document.documentElement.classList.toggle('scroll-lock',!!a); document.body.classList.toggle('scroll-lock',!!a); }).observe(cont,{attributes:true,attributeFilter:['class']}); }))(ov,'.ag-card');
-    ov.addEventListener('click', function(e){ if(e.target === ov) ov.classList.remove('aberto'); });
-    btn.addEventListener('click', function(){ window.__reservaMenu = ''; abrir(); });   // botão normal: reserva sem menu do carrinho
+    ov.addEventListener('click', function(e){ if(e.target === ov){ ov.classList.remove('aberto'); _fechouSemConcluir(); } });
+    btn.addEventListener('click', function(){
+      // Se há uma reserva por concluir e a folha está fechada, perguntar se quer continuar
+      if(pend && !ov.classList.contains('aberto')){
+        if(confirm('Tem uma reserva por concluir. Deseja continuar?')){ window.__reservaMenu = ''; abrir(true); }
+        else { pend = false; concluida = true; btn.classList.remove('res-pendente'); estado.diaSel = null; estado.slotSel = null; _agToast('Obrigado! 😊'); }
+        return;
+      }
+      window.__reservaMenu = ''; abrir();
+    });   // botão normal: reserva sem menu do carrinho
     window.__abrirAgenda = abrir;   // permite abrir o calendário a partir do carrinho (menu de grupo)
     window.__reservaRerender = function(){ try{ if(ov.classList.contains('aberto')) render(); }catch(e){} };   // re-desenhar após sincronização com o servidor
 
@@ -6208,7 +6218,7 @@
             card.removeEventListener('transitionend', done);
             ov.classList.remove('aberto');
             requestAnimationFrame(function(){ try{ card.getAnimations().forEach(function(a){ a.cancel(); }); }catch(_){}; card.style.transition=''; card.style.transform=''; });
-            try{ estado.diaSel=null; estado.slotSel=null; }catch(_){}
+            try{ _fechouSemConcluir(); }catch(_){}
           };
           card.addEventListener('transitionend', done);
         } else {
@@ -6223,6 +6233,21 @@
     const MESES = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
     const DOW = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
     let estado = { mes:null, ano:null, diaSel:null, slotSel:null, ocupadas:{}, reservasDia:{}, pessoas:2 };
+    let pend = false, concluida = false;   // reserva por concluir / já concluída
+    function _temProgresso(){ return !!(estado.diaSel || estado.slotSel); }
+    // Chamar quando a folha fecha SEM concluir: se houver progresso, marca pendente e destaca o ícone
+    function _fechouSemConcluir(){
+      if(!concluida && _temProgresso()){ pend = true; btn.classList.add('res-pendente'); }
+      else { pend = false; btn.classList.remove('res-pendente'); }
+    }
+    function _limparPendente(){ pend = false; concluida = true; btn.classList.remove('res-pendente'); }
+    function _agToast(msg){
+      try{ var t=document.createElement('div'); t.textContent=msg;
+        t.style.cssText='position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--castanho,#4a3820);color:#fff;padding:11px 18px;border-radius:22px;font-size:.92rem;z-index:900;box-shadow:0 4px 16px rgba(0,0,0,.28);opacity:0;transition:opacity .25s;';
+        document.body.appendChild(t); requestAnimationFrame(function(){ t.style.opacity='1'; });
+        setTimeout(function(){ t.style.opacity='0'; setTimeout(function(){ if(t.parentNode) t.parentNode.removeChild(t); },300); },2200);
+      }catch(e){ alert(msg); }
+    }
 
     function cfg(){ return window._agenda || {}; }
     function mesasExpandido(){ const a = cfg(); const arr = []; (a.mesas || []).forEach(function(m){ const q = parseInt(m.quantidade,10)||0, l = parseInt(m.lugares,10)||0; for(let i=0;i<q;i++) if(l>0) arr.push(l); }); arr.sort(function(x,y){ return x-y; }); return arr; }
@@ -6257,10 +6282,11 @@
     }
     function horariosDoDia(iso){ const a = cfg(); const wd = new Date(iso+'T00:00:00').getDay(); const hd = a.horariosDia || {}; return (hd[wd] && Array.isArray(hd[wd])) ? hd[wd] : (a.horarios || []); }
     function diaFechado(iso){ const a = cfg(); const wd = new Date(iso+'T00:00:00').getDay(); if(Array.isArray(a.diasFecho) && a.diasFecho.indexOf(wd) >= 0) return true; const fs = a.fechos || []; for(var i=0;i<fs.length;i++){ if(fs[i].de && iso >= fs[i].de && iso <= (fs[i].a || fs[i].de)) return true; } return false; }
-    function abrir(){
+    function abrir(retomar){
       const h = hoje0();
       if(estado.mes === null){ estado.mes = h.getMonth(); estado.ano = h.getFullYear(); }
-      estado.diaSel = null; estado.slotSel = null;
+      if(!retomar){ estado.diaSel = null; estado.slotSel = null; concluida = false; }   // início novo (a retomar, mantém a escolha)
+      btn.classList.add('res-pendente');   // destaca o ícone assim que a folha abre (para o cliente saber onde voltar)
       render(); requestAnimationFrame(function(){ ov.classList.add('aberto'); });
       try{ if(window._sincronizarReservas) window._sincronizarReservas(); }catch(e){}   // confirma no servidor e re-desenha as estrelas
     }
@@ -6357,7 +6383,7 @@
       }; });
       document.querySelectorAll('#agCard [data-slot]').forEach(function(b){ b.onclick = function(){ estado.slotSel = b.getAttribute('data-slot'); render(); }; });
       const pe = document.getElementById('agPessoas'); if(pe) pe.onchange = function(){ estado.pessoas = Math.max(1, parseInt(pe.value,10)||1); estado.slotSel = null; render(); };
-      const f = document.getElementById('agFechar'); if(f) f.onclick = function(){ ov.classList.remove('aberto'); };
+      const f = document.getElementById('agFechar'); if(f) f.onclick = function(){ ov.classList.remove('aberto'); _fechouSemConcluir(); };
       const env = document.getElementById('agEnviar'); if(env) env.onclick = enviar;
       const am = document.getElementById('agMinhas'); if(am) am.onclick = function(){
         const atual = (window._meuTelefoneGuardado && window._meuTelefoneGuardado()) || '+351 ';
@@ -6412,6 +6438,7 @@
           alert('Não consegui registar a reserva: ' + (error.message || error)); return false;
         }
         _jaGravou = true;
+        _limparPendente();   // reserva concluída — deixa de estar pendente e apaga o destaque do ícone
         const _rid = (typeof data === 'string') ? data : ((data && data.id) || '');   // criar_reserva devolve o uuid da reserva
         try{ if(window._guardarMinhaReserva) window._guardarMinhaReserva({ rid: _rid, rn: nome, rd: estado.diaSel, rh: estado.slotSel, rp: pessoas }); }catch(e){}
         try{ if(window._guardarMeuTelefone) window._guardarMeuTelefone(tel); }catch(e){}   // lembra o número, para recuperar as reservas em qualquer dispositivo
@@ -6465,7 +6492,7 @@
       };
       // Pagar o sinal também regista a pré-reserva (compromisso forte)
       const pb = document.getElementById('agPagar'); if(pb) pb.onclick = function(){ window.open(a.pagamentoLink, '_blank'); _gravarReserva(); };
-      const fb = document.getElementById('agFechar'); if(fb) fb.onclick = function(){ ov.classList.remove('aberto'); estado.diaSel=null; estado.slotSel=null; };
+      const fb = document.getElementById('agFechar'); if(fb) fb.onclick = function(){ ov.classList.remove('aberto'); _fechouSemConcluir(); };
     }
   })();
 
