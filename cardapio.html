@@ -2185,6 +2185,8 @@
   body.modo-cerimonias #categoriaGrid .tile[data-cerimonia="1"]{ display:flex !important; }
   body.modo-normal #linkAgenda, body.modo-takeaway #linkAgenda{ display:none !important; }
   body.res-pend #linkAgenda{ display:flex !important; }   /* reserva em curso/pendente: mostrar sempre o ícone para voltar */
+  /* já existe uma reserva do cliente: mostrar sempre o ícone (mesmo em modo normal/takeaway) */
+  body.modo-normal #linkAgenda.tem-reserva, body.modo-takeaway #linkAgenda.tem-reserva{ display:flex !important; }
   /* Ícones dos modos dentro da própria abertura (por cima da foto), posicionáveis */
   /* Puxar para atualizar — círculo discreto que aparece no topo */
   #ptr-ind{ position:fixed; top:0; left:50%; margin-left:-19px; width:38px; height:38px; border-radius:50%; background:rgba(0,0,0,.5); -webkit-backdrop-filter:blur(5px); backdrop-filter:blur(5px); display:flex; align-items:center; justify-content:center; z-index:99998; transform:translateY(-120%); opacity:0; box-shadow:0 4px 12px rgba(0,0,0,.25); pointer-events:none; }
