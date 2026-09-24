@@ -5314,8 +5314,8 @@
             }
             const ov = document.createElement('div');
             ov.id = 'gerirOverlay';
-            ov.style.cssText = 'position:fixed; inset:0; z-index:9000; background:rgba(0,0,0,.55); display:flex; align-items:center; justify-content:center; padding:16px;';
-            ov.innerHTML = '<div style="background:#fff; border-radius:18px; max-width:420px; width:100%; max-height:92vh; overflow:auto; padding:20px 18px; animation:apPop .38s cubic-bezier(.22,.8,.25,1);">'
+            ov.style.cssText = 'position:fixed; inset:0; z-index:9000; background:rgba(0,0,0,.55); display:flex; align-items:flex-end; justify-content:center; padding:0;';
+            ov.innerHTML = '<div style="background:linear-gradient(180deg,#fffdf9,var(--branco,#fff)); border-radius:22px 22px 0 0; border-top:3px solid var(--dourado,#a8712f); max-width:440px; width:100%; max-height:92vh; overflow:auto; padding:20px 18px calc(20px + env(safe-area-inset-bottom)); box-shadow:0 -12px 40px rgba(0,0,0,.30); transform:translateY(100%); transition:transform .36s cubic-bezier(.2,.9,.3,1);">'
               + '<h3 style="margin:0 0 4px; text-align:center; font-family:var(--fonte-titulo); color:var(--castanho);">A tua reserva</h3>'
               + '<div style="text-align:center; color:var(--castanho-suave); font-size:.9rem; margin-bottom:14px;">' + resumo + '</div>'
               + (tel
@@ -5334,7 +5334,9 @@
               + '</div>';
             document.body.appendChild(ov);
             document.body.style.overflow = 'hidden';
-            const fechar = function(){ ov.remove(); document.body.style.overflow = ''; };
+            const _sheet = ov.firstElementChild;
+            requestAnimationFrame(function(){ if(_sheet) _sheet.style.transform = 'translateY(0)'; });   // desliza de baixo
+            const fechar = function(){ if(_sheet){ _sheet.style.transform='translateY(100%)'; } ov.style.background='rgba(0,0,0,0)'; ov.style.transition='background .3s'; setTimeout(function(){ try{ ov.remove(); }catch(e){} document.body.style.overflow = ''; }, 320); };
             const gf = document.getElementById('grFechar'); if(gf) gf.onclick = fechar;
             const grm = document.getElementById('grRemover'); if(grm) grm.onclick = function(){ if(confirm('Remover esta reserva do teu telemóvel? O restaurante continua com ela — isto só apaga o atalho aqui.')){ remover(r); fechar(); } };
             ov.addEventListener('click', function(e){ if(e.target === ov) fechar(); });
@@ -5363,22 +5365,7 @@
           window._atualizarIconeReserva = atualizarBotao;
 
           // Pop-up na app quando o estado de uma reserva muda (o restaurante confirmou ou não teve disponibilidade)
-          function _resPopup(cor, titulo, sub){
-            try{
-              var ov = document.getElementById('resPopup'); if(ov) ov.remove();
-              ov = document.createElement('div'); ov.id = 'resPopup';
-              ov.style.cssText = 'position:fixed; inset:0; z-index:9500; background:rgba(0,0,0,.55); display:flex; align-items:center; justify-content:center; padding:18px;';
-              ov.innerHTML = '<div style="background:#fff; border-radius:18px; max-width:360px; width:100%; padding:24px 20px; text-align:center; border-top:6px solid ' + cor + '; animation:apPop .38s cubic-bezier(.22,.8,.25,1);">'
-                + '<div style="font-family:var(--fonte-titulo); font-weight:800; font-size:1.3rem; color:' + cor + '; margin-bottom:8px;">' + titulo + '</div>'
-                + '<div style="color:var(--castanho); font-size:.98rem; line-height:1.5;">' + sub + '</div>'
-                + '<button type="button" style="margin-top:18px; width:100%; background:' + cor + '; color:#fff; border:none; border-radius:12px; padding:13px; font-weight:800; font-family:inherit; cursor:pointer;">Está bem</button>'
-                + '</div>';
-              document.body.appendChild(ov);
-              var fechar = function(){ try{ ov.remove(); }catch(e){} };
-              ov.addEventListener('click', function(e){ if(e.target === ov) fechar(); });
-              var ok = ov.querySelector('button'); if(ok) ok.onclick = fechar;
-            }catch(e){}
-          }
+          function _resPopup(cor, titulo, sub){ try{ if(window.__amAlert) window.__amAlert(titulo, { texto:sub, cor:cor }); }catch(e){} }
           function _dataResumo(r){ try{ var d=new Date((r.rd||'')+'T00:00:00'); return d.getDate()+' de '+_MESES[d.getMonth()]+(r.rh?(' às '+r.rh):''); }catch(e){ return r.rd||''; } }
           function _mostrarAvisoRes(av){
             if(!av) return;
@@ -6306,8 +6293,11 @@
     bC.onclick=function(){ fechar(_prompt ? null : false); };
     ov.addEventListener('click', function(e){ if(e.target===ov) bC.onclick(); });
     inp.addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); bOk.onclick(); } });
-    window.__amConfirm=function(titulo,opts){ opts=opts||{}; _prompt=false; tit.textContent=titulo||'Confirmar'; msg.textContent=opts.texto||''; msg.style.display=opts.texto?'block':'none'; inp.style.display='none'; bOk.textContent=opts.ok||'Sim'; bC.textContent=opts.cancelar||'Não'; abrir(); return new Promise(function(r){ _res=r; }); };
-    window.__amPrompt=function(titulo,opts){ opts=opts||{}; _prompt=true; tit.textContent=titulo||''; msg.textContent=opts.texto||''; msg.style.display=opts.texto?'block':'none'; inp.style.display='block'; inp.value=(opts.valor!=null?opts.valor:''); inp.placeholder=opts.placeholder||''; inp.type=opts.tipo||'text'; bOk.textContent=opts.ok||'OK'; bC.textContent=opts.cancelar||'Cancelar'; abrir(); setTimeout(function(){ try{ inp.focus(); inp.select(); }catch(e){} },80); return new Promise(function(r){ _res=r; }); };
+    function _reset(){ bC.style.display=''; card.style.borderTopColor=''; bOk.style.background=''; tit.style.color=''; msg.style.color=''; }
+    window.__amConfirm=function(titulo,opts){ opts=opts||{}; _reset(); _prompt=false; tit.textContent=titulo||'Confirmar'; msg.textContent=opts.texto||''; msg.style.display=opts.texto?'block':'none'; inp.style.display='none'; bOk.textContent=opts.ok||'Sim'; bC.textContent=opts.cancelar||'Não'; abrir(); return new Promise(function(r){ _res=r; }); };
+    window.__amPrompt=function(titulo,opts){ opts=opts||{}; _reset(); _prompt=true; tit.textContent=titulo||''; msg.textContent=opts.texto||''; msg.style.display=opts.texto?'block':'none'; inp.style.display='block'; inp.value=(opts.valor!=null?opts.valor:''); inp.placeholder=opts.placeholder||''; inp.type=opts.tipo||'text'; bOk.textContent=opts.ok||'OK'; bC.textContent=opts.cancelar||'Cancelar'; abrir(); setTimeout(function(){ try{ inp.focus(); inp.select(); }catch(e){} },80); return new Promise(function(r){ _res=r; }); };
+    // Aviso simples (um só botão), aceita HTML na mensagem e uma cor de destaque
+    window.__amAlert=function(titulo,opts){ opts=opts||{}; _reset(); _prompt=false; tit.textContent=titulo||''; if(opts.texto!=null){ msg.innerHTML=opts.texto; msg.style.display='block'; } else { msg.style.display='none'; } inp.style.display='none'; bC.style.display='none'; bOk.textContent=opts.ok||'Está bem'; if(opts.cor){ card.style.borderTopColor=opts.cor; bOk.style.background=opts.cor; tit.style.color=opts.cor; } abrir(); return new Promise(function(r){ _res=r; }); };
   })();
 
   // ==========================================================
@@ -8009,22 +7999,7 @@
         card.addEventListener('touchend', function(){ if(x0 === null) return; const id = card.dataset.encid; card.style.transition = 'transform .18s ease, opacity .18s ease'; if(dx < -70){ card.style.transform = 'translateX(-120%)'; card.style.opacity = '0'; setTimeout(function(){ _encRemover(id); }, 170); } else { card.style.transform = ''; card.style.opacity = ''; } x0 = null; }, { passive:true });
       });
     }
-    function _encMostrarPopup(cor, titulo, sub){
-      try{
-        let ov = document.getElementById('encPopup'); if(ov) ov.remove();
-        ov = document.createElement('div'); ov.id = 'encPopup';
-        ov.style.cssText = 'position:fixed; inset:0; z-index:9500; background:rgba(0,0,0,.55); display:flex; align-items:center; justify-content:center; padding:18px;';
-        ov.innerHTML = '<div style="background:#fff; border-radius:18px; max-width:360px; width:100%; padding:24px 20px; text-align:center; border-top:6px solid ' + cor + '; animation:apPop .38s cubic-bezier(.22,.8,.25,1);">'
-          + '<div style="font-family:var(--fonte-titulo); font-weight:800; font-size:1.3rem; color:' + cor + '; margin-bottom:8px;">' + titulo + '</div>'
-          + '<div style="color:var(--castanho); font-size:.98rem; line-height:1.5;">' + sub + '</div>'
-          + '<button id="encPopupOk" type="button" style="margin-top:18px; width:100%; background:' + cor + '; color:#fff; border:none; border-radius:12px; padding:13px; font-weight:800; font-family:inherit; cursor:pointer;">Está bem</button>'
-          + '</div>';
-        document.body.appendChild(ov);
-        const fechar = function(){ try{ ov.remove(); }catch(e){} };
-        ov.addEventListener('click', function(e){ if(e.target === ov) fechar(); });
-        const ok = document.getElementById('encPopupOk'); if(ok) ok.onclick = fechar;
-      }catch(e){}
-    }
+    function _encMostrarPopup(cor, titulo, sub){ try{ if(window.__amAlert) window.__amAlert(titulo, { texto:sub, cor:cor }); }catch(e){} }
     function _encAvisar(av){
       const _n = (av.numero != null ? av.numero : '—');
       if(av.estado === 'pronta') _encMostrarPopup('#8a4b10', '🎉 Encomenda pronta!', 'A tua encomenda nº ' + _n + ' está <strong>pronta para levantar</strong>.');
