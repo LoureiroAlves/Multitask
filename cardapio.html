@@ -6220,7 +6220,7 @@
       function fim(){
         if(!drag) return; drag=false;
         card.style.transition='transform .28s cubic-bezier(.22,.9,.3,1)';
-        if(dy > 110){
+        if(dy > 140){
           card.style.transform='translateY(100%)';
           var done=function(){
             card.removeEventListener('transitionend', done);
