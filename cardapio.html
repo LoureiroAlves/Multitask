@@ -2190,6 +2190,7 @@
   body.res-pend #linkAgenda{ display:flex !important; }   /* reserva em curso/pendente: mostrar sempre o ícone para voltar */
   /* já existe uma reserva do cliente: mostrar sempre o ícone (mesmo em modo normal/takeaway) */
   body.modo-normal #linkAgenda.tem-reserva, body.modo-takeaway #linkAgenda.tem-reserva{ display:flex !important; }
+  body.modo-normal #linkAgenda.pre-reserva, body.modo-takeaway #linkAgenda.pre-reserva{ display:flex !important; }
   /* Ícones dos modos dentro da própria abertura (por cima da foto), posicionáveis */
   /* Puxar para atualizar — círculo discreto que aparece no topo */
   #ptr-ind{ position:fixed; top:0; left:50%; margin-left:-19px; width:38px; height:38px; border-radius:50%; background:rgba(0,0,0,.5); -webkit-backdrop-filter:blur(5px); backdrop-filter:blur(5px); display:flex; align-items:center; justify-content:center; z-index:99998; transform:translateY(-120%); opacity:0; box-shadow:0 4px 12px rgba(0,0,0,.25); pointer-events:none; }
@@ -2311,10 +2312,14 @@
   .ag-dia.sel{ background:linear-gradient(180deg,var(--dourado),var(--dourado-escuro)); color:#fff; border:1px solid var(--dourado-escuro); box-shadow:0 3px 11px rgba(74,56,32,.34); transform:translateY(-1px); }
   .ag-dia.minha{ background:#fff3cd; color:#5a4a1f; font-weight:800; box-shadow:inset 0 0 0 2px #e6b800; position:relative; }
   .ag-dia.minha::after{ content:'★'; position:absolute; top:0; right:2px; font-size:0.5rem; color:#e6a700; }
-  #linkAgenda.tem-reserva{ position:relative; background:rgba(255,202,40,.28); border-radius:9px; box-shadow:0 0 0 2px rgba(255,202,40,.65); }
-  #linkAgenda.tem-reserva::after{ content:''; position:absolute; top:-2px; right:-2px; width:9px; height:9px; border-radius:50%; background:#ffca28; box-shadow:0 0 0 2px #fff; animation:iconeResPulse 1.6s ease-in-out infinite; }
+  /* Reserva CONFIRMADA → verde */
+  #linkAgenda.tem-reserva{ position:relative; background:rgba(46,204,113,.26); border-radius:9px; box-shadow:0 0 0 2px rgba(46,204,113,.6); }
+  #linkAgenda.tem-reserva::after{ content:''; position:absolute; top:-2px; right:-2px; width:9px; height:9px; border-radius:50%; background:#2ecc71; box-shadow:0 0 0 2px #fff; animation:iconeResPulse 1.6s ease-in-out infinite; }
   #linkAgenda.res-pendente{ position:relative; background:rgba(255,202,40,.28); border-radius:9px; box-shadow:0 0 0 2px rgba(255,202,40,.65); }
   #linkAgenda.res-pendente::after{ content:''; position:absolute; top:-2px; right:-2px; width:9px; height:9px; border-radius:50%; background:#ffca28; box-shadow:0 0 0 2px #fff; animation:iconeResPulse 1.6s ease-in-out infinite; }
+  /* Pré-reserva enviada, a aguardar confirmação do restaurante → amarelo a piscar */
+  #linkAgenda.pre-reserva{ position:relative; background:rgba(255,202,40,.28); border-radius:9px; box-shadow:0 0 0 2px rgba(255,202,40,.65); }
+  #linkAgenda.pre-reserva::after{ content:''; position:absolute; top:-2px; right:-2px; width:9px; height:9px; border-radius:50%; background:#ffca28; box-shadow:0 0 0 2px #fff; animation:iconeResPulse 1.6s ease-in-out infinite; }
   @keyframes iconeResPulse{ 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.3); } }
   .ag-slots{ display:grid; grid-template-columns:repeat(auto-fill,minmax(72px,1fr)); gap:8px; margin-top:12px; }
   .ag-slot{ padding:10px 6px; border:1.5px solid var(--linha); border-radius:11px; background:linear-gradient(180deg,#fff,#fdf9f0); color:var(--castanho); font-size:0.9rem; font-weight:600; cursor:pointer; font-family:inherit; box-shadow:0 1px 2px rgba(74,56,32,.1); transition:border-color .15s, box-shadow .15s, transform .1s; }
@@ -5255,7 +5260,7 @@
               return new Date() < limite;
             }catch(e){ return true; }
           }
-          function _norm(r){ return r ? { rid:String(r.rid||''), rn:r.rn||'', rd:r.rd||'', rh:r.rh||'', rp:String(r.rp||'1') } : null; }
+          function _norm(r){ return r ? { rid:String(r.rid||''), rn:r.rn||'', rd:r.rd||'', rh:r.rh||'', rp:String(r.rp||'1'), estado:(r.estado||'pendente') } : null; }
           function _chave(r){ return r.rid || (r.rd + '|' + r.rh); }   // identidade: código único, ou dia+hora se não houver
           function _escrever(arr){ try{ localStorage.setItem(KEY, JSON.stringify(arr)); }catch(e){} }
           // Lê a lista (migra o formato antigo), remove as expiradas e regrava
@@ -5340,13 +5345,34 @@
           }
           window._abrirMinhaReservaDia = function(iso){ abrir(window._minhaReservaDoDia(iso)); };
 
-          // Destacar o ícone das reservas (amarelo) se houver alguma reserva por vir
+          // Ícone das reservas: AMARELO se houver reserva confirmada; VERDE se só houver pré-reserva (a aguardar confirmação)
           function atualizarBotao(){
-            const ic = document.getElementById('linkAgenda');
-            let tem = false; try{ tem = lerLista().length > 0; }catch(e){}
-            if(ic) ic.classList.toggle('tem-reserva', tem);
+            const ic = document.getElementById('linkAgenda'); if(!ic) return;
+            let temConf = false, temPend = false;
+            try{ lerLista().forEach(function(r){ if(String(r.estado) === 'confirmada') temConf = true; else temPend = true; }); }catch(e){}
+            ic.classList.toggle('tem-reserva', temConf);              // amarelo = confirmada
+            ic.classList.toggle('pre-reserva', !temConf && temPend);  // verde = pré-reserva pendente
           }
           window._atualizarIconeReserva = atualizarBotao;
+
+          // Pop-up na app quando o estado de uma reserva muda (o restaurante confirmou ou não teve disponibilidade)
+          function _resPopup(cor, titulo, sub){
+            try{
+              var ov = document.getElementById('resPopup'); if(ov) ov.remove();
+              ov = document.createElement('div'); ov.id = 'resPopup';
+              ov.style.cssText = 'position:fixed; inset:0; z-index:9500; background:rgba(0,0,0,.55); display:flex; align-items:center; justify-content:center; padding:18px;';
+              ov.innerHTML = '<div style="background:#fff; border-radius:18px; max-width:360px; width:100%; padding:24px 20px; text-align:center; border-top:6px solid ' + cor + '; animation:apPop .38s cubic-bezier(.22,.8,.25,1);">'
+                + '<div style="font-family:var(--fonte-titulo); font-weight:800; font-size:1.3rem; color:' + cor + '; margin-bottom:8px;">' + titulo + '</div>'
+                + '<div style="color:var(--castanho); font-size:.98rem; line-height:1.5;">' + sub + '</div>'
+                + '<button type="button" style="margin-top:18px; width:100%; background:' + cor + '; color:#fff; border:none; border-radius:12px; padding:13px; font-weight:800; font-family:inherit; cursor:pointer;">Está bem</button>'
+                + '</div>';
+              document.body.appendChild(ov);
+              var fechar = function(){ try{ ov.remove(); }catch(e){} };
+              ov.addEventListener('click', function(e){ if(e.target === ov) fechar(); });
+              var ok = ov.querySelector('button'); if(ok) ok.onclick = fechar;
+            }catch(e){}
+          }
+          function _dataResumo(r){ try{ var d=new Date((r.rd||'')+'T00:00:00'); return d.getDate()+' de '+_MESES[d.getMonth()]+(r.rh?(' às '+r.rh):''); }catch(e){ return r.rd||''; } }
 
           // Chegou pelo link do WhatsApp → guardar/atualizar ESSA reserva (por código) e destacar o ícone. NUNCA abre popup.
           const P = new URLSearchParams(location.search);
@@ -5374,14 +5400,21 @@
                 sbC.rpc('reservas_por_telefone', { p_negocio: window.__negocioId, p_tel: tel }).then(function(res){
                   if(!res || res.error || !res.data) return;   // função SQL ainda não criada → não mexe
                   const antes = lerLista();
+                  const prevMap = {}; antes.forEach(function(x){ if(x.rid) prevMap[String(x.rid)] = String(x.estado||''); });
                   const nova = [];
+                  let _aviso = null;
                   res.data.forEach(function(s){
                     if(!s || !s.id || String(s.estado) === 'cancelada') return;
                     const ant = antes.find(function(x){ return String(x.rid) === String(s.id); });
-                    nova.push(_norm({ rid:s.id, rn:(ant && ant.rn) || '', rd:s.data, rh:s.hora, rp:s.pessoas }));
+                    const nr = _norm({ rid:s.id, rn:(ant && ant.rn) || '', rd:s.data, rh:s.hora, rp:s.pessoas, estado:s.estado });
+                    if(prevMap[String(s.id)] && prevMap[String(s.id)] !== 'confirmada' && String(s.estado) === 'confirmada'){ _aviso = { tipo:'confirmada', r:nr }; }
+                    nova.push(nr);
                   });
+                  // reservas que existiam e deixaram de vir (canceladas/recusadas pelo restaurante)
+                  antes.forEach(function(x){ if(x.rid && prevMap[String(x.rid)] && !res.data.find(function(s){ return String(s.id)===String(x.rid); })){ if(!_aviso) _aviso = { tipo:'recusada', r:x }; } });
                   const nova2 = nova.filter(valida);
                   if(JSON.stringify(nova2) !== JSON.stringify(antes)){ _escrever(nova2); atualizarBotao(); if(window.__reservaRerender) window.__reservaRerender(); }
+                  if(_aviso){ if(_aviso.tipo==='confirmada') _resPopup('#1e6b3c','✅ Reserva confirmada','A tua reserva de '+_dataResumo(_aviso.r)+' foi confirmada pelo restaurante. Até já! 🍽️'); else _resPopup('#b23','❌ Reserva não confirmada','A tua reserva de '+_dataResumo(_aviso.r)+' não teve disponibilidade. Fala com o restaurante para uma alternativa.'); }
                 });
                 return;
               }
@@ -5393,13 +5426,16 @@
                 res.data.forEach(function(row){ if(row && row.id) srv[String(row.id)] = row; });
                 const antes = lerLista();
                 const nova = [];
+                let _aviso = null;
                 antes.forEach(function(r){
                   if(!r.rid) return;                              // legado sem código → largar
                   const s = srv[String(r.rid)];
-                  if(!s || String(s.estado) === 'cancelada') return;   // apagada/cancelada → largar
-                  nova.push(_norm({ rid:r.rid, rn:r.rn, rd:(s.data||r.rd), rh:(s.hora||r.rh), rp:(s.pessoas!=null?s.pessoas:r.rp) }));
+                  if(!s || String(s.estado) === 'cancelada'){ if(s && String(s.estado)==='cancelada' && String(r.estado)!=='cancelada' && !_aviso) _aviso={ tipo:'recusada', r:r }; return; }   // apagada/cancelada → largar (avisa se foi recusada)
+                  if(String(r.estado) !== 'confirmada' && String(s.estado) === 'confirmada'){ _aviso = { tipo:'confirmada', r:r }; }
+                  nova.push(_norm({ rid:r.rid, rn:r.rn, rd:(s.data||r.rd), rh:(s.hora||r.rh), rp:(s.pessoas!=null?s.pessoas:r.rp), estado:(s.estado||r.estado) }));
                 });
                 if(JSON.stringify(nova) !== JSON.stringify(antes)){ _escrever(nova); atualizarBotao(); if(window.__reservaRerender) window.__reservaRerender(); }
+                if(_aviso){ if(_aviso.tipo==='confirmada') _resPopup('#1e6b3c','✅ Reserva confirmada','A tua reserva de '+_dataResumo(_aviso.r)+' foi confirmada pelo restaurante. Até já! 🍽️'); else _resPopup('#b23','❌ Reserva não confirmada','A tua reserva de '+_dataResumo(_aviso.r)+' não teve disponibilidade. Fala com o restaurante para uma alternativa.'); }
               });
             }catch(e){}
           }
@@ -6402,7 +6438,8 @@
       const inicioDow = primeiro.getDay();
       const diasNoMes = new Date(estado.ano, estado.mes+1, 0).getDate();
       const podeRecuar = (estado.ano > h.getFullYear()) || (estado.ano === h.getFullYear() && estado.mes > h.getMonth());
-      const _mrDias = (window._minhaReservas ? window._minhaReservas() : []).map(function(x){ return x.rd; });
+      // Só marca no calendário do cliente as reservas CONFIRMADAS (pré-reservas pendentes não aparecem até o restaurante confirmar)
+      const _mrDias = (window._minhaReservas ? window._minhaReservas() : []).filter(function(x){ return String(x.estado) === 'confirmada'; }).map(function(x){ return x.rd; });
       let html = '';
       html += '<h3>' + (a.titulo || 'Reservas') + '</h3>';
       html += '<div class="ag-sub">Escolhe o dia e a hora da tua reserva</div>';
@@ -6573,6 +6610,9 @@
           if(!gravou){ wab.disabled = false; if(_h) _h.textContent = 'Confirma o teu pedido'; return; }
           const url = 'https://wa.me/' + telResto + '?text=' + encodeURIComponent(waMsg);
           if(_h) _h.textContent = 'Pré-reserva registada ✓';
+          // Fecha JÁ a folha → volta ao menu com o ícone a piscar verde (pré-reserva a aguardar confirmação)
+          ov.classList.remove('aberto'); estado.diaSel = null; estado.slotSel = null;
+          try{ if(window._atualizarIconeReserva) window._atualizarIconeReserva(); }catch(e){}
           const _movel = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
           if(_movel){
             wab.textContent = '✓ A abrir o WhatsApp…';
@@ -6580,7 +6620,6 @@
           } else {
             wab.textContent = '✓ Pedido enviado';
             window.open(url, '_blank');
-            ov.classList.remove('aberto'); estado.diaSel = null; estado.slotSel = null;   // no PC volta logo à app
           }
         });
       };
