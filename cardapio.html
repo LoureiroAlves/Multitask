@@ -40,7 +40,9 @@
   #introOverlay.animar #introNome{ animation:nomeFloat 3.2s ease-in-out 1.8s infinite; }
   #introSub{ font-family:var(--fonte-texto); color:#f7eeda; font-size:1.08rem; font-style:italic; text-shadow:0 1px 8px rgba(0,0,0,.5); opacity:var(--opacS,1); transform:translate(var(--posSX,0px),var(--posSY,0px)) rotate(var(--rotS,0deg)); }
   /* o subtítulo é revelado pelo invólucro .ent (animação escolhida no editar) */
-  #introBtn{ margin-top:20px; background:var(--dourado,#a8712f); color:#fff; border:none; border-radius:24px; padding:10px 24px; font-family:var(--fonte-titulo); font-size:0.86rem; font-weight:600; cursor:pointer; box-shadow:0 6px 16px rgba(0,0,0,.35); opacity:0; transform:translate(var(--posBX,0px),var(--posBY,0px)) rotate(var(--rotB,0deg)); }
+  /* Escondido por defeito: só aparece quando o negócio NÃO usa os ícones de modos (evita o flash da pílula castanha) */
+  #introBtn{ display:none; margin-top:20px; background:var(--dourado,#a8712f); color:#fff; border:none; border-radius:24px; padding:10px 24px; font-family:var(--fonte-titulo); font-size:0.86rem; font-weight:600; cursor:pointer; box-shadow:0 6px 16px rgba(0,0,0,.35); opacity:0; transform:translate(var(--posBX,0px),var(--posBY,0px)) rotate(var(--rotB,0deg)); }
+  body.usa-verbotao #introBtn{ display:inline-block; }
   #introOverlay.animar #introBtn{ animation:introBtnIn .6s ease 2.1s forwards, introPulse 1.6s ease-in-out 2.8s infinite; }
   .intro-botao-livre{ display:inline-block; margin-top:12px; background:var(--dourado,#a8712f); color:#fff; text-decoration:none; border-radius:24px; padding:10px 24px; font-family:var(--fonte-titulo); font-weight:600; font-size:0.86rem; box-shadow:0 6px 16px rgba(0,0,0,.35); cursor:pointer; }
   @keyframes letraIn{ 0%{ opacity:0; transform:translateY(-46px) rotate(-10deg) scale(.5); } 60%{ opacity:1; transform:translateY(7px) rotate(3deg) scale(1.08); } 100%{ opacity:1; transform:translateY(0) rotate(0) scale(1); } }
@@ -4580,6 +4582,8 @@
       // Modos de entrada (Menu / Take away / Grupos)
       window.__modosCfg = (config.modos && typeof config.modos === 'object') ? config.modos : {};
       window.__modosTam = (config.modos && config.modos.tam && typeof config.modos.tam === 'object') ? config.modos.tam : {};
+      // O botão antigo "Ver menu" só aparece se NÃO houver modos ativos (ou se o dono o quiser manter). Por defeito está escondido → sem flash.
+      try{ document.body.classList.toggle('usa-verbotao', (!window.__modosCfg.ativo || !!window.__modosCfg.verBotao)); }catch(e){}
       window.__waGrupo = ((config.agenda && config.agenda.whatsapp) || (config.carrinho && config.carrinho.whatsapp) || '').toString().replace(/\D/g,'').replace(/^00/,'');
       (function _goModos(){ if(window.__menuOk){ try{ if(window.__initModos) window.__initModos(); }catch(e){} } else setTimeout(_goModos, 60); })();
       // PILOTO — Fundo do menu independente dos separadores (opcional; vazio = segue o modelo)
@@ -5826,7 +5830,8 @@
       if(cfg.reservas && (preview || !!window._agenda)) modos.push('reservas');
       if(!modos.length) return;
       // Esconde o botão antigo "Ver menu" quando há ícones de modo (a não ser que o dono o queira manter)
-      var _vb = document.getElementById('introBtn'); if(_vb) _vb.style.display = cfg.verBotao ? '' : 'none';
+      try{ document.body.classList.toggle('usa-verbotao', !!cfg.verBotao); }catch(e){}
+      var _vb = document.getElementById('introBtn'); if(_vb) _vb.style.display = '';   // deixa o CSS/classe mandar
       var pos = cfg.pos || {}, tam = cfg.tam || {};
       var baseDelay = Math.max(0, Math.round((parseFloat(cfg.entrada) || 0) * 1000));   // momento de entrada (ms)
       var animCls = 'anim-' + (cfg.anim || 'subir');
