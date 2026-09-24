@@ -2285,8 +2285,8 @@
   .ag-card{ background:linear-gradient(180deg,#fffdf9,var(--branco)); width:100%; max-width:440px; max-height:88vh; overflow-y:auto; overscroll-behavior:contain; border-radius:22px 22px 0 0; padding:14px 16px calc(18px + env(safe-area-inset-bottom)); transform:translateY(100%); pointer-events:none; border-top:3px solid var(--dourado); box-shadow:0 -10px 34px rgba(0,0,0,.20); }
   .ag-card::before{ content:''; display:block; width:42px; height:4px; border-radius:3px; background:var(--linha); margin:0 auto 12px; }
   #agendaOverlay.aberto .ag-card{ transform:translateY(0); pointer-events:auto; }
-  .ag-card h3{ font-family:var(--fonte-titulo); color:var(--castanho); text-align:center; margin:0 0 2px; font-size:1.35rem; }
-  .ag-sub{ text-align:center; font-size:0.82rem; color:var(--castanho-suave); margin:0 0 14px; }
+  .ag-card h3{ font-family:var(--fonte-titulo); color:var(--castanho); text-align:center; margin:0 0 2px; font-size:1.35rem; cursor:grab; -webkit-user-select:none; user-select:none; touch-action:none; }
+  .ag-sub{ text-align:center; font-size:0.82rem; color:var(--castanho-suave); margin:0 0 14px; -webkit-user-select:none; user-select:none; touch-action:none; }
   .ag-cal-top{ display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
   .ag-cal-top button{ background:var(--branco); border:1px solid var(--ag-cor-num, var(--linha)); border-radius:10px; width:38px; height:38px; font-size:1.15rem; line-height:1; cursor:pointer; color:var(--ag-cor-num, var(--castanho)); box-shadow:0 1px 3px rgba(74,56,32,.14); transition:background .15s, transform .1s; }
   .ag-cal-top button:hover:not(:disabled){ background:var(--bege); }
@@ -6197,21 +6197,28 @@
     // Arrastar a folha para baixo (pela pega/topo) para fechar
     (function(){
       var card = ov.querySelector('#agCard'); if(!card) return;
-      var y0=0, x0=0, dy=0, drag=false, decidiu=false;
+      var y0=0, x0=0, dy=0, drag=false, decidiu=false, naZona=false;
+      function _zonaPega(e){
+        // arrastar só pela zona do cabeçalho: a pega, o título "Reservas" e o subtítulo
+        var t = e.target;
+        if(t && t.closest && (t.tagName==='H3' || t.closest('h3') || t.classList.contains('ag-sub'))) return true;
+        return (e.clientY - card.getBoundingClientRect().top) < 92;   // faixa do topo (pega + título)
+      }
       card.addEventListener('pointerdown', function(e){
         if(e.pointerType==='mouse' && e.button!==0) return;
-        y0=e.clientY; x0=e.clientX; dy=0; drag=false; decidiu=false;   // decide no 1.º movimento
+        y0=e.clientY; x0=e.clientX; dy=0; drag=false; decidiu=false;
+        naZona = _zonaPega(e);   // só arranca o arrasto se começar no cabeçalho
       });
       card.addEventListener('pointermove', function(e){
-        if(decidiu && !drag) return;   // já decidido que é scroll/toque normal
+        if(!naZona) return;
+        if(decidiu && !drag) return;
         var d = e.clientY - y0, dx = e.clientX - x0;
         if(!drag){
-          if(Math.abs(d) < 8 && Math.abs(dx) < 8) return;   // ainda a decidir
-          // arrastar-para-fechar: só quando está no topo, o gesto é para baixo e mais vertical que horizontal
-          if(card.scrollTop <= 0 && d > 0 && Math.abs(d) > Math.abs(dx)){
+          if(Math.abs(d) < 6 && Math.abs(dx) < 6) return;
+          if(d > 0 && Math.abs(d) > Math.abs(dx)){   // gesto para baixo e mais vertical que horizontal
             drag=true; card.style.transition='none';
             try{ card.setPointerCapture(e.pointerId); }catch(_){}
-          } else { decidiu=true; return; }   // deixa fazer scroll/toque normal
+          } else { decidiu=true; return; }
         }
         dy = e.clientY - y0; if(dy<0) dy=0;
         card.style.transform = 'translateY('+dy+'px)';
