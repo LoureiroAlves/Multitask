@@ -6360,10 +6360,11 @@
         card.style.transition='transform .28s cubic-bezier(.22,.9,.3,1)';
         if(dy > 140){
           card.style.transform='translateY(100%)';
+          ov.classList.remove('aberto');   // desvanecer o fundo escuro JÁ, em paralelo com o deslizar (tal como no fecho normal) — assim a faixa não fica para trás
+          requestAnimationFrame(function(){ try{ card.getAnimations().forEach(function(a){ a.cancel(); }); }catch(_){} });
           var done=function(){
             card.removeEventListener('transitionend', done);
-            ov.classList.remove('aberto');
-            requestAnimationFrame(function(){ try{ card.getAnimations().forEach(function(a){ a.cancel(); }); }catch(_){}; card.style.transition=''; card.style.transform=''; });
+            requestAnimationFrame(function(){ card.style.transition=''; card.style.transform=''; });
             try{ _fechouSemConcluir(); }catch(_){}
           };
           card.addEventListener('transitionend', done);
