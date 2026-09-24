@@ -2256,7 +2256,7 @@
   @keyframes imRodar{ from{ opacity:0; transform:rotate(-22deg) scale(.5); } to{ opacity:1; transform:rotate(0) scale(1); } }
   #expOverlay{ position:fixed; inset:0; z-index:640; background:rgba(0,0,0,0); display:flex; align-items:flex-end; justify-content:center; padding:0; pointer-events:none; transition:background .3s ease; }
   #expOverlay.aberto{ background:rgba(0,0,0,0.5); pointer-events:auto; }
-  .exp-card{ background:#fff; width:100%; max-width:460px; max-height:88vh; overflow-y:auto; border-radius:18px 18px 0 0; padding:18px 18px calc(20px + env(safe-area-inset-bottom)); transform:translateY(100%); box-shadow:0 140px 0 0 #fff; }
+  .exp-card{ background:#fff; width:100%; max-width:460px; max-height:88vh; overflow-y:auto; border-radius:18px 18px 0 0; padding:18px 18px calc(20px + env(safe-area-inset-bottom)); transform:translateY(100%); }
   #expOverlay.aberto .exp-card{ transform:translateY(0); }
   .exp-card h3{ font-family:var(--fonte-titulo); color:#3a2c18; margin:0 0 2px; font-size:1.25rem; text-align:center; }
   .exp-sub{ text-align:center; color:#8a7a5c; font-size:.82rem; margin:0 0 14px; }
@@ -2286,10 +2286,10 @@
   #fidOverlay.aberto{ background:rgba(0,0,0,0.55); pointer-events:auto; }
 
   /* ===== Agenda / Reservas ===== */
-  #agendaOverlay{ position:fixed; inset:0; z-index:660; background:rgba(0,0,0,0); display:flex; align-items:flex-end; justify-content:center; padding:0 0 env(safe-area-inset-bottom); pointer-events:none; transition:background .32s ease; }
+  #agendaOverlay{ position:fixed; inset:0; z-index:660; background:rgba(0,0,0,0); display:flex; align-items:flex-end; justify-content:center; padding:0; pointer-events:none; transition:background .32s ease; }
   body.scroll-lock .info-fixa{ display:none !important; }   /* enquanto uma folha está aberta, esconde a barra fixa do rodapé (não espreita por baixo) */
   #agendaOverlay.aberto{ background:rgba(0,0,0,0.55); pointer-events:auto; }
-  .ag-card{ background:linear-gradient(180deg,#fffdf9,var(--branco)); width:100%; max-width:440px; max-height:88vh; overflow-y:auto; overscroll-behavior:contain; border-radius:22px 22px 0 0; padding:14px 16px calc(18px + env(safe-area-inset-bottom)); transform:translateY(100%); pointer-events:none; border-top:3px solid var(--dourado); box-shadow:0 -10px 34px rgba(0,0,0,.20), 0 140px 0 0 var(--branco); }
+  .ag-card{ background:linear-gradient(180deg,#fffdf9,var(--branco)); width:100%; max-width:440px; max-height:88vh; overflow-y:auto; overscroll-behavior:contain; border-radius:22px 22px 0 0; padding:14px 16px calc(18px + env(safe-area-inset-bottom)); margin-bottom:calc(-1 * env(safe-area-inset-bottom)); transform:translateY(100%); pointer-events:none; border-top:3px solid var(--dourado); box-shadow:0 -10px 34px rgba(0,0,0,.20); }
   .ag-card::before{ content:''; display:block; width:42px; height:4px; border-radius:3px; background:var(--linha); margin:0 auto 12px; }
   #agendaOverlay.aberto .ag-card{ transform:translateY(0); pointer-events:auto; }
   .ag-card h3{ font-family:var(--fonte-titulo); color:var(--castanho); text-align:center; margin:0 0 2px; font-size:1.35rem; cursor:grab; -webkit-user-select:none; user-select:none; touch-action:none; }
@@ -2339,7 +2339,7 @@
   .ag-btn:disabled{ opacity:.45; cursor:default; }
   .ag-fechar{ background:none; border:none; color:var(--castanho-suave); font-size:0.9rem; cursor:pointer; display:block; margin:12px auto 0; text-decoration:underline; }
   .ag-passo-tit{ font-size:0.8rem; font-weight:700; color:var(--dourado-escuro); margin:14px 0 4px; }
-  .fid-card{ background:var(--branco); width:100%; max-width:440px; border-radius:18px 18px 0 0; padding:20px 18px calc(20px + env(safe-area-inset-bottom)); transform:translateY(100%); pointer-events:none; box-shadow:0 140px 0 0 var(--branco); }
+  .fid-card{ background:var(--branco); width:100%; max-width:440px; border-radius:18px 18px 0 0; padding:20px 18px calc(20px + env(safe-area-inset-bottom)); transform:translateY(100%); pointer-events:none; }
   #fidOverlay.aberto .fid-card{ transform:translateY(0); pointer-events:auto; }
   .fid-stamps{ display:grid; grid-template-columns:repeat(4, 1fr); gap:10px; margin:6px 0; }
   .fid-stamp{ aspect-ratio:1/1; border-radius:50%; border:2px dashed var(--linha); display:flex; align-items:center; justify-content:center; font-size:1.4rem; color:var(--castanho-suave); }
@@ -5315,7 +5315,7 @@
             const ov = document.createElement('div');
             ov.id = 'gerirOverlay';
             ov.style.cssText = 'position:fixed; inset:0; z-index:9000; background:rgba(0,0,0,.55); display:flex; align-items:flex-end; justify-content:center; padding:0;';
-            ov.innerHTML = '<div style="background:linear-gradient(180deg,#fffdf9,var(--branco,#fff)); border-radius:22px 22px 0 0; border-top:3px solid var(--dourado,#a8712f); max-width:440px; width:100%; max-height:92vh; overflow:auto; padding:20px 18px calc(20px + env(safe-area-inset-bottom)); box-shadow:0 -12px 40px rgba(0,0,0,.30), 0 140px 0 0 var(--branco,#fff); transform:translateY(100%); transition:transform .36s cubic-bezier(.2,.9,.3,1);">'
+            ov.innerHTML = '<div style="background:linear-gradient(180deg,#fffdf9,var(--branco,#fff)); border-radius:22px 22px 0 0; border-top:3px solid var(--dourado,#a8712f); max-width:440px; width:100%; max-height:92vh; overflow:auto; padding:20px 18px calc(20px + env(safe-area-inset-bottom)); margin-bottom:calc(-1 * env(safe-area-inset-bottom)); box-shadow:0 -12px 40px rgba(0,0,0,.30); transform:translateY(100%); transition:transform .36s cubic-bezier(.2,.9,.3,1);">'
               + '<h3 style="margin:0 0 4px; text-align:center; font-family:var(--fonte-titulo); color:var(--castanho);">A tua reserva</h3>'
               + '<div style="text-align:center; color:var(--castanho-suave); font-size:.9rem; margin-bottom:14px;">' + resumo + '</div>'
               + (tel
@@ -6269,7 +6269,7 @@
   (function(){
     var ov = document.createElement('div'); ov.id = 'amModal';
     ov.style.cssText = 'position:fixed;inset:0;z-index:1200;display:none;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.5);padding:0;opacity:0;transition:opacity .28s ease;';
-    ov.innerHTML = '<div id="amCard" style="background:linear-gradient(180deg,#fffdf9,var(--branco,#fff));width:100%;max-width:440px;border-radius:22px 22px 0 0;border-top:3px solid var(--dourado,#a8712f);box-shadow:0 -12px 40px rgba(0,0,0,.30), 0 140px 0 0 var(--branco,#fff);padding:20px 18px calc(20px + env(safe-area-inset-bottom));transform:translateY(100%);transition:transform .36s cubic-bezier(.2,.9,.3,1);will-change:transform;">'
+    ov.innerHTML = '<div id="amCard" style="background:linear-gradient(180deg,#fffdf9,var(--branco,#fff));width:100%;max-width:440px;border-radius:22px 22px 0 0;border-top:3px solid var(--dourado,#a8712f);box-shadow:0 -12px 40px rgba(0,0,0,.30);padding:20px 18px calc(20px + env(safe-area-inset-bottom));margin-bottom:calc(-1 * env(safe-area-inset-bottom));transform:translateY(100%);transition:transform .36s cubic-bezier(.2,.9,.3,1);will-change:transform;">'
       + '<div id="amTit" style="font-family:var(--fonte-titulo,inherit);color:var(--castanho,#4a3820);font-size:1.12rem;font-weight:800;text-align:center;margin-bottom:6px;"></div>'
       + '<div id="amMsg" style="color:var(--castanho-suave,#8a7350);font-size:.9rem;line-height:1.4;text-align:center;margin-bottom:12px;white-space:pre-line;"></div>'
       + '<input id="amInput" style="display:none;width:100%;box-sizing:border-box;padding:12px 13px;border:1.5px solid var(--linha,#e6dcc8);border-radius:12px;font-family:inherit;font-size:1rem;color:var(--castanho,#4a3820);background:var(--branco,#fff);margin-bottom:14px;">'
