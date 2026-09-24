@@ -2282,7 +2282,7 @@
   /* ===== Agenda / Reservas ===== */
   #agendaOverlay{ position:fixed; inset:0; z-index:620; background:rgba(0,0,0,0); display:flex; align-items:flex-end; justify-content:center; padding:0; pointer-events:none; transition:background .32s ease; }
   #agendaOverlay.aberto{ background:rgba(0,0,0,0.55); pointer-events:auto; }
-  .ag-card{ background:linear-gradient(180deg,#fffdf9,var(--branco)); width:100%; max-width:440px; max-height:92vh; overflow-y:auto; border-radius:22px 22px 0 0; padding:14px 16px calc(18px + env(safe-area-inset-bottom)); transform:translateY(100%); pointer-events:none; border-top:3px solid var(--dourado); box-shadow:0 -10px 34px rgba(0,0,0,.20); }
+  .ag-card{ background:linear-gradient(180deg,#fffdf9,var(--branco)); width:100%; max-width:440px; max-height:88vh; overflow-y:auto; overscroll-behavior:contain; border-radius:22px 22px 0 0; padding:14px 16px calc(18px + env(safe-area-inset-bottom)); transform:translateY(100%); pointer-events:none; border-top:3px solid var(--dourado); box-shadow:0 -10px 34px rgba(0,0,0,.20); }
   .ag-card::before{ content:''; display:block; width:42px; height:4px; border-radius:3px; background:var(--linha); margin:0 auto 12px; }
   #agendaOverlay.aberto .ag-card{ transform:translateY(0); pointer-events:auto; }
   .ag-card h3{ font-family:var(--fonte-titulo); color:var(--castanho); text-align:center; margin:0 0 2px; font-size:1.35rem; }
@@ -6197,18 +6197,25 @@
     // Arrastar a folha para baixo (pela pega/topo) para fechar
     (function(){
       var card = ov.querySelector('#agCard'); if(!card) return;
-      var y0=0, dy=0, drag=false;
+      var y0=0, x0=0, dy=0, drag=false, decidiu=false;
       card.addEventListener('pointerdown', function(e){
         if(e.pointerType==='mouse' && e.button!==0) return;
-        if(card.scrollTop > 4) return;                                  // só quando o conteúdo está no topo
-        if((e.clientY - card.getBoundingClientRect().top) > 64) return; // só a faixa da pega/cabeçalho
-        drag=true; y0=e.clientY; dy=0; card.style.transition='none';
-        try{ card.setPointerCapture(e.pointerId); }catch(_){}
+        y0=e.clientY; x0=e.clientX; dy=0; drag=false; decidiu=false;   // decide no 1.º movimento
       });
       card.addEventListener('pointermove', function(e){
-        if(!drag) return;
+        if(decidiu && !drag) return;   // já decidido que é scroll/toque normal
+        var d = e.clientY - y0, dx = e.clientX - x0;
+        if(!drag){
+          if(Math.abs(d) < 8 && Math.abs(dx) < 8) return;   // ainda a decidir
+          // arrastar-para-fechar: só quando está no topo, o gesto é para baixo e mais vertical que horizontal
+          if(card.scrollTop <= 0 && d > 0 && Math.abs(d) > Math.abs(dx)){
+            drag=true; card.style.transition='none';
+            try{ card.setPointerCapture(e.pointerId); }catch(_){}
+          } else { decidiu=true; return; }   // deixa fazer scroll/toque normal
+        }
         dy = e.clientY - y0; if(dy<0) dy=0;
         card.style.transform = 'translateY('+dy+'px)';
+        if(e.cancelable) e.preventDefault();
       });
       function fim(){
         if(!drag) return; drag=false;
