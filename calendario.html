@@ -745,6 +745,13 @@
     var sel=await sb.from('negocios').select('config').eq('id',negocio.id).maybeSingle();
     if(sel.error){ g.disabled=false; msg.textContent='Erro: '+sel.error.message; msg.className='msg erro'; return; }
     var cfg=(sel.data&&sel.data.config)||{}; cfg.pratoDatas=cfg.pratoDatas||{};
+    // Segurança: se ao gravar (sem caixas / desligado) fôssemos APAGAR um prato que já existe, confirmar primeiro
+    { var _jaTinha = ehFixo ? (cfg.pratoFixo && Array.isArray(cfg.pratoFixo.caixas) && cfg.pratoFixo.caixas.length)
+                            : (cfg.pratoDatas[iso] && Array.isArray(cfg.pratoDatas[iso].caixas) && cfg.pratoDatas[iso].caixas.length);
+      if(_jaTinha && (!novo.ativo || !caixas.length)){
+        if(!confirm('Isto vai REMOVER o prato'+(ehFixo?' fixo':' deste dia')+' (ficas sem nada). Tens a certeza?')){ g.disabled=false; msg.textContent=''; return; }
+      }
+    }
     delete cfg.pratoDia;   // limpa o legado (evita caixa fantasma no cardápio)
     if(ehFixo){
       // Prato FIXO: repete todos os dias. Guarda em cfg.pratoFixo e não prende a este dia.
