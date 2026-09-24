@@ -710,6 +710,8 @@
       + '<label style="display:flex;align-items:center;gap:8px;margin:6px 0;font-weight:700;color:#8a5a10;cursor:pointer;"><input type="checkbox" id="pd_ativo"'+(pd.ativo?' checked':'')+' style="width:auto;"> Mostrar no cardápio</label>'
       + '<label style="display:flex;align-items:center;gap:8px;margin:2px 0 8px;color:#3f7a34;cursor:pointer;font-size:.9rem;"><input type="checkbox" id="pd_fixo" style="width:auto;"> 📌 Repetir todos os dias (prato fixo)</label>'
       + '<div id="pd_fixoNota" style="font-size:.74rem;color:#8a7a5c;margin:-4px 0 6px;display:none;">Este prato aparece em todos os dias que não tenham um prato específico.</div>'
+      + '<label style="display:flex;align-items:center;gap:8px;margin:2px 0 4px;color:#8a5a10;cursor:pointer;font-size:.9rem;"><input type="checkbox" id="pd_janela" style="width:auto;"> ⏰ Mostrar só a certas horas</label>'
+      + '<div id="pd_janelaRow" style="display:none;align-items:center;gap:8px;margin:2px 0 8px;font-size:.85rem;color:#5a4a2c;">das <input type="time" id="pd_horaDe" value="12:00" style="flex:1;padding:7px;border:1.5px solid #e0d3b5;border-radius:8px;"> às <input type="time" id="pd_horaA" value="15:00" style="flex:1;padding:7px;border:1.5px solid #e0d3b5;border-radius:8px;"></div>'
       + (function(){ var a=_pdDataAnterior(iso); if(!a) return ''; return '<button type="button" id="pd_copiar" style="width:100%;margin:2px 0 8px;background:#eef6ec;border:1.5px solid #bcd8b4;border-radius:10px;padding:10px;cursor:pointer;font-weight:700;color:#3f7a34;">📋 Copiar do último dia ('+a.data.split("-").reverse().join("/")+') — '+a.caixas.length+(a.caixas.length===1?' caixa':' caixas')+'</button>'; })()
       + '<div id="pd_lista"></div>'
       + '<button type="button" id="pd_add" style="width:100%;margin-top:10px;background:#f3ead8;border:1.5px dashed #d9c9a8;border-radius:10px;padding:11px;cursor:pointer;font-weight:700;color:#8a5a10;">＋ Adicionar caixa</button>'
@@ -729,6 +731,13 @@
     else { _pdCaixas = [ _pdNovaCaixa() ]; }
     { var af=$('pd_ativo'); if(af) af.checked = usarFixo ? (fixo.ativo!==false) : !!pd.ativo; }
     { var fx=$('pd_fixo'); if(fx){ fx.checked = usarFixo; var nota=$('pd_fixoNota'); if(nota) nota.style.display = fx.checked?'block':'none'; fx.addEventListener('change', function(){ var n=$('pd_fixoNota'); if(n) n.style.display = fx.checked?'block':'none'; }); } }
+    // janela horária do prato do dia (vem da fonte carregada)
+    { var _src = usarFixo ? fixo : pd; var jn=$('pd_janela'), jr=$('pd_janelaRow'), jd=$('pd_horaDe'), ja=$('pd_horaA');
+      if(jn){ var temJ = !!(_src && _src.horaDe && _src.horaA); jn.checked=temJ; if(jr) jr.style.display=temJ?'flex':'none';
+        if(temJ){ if(jd) jd.value=_src.horaDe; if(ja) ja.value=_src.horaA; }
+        jn.addEventListener('change', function(){ if(jr) jr.style.display=jn.checked?'flex':'none'; });
+      }
+    }
     _pdRenderLista(); _pdSegVis();
     var add=$('pd_add'); if(add) add.onclick=function(){ _pdCaixas.push(_pdNovaHerdada()); _pdRenderLista(); _pdSegVis(); };
     var cp=$('pd_copiar'); if(cp) cp.onclick=function(){ var a=_pdDataAnterior(iso); if(!a||!a.caixas.length) return; _pdCaixas = a.caixas; var at=$('pd_ativo'); if(at) at.checked=true; _pdRenderLista(); _pdSegVis(); var msg=$('pd_msg'); if(msg){ msg.textContent='Trazido do dia '+a.data.split("-").reverse().join("/")+'. Ajusta o que precisares e grava.'; msg.className='msg'; } };
@@ -742,6 +751,8 @@
     var caixas=_pdCaixas.filter(function(c){ return (c.titulo&&c.titulo.trim())||(c.subtitulo&&c.subtitulo.trim())||c.foto; }).map(function(c){ return { titulo:(c.titulo||'').trim(), subtitulo:(c.subtitulo||'').trim(), foto:c.foto||'', escurecer:parseInt(c.escurecer,10)||0, caixaTexto:!!c.caixaTexto, seg:Math.max(2,Math.min(60,parseInt(c.seg,10)||6)), neonAtivo:!!c.neonAtivo, neonCor:c.neonCor||'#19e9ff', neonPiscar:!!c.neonPiscar, tx:(c.tx!=null?c.tx:6), ty:(c.ty!=null?c.ty:62), subX:(c.subX!=null?c.subX:6), subY:(c.subY!=null?c.subY:78), estilo:c.estilo||{}, estiloSub:c.estiloSub||{} }; });
     var ehFixo = !!($('pd_fixo') && $('pd_fixo').checked);
     var novo={ ativo:$('pd_ativo').checked, caixas:caixas };
+    // janela horária opcional do prato do dia
+    if($('pd_janela') && $('pd_janela').checked){ var _hd=($('pd_horaDe')||{}).value, _ha=($('pd_horaA')||{}).value; if(_hd && _ha){ novo.horaDe=_hd; novo.horaA=_ha; } }
     var sel=await sb.from('negocios').select('config').eq('id',negocio.id).maybeSingle();
     if(sel.error){ g.disabled=false; msg.textContent='Erro: '+sel.error.message; msg.className='msg erro'; return; }
     var cfg=(sel.data&&sel.data.config)||{}; cfg.pratoDatas=cfg.pratoDatas||{};

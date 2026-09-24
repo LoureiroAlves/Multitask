@@ -3251,6 +3251,18 @@
       var lista = (pd && Array.isArray(pd.caixas) && pd.caixas.length) ? pd.caixas : ((pd && _temConteudo(pd)) ? [pd] : []);
       lista = lista.filter(_temConteudo);
       var on = !!(pd && pd.ativo && lista.length);
+      // janela horária do prato do dia (ex.: só ao almoço) — fora da hora, não mostra
+      window.__pratoJanela = null;
+      if(on && pd && pd.horaDe && pd.horaA && !window.__PREVIEW && !window.__ehPreview){   // no editor mostra sempre
+        var _de = _pdHHmm(pd.horaDe), _a = _pdHHmm(pd.horaA);
+        if(_de != null && _a != null){
+          window.__pratoJanela = { de:_de, a:_a };
+          var _n = new Date(), _min = _n.getHours()*60 + _n.getMinutes();
+          var _dentro = (_de <= _a) ? (_min >= _de && _min < _a) : (_min >= _de || _min < _a);
+          if(!_dentro) on = false;
+        }
+      }
+      window.__pratoCfg = cfg;   // guarda para a reavaliação por hora
       document.body.classList.toggle('pratodia-on', on);
       if(!on){ grid.innerHTML = ''; return; }
       // pré-carrega as fotos para não piscar cinzento ao trocar de caixa
@@ -3306,6 +3318,17 @@
       }
     }catch(e){}
   };
+  function _pdHHmm(s){ var m = /^(\d{1,2}):(\d{2})$/.exec(String(s||'').trim()); if(!m) return null; return (parseInt(m[1],10)*60 + parseInt(m[2],10)); }
+  // Reavalia a janela horária do prato do dia: só re-desenha quando a hora faz abrir/fechar (não reinicia o carrossel à toa)
+  setInterval(function(){
+    try{
+      var j = window.__pratoJanela; if(!j) return;
+      var n = new Date(), m = n.getHours()*60 + n.getMinutes();
+      var dentro = (j.de <= j.a) ? (m >= j.de && m < j.a) : (m >= j.de || m < j.a);
+      var mostrado = document.body.classList.contains('pratodia-on');
+      if(dentro !== mostrado && window.__renderPratoDia && window.__pratoCfg){ window.__renderPratoDia(window.__pratoCfg); }
+    }catch(e){}
+  }, 60000);
   // Tocar numa caixa que aponta para uma secção abre essa secção (reutiliza o menu)
   document.addEventListener('click', function(e){
     const mb = e.target && e.target.closest ? e.target.closest('.mos-box[data-target]') : null;
