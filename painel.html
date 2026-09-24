@@ -195,6 +195,15 @@
 
         <section class="tab-panel" data-panel="negocios">
     <div class="card">
+      <h2 style="margin:0 0 4px; font-size:1.05rem;">🛟 Cópia de segurança (todos os negócios)</h2>
+      <div style="color:#9a8b6f; font-size:.85rem; margin-bottom:10px;">Faz uma cópia de todas as definições de todos os negócios de uma vez. Corre isto antes de cada atualização.</div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button class="mini" id="bkAllCloud" style="background:#8a5a10; color:#fff; border:none; font-weight:700;">💾 Fazer cópia de todos (na nuvem)</button>
+        <button class="mini" id="bkAllFile">⬇️ Descarregar cópia de todos (ficheiro)</button>
+      </div>
+      <div id="bkAllMsg" style="margin-top:8px; font-size:.85rem;"></div>
+    </div>
+    <div class="card">
       <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
         <h2 style="margin:0; font-size:1.05rem;">Negócios</h2>
         <button class="mini" id="btnRecarregar">↻ Recarregar</button>
@@ -311,6 +320,47 @@
   $('btnRecarregar').onclick = carregar;
   $('btnCriar').onclick = criar;
   $('btnDuplicar').onclick = duplicar;
+
+  // ---- Cópia de segurança de TODOS os negócios ----
+  { const _bc=$('bkAllCloud'); if(_bc) _bc.onclick = bkTodosNuvem; }
+  { const _bf=$('bkAllFile'); if(_bf) _bf.onclick = bkTodosFicheiro; }
+  async function bkTodosNuvem(){
+    const m=$('bkAllMsg'), b=$('bkAllCloud');
+    if(!confirm('Fazer uma cópia de segurança das definições de TODOS os negócios agora?')) return;
+    if(b) b.disabled=true; if(m){ m.textContent='A guardar cópias…'; m.style.color='#8a5a10'; }
+    try{
+      const { data:negs, error } = await sb.from('negocios').select('id,slug,config');
+      if(error) throw error;
+      let ok=0, falhas=0;
+      for(const n of (negs||[])){
+        try{
+          const cfg = (n.config && typeof n.config==='object') ? n.config : {};
+          const snap = JSON.parse(JSON.stringify(cfg)); delete snap.__bkp;
+          cfg.__bkp = { ts:new Date().toISOString(), config:snap };
+          const up = await sb.from('negocios').update({ config:cfg }).eq('id', n.id);
+          if(up.error) falhas++; else ok++;
+        }catch(e){ falhas++; }
+      }
+      if(m){ m.textContent='Cópias guardadas ✓ '+ok+' negócio(s)'+(falhas?(' · '+falhas+' com erro'):''); m.style.color= falhas?'#b23b2e':'#3f7a34'; }
+    }catch(e){ if(m){ m.textContent='Erro: '+(e.message||e); m.style.color='#b23b2e'; } }
+    if(b) b.disabled=false;
+  }
+  async function bkTodosFicheiro(){
+    const m=$('bkAllMsg'), b=$('bkAllFile');
+    if(b) b.disabled=true; if(m){ m.textContent='A preparar ficheiro…'; m.style.color='#8a5a10'; }
+    try{
+      const { data:negs, error } = await sb.from('negocios').select('id,slug,nome,config,menu');
+      if(error) throw error;
+      const pacote={ tipo:'amesa-backup-todos', versao:1, exportadoEm:new Date().toISOString(), total:(negs||[]).length, negocios:negs||[] };
+      const blob=new Blob([JSON.stringify(pacote)],{type:'application/json'});
+      const url=URL.createObjectURL(blob);
+      const d=new Date(); const stamp=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+      const a=document.createElement('a'); a.href=url; a.download='amesa-backup-todos-'+stamp+'.json'; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function(){ URL.revokeObjectURL(url); },2000);
+      if(m){ m.textContent='Ficheiro descarregado ✓ ('+((negs||[]).length)+' negócios). Guarda-o num sítio seguro.'; m.style.color='#3f7a34'; }
+    }catch(e){ if(m){ m.textContent='Erro: '+(e.message||e); m.style.color='#b23b2e'; } }
+    if(b) b.disabled=false;
+  }
 
   // Duplica um negócio: copia config + menu + permissões para um novo slug
   async function duplicar(){
