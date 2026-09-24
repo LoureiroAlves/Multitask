@@ -5337,7 +5337,7 @@
             const gf = document.getElementById('grFechar'); if(gf) gf.onclick = fechar;
             const grm = document.getElementById('grRemover'); if(grm) grm.onclick = function(){ if(confirm('Remover esta reserva do teu telemóvel? O restaurante continua com ela — isto só apaga o atalho aqui.')){ remover(r); fechar(); } };
             ov.addEventListener('click', function(e){ if(e.target === ov) fechar(); });
-            const gc = document.getElementById('grCancelar'); if(gc) gc.onclick = function(){ try{ if(r.rid) _cancAdd(r.rid); }catch(e){} window.open('https://wa.me/'+tel+'?text='+encodeURIComponent('Olá! Quero CANCELAR '+baseMsg+'. Obrigado.'+_linkCal('&canc=1')), '_blank'); };
+            const gc = document.getElementById('grCancelar'); if(gc) gc.onclick = function(){ try{ if(r.rid) _cancAdd(r.rid); }catch(e){} var _u='https://wa.me/'+tel+'?text='+encodeURIComponent('Olá! Quero CANCELAR '+baseMsg+'. Obrigado.'+_linkCal('&canc=1')); fechar(); var _mv=('ontouchstart' in window)||(navigator.maxTouchPoints>0); if(_mv){ window.location.href=_u; } else { window.open(_u,'_blank'); } };
             const gab = document.getElementById('grAlterarBtn'); if(gab) gab.onclick = function(){ const b=document.getElementById('grAlterarBox'); if(b) b.style.display = (b.style.display==='none'?'block':'none'); };
             const gea = document.getElementById('grEnviarAlt'); if(gea) gea.onclick = function(){
               const np = Math.max(1, parseInt((document.getElementById('grPessoas')||{}).value,10)||1);
@@ -5346,7 +5346,7 @@
               if(nh) msg += ' e às '+nh;
               msg += '. Obrigado.';
               msg += _linkCal('&alt=1&ap=' + np + (nh ? ('&ah=' + encodeURIComponent(nh)) : ''));
-              window.open('https://wa.me/'+tel+'?text='+encodeURIComponent(msg), '_blank');
+              var _ua='https://wa.me/'+tel+'?text='+encodeURIComponent(msg); fechar(); var _mv2=('ontouchstart' in window)||(navigator.maxTouchPoints>0); if(_mv2){ window.location.href=_ua; } else { window.open(_ua,'_blank'); }
             };
           }
           window._abrirMinhaReservaDia = function(iso){ abrir(window._minhaReservaDoDia(iso)); };
