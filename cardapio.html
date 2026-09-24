@@ -2286,7 +2286,7 @@
   #fidOverlay.aberto{ background:rgba(0,0,0,0.55); pointer-events:auto; }
 
   /* ===== Agenda / Reservas ===== */
-  #agendaOverlay{ position:fixed; inset:0; z-index:660; background:rgba(0,0,0,0); display:flex; align-items:flex-end; justify-content:center; padding:0; pointer-events:none; transition:background .32s ease; }
+  #agendaOverlay{ position:fixed; inset:0; z-index:660; background:rgba(0,0,0,0); display:flex; align-items:flex-end; justify-content:center; padding:0 0 env(safe-area-inset-bottom); pointer-events:none; transition:background .32s ease; }
   body.scroll-lock .info-fixa{ display:none !important; }   /* enquanto uma folha está aberta, esconde a barra fixa do rodapé (não espreita por baixo) */
   #agendaOverlay.aberto{ background:rgba(0,0,0,0.55); pointer-events:auto; }
   .ag-card{ background:linear-gradient(180deg,#fffdf9,var(--branco)); width:100%; max-width:440px; max-height:88vh; overflow-y:auto; overscroll-behavior:contain; border-radius:22px 22px 0 0; padding:14px 16px calc(18px + env(safe-area-inset-bottom)); transform:translateY(100%); pointer-events:none; border-top:3px solid var(--dourado); box-shadow:0 -10px 34px rgba(0,0,0,.20), 0 140px 0 0 var(--branco); }
