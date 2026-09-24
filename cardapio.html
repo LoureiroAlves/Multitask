@@ -6204,16 +6204,46 @@
       const est = carregar();
       const hoje = new Date().toISOString().slice(0, 10);
       if(est.ultimoDia === hoje){ alert('Já carimbaste hoje. Volta noutra visita! 😉'); return; }
-      const cod = prompt('Pede o código ao empregado:');
-      if(cod === null) return;
-      if(String(cod).trim().toUpperCase() !== String(f.codigo || '').trim().toUpperCase()){ alert('❌ Código errado.'); return; }
-      est.carimbos = Math.min((f.total || 8), (est.carimbos || 0) + 1);
-      est.ultimoDia = hoje;
-      guardar(est);
-      abrirFid();
+      window.__amPrompt('Carimbar visita', { texto:'Pede o código ao empregado:', placeholder:'Código', ok:'Carimbar' }).then(function(cod){
+        if(cod === null) return;
+        if(String(cod).trim().toUpperCase() !== String(f.codigo || '').trim().toUpperCase()){ alert('❌ Código errado.'); return; }
+        est.carimbos = Math.min((f.total || 8), (est.carimbos || 0) + 1);
+        est.ultimoDia = hoje;
+        guardar(est);
+        abrirFid();
+      });
     };
     window.fidReset = function(){ guardar({ carimbos:0, ultimoDia:'' }); abrirFid(); };
     window.fidFechar = function(){ ov.classList.remove('aberto'); };
+  })();
+
+  // ==========================================================
+  //  Janela própria (substitui prompt()/confirm() do sistema) — estilo da app
+  //  window.__amConfirm(titulo,{texto,ok,cancelar}) -> Promise<bool>
+  //  window.__amPrompt(titulo,{texto,valor,placeholder,tipo,ok,cancelar}) -> Promise<string|null>
+  // ==========================================================
+  (function(){
+    var ov = document.createElement('div'); ov.id = 'amModal';
+    ov.style.cssText = 'position:fixed;inset:0;z-index:1200;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.5);padding:20px;opacity:0;transition:opacity .24s ease;';
+    ov.innerHTML = '<div id="amCard" style="background:linear-gradient(180deg,#fffdf9,var(--branco,#fff));width:100%;max-width:360px;border-radius:20px;border-top:3px solid var(--dourado,#a8712f);box-shadow:0 18px 48px rgba(0,0,0,.34);padding:20px 18px calc(18px + env(safe-area-inset-bottom));opacity:0;transform:translateY(22px) scale(.92);transition:opacity .24s ease, transform .34s cubic-bezier(.2,.95,.3,1);will-change:transform,opacity;">'
+      + '<div id="amTit" style="font-family:var(--fonte-titulo,inherit);color:var(--castanho,#4a3820);font-size:1.12rem;font-weight:800;text-align:center;margin-bottom:6px;"></div>'
+      + '<div id="amMsg" style="color:var(--castanho-suave,#8a7350);font-size:.9rem;line-height:1.4;text-align:center;margin-bottom:12px;white-space:pre-line;"></div>'
+      + '<input id="amInput" style="display:none;width:100%;box-sizing:border-box;padding:12px 13px;border:1.5px solid var(--linha,#e6dcc8);border-radius:12px;font-family:inherit;font-size:1rem;color:var(--castanho,#4a3820);background:var(--branco,#fff);margin-bottom:14px;">'
+      + '<div style="display:flex;gap:8px;">'
+      +   '<button id="amCancel" type="button" style="flex:1;padding:12px;border:1.5px solid var(--linha,#e6dcc8);background:var(--branco,#fff);color:var(--castanho,#4a3820);border-radius:12px;font-family:inherit;font-weight:700;cursor:pointer;">Cancelar</button>'
+      +   '<button id="amOk" type="button" style="flex:1;padding:12px;border:none;background:linear-gradient(180deg,var(--dourado,#a8712f),var(--dourado-escuro,#7a5320));color:#fff;border-radius:12px;font-family:var(--fonte-titulo,inherit);font-weight:800;cursor:pointer;">OK</button>'
+      + '</div></div>';
+    document.body.appendChild(ov);
+    var card=ov.querySelector('#amCard'), tit=ov.querySelector('#amTit'), msg=ov.querySelector('#amMsg'), inp=ov.querySelector('#amInput'), bOk=ov.querySelector('#amOk'), bC=ov.querySelector('#amCancel');
+    var _res=null, _prompt=false;
+    function fechar(val){ ov.style.opacity='0'; card.style.opacity='0'; card.style.transform='translateY(22px) scale(.92)'; setTimeout(function(){ ov.style.display='none'; },280); var r=_res; _res=null; if(r) r(val); }
+    function abrir(){ ov.style.display='flex'; void ov.offsetWidth; requestAnimationFrame(function(){ ov.style.opacity='1'; card.style.opacity='1'; card.style.transform='translateY(0) scale(1)'; }); }
+    bOk.onclick=function(){ fechar(_prompt ? inp.value : true); };
+    bC.onclick=function(){ fechar(_prompt ? null : false); };
+    ov.addEventListener('click', function(e){ if(e.target===ov) bC.onclick(); });
+    inp.addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); bOk.onclick(); } });
+    window.__amConfirm=function(titulo,opts){ opts=opts||{}; _prompt=false; tit.textContent=titulo||'Confirmar'; msg.textContent=opts.texto||''; msg.style.display=opts.texto?'block':'none'; inp.style.display='none'; bOk.textContent=opts.ok||'Sim'; bC.textContent=opts.cancelar||'Não'; abrir(); return new Promise(function(r){ _res=r; }); };
+    window.__amPrompt=function(titulo,opts){ opts=opts||{}; _prompt=true; tit.textContent=titulo||''; msg.textContent=opts.texto||''; msg.style.display=opts.texto?'block':'none'; inp.style.display='block'; inp.value=(opts.valor!=null?opts.valor:''); inp.placeholder=opts.placeholder||''; inp.type=opts.tipo||'text'; bOk.textContent=opts.ok||'OK'; bC.textContent=opts.cancelar||'Cancelar'; abrir(); setTimeout(function(){ try{ inp.focus(); inp.select(); }catch(e){} },80); return new Promise(function(r){ _res=r; }); };
   })();
 
   // ==========================================================
@@ -6230,8 +6260,10 @@
     btn.addEventListener('click', function(){
       // Se há uma reserva por concluir e a folha está fechada, perguntar se quer continuar
       if(pend && !ov.classList.contains('aberto')){
-        if(confirm('Tem uma reserva por concluir. Deseja continuar?')){ window.__reservaMenu = ''; abrir(true); }
-        else { pend = false; concluida = true; btn.classList.remove('res-pendente'); document.body.classList.remove('res-pend'); estado.diaSel = null; estado.slotSel = null; _agToast('Obrigado! 😊'); }
+        window.__amConfirm('Reserva por concluir', { texto:'Tens uma reserva que não chegaste a concluir. Queres continuar?', ok:'Continuar', cancelar:'Não, obrigado' }).then(function(sim){
+          if(sim){ window.__reservaMenu = ''; abrir(true); }
+          else { pend = false; concluida = true; btn.classList.remove('res-pendente'); document.body.classList.remove('res-pend'); estado.diaSel = null; estado.slotSel = null; _agToast('Obrigado! 😊'); }
+        });
         return;
       }
       window.__reservaMenu = ''; abrir();
@@ -6447,8 +6479,9 @@
       const env = document.getElementById('agEnviar'); if(env) env.onclick = enviar;
       const am = document.getElementById('agMinhas'); if(am) am.onclick = function(){
         const atual = (window._meuTelefoneGuardado && window._meuTelefoneGuardado()) || '+351 ';
-        const t = prompt('Escreve o teu número de telemóvel (o mesmo com que reservaste) para ver as tuas reservas:', atual);
-        if(t && t.trim() && window._definirMeuTelefone) window._definirMeuTelefone(t.trim());
+        window.__amPrompt('As tuas reservas', { texto:'Escreve o teu número de telemóvel (o mesmo com que reservaste).', valor:atual, tipo:'tel', ok:'Ver reservas' }).then(function(t){
+          if(t && t.trim() && window._definirMeuTelefone) window._definirMeuTelefone(t.trim());
+        });
       };
     }
     async function enviar(){
