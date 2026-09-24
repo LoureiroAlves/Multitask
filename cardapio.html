@@ -7208,15 +7208,17 @@
   }
 
   window.stopEntrarOuCriar = function(){
-    let codigo = prompt('Código da sala\n(deixa vazio para CRIAR uma sala nova):', '');
-    if(codigo === null) return;
-    let nome = prompt('O teu nome:', '');
-    if(!nome || !nome.trim()) return;
-    mpNome = nome.trim();
-    mpTotais = {};
-    codigo = codigo.trim().toUpperCase();
-    if(codigo === '') mpCriarSala();
-    else mpEntrarSala(codigo);
+    window.__amPrompt('Jogo do Stop', { texto:'Código da sala (deixa vazio para CRIAR uma nova):', placeholder:'Ex.: ABCD', ok:'Continuar' }).then(function(codigo){
+      if(codigo === null) return;
+      window.__amPrompt('O teu nome', { placeholder:'O teu nome', ok:'Jogar' }).then(function(nome){
+        if(!nome || !nome.trim()) return;
+        mpNome = nome.trim();
+        mpTotais = {};
+        codigo = codigo.trim().toUpperCase();
+        if(codigo === '') mpCriarSala();
+        else mpEntrarSala(codigo);
+      });
+    });
   };
 
   async function mpCriarSala(){
@@ -7654,14 +7656,16 @@
   function qzLimpar(){ qzIntervals.forEach(clearInterval); qzIntervals = []; if(qzTimerHost){ clearInterval(qzTimerHost); qzTimerHost = null; } }
 
   window.quizEntrarOuCriar = function(){
-    let codigo = prompt('Código da sala\n(deixa vazio para CRIAR uma nova):', '');
-    if(codigo === null) return;
-    let nome = prompt('O teu nome:', '');
-    if(!nome || !nome.trim()) return;
-    qzNome = nome.trim();
-    codigo = codigo.trim().toUpperCase();
-    if(codigo === '') qzCriarSala();
-    else qzEntrar(codigo);
+    window.__amPrompt('Quiz', { texto:'Código da sala (deixa vazio para CRIAR uma nova):', placeholder:'Ex.: ABCD', ok:'Continuar' }).then(function(codigo){
+      if(codigo === null) return;
+      window.__amPrompt('O teu nome', { placeholder:'O teu nome', ok:'Jogar' }).then(function(nome){
+        if(!nome || !nome.trim()) return;
+        qzNome = nome.trim();
+        codigo = codigo.trim().toUpperCase();
+        if(codigo === '') qzCriarSala();
+        else qzEntrar(codigo);
+      });
+    });
   };
 
   async function qzCriarSala(){
@@ -8979,15 +8983,17 @@
       };
       var lp = document.getElementById('expLimpar');
       if(lp) lp.onclick = function(){
-        if(!confirm('Apagar favoritos, carrinho e reservas guardados neste aparelho?')) return;
-        try{
-          var slug = (typeof __slugDoEndereco === 'function' ? __slugDoEndereco() : '') || 'geral';
-          var suf = ':' + slug;
-          var rem = [];
-          for(var i = 0; i < localStorage.length; i++){ var k = localStorage.key(i); if(k && k.length >= suf.length && k.slice(-suf.length) === suf) rem.push(k); }
-          rem.forEach(function(k){ localStorage.removeItem(k); });
-        }catch(e){}
-        location.reload();
+        window.__amConfirm('Limpar dados', { texto:'Apagar favoritos, carrinho e reservas guardados neste aparelho?', ok:'Apagar', cancelar:'Cancelar' }).then(function(sim){
+          if(!sim) return;
+          try{
+            var slug = (typeof __slugDoEndereco === 'function' ? __slugDoEndereco() : '') || 'geral';
+            var suf = ':' + slug;
+            var rem = [];
+            for(var i = 0; i < localStorage.length; i++){ var k = localStorage.key(i); if(k && k.length >= suf.length && k.slice(-suf.length) === suf) rem.push(k); }
+            rem.forEach(function(k){ localStorage.removeItem(k); });
+          }catch(e){}
+          location.reload();
+        });
       };
     }
   })();

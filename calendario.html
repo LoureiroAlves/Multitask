@@ -760,7 +760,7 @@
     { var _jaTinha = ehFixo ? (cfg.pratoFixo && Array.isArray(cfg.pratoFixo.caixas) && cfg.pratoFixo.caixas.length)
                             : (cfg.pratoDatas[iso] && Array.isArray(cfg.pratoDatas[iso].caixas) && cfg.pratoDatas[iso].caixas.length);
       if(_jaTinha && (!novo.ativo || !caixas.length)){
-        if(!confirm('Isto vai REMOVER o prato'+(ehFixo?' fixo':' deste dia')+' (ficas sem nada). Tens a certeza?')){ g.disabled=false; msg.textContent=''; return; }
+        if(!(await window.__amConfirm('Confirmar',{texto:'Isto vai REMOVER o prato'+(ehFixo?' fixo':' deste dia')+' (ficas sem nada). Tens a certeza?', ok:'Sim', cancelar:'Não'}))){ g.disabled=false; msg.textContent=''; return; }
       }
     }
     delete cfg.pratoDia;   // limpa o legado (evita caixa fantasma no cardápio)
@@ -781,7 +781,7 @@
   }
   async function removerPrato(iso){
     var ehFixo = !!($('pd_fixo') && $('pd_fixo').checked);
-    if(!confirm(ehFixo ? 'Remover o prato fixo (deixa de repetir todos os dias)?' : 'Remover o prato do dia deste dia?')) return;
+    if(!(await window.__amConfirm('Confirmar',{texto:ehFixo ? 'Remover o prato fixo (deixa de repetir todos os dias)?' : 'Remover o prato do dia deste dia?', ok:'Sim', cancelar:'Não'}))) return;
     var sel=await sb.from('negocios').select('config').eq('id',negocio.id).maybeSingle();
     if(sel.error){ return; }
     var cfg=(sel.data&&sel.data.config)||{}; cfg.pratoDatas=cfg.pratoDatas||{};
@@ -879,7 +879,7 @@
     v.innerHTML = html;
     _wireSom();
     v.querySelectorAll('.enc-a').forEach(function(b){ b.onclick = function(){ _encSetEstado(b.dataset.id, b.dataset.a); }; });
-    v.querySelectorAll('.enc-del').forEach(function(b){ b.onclick = async function(){ if(!confirm('Apagar esta encomenda da lista?')) return; const { error } = await sb.from('encomendas').delete().eq('id', b.dataset.id); if(error){ alert('Erro: ' + error.message); return; } renderEncomendas(); }; });
+    v.querySelectorAll('.enc-del').forEach(function(b){ b.onclick = async function(){ if(!(await window.__amConfirm('Confirmar',{texto:'Apagar esta encomenda da lista?', ok:'Sim', cancelar:'Não'}))) return; const { error } = await sb.from('encomendas').delete().eq('id', b.dataset.id); if(error){ alert('Erro: ' + error.message); return; } renderEncomendas(); }; });
   }
 
   function _cmpR(a,b){ return (a.data + (a.hora||'')).localeCompare(b.data + (b.hora||'')); }
@@ -1177,7 +1177,7 @@
       var bk=cfg.__bkp;
       if(!bk||!bk.config){ if(msg){ msg.textContent='Ainda não há cópia guardada.'; msg.className='msg erro'; } return; }
       var quando = bk.ts ? new Date(bk.ts).toLocaleString('pt-PT') : '';
-      if(!confirm('Repor todas as definições da cópia de '+quando+'?\n\nSubstitui as definições atuais. As reservas e encomendas já feitas não são afetadas.')) return;
+      if(!(await window.__amConfirm('Confirmar',{texto:'Repor todas as definições da cópia de '+quando+'?\n\nSubstitui as definições atuais. As reservas e encomendas já feitas não são afetadas.', ok:'Sim', cancelar:'Não'}))) return;
       var nova=JSON.parse(JSON.stringify(bk.config));
       nova.__bkp=cfg.__bkp;   // manter a cópia para poderes repor de novo
       var up=await sb.from('negocios').update({ config:nova }).eq('id',negocio.id);
@@ -1218,7 +1218,7 @@
       }
       if(!cfgNova) throw new Error('ficheiro inválido');
       var quando = pac.exportadoEm ? (' de '+new Date(pac.exportadoEm).toLocaleString('pt-PT')) : '';
-      if(!confirm('Repor TODAS as definições deste negócio a partir da cópia'+quando+'?\n\nIsto substitui as definições atuais. As reservas e encomendas já feitas não são afetadas.')) { if(inputEl) inputEl.value=''; if(msg){msg.textContent='';} return; }
+      if(!(await window.__amConfirm('Confirmar',{texto:'Repor TODAS as definições deste negócio a partir da cópia'+quando+'?\n\nIsto substitui as definições atuais. As reservas e encomendas já feitas não são afetadas.', ok:'Sim', cancelar:'Não'}))) { if(inputEl) inputEl.value=''; if(msg){msg.textContent='';} return; }
       var up=await sb.from('negocios').update({ config:cfgNova }).eq('id',negocio.id);
       if(up.error) throw up.error;
       negocio.config=cfgNova;
@@ -1301,7 +1301,7 @@
   }
   async function apagarModal(){
     if(!_mdId) return;
-    if(!confirm('Apagar esta reserva definitivamente? Esta ação não pode ser anulada.')) return;
+    if(!(await window.__amConfirm('Confirmar',{texto:'Apagar esta reserva definitivamente? Esta ação não pode ser anulada.', ok:'Sim', cancelar:'Não'}))) return;
     const { error } = await sb.from('reservas').delete().eq('id', _mdId);
     if(error){ alert('Erro: '+error.message); return; }
     fecharModal(); carregar();
@@ -1559,7 +1559,7 @@
     renderCal();
   }
   async function removerPromo(iso){
-    if(!confirm('Remover a promoção deste dia?')) return;
+    if(!(await window.__amConfirm('Confirmar',{texto:'Remover a promoção deste dia?', ok:'Sim', cancelar:'Não'}))) return;
     const err = await _gravarPromoData(iso, null);
     if(err){ const msg=$('pmMsg'); if(msg){ msg.textContent='Erro: '+err.message; msg.className='msg erro'; } return; }
     renderCal(); renderDia(iso);
@@ -1607,7 +1607,7 @@
     if(a==='avisar'){ _avisarCliente(r); return; }
     if(a==='editar'){ abrirEdicao(id); return; }
     if(a==='apagar'){
-      if(!confirm('Apagar esta reserva definitivamente? Esta ação não pode ser anulada.')) return;
+      if(!(await window.__amConfirm('Confirmar',{texto:'Apagar esta reserva definitivamente? Esta ação não pode ser anulada.', ok:'Sim', cancelar:'Não'}))) return;
       const { error } = await sb.from('reservas').delete().eq('id', id);
       if(error){ alert('Erro: '+error.message); return; }
       carregar();
@@ -1615,7 +1615,7 @@
     }
     let patch = null, tipo = null;
     if(a==='confirmar'){ patch = { estado:'confirmada' }; tipo = 'confirmar'; }
-    else if(a==='cancelar'){ if(!confirm('Recusar/cancelar esta reserva?')) return; patch = { estado:'cancelada' }; tipo = 'recusar'; }
+    else if(a==='cancelar'){ if(!(await window.__amConfirm('Confirmar',{texto:'Recusar/cancelar esta reserva?', ok:'Sim', cancelar:'Não'}))) return; patch = { estado:'cancelada' }; tipo = 'recusar'; }
     if(!patch) return;
     // Abre já o WhatsApp com a resposta pronta (mantém a permissão do toque; o dono só carrega em enviar)
     const url = r ? _waUrl(r, tipo) : '';
@@ -1629,5 +1629,34 @@
 
   iniciar();
 </script>
+<script>
+/* Janela própria (substitui prompt()/confirm() do sistema) — estilo ÀMesa */
+(function(){
+  if(window.__amConfirm) return;
+  var D='#4a3820', S='#8a7350', L='#e6dcc8', G='#a8712f', GE='#7a5320';
+  var ov=document.createElement('div'); ov.id='amModal';
+  ov.style.cssText='position:fixed;inset:0;z-index:12000;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.5);padding:20px;opacity:0;transition:opacity .24s ease;';
+  ov.innerHTML='<div id="amCard" style="background:linear-gradient(180deg,#fffdf9,#fff);width:100%;max-width:360px;border-radius:20px;border-top:3px solid '+G+';box-shadow:0 18px 48px rgba(0,0,0,.34);padding:20px 18px;opacity:0;transform:translateY(22px) scale(.92);transition:opacity .24s ease, transform .34s cubic-bezier(.2,.95,.3,1);will-change:transform,opacity;font-family:inherit;">'
+    +'<div id="amTit" style="color:'+D+';font-size:1.12rem;font-weight:800;text-align:center;margin-bottom:6px;"></div>'
+    +'<div id="amMsg" style="color:'+S+';font-size:.9rem;line-height:1.4;text-align:center;margin-bottom:12px;white-space:pre-line;"></div>'
+    +'<input id="amInput" style="display:none;width:100%;box-sizing:border-box;padding:12px 13px;border:1.5px solid '+L+';border-radius:12px;font-family:inherit;font-size:1rem;color:'+D+';background:#fff;margin-bottom:14px;">'
+    +'<div style="display:flex;gap:8px;">'
+    +'<button id="amCancel" type="button" style="flex:1;padding:12px;border:1.5px solid '+L+';background:#fff;color:'+D+';border-radius:12px;font-family:inherit;font-weight:700;cursor:pointer;">Cancelar</button>'
+    +'<button id="amOk" type="button" style="flex:1;padding:12px;border:none;background:linear-gradient(180deg,'+G+','+GE+');color:#fff;border-radius:12px;font-family:inherit;font-weight:800;cursor:pointer;">OK</button>'
+    +'</div></div>';
+  document.body.appendChild(ov);
+  var card=ov.querySelector('#amCard'),tit=ov.querySelector('#amTit'),msg=ov.querySelector('#amMsg'),inp=ov.querySelector('#amInput'),bOk=ov.querySelector('#amOk'),bC=ov.querySelector('#amCancel');
+  var _res=null,_p=false;
+  function fechar(v){ ov.style.opacity='0'; card.style.opacity='0'; card.style.transform='translateY(22px) scale(.92)'; setTimeout(function(){ ov.style.display='none'; },280); var r=_res;_res=null; if(r) r(v); }
+  function abrir(){ ov.style.display='flex'; void ov.offsetWidth; requestAnimationFrame(function(){ ov.style.opacity='1'; card.style.opacity='1'; card.style.transform='translateY(0) scale(1)'; }); }
+  bOk.onclick=function(){ fechar(_p?inp.value:true); };
+  bC.onclick=function(){ fechar(_p?null:false); };
+  ov.addEventListener('click',function(e){ if(e.target===ov) bC.onclick(); });
+  inp.addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); bOk.onclick(); } });
+  window.__amConfirm=function(t,o){ o=o||{}; _p=false; tit.textContent=t||'Confirmar'; msg.textContent=o.texto||''; msg.style.display=o.texto?'block':'none'; inp.style.display='none'; bOk.textContent=o.ok||'Sim'; bC.textContent=o.cancelar||'Não'; abrir(); return new Promise(function(r){_res=r;}); };
+  window.__amPrompt=function(t,o){ o=o||{}; _p=true; tit.textContent=t||''; msg.textContent=o.texto||''; msg.style.display=o.texto?'block':'none'; inp.style.display='block'; inp.value=(o.valor!=null?o.valor:''); inp.placeholder=o.placeholder||''; inp.type=o.tipo||'text'; bOk.textContent=o.ok||'OK'; bC.textContent=o.cancelar||'Cancelar'; abrir(); setTimeout(function(){ try{inp.focus();inp.select();}catch(e){} },80); return new Promise(function(r){_res=r;}); };
+})();
+</script>
+
 </body>
 </html>
