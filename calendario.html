@@ -707,7 +707,9 @@
       + '<button class="promo-btn" id="btnPrato" type="button" style="border-color:#8a5a10;color:#8a5a10;background:#fff;">🍽️ Prato do dia deste dia'+(tem?' ✓':'')+'</button>'
       + '<div class="nova-form '+(tem?'':'hide')+'" id="pratoForm">'
       + '<div style="font-size:.78rem;color:#8a7a5c;margin-bottom:4px;">Uma ou várias caixas em destaque por baixo do cabeçalho, só neste dia. Com mais que uma, vão rodando.</div>'
-      + '<label style="display:flex;align-items:center;gap:8px;margin:6px 0;font-weight:700;color:#8a5a10;cursor:pointer;"><input type="checkbox" id="pd_ativo"'+(pd.ativo?' checked':'')+' style="width:auto;"> Mostrar no cardápio neste dia</label>'
+      + '<label style="display:flex;align-items:center;gap:8px;margin:6px 0;font-weight:700;color:#8a5a10;cursor:pointer;"><input type="checkbox" id="pd_ativo"'+(pd.ativo?' checked':'')+' style="width:auto;"> Mostrar no cardápio</label>'
+      + '<label style="display:flex;align-items:center;gap:8px;margin:2px 0 8px;color:#3f7a34;cursor:pointer;font-size:.9rem;"><input type="checkbox" id="pd_fixo" style="width:auto;"> 📌 Repetir todos os dias (prato fixo)</label>'
+      + '<div id="pd_fixoNota" style="font-size:.74rem;color:#8a7a5c;margin:-4px 0 6px;display:none;">Este prato aparece em todos os dias que não tenham um prato específico.</div>'
       + (function(){ var a=_pdDataAnterior(iso); if(!a) return ''; return '<button type="button" id="pd_copiar" style="width:100%;margin:2px 0 8px;background:#eef6ec;border:1.5px solid #bcd8b4;border-radius:10px;padding:10px;cursor:pointer;font-weight:700;color:#3f7a34;">📋 Copiar do último dia ('+a.data.split("-").reverse().join("/")+') — '+a.caixas.length+(a.caixas.length===1?' caixa':' caixas')+'</button>'; })()
       + '<div id="pd_lista"></div>'
       + '<button type="button" id="pd_add" style="width:100%;margin-top:10px;background:#f3ead8;border:1.5px dashed #d9c9a8;border-radius:10px;padding:11px;cursor:pointer;font-weight:700;color:#8a5a10;">＋ Adicionar caixa</button>'
@@ -718,8 +720,15 @@
   function _wirePrato(iso){
     var btn=$('btnPrato'), form=$('pratoForm');
     if(btn&&form) btn.onclick=function(){ form.classList.toggle('hide'); };
-    var pd=((negocio&&negocio.config&&negocio.config.pratoDatas)||{})[iso]||{};
-    _pdCaixas = (Array.isArray(pd.caixas)&&pd.caixas.length) ? pd.caixas.map(_pdMapCaixa) : [ _pdNovaCaixa() ];
+    var cfg0=(negocio&&negocio.config)||{};
+    var pd=(cfg0.pratoDatas||{})[iso]||{};
+    var fixo=cfg0.pratoFixo||{};
+    var usarFixo=false;
+    if(Array.isArray(pd.caixas)&&pd.caixas.length){ _pdCaixas = pd.caixas.map(_pdMapCaixa); }        // este dia tem um prato específico
+    else if(Array.isArray(fixo.caixas)&&fixo.caixas.length){ _pdCaixas = fixo.caixas.map(_pdMapCaixa); usarFixo=true; }   // senão, carrega o fixo
+    else { _pdCaixas = [ _pdNovaCaixa() ]; }
+    { var af=$('pd_ativo'); if(af) af.checked = usarFixo ? (fixo.ativo!==false) : !!pd.ativo; }
+    { var fx=$('pd_fixo'); if(fx){ fx.checked = usarFixo; var nota=$('pd_fixoNota'); if(nota) nota.style.display = fx.checked?'block':'none'; fx.addEventListener('change', function(){ var n=$('pd_fixoNota'); if(n) n.style.display = fx.checked?'block':'none'; }); } }
     _pdRenderLista(); _pdSegVis();
     var add=$('pd_add'); if(add) add.onclick=function(){ _pdCaixas.push(_pdNovaHerdada()); _pdRenderLista(); _pdSegVis(); };
     var cp=$('pd_copiar'); if(cp) cp.onclick=function(){ var a=_pdDataAnterior(iso); if(!a||!a.caixas.length) return; _pdCaixas = a.caixas; var at=$('pd_ativo'); if(at) at.checked=true; _pdRenderLista(); _pdSegVis(); var msg=$('pd_msg'); if(msg){ msg.textContent='Trazido do dia '+a.data.split("-").reverse().join("/")+'. Ajusta o que precisares e grava.'; msg.className='msg'; } };
@@ -731,24 +740,34 @@
     // sincroniza os campos do formulário para o array (garante o tempo de cada caixa)
     document.querySelectorAll('#pd_lista .pd-seg').forEach(function(el){ if(_pdCaixas[+el.dataset.i]) _pdCaixas[+el.dataset.i].seg = Math.max(2, Math.min(60, parseInt(el.value,10)||6)); });
     var caixas=_pdCaixas.filter(function(c){ return (c.titulo&&c.titulo.trim())||(c.subtitulo&&c.subtitulo.trim())||c.foto; }).map(function(c){ return { titulo:(c.titulo||'').trim(), subtitulo:(c.subtitulo||'').trim(), foto:c.foto||'', escurecer:parseInt(c.escurecer,10)||0, caixaTexto:!!c.caixaTexto, seg:Math.max(2,Math.min(60,parseInt(c.seg,10)||6)), neonAtivo:!!c.neonAtivo, neonCor:c.neonCor||'#19e9ff', neonPiscar:!!c.neonPiscar, tx:(c.tx!=null?c.tx:6), ty:(c.ty!=null?c.ty:62), subX:(c.subX!=null?c.subX:6), subY:(c.subY!=null?c.subY:78), estilo:c.estilo||{}, estiloSub:c.estiloSub||{} }; });
+    var ehFixo = !!($('pd_fixo') && $('pd_fixo').checked);
     var novo={ ativo:$('pd_ativo').checked, caixas:caixas };
     var sel=await sb.from('negocios').select('config').eq('id',negocio.id).maybeSingle();
     if(sel.error){ g.disabled=false; msg.textContent='Erro: '+sel.error.message; msg.className='msg erro'; return; }
     var cfg=(sel.data&&sel.data.config)||{}; cfg.pratoDatas=cfg.pratoDatas||{};
     delete cfg.pratoDia;   // limpa o legado (evita caixa fantasma no cardápio)
-    if(novo.ativo && caixas.length){ cfg.pratoDatas[iso]=novo; } else { delete cfg.pratoDatas[iso]; }
+    if(ehFixo){
+      // Prato FIXO: repete todos os dias. Guarda em cfg.pratoFixo e não prende a este dia.
+      if(novo.ativo && caixas.length){ cfg.pratoFixo=novo; } else { delete cfg.pratoFixo; }
+      delete cfg.pratoDatas[iso];   // este dia passa a seguir o fixo
+    } else {
+      // Prato só deste dia
+      if(novo.ativo && caixas.length){ cfg.pratoDatas[iso]=novo; } else { delete cfg.pratoDatas[iso]; }
+    }
     var up=await sb.from('negocios').update({ config:cfg }).eq('id',negocio.id);
     g.disabled=false;
     if(up.error){ msg.textContent='Erro: '+up.error.message; msg.className='msg erro'; return; }
-    negocio.config=cfg; msg.textContent='Prato do dia guardado ✓'; msg.className='msg';
+    negocio.config=cfg; msg.textContent=(ehFixo?'Prato fixo guardado ✓ (repete todos os dias)':'Prato do dia guardado ✓'); msg.className='msg';
     { var rmb=$('pd_remover'); if(rmb) rmb.style.display = (novo.ativo&&caixas.length)?'':'none'; }
     renderCal();
   }
   async function removerPrato(iso){
-    if(!confirm('Remover o prato do dia deste dia?')) return;
+    var ehFixo = !!($('pd_fixo') && $('pd_fixo').checked);
+    if(!confirm(ehFixo ? 'Remover o prato fixo (deixa de repetir todos os dias)?' : 'Remover o prato do dia deste dia?')) return;
     var sel=await sb.from('negocios').select('config').eq('id',negocio.id).maybeSingle();
     if(sel.error){ return; }
-    var cfg=(sel.data&&sel.data.config)||{}; cfg.pratoDatas=cfg.pratoDatas||{}; delete cfg.pratoDatas[iso];
+    var cfg=(sel.data&&sel.data.config)||{}; cfg.pratoDatas=cfg.pratoDatas||{};
+    if(ehFixo){ delete cfg.pratoFixo; } else { delete cfg.pratoDatas[iso]; }
     var up=await sb.from('negocios').update({ config:cfg }).eq('id',negocio.id);
     if(up.error){ return; }
     negocio.config=cfg; renderCal(); renderDia(iso);

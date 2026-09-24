@@ -4041,6 +4041,7 @@ amesadigital.pt</textarea>
           if(fc.mostrarAgendaIcon !== undefined) config.mostrarAgendaIcon = fc.mostrarAgendaIcon; // ícone das reservas segue o Calendário
           if(fc.promoDatas !== undefined) config.promoDatas = fc.promoDatas; // promoções por data (Calendário)
           if(fc.pratoDatas !== undefined) config.pratoDatas = fc.pratoDatas; // prato do dia por data (Calendário)
+          if(fc.pratoFixo !== undefined) config.pratoFixo = fc.pratoFixo;   // prato do dia fixo (repete todos os dias)
           if(fc.__bkp !== undefined) config.__bkp = fc.__bkp;               // cópia de segurança guardada (Gestão)
         }
         // Guarda 1 cópia do estado ANTERIOR (config + menu já publicados) para o "Repor versão anterior".
@@ -5890,7 +5891,7 @@ amesadigital.pt</textarea>
         // manter campos geridos pelo admin/Calendário do estado atual (visibilidade, tipo, secções,
         // reservas, promoções e prato do dia) — repor a versão do editor NÃO deve apagar estas definições
         const ac = est.config || {};
-        ['oculto','naApp','tipo','editorOff','agenda','mostrarAgendaIcon','promoDatas','pratoDatas','pratoDia','__bkp'].forEach(function(k){ if(ac[k] !== undefined) nova[k] = ac[k]; });
+        ['oculto','naApp','tipo','editorOff','agenda','mostrarAgendaIcon','promoDatas','pratoDatas','pratoFixo','pratoDia','__bkp'].forEach(function(k){ if(ac[k] !== undefined) nova[k] = ac[k]; });
         // a "nova cópia" passa a apontar para o estado ATUAL, para poderes alternar
         nova.__undo = { config: _stripUndo(est.config || {}), menu: est.menu || null, ts: Date.now() };
         await sbc.from('negocios').update({ config: nova, menu: (u.menu || null) }).eq('id', window.__negocio.id);

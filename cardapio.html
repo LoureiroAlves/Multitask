@@ -3241,6 +3241,8 @@
       var _pdIso = _pdDia.getFullYear() + '-' + String(_pdDia.getMonth()+1).padStart(2,'0') + '-' + String(_pdDia.getDate()).padStart(2,'0');
       var _pdDatas = (cfg && cfg.pratoDatas && typeof cfg.pratoDatas === 'object') ? cfg.pratoDatas : {};
       var pd = _pdDatas[_pdIso] || null;   // prioridade: prato do dia desta DATA
+      // 2.º: prato do dia FIXO (repete todos os dias), se estiver ativo e tiver caixas
+      if(!pd && cfg && cfg.pratoFixo && cfg.pratoFixo.ativo && Array.isArray(cfg.pratoFixo.caixas) && cfg.pratoFixo.caixas.length) pd = cfg.pratoFixo;
       // legado (config.pratoDia): só usar se realmente tiver caixas — ignora restos vazios com ativo:true
       if(!pd && cfg && cfg.pratoDia && Array.isArray(cfg.pratoDia.caixas) && cfg.pratoDia.caixas.length) pd = cfg.pratoDia;
       function _mapa(c){ var f = (c && Array.isArray(c.fotos) && c.fotos.length) ? c.fotos : (c && c.foto ? [c.foto] : []); return { tam: (c && c.tam) || 'l', titulo: (c && c.titulo) || '', subtitulo: (c && c.subtitulo) || '', cor: (c && c.cor) || '', escurecer: (c && c.escurecer) || 0, caixaTexto: !!(c && c.caixaTexto), fotos: f, estilo: (c && c.estilo) || {}, estiloSub: (c && c.estiloSub) || {}, tx:(c&&c.tx!=null?c.tx:null), ty:(c&&c.ty!=null?c.ty:null), subX:(c&&c.subX!=null?c.subX:null), subY:(c&&c.subY!=null?c.subY:null), neonAtivo:!!(c&&c.neonAtivo), neonCor:(c&&c.neonCor)||'#19e9ff', neonPiscar:(c&&c.neonPiscar)?1.4:'' }; }
