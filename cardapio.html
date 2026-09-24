@@ -5263,6 +5263,12 @@
           function _norm(r){ return r ? { rid:String(r.rid||''), rn:r.rn||'', rd:r.rd||'', rh:r.rh||'', rp:String(r.rp||'1'), estado:(r.estado||'pendente') } : null; }
           function _chave(r){ return r.rid || (r.rd + '|' + r.rh); }   // identidade: código único, ou dia+hora se não houver
           function _escrever(arr){ try{ localStorage.setItem(KEY, JSON.stringify(arr)); }catch(e){} }
+          // Registo local dos cancelamentos PEDIDOS pelo cliente (para distinguir de uma recusa do restaurante)
+          const CANC_KEY = 'cancelPedido:' + _slug;
+          function _cancLer(){ try{ var a=JSON.parse(localStorage.getItem(CANC_KEY)); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
+          function _cancAdd(rid){ if(!rid) return; try{ var a=_cancLer(); if(a.indexOf(String(rid))<0){ a.push(String(rid)); localStorage.setItem(CANC_KEY, JSON.stringify(a)); } }catch(e){} }
+          function _cancTem(rid){ return rid && _cancLer().indexOf(String(rid))>=0; }
+          function _cancDel(rid){ try{ var a=_cancLer().filter(function(x){ return x!==String(rid); }); localStorage.setItem(CANC_KEY, JSON.stringify(a)); }catch(e){} }
           // Lê a lista (migra o formato antigo), remove as expiradas e regrava
           function lerLista(){
             let arr = [];
@@ -5331,7 +5337,7 @@
             const gf = document.getElementById('grFechar'); if(gf) gf.onclick = fechar;
             const grm = document.getElementById('grRemover'); if(grm) grm.onclick = function(){ if(confirm('Remover esta reserva do teu telemóvel? O restaurante continua com ela — isto só apaga o atalho aqui.')){ remover(r); fechar(); } };
             ov.addEventListener('click', function(e){ if(e.target === ov) fechar(); });
-            const gc = document.getElementById('grCancelar'); if(gc) gc.onclick = function(){ window.open('https://wa.me/'+tel+'?text='+encodeURIComponent('Olá! Quero CANCELAR '+baseMsg+'. Obrigado.'+_linkCal('&canc=1')), '_blank'); };
+            const gc = document.getElementById('grCancelar'); if(gc) gc.onclick = function(){ try{ if(r.rid) _cancAdd(r.rid); }catch(e){} window.open('https://wa.me/'+tel+'?text='+encodeURIComponent('Olá! Quero CANCELAR '+baseMsg+'. Obrigado.'+_linkCal('&canc=1')), '_blank'); };
             const gab = document.getElementById('grAlterarBtn'); if(gab) gab.onclick = function(){ const b=document.getElementById('grAlterarBox'); if(b) b.style.display = (b.style.display==='none'?'block':'none'); };
             const gea = document.getElementById('grEnviarAlt'); if(gea) gea.onclick = function(){
               const np = Math.max(1, parseInt((document.getElementById('grPessoas')||{}).value,10)||1);
@@ -5373,6 +5379,12 @@
             }catch(e){}
           }
           function _dataResumo(r){ try{ var d=new Date((r.rd||'')+'T00:00:00'); return d.getDate()+' de '+_MESES[d.getMonth()]+(r.rh?(' às '+r.rh):''); }catch(e){ return r.rd||''; } }
+          function _mostrarAvisoRes(av){
+            if(!av) return;
+            if(av.tipo==='confirmada') _resPopup('#1e6b3c','✅ Reserva confirmada','A tua reserva de '+_dataResumo(av.r)+' foi confirmada pelo restaurante. Até já! 🍽️');
+            else if(av.tipo==='cancelado') _resPopup('#8a5a10','👋 Cancelamento confirmado','O teu cancelamento da reserva de '+_dataResumo(av.r)+' foi aceite. Até uma próxima!');
+            else _resPopup('#b23','❌ Reserva não confirmada','A tua reserva de '+_dataResumo(av.r)+' não teve disponibilidade. Fala com o restaurante para uma alternativa.');
+          }
 
           // Chegou pelo link do WhatsApp → guardar/atualizar ESSA reserva (por código) e destacar o ícone. NUNCA abre popup.
           const P = new URLSearchParams(location.search);
@@ -5410,11 +5422,11 @@
                     if(prevMap[String(s.id)] && prevMap[String(s.id)] !== 'confirmada' && String(s.estado) === 'confirmada'){ _aviso = { tipo:'confirmada', r:nr }; }
                     nova.push(nr);
                   });
-                  // reservas que existiam e deixaram de vir (canceladas/recusadas pelo restaurante)
-                  antes.forEach(function(x){ if(x.rid && prevMap[String(x.rid)] && !res.data.find(function(s){ return String(s.id)===String(x.rid); })){ if(!_aviso) _aviso = { tipo:'recusada', r:x }; } });
+                  // reservas que existiam e deixaram de vir (canceladas): distinguir cancelamento pedido pelo cliente vs recusa do restaurante
+                  antes.forEach(function(x){ if(x.rid && prevMap[String(x.rid)] && !res.data.find(function(s){ return String(s.id)===String(x.rid); })){ if(!_aviso){ if(_cancTem(x.rid)){ _aviso = { tipo:'cancelado', r:x }; _cancDel(x.rid); } else { _aviso = { tipo:'recusada', r:x }; } } } });
                   const nova2 = nova.filter(valida);
                   if(JSON.stringify(nova2) !== JSON.stringify(antes)){ _escrever(nova2); atualizarBotao(); if(window.__reservaRerender) window.__reservaRerender(); }
-                  if(_aviso){ if(_aviso.tipo==='confirmada') _resPopup('#1e6b3c','✅ Reserva confirmada','A tua reserva de '+_dataResumo(_aviso.r)+' foi confirmada pelo restaurante. Até já! 🍽️'); else _resPopup('#b23','❌ Reserva não confirmada','A tua reserva de '+_dataResumo(_aviso.r)+' não teve disponibilidade. Fala com o restaurante para uma alternativa.'); }
+                  _mostrarAvisoRes(_aviso);
                 });
                 return;
               }
@@ -5430,12 +5442,15 @@
                 antes.forEach(function(r){
                   if(!r.rid) return;                              // legado sem código → largar
                   const s = srv[String(r.rid)];
-                  if(!s || String(s.estado) === 'cancelada'){ if(s && String(s.estado)==='cancelada' && String(r.estado)!=='cancelada' && !_aviso) _aviso={ tipo:'recusada', r:r }; return; }   // apagada/cancelada → largar (avisa se foi recusada)
+                  if(!s || String(s.estado) === 'cancelada'){
+                    if(s && String(s.estado)==='cancelada' && String(r.estado)!=='cancelada' && !_aviso){ if(_cancTem(r.rid)){ _aviso={ tipo:'cancelado', r:r }; _cancDel(r.rid); } else { _aviso={ tipo:'recusada', r:r }; } }
+                    return;   // apagada/cancelada → largar
+                  }
                   if(String(r.estado) !== 'confirmada' && String(s.estado) === 'confirmada'){ _aviso = { tipo:'confirmada', r:r }; }
                   nova.push(_norm({ rid:r.rid, rn:r.rn, rd:(s.data||r.rd), rh:(s.hora||r.rh), rp:(s.pessoas!=null?s.pessoas:r.rp), estado:(s.estado||r.estado) }));
                 });
                 if(JSON.stringify(nova) !== JSON.stringify(antes)){ _escrever(nova); atualizarBotao(); if(window.__reservaRerender) window.__reservaRerender(); }
-                if(_aviso){ if(_aviso.tipo==='confirmada') _resPopup('#1e6b3c','✅ Reserva confirmada','A tua reserva de '+_dataResumo(_aviso.r)+' foi confirmada pelo restaurante. Até já! 🍽️'); else _resPopup('#b23','❌ Reserva não confirmada','A tua reserva de '+_dataResumo(_aviso.r)+' não teve disponibilidade. Fala com o restaurante para uma alternativa.'); }
+                _mostrarAvisoRes(_aviso);
               });
             }catch(e){}
           }
