@@ -1033,20 +1033,16 @@
     var _bk = (negocio.config && negocio.config.__bkp) || null;
     var _bkQuando = _bk && _bk.ts ? new Date(_bk.ts).toLocaleString('pt-PT') : null;
     html += '<div class="def-card" style="margin-top:14px;">'
-      + '<div class="def-h">🛟 Cópia de segurança das definições</div>'
-      + '<div style="font-size:.82rem;color:#6a5a3c;margin:2px 0 10px;">Guarda uma cópia de todas as definições deste negócio. Faz uma cópia antes de cada atualização — se algo se perder, repões com um clique.</div>'
-      + '<button type="button" id="dfBkFazer" style="width:100%;background:#8a5a10;border:none;border-radius:10px;padding:12px;cursor:pointer;font-weight:800;color:#fff;margin-bottom:8px;">💾 Fazer cópia de segurança agora</button>'
-      + '<button type="button" id="dfBkRepor"'+(_bk?'':' disabled')+' style="width:100%;background:'+(_bk?'#fff':'#f2eee4')+';border:1.5px solid #e0d3b5;border-radius:10px;padding:11px;cursor:'+(_bk?'pointer':'default')+';font-weight:700;color:'+(_bk?'#8a5a10':'#b3a689')+';margin-bottom:6px;">↩️ Repor a última cópia'+(_bkQuando?' (de '+_bkQuando+')':' — ainda não há')+'</button>'
-      + '<div style="font-size:.74rem;color:#8a7a5c;margin:8px 0 4px;">Extra (ficheiro no teu computador):</div>'
-      + '<button type="button" id="dfExportar" style="width:100%;background:#eef6ec;border:1.5px solid #bcd8b4;border-radius:10px;padding:10px;cursor:pointer;font-weight:700;color:#3f7a34;margin-bottom:8px;">⬇️ Descarregar cópia para ficheiro</button>'
+      + '<div class="def-h">🛟 Repor as definições deste negócio</div>'
+      + '<div style="font-size:.82rem;color:#6a5a3c;margin:2px 0 10px;">As cópias de segurança são feitas de uma vez para todos os negócios no painel Multitask. Aqui podes repor SÓ este negócio, se algo se perder.</div>'
+      + '<button type="button" id="dfBkRepor"'+(_bk?'':' disabled')+' style="width:100%;background:'+(_bk?'#8a5a10':'#f2eee4')+';border:'+(_bk?'none':'1.5px solid #e0d3b5')+';border-radius:10px;padding:12px;cursor:'+(_bk?'pointer':'default')+';font-weight:800;color:'+(_bk?'#fff':'#b3a689')+';margin-bottom:6px;">↩️ Repor a última cópia'+(_bkQuando?' (de '+_bkQuando+')':' — ainda não há cópia')+'</button>'
+      + '<div style="font-size:.74rem;color:#8a7a5c;margin:8px 0 4px;">Ou repor a partir de um ficheiro de cópia (individual ou o geral de todos):</div>'
       + '<label for="dfImportFile" style="display:block;text-align:center;background:#fff;border:1.5px solid #e0d3b5;border-radius:10px;padding:10px;cursor:pointer;font-weight:700;color:#8a5a10;">⬆️ Repor a partir de um ficheiro…</label>'
       + '<input type="file" id="dfImportFile" accept="application/json,.json" style="display:none;">'
       + '<div class="msg" id="dfBkMsg" style="margin-top:8px;"></div>'
       + '</div>';
     $('vistaDef').innerHTML = html;
-    { var _bf=$('dfBkFazer'); if(_bf) _bf.onclick=_bkFazer;
-      var _brp=$('dfBkRepor'); if(_brp && _bk) _brp.onclick=_bkRepor;
-      var _ex=$('dfExportar'); if(_ex) _ex.onclick=_exportarConfig;
+    { var _brp=$('dfBkRepor'); if(_brp && _bk) _brp.onclick=_bkRepor;
       var _im=$('dfImportFile'); if(_im) _im.onchange=function(){ if(this.files&&this.files[0]) _importarConfig(this.files[0], this); }; }
     _dfMesas = Array.isArray(a.mesas) ? JSON.parse(JSON.stringify(a.mesas)) : [];
     _renderMesas();
@@ -1170,7 +1166,16 @@
     var msg=$('dfBkMsg'); if(msg){ msg.textContent='A ler ficheiro...'; msg.className='msg'; }
     try{
       var txt=await file.text(); var pac=JSON.parse(txt);
-      var cfgNova = (pac && pac.config && typeof pac.config==='object') ? pac.config : (pac && typeof pac==='object' && pac.agenda ? pac : null);
+      var cfgNova=null;
+      if(pac && Array.isArray(pac.negocios)){
+        // ficheiro GERAL (todos os negócios) — encontrar este negócio
+        var alvo = pac.negocios.find(function(n){ return n.id===negocio.id; })
+                || pac.negocios.find(function(n){ return n.slug && negocio.slug && n.slug===negocio.slug; });
+        if(!alvo) throw new Error('este negócio não está no ficheiro');
+        cfgNova = (alvo.config && typeof alvo.config==='object') ? alvo.config : null;
+      } else {
+        cfgNova = (pac && pac.config && typeof pac.config==='object') ? pac.config : (pac && typeof pac==='object' && pac.agenda ? pac : null);
+      }
       if(!cfgNova) throw new Error('ficheiro inválido');
       var quando = pac.exportadoEm ? (' de '+new Date(pac.exportadoEm).toLocaleString('pt-PT')) : '';
       if(!confirm('Repor TODAS as definições deste negócio a partir da cópia'+quando+'?\n\nIsto substitui as definições atuais. As reservas e encomendas já feitas não são afetadas.')) { if(inputEl) inputEl.value=''; if(msg){msg.textContent='';} return; }
