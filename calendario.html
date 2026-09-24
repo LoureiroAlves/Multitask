@@ -437,17 +437,17 @@
         const dd = new Date(alvoR.data+'T00:00:00');
         vAno = dd.getFullYear(); vMes = dd.getMonth(); diaSel = alvoR.data;
         mostrarVista('cal'); renderCal(); renderDia(alvoR.data);
-        abrirModalEdicao(alvoR.id);
-        if(ALT_PARAM){
-          if(AP_PARAM) $('mdPessoas').value = AP_PARAM;
-          if(AH_PARAM) $('mdHora').value = AH_PARAM;
-          $('mdEstado').value = 'confirmada';
-          $('mdMsg').textContent = '✏️ O cliente pediu esta alteração: ' + (AP_PARAM || alvoR.pessoas) + ' pessoa(s)' + (AH_PARAM ? (' às ' + AH_PARAM) : '') + '. Revê e clica Guardar para confirmar.';
-          $('mdMsg').className = 'msg';
-        } else if(CANC_PARAM){
-          $('mdEstado').value = 'cancelada';
-          $('mdMsg').textContent = '❌ O cliente pediu o CANCELAMENTO desta reserva. Confirma com Guardar (ou Apagar).';
-          $('mdMsg').className = 'msg';
+        if(CANC_PARAM){
+          _pedidoCancelamento(alvoR);   // "Cliente X quer cancelar a reserva Y" → aceitar e responder
+        } else {
+          abrirModalEdicao(alvoR.id);
+          if(ALT_PARAM){
+            if(AP_PARAM) $('mdPessoas').value = AP_PARAM;
+            if(AH_PARAM) $('mdHora').value = AH_PARAM;
+            $('mdEstado').value = 'confirmada';
+            $('mdMsg').textContent = '✏️ O cliente pediu esta alteração: ' + (AP_PARAM || alvoR.pessoas) + ' pessoa(s)' + (AH_PARAM ? (' às ' + AH_PARAM) : '') + '. Revê e clica Guardar para confirmar.';
+            $('mdMsg').className = 'msg';
+          }
         }
         return;
       }
@@ -1588,6 +1588,9 @@
       msg = 'Olá' + (nome ? ' '+nome : '') + '! A sua reserva em ' + casa + ' para ' + quando + ' (' + pessoas + ') está confirmada. Até já! 🍽️' + _gerir;
     } else if(tipo==='pendente'){
       msg = 'Olá' + (nome ? ' '+nome : '') + '! Recebemos o seu pedido de reserva em ' + casa + ' para ' + quando + ' (' + pessoas + '). Confirmamos em breve. Obrigado!' + _gerir;
+    } else if(tipo==='cancelaceite'){
+      // O CLIENTE pediu para cancelar e o restaurante aceitou
+      msg = 'Olá' + (nome ? ' '+nome : '') + '! O seu cancelamento da reserva em ' + casa + ' para ' + quando + ' foi aceite. Obrigado por avisar — até uma próxima! 👋';
     } else {
       msg = 'Olá' + (nome ? ' '+nome : '') + '. Lamentamos, mas não conseguimos confirmar a sua reserva em ' + casa + ' para ' + quando + '. Contacte-nos para encontrarmos uma alternativa.';
     }
@@ -1600,6 +1603,26 @@
     const url = _waUrl(r, tipo);
     if(url){ window.open(url, '_blank'); }
     else { alert('Esta reserva não tem número de telefone para avisar o cliente.'); }
+  }
+
+  // Pedido de cancelamento vindo do cliente (link &canc=1): mostra "Cliente X quer cancelar a reserva Y"
+  // e, ao aceitar, marca cancelada + abre o WhatsApp com "cancelamento aceite, até uma próxima".
+  async function _pedidoCancelamento(r){
+    if(!r) return;
+    if(String(r.estado) === 'cancelada'){ alert('Esta reserva já está cancelada.'); return; }
+    var quando = _dataPt(r.data) + (r.hora ? (' às ' + r.hora) : '');
+    var nome = (r.nome || 'O cliente').trim();
+    var sim = await window.__amConfirm('Pedido de cancelamento', {
+      texto: nome + ' quer cancelar a reserva de ' + quando + ' (' + (Number(r.pessoas)||1) + ' pessoa(s)).\n\nAceitar o cancelamento e avisar o cliente?',
+      ok: 'Aceitar e avisar', cancelar: 'Agora não'
+    });
+    if(!sim) return;
+    // Abre já o WhatsApp (mantém o gesto do toque) com a mensagem de cancelamento aceite
+    var url = _waUrl(r, 'cancelaceite');
+    var win = url ? window.open(url, '_blank') : null;
+    var { error } = await sb.from('reservas').update({ estado:'cancelada' }).eq('id', r.id);
+    if(error){ alert('Erro: ' + error.message); if(win){ try{ win.close(); }catch(e){} } return; }
+    carregar();
   }
 
   async function accao(id, a){
