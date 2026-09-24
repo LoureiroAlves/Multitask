@@ -45,6 +45,14 @@
   .fs-chip{ display:inline-flex; align-items:center; gap:6px; background:linear-gradient(180deg,#fff,#fdf7ec); border:1.5px solid var(--linha); border-radius:11px; padding:8px 12px; font-size:.85rem; cursor:pointer; box-shadow:0 1px 2px rgba(120,90,50,.08); transition:border-color .15s; }
   .fs-chip:hover{ border-color:var(--terra); }
   .fs-chip input{ width:auto; margin:0; accent-color:var(--terra); }
+  /* Telemóvel de pré-visualização */
+  .fone{ width:300px; max-width:100%; margin:14px auto 6px; background:linear-gradient(160deg,#2a2018,#15100b); border-radius:40px; padding:12px; box-shadow:0 16px 40px rgba(60,40,20,.34); }
+  .fone-ecra{ position:relative; border-radius:30px; overflow:hidden; height:540px; overflow-y:auto; -webkit-overflow-scrolling:touch; background:#fff; transition:background .2s; }
+  .fone-notch{ position:absolute; top:0; left:50%; transform:translateX(-50%); width:118px; height:20px; background:#15100b; border-radius:0 0 14px 14px; z-index:5; }
+  .cor-row{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin:7px 0; cursor:pointer; }
+  .cor-row span{ display:flex; align-items:center; gap:8px; font-size:.9rem; color:var(--ink); }
+  .cor-row input[type=color]{ width:50px; height:32px; padding:0; border:none; background:none; cursor:pointer; flex-shrink:0; }
+  .cor-row input[type=checkbox]{ width:auto; margin:0; accent-color:var(--terra); }
 </style>
 </head>
 <body>
@@ -167,21 +175,38 @@
     </div>
 
     <div class="card">
-      <h2><span class="ic">🎛️</span> Estilo dos separadores <span class="op">(só para veres)</span></h2>
-      <div class="dica" style="margin-bottom:8px;">Os separadores são os “botões” de cada secção do menu. Espreita alguns estilos e, se quiseres, diz-nos qual gostaste — a escolha final afinamos contigo.</div>
-      <button type="button" class="btn sec" id="verEstilos" style="cursor:pointer; text-align:center;">👀 Ver exemplos de estilos</button>
-      <div id="estilosBox" style="display:none; margin-top:10px;">
-        <div id="estilosBtns" style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px;"></div>
-        <div id="mockPrev" style="border-radius:16px; overflow:hidden; border:1px solid var(--linha); box-shadow:0 6px 18px rgba(74,56,32,.12); transition:background .2s;">
-          <div id="mockHead" style="padding:20px 16px 16px; text-align:center;">
-            <div id="mockTitle" style="font-weight:800; font-size:1.3rem; line-height:1.15;">O teu restaurante</div>
-            <div id="mockSub" style="font-size:.85rem; opacity:.85; margin-top:3px;">o teu subtítulo</div>
+      <h2><span class="ic">🎛️</span> Estilo e cores do cardápio</h2>
+      <div class="dica" style="margin-bottom:8px;">Escolhe o visual e afina as cores. Em baixo, num telemóvel, vês como fica o teu menu — o exemplo constrói-se com as tuas escolhas.</div>
+      <button type="button" class="btn sec" id="verEstilos" style="cursor:pointer; text-align:center;">👀 Ver e escolher o estilo</button>
+      <div id="estilosBox" style="display:none; margin-top:12px;">
+        <label style="margin-top:0;">Estilo base</label>
+        <div id="estilosBtns" style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:4px;"></div>
+
+        <div class="fone"><div class="fone-ecra" id="mockPrev">
+          <div class="fone-notch"></div>
+          <div id="mockHead" style="padding:30px 16px 16px; text-align:center;">
+            <div id="mockTitle" style="font-weight:800; font-size:1.25rem; line-height:1.15;">O teu restaurante</div>
+            <div id="mockSub" style="font-size:.82rem; opacity:.9; margin-top:3px;">o teu subtítulo</div>
           </div>
-          <div id="mockTiles" style="display:grid; grid-template-columns:1fr 1fr; gap:8px; padding:0 14px 14px;"></div>
-          <div id="mockFoot" style="padding:12px 14px; text-align:center; font-size:.78rem;">a tua morada · contacto</div>
+          <div id="mockTiles" style="display:grid; grid-template-columns:1fr 1fr; gap:8px; padding:0 12px 12px;"></div>
+          <div id="mockSecao" style="padding:0 12px 14px;"></div>
+          <div id="mockFoot" style="padding:12px 14px; text-align:center; font-size:.75rem;">a tua morada · contacto</div>
+        </div></div>
+
+        <div style="margin-top:12px; padding:12px 12px 8px; border:1.5px solid var(--linha); border-radius:14px; background:#fdfaf4;">
+          <div style="font-weight:800; color:var(--terra-esc); margin-bottom:2px;">🎨 Cores e Fundos</div>
+          <div class="dica" style="margin-bottom:8px;">Liga só o que quiseres mudar; o resto segue o estilo base.</div>
+          <label class="cor-row"><span><input type="checkbox" id="apBgMainOn"> Fundo principal</span><input type="color" id="apBgMain" value="#faf7f1"></label>
+          <label class="cor-row"><span><input type="checkbox" id="apTilesOn"> Fundo dos separadores</span><input type="color" id="apTiles" value="#ffffff"></label>
+          <label class="cor-row"><span><input type="checkbox" id="apTitOn"> Títulos</span><input type="color" id="apTit" value="#3a2c18"></label>
+          <label class="cor-row"><span><input type="checkbox" id="apSubOn"> Subtítulos</span><input type="color" id="apSub" value="#a8712f"></label>
+          <label class="cor-row"><span><input type="checkbox" id="apPratosOn"> Nome dos pratos</span><input type="color" id="apPratos" value="#3a2c18"></label>
+          <label class="cor-row"><span><input type="checkbox" id="apPrecoOn"> Preços</span><input type="color" id="apPreco" value="#a8712f"></label>
+          <label class="cor-row"><span><input type="checkbox" id="apMaisOn"> Cor do +</span><input type="color" id="apMais" value="#a8712f"></label>
+          <label class="cor-row"><span><input type="checkbox" id="apRodapeOn"> Rodapé</span><input type="color" id="apRodape" value="#f1e9db"></label>
         </div>
-        <div class="dica" style="margin-top:6px;">Pré-visualização com secções de exemplo — o cabeçalho e o rodapé vão-se atualizando com o que escreves em cima.</div>
-        <label style="margin-top:10px;">Estilo que mais gostaste <span class="op">(opcional)</span></label>
+
+        <label style="margin-top:12px;">Estilo que mais gostaste <span class="op">(opcional)</span></label>
         <input id="modeloPreferido" type="text" placeholder="Ex.: Revista">
         <input id="modeloId" type="hidden">
       </div>
@@ -226,52 +251,83 @@
   function _get(id){ var e=document.getElementById(id); return e ? e.value.trim() : ''; }
   function _esc(s){ return String(s||'').replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c];}); }
 
-  function recolher(){ var o={}; CAMPOS.forEach(function(c){ var v=_get(c[0]); if(v) o[c[0]]=v; }); var _fs=[]; [1,2,3,4,5,6,0].forEach(function(w){ var c=document.getElementById('fs'+w); if(c&&c.checked) _fs.push(w); }); if(_fs.length) o.fechoSemanal=_fs.join(','); var _ft=document.getElementById('fazTakeaway'); if(_ft&&_ft.checked){ o.fazTakeaway=true; o.cozAbre1=_get('cozAbre1'); o.cozFecha1=_get('cozFecha1'); o.cozAbre2=_get('cozAbre2'); o.cozFecha2=_get('cozFecha2'); o.cozAntes=_get('cozAntes'); } if(fotosURLs.length) o.fotos = fotosURLs.slice(); var b={}; ['cabecalho','abertura','montra'].forEach(function(k){ if(brand[k]) b[k]=brand[k]; }); if(Object.keys(b).length) o.brand = b; return o; }
+  function recolher(){ var o={}; CAMPOS.forEach(function(c){ var v=_get(c[0]); if(v) o[c[0]]=v; }); var _fs=[]; [1,2,3,4,5,6,0].forEach(function(w){ var c=document.getElementById('fs'+w); if(c&&c.checked) _fs.push(w); }); if(_fs.length) o.fechoSemanal=_fs.join(','); var _ft=document.getElementById('fazTakeaway'); if(_ft&&_ft.checked){ o.fazTakeaway=true; o.cozAbre1=_get('cozAbre1'); o.cozFecha1=_get('cozFecha1'); o.cozAbre2=_get('cozAbre2'); o.cozFecha2=_get('cozFecha2'); o.cozAntes=_get('cozAntes'); } if(fotosURLs.length) o.fotos = fotosURLs.slice(); var b={}; ['cabecalho','abertura','montra'].forEach(function(k){ if(brand[k]) b[k]=brand[k]; }); if(Object.keys(b).length) o.brand = b;
+    // Cores e Fundos escolhidas (mapa igual ao config.aparencia do editor) — só as que o dono ligou
+    var ap={}; [['BgMain','bgMain'],['Tiles','subFundo'],['Tit','titulos'],['Sub','subtitulos'],['Pratos','pratos'],['Preco','precos'],['Mais','destaque'],['Rodape','rodape']].forEach(function(pr){ var on=document.getElementById('ap'+pr[0]+'On'), col=document.getElementById('ap'+pr[0]); if(on&&on.checked&&col) ap[pr[1]]=col.value; }); if(Object.keys(ap).length) o.aparencia=ap;
+    return o; }
   (function(){ var ft=document.getElementById('fazTakeaway'); if(ft){ ft.addEventListener('change', function(){ var bx=document.getElementById('takeawayBox'); if(bx) bx.style.display = ft.checked ? 'block' : 'none'; }); } })();
 
-  // Pré-visualização de estilos — maqueta própria (muda de estilo e acompanha o que se escreve no formulário).
+  // Pré-visualização em telemóvel — estilo base + Cores e Fundos; o menu-exemplo constrói-se com as escolhas.
   (function(){
     var g = function(id){ return document.getElementById(id); };
     var MODELOS = [
-      {id:'elegante', nome:'Elegante', p:{ pageBg:'#faf7f1', headBg:'#faf7f1', headColor:'#3a2c18', subColor:'#a8712f', tileBg:'#ffffff', tileColor:'#3a2c18', tileBorder:'1px solid #e7dcc6', footBg:'#f1e9db', footColor:'#6b4a1f', radius:'12px', font:"Georgia,'Times New Roman',serif" }},
-      {id:'revista', nome:'Revista', p:{ pageBg:'#ffffff', headBg:'#151515', headColor:'#ffffff', subColor:'#c9a24a', tileBg:'#f3f3f3', tileColor:'#151515', tileBorder:'none', footBg:'#151515', footColor:'#f3f3f3', radius:'6px', font:"'Poppins',sans-serif" }},
-      {id:'foodtruck', nome:'Food Truck', p:{ pageBg:'#fff8ea', headBg:'#e0662a', headColor:'#ffffff', subColor:'#ffe8cf', tileBg:'#fff3d9', tileColor:'#a3451d', tileBorder:'2px dashed #e0a04a', footBg:'#2e2a24', footColor:'#ffe8cf', radius:'14px', font:"'Poppins',sans-serif" }},
-      {id:'azulejo', nome:'Azulejo', p:{ pageBg:'#eef3fa', headBg:'#2a5aa8', headColor:'#ffffff', subColor:'#cfe0f4', tileBg:'#ffffff', tileColor:'#22417f', tileBorder:'1.5px solid #2a5aa8', footBg:'#dbe6f5', footColor:'#22417f', radius:'10px', font:"'Poppins',sans-serif" }},
-      {id:'caderno', nome:'Caderno', p:{ pageBg:'#fbf8f2', headBg:'#fbf8f2', headColor:'#3a2c18', subColor:'#8a6a2f', tileBg:'#fffdf7', tileColor:'#3a2c18', tileBorder:'1px dashed #cbb98f', footBg:'#f4ead2', footColor:'#6b4a1f', radius:'8px', font:"'Poppins',cursive" }},
-      {id:'ardosia', nome:'Ardósia', p:{ pageBg:'#2b322c', headBg:'#222a24', headColor:'#f2efe6', subColor:'#9ec3a8', tileBg:'#39423a', tileColor:'#f2efe6', tileBorder:'1px solid #55605a', footBg:'#222a24', footColor:'#cfe6d6', radius:'10px', font:"'Poppins',sans-serif" }},
-      {id:'neon', nome:'Néon', p:{ pageBg:'#05050c', headBg:'#05050c', headColor:'#ff4fd8', subColor:'#4fe0ff', tileBg:'#0e0e1c', tileColor:'#7cf7ff', tileBorder:'1.5px solid #a64bff', footBg:'#0e0e1c', footColor:'#ff4fd8', radius:'12px', font:"'Poppins',sans-serif" }},
-      {id:'praia', nome:'Praia', p:{ pageBg:'#f4efe1', headBg:'#23417f', headColor:'#ffffff', subColor:'#f0e6c8', tileBg:'#ffffff', tileColor:'#23417f', tileBorder:'1.5px solid #90835f', footBg:'#e9dfc4', footColor:'#23417f', radius:'14px', font:"'Poppins',sans-serif" }}
+      {id:'elegante', nome:'Elegante', p:{ pageBg:'#faf7f1', headBg:'#faf7f1', headColor:'#3a2c18', subColor:'#a8712f', tileBg:'#ffffff', tileColor:'#3a2c18', tileBorder:'1px solid #e7dcc6', footBg:'#f1e9db', footColor:'#6b4a1f', preco:'#a8712f', radius:'12px', font:"Georgia,'Times New Roman',serif" }},
+      {id:'revista', nome:'Revista', p:{ pageBg:'#ffffff', headBg:'#151515', headColor:'#ffffff', subColor:'#c9a24a', tileBg:'#f3f3f3', tileColor:'#151515', tileBorder:'none', footBg:'#151515', footColor:'#f3f3f3', preco:'#c9a24a', radius:'6px', font:"'Poppins',sans-serif" }},
+      {id:'foodtruck', nome:'Food Truck', p:{ pageBg:'#fff8ea', headBg:'#e0662a', headColor:'#ffffff', subColor:'#a3451d', tileBg:'#fff3d9', tileColor:'#a3451d', tileBorder:'2px dashed #e0a04a', footBg:'#2e2a24', footColor:'#ffe8cf', preco:'#e0662a', radius:'14px', font:"'Poppins',sans-serif" }},
+      {id:'azulejo', nome:'Azulejo', p:{ pageBg:'#eef3fa', headBg:'#2a5aa8', headColor:'#ffffff', subColor:'#2a5aa8', tileBg:'#ffffff', tileColor:'#22417f', tileBorder:'1.5px solid #2a5aa8', footBg:'#dbe6f5', footColor:'#22417f', preco:'#2a5aa8', radius:'10px', font:"'Poppins',sans-serif" }},
+      {id:'caderno', nome:'Caderno', p:{ pageBg:'#fbf8f2', headBg:'#fbf8f2', headColor:'#3a2c18', subColor:'#8a6a2f', tileBg:'#fffdf7', tileColor:'#3a2c18', tileBorder:'1px dashed #cbb98f', footBg:'#f4ead2', footColor:'#6b4a1f', preco:'#8a6a2f', radius:'8px', font:"'Poppins',cursive" }},
+      {id:'ardosia', nome:'Ardósia', p:{ pageBg:'#2b322c', headBg:'#222a24', headColor:'#f2efe6', subColor:'#9ec3a8', tileBg:'#39423a', tileColor:'#f2efe6', tileBorder:'1px solid #55605a', footBg:'#222a24', footColor:'#cfe6d6', preco:'#9ec3a8', radius:'10px', font:"'Poppins',sans-serif" }},
+      {id:'neon', nome:'Néon', p:{ pageBg:'#05050c', headBg:'#05050c', headColor:'#ff4fd8', subColor:'#4fe0ff', tileBg:'#0e0e1c', tileColor:'#7cf7ff', tileBorder:'1.5px solid #a64bff', footBg:'#0e0e1c', footColor:'#ff4fd8', preco:'#4fe0ff', radius:'12px', font:"'Poppins',sans-serif" }},
+      {id:'praia', nome:'Praia', p:{ pageBg:'#f4efe1', headBg:'#23417f', headColor:'#ffffff', subColor:'#23417f', tileBg:'#ffffff', tileColor:'#23417f', tileBorder:'1.5px solid #90835f', footBg:'#e9dfc4', footColor:'#23417f', preco:'#23417f', radius:'14px', font:"'Poppins',sans-serif" }}
     ];
     var CATS = [ {e:'🥗',t:'Entradas'}, {e:'🍲',t:'Sopas & Saladas'}, {e:'🐟',t:'Peixe'}, {e:'🥩',t:'Carne'}, {e:'🍰',t:'Sobremesas'}, {e:'🍷',t:'Vinhos'} ];
+    var PRATOS = [ ['Posta à Mirandesa','Vazia grelhada, batata a murro','16,50'], ['Bife da vazia','Molho de pimenta, arroz de feijão','14,00'] ];
     var ver = g('verEstilos'), box = g('estilosBox'), btns = g('estilosBtns'), pref = g('modeloPreferido');
-    var mock = g('mockPrev'), head = g('mockHead'), title = g('mockTitle'), sub = g('mockSub'), tiles = g('mockTiles'), foot = g('mockFoot');
+    var mock = g('mockPrev'), head = g('mockHead'), title = g('mockTitle'), sub = g('mockSub'), tiles = g('mockTiles'), secao = g('mockSecao'), foot = g('mockFoot');
     if(!ver || !box || !btns || !mock) return;
     var carregado = false, atual = MODELOS[0];
+    // cor efetiva: se o "Cores e Fundos" tiver o interruptor ligado, usa a cor escolhida; senão, a do estilo base
+    function eff(key, base){ var on = g('ap'+key+'On'), col = g('ap'+key); return (on && on.checked && col) ? col.value : base; }
     function pinta(id){
       Array.prototype.forEach.call(btns.children, function(b){
         var on = b.dataset.id === id;
-        b.style.background = on ? 'var(--castanho, #4a3820)' : '#fff';
-        b.style.color = on ? '#fff' : 'var(--castanho, #4a3820)';
-        b.style.borderColor = on ? 'var(--castanho, #4a3820)' : 'var(--linha, #e5ddcf)';
+        b.style.background = on ? 'var(--terra-esc,#7a5320)' : '#fff';
+        b.style.color = on ? '#fff' : 'var(--terra-esc,#7a5320)';
+        b.style.borderColor = on ? 'var(--terra-esc,#7a5320)' : 'var(--linha,#e5ddcf)';
       });
     }
-    function tilesHTML(p){
-      return CATS.map(function(c){
-        return '<div style="background:'+p.tileBg+'; color:'+p.tileColor+'; border:'+p.tileBorder+'; border-radius:'+p.radius+'; padding:13px 6px; text-align:center; font-weight:700; font-size:.8rem; line-height:1.2;">'
-          + '<div style="font-size:1.35rem; margin-bottom:3px;">'+c.e+'</div>'+c.t+'</div>';
-      }).join('');
-    }
-    function aplica(m){
-      atual = m; var p = m.p;
-      mock.style.background = p.pageBg;
+    function render(){
+      var p = atual.p;
+      var pageBg = eff('BgMain', p.pageBg);
+      var tileBg = eff('Tiles', p.tileBg);
+      var titCor = eff('Tit', p.headColor);
+      var subCor = eff('Sub', p.subColor);
+      var pratoCor = eff('Pratos', p.tileColor);
+      var precoCor = eff('Preco', p.preco);
+      var maisCor = eff('Mais', p.preco);
+      var footBg = eff('Rodape', p.footBg);
+      mock.style.background = pageBg;
       head.style.background = p.headBg;
       title.style.color = p.headColor; title.style.fontFamily = p.font;
       sub.style.color = p.subColor;
-      foot.style.background = p.footBg; foot.style.color = p.footColor;
-      tiles.innerHTML = tilesHTML(p);
-      pinta(m.id);
-      var hid = g('modeloId'); if(hid) hid.value = m.id;   // id interno exato (ex.: foodtruck) para a automação usar sem adivinhar
+      foot.style.background = footBg; foot.style.color = p.footColor;
+      // separadores (tiles)
+      tiles.innerHTML = CATS.map(function(c){
+        return '<div style="background:'+tileBg+'; color:'+pratoCor+'; border:'+p.tileBorder+'; border-radius:'+p.radius+'; padding:13px 6px; text-align:center; font-weight:700; font-size:.8rem; line-height:1.2;">'
+          + '<div style="font-size:1.35rem; margin-bottom:3px;">'+c.e+'</div>'+c.t+'</div>';
+      }).join('');
+      // secção aberta (exemplo) com pratos + preços + botão +
+      var linhas = PRATOS.map(function(d){
+        return '<div style="display:flex; align-items:center; gap:8px; padding:9px 0; border-top:1px solid rgba(0,0,0,.07);">'
+          + '<div style="flex:1;"><div style="font-weight:700; color:'+pratoCor+'; font-size:.9rem;">'+d[0]+'</div><div style="color:'+subCor+'; font-size:.75rem;">'+d[1]+'</div></div>'
+          + '<div style="font-weight:800; color:'+precoCor+'; font-size:.9rem; white-space:nowrap;">'+d[2]+' €</div>'
+          + '<div style="width:26px; height:26px; border-radius:50%; background:'+maisCor+'; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:1rem; flex:none;">+</div>'
+          + '</div>';
+      }).join('');
+      secao.innerHTML = '<div style="background:'+tileBg+'; border:'+p.tileBorder+'; border-radius:'+p.radius+'; padding:11px 12px 5px;">'
+        + '<div style="font-weight:800; color:'+titCor+'; font-family:'+p.font+'; font-size:1rem; margin-bottom:2px;">🥩 Carne</div>'
+        + '<div style="color:'+subCor+'; font-size:.74rem; margin-bottom:2px;">os nossos grelhados</div>'
+        + linhas + '</div>';
+      var hid = g('modeloId'); if(hid) hid.value = atual.id;
+      pinta(atual.id);
+    }
+    function aplica(m){
+      atual = m;
+      // atualiza os seletores de cor (só os que NÃO estão ligados) para partirem do estilo base
+      var map = [['BgMain','pageBg'],['Tiles','tileBg'],['Tit','headColor'],['Sub','subColor'],['Pratos','tileColor'],['Preco','preco'],['Mais','preco'],['Rodape','footBg']];
+      map.forEach(function(pair){ var on=g('ap'+pair[0]+'On'), col=g('ap'+pair[0]); if(col && (!on || !on.checked)) col.value = m.p[pair[1]]; });
       if(pref && (!pref.value || pref.dataset.auto === '1')){ pref.value = m.nome; pref.dataset.auto = '1'; }
+      render();
     }
     function live(){
       if(title) title.textContent = _get('nome') || 'O teu restaurante';
@@ -282,6 +338,12 @@
     }
     ['nome','subtitulo','morada','whatsapp'].forEach(function(id){ var e = g(id); if(e) e.addEventListener('input', live); });
     if(pref) pref.addEventListener('input', function(){ pref.dataset.auto = ''; });
+    // ligar os controlos de Cores e Fundos → re-desenha o telemóvel
+    ['BgMain','Tiles','Tit','Sub','Pratos','Preco','Mais','Rodape'].forEach(function(k){
+      var on=g('ap'+k+'On'), col=g('ap'+k);
+      if(on) on.addEventListener('change', render);
+      if(col) col.addEventListener('input', function(){ var o=g('ap'+k+'On'); if(o && !o.checked) o.checked=true; render(); });
+    });
     ver.onclick = function(){
       box.style.display = 'block'; ver.style.display = 'none';
       if(!carregado){
@@ -289,7 +351,7 @@
         MODELOS.forEach(function(m){
           var b = document.createElement('button');
           b.type = 'button'; b.textContent = m.nome; b.dataset.id = m.id;
-          b.style.cssText = 'border:1.5px solid var(--linha, #e5ddcf); background:#fff; color:var(--castanho, #4a3820); border-radius:20px; padding:6px 12px; font-size:.85rem; cursor:pointer;';
+          b.style.cssText = 'border:1.5px solid var(--linha,#e5ddcf); background:#fff; color:var(--terra-esc,#7a5320); border-radius:20px; padding:6px 12px; font-size:.85rem; cursor:pointer;';
           b.onclick = function(){ aplica(m); };
           btns.appendChild(b);
         });
