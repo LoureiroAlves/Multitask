@@ -326,7 +326,7 @@
   { const _bf=$('bkAllFile'); if(_bf) _bf.onclick = bkTodosFicheiro; }
   async function bkTodosNuvem(){
     const m=$('bkAllMsg'), b=$('bkAllCloud');
-    if(!confirm('Fazer uma cópia de segurança das definições de TODOS os negócios agora?')) return;
+    if(!(await window.__amConfirm('Confirmar',{texto:'Fazer uma cópia de segurança das definições de TODOS os negócios agora?', ok:'Sim', cancelar:'Não'}))) return;
     if(b) b.disabled=true; if(m){ m.textContent='A guardar cópias…'; m.style.color='#8a5a10'; }
     try{
       const { data:negs, error } = await sb.from('negocios').select('id,slug,config');
@@ -614,8 +614,8 @@
         try{ await navigator.clipboard.writeText(payload); const m=card.querySelector('[data-rmsg]'); if(m) m.textContent='Copiado ✓ — cola no chat do Claude.'; }
         catch(e){ const m=card.querySelector('[data-rmsg]'); if(m){ m.textContent='Copia manualmente:'; const ta=document.createElement('textarea'); ta.value=payload; ta.style.cssText='width:100%;height:120px;margin-top:4px;'; m.appendChild(ta); } }
       };
-      card.querySelector('[data-a="tratado"]').onclick = async function(){ if(!confirm('Marcar como tratado? Deixa de aparecer aqui (não apaga a foto).')) return; await sb.from('registos').update({ tratado:true }).eq('id', r.id); carregarRegistos(); };
-      card.querySelector('[data-a="apagar"]').onclick = async function(){ if(!confirm('Apagar este registo definitivamente?')) return; await sb.from('registos').delete().eq('id', r.id); carregarRegistos(); };
+      card.querySelector('[data-a="tratado"]').onclick = async function(){ if(!(await window.__amConfirm('Confirmar',{texto:'Marcar como tratado? Deixa de aparecer aqui (não apaga a foto).', ok:'Sim', cancelar:'Não'}))) return; await sb.from('registos').update({ tratado:true }).eq('id', r.id); carregarRegistos(); };
+      card.querySelector('[data-a="apagar"]').onclick = async function(){ if(!(await window.__amConfirm('Confirmar',{texto:'Apagar este registo definitivamente?', ok:'Sim', cancelar:'Não'}))) return; await sb.from('registos').delete().eq('id', r.id); carregarRegistos(); };
       box.appendChild(card);
     });
   }
@@ -763,7 +763,7 @@
   // Repor (zerar) as avaliações por estrelas de um negócio
   async function reporRating(n, div){
     const total = Number(n.rating_contagem) || 0;
-    if(!confirm('Repor as avaliações de "' + n.nome + '"?\n\nApaga a média e os ' + total + (total === 1 ? ' voto' : ' votos') + ' atuais. Não dá para desfazer.')) return;
+    if(!(await window.__amConfirm('Confirmar',{texto:'Repor as avaliações de "' + n.nome + '"?\n\nApaga a média e os ' + total + (total === 1 ? ' voto' : ' votos') + ' atuais. Não dá para desfazer.', ok:'Sim', cancelar:'Não'}))) return;
     const { error } = await sb.from('negocios').update({ rating_soma: 0, rating_contagem: 0 }).eq('id', n.id);
     if(error){ alert('Erro: ' + error.message + '\n\n(Se disser que faltam as colunas "rating_*", corre primeiro o SQL das avaliações.)'); return; }
     const msg = div && div.querySelector('[data-msg]'); if(msg){ msg.textContent = '✓ Avaliações repostas.'; msg.style.cssText = 'color:#3a7d44; font-weight:700; margin-top:8px;'; }
@@ -782,7 +782,7 @@
       const bk = cfg.__bkp;
       if(!bk || !bk.config){ _diz('Ainda não há cópia guardada para este negócio. Faz primeiro "Fazer cópia de todos".', '#b0532e'); if(btn) btn.disabled=false; return; }
       const quando = bk.ts ? new Date(bk.ts).toLocaleString('pt-PT') : '';
-      if(!confirm('Repor as definições de "' + n.nome + '" a partir da cópia de ' + quando + '?\n\nSubstitui as definições atuais deste negócio. As reservas e encomendas já feitas não são afetadas.')){ if(btn) btn.disabled=false; _diz('',''); return; }
+      if(!(await window.__amConfirm('Confirmar',{texto:'Repor as definições de "' + n.nome + '" a partir da cópia de ' + quando + '?\n\nSubstitui as definições atuais deste negócio. As reservas e encomendas já feitas não são afetadas.', ok:'Sim', cancelar:'Não'}))){ if(btn) btn.disabled=false; _diz('',''); return; }
       const nova = JSON.parse(JSON.stringify(bk.config));
       nova.__bkp = cfg.__bkp;   // manter a cópia para poderes repor de novo
       const up = await sb.from('negocios').update({ config: nova }).eq('id', n.id);
@@ -795,7 +795,7 @@
   const LIXO_DIAS = 30;   // dias que um negócio fica na lixeira antes de ser apagado de vez
   // Apagar = mandar para a lixeira (fica escondido, mas dá para recuperar durante LIXO_DIAS)
   async function apagar(n){
-    if(!confirm('Mandar "' + n.nome + '" para a lixeira?\n\nDeixa de aparecer, mas podes recuperá-lo nos próximos ' + LIXO_DIAS + ' dias. Depois disso é apagado definitivamente.')) return;
+    if(!(await window.__amConfirm('Confirmar',{texto:'Mandar "' + n.nome + '" para a lixeira?\n\nDeixa de aparecer, mas podes recuperá-lo nos próximos ' + LIXO_DIAS + ' dias. Depois disso é apagado definitivamente.', ok:'Sim', cancelar:'Não'}))) return;
     const { error } = await sb.from('negocios').update({ apagado_em: new Date().toISOString() }).eq('id', n.id);
     if(error){ alert('Erro: ' + error.message + '\n\n(Se disser que falta a coluna "apagado_em", corre primeiro o SQL que te dei.)'); } else { carregar(); }
   }
@@ -806,7 +806,7 @@
   }
   // Apagar a sério (irreversível) + limpar as fotos/vídeos do Storage
   async function apagarDefinitivo(n){
-    if(!confirm('Apagar DEFINITIVAMENTE "' + n.nome + '"?\n\nRemove o negócio, permissões, reservas e as fotos/vídeos. NÃO há recuperação.')) return;
+    if(!(await window.__amConfirm('Confirmar',{texto:'Apagar DEFINITIVAMENTE "' + n.nome + '"?\n\nRemove o negócio, permissões, reservas e as fotos/vídeos. NÃO há recuperação.', ok:'Sim', cancelar:'Não'}))) return;
     try{ const { data:files } = await sb.storage.from('imagens').list(n.slug, { limit:2000 }); if(files && files.length){ await sb.storage.from('imagens').remove(files.map(function(f){ return n.slug + '/' + f.name; })); } }catch(e){}
     const { error } = await sb.from('negocios').delete().eq('id', n.id);
     if(error){ alert('Erro: ' + error.message); } else { carregar(); }
@@ -1063,7 +1063,7 @@
   }
   async function limparFotosGlobais(){
     const btn = $('btnLimparFotos'); if(!btn) return;
-    if(!confirm('Vou procurar em TODOS os negócios as fotos que já não são usadas em lado nenhum (layout + menu) e apagá-las do Storage.\n\nContinuar?')) return;
+    if(!(await window.__amConfirm('Confirmar',{texto:'Vou procurar em TODOS os negócios as fotos que já não são usadas em lado nenhum (layout + menu) e apagá-las do Storage.\n\nContinuar?', ok:'Sim', cancelar:'Não'}))) return;
     const old = btn.textContent; btn.disabled = true; btn.textContent = '🔍 A verificar…';
     try{
       // 1) Fotos usadas — de todos os negócios (config + menu)
@@ -1108,7 +1108,7 @@
     $('limparApagar').onclick = async function(){
       const checks = Array.from(lista.querySelectorAll('.lmp-chk:checked'));
       if(!checks.length){ msg($('limparMsg'), 'Não selecionaste nenhuma.', 'erro'); return; }
-      if(!confirm('Apagar ' + checks.length + ' foto(s) definitivamente? Não pode ser desfeito.')) return;
+      if(!(await window.__amConfirm('Confirmar',{texto:'Apagar ' + checks.length + ' foto(s) definitivamente? Não pode ser desfeito.', ok:'Sim', cancelar:'Não'}))) return;
       const ap = $('limparApagar'); ap.disabled = true; ap.textContent = 'A apagar…';
       let ok = 0, fail = 0;
       for(const ch of checks){
@@ -1238,5 +1238,34 @@
     try{ if(window.__buildPubNav) window.__buildPubNav(); }catch(e){}
   })();
 </script>
+<script>
+/* Janela própria (substitui prompt()/confirm() do sistema) — estilo ÀMesa */
+(function(){
+  if(window.__amConfirm) return;
+  var D='#4a3820', S='#8a7350', L='#e6dcc8', G='#a8712f', GE='#7a5320';
+  var ov=document.createElement('div'); ov.id='amModal';
+  ov.style.cssText='position:fixed;inset:0;z-index:12000;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.5);padding:20px;opacity:0;transition:opacity .24s ease;';
+  ov.innerHTML='<div id="amCard" style="background:linear-gradient(180deg,#fffdf9,#fff);width:100%;max-width:360px;border-radius:20px;border-top:3px solid '+G+';box-shadow:0 18px 48px rgba(0,0,0,.34);padding:20px 18px;opacity:0;transform:translateY(22px) scale(.92);transition:opacity .24s ease, transform .34s cubic-bezier(.2,.95,.3,1);will-change:transform,opacity;font-family:inherit;">'
+    +'<div id="amTit" style="color:'+D+';font-size:1.12rem;font-weight:800;text-align:center;margin-bottom:6px;"></div>'
+    +'<div id="amMsg" style="color:'+S+';font-size:.9rem;line-height:1.4;text-align:center;margin-bottom:12px;white-space:pre-line;"></div>'
+    +'<input id="amInput" style="display:none;width:100%;box-sizing:border-box;padding:12px 13px;border:1.5px solid '+L+';border-radius:12px;font-family:inherit;font-size:1rem;color:'+D+';background:#fff;margin-bottom:14px;">'
+    +'<div style="display:flex;gap:8px;">'
+    +'<button id="amCancel" type="button" style="flex:1;padding:12px;border:1.5px solid '+L+';background:#fff;color:'+D+';border-radius:12px;font-family:inherit;font-weight:700;cursor:pointer;">Cancelar</button>'
+    +'<button id="amOk" type="button" style="flex:1;padding:12px;border:none;background:linear-gradient(180deg,'+G+','+GE+');color:#fff;border-radius:12px;font-family:inherit;font-weight:800;cursor:pointer;">OK</button>'
+    +'</div></div>';
+  document.body.appendChild(ov);
+  var card=ov.querySelector('#amCard'),tit=ov.querySelector('#amTit'),msg=ov.querySelector('#amMsg'),inp=ov.querySelector('#amInput'),bOk=ov.querySelector('#amOk'),bC=ov.querySelector('#amCancel');
+  var _res=null,_p=false,_hideTimer=null;
+  function fechar(v){ ov.style.opacity='0'; card.style.opacity='0'; card.style.transform='translateY(22px) scale(.92)'; if(_hideTimer) clearTimeout(_hideTimer); _hideTimer=setTimeout(function(){ ov.style.display='none'; _hideTimer=null; },280); var r=_res;_res=null; if(r) r(v); }
+  function abrir(){ if(_hideTimer){ clearTimeout(_hideTimer); _hideTimer=null; } ov.style.display='flex'; card.style.transition='none'; card.style.opacity='0'; card.style.transform='translateY(22px) scale(.92)'; ov.style.opacity='0'; void ov.offsetWidth; card.style.transition='opacity .24s ease, transform .34s cubic-bezier(.2,.95,.3,1)'; requestAnimationFrame(function(){ ov.style.opacity='1'; card.style.opacity='1'; card.style.transform='translateY(0) scale(1)'; }); }
+  bOk.onclick=function(){ fechar(_p?inp.value:true); };
+  bC.onclick=function(){ fechar(_p?null:false); };
+  ov.addEventListener('click',function(e){ if(e.target===ov) bC.onclick(); });
+  inp.addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); bOk.onclick(); } });
+  window.__amConfirm=function(t,o){ o=o||{}; _p=false; tit.textContent=t||'Confirmar'; msg.textContent=o.texto||''; msg.style.display=o.texto?'block':'none'; inp.style.display='none'; bOk.textContent=o.ok||'Sim'; bC.textContent=o.cancelar||'Não'; abrir(); return new Promise(function(r){_res=r;}); };
+  window.__amPrompt=function(t,o){ o=o||{}; _p=true; tit.textContent=t||''; msg.textContent=o.texto||''; msg.style.display=o.texto?'block':'none'; inp.style.display='block'; inp.value=(o.valor!=null?o.valor:''); inp.placeholder=o.placeholder||''; inp.type=o.tipo||'text'; bOk.textContent=o.ok||'OK'; bC.textContent=o.cancelar||'Cancelar'; abrir(); setTimeout(function(){ try{inp.focus();inp.select();}catch(e){} },80); return new Promise(function(r){_res=r;}); };
+})();
+</script>
+
 </body>
 </html>

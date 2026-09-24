@@ -6235,9 +6235,16 @@
       + '</div></div>';
     document.body.appendChild(ov);
     var card=ov.querySelector('#amCard'), tit=ov.querySelector('#amTit'), msg=ov.querySelector('#amMsg'), inp=ov.querySelector('#amInput'), bOk=ov.querySelector('#amOk'), bC=ov.querySelector('#amCancel');
-    var _res=null, _prompt=false;
-    function fechar(val){ ov.style.opacity='0'; card.style.opacity='0'; card.style.transform='translateY(22px) scale(.92)'; setTimeout(function(){ ov.style.display='none'; },280); var r=_res; _res=null; if(r) r(val); }
-    function abrir(){ ov.style.display='flex'; void ov.offsetWidth; requestAnimationFrame(function(){ ov.style.opacity='1'; card.style.opacity='1'; card.style.transform='translateY(0) scale(1)'; }); }
+    var _res=null, _prompt=false, _hideTimer=null;
+    function fechar(val){ ov.style.opacity='0'; card.style.opacity='0'; card.style.transform='translateY(22px) scale(.92)'; if(_hideTimer) clearTimeout(_hideTimer); _hideTimer=setTimeout(function(){ ov.style.display='none'; _hideTimer=null; },280); var r=_res; _res=null; if(r) r(val); }
+    function abrir(){
+      if(_hideTimer){ clearTimeout(_hideTimer); _hideTimer=null; }
+      ov.style.display='flex';
+      card.style.transition='none'; card.style.opacity='0'; card.style.transform='translateY(22px) scale(.92)'; ov.style.opacity='0';
+      void ov.offsetWidth;   // parte sempre do mesmo sítio (sem saltos entre pop-ups seguidos)
+      card.style.transition='opacity .24s ease, transform .34s cubic-bezier(.2,.95,.3,1)';
+      requestAnimationFrame(function(){ ov.style.opacity='1'; card.style.opacity='1'; card.style.transform='translateY(0) scale(1)'; });
+    }
     bOk.onclick=function(){ fechar(_prompt ? inp.value : true); };
     bC.onclick=function(){ fechar(_prompt ? null : false); };
     ov.addEventListener('click', function(e){ if(e.target===ov) bC.onclick(); });
