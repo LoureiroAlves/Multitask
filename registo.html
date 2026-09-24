@@ -9,39 +9,50 @@
 <style>
   :root{ --terra:#a8712f; --terra-esc:#7a5320; --bege:#fbf7f0; --bege2:#f3e8d8; --linha:#e7d9c4; --ink:#3a2c18; --muted:#8a7a63; --branco:#fff; --ok:#2f8a4f; }
   *{ box-sizing:border-box; }
-  body{ margin:0; font-family:'Nunito',sans-serif; background:var(--bege); color:var(--ink); -webkit-font-smoothing:antialiased; }
-  .wrap{ max-width:640px; margin:0 auto; padding:22px 16px 60px; }
-  .topo{ text-align:center; margin:8px 0 18px; }
-  .logo{ font-family:'Playfair Display',serif; font-size:1.8rem; color:var(--terra-esc); font-weight:700; }
+  body{ margin:0; font-family:'Nunito',sans-serif; background:linear-gradient(180deg,#fdfaf4 0%,#f4ead9 100%); background-attachment:fixed; color:var(--ink); -webkit-font-smoothing:antialiased; }
+  .wrap{ max-width:640px; margin:0 auto; padding:22px 16px calc(96px + env(safe-area-inset-bottom)); }
+  /* Cabeçalho */
+  .topo{ text-align:center; margin:10px 0 20px; }
+  .topo .selo{ display:inline-flex; align-items:center; gap:7px; background:#fff; border:1px solid var(--linha); border-radius:999px; padding:6px 14px; box-shadow:0 4px 14px rgba(120,90,50,.10); }
+  .logo{ font-family:'Playfair Display',serif; font-size:1.55rem; color:var(--terra-esc); font-weight:700; line-height:1; }
+  .topo h1{ font-family:'Poppins',sans-serif; font-size:1.28rem; color:var(--ink); margin:14px 0 0; font-weight:700; }
   .topo p{ color:var(--muted); margin:6px 0 0; font-size:.95rem; }
-  .card{ background:var(--branco); border:1px solid var(--linha); border-radius:16px; padding:16px 16px 18px; box-shadow:0 6px 18px rgba(120,90,50,.06); margin-bottom:14px; }
-  .card h2{ font-family:'Poppins',sans-serif; font-size:1.02rem; margin:0 0 10px; color:var(--terra-esc); }
-  label{ display:block; font-weight:700; font-size:.9rem; margin:12px 0 4px; }
+  /* Cartões com cabeçalho e ícone */
+  .card{ background:var(--branco); border:1px solid var(--linha); border-radius:18px; padding:0 16px 18px; box-shadow:0 8px 22px rgba(120,90,50,.09); margin-bottom:16px; overflow:hidden; }
+  .card h2{ display:flex; align-items:center; gap:10px; font-family:'Poppins',sans-serif; font-size:1.02rem; margin:0 -16px 14px; padding:14px 16px; color:var(--terra-esc); background:linear-gradient(180deg,#fdf7ec,#f8efdf); border-bottom:1px solid var(--linha); }
+  .card h2 .ic{ flex:none; width:34px; height:34px; border-radius:10px; display:inline-flex; align-items:center; justify-content:center; font-size:1.05rem; background:linear-gradient(180deg,#fff,#f3e6cf); border:1px solid #e6d3ad; box-shadow:0 1px 2px rgba(120,90,50,.14); }
+  .card h2 .op{ font-weight:600; color:var(--muted); font-size:.78rem; }
+  label{ display:block; font-weight:700; font-size:.9rem; margin:14px 0 5px; color:var(--ink); }
   label .op{ font-weight:600; color:var(--muted); font-size:.8rem; }
-  input, textarea, select{ width:100%; padding:11px 12px; border:1.5px solid var(--linha); border-radius:10px; background:#fff; font-family:inherit; font-size:1rem; color:var(--ink); }
-  input:focus, textarea:focus, select:focus{ outline:none; border-color:var(--terra); }
+  input, textarea, select{ width:100%; padding:12px 13px; border:1.5px solid var(--linha); border-radius:12px; background:linear-gradient(180deg,#fff,#fdfaf4); font-family:inherit; font-size:1rem; color:var(--ink); transition:border-color .15s, box-shadow .15s; }
+  input:focus, textarea:focus, select:focus{ outline:none; border-color:var(--terra); box-shadow:0 0 0 3px rgba(168,113,47,.16); background:#fff; }
   textarea{ min-height:78px; resize:vertical; }
   .dica{ font-size:.8rem; color:var(--muted); margin-top:4px; }
-  .btn{ display:block; width:100%; border:none; border-radius:12px; padding:15px; font-family:'Poppins',sans-serif; font-weight:700; font-size:1.02rem; cursor:pointer; background:var(--terra); color:#fff; box-shadow:0 6px 16px rgba(168,113,47,.3); }
-  .btn:active{ transform:translateY(1px); }
+  .btn{ display:block; width:100%; border:none; border-radius:14px; padding:15px; font-family:'Poppins',sans-serif; font-weight:700; font-size:1.02rem; cursor:pointer; background:linear-gradient(180deg,var(--terra),var(--terra-esc)); color:#fff; box-shadow:0 8px 18px rgba(168,113,47,.32); transition:transform .1s, box-shadow .15s; }
+  .btn:active{ transform:translateY(1px); box-shadow:0 4px 10px rgba(168,113,47,.28); }
   .btn.sec{ background:#fff; color:var(--terra-esc); border:1.5px solid var(--terra); box-shadow:none; margin-top:10px; }
-  .aviso{ background:#fff6ec; border:1.5px solid var(--terra); border-radius:12px; padding:12px 14px; font-size:.9rem; color:var(--terra-esc); margin-bottom:14px; }
+  /* Barra fixa com o botão Concluir */
+  .barra-envio{ position:fixed; left:0; right:0; bottom:0; z-index:20; padding:12px 16px calc(12px + env(safe-area-inset-bottom)); background:linear-gradient(180deg,rgba(244,234,217,0),#f4ead9 34%); }
+  .barra-envio .btn{ max-width:640px; margin:0 auto; }
+  .aviso{ background:linear-gradient(180deg,#fff8ee,#fdf1df); border:1.5px solid #eecfa0; border-left:4px solid var(--terra); border-radius:14px; padding:13px 15px; font-size:.9rem; color:var(--terra-esc); margin-bottom:16px; box-shadow:0 4px 14px rgba(120,90,50,.07); }
   .aviso b{ color:var(--terra-esc); }
   #resultado{ display:none; }
-  .okbox{ background:#eef8f0; border:1.5px solid #b9e0c4; border-radius:12px; padding:14px; color:#245b39; }
+  .okbox{ background:#eef8f0; border:1.5px solid #b9e0c4; border-radius:16px; padding:14px; color:#245b39; box-shadow:0 8px 22px rgba(47,138,79,.10); }
   .linkbox{ width:100%; padding:11px 12px; border:1.5px solid var(--linha); border-radius:10px; background:#fbf8f2; font-family:monospace; font-size:.8rem; word-break:break-all; color:#555; margin-top:8px; }
   .resumo{ font-size:.9rem; line-height:1.6; }
   .resumo b{ color:var(--terra-esc); }
   .hide{ display:none !important; }
-  .fs-chip{ display:inline-flex; align-items:center; gap:5px; background:var(--bege-claro,#fbf8f2); border:1.5px solid var(--linha,#e5ddcf); border-radius:9px; padding:7px 10px; font-size:.85rem; cursor:pointer; }
-  .fs-chip input{ width:auto; margin:0; }
+  .fs-chip{ display:inline-flex; align-items:center; gap:6px; background:linear-gradient(180deg,#fff,#fdf7ec); border:1.5px solid var(--linha); border-radius:11px; padding:8px 12px; font-size:.85rem; cursor:pointer; box-shadow:0 1px 2px rgba(120,90,50,.08); transition:border-color .15s; }
+  .fs-chip:hover{ border-color:var(--terra); }
+  .fs-chip input{ width:auto; margin:0; accent-color:var(--terra); }
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="topo">
-    <div class="logo">ÀMesa</div>
-    <p>Formulário para pôr o teu restaurante online</p>
+    <div class="selo"><span class="logo">ÀMesa</span></div>
+    <h1>Pôr o teu restaurante online</h1>
+    <p>Preenche o que souberes — leva poucos minutos.</p>
   </div>
 
   <!-- FORMULÁRIO -->
@@ -49,7 +60,7 @@
     <div class="aviso">Preenche o que souberes — <b>quase tudo é opcional</b>. Podes <b>anexar aqui as fotos do menu ou um PDF</b>. No fim, carrega em <b>“Concluir”</b>, copia o link que aparece e <b>envia-o de volta</b> a quem te enviou este formulário.</div>
 
     <div class="card">
-      <h2>Identidade</h2>
+      <h2><span class="ic">🪪</span> Identidade</h2>
       <label>Nome do restaurante <span class="op">(aparece na app e na montra ÀMesa)</span></label>
       <input id="nome" type="text" placeholder="Ex.: Restaurante Singular">
       <label>Frase/subtítulo curto <span class="op">(opcional)</span></label>
@@ -82,7 +93,7 @@
     </div>
 
     <div class="card">
-      <h2>Contactos</h2>
+      <h2><span class="ic">📞</span> Contactos</h2>
       <label>Email <span class="op">(será o acesso do dono ao editor)</span></label>
       <input id="email" type="email" placeholder="dono@exemplo.com" autocapitalize="off">
       <label>Telemóvel / WhatsApp <span class="op">(contacto e encomendas)</span></label>
@@ -96,7 +107,7 @@
     </div>
 
     <div class="card">
-      <h2>Reservas e take away</h2>
+      <h2><span class="ic">🍽️</span> Reservas e take away</h2>
       <label>Capacidade para reservas <span class="op">(nº de lugares — opcional)</span></label>
       <input id="capacidade" type="number" min="0" placeholder="Ex.: 40">
 
@@ -120,7 +131,7 @@
     </div>
 
     <div class="card">
-      <h2>Sobre o restaurante</h2>
+      <h2><span class="ic">ℹ️</span> Sobre o restaurante</h2>
       <label>Tipo de cozinha <span class="op">(alimenta o filtro da montra)</span></label>
       <input id="tipo" type="text" placeholder="Ex.: Português, Pizzaria, Marisqueira…">
       <label>Horário de funcionamento <span class="op">(opcional)</span></label>
@@ -148,7 +159,7 @@
     </div>
 
     <div class="card">
-      <h2>Visual (opcional)</h2>
+      <h2><span class="ic">🎨</span> Visual <span class="op">(opcional)</span></h2>
       <label>Cores / estilo que gostavas</label>
       <input id="estilo" type="text" placeholder="Ex.: tons de vinho e dourado, ar elegante">
       <label style="margin-top:12px;">Algo que queiras destacar / notas</label>
@@ -156,7 +167,7 @@
     </div>
 
     <div class="card">
-      <h2>Estilo dos separadores <span class="op">(só para veres)</span></h2>
+      <h2><span class="ic">🎛️</span> Estilo dos separadores <span class="op">(só para veres)</span></h2>
       <div class="dica" style="margin-bottom:8px;">Os separadores são os “botões” de cada secção do menu. Espreita alguns estilos e, se quiseres, diz-nos qual gostaste — a escolha final afinamos contigo.</div>
       <button type="button" class="btn sec" id="verEstilos" style="cursor:pointer; text-align:center;">👀 Ver exemplos de estilos</button>
       <div id="estilosBox" style="display:none; margin-top:10px;">
@@ -177,7 +188,7 @@
     </div>
 
     <div class="card">
-      <h2>Menu — fotos ou PDF</h2>
+      <h2><span class="ic">📸</span> Menu — fotos ou PDF</h2>
       <div class="dica" style="margin-bottom:8px;">Fotografa <b>todas as secções do cardápio</b> (entradas, pratos, bebidas, sobremesas…) ou envia o <b>PDF</b>. Podes escolher vários de uma vez.</div>
       <label class="btn sec" style="cursor:pointer; text-align:center;" for="fotosInput">＋ Adicionar fotos / PDF</label>
       <input id="fotosInput" type="file" accept="image/*,application/pdf" multiple style="display:none;">
@@ -185,8 +196,8 @@
       <div id="fotosLista" style="display:flex; flex-wrap:wrap; gap:8px; margin-top:8px;"></div>
     </div>
 
-    <button class="btn" id="btnConcluir">Concluir ✓</button>
   </div>
+  <div class="barra-envio" id="barraEnvio"><button class="btn" id="btnConcluir">Concluir ✓</button></div>
 
   <!-- RESULTADO -->
   <div id="resultado">
@@ -375,6 +386,7 @@
       });
       if(!r.ok) throw new Error(r.status);
       document.getElementById('form').style.display = 'none';
+      { var _be = document.getElementById('barraEnvio'); if(_be) _be.style.display = 'none'; }
       document.getElementById('resultado').style.display = 'block';
       window.scrollTo(0,0);
     }catch(e){
