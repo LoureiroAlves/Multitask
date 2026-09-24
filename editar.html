@@ -5132,6 +5132,23 @@ amesadigital.pt</textarea>
       ocWrap.appendChild(ocChk); ocWrap.appendChild(document.createTextNode('Esconder do menu principal (só abre pelo mosaico)'));
       p.appendChild(ocWrap);
 
+      // Janela horária — mostrar esta secção só entre X e Y horas (ex.: menu de almoço)
+      { const jhBox=document.createElement('div'); jhBox.style.cssText='margin:2px 0 10px; padding:9px 10px; border:1px solid var(--linha); border-radius:8px;';
+        const jhTop=document.createElement('label'); jhTop.style.cssText='display:flex; align-items:center; gap:8px; font-size:0.82rem; color:var(--castanho-suave); cursor:pointer;';
+        const jhChk=document.createElement('input'); jhChk.type='checkbox'; jhChk.style.width='auto'; jhChk.checked=!!(cat.horaDe && cat.horaA);
+        jhTop.appendChild(jhChk); jhTop.appendChild(document.createTextNode('⏰ Mostrar só a certas horas (ex.: menu de almoço)'));
+        jhBox.appendChild(jhTop);
+        const jhRow=document.createElement('div'); jhRow.style.cssText='display:'+((cat.horaDe&&cat.horaA)?'flex':'none')+'; align-items:center; gap:8px; margin-top:9px; font-size:0.85rem; color:var(--castanho);';
+        const jhDe=document.createElement('input'); jhDe.type='time'; jhDe.value=cat.horaDe||'12:00'; jhDe.style.cssText='flex:1; padding:8px; border:1.5px solid var(--linha); border-radius:8px; font-family:inherit;';
+        const jhA=document.createElement('input'); jhA.type='time'; jhA.value=cat.horaA||'15:00'; jhA.style.cssText='flex:1; padding:8px; border:1.5px solid var(--linha); border-radius:8px; font-family:inherit;';
+        jhRow.appendChild(document.createTextNode('das')); jhRow.appendChild(jhDe); jhRow.appendChild(document.createTextNode('às')); jhRow.appendChild(jhA);
+        jhBox.appendChild(jhRow);
+        const jhSync=function(){ if(jhChk.checked){ cat.horaDe=jhDe.value||'12:00'; cat.horaA=jhA.value||'15:00'; } else { delete cat.horaDe; delete cat.horaA; } if(window.__agendarPreview) window.__agendarPreview(); };
+        jhChk.addEventListener('change',function(){ jhRow.style.display=jhChk.checked?'flex':'none'; jhSync(); });
+        jhDe.addEventListener('input',jhSync); jhA.addEventListener('input',jhSync);
+        p.appendChild(jhBox);
+      }
+
       // Prato do Dia — secção especial (título grande, sem carrinho, fundo próprio)
       { const pdWrap=document.createElement('label'); pdWrap.style.cssText='display:flex; align-items:center; gap:8px; margin:2px 0 8px; font-size:0.82rem; color:var(--castanho-suave); cursor:pointer;';
         const pdChk=document.createElement('input'); pdChk.type='checkbox'; pdChk.style.width='auto'; pdChk.checked=!!cat.pratoDia;

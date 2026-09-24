@@ -763,7 +763,23 @@
   async function _encSetEstado(id, estado){
     const { error } = await sb.from('encomendas').update({ estado: estado }).eq('id', id);
     if(error){ alert('Erro: ' + error.message); return; }
+    try{ _encAvisarCliente(id, estado); }catch(e){}   // avisa o cliente por push (se tiver notificações ativas)
     renderEncomendas();
+  }
+  // Envia push ao cliente da encomenda quando o estado muda
+  async function _encAvisarCliente(id, estado){
+    if(['confirmada','pronta','cancelada'].indexOf(estado) < 0) return;
+    let ep = '', n = '';
+    try{
+      const { data } = await sb.from('encomendas').select('numero, push_sub').eq('id', id).maybeSingle();
+      ep = data && data.push_sub && data.push_sub.endpoint; n = (data && data.numero) || '';
+    }catch(e){ return; }
+    if(!ep) return;   // o cliente não ativou notificações
+    let titulo, corpo;
+    if(estado === 'confirmada'){ titulo = '✅ Encomenda confirmada'; corpo = 'A tua encomenda' + (n ? (' nº ' + n) : '') + ' foi confirmada e já está a ser preparada.'; }
+    else if(estado === 'pronta'){ titulo = '🎉 Encomenda pronta!'; corpo = 'A tua encomenda' + (n ? (' nº ' + n) : '') + ' está pronta para levantar.'; }
+    else { titulo = '❌ Encomenda não confirmada'; corpo = 'A tua encomenda' + (n ? (' nº ' + n) : '') + ' não foi confirmada. Fala com o restaurante.'; }
+    try{ await sb.functions.invoke('enviar-push', { body: { negocio: negocio.id, titulo: titulo, corpo: corpo, url: (typeof _linkCardapio === 'function' ? _linkCardapio() : '/'), endpoints: [ep] } }); }catch(e){}
   }
   let _encSig = '', _encTimer = null, _encIdsVistos = null, _somPronto = false;
   function _encSomOn(){ try{ return localStorage.getItem('amesaEncSom') !== '0'; }catch(e){ return true; } }

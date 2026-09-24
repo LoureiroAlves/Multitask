@@ -282,6 +282,7 @@
   body.cabecalho-fixo header{ position:sticky; top:0; box-shadow:0 4px 14px rgba(0,0,0,0.16); }
   /* Secção escondida do menu principal (só abre pelo mosaico) */
   .tile.tile-oculto{ display:none !important; }
+  .tile.tile-fora-hora{ display:none !important; }   /* categoria fora da janela horária (ex.: menu de almoço) */
   /* Botão voltar: quando o menu clássico está oculto, mostra só a seta (maior) */
   body.menu-oculto .categoria-painel-header .voltar{ font-size:1.5rem; line-height:1; padding:7px 15px; }
   /* Sem foto: garante fundo sólido para o nome se ler sempre */
@@ -3452,6 +3453,7 @@
       btn.className = 'tile tile-espera'; btn.type = 'button';
       btn.setAttribute('data-target', cat.id);
       btn.dataset.tipo = cat.tipo || 'comida';   // usado pelos "modos"
+      if(cat.horaDe && cat.horaA){ btn.dataset.horade = cat.horaDe; btn.dataset.horaa = cat.horaA; }   // janela horária (ex.: menu de almoço)
       if(cat.modoGrupo && !cat.contentor) btn.dataset.grupo = '1';   // categoria (não-pasta) marcada para o modo "Grupos"
       if(cat.modoCerimonia && !cat.contentor) btn.dataset.cerimonia = '1';   // categoria marcada para o modo "Cerimónias"
       const emoji = document.createElement('span'); emoji.className='tile-emoji'; emoji.textContent = cat.emoji || '';
@@ -3598,9 +3600,25 @@
       setTimeout(window.__animarEntrada, 60);
     }
     if(document.body.classList.contains('modelo-slider')){ try{ montarDeck(); }catch(e){ console.warn('deck', e); } }
+    try{ window.__aplicarJanelaHoraria(); }catch(e){}
     window.__menuOk = true; window.__tryReveal();
     if(window.__ajustarCapa){ setTimeout(window.__ajustarCapa, 60); setTimeout(window.__ajustarCapa, 400); }
   }
+
+  // Janela horária das categorias (ex.: menu de almoço só entre 12:00 e 15:00).
+  // Esconde os tiles fora da hora; corre ao construir o menu e de minuto a minuto.
+  window.__aplicarJanelaHoraria = function(){
+    if(window.__PREVIEW || window.__ehPreview){ document.querySelectorAll('.tile.tile-fora-hora').forEach(function(t){ t.classList.remove('tile-fora-hora'); }); return; }   // no editor mostra sempre (para o dono ver/editar)
+    var agora = new Date(); var min = agora.getHours()*60 + agora.getMinutes();
+    document.querySelectorAll('.tile[data-horade][data-horaa]').forEach(function(t){
+      var de = _hhmmMin(t.dataset.horade), a = _hhmmMin(t.dataset.horaa);
+      if(de == null || a == null){ t.classList.remove('tile-fora-hora'); return; }
+      var dentro = (de <= a) ? (min >= de && min < a) : (min >= de || min < a);   // janela normal ou atravessa a meia-noite
+      t.classList.toggle('tile-fora-hora', !dentro);
+    });
+  };
+  function _hhmmMin(s){ var m = /^(\d{1,2}):(\d{2})$/.exec(String(s||'').trim()); if(!m) return null; return (parseInt(m[1],10)*60 + parseInt(m[2],10)); }
+  setInterval(function(){ try{ window.__aplicarJanelaHoraria(); }catch(e){} }, 60000);
 
   // Calcula as variáveis --az-* de azulejo (a partir de um hex) num elemento
   function azSetVars(el, hex){
@@ -8185,7 +8203,7 @@
           return msg;
         };
         const _registado = function(rec){
-          if(rec && rec.id){ try{ _encPush({ id: rec.id, numero: rec.numero, itens: itensJson, total: t, levant: horaLev, estado:'pendente', criado: Date.now() }); _encIniciarSync(); }catch(e){} }
+          if(rec && rec.id){ try{ _encPush({ id: rec.id, numero: rec.numero, itens: itensJson, total: t, levant: horaLev, estado:'pendente', criado: Date.now() }); _encIniciarSync(); }catch(e){} try{ if(window.__encGarantirPush) window.__encGarantirPush(rec.id); }catch(e){} }
           try{ lista = []; guardar(); atualizarBadge(); }catch(e){}
           render();   // mostra o recibo/estado (a aguardar confirmação) — sem WhatsApp
         };
@@ -8732,6 +8750,23 @@
         });
       });
     }
+    // Associa a subscrição push do cliente a uma encomenda (para receber o estado mesmo com a app fechada).
+    // Só age se as notificações JÁ estiverem permitidas — não incomoda quem não as ativou.
+    window.__encGarantirPush = function(orderId){
+      try{
+        if(!pushSuportado() || Notification.permission !== 'granted' || !(typeof sbC !== 'undefined' && sbC && window.__negocioId)) return;
+        var p = __swReg ? Promise.resolve(__swReg) : registarSW();
+        p.then(function(r){ if(!r) return;
+          return r.pushManager.getSubscription().then(function(s){
+            if(s) return s;
+            return r.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: _b64ToU8(__VAPID_PUB) });
+          }).then(function(sub){ if(!sub) return; var k = (sub.toJSON() || {}).keys || {};
+            return sbC.rpc('guardar_push_sub', { p_negocio: window.__negocioId, p_endpoint: sub.endpoint, p_p256dh: k.p256dh || '', p_auth: k.auth || '' })
+              .then(function(){ return sbC.rpc('encomenda_set_push', { p_id: orderId, p_push: { endpoint: sub.endpoint } }); });
+          });
+        }).catch(function(){});
+      }catch(e){}
+    };
     function desativarPush(){
       var p = __swReg ? Promise.resolve(__swReg) : registarSW();
       return p.then(function(r){ if(!r) return; return r.pushManager.getSubscription().then(function(s){ if(!s) return; var ep = s.endpoint; return s.unsubscribe().then(function(){ if(typeof sbC !== 'undefined' && sbC && window.__negocioId){ return sbC.rpc('remover_push_sub', { p_negocio: window.__negocioId, p_endpoint: ep }); } }); }); }).catch(function(){});
