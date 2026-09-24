@@ -2184,6 +2184,7 @@
   body.modo-cerimonias #categoriaGrid .tile{ display:none !important; }
   body.modo-cerimonias #categoriaGrid .tile[data-cerimonia="1"]{ display:flex !important; }
   body.modo-normal #linkAgenda, body.modo-takeaway #linkAgenda{ display:none !important; }
+  body.res-pend #linkAgenda{ display:flex !important; }   /* reserva em curso/pendente: mostrar sempre o ícone para voltar */
   /* Ícones dos modos dentro da própria abertura (por cima da foto), posicionáveis */
   /* Puxar para atualizar — círculo discreto que aparece no topo */
   #ptr-ind{ position:fixed; top:0; left:50%; margin-left:-19px; width:38px; height:38px; border-radius:50%; background:rgba(0,0,0,.5); -webkit-backdrop-filter:blur(5px); backdrop-filter:blur(5px); display:flex; align-items:center; justify-content:center; z-index:99998; transform:translateY(-120%); opacity:0; box-shadow:0 4px 12px rgba(0,0,0,.25); pointer-events:none; }
@@ -6185,7 +6186,7 @@
       // Se há uma reserva por concluir e a folha está fechada, perguntar se quer continuar
       if(pend && !ov.classList.contains('aberto')){
         if(confirm('Tem uma reserva por concluir. Deseja continuar?')){ window.__reservaMenu = ''; abrir(true); }
-        else { pend = false; concluida = true; btn.classList.remove('res-pendente'); estado.diaSel = null; estado.slotSel = null; _agToast('Obrigado! 😊'); }
+        else { pend = false; concluida = true; btn.classList.remove('res-pendente'); document.body.classList.remove('res-pend'); estado.diaSel = null; estado.slotSel = null; _agToast('Obrigado! 😊'); }
         return;
       }
       window.__reservaMenu = ''; abrir();
@@ -6237,10 +6238,10 @@
     function _temProgresso(){ return !!(estado.diaSel || estado.slotSel); }
     // Chamar quando a folha fecha SEM concluir: se houver progresso, marca pendente e destaca o ícone
     function _fechouSemConcluir(){
-      if(!concluida && _temProgresso()){ pend = true; btn.classList.add('res-pendente'); }
-      else { pend = false; btn.classList.remove('res-pendente'); }
+      if(!concluida && _temProgresso()){ pend = true; btn.classList.add('res-pendente'); document.body.classList.add('res-pend'); }
+      else { pend = false; btn.classList.remove('res-pendente'); document.body.classList.remove('res-pend'); }
     }
-    function _limparPendente(){ pend = false; concluida = true; btn.classList.remove('res-pendente'); }
+    function _limparPendente(){ pend = false; concluida = true; btn.classList.remove('res-pendente'); document.body.classList.remove('res-pend'); }
     function _agToast(msg){
       try{ var t=document.createElement('div'); t.textContent=msg;
         t.style.cssText='position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--castanho,#4a3820);color:#fff;padding:11px 18px;border-radius:22px;font-size:.92rem;z-index:900;box-shadow:0 4px 16px rgba(0,0,0,.28);opacity:0;transition:opacity .25s;';
@@ -6286,7 +6287,7 @@
       const h = hoje0();
       if(estado.mes === null){ estado.mes = h.getMonth(); estado.ano = h.getFullYear(); }
       if(!retomar){ estado.diaSel = null; estado.slotSel = null; concluida = false; }   // início novo (a retomar, mantém a escolha)
-      btn.classList.add('res-pendente');   // destaca o ícone assim que a folha abre (para o cliente saber onde voltar)
+      btn.classList.add('res-pendente'); document.body.classList.add('res-pend');   // mostra + destaca o ícone assim que a folha abre (para o cliente saber onde voltar)
       render(); requestAnimationFrame(function(){ ov.classList.add('aberto'); });
       try{ if(window._sincronizarReservas) window._sincronizarReservas(); }catch(e){}   // confirma no servidor e re-desenha as estrelas
     }
