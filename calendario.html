@@ -1030,20 +1030,7 @@
       + '<button class="acao" id="dfGuardar" style="width:100%; margin-top:16px;">Guardar definições</button>'
       + '<div class="msg" id="dfMsg" style="margin-top:8px;"></div>'
       + '</div>';
-    var _bk = (negocio.config && negocio.config.__bkp) || null;
-    var _bkQuando = _bk && _bk.ts ? new Date(_bk.ts).toLocaleString('pt-PT') : null;
-    html += '<div class="def-card" style="margin-top:14px;">'
-      + '<div class="def-h">🛟 Repor as definições deste negócio</div>'
-      + '<div style="font-size:.82rem;color:#6a5a3c;margin:2px 0 10px;">As cópias de segurança são feitas de uma vez para todos os negócios no painel Multitask. Aqui podes repor SÓ este negócio, se algo se perder.</div>'
-      + '<button type="button" id="dfBkRepor"'+(_bk?'':' disabled')+' style="width:100%;background:'+(_bk?'#8a5a10':'#f2eee4')+';border:'+(_bk?'none':'1.5px solid #e0d3b5')+';border-radius:10px;padding:12px;cursor:'+(_bk?'pointer':'default')+';font-weight:800;color:'+(_bk?'#fff':'#b3a689')+';margin-bottom:6px;">↩️ Repor a última cópia'+(_bkQuando?' (de '+_bkQuando+')':' — ainda não há cópia')+'</button>'
-      + '<div style="font-size:.74rem;color:#8a7a5c;margin:8px 0 4px;">Ou repor a partir de um ficheiro de cópia (individual ou o geral de todos):</div>'
-      + '<label for="dfImportFile" style="display:block;text-align:center;background:#fff;border:1.5px solid #e0d3b5;border-radius:10px;padding:10px;cursor:pointer;font-weight:700;color:#8a5a10;">⬆️ Repor a partir de um ficheiro…</label>'
-      + '<input type="file" id="dfImportFile" accept="application/json,.json" style="display:none;">'
-      + '<div class="msg" id="dfBkMsg" style="margin-top:8px;"></div>'
-      + '</div>';
     $('vistaDef').innerHTML = html;
-    { var _brp=$('dfBkRepor'); if(_brp && _bk) _brp.onclick=_bkRepor;
-      var _im=$('dfImportFile'); if(_im) _im.onchange=function(){ if(this.files&&this.files[0]) _importarConfig(this.files[0], this); }; }
     _dfMesas = Array.isArray(a.mesas) ? JSON.parse(JSON.stringify(a.mesas)) : [];
     _renderMesas();
     _dfFechos = Array.isArray(a.fechos) ? JSON.parse(JSON.stringify(a.fechos)) : [];

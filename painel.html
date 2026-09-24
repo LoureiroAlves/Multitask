@@ -501,6 +501,7 @@
           '<button class="mini" data-act="copiar">📋 Copiar acessos</button>' +
           '<button class="mini" data-act="migrarFotos">📦 Migrar fotos p/ definitivo</button>' +
           '<button class="mini perigo" data-act="reporRating">⭐ Repor avaliações</button>' +
+          '<button class="mini" data-act="reporBackup">🛟 Repor cópia de segurança</button>' +
           '<a class="link" href="' + SITE + '/editar.html?n=' + n.slug + '" target="_blank">Abrir editor ↗</a>' +
           '<a class="link" href="' + SITE + '/calendario.html?n=' + n.slug + '" target="_blank">📅 Calendário / Reservas ↗</a>' +
           '<a class="link" href="' + SITE + '/' + n.slug + '" target="_blank">Ver menu ↗</a>' +
@@ -538,6 +539,7 @@
     div.querySelector('[data-act="copiar"]').onclick = function(e){ copiarAcessos(n, e.currentTarget); };
     div.querySelector('[data-act="migrarFotos"]').onclick = function(e){ migrarFotosNegocio(n, e.currentTarget); };
     div.querySelector('[data-act="reporRating"]').onclick = function(){ reporRating(n, div); };
+    div.querySelector('[data-act="reporBackup"]').onclick = function(e){ reporBackupNeg(n, div, e.currentTarget); };
     return div;
   }
 
@@ -766,6 +768,28 @@
     if(error){ alert('Erro: ' + error.message + '\n\n(Se disser que faltam as colunas "rating_*", corre primeiro o SQL das avaliações.)'); return; }
     const msg = div && div.querySelector('[data-msg]'); if(msg){ msg.textContent = '✓ Avaliações repostas.'; msg.style.cssText = 'color:#3a7d44; font-weight:700; margin-top:8px;'; }
     carregar();
+  }
+
+  // Repor a cópia de segurança de UM negócio (a partir de config.__bkp), feita centralmente antes
+  async function reporBackupNeg(n, div, btn){
+    const out = div && div.querySelector('[data-msg]');
+    function _diz(t, cor){ if(out){ out.textContent=t; out.style.cssText='color:'+(cor||'#3a7d44')+'; font-weight:700; margin-top:8px;'; } }
+    try{
+      if(btn) btn.disabled=true; _diz('A ler cópia…', '#8a5a10');
+      const { data, error } = await sb.from('negocios').select('config').eq('id', n.id).maybeSingle();
+      if(error) throw error;
+      const cfg = (data && data.config) || {};
+      const bk = cfg.__bkp;
+      if(!bk || !bk.config){ _diz('Ainda não há cópia guardada para este negócio. Faz primeiro "Fazer cópia de todos".', '#b0532e'); if(btn) btn.disabled=false; return; }
+      const quando = bk.ts ? new Date(bk.ts).toLocaleString('pt-PT') : '';
+      if(!confirm('Repor as definições de "' + n.nome + '" a partir da cópia de ' + quando + '?\n\nSubstitui as definições atuais deste negócio. As reservas e encomendas já feitas não são afetadas.')){ if(btn) btn.disabled=false; _diz('',''); return; }
+      const nova = JSON.parse(JSON.stringify(bk.config));
+      nova.__bkp = cfg.__bkp;   // manter a cópia para poderes repor de novo
+      const up = await sb.from('negocios').update({ config: nova }).eq('id', n.id);
+      if(up.error) throw up.error;
+      _diz('✓ Definições repostas da cópia de ' + quando + '.');
+      carregar();
+    }catch(e){ _diz('Erro: ' + (e.message||e), '#b0532e'); if(btn) btn.disabled=false; }
   }
 
   const LIXO_DIAS = 30;   // dias que um negócio fica na lixeira antes de ser apagado de vez
