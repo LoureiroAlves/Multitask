@@ -2201,11 +2201,13 @@ window.STORY_TEMPLATES = [
       +   '<label style="flex:1;text-align:center;border:1px solid #e0d3b5;background:#fff;border-radius:10px;padding:11px;cursor:pointer;font-weight:800;color:#4a3820;font-size:.9rem;">📷 Escolher foto<input id="stFoto" type="file" accept="image/*" style="display:none;"></label>'
       +   '<button id="stSemFoto" type="button" style="border:1px solid #e0d3b5;background:#fff;border-radius:10px;padding:11px 14px;cursor:pointer;font-weight:800;color:#8a7a5c;font-size:.9rem;">Sem foto</button>'
       + '</div>'
+      + '<button id="stPartilhar" type="button" style="width:100%;box-sizing:border-box;margin-top:8px;border:none;background:#25a05b;color:#fff;border-radius:10px;padding:13px;cursor:pointer;font-weight:800;font-size:.95rem;">📲 Partilhar Story</button>'
       + '<div style="display:flex;gap:8px;margin-top:8px;">'
-      +   '<button id="stRegerar" type="button" style="flex:1;border:none;background:#a8712f;color:#fff;border-radius:10px;padding:12px;cursor:pointer;font-weight:800;font-size:.92rem;">🔄 Gerar novamente</button>'
-      +   '<button id="stFechar" type="button" style="border:1px solid #e0d3b5;background:#fff;color:#4a3820;border-radius:10px;padding:12px 16px;cursor:pointer;font-weight:800;font-size:.92rem;">Fechar</button>'
+      +   '<button id="stGuardar" type="button" style="flex:1;border:1px solid #e0d3b5;background:#fff;color:#4a3820;border-radius:10px;padding:12px;cursor:pointer;font-weight:800;font-size:.9rem;">⬇️ Guardar imagem</button>'
+      +   '<button id="stRegerar" type="button" style="flex:1;border:none;background:#a8712f;color:#fff;border-radius:10px;padding:12px;cursor:pointer;font-weight:800;font-size:.9rem;">🔄 Gerar novamente</button>'
       + '</div>'
-      + '<div style="font-size:.76rem;color:#8a7a5c;text-align:center;margin-top:10px;">Fase 1 — só pré-visualização. Guardar e partilhar chegam depois.</div>'
+      + '<button id="stFechar" type="button" style="width:100%;box-sizing:border-box;margin-top:8px;border:1px solid #e0d3b5;background:#fff;color:#8a7a5c;border-radius:10px;padding:11px;cursor:pointer;font-weight:800;font-size:.88rem;">Fechar</button>'
+      + '<div style="font-size:.76rem;color:#8a7a5c;text-align:center;margin-top:10px;">No telemóvel, "Partilhar" abre o menu do sistema (Instagram, WhatsApp…). No computador, transfere a imagem.</div>'
       + '</div>';
     document.body.appendChild(ov);
 
@@ -2220,6 +2222,8 @@ window.STORY_TEMPLATES = [
       fr.onload = function () { estado.fotoSrc = fr.result; render(); };
       fr.readAsDataURL(f);
     };
+    document.getElementById('stPartilhar').onclick = partilhar;
+    document.getElementById('stGuardar').onclick = descarregar;
   }
 
   function pintarTpls() {
@@ -2237,10 +2241,39 @@ window.STORY_TEMPLATES = [
     });
   }
 
+  function _nomeFicheiro() {
+    var base = 'story-' + ((estado.dados && estado.dados.nome) || 'restaurante');
+    return base.replace(/[^a-z0-9.\-]+/gi, '-').replace(/^-+|-+$/g, '').toLowerCase() + '-' + Date.now() + '.jpg';
+  }
   function render() {
     var c = document.getElementById('stCanvas');
     if (!c || !estado.tpl) return;
-    desenhar(c, estado.tpl, estado.dados, estado.fotoSrc);
+    estado.blob = null; estado.file = null;
+    desenhar(c, estado.tpl, estado.dados, estado.fotoSrc).then(function () {
+      try {
+        c.toBlob(function (b) {
+          if (!b) return;
+          estado.blob = b;
+          try { estado.file = new File([b], _nomeFicheiro(), { type: 'image/jpeg' }); } catch (e) { estado.file = null; }
+        }, 'image/jpeg', 0.92);
+      } catch (e) { estado.blob = null; estado.file = null; }
+    });
+  }
+  async function partilhar() {
+    if (estado.file && navigator.canShare && navigator.canShare({ files: [estado.file] })) {
+      try { await navigator.share({ files: [estado.file], title: (estado.dados && estado.dados.titulo) || 'Story' }); }
+      catch (e) { /* cancelado pelo utilizador */ }
+      return;
+    }
+    if (estado.blob) { descarregar(); alert('O teu dispositivo não permite partilha direta de imagens. A imagem foi transferida — abre o Instagram/WhatsApp e adiciona-a manualmente.'); return; }
+    alert('A imagem ainda está a ser preparada. Espera um instante e tenta de novo. Se persistir, escolhe uma foto com o botão "Escolher foto".');
+  }
+  function descarregar() {
+    if (!estado.blob) { alert('A imagem ainda está a ser preparada. Tenta daqui a um instante.'); return; }
+    var url = URL.createObjectURL(estado.blob);
+    var a = document.createElement('a'); a.href = url; a.download = _nomeFicheiro();
+    document.body.appendChild(a); a.click();
+    setTimeout(function () { try { document.body.removeChild(a); } catch (e) {} URL.revokeObjectURL(url); }, 600);
   }
 
   function fechar() {
