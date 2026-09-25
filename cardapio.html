@@ -2201,21 +2201,26 @@
   #ptr-ind.spin .ptr-spin{ animation:ptrSpin .7s linear infinite; }
   @keyframes ptrSpin{ to{ transform:rotate(360deg); } }
   /* Promoção do dia no cardápio (por baixo do cabeçalho) — com destaque */
-  #promoDia{ margin:12px 14px 2px; }
-  #promoDia .promo-cartao{ position:relative; overflow:hidden; display:flex; align-items:center; gap:13px; border-radius:16px; padding:15px 17px;
-    background:linear-gradient(135deg, rgba(255,255,255,.16), rgba(0,0,0,.16)), var(--pd-cor,#e0245e);
-    color:#fff; border:2px solid var(--pd-mold, rgba(255,255,255,.55)); box-shadow:0 8px 24px -8px var(--pd-cor,#e0245e), 0 2px 6px rgba(0,0,0,.12), inset 0 0 0 1px rgba(0,0,0,.06);
-    animation:promoEntra .5s cubic-bezier(.22,1,.36,1) both, promoPulsa 2.6s ease-in-out 1s infinite; }
-  #promoDia .promo-cartao::after{ content:''; position:absolute; top:0; left:-60%; width:45%; height:100%; transform:skewX(-20deg);
-    background:linear-gradient(90deg, transparent, rgba(255,255,255,.35), transparent); animation:promoBrilho 3.4s ease-in-out 1.2s infinite; }
-  #promoDia .promo-emoji{ font-size:1.9rem; line-height:1; flex:0 0 auto; filter:drop-shadow(0 1px 2px rgba(0,0,0,.25)); }
+  #promoDia{ margin:22px 20px 8px; overflow:visible; }
+  #promoDia .promo-cartao{ position:relative; display:block; border-radius:20px; padding:16px 20px 15px; overflow:visible;
+    background:linear-gradient(135deg, var(--pd-cor2,#ff7a18), var(--pd-cor,#e0245e));
+    color:#fff; border:4px solid #fff; box-shadow:0 16px 30px -6px var(--pd-cor,#e0245e), 0 4px 0 rgba(0,0,0,.12);
+    transform:rotate(-2.4deg);
+    animation:promoEntra .45s ease both, promoPulsa 1.7s ease-in-out .6s infinite; }
+  #promoDia .promo-cartao::after{ content:''; position:absolute; top:0; left:-70%; width:45%; height:100%; transform:skewX(-20deg); border-radius:20px;
+    background:linear-gradient(120deg, transparent, rgba(255,255,255,.5), transparent); animation:promoBrilho 2.6s ease-in-out 1s infinite; }
+  #promoDia .promo-emoji{ position:absolute; top:-24px; left:-12px; font-size:2.9rem; line-height:1; z-index:2; transform:rotate(-14deg);
+    filter:drop-shadow(0 4px 6px rgba(0,0,0,.35)); animation:promoWob 1.7s ease-in-out .6s infinite; }
   #promoDia .promo-corpo{ position:relative; z-index:1; }
-  #promoDia .promo-selo{ display:inline-block; font-family:var(--fonte-titulo); font-weight:800; font-size:.62rem; letter-spacing:1.5px; text-transform:uppercase; background:rgba(255,255,255,.22); padding:2px 8px; border-radius:20px; margin-bottom:4px; }
-  #promoDia .promo-txt{ font-family:var(--fonte-titulo); font-weight:800; color:#fff; line-height:1.18; text-shadow:0 1px 3px rgba(0,0,0,.22); }
-  #promoDia .promo-hora{ display:block; font-family:var(--fonte-base); font-weight:600; font-size:.74rem; color:rgba(255,255,255,.9); margin-top:3px; }
-  @keyframes promoEntra{ from{ opacity:0; transform:translateY(-12px) scale(.98); } to{ opacity:1; transform:translateY(0) scale(1); } }
-  @keyframes promoPulsa{ 0%,100%{ box-shadow:0 8px 24px -8px var(--pd-cor,#e0245e), 0 2px 6px rgba(0,0,0,.12); } 50%{ box-shadow:0 12px 30px -6px var(--pd-cor,#e0245e), 0 2px 6px rgba(0,0,0,.12); } }
-  @keyframes promoBrilho{ 0%{ left:-60%; } 60%,100%{ left:130%; } }
+  #promoDia .promo-selo{ display:inline-block; font-family:var(--fonte-titulo); font-weight:800; font-size:.62rem; letter-spacing:2px; text-transform:uppercase; background:rgba(255,255,255,.25); padding:3px 10px; border-radius:20px; margin-bottom:5px; }
+  #promoDia .promo-txt{ font-family:var(--fonte-titulo); font-weight:900; color:#fff; line-height:.98; text-transform:uppercase; font-size:clamp(1.6rem, 8vw, 2.4rem); text-shadow:0 3px 0 rgba(0,0,0,.16), 0 1px 8px rgba(0,0,0,.2); }
+  #promoDia .promo-txt.curto{ white-space:nowrap; margin-right:-34px; font-size:clamp(1.9rem, 10vw, 2.7rem); }
+  #promoDia .promo-msg{ font-family:var(--fonte-base); font-weight:700; color:#fff; font-size:.95rem; margin-top:6px; text-shadow:0 1px 3px rgba(0,0,0,.22); }
+  #promoDia .promo-hora{ display:inline-block; margin-top:9px; background:#fff; color:var(--pd-cor,#e0245e); font-family:var(--fonte-base); font-weight:800; font-size:.8rem; padding:4px 12px; border-radius:20px; transform:rotate(1.5deg); box-shadow:0 3px 8px rgba(0,0,0,.18); }
+  @keyframes promoEntra{ from{ opacity:0; } to{ opacity:1; } }
+  @keyframes promoPulsa{ 0%,100%{ transform:rotate(-2.4deg) scale(1); } 50%{ transform:rotate(-2.4deg) scale(1.035); } }
+  @keyframes promoBrilho{ 0%{ left:-70%; } 55%,100%{ left:130%; } }
+  @keyframes promoWob{ 0%,100%{ transform:rotate(-14deg); } 50%{ transform:rotate(-6deg) scale(1.06); } }
   #introModosWrap{ position:absolute; inset:0; pointer-events:none; z-index:4; }
   #introModosWrap .im-opt{ position:absolute; left:50%; top:58%; transform:translate(-50%,-50%) translate(var(--mx,0px), var(--my,0px)); pointer-events:auto; background:transparent; border:none; cursor:pointer; font-family:var(--fonte-titulo); padding:0; touch-action:none; }
   /* Estilo PÍLULA — ícone + texto na horizontal, dentro de cápsula */
@@ -4577,15 +4582,18 @@
           if(!p || p.ativo === false || !(p.texto && String(p.texto).trim()) || !_dentroHora(p)){ _off(); return; }
           var texto = String(p.texto).trim();
           var cor = p.cor || '#e0245e';
-          var tam = parseInt(p.tamanho, 10) || 16;
           var _esc = function(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
-          var _suave = function(hex){ try{ var h = String(hex).replace('#',''); if(h.length===3) h = h.split('').map(function(c){return c+c;}).join(''); var r=parseInt(h.slice(0,2),16), g=parseInt(h.slice(2,4),16), b=parseInt(h.slice(4,6),16); return 'rgba('+r+','+g+','+b+',0.08)'; }catch(e){ return '#fff0f5'; } };
-          var horaTxt = (p.horaIni && p.horaFim) ? ('🕒 ' + _esc(p.horaIni) + '–' + _esc(p.horaFim)) : '';
+          var _clarear = function(hex, amt){ try{ var h=String(hex).replace('#',''); if(h.length===3) h=h.split('').map(function(c){return c+c;}).join(''); var r=parseInt(h.slice(0,2),16), g=parseInt(h.slice(2,4),16), b=parseInt(h.slice(4,6),16); r=Math.round(r+(255-r)*amt); g=Math.round(g+(255-g)*amt); b=Math.round(b+(255-b)*amt); return 'rgb('+r+','+g+','+b+')'; }catch(e){ return hex; } };
+          // 1.ª linha = título grande; restantes = mensagem
+          var linhas = texto.split(/\r?\n/).map(function(s){ return s.trim(); }).filter(Boolean);
+          var big = linhas.shift() || texto;
+          var msg = linhas.join(' ');
+          var emoji = (p.emoji && String(p.emoji).trim()) || '🔥';
+          var horaTxt = (p.horaIni && p.horaFim) ? ('🕒 ' + _esc(p.horaIni) + ' – ' + _esc(p.horaFim)) : '';
           el.style.setProperty('--pd-cor', cor);
-          el.style.setProperty('--pd-bg', _suave(cor));
-          if(p.corMold) el.style.setProperty('--pd-mold', p.corMold); else el.style.removeProperty('--pd-mold');
-          var textoHtml = _esc(texto).replace(/\r?\n/g, '<br>');
-          el.innerHTML = '<div class="promo-cartao"><div class="promo-corpo"><span class="promo-selo">Promoção de hoje</span><div class="promo-txt" style="font-size:' + tam + 'px;">' + textoHtml + '</div>' + (horaTxt ? ('<span class="promo-hora">' + horaTxt + '</span>') : '') + '</div></div>';
+          el.style.setProperty('--pd-cor2', _clarear(cor, 0.45));
+          var curto = (big.replace(/\s+/g,'').length <= 14) ? ' curto' : '';
+          el.innerHTML = '<div class="promo-cartao"><span class="promo-emoji">' + _esc(emoji) + '</span><div class="promo-corpo"><span class="promo-selo">Promoção de hoje</span><div class="promo-txt' + curto + '">' + _esc(big) + '</div>' + (msg ? ('<div class="promo-msg">' + _esc(msg) + '</div>') : '') + (horaTxt ? ('<span class="promo-hora">' + horaTxt + '</span>') : '') + '</div></div>';
           el.style.display = '';
         }catch(e){}
       };
