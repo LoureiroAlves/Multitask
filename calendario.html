@@ -2102,8 +2102,8 @@ window.STORY_LAYOUTS = [
       if (!blocos.length) blocos = [{ titulo: '', mensagem: '' }];
       var y = yBase;
       for (var i = blocos.length - 1; i >= 0; i--) {
-        y = drawBloco(ctx, blocos[i], M, maxW, y, { tamTit: 50, titLinhas: 2, corTit: accent, tamMsg: 36, msgLinhas: 2 });
-        y -= 42; // espaço entre blocos
+        y = drawBloco(ctx, blocos[i], M, maxW, y, { tamTit: 50, titLinhas: 2, corTit: accent, tamMsg: 36, msgLinhas: 3 });
+        y -= 34; // espaço entre blocos
       }
     }
   };
