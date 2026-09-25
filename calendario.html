@@ -634,7 +634,7 @@
     v.innerHTML =
       '<div style="background:linear-gradient(135deg,#e0245e,#a8712f);border-radius:16px;padding:18px;margin-bottom:14px;color:#fff;box-shadow:0 8px 24px rgba(224,36,94,.22);">'
       + '<div style="font-size:1.25rem;font-weight:800;">📢 Promoções Push</div>'
-      + '<div style="font-size:.88rem;opacity:.95;margin-top:4px;">Faz crescer o negócio: envia o prato do dia, um Happy Hour ou um desconto direto ao telemóvel dos clientes.</div>'
+      + '<div style="font-size:.88rem;opacity:.95;margin-top:4px;">Faz crescer o negócio: envia o prato do dia, um Happy Hour ou um desconto ao telemóvel dos clientes — e fica publicada no menu de hoje.</div>'
       + '<div style="font-size:.8rem;opacity:.9;margin-top:8px;">📱 <span id="ntCount">…</span></div>'
       + '</div>'
       + '<div style="background:#fff;border:1.5px solid #eadfc6;border-radius:14px;padding:16px;">'
@@ -681,11 +681,15 @@
       if(!tit && !msg){ alert('Escreve pelo menos um título ou uma mensagem.'); return; }
       const btn = $('ntEnviar'); btn.disabled = true; const _t = btn.textContent; btn.textContent = 'A enviar…';
       $('ntRes').textContent = '';
+      // Publicar também no MENU de hoje (config.promoDatas) — a promoção passa a aparecer no cardápio, não só como push
+      var _menuTxt = (tit ? tit : '') + ((tit && msg) ? '\n' : '') + (msg || '');
+      var _pubErr = null;
+      try{ _pubErr = await _gravarPromoData(hojeIso, { texto: _menuTxt, cor: '#e0245e', tamanho: 16, ativo: true }); }catch(e){ _pubErr = e; }
       try{
         const { data, error } = await sb.functions.invoke('enviar-push', { body: { negocio: negocio.id, titulo: tit || (negocio.nome || 'Novidade'), corpo: msg, url: url || _linkCardapio() } });
         if(error) throw error;
         if(data && data.erro) throw new Error(data.erro);
-        $('ntRes').innerHTML = '✅ Enviado a <strong>' + ((data && data.enviados) || 0) + '</strong> de ' + ((data && data.total) || 0) + ' aparelho(s).';
+        $('ntRes').innerHTML = '✅ Enviado a <strong>' + ((data && data.enviados) || 0) + '</strong> de ' + ((data && data.total) || 0) + ' aparelho(s).' + (_pubErr ? '' : ' · 📢 publicada no menu de hoje.');
         $('ntTit').value = ''; $('ntMsg').value = '';
       }catch(e){
         let det = (e && e.message) ? e.message : String(e);
