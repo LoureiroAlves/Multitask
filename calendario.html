@@ -208,6 +208,12 @@
   .nova-form .acts button.guardar{ background:var(--verde); color:#fff; border-color:var(--verde); }
   .promo-btn{ width:100%; border:1.5px dashed #e0245e; background:#fff; color:#c01e50; border-radius:12px; padding:12px; cursor:pointer; font-weight:800; font-size:.92rem; margin-bottom:12px; }
   .promo-btn:hover{ background:#fff5f8; }
+  /* ── Encomendas: contorno neon por estado + selo ENTREGUE ── */
+  .enc-card{ position:relative; border:1.5px solid transparent; border-radius:12px; transition:box-shadow .3s ease, opacity .3s ease, filter .3s ease; }
+  @keyframes encPulse{ 0%,100%{ box-shadow:0 0 0 1.5px var(--nc), 0 0 6px var(--ng); } 50%{ box-shadow:0 0 0 1.5px var(--nc), 0 0 20px var(--ng); } }
+  .enc-card.pulsa{ animation:encPulse 1.5s ease-in-out infinite; }
+  .enc-selo{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; pointer-events:none; z-index:2; }
+  .enc-selo span{ font-weight:900; font-size:1.9rem; letter-spacing:3px; text-transform:uppercase; color:#2e9e5b; border:3px solid #2e9e5b; border-radius:12px; padding:6px 20px; transform:rotate(-11deg); background:rgba(255,255,255,.62); box-shadow:0 3px 12px rgba(0,0,0,.14); }
 </style>
 </head>
 <body>
@@ -794,10 +800,11 @@
   }
 
   function _encEstadoInfo(est){
-    if(est === 'confirmada') return { txt:'Confirmada', cor:'#1e6b3c', bg:'#e2f4e9' };
-    if(est === 'pronta')     return { txt:'Pronta', cor:'#8a4b10', bg:'#ffe6c2' };
-    if(est === 'cancelada')  return { txt:'Cancelada', cor:'#b23',   bg:'#fbe7e4' };
-    return { txt:'Pendente', cor:'#8a5a10', bg:'#fbeecb' };
+    if(est === 'confirmada') return { txt:'A preparar', cor:'#a85d10', bg:'#fff2df' };
+    if(est === 'pronta')     return { txt:'Pronta',     cor:'#1e6b3c', bg:'#e6f7ec' };
+    if(est === 'entregue')   return { txt:'Entregue',   cor:'#5a6b5f', bg:'#eef1ee' };
+    if(est === 'cancelada')  return { txt:'Cancelada',  cor:'#b23',    bg:'#fbe7e4' };
+    return { txt:'A chegar', cor:'#c0392b', bg:'#fdeae8' };
   }
   async function _encSetEstado(id, estado){
     const { error } = await sb.from('encomendas').update({ estado: estado }).eq('id', id);
@@ -846,37 +853,49 @@
     const _somHdr = '<div style="display:flex; justify-content:flex-end; margin-bottom:8px;"><button id="encSomBtn" type="button" style="border:1px solid var(--linha); background:#fff; border-radius:999px; padding:6px 12px; cursor:pointer; font-family:inherit; font-weight:700; font-size:.8rem; color:var(--castanho);">' + (_encSomOn() ? '🔔 Som ligado' : '🔕 Som desligado') + '</button></div>';
     function _wireSom(){ const b = document.getElementById('encSomBtn'); if(!b) return; b.onclick = function(){ const novo = _encSomOn() ? '0' : '1'; try{ localStorage.setItem('amesaEncSom', novo); }catch(e){} _somPronto = false; _prepararSom(); b.textContent = (novo === '1') ? '🔔 Som ligado' : '🔕 Som desligado'; if(novo === '1') setTimeout(_beep, 60); }; }
     if(!arr.length){ v.innerHTML = _somHdr + '<div class="card"><div style="color:#8a7a5c; font-size:.9rem;">Ainda não há encomendas (últimos 7 dias).</div></div>'; _wireSom(); return; }
-    const _cartaEnc = function(e, cor){
+    const _cartaEnc = function(e, g){
+      const cor = g.cor, glow = g.glow, est = (e.estado || 'pendente');
+      const entregue = (est === 'entregue');
       const dt = new Date(e.criado_em);
       const itens = Array.isArray(e.itens) ? e.itens : [];
       const linhas = itens.map(function(it){ return (it.qtd||1) + '× ' + esc(it.nome||''); }).join('<br>');
       const dia = String(dt.getDate()).padStart(2,'0') + '/' + String(dt.getMonth()+1).padStart(2,'0');
       const hh = String(dt.getHours()).padStart(2,'0') + ':' + String(dt.getMinutes()).padStart(2,'0');
       let acoes = '';
-      if(e.estado !== 'confirmada' && e.estado !== 'pronta') acoes += '<button class="enc-a" data-a="confirmada" data-id="' + e.id + '" style="border:none; background:#e2f4e9; color:#1e6b3c; border-radius:8px; padding:7px 11px; cursor:pointer; font-family:inherit; font-weight:800; font-size:.82rem;">✔ Confirmar</button>';
-      if(e.estado !== 'pronta' && e.estado !== 'cancelada') acoes += '<button class="enc-a" data-a="pronta" data-id="' + e.id + '" style="border:none; background:#ffe6c2; color:#8a4b10; border-radius:8px; padding:7px 11px; cursor:pointer; font-family:inherit; font-weight:800; font-size:.82rem;">🍳 Pronta</button>';
-      if(e.estado !== 'cancelada') acoes += '<button class="enc-a" data-a="cancelada" data-id="' + e.id + '" style="border:none; background:#fbe7e4; color:#b23; border-radius:8px; padding:7px 11px; cursor:pointer; font-family:inherit; font-weight:800; font-size:.82rem;">✕ Cancelar</button>';
+      // Fluxo: A chegar (vermelho) → Confirmar (a preparar/laranja) → Pronta (verde) → Entregue
+      if(['confirmada','pronta','entregue'].indexOf(est) < 0) acoes += '<button class="enc-a" data-a="confirmada" data-id="' + e.id + '" style="border:none; background:#fff2df; color:#a85d10; border-radius:8px; padding:7px 11px; cursor:pointer; font-family:inherit; font-weight:800; font-size:.82rem;">✔ Confirmar</button>';
+      if(['pronta','entregue','cancelada'].indexOf(est) < 0) acoes += '<button class="enc-a" data-a="pronta" data-id="' + e.id + '" style="border:none; background:#e6f7ec; color:#1e6b3c; border-radius:8px; padding:7px 11px; cursor:pointer; font-family:inherit; font-weight:800; font-size:.82rem;">🍳 Pronta</button>';
+      if(est === 'pronta') acoes += '<button class="enc-a" data-a="entregue" data-id="' + e.id + '" style="border:none; background:#eef1ee; color:#5a6b5f; border-radius:8px; padding:7px 11px; cursor:pointer; font-family:inherit; font-weight:800; font-size:.82rem;">📦 Entregue</button>';
+      if(['cancelada','entregue'].indexOf(est) < 0) acoes += '<button class="enc-a" data-a="cancelada" data-id="' + e.id + '" style="border:none; background:#fbe7e4; color:#b23; border-radius:8px; padding:7px 11px; cursor:pointer; font-family:inherit; font-weight:800; font-size:.82rem;">✕ Cancelar</button>';
       acoes += '<button class="enc-del" data-id="' + e.id + '" style="border:1px solid #e8c4bf; color:var(--vermelho); background:#fff; border-radius:8px; padding:7px 10px; cursor:pointer; font-family:inherit; font-weight:700; font-size:.82rem;">🗑</button>';
-      return '<div class="card" style="margin-bottom:10px; border-left:5px solid ' + cor + ';">'
-        + '<div style="font-weight:800; color:var(--castanho);">Encomenda nº ' + (e.numero != null ? e.numero : '—') + '</div>'
-        + '<div style="font-size:.82rem; color:#8a7a5c; margin:2px 0 8px;">Recebida ' + dia + ' às ' + hh + (e.nome ? (' · ' + esc(e.nome)) : '') + (e.levantamento ? (' · 🕒 levantar às ' + esc(e.levantamento)) : '') + '</div>'
-        + '<div style="font-size:.9rem; color:var(--castanho); line-height:1.5;">' + (linhas || '—') + '</div>'
-        + (Number(e.total) > 0 ? ('<div style="margin-top:8px; font-weight:800; color:var(--castanho);">Total: ' + Number(e.total).toFixed(2).replace('.', ',') + '€</div>') : '')
-        + '<div style="display:flex; gap:7px; flex-wrap:wrap; margin-top:10px;">' + acoes + '</div>'
+      const neon = entregue ? 'box-shadow:none;' : (est === 'pendente' ? '' : ('box-shadow:0 0 0 1.5px ' + cor + ', 0 0 12px ' + glow + ';'));
+      const pulsa = (est === 'pendente') ? ' pulsa' : '';
+      const fade = entregue ? 'opacity:.5; filter:grayscale(.35);' : '';
+      const selo = entregue ? '<div class="enc-selo"><span>Entregue</span></div>' : '';
+      return '<div class="card enc-card' + pulsa + '" style="margin-bottom:10px; border-color:' + cor + '; --nc:' + cor + '; --ng:' + glow + '; ' + neon + '">'
+        + '<div style="' + fade + '">'
+        +   '<div style="font-weight:800; color:var(--castanho);">Encomenda nº ' + (e.numero != null ? e.numero : '—') + '</div>'
+        +   '<div style="font-size:.82rem; color:#8a7a5c; margin:2px 0 8px;">Recebida ' + dia + ' às ' + hh + (e.nome ? (' · ' + esc(e.nome)) : '') + (e.levantamento ? (' · 🕒 levantar às ' + esc(e.levantamento)) : '') + '</div>'
+        +   '<div style="font-size:.9rem; color:var(--castanho); line-height:1.5;">' + (linhas || '—') + '</div>'
+        +   (Number(e.total) > 0 ? ('<div style="margin-top:8px; font-weight:800; color:var(--castanho);">Total: ' + Number(e.total).toFixed(2).replace('.', ',') + '€</div>') : '')
+        +   '<div style="display:flex; gap:7px; flex-wrap:wrap; margin-top:10px;">' + acoes + '</div>'
+        + '</div>'
+        + selo
         + '</div>';
     };
     const _grupos = [
-      { est:'pendente',   nome:'🟡 A chegar',     cor:'#d9a521', bg:'#fbeecb', tc:'#8a5a10' },
-      { est:'confirmada', nome:'🟢 Em andamento', cor:'#2e9e5b', bg:'#e2f4e9', tc:'#1e6b3c' },
-      { est:'pronta',     nome:'🟠 Prontas',      cor:'#e08a2b', bg:'#ffe6c2', tc:'#8a4b10' },
-      { est:'cancelada',  nome:'⚪ Canceladas',   cor:'#c9a9a0', bg:'#f6e9e6', tc:'#b23' }
+      { est:'pendente',   nome:'🔴 A chegar',            cor:'#e0453a', glow:'rgba(224,69,58,.55)',  bg:'#fdeae8', tc:'#c0392b' },
+      { est:'confirmada', nome:'🟠 A preparar',          cor:'#ef8f22', glow:'rgba(239,143,34,.55)', bg:'#fff2df', tc:'#a85d10' },
+      { est:'pronta',     nome:'🟢 Prontas p/ levantar', cor:'#2ecc71', glow:'rgba(46,204,113,.60)', bg:'#e6f7ec', tc:'#1e6b3c' },
+      { est:'entregue',   nome:'✅ Entregues',           cor:'#b8c2ba', glow:'rgba(0,0,0,0)',        bg:'#eef1ee', tc:'#5a6b5f' },
+      { est:'cancelada',  nome:'⚪ Canceladas',          cor:'#c9a9a0', glow:'rgba(0,0,0,0)',        bg:'#f6e9e6', tc:'#b23' }
     ];
     let html = _somHdr;
     _grupos.forEach(function(g){
       const doGrupo = arr.filter(function(e){ return (e.estado || 'pendente') === g.est; });
       if(!doGrupo.length) return;
       html += '<div style="margin:10px 2px 10px;"><span style="background:' + g.bg + '; color:' + g.tc + '; padding:6px 13px; border-radius:999px; font-weight:800; font-size:.9rem;">' + g.nome + ' · ' + doGrupo.length + '</span></div>';
-      doGrupo.forEach(function(e){ html += _cartaEnc(e, g.cor); });
+      doGrupo.forEach(function(e){ html += _cartaEnc(e, g); });
     });
     v.innerHTML = html;
     _wireSom();
