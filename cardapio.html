@@ -2087,7 +2087,7 @@
   }
   #cartBtn.escondido{ display:none; }
   /* Ao adicionar ao carrinho, força o botão a aparecer mesmo dentro de uma categoria (por cima do cart-oculto) */
-  body.cart-forcado #cartBtn{ opacity:1 !important; visibility:visible !important; pointer-events:auto !important; }
+  body.cart-forcado #cartBtn{ opacity:1 !important; visibility:visible !important; pointer-events:auto !important; z-index:400 !important; }
   #cartBtn.pop{ animation:cartPop .42s ease; }
   @keyframes cartPop{ 0%{ transform:scale(1); } 30%{ transform:scale(1.28); } 60%{ transform:scale(.92); } 100%{ transform:scale(1); } }
 
