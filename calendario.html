@@ -1987,7 +1987,7 @@
      As funções de desenho de cada layout vivem no motor (story-render.js), associadas por id.
    Para adicionar um layout novo no futuro: acrescenta aqui um objeto e a função de desenho no motor. */
 window.STORY_BASE = {
-  badge: 'PROMOÇÃO',
+  badge: '',   /* etiqueta do topo removida; para reativar, escreve aqui um texto (ex.: 'HOJE') */
   corAccentKeys: ['destaque', 'precos'],   // usa estas chaves de config.aparencia
   fallback: { bg1: '#2a1d10', bg2: '#a8712f', accent: '#e0245e', texto: '#ffffff' },
   escurecer: 0.55
@@ -2134,12 +2134,14 @@ window.STORY_LAYOUTS = [
     var M = 90, maxW = W - M * 2;
     ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
 
-    // badge topo
-    ctx.font = '800 40px ' + FAMILIA;
-    var badge = (base.badge || 'PROMOÇÃO').toUpperCase();
-    var bw = ctx.measureText(badge).width, padX = 30, padY = 20, by = 96, bh = 40 + padY * 2;
-    ctx.fillStyle = accent; roundRect(ctx, M, by, bw + padX * 2, bh, 14); ctx.fill();
-    ctx.fillStyle = '#fff'; ctx.fillText(badge, M + padX, by + padY + 32);
+    // etiqueta topo (só desenha se base.badge tiver texto — atualmente vazia)
+    if (base.badge && String(base.badge).trim()) {
+      ctx.font = '800 40px ' + FAMILIA;
+      var badge = String(base.badge).toUpperCase();
+      var bw = ctx.measureText(badge).width, padX = 30, padY = 20, by = 96, bh = 40 + padY * 2;
+      ctx.fillStyle = accent; roundRect(ctx, M, by, bw + padX * 2, bh, 14); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.fillText(badge, M + padX, by + padY + 32);
+    }
 
     // nome do restaurante (base), encolhe até caber numa linha
     var nomeTxt = (payload.nome || '').toUpperCase();
