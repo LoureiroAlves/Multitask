@@ -112,6 +112,42 @@
   .tabs{ display:grid; grid-template-columns:1fr 1fr; gap:6px; background:#efe4cf; padding:5px; border-radius:14px; margin-bottom:16px; }
   .tab{ white-space:nowrap; padding:12px 10px; border:none; background:transparent; border-radius:10px; font-weight:800; cursor:pointer; color:#9a7f4f; font-size:.9rem; transition:.15s; }
   .tab.ativo{ background:#fff; color:var(--castanho); box-shadow:0 2px 8px rgba(74,56,32,.12); }
+  /* ===== Dashboard moderna (home com cartões) ===== */
+  .tabs.hide{ display:none !important; }
+  #dashHome{ animation:homeIn .34s ease; }
+  @keyframes homeIn{ from{ opacity:0; transform:translateY(6px); } to{ opacity:1; transform:none; } }
+  .home-hi{ font-size:1.3rem; font-weight:800; color:var(--castanho); margin:2px 0 14px; }
+  .home-hi span{ color:#8a7a5c; font-weight:600; font-size:.9rem; display:block; margin-top:2px; }
+  .home-kpis{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:18px; }
+  .home-kpi{ background:#fff; border:1px solid #efe4cf; border-radius:14px; padding:12px 14px; box-shadow:0 4px 14px rgba(74,56,32,.06); }
+  .home-kpi .n{ font-size:1.5rem; font-weight:800; color:var(--castanho); line-height:1; }
+  .home-kpi .l{ font-size:.74rem; color:#8a7a5c; font-weight:700; margin-top:5px; }
+  .home-kpi.alerta .n{ color:#e0453a; }
+  .cards-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+  .dash-card{ text-align:left; cursor:pointer; background:#fff; border:1px solid #ece0c8; border-radius:18px; padding:18px; box-shadow:0 6px 22px rgba(74,56,32,.07); transition:transform .18s cubic-bezier(.2,.8,.3,1), box-shadow .18s, border-color .18s; display:flex; flex-direction:column; gap:6px; min-height:138px; font-family:inherit; position:relative; overflow:hidden; }
+  .dash-card:hover{ transform:translateY(-3px); box-shadow:0 14px 34px rgba(74,56,32,.14); border-color:var(--dourado); }
+  .dash-card:active{ transform:translateY(-1px) scale(.995); }
+  .dash-card .dc-ico{ font-size:1.7rem; line-height:1; }
+  .dash-card .dc-tit{ font-size:1.05rem; font-weight:800; color:var(--castanho); }
+  .dash-card .dc-sub{ font-size:.85rem; color:#8a7a5c; font-weight:600; line-height:1.35; }
+  .dash-card .dc-badge{ position:absolute; top:14px; right:14px; background:#e0453a; color:#fff; font-size:.76rem; font-weight:800; padding:3px 9px; border-radius:999px; box-shadow:0 2px 8px rgba(224,69,58,.4); }
+  .dash-card .dc-seta{ margin-top:auto; color:var(--dourado); font-weight:800; font-size:.84rem; }
+  #areaBar{ display:flex; align-items:center; gap:12px; margin-bottom:14px; }
+  #btnVoltarHome{ border:1px solid #e0d3b5; background:#fff; border-radius:999px; padding:8px 16px; cursor:pointer; font-family:inherit; font-weight:800; color:var(--castanho); font-size:.9rem; box-shadow:0 2px 8px rgba(74,56,32,.08); transition:.15s; }
+  #btnVoltarHome:hover{ background:#fbf6ec; transform:translateX(-2px); }
+  #areaTit{ font-weight:800; color:var(--castanho); font-size:1.12rem; }
+  /* Filtros das encomendas */
+  .enc-filtros{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; }
+  .enc-chip{ border:1px solid #e0d3b5; background:#fff; border-radius:999px; padding:8px 13px; cursor:pointer; font-family:inherit; font-weight:800; font-size:.83rem; color:#9a7f4f; transition:.15s; }
+  .enc-chip .cnt{ display:inline-block; margin-left:6px; background:#efe4cf; color:#7a6440; border-radius:999px; padding:0 7px; font-size:.75rem; }
+  .enc-chip.on{ color:#fff; }
+  .enc-chip.on .cnt{ background:rgba(255,255,255,.28); color:#fff; }
+  .enc-chip.f-pendente.on{ background:#e0453a; border-color:#e0453a; }
+  .enc-chip.f-confirmada.on{ background:#ef8f22; border-color:#ef8f22; }
+  .enc-chip.f-pronta.on{ background:#2ecc71; border-color:#2ecc71; }
+  .enc-chip.f-entregue.on{ background:#5a6b5f; border-color:#5a6b5f; }
+  @media(max-width:900px){ .cards-grid{ grid-template-columns:repeat(2,1fr); } }
+  @media(max-width:560px){ .cards-grid{ grid-template-columns:1fr; } }
   /* Painel (dashboard) */
   .kpis{ display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-bottom:18px; }
   .kpi{ border:1px solid var(--linha); border-radius:16px; padding:15px; background:#fff; box-shadow:0 6px 22px rgba(74,56,32,.07); }
@@ -233,15 +269,16 @@
   </div>
 
   <div id="painel" class="hide">
-    <div class="tabs">
+    <div class="tabs hide">
       <button id="tabCal" class="tab ativo" type="button">📅 Calendário</button>
       <button id="tabDash" class="tab" type="button">📊 Painel</button>
       <button id="tabEnc" class="tab" type="button">🛍️ Encomendas</button>
-      <button id="tabEntregues" class="tab" type="button">✅ Entregues</button>
       <button id="tabNotif" class="tab" type="button">🔔 Avisar</button>
       <button id="tabDef" class="tab" type="button">⚙️ Definições</button>
     </div>
-    <div id="vistaCal">
+    <div id="dashHome"></div>
+    <div id="areaBar" class="hide"><button id="btnVoltarHome" type="button">‹ Voltar</button><span id="areaTit"></span></div>
+    <div id="vistaCal" class="hide">
       <div class="mes-bar">
         <button id="mesPrev" aria-label="Mês anterior">‹</button>
         <div class="mes-nome" id="mesNome"></div>
@@ -252,13 +289,12 @@
         <div class="cal-grid" id="grid"></div>
       </div>
       <div class="legenda"><span><i style="background:var(--dourado)"></i> Pendente</span><span><i style="background:var(--verde)"></i> Confirmada</span></div>
-      <button id="btnPdf" type="button" class="pdf-btn">🖨️ Exportar mês em PDF</button>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;"><button id="btnPdfDia" type="button" class="pdf-btn" style="flex:1; min-width:150px;">📄 Exportar dia</button><button id="btnPdf" type="button" class="pdf-btn" style="flex:1; min-width:150px;">🖨️ Exportar mês</button></div>
       <div id="detalhe" style="margin-top:14px;"></div>
     </div>
     <div id="vistaDash" class="hide"></div>
     <div id="vistaDef" class="hide"></div>
     <div id="vistaEncomendas" class="hide"></div>
-    <div id="vistaEntregues" class="hide"></div>
     <div id="vistaNotif" class="hide"></div>
   </div>
 </div>
@@ -354,9 +390,11 @@
   $('tabDash').onclick = () => mostrarVista('dash');
   $('tabDef').onclick = () => mostrarVista('def');
   $('tabEnc').onclick = () => mostrarVista('enc');
-  $('tabEntregues').onclick = () => mostrarVista('entregues');
   $('tabNotif').onclick = () => mostrarVista('notif');
+  $('btnVoltarHome').onclick = voltarHome;
+  $('dashHome').addEventListener('click', function(e){ var c = e.target.closest('[data-ir]'); if(c) mostrarVista(c.getAttribute('data-ir')); });
   $('btnPdf').onclick = exportarPdf;
+  $('btnPdfDia').onclick = exportarPdfDia;
   $('mdFechar').onclick = fecharModal;
   $('mdGuardar').onclick = guardarModal;
   $('mdApagar').onclick = apagarModal;
@@ -436,7 +474,8 @@
     renderCal();
     if(diaSel) renderDia(diaSel);
     if(!$('vistaDash').classList.contains('hide')) renderDashboard();
-    if(_primeiraCarga){ _primeiraCarga = false; _aprovacaoInicial(); }
+    if(_primeiraCarga){ _primeiraCarga = false; voltarHome(); _aprovacaoInicial(); }
+    else if(!$('dashHome').classList.contains('hide')) renderHome();   // se a home estiver visível, atualiza os resumos
   }
 
   // Ao abrir o calendário, salta logo para o dia da pré-reserva a aguardar e mostra um pop-up
@@ -504,28 +543,71 @@
     await accao(id, a);
   }
 
+  const _AREA_TIT = { cal:'📅 Calendário', dash:'📊 Painel', enc:'🛍️ Encomendas', notif:'📢 Promoções Push', def:'⚙️ Definições' };
   function mostrarVista(qual){
+    $('dashHome').classList.add('hide');
+    $('areaBar').classList.remove('hide');
+    $('areaTit').textContent = _AREA_TIT[qual] || '';
     $('vistaCal').classList.toggle('hide', qual!=='cal');
     $('vistaDash').classList.toggle('hide', qual!=='dash');
     $('vistaDef').classList.toggle('hide', qual!=='def');
     $('vistaEncomendas').classList.toggle('hide', qual!=='enc');
-    $('vistaEntregues').classList.toggle('hide', qual!=='entregues');
     $('vistaNotif').classList.toggle('hide', qual!=='notif');
-    $('tabCal').classList.toggle('ativo', qual==='cal');
-    $('tabDash').classList.toggle('ativo', qual==='dash');
-    $('tabDef').classList.toggle('ativo', qual==='def');
-    $('tabEnc').classList.toggle('ativo', qual==='enc');
-    $('tabEntregues').classList.toggle('ativo', qual==='entregues');
-    $('tabNotif').classList.toggle('ativo', qual==='notif');
     if(qual==='dash') renderDashboard();
     if(qual==='def') renderDefinicoes();
     if(qual==='notif') renderNotif();
-    if(qual==='entregues') renderEntregues();
     if(_encTimer){ clearInterval(_encTimer); _encTimer = null; }
     if(qual==='enc'){
       renderEncomendas();
       _encTimer = setInterval(function(){ if($('vistaEncomendas').classList.contains('hide')){ clearInterval(_encTimer); _encTimer = null; } else { renderEncomendas(true); } }, 5000);   // atualiza de 5 em 5 s
     }
+    try{ window.scrollTo(0,0); }catch(e){}
+  }
+  function voltarHome(){
+    if(_encTimer){ clearInterval(_encTimer); _encTimer = null; }
+    ['vistaCal','vistaDash','vistaDef','vistaEncomendas','vistaNotif'].forEach(function(id){ var el=$(id); if(el) el.classList.add('hide'); });
+    $('areaBar').classList.add('hide');
+    $('dashHome').classList.remove('hide');
+    renderHome();
+    try{ window.scrollTo(0,0); }catch(e){}
+  }
+  function _cardHome(ir, ico, tit, sub, seta, badge){
+    return '<button class="dash-card" type="button" data-ir="' + ir + '">'
+      + (badge ? ('<span class="dc-badge">' + badge + '</span>') : '')
+      + '<span class="dc-ico">' + ico + '</span>'
+      + '<span class="dc-tit">' + tit + '</span>'
+      + '<span class="dc-sub">' + sub + '</span>'
+      + '<span class="dc-seta">' + seta + ' ›</span>'
+      + '</button>';
+  }
+  async function renderHome(){
+    const h = $('dashHome'); if(!h) return;
+    const hojeIso = isoLocal(hoje);
+    const ativas = reservas.filter(function(r){ return r.estado !== 'cancelada'; });
+    const hojeR = ativas.filter(function(r){ return r.data === hojeIso; });
+    const futPend = ativas.filter(function(r){ return r.data >= hojeIso && r.estado === 'pendente'; });
+    let encPend = 0, encAtivas = 0;
+    try{
+      const desde = new Date(); desde.setDate(desde.getDate()-30);
+      const { data } = await sb.from('encomendas').select('estado').eq('negocio_id', negocio.id).gte('criado_em', desde.toISOString());
+      (data||[]).forEach(function(e){ const s=e.estado||'pendente'; if(s==='pendente'){ encPend++; encAtivas++; } else if(s==='confirmada'||s==='pronta'){ encAtivas++; } });
+    }catch(e){}
+    const nome = (negocio && negocio.nome) || 'Restaurante';
+    const dd = new Date();
+    const diaTxt = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'][dd.getDay()] + ', ' + dd.getDate() + ' ' + MESES[dd.getMonth()];
+    h.innerHTML =
+      '<div class="home-hi">Olá 👋 <span>' + esc(nome) + ' · ' + diaTxt + '</span></div>'
+      + '<div class="home-kpis">'
+      +   '<div class="home-kpi"><div class="n">' + hojeR.length + '</div><div class="l">Reservas hoje</div></div>'
+      +   '<div class="home-kpi' + (futPend.length?' alerta':'') + '"><div class="n">' + futPend.length + '</div><div class="l">Reservas por responder</div></div>'
+      +   '<div class="home-kpi' + (encPend?' alerta':'') + '"><div class="n">' + encPend + '</div><div class="l">Encomendas a chegar</div></div>'
+      + '</div>'
+      + '<div class="cards-grid">'
+      +   _cardHome('cal','📅','Calendário','Agenda do dia e reservas', hojeR.length?('Ver hoje ('+hojeR.length+')'):'Ver agenda', 0)
+      +   _cardHome('enc','🛍️','Encomendas', encAtivas?(encAtivas+' em curso'):'Gerir pedidos', 'Pendentes · Preparação · Prontas · Entregues', encPend)
+      +   _cardHome('notif','📢','Promoções Push','Prato do dia, Happy Hour, eventos…','Criar campanha', 0)
+      +   _cardHome('def','⚙️','Definições','Dados, horários, reservas…','Configurar', 0)
+      + '</div>';
   }
 
   function _linkCardapio(){
@@ -541,9 +623,14 @@
     const promoHoje = ((negocio && negocio.config && negocio.config.promoDatas) || {})[hojeIso];
     const temPromo = !!(promoHoje && (promoHoje.texto || '').toString().trim());
     v.innerHTML =
-      '<div style="background:#fff;border:1.5px solid #eadfc6;border-radius:14px;padding:16px;">'
-      + '<h3 style="margin:0 0 6px;">🔔 Enviar aviso / promoção</h3>'
-      + '<p style="font-size:.86rem;color:#7a6a4c;margin:0 0 12px;">Chega aos clientes que ativaram as notificações no telemóvel (sem registo). <span id="ntCount">…</span></p>'
+      '<div style="background:linear-gradient(135deg,#e0245e,#a8712f);border-radius:16px;padding:18px;margin-bottom:14px;color:#fff;box-shadow:0 8px 24px rgba(224,36,94,.22);">'
+      + '<div style="font-size:1.25rem;font-weight:800;">📢 Promoções Push</div>'
+      + '<div style="font-size:.88rem;opacity:.95;margin-top:4px;">Faz crescer o negócio: envia o prato do dia, um Happy Hour ou um desconto direto ao telemóvel dos clientes.</div>'
+      + '<div style="font-size:.8rem;opacity:.9;margin-top:8px;">📱 <span id="ntCount">…</span></div>'
+      + '</div>'
+      + '<div style="background:#fff;border:1.5px solid #eadfc6;border-radius:14px;padding:16px;">'
+      + '<div style="font-size:.8rem;color:#8a7a5c;font-weight:800;margin-bottom:8px;">⚡ Modelos rápidos</div>'
+      + '<div id="ntTpls" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;"></div>'
       + (temPromo ? '<button id="ntUsarPromo" type="button" style="width:100%;box-sizing:border-box;padding:11px;margin-bottom:12px;border:1.5px dashed #e0245e;background:#fff5f8;color:#c01e50;border-radius:10px;font-weight:800;cursor:pointer;">🏷️ Usar a promoção de hoje</button>' : '')
       + '<label style="font-size:.85rem;color:#5a4a2c;">Título</label>'
       + '<input id="ntTit" maxlength="60" placeholder="Ex.: Hoje há novidades 🍽️" style="width:100%;box-sizing:border-box;padding:10px;border:1.5px solid #e0d3b5;border-radius:9px;margin:4px 0 10px;font-family:inherit;">'
@@ -554,7 +641,19 @@
       + '<button id="ntEnviar" class="pdf-btn" style="width:100%;">📣 Enviar a todos</button>'
       + '<div id="ntRes" style="margin-top:10px;font-size:.9rem;"></div>'
       + '</div>';
-    try{ const { count } = await sb.from('push_subs').select('*', { count:'exact', head:true }).eq('negocio_id', negocio.id); $('ntCount').textContent = (count || 0) + ' aparelho(s) subscrito(s).'; }catch(e){ $('ntCount').textContent = ''; }
+    try{ const { count } = await sb.from('push_subs').select('*', { count:'exact', head:true }).eq('negocio_id', negocio.id); $('ntCount').textContent = (count || 0) + ' cliente(s) a receber as tuas promoções'; }catch(e){ $('ntCount').textContent = ''; }
+    (function(){
+      const tpls = [
+        { ico:'🍽️', nome:'Prato do dia', tit:'Prato do dia 🍽️', msg:'Hoje temos … Vem provar!' },
+        { ico:'🍹', nome:'Happy Hour', tit:'Happy Hour 🍹', msg:'Happy Hour hoje — bebidas a preço especial. Aparece!' },
+        { ico:'🏷️', nome:'Desconto', tit:'Desconto especial 🏷️', msg:'Só hoje: desconto especial em … Não percas!' },
+        { ico:'🎉', nome:'Evento', tit:'Evento 🎉', msg:'Temos novidades! … Contamos contigo.' },
+        { ico:'✨', nome:'Novo menu', tit:'Novo menu ✨', msg:'Novidades na ementa! Vem descobrir os novos pratos.' }
+      ];
+      const cont = $('ntTpls'); if(!cont) return;
+      cont.innerHTML = tpls.map(function(t,i){ return '<button type="button" data-i="'+i+'" style="border:1px solid #e0d3b5;background:#fbf6ec;border-radius:999px;padding:7px 13px;cursor:pointer;font-family:inherit;font-weight:700;font-size:.82rem;color:var(--castanho);">'+t.ico+' '+t.nome+'</button>'; }).join('');
+      cont.querySelectorAll('button').forEach(function(b){ b.onclick = function(){ const t = tpls[+b.dataset.i]; $('ntTit').value = t.tit; $('ntMsg').value = t.msg; try{ $('ntMsg').focus(); }catch(e){} }; });
+    })();
     if(temPromo){ const bp = $('ntUsarPromo'); if(bp) bp.onclick = function(){ $('ntTit').value = 'Promoção de hoje'; $('ntMsg').value = (promoHoje.texto || '').toString().trim(); $('ntTit').focus(); }; }
     $('ntEnviar').onclick = async function(){
       const tit = $('ntTit').value.trim(), msg = $('ntMsg').value.trim(), url = $('ntUrl').value.trim();
@@ -842,74 +941,6 @@
   function _prepararSom(){ try{ if(!_beepEl || _somPronto) return; _beepEl.muted = true; const p = _beepEl.play(); const fim = function(){ try{ _beepEl.pause(); _beepEl.currentTime = 0; _beepEl.muted = false; _somPronto = true; }catch(e){} }; if(p && p.then) p.then(fim).catch(function(){ try{ _beepEl.muted = false; }catch(e){} }); else fim(); }catch(e){} }
   document.addEventListener('pointerdown', _prepararSom);
   document.addEventListener('click', _prepararSom);
-  async function renderEncomendas(silencioso){
-    const v = $('vistaEncomendas');
-    if(!silencioso) v.innerHTML = '<div class="msg">A carregar…</div>';
-    const desde = new Date(); desde.setDate(desde.getDate() - 7);
-    const { data, error } = await sb.from('encomendas').select('*').eq('negocio_id', negocio.id).gte('criado_em', desde.toISOString()).order('criado_em', { ascending:false });
-    if(error){ if(!silencioso) v.innerHTML = '<div class="msg erro">Erro: ' + esc(error.message) + '</div>'; return; }
-    const arr = data || [];
-    const sig = JSON.stringify(arr.map(function(e){ return [e.id, e.estado]; }));
-    if(silencioso && sig === _encSig) return;   // nada mudou → não re-desenha (evita piscar)
-    _encSig = sig;
-    // Som quando chega uma encomenda NOVA (id que ainda não tínhamos visto)
-    const _ids = arr.map(function(e){ return String(e.id); });
-    if(_encIdsVistos !== null){ let _nova = false; _ids.forEach(function(id){ if(!_encIdsVistos[id]) _nova = true; }); if(_nova) _beep(); }
-    _encIdsVistos = {}; _ids.forEach(function(id){ _encIdsVistos[id] = 1; });
-    const _somHdr = '<div style="display:flex; justify-content:flex-end; margin-bottom:8px;"><button id="encSomBtn" type="button" style="border:1px solid var(--linha); background:#fff; border-radius:999px; padding:6px 12px; cursor:pointer; font-family:inherit; font-weight:700; font-size:.8rem; color:var(--castanho);">' + (_encSomOn() ? '🔔 Som ligado' : '🔕 Som desligado') + '</button></div>';
-    function _wireSom(){ const b = document.getElementById('encSomBtn'); if(!b) return; b.onclick = function(){ const novo = _encSomOn() ? '0' : '1'; try{ localStorage.setItem('amesaEncSom', novo); }catch(e){} _somPronto = false; _prepararSom(); b.textContent = (novo === '1') ? '🔔 Som ligado' : '🔕 Som desligado'; if(novo === '1') setTimeout(_beep, 60); }; }
-    if(!arr.length){ v.innerHTML = _somHdr + '<div class="card"><div style="color:#8a7a5c; font-size:.9rem;">Ainda não há encomendas (últimos 7 dias).</div></div>'; _wireSom(); return; }
-    const _cartaEnc = function(e, g){
-      const cor = g.cor, glow = g.glow, est = (e.estado || 'pendente');
-      const entregue = (est === 'entregue');
-      const dt = new Date(e.criado_em);
-      const itens = Array.isArray(e.itens) ? e.itens : [];
-      const linhas = itens.map(function(it){ return (it.qtd||1) + '× ' + esc(it.nome||''); }).join('<br>');
-      const dia = String(dt.getDate()).padStart(2,'0') + '/' + String(dt.getMonth()+1).padStart(2,'0');
-      const hh = String(dt.getHours()).padStart(2,'0') + ':' + String(dt.getMinutes()).padStart(2,'0');
-      let acoes = '';
-      // Fluxo: A chegar (vermelho) → Confirmar (a preparar/laranja) → Pronta (verde) → Entregue
-      if(['confirmada','pronta','entregue'].indexOf(est) < 0) acoes += '<button class="enc-a" data-a="confirmada" data-id="' + e.id + '" style="border:none; background:#fff2df; color:#a85d10; border-radius:8px; padding:7px 11px; cursor:pointer; font-family:inherit; font-weight:800; font-size:.82rem;">✔ Confirmar</button>';
-      if(['pronta','entregue','cancelada'].indexOf(est) < 0) acoes += '<button class="enc-a" data-a="pronta" data-id="' + e.id + '" style="border:none; background:#e6f7ec; color:#1e6b3c; border-radius:8px; padding:7px 11px; cursor:pointer; font-family:inherit; font-weight:800; font-size:.82rem;">🍳 Pronta</button>';
-      if(est === 'pronta') acoes += '<button class="enc-a" data-a="entregue" data-id="' + e.id + '" style="border:none; background:#eef1ee; color:#5a6b5f; border-radius:8px; padding:7px 11px; cursor:pointer; font-family:inherit; font-weight:800; font-size:.82rem;">📦 Entregue</button>';
-      if(['cancelada','entregue'].indexOf(est) < 0) acoes += '<button class="enc-a" data-a="cancelada" data-id="' + e.id + '" style="border:none; background:#fbe7e4; color:#b23; border-radius:8px; padding:7px 11px; cursor:pointer; font-family:inherit; font-weight:800; font-size:.82rem;">✕ Cancelar</button>';
-      acoes += '<button class="enc-del" data-id="' + e.id + '" style="border:1px solid #e8c4bf; color:var(--vermelho); background:#fff; border-radius:8px; padding:7px 10px; cursor:pointer; font-family:inherit; font-weight:700; font-size:.82rem;">🗑</button>';
-      const neon = entregue ? 'box-shadow:none;' : (est === 'pendente' ? '' : ('box-shadow:0 0 0 1.5px ' + cor + ', 0 0 12px ' + glow + ';'));
-      const pulsa = (est === 'pendente') ? ' pulsa' : '';
-      const fade = entregue ? 'opacity:.5; filter:grayscale(.35);' : '';
-      const selo = entregue ? '<div class="enc-selo"><span>Entregue</span></div>' : '';
-      return '<div class="card enc-card' + pulsa + '" style="position:relative; margin-bottom:10px; border-color:' + cor + '; --nc:' + cor + '; --ng:' + glow + '; ' + neon + '">'
-        + '<div style="' + fade + '">'
-        +   '<div style="font-weight:800; color:var(--castanho);">Encomenda nº ' + (e.numero != null ? e.numero : '—') + '</div>'
-        +   '<div style="font-size:.82rem; color:#8a7a5c; margin:2px 0 8px;">Recebida ' + dia + ' às ' + hh + (e.nome ? (' · ' + esc(e.nome)) : '') + (e.levantamento ? (' · 🕒 levantar às ' + esc(e.levantamento)) : '') + '</div>'
-        +   '<div style="font-size:.9rem; color:var(--castanho); line-height:1.5;">' + (linhas || '—') + '</div>'
-        +   (Number(e.total) > 0 ? ('<div style="margin-top:8px; font-weight:800; color:var(--castanho);">Total: ' + Number(e.total).toFixed(2).replace('.', ',') + '€</div>') : '')
-        +   '<div style="display:flex; gap:7px; flex-wrap:wrap; margin-top:10px;">' + acoes + '</div>'
-        + '</div>'
-        + selo
-        + '</div>';
-    };
-    const _grupos = [
-      { est:'pendente',   nome:'🔴 A chegar',            cor:'#e0453a', glow:'rgba(224,69,58,.55)',  bg:'#fdeae8', tc:'#c0392b' },
-      { est:'confirmada', nome:'🟠 A preparar',          cor:'#ef8f22', glow:'rgba(239,143,34,.55)', bg:'#fff2df', tc:'#a85d10' },
-      { est:'pronta',     nome:'🟢 Prontas p/ levantar', cor:'#2ecc71', glow:'rgba(46,204,113,.60)', bg:'#e6f7ec', tc:'#1e6b3c' },
-      { est:'cancelada',  nome:'⚪ Canceladas',          cor:'#c9a9a0', glow:'rgba(0,0,0,0)',        bg:'#f6e9e6', tc:'#b23' }
-      /* 'entregue' já não aparece aqui — tem aba própria "Entregues" */
-    ];
-    let html = _somHdr;
-    _grupos.forEach(function(g){
-      const doGrupo = arr.filter(function(e){ return (e.estado || 'pendente') === g.est; });
-      if(!doGrupo.length) return;
-      html += '<div style="margin:10px 2px 10px;"><span style="background:' + g.bg + '; color:' + g.tc + '; padding:6px 13px; border-radius:999px; font-weight:800; font-size:.9rem;">' + g.nome + ' · ' + doGrupo.length + '</span></div>';
-      doGrupo.forEach(function(e){ html += _cartaEnc(e, g); });
-    });
-    v.innerHTML = html;
-    _wireSom();
-    v.querySelectorAll('.enc-a').forEach(function(b){ b.onclick = function(){ _encSetEstado(b.dataset.id, b.dataset.a); }; });
-    v.querySelectorAll('.enc-del').forEach(function(b){ b.onclick = async function(){ if(!(await window.__amConfirm('Confirmar',{texto:'Apagar esta encomenda da lista?', ok:'Sim', cancelar:'Não'}))) return; const { error } = await sb.from('encomendas').delete().eq('id', b.dataset.id); if(error){ alert('Erro: ' + error.message); return; } renderEncomendas(); }; });
-  }
-
-  // ── ABA ENTREGUES ──────────────────────────────────────────
   // Classifica um prato como Carne/Peixe por palavras-chave no nome (best-effort; vazio se não reconhecer)
   function _tipoCarnePeixe(nome){
     const s = (nome||'').toLowerCase();
@@ -919,78 +950,161 @@
     for(let i=0;i<carne.length;i++){ if(s.indexOf(carne[i])>=0) return 'Carne'; }
     return '';
   }
-  async function renderEntregues(){
-    const v = $('vistaEntregues');
-    v.innerHTML = '<div class="msg">A carregar…</div>';
-    const { data, error } = await sb.from('encomendas').select('*').eq('negocio_id', negocio.id).eq('estado','entregue').order('criado_em', { ascending:false });
-    if(error){ v.innerHTML = '<div class="msg erro">Erro: ' + esc(error.message) + '</div>'; return; }
-    const arr = data || [];
-    window.__entregues = arr;   // guardado para o export
-    const topo = '<div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;">'
-      + '<button id="entExport" type="button" style="flex:1; min-width:150px; border:none; background:var(--verde,#2e9e5b); color:#fff; border-radius:10px; padding:11px; cursor:pointer; font-family:inherit; font-weight:800; font-size:.9rem;">📊 Exportar (entregues)</button>'
-      + '<button id="entApagarTodas" type="button" style="border:1px solid #e8c4bf; background:#fff; color:var(--vermelho,#b23); border-radius:10px; padding:11px 14px; cursor:pointer; font-family:inherit; font-weight:800; font-size:.9rem;">🗑 Apagar todas</button>'
+  let _encFiltro = 'pendente', _encCache = [];
+  const _ENC_GRP = {
+    pendente:   { cor:'#e0453a', glow:'rgba(224,69,58,.55)',  nome:'Pendentes',  cls:'f-pendente' },
+    confirmada: { cor:'#ef8f22', glow:'rgba(239,143,34,.55)', nome:'Preparação', cls:'f-confirmada' },
+    pronta:     { cor:'#2ecc71', glow:'rgba(46,204,113,.60)', nome:'Prontas',    cls:'f-pronta' },
+    entregue:   { cor:'#b8c2ba', glow:'rgba(0,0,0,0)',        nome:'Entregues',  cls:'f-entregue' },
+    cancelada:  { cor:'#c9a9a0', glow:'rgba(0,0,0,0)',        nome:'Canceladas', cls:'f-cancelada' }
+  };
+  const _ENC_ORDEM = ['pendente','confirmada','pronta','entregue','cancelada'];
+  function _cartaEnc(e, g){
+    const cor = g.cor, glow = g.glow, est = (e.estado || 'pendente');
+    const entregue = (est === 'entregue');
+    const dt = new Date(e.criado_em);
+    const itens = Array.isArray(e.itens) ? e.itens : [];
+    const linhas = itens.map(function(it){ return (it.qtd||1) + '× ' + esc(it.nome||''); }).join('<br>');
+    const dia = String(dt.getDate()).padStart(2,'0') + '/' + String(dt.getMonth()+1).padStart(2,'0');
+    const hh = String(dt.getHours()).padStart(2,'0') + ':' + String(dt.getMinutes()).padStart(2,'0');
+    let acoes = '';
+    // Fluxo: A chegar (vermelho) → Confirmar (a preparar/laranja) → Pronta (verde) → Entregue
+    if(['confirmada','pronta','entregue'].indexOf(est) < 0) acoes += '<button class="enc-a" data-a="confirmada" data-id="' + e.id + '" style="border:none; background:#fff2df; color:#a85d10; border-radius:8px; padding:7px 11px; cursor:pointer; font-family:inherit; font-weight:800; font-size:.82rem;">✔ Confirmar</button>';
+    if(['pronta','entregue','cancelada'].indexOf(est) < 0) acoes += '<button class="enc-a" data-a="pronta" data-id="' + e.id + '" style="border:none; background:#e6f7ec; color:#1e6b3c; border-radius:8px; padding:7px 11px; cursor:pointer; font-family:inherit; font-weight:800; font-size:.82rem;">🍳 Pronta</button>';
+    if(est === 'pronta') acoes += '<button class="enc-a" data-a="entregue" data-id="' + e.id + '" style="border:none; background:#eef1ee; color:#5a6b5f; border-radius:8px; padding:7px 11px; cursor:pointer; font-family:inherit; font-weight:800; font-size:.82rem;">📦 Entregue</button>';
+    if(['cancelada','entregue'].indexOf(est) < 0) acoes += '<button class="enc-a" data-a="cancelada" data-id="' + e.id + '" style="border:none; background:#fbe7e4; color:#b23; border-radius:8px; padding:7px 11px; cursor:pointer; font-family:inherit; font-weight:800; font-size:.82rem;">✕ Cancelar</button>';
+    acoes += '<button class="enc-del" data-id="' + e.id + '" style="border:1px solid #e8c4bf; color:var(--vermelho); background:#fff; border-radius:8px; padding:7px 10px; cursor:pointer; font-family:inherit; font-weight:700; font-size:.82rem;">🗑</button>';
+    const neon = entregue ? 'box-shadow:none;' : (est === 'pendente' ? '' : ('box-shadow:0 0 0 1.5px ' + cor + ', 0 0 12px ' + glow + ';'));
+    const pulsa = (est === 'pendente') ? ' pulsa' : '';
+    const fade = entregue ? 'opacity:.5; filter:grayscale(.35);' : '';
+    const selo = entregue ? '<div class="enc-selo"><span>Entregue</span></div>' : '';
+    return '<div class="card enc-card' + pulsa + '" style="position:relative; margin-bottom:10px; border-color:' + cor + '; --nc:' + cor + '; --ng:' + glow + '; ' + neon + '">'
+      + '<div style="' + fade + '">'
+      +   '<div style="font-weight:800; color:var(--castanho);">Encomenda nº ' + (e.numero != null ? e.numero : '—') + '</div>'
+      +   '<div style="font-size:.82rem; color:#8a7a5c; margin:2px 0 8px;">Recebida ' + dia + ' às ' + hh + (e.nome ? (' · ' + esc(e.nome)) : '') + (e.levantamento ? (' · 🕒 levantar às ' + esc(e.levantamento)) : '') + '</div>'
+      +   '<div style="font-size:.9rem; color:var(--castanho); line-height:1.5;">' + (linhas || '—') + '</div>'
+      +   (Number(e.total) > 0 ? ('<div style="margin-top:8px; font-weight:800; color:var(--castanho);">Total: ' + Number(e.total).toFixed(2).replace('.', ',') + '€</div>') : '')
+      +   '<div style="display:flex; gap:7px; flex-wrap:wrap; margin-top:10px;">' + acoes + '</div>'
+      + '</div>'
+      + selo
       + '</div>';
-    if(!arr.length){ v.innerHTML = topo + '<div class="card"><div style="color:#8a7a5c; font-size:.9rem;">Ainda não há encomendas entregues.</div></div>'; _wireEnt(); return; }
-    let html = topo + '<div style="margin:2px 2px 10px;"><span style="background:#eef1ee; color:#5a6b5f; padding:6px 13px; border-radius:999px; font-weight:800; font-size:.9rem;">✅ Entregues · ' + arr.length + '</span></div>';
-    arr.forEach(function(e){
-      const dt = new Date(e.criado_em);
-      const dia = String(dt.getDate()).padStart(2,'0') + '/' + String(dt.getMonth()+1).padStart(2,'0');
-      const hh = String(dt.getHours()).padStart(2,'0') + ':' + String(dt.getMinutes()).padStart(2,'0');
-      const itens = Array.isArray(e.itens) ? e.itens : [];
-      const linhas = itens.map(function(it){ const tp=_tipoCarnePeixe(it.nome); return (it.qtd||1)+'× '+esc(it.nome||'')+(tp?(' <span style="font-size:.72rem;color:#8a7a5c;">('+tp+')</span>'):''); }).join('<br>');
-      html += '<div class="card" style="margin-bottom:10px; opacity:.92;">'
-        + '<div style="display:flex; justify-content:space-between; align-items:center; gap:8px;"><div style="font-weight:800; color:var(--castanho);">Encomenda nº ' + (e.numero != null ? e.numero : '—') + '</div>'
-        +   '<button class="ent-del" data-id="' + e.id + '" style="border:1px solid #e8c4bf; color:var(--vermelho); background:#fff; border-radius:8px; padding:6px 10px; cursor:pointer; font-family:inherit; font-weight:700; font-size:.82rem;">🗑</button></div>'
-        + '<div style="font-size:.82rem; color:#8a7a5c; margin:2px 0 8px;">Entregue · recebida ' + dia + ' às ' + hh + (e.nome ? (' · ' + esc(e.nome)) : '') + '</div>'
-        + '<div style="font-size:.9rem; color:var(--castanho); line-height:1.5;">' + (linhas || '—') + '</div>'
-        + (Number(e.total) > 0 ? ('<div style="margin-top:8px; font-weight:800; color:var(--castanho);">Total: ' + Number(e.total).toFixed(2).replace('.', ',') + '€</div>') : '')
-        + '</div>';
-    });
-    v.innerHTML = html;
-    _wireEnt();
   }
-  function _wireEnt(){
-    const ex = document.getElementById('entExport'); if(ex) ex.onclick = function(){ _exportEntregues(window.__entregues || []); };
+  async function renderEncomendas(silencioso){
+    const v = $('vistaEncomendas');
+    if(!silencioso && !v.innerHTML) v.innerHTML = '<div class="msg">A carregar…</div>';
+    // Sem filtro de data: as encomendas entregues ficam disponíveis até o dono as apagar
+    const { data, error } = await sb.from('encomendas').select('*').eq('negocio_id', negocio.id).order('criado_em', { ascending:false });
+    if(error){ if(!silencioso) v.innerHTML = '<div class="msg erro">Erro: ' + esc(error.message) + '</div>'; return; }
+    const arr = data || [];
+    const sig = JSON.stringify(arr.map(function(e){ return [e.id, e.estado]; })) + '|' + _encFiltro;
+    if(silencioso && sig === _encSig) return;   // nada mudou → não re-desenha (evita piscar)
+    _encSig = sig;
+    // Som quando chega uma encomenda NOVA (id que ainda não tínhamos visto)
+    const _ids = arr.map(function(e){ return String(e.id); });
+    if(_encIdsVistos !== null){ let _nova = false; _ids.forEach(function(id){ if(!_encIdsVistos[id]) _nova = true; }); if(_nova) _beep(); }
+    _encIdsVistos = {}; _ids.forEach(function(id){ _encIdsVistos[id] = 1; });
+    _encCache = arr;
+    _pintaEnc();
+  }
+  function _pintaEnc(){
+    const v = $('vistaEncomendas'); if(!v) return;
+    const arr = _encCache || [];
+    const cont = { pendente:0, confirmada:0, pronta:0, entregue:0, cancelada:0 };
+    arr.forEach(function(e){ const s = e.estado || 'pendente'; if(cont[s] == null) cont[s] = 0; cont[s]++; });
+    if(!_ENC_GRP[_encFiltro]) _encFiltro = 'pendente';
+    // barra de som + filtros
+    const somBtn = '<button id="encSomBtn" type="button" style="border:1px solid var(--linha); background:#fff; border-radius:999px; padding:6px 12px; cursor:pointer; font-family:inherit; font-weight:700; font-size:.8rem; color:var(--castanho);">' + (_encSomOn() ? '🔔 Som ligado' : '🔕 Som desligado') + '</button>';
+    let chips = '<div class="enc-filtros">';
+    _ENC_ORDEM.forEach(function(s){ const g = _ENC_GRP[s]; chips += '<button class="enc-chip ' + g.cls + (s === _encFiltro ? ' on' : '') + '" data-f="' + s + '" type="button">' + g.nome + '<span class="cnt">' + (cont[s] || 0) + '</span></button>'; });
+    chips += '</div>';
+    let html = '<div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap;"><div style="font-weight:800; color:var(--castanho);">🛍️ Encomendas <span style="color:#8a7a5c; font-weight:600; font-size:.85rem;">(' + arr.length + ')</span></div>' + somBtn + '</div>' + chips;
+    // barra específica dos Entregues: exportar PDF (dia/mês) + apagar todas
+    if(_encFiltro === 'entregue'){
+      html += '<div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;">'
+        + '<button id="entPdfDia" type="button" style="flex:1; min-width:130px; border:none; background:var(--verde,#2e9e5b); color:#fff; border-radius:10px; padding:10px; cursor:pointer; font-family:inherit; font-weight:800; font-size:.86rem;">📄 PDF do dia</button>'
+        + '<button id="entPdfMes" type="button" style="flex:1; min-width:130px; border:none; background:#3a7a52; color:#fff; border-radius:10px; padding:10px; cursor:pointer; font-family:inherit; font-weight:800; font-size:.86rem;">📄 PDF do mês</button>'
+        + '<button id="entApagarTodas" type="button" style="border:1px solid #e8c4bf; background:#fff; color:var(--vermelho,#b23); border-radius:10px; padding:10px 13px; cursor:pointer; font-family:inherit; font-weight:800; font-size:.86rem;">🗑 Apagar todas</button>'
+        + '</div>';
+    }
+    const doFiltro = arr.filter(function(e){ return (e.estado || 'pendente') === _encFiltro; });
+    if(!doFiltro.length){
+      html += '<div class="card"><div style="color:#8a7a5c; font-size:.9rem;">Sem encomendas em "' + _ENC_GRP[_encFiltro].nome + '".</div></div>';
+    } else {
+      doFiltro.forEach(function(e){ html += _cartaEnc(e, _ENC_GRP[_encFiltro]); });
+    }
+    v.innerHTML = html;
+    // som
+    const sb2 = document.getElementById('encSomBtn'); if(sb2) sb2.onclick = function(){ const novo = _encSomOn() ? '0' : '1'; try{ localStorage.setItem('amesaEncSom', novo); }catch(e){} _somPronto = false; _prepararSom(); sb2.textContent = (novo === '1') ? '🔔 Som ligado' : '🔕 Som desligado'; if(novo === '1') setTimeout(_beep, 60); };
+    // filtros
+    v.querySelectorAll('.enc-chip').forEach(function(b){ b.onclick = function(){ _encFiltro = b.getAttribute('data-f'); _pintaEnc(); }; });
+    // ações de estado / apagar
+    v.querySelectorAll('.enc-a').forEach(function(b){ b.onclick = function(){ _encSetEstado(b.dataset.id, b.dataset.a); }; });
+    v.querySelectorAll('.enc-del').forEach(function(b){ b.onclick = async function(){ if(!(await window.__amConfirm('Confirmar',{texto:'Apagar esta encomenda da lista?', ok:'Sim', cancelar:'Não'}))) return; const { error } = await sb.from('encomendas').delete().eq('id', b.dataset.id); if(error){ alert('Erro: ' + error.message); return; } renderEncomendas(); }; });
+    // entregues: PDF + apagar todas
+    const pd = document.getElementById('entPdfDia'); if(pd) pd.onclick = function(){ _exportEntreguesPDF('dia'); };
+    const pm = document.getElementById('entPdfMes'); if(pm) pm.onclick = function(){ _exportEntreguesPDF('mes'); };
     const ap = document.getElementById('entApagarTodas'); if(ap) ap.onclick = async function(){
-      const lista = window.__entregues || []; if(!lista.length) return;
+      const lista = (_encCache || []).filter(function(e){ return (e.estado||'') === 'entregue'; });
+      if(!lista.length) return;
       if(!(await window.__amConfirm('Apagar todas', { texto:'Apagar TODAS as ' + lista.length + ' encomendas entregues? Esta ação não se pode desfazer.', ok:'Apagar todas', cancelar:'Cancelar' }))) return;
       const ids = lista.map(function(e){ return e.id; });
       const { error } = await sb.from('encomendas').delete().in('id', ids);
       if(error){ alert('Erro: ' + error.message); return; }
-      renderEntregues();
+      renderEncomendas();
     };
-    document.querySelectorAll('#vistaEntregues .ent-del').forEach(function(b){ b.onclick = async function(){ if(!(await window.__amConfirm('Confirmar', { texto:'Apagar esta encomenda entregue?', ok:'Sim', cancelar:'Não' }))) return; const { error } = await sb.from('encomendas').delete().eq('id', b.dataset.id); if(error){ alert('Erro: ' + error.message); return; } renderEntregues(); }; });
   }
-  // Export CSV (abre no Excel): agrega por prato — Tipo de prato, Carne ou peixe, Quantidade, Preço, com soma final
-  function _exportEntregues(arr){
-    if(!arr || !arr.length){ alert('Não há encomendas entregues para exportar.'); return; }
-    const mapa = {};   // nome -> { tipo, qtd, total }
-    arr.forEach(function(e){
-      (Array.isArray(e.itens) ? e.itens : []).forEach(function(it){
-        const nome = (it.nome || '').trim(); if(!nome) return;
-        const qtd = Number(it.qtd) || 1;
-        const preco = Number(it.preco) || 0;
-        if(!mapa[nome]) mapa[nome] = { tipo:_tipoCarnePeixe(nome), qtd:0, total:0 };
-        mapa[nome].qtd += qtd;
-        mapa[nome].total += preco * qtd;
-      });
+  // Exportar as encomendas entregues em PDF — escopo 'dia' (hoje) ou 'mes' (mês atual). Agrega por prato com Carne/Peixe e soma final.
+  async function _exportEntreguesPDF(escopo){
+    const todas = (_encCache || []).filter(function(e){ return (e.estado||'') === 'entregue'; });
+    const hoje0 = new Date(); const hojeIso = isoLocal(hoje0);
+    const mesPref = hoje0.getFullYear() + '-' + String(hoje0.getMonth()+1).padStart(2,'0');
+    const arr = todas.filter(function(e){
+      const d = new Date(e.criado_em); const iso = isoLocal(d);
+      return escopo === 'dia' ? (iso === hojeIso) : (iso.indexOf(mesPref) === 0);
     });
+    if(!arr.length){ alert('Não há encomendas entregues ' + (escopo === 'dia' ? 'hoje' : 'neste mês') + '.'); return; }
+    const mapa = {}; let totalGeral = 0, qtdGeral = 0;
+    arr.forEach(function(e){ (Array.isArray(e.itens)?e.itens:[]).forEach(function(it){
+      const nome = (it.nome||'').trim(); if(!nome) return;
+      const qtd = Number(it.qtd)||1, preco = Number(it.preco)||0;
+      if(!mapa[nome]) mapa[nome] = { tipo:_tipoCarnePeixe(nome), qtd:0, total:0 };
+      mapa[nome].qtd += qtd; mapa[nome].total += preco*qtd;
+    }); });
     const nomes = Object.keys(mapa).sort(function(a,b){ return a.localeCompare(b); });
-    const sep = ';';
-    const dec = function(n){ return Number(n).toFixed(2).replace('.', ','); };
-    const q = function(s){ return '"' + String(s).replace(/"/g,'""') + '"'; };
-    const linhas = [];
-    linhas.push(['Tipo de prato','Carne ou peixe','Quantidade','Preço (€)'].map(q).join(sep));
-    let somaQtd = 0, somaTotal = 0;
-    nomes.forEach(function(n){ const m = mapa[n]; somaQtd += m.qtd; somaTotal += m.total; linhas.push([n, m.tipo || '', m.qtd, dec(m.total)].map(q).join(sep)); });
-    linhas.push(['TOTAL','', somaQtd, dec(somaTotal)].map(q).join(sep));
-    const csv = '﻿' + linhas.join('\r\n');   // BOM para os acentos abrirem certos no Excel
-    const blob = new Blob([csv], { type:'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    const h = new Date(); const fich = 'entregues_' + h.getFullYear() + String(h.getMonth()+1).padStart(2,'0') + String(h.getDate()).padStart(2,'0') + '.csv';
-    a.href = url; a.download = fich; document.body.appendChild(a); a.click();
-    setTimeout(function(){ try{ document.body.removeChild(a); }catch(e){} URL.revokeObjectURL(url); }, 600);
+    try{
+      await _carregarJsPDF();
+      const JsPDF = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+      const pdf = new JsPDF({ unit:'mm', format:'a4', orientation:'portrait' });
+      const M = 14, W = 210, BOTTOM = 285; let y = 18;
+      const eur = function(n){ return Number(n).toFixed(2).replace('.', ',') + ' €'; };
+      const ensure = function(h){ if(y + h > BOTTOM){ pdf.addPage(); y = 18; } };
+      pdf.setFont('helvetica','bold'); pdf.setFontSize(16); pdf.setTextColor(58,44,24);
+      pdf.text((negocio && negocio.nome) || 'Encomendas', M, y); y += 7;
+      pdf.setFont('helvetica','normal'); pdf.setFontSize(12); pdf.setTextColor(120,110,90);
+      const per = (escopo === 'dia') ? ('Dia ' + hoje0.getDate() + ' de ' + MESES[hoje0.getMonth()] + ' ' + hoje0.getFullYear()) : (MESES[hoje0.getMonth()] + ' ' + hoje0.getFullYear());
+      pdf.text('Encomendas entregues · ' + per, M, y); y += 6;
+      pdf.setFontSize(10); pdf.text(arr.length + ' encomenda(s) entregue(s)', M, y); y += 6;
+      // cabeçalho da tabela
+      pdf.setDrawColor(205,185,150); pdf.setFillColor(244,238,222); pdf.rect(M, y-4, W-2*M, 8, 'F');
+      pdf.setFont('helvetica','bold'); pdf.setFontSize(9.5); pdf.setTextColor(58,44,24);
+      pdf.text('Prato', M+2, y+1.5); pdf.text('Tipo', 120, y+1.5); pdf.text('Qtd', 150, y+1.5, {align:'right'}); pdf.text('Total', W-M-2, y+1.5, {align:'right'});
+      y += 9;
+      pdf.setFont('helvetica','normal'); pdf.setFontSize(10); pdf.setTextColor(40,30,20);
+      nomes.forEach(function(n){ const m = mapa[n]; ensure(7); totalGeral += m.total; qtdGeral += m.qtd;
+        pdf.text(String(n), M+2, y, { maxWidth: 100 });
+        pdf.setTextColor(120,100,70); pdf.text(m.tipo || '—', 120, y); pdf.setTextColor(40,30,20);
+        pdf.text(String(m.qtd), 150, y, {align:'right'});
+        pdf.text(eur(m.total), W-M-2, y, {align:'right'});
+        y += 6; pdf.setDrawColor(232,224,204); pdf.line(M, y-3.5, W-M, y-3.5);
+      });
+      ensure(12); y += 2;
+      pdf.setDrawColor(180,150,90); pdf.line(M, y-3, W-M, y-3);
+      pdf.setFont('helvetica','bold'); pdf.setFontSize(11.5); pdf.setTextColor(58,44,24);
+      pdf.text('TOTAL', M+2, y+3); pdf.text(String(qtdGeral), 150, y+3, {align:'right'}); pdf.text(eur(totalGeral), W-M-2, y+3, {align:'right'});
+      const suf = (escopo === 'dia') ? (hoje0.getFullYear() + String(hoje0.getMonth()+1).padStart(2,'0') + String(hoje0.getDate()).padStart(2,'0')) : mesPref;
+      const fich = 'entregues-' + escopo + '-' + suf + '.pdf';
+      try{ pdf.save(fich); }catch(e){ const nova = window.open(pdf.output('bloburl'), '_blank'); if(!nova) alert('O navegador bloqueou o PDF. Ativa os pop-ups.'); }
+    }catch(err){ alert(err.message || 'Não foi possível gerar o PDF.'); }
   }
 
   function _cmpR(a,b){ return (a.data + (a.hora||'')).localeCompare(b.data + (b.hora||'')); }
@@ -1136,6 +1250,43 @@
       try{ pdf.save(fich); }catch(e){ const nova = window.open(pdf.output('bloburl'), '_blank'); if(!nova) alert('O navegador bloqueou o PDF. Ativa os pop-ups.'); }
     }catch(err){ alert(err.message || 'Não foi possível gerar o PDF.'); }
     finally{ btn.disabled = false; btn.textContent = _t; }
+  }
+  async function exportarPdfDia(){
+    const iso = diaSel || isoLocal(hoje);
+    const btn = $('btnPdfDia'); const _t = btn.textContent; btn.disabled = true; btn.textContent = 'A gerar…';
+    try{
+      await _carregarJsPDF();
+      const JsPDF = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+      const pdf = new JsPDF({ unit:'mm', format:'a4', orientation:'portrait' });
+      const doDia = reservas.filter(function(r){ return r.data === iso && r.estado !== 'cancelada'; }).sort(_cmpR);
+      const d = new Date(iso+'T00:00:00');
+      const WD = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+      const M=14, W=210, BOTTOM=285; let y=18;
+      const ensure=function(h){ if(y+h>BOTTOM){ pdf.addPage(); y=18; } };
+      pdf.setFont('helvetica','bold'); pdf.setFontSize(16); pdf.setTextColor(58,44,24);
+      pdf.text((negocio&&negocio.nome)||'Reservas', M, y); y+=7;
+      pdf.setFont('helvetica','normal'); pdf.setFontSize(12); pdf.setTextColor(120,110,90);
+      pdf.text('Reservas · ' + WD[d.getDay()] + ', ' + d.getDate() + ' de ' + MESES[d.getMonth()] + ' ' + d.getFullYear(), M, y); y+=6;
+      pdf.setFontSize(10); pdf.text(doDia.length + ' reserva(s) · ' + _pessoasDia(iso) + ' pessoa(s)', M, y); y+=5;
+      pdf.setDrawColor(205,185,150); pdf.line(M,y,W-M,y); y+=7;
+      if(!doDia.length){ pdf.setTextColor(120,110,90); pdf.text('Sem reservas neste dia.', M, y); }
+      doDia.forEach(function(r){
+        ensure(8);
+        pdf.setFont('helvetica','bold'); pdf.setFontSize(10); pdf.setTextColor(40,30,20);
+        pdf.text(String(r.hora||'—'), M+2, y);
+        pdf.setFont('helvetica','normal');
+        let linha=(r.nome||'')+'  ·  '+(Number(r.pessoas)||1)+' pax'; if(r.telefone) linha+='  ·  '+r.telefone;
+        pdf.text(linha, M+18, y, { maxWidth: W-M-18-26 });
+        if(r.estado==='confirmada'){ pdf.setTextColor(46,139,87); } else { pdf.setTextColor(160,110,20); }
+        pdf.setFont('helvetica','bold'); pdf.setFontSize(8); pdf.text((r.estado||'').toUpperCase(), W-M-2, y, {align:'right'});
+        y+=5;
+        if(r.obs){ pdf.setFont('helvetica','italic'); pdf.setFontSize(8.5); pdf.setTextColor(120,100,70); pdf.text('   '+String(r.obs), M+18, y, {maxWidth:W-M-18}); y+=4; }
+        y+=1.5;
+      });
+      const fich='reservas-'+iso+'.pdf';
+      try{ pdf.save(fich); }catch(e){ const nova=window.open(pdf.output('bloburl'),'_blank'); if(!nova) alert('O navegador bloqueou o PDF. Ativa os pop-ups.'); }
+    }catch(err){ alert(err.message||'Não foi possível gerar o PDF.'); }
+    finally{ btn.disabled=false; btn.textContent=_t; }
   }
 
   /* ===== Definições de reservas (config.agenda) ===== */
