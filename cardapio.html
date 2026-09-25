@@ -266,8 +266,10 @@
     min-height:100vh;
     min-height:100svh;
     padding-bottom:calc(112px + env(safe-area-inset-bottom));
+    overflow-x:hidden;   /* nunca arrastar a página na horizontal (ex.: promoção com rotação/spill) */
+    max-width:100%;
   }
-  html{ background:var(--intro-bg,#1f2530); }
+  html{ background:var(--intro-bg,#1f2530); overflow-x:hidden; }
   body.barra-oculta{ padding-bottom:env(safe-area-inset-bottom); }
   /* Cabeçalho desligado: garante afastamento do topo (notch/status bar) para o conteúdo não colar ao limite */
   body.cabecalho-oculto{ padding-top:calc(env(safe-area-inset-top) + 10px); }
