@@ -8186,6 +8186,9 @@
     // WhatsApp só fica ativo se houver um número E (a lista tiver um menu de grupo, para reservar,
     // OU o negócio esteja marcado para encomendar tudo por WhatsApp — ex.: pastelaria/encomendas).
     function _waAtivo(){ return !!_cartCfg().whatsapp && (lista.some(function(i){ return i.menu; }) || _cartCfg().whatsappSempre === true); }
+    // Take away vai por PUSH (encomenda direta ao gestor), sem precisar de WhatsApp
+    function _pushEnc(){ try{ return document.body.classList.contains('modo-takeaway') && (typeof sbC !== 'undefined') && !!sbC && !!window.__negocioId; }catch(e){ return false; } }
+    function _podeEnc(){ return _waAtivo() || _pushEnc(); }
     window.__cartRefresh = function(){ try{ atualizarBadge(); if(overlay.classList.contains('aberto')) render(); }catch(e){} };
     function atualizarVisibilidade(){
       const total = lista.reduce((s,i)=>s+i.qtd,0);
@@ -8221,7 +8224,7 @@
         });
         if(mostrarPrecos){
           html += '<div class="cart-total"><span>Total</span><span>' + total.toFixed(2).replace('.',',') + '€</span></div>';
-          if(!_waAtivo()){
+          if(!_podeEnc()){
             const porPessoa = (total / numPessoas).toFixed(2).replace('.',',');
             html += '<div class="cart-dividir">' +
               '<button class="cart-dividir-btn" id="cartDividirBtn">👥 Dividir a conta</button>' +
@@ -8237,10 +8240,10 @@
             '</div>';
           }
         }
-        if(_waAtivo()){ html += '<button class="cart-whats" id="cartWhats">🛍️ Enviar pedido</button>'; }
+        if(_podeEnc()){ html += '<button class="cart-whats" id="cartWhats">🛍️ Enviar pedido</button>'; }
         html += '<div class="cart-acoes"><button class="cart-fechar" id="cartFechar">Fechar</button><button class="cart-limpar" id="cartLimpar">Limpar lista</button></div>';
         p.innerHTML = html;
-        if(mostrarPrecos && !_waAtivo()){
+        if(mostrarPrecos && !_podeEnc()){
           const divBtn = document.getElementById('cartDividirBtn');
           const divBox = document.getElementById('cartDividirBox');
           if(divBtn) divBtn.onclick = () => { dividirAberto = !dividirAberto; divBox.classList.toggle('aberta', dividirAberto); };
@@ -8288,7 +8291,7 @@
 
     // ---- Encomenda por WhatsApp: confirmar + enviar ----
     function confirmarPedidoWhats(){
-      if(!_waAtivo() || lista.length === 0) return;
+      if(!_podeEnc() || lista.length === 0) return;
       const p = document.getElementById('cartPainel');
       let total = 0; lista.forEach(it => { total += it.preco * it.qtd; });
       let resumo = '';
