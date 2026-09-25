@@ -672,7 +672,8 @@
         titulo: $('ntTit').value.trim(),
         descricao: $('ntMsg').value.trim(),
         aparencia: (negocio && negocio.config && negocio.config.aparencia) || {},
-        headerFotos: (negocio && negocio.config && negocio.config.header && negocio.config.header.fotos) || []
+        headerFotos: (negocio && negocio.config && negocio.config.header && negocio.config.header.fotos) || [],
+        pratoCaixas: (function(){ var cfg=(negocio&&negocio.config)||{}; var pd=(cfg.pratoDatas&&cfg.pratoDatas[hojeIso]); if(!(pd&&Array.isArray(pd.caixas)&&pd.caixas.length) && cfg.pratoFixo && cfg.pratoFixo.ativo!==false) pd=cfg.pratoFixo; return (pd&&Array.isArray(pd.caixas))?pd.caixas:[]; })()
       });
     };
     $('ntEnviar').onclick = async function(){
@@ -2094,7 +2095,7 @@ window.STORY_LAYOUTS = [
     // 1 bloco em destaque (título grande + mensagem), junto à base
     layout1: function (ctx, dados, accent, M, maxW, yBase) {
       var b = (dados.blocos && dados.blocos[0]) || { titulo: '', mensagem: '' };
-      drawBloco(ctx, b, M, maxW, yBase, { tamTit: 100, titLinhas: 4, corTit: '#ffffff', tamMsg: 46, msgLinhas: 4 });
+      drawBloco(ctx, b, M, maxW, yBase, { tamTit: 100, titLinhas: 4, corTit: '#ffffff', tamMsg: 46, msgLinhas: 10 });
     },
     // até 3 destaques empilhados (título curto colorido + mensagem)
     layout2: function (ctx, dados, accent, M, maxW, yBase) {
@@ -2102,7 +2103,7 @@ window.STORY_LAYOUTS = [
       if (!blocos.length) blocos = [{ titulo: '', mensagem: '' }];
       var y = yBase;
       for (var i = blocos.length - 1; i >= 0; i--) {
-        y = drawBloco(ctx, blocos[i], M, maxW, y, { tamTit: 50, titLinhas: 2, corTit: accent, tamMsg: 36, msgLinhas: 3 });
+        y = drawBloco(ctx, blocos[i], M, maxW, y, { tamTit: 50, titLinhas: 3, corTit: accent, tamMsg: 36, msgLinhas: 10 });
         y -= 34; // espaço entre blocos
       }
     }
@@ -2188,6 +2189,14 @@ window.STORY_LAYOUTS = [
     setTimeout(function () { try { document.body.removeChild(a); } catch (e) {} URL.revokeObjectURL(url); }, 600);
   }
 
+  function usarPrato() {
+    var caixas = (estado.dados && estado.dados.pratoCaixas) || [];
+    if (!caixas.length) { alert('Não há prato do dia definido para hoje. Cria o prato do dia primeiro.'); return; }
+    estado.blocos = caixas.slice(0, 3).map(function (cx) { return { titulo: (cx.titulo || '').trim(), mensagem: (cx.subtitulo || '').trim() }; });
+    if (!estado.blocos.length) estado.blocos = [{ titulo: '', mensagem: '' }];
+    estado.layoutId = (estado.blocos.length >= 2) ? 'layout2' : 'layout1';   // 1 caixa -> Layout 1, 2/3 -> Layout 2
+    pintarLayouts(); pintarBlocos(); render();
+  }
   function maxBlocosLayout() {
     var l = LAYOUTS().find(function (x) { return x.id === estado.layoutId; });
     return (l && l.maxBlocos) || 1;
@@ -2245,7 +2254,9 @@ window.STORY_LAYOUTS = [
       +   '<label style="flex:1;text-align:center;border:1px solid #e0d3b5;background:#fff;border-radius:10px;padding:11px;cursor:pointer;font-weight:800;color:#4a3820;font-size:.9rem;">📷 Escolher foto<input id="stFoto" type="file" accept="image/*" style="display:none;"></label>'
       +   '<button id="stSemFoto" type="button" style="border:1px solid #e0d3b5;background:#fff;border-radius:10px;padding:11px 14px;cursor:pointer;font-weight:800;color:#8a7a5c;font-size:.9rem;">Sem foto</button>'
       + '</div>'
-      + '<div style="font-size:.78rem;color:#8a7a5c;font-weight:800;margin:12px 0 6px;">Conteúdo</div>'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin:12px 0 6px;"><span style="font-size:.78rem;color:#8a7a5c;font-weight:800;">Conteúdo</span>'
+      +   '<button id="stUsarPrato" type="button" style="border:1px solid #a8712f;background:#fff;color:#a8712f;border-radius:999px;padding:6px 11px;cursor:pointer;font-weight:800;font-size:.78rem;">🍽️ Usar o prato do dia</button>'
+      + '</div>'
       + '<div id="stBlocos"></div>'
       + '<button id="stAddBloco" type="button" style="width:100%;box-sizing:border-box;border:1.5px dashed #a8712f;background:#fff;color:#a8712f;border-radius:10px;padding:10px;cursor:pointer;font-weight:800;font-size:.86rem;">＋ Adicionar bloco</button>'
       + '<button id="stPartilhar" type="button" style="width:100%;box-sizing:border-box;margin-top:12px;border:none;background:#25a05b;color:#fff;border-radius:10px;padding:13px;cursor:pointer;font-weight:800;font-size:.95rem;">📲 Partilhar Story</button>'
@@ -2268,6 +2279,7 @@ window.STORY_LAYOUTS = [
       var fr = new FileReader(); fr.onload = function () { estado.fotoSrc = fr.result; render(); }; fr.readAsDataURL(f);
     };
     document.getElementById('stAddBloco').onclick = function () { if (estado.blocos.length < 3) { estado.blocos.push({ titulo: '', mensagem: '' }); pintarBlocos(); render(); } };
+    document.getElementById('stUsarPrato').onclick = usarPrato;
     document.getElementById('stPartilhar').onclick = partilhar;
     document.getElementById('stGuardar').onclick = descarregar;
   }
