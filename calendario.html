@@ -237,6 +237,7 @@
       <button id="tabCal" class="tab ativo" type="button">📅 Calendário</button>
       <button id="tabDash" class="tab" type="button">📊 Painel</button>
       <button id="tabEnc" class="tab" type="button">🛍️ Encomendas</button>
+      <button id="tabEntregues" class="tab" type="button">✅ Entregues</button>
       <button id="tabNotif" class="tab" type="button">🔔 Avisar</button>
       <button id="tabDef" class="tab" type="button">⚙️ Definições</button>
     </div>
@@ -257,6 +258,7 @@
     <div id="vistaDash" class="hide"></div>
     <div id="vistaDef" class="hide"></div>
     <div id="vistaEncomendas" class="hide"></div>
+    <div id="vistaEntregues" class="hide"></div>
     <div id="vistaNotif" class="hide"></div>
   </div>
 </div>
@@ -352,6 +354,7 @@
   $('tabDash').onclick = () => mostrarVista('dash');
   $('tabDef').onclick = () => mostrarVista('def');
   $('tabEnc').onclick = () => mostrarVista('enc');
+  $('tabEntregues').onclick = () => mostrarVista('entregues');
   $('tabNotif').onclick = () => mostrarVista('notif');
   $('btnPdf').onclick = exportarPdf;
   $('mdFechar').onclick = fecharModal;
@@ -506,15 +509,18 @@
     $('vistaDash').classList.toggle('hide', qual!=='dash');
     $('vistaDef').classList.toggle('hide', qual!=='def');
     $('vistaEncomendas').classList.toggle('hide', qual!=='enc');
+    $('vistaEntregues').classList.toggle('hide', qual!=='entregues');
     $('vistaNotif').classList.toggle('hide', qual!=='notif');
     $('tabCal').classList.toggle('ativo', qual==='cal');
     $('tabDash').classList.toggle('ativo', qual==='dash');
     $('tabDef').classList.toggle('ativo', qual==='def');
     $('tabEnc').classList.toggle('ativo', qual==='enc');
+    $('tabEntregues').classList.toggle('ativo', qual==='entregues');
     $('tabNotif').classList.toggle('ativo', qual==='notif');
     if(qual==='dash') renderDashboard();
     if(qual==='def') renderDefinicoes();
     if(qual==='notif') renderNotif();
+    if(qual==='entregues') renderEntregues();
     if(_encTimer){ clearInterval(_encTimer); _encTimer = null; }
     if(qual==='enc'){
       renderEncomendas();
@@ -887,8 +893,8 @@
       { est:'pendente',   nome:'🔴 A chegar',            cor:'#e0453a', glow:'rgba(224,69,58,.55)',  bg:'#fdeae8', tc:'#c0392b' },
       { est:'confirmada', nome:'🟠 A preparar',          cor:'#ef8f22', glow:'rgba(239,143,34,.55)', bg:'#fff2df', tc:'#a85d10' },
       { est:'pronta',     nome:'🟢 Prontas p/ levantar', cor:'#2ecc71', glow:'rgba(46,204,113,.60)', bg:'#e6f7ec', tc:'#1e6b3c' },
-      { est:'entregue',   nome:'✅ Entregues',           cor:'#b8c2ba', glow:'rgba(0,0,0,0)',        bg:'#eef1ee', tc:'#5a6b5f' },
       { est:'cancelada',  nome:'⚪ Canceladas',          cor:'#c9a9a0', glow:'rgba(0,0,0,0)',        bg:'#f6e9e6', tc:'#b23' }
+      /* 'entregue' já não aparece aqui — tem aba própria "Entregues" */
     ];
     let html = _somHdr;
     _grupos.forEach(function(g){
@@ -901,6 +907,90 @@
     _wireSom();
     v.querySelectorAll('.enc-a').forEach(function(b){ b.onclick = function(){ _encSetEstado(b.dataset.id, b.dataset.a); }; });
     v.querySelectorAll('.enc-del').forEach(function(b){ b.onclick = async function(){ if(!(await window.__amConfirm('Confirmar',{texto:'Apagar esta encomenda da lista?', ok:'Sim', cancelar:'Não'}))) return; const { error } = await sb.from('encomendas').delete().eq('id', b.dataset.id); if(error){ alert('Erro: ' + error.message); return; } renderEncomendas(); }; });
+  }
+
+  // ── ABA ENTREGUES ──────────────────────────────────────────
+  // Classifica um prato como Carne/Peixe por palavras-chave no nome (best-effort; vazio se não reconhecer)
+  function _tipoCarnePeixe(nome){
+    const s = (nome||'').toLowerCase();
+    const peixe = ['peixe','bacalhau','robalo','dourada','polvo','atum','salm','sardinh','pescada','lula','choco','camar','marisco','amêijoa','ameijoa','gamba','sapateira','linguado','cherne','corvina','truta','enguia','raia','tamboril','carapau','faneca','safio','mexilh','lingueir','perceb','lagosta','lavagante','arroz de marisco','cataplana','açorda de marisco'];
+    const carne = ['carne','bife','frango','vitela','porco','costel','entrecosto','febra','picanha','alheira','chouri','salsicha','borrego','cabrito','coelho','pato','peru','bitoque','francesinha','hambúrg','hamburg','naco','posta de carne','leitã','leita','secreto','pluma','panado','rojõ','rojo','maminha','picadinho','tornedó','tornedo','feijoada','cozido','dobrada','tripas','moelas','salpic','presunto','bifana'];
+    for(let i=0;i<peixe.length;i++){ if(s.indexOf(peixe[i])>=0) return 'Peixe'; }
+    for(let i=0;i<carne.length;i++){ if(s.indexOf(carne[i])>=0) return 'Carne'; }
+    return '';
+  }
+  async function renderEntregues(){
+    const v = $('vistaEntregues');
+    v.innerHTML = '<div class="msg">A carregar…</div>';
+    const { data, error } = await sb.from('encomendas').select('*').eq('negocio_id', negocio.id).eq('estado','entregue').order('criado_em', { ascending:false });
+    if(error){ v.innerHTML = '<div class="msg erro">Erro: ' + esc(error.message) + '</div>'; return; }
+    const arr = data || [];
+    window.__entregues = arr;   // guardado para o export
+    const topo = '<div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;">'
+      + '<button id="entExport" type="button" style="flex:1; min-width:150px; border:none; background:var(--verde,#2e9e5b); color:#fff; border-radius:10px; padding:11px; cursor:pointer; font-family:inherit; font-weight:800; font-size:.9rem;">📊 Exportar (entregues)</button>'
+      + '<button id="entApagarTodas" type="button" style="border:1px solid #e8c4bf; background:#fff; color:var(--vermelho,#b23); border-radius:10px; padding:11px 14px; cursor:pointer; font-family:inherit; font-weight:800; font-size:.9rem;">🗑 Apagar todas</button>'
+      + '</div>';
+    if(!arr.length){ v.innerHTML = topo + '<div class="card"><div style="color:#8a7a5c; font-size:.9rem;">Ainda não há encomendas entregues.</div></div>'; _wireEnt(); return; }
+    let html = topo + '<div style="margin:2px 2px 10px;"><span style="background:#eef1ee; color:#5a6b5f; padding:6px 13px; border-radius:999px; font-weight:800; font-size:.9rem;">✅ Entregues · ' + arr.length + '</span></div>';
+    arr.forEach(function(e){
+      const dt = new Date(e.criado_em);
+      const dia = String(dt.getDate()).padStart(2,'0') + '/' + String(dt.getMonth()+1).padStart(2,'0');
+      const hh = String(dt.getHours()).padStart(2,'0') + ':' + String(dt.getMinutes()).padStart(2,'0');
+      const itens = Array.isArray(e.itens) ? e.itens : [];
+      const linhas = itens.map(function(it){ const tp=_tipoCarnePeixe(it.nome); return (it.qtd||1)+'× '+esc(it.nome||'')+(tp?(' <span style="font-size:.72rem;color:#8a7a5c;">('+tp+')</span>'):''); }).join('<br>');
+      html += '<div class="card" style="margin-bottom:10px; opacity:.92;">'
+        + '<div style="display:flex; justify-content:space-between; align-items:center; gap:8px;"><div style="font-weight:800; color:var(--castanho);">Encomenda nº ' + (e.numero != null ? e.numero : '—') + '</div>'
+        +   '<button class="ent-del" data-id="' + e.id + '" style="border:1px solid #e8c4bf; color:var(--vermelho); background:#fff; border-radius:8px; padding:6px 10px; cursor:pointer; font-family:inherit; font-weight:700; font-size:.82rem;">🗑</button></div>'
+        + '<div style="font-size:.82rem; color:#8a7a5c; margin:2px 0 8px;">Entregue · recebida ' + dia + ' às ' + hh + (e.nome ? (' · ' + esc(e.nome)) : '') + '</div>'
+        + '<div style="font-size:.9rem; color:var(--castanho); line-height:1.5;">' + (linhas || '—') + '</div>'
+        + (Number(e.total) > 0 ? ('<div style="margin-top:8px; font-weight:800; color:var(--castanho);">Total: ' + Number(e.total).toFixed(2).replace('.', ',') + '€</div>') : '')
+        + '</div>';
+    });
+    v.innerHTML = html;
+    _wireEnt();
+  }
+  function _wireEnt(){
+    const ex = document.getElementById('entExport'); if(ex) ex.onclick = function(){ _exportEntregues(window.__entregues || []); };
+    const ap = document.getElementById('entApagarTodas'); if(ap) ap.onclick = async function(){
+      const lista = window.__entregues || []; if(!lista.length) return;
+      if(!(await window.__amConfirm('Apagar todas', { texto:'Apagar TODAS as ' + lista.length + ' encomendas entregues? Esta ação não se pode desfazer.', ok:'Apagar todas', cancelar:'Cancelar' }))) return;
+      const ids = lista.map(function(e){ return e.id; });
+      const { error } = await sb.from('encomendas').delete().in('id', ids);
+      if(error){ alert('Erro: ' + error.message); return; }
+      renderEntregues();
+    };
+    document.querySelectorAll('#vistaEntregues .ent-del').forEach(function(b){ b.onclick = async function(){ if(!(await window.__amConfirm('Confirmar', { texto:'Apagar esta encomenda entregue?', ok:'Sim', cancelar:'Não' }))) return; const { error } = await sb.from('encomendas').delete().eq('id', b.dataset.id); if(error){ alert('Erro: ' + error.message); return; } renderEntregues(); }; });
+  }
+  // Export CSV (abre no Excel): agrega por prato — Tipo de prato, Carne ou peixe, Quantidade, Preço, com soma final
+  function _exportEntregues(arr){
+    if(!arr || !arr.length){ alert('Não há encomendas entregues para exportar.'); return; }
+    const mapa = {};   // nome -> { tipo, qtd, total }
+    arr.forEach(function(e){
+      (Array.isArray(e.itens) ? e.itens : []).forEach(function(it){
+        const nome = (it.nome || '').trim(); if(!nome) return;
+        const qtd = Number(it.qtd) || 1;
+        const preco = Number(it.preco) || 0;
+        if(!mapa[nome]) mapa[nome] = { tipo:_tipoCarnePeixe(nome), qtd:0, total:0 };
+        mapa[nome].qtd += qtd;
+        mapa[nome].total += preco * qtd;
+      });
+    });
+    const nomes = Object.keys(mapa).sort(function(a,b){ return a.localeCompare(b); });
+    const sep = ';';
+    const dec = function(n){ return Number(n).toFixed(2).replace('.', ','); };
+    const q = function(s){ return '"' + String(s).replace(/"/g,'""') + '"'; };
+    const linhas = [];
+    linhas.push(['Tipo de prato','Carne ou peixe','Quantidade','Preço (€)'].map(q).join(sep));
+    let somaQtd = 0, somaTotal = 0;
+    nomes.forEach(function(n){ const m = mapa[n]; somaQtd += m.qtd; somaTotal += m.total; linhas.push([n, m.tipo || '', m.qtd, dec(m.total)].map(q).join(sep)); });
+    linhas.push(['TOTAL','', somaQtd, dec(somaTotal)].map(q).join(sep));
+    const csv = '﻿' + linhas.join('\r\n');   // BOM para os acentos abrirem certos no Excel
+    const blob = new Blob([csv], { type:'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const h = new Date(); const fich = 'entregues_' + h.getFullYear() + String(h.getMonth()+1).padStart(2,'0') + String(h.getDate()).padStart(2,'0') + '.csv';
+    a.href = url; a.download = fich; document.body.appendChild(a); a.click();
+    setTimeout(function(){ try{ document.body.removeChild(a); }catch(e){} URL.revokeObjectURL(url); }, 600);
   }
 
   function _cmpR(a,b){ return (a.data + (a.hora||'')).localeCompare(b.data + (b.hora||'')); }
