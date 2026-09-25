@@ -872,7 +872,7 @@
       const pulsa = (est === 'pendente') ? ' pulsa' : '';
       const fade = entregue ? 'opacity:.5; filter:grayscale(.35);' : '';
       const selo = entregue ? '<div class="enc-selo"><span>Entregue</span></div>' : '';
-      return '<div class="card enc-card' + pulsa + '" style="margin-bottom:10px; border-color:' + cor + '; --nc:' + cor + '; --ng:' + glow + '; ' + neon + '">'
+      return '<div class="card enc-card' + pulsa + '" style="position:relative; margin-bottom:10px; border-color:' + cor + '; --nc:' + cor + '; --ng:' + glow + '; ' + neon + '">'
         + '<div style="' + fade + '">'
         +   '<div style="font-weight:800; color:var(--castanho);">Encomenda nº ' + (e.numero != null ? e.numero : '—') + '</div>'
         +   '<div style="font-size:.82rem; color:#8a7a5c; margin:2px 0 8px;">Recebida ' + dia + ' às ' + hh + (e.nome ? (' · ' + esc(e.nome)) : '') + (e.levantamento ? (' · 🕒 levantar às ' + esc(e.levantamento)) : '') + '</div>'
