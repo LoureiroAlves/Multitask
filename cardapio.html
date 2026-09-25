@@ -8024,6 +8024,7 @@
     function _encInfo(est){
       if(est === 'confirmada') return { txt:'Confirmada — a preparar', cor:'#1e6b3c', bg:'#e2f4e9', ic:'✅' };
       if(est === 'pronta')     return { txt:'Pronta para levantar!',   cor:'#8a4b10', bg:'#ffe6c2', ic:'🎉' };
+      if(est === 'entregue')   return { txt:'Entregue — bom apetite!', cor:'#5a6b5f', bg:'#eef1ee', ic:'📦' };
       if(est === 'cancelada')  return { txt:'Não confirmada',          cor:'#b23',   bg:'#fbe7e4', ic:'❌' };
       return { txt:'A aguardar confirmação do restaurante', cor:'#8a5a10', bg:'#fbeecb', ic:'🕒' };
     }
@@ -8070,10 +8071,20 @@
         sbC.rpc('encomendas_estado', { p_ids: ids }).then(function(res){
           if(!res || res.error || !res.data) return;   // função SQL ainda não criada → não mexe
           const srv = {}; res.data.forEach(function(r){ if(r && r.id) srv[String(r.id)] = r; });
-          const a = _encListaValida(); let mudou = false; let _aviso = null;
-          a.forEach(function(o){ const s = srv[String(o.id)]; if(s && s.estado && s.estado !== o.estado){ o.estado = s.estado; mudou = true; if(['confirmada','pronta','cancelada'].indexOf(s.estado) >= 0) _aviso = { numero:o.numero, estado:s.estado }; } });
+          const a0 = _encListaValida(); let mudou = false; let _aviso = null; let _entregue = null;
+          const a = [];
+          a0.forEach(function(o){
+            const s = srv[String(o.id)];
+            if(s && s.estado && s.estado !== o.estado){
+              if(s.estado === 'entregue'){ _entregue = { numero:o.numero }; mudou = true; return; }   // entregue → sai da lista (carrinho volta ao normal)
+              o.estado = s.estado; mudou = true;
+              if(['confirmada','pronta','cancelada'].indexOf(s.estado) >= 0) _aviso = { numero:o.numero, estado:s.estado };
+            }
+            a.push(o);
+          });
           if(mudou){ _encEscrever(a); atualizarBadge(); if(overlay.classList.contains('aberto')) render(); }
           if(_aviso) _encAvisar(_aviso);   // popup no telemóvel do cliente ao mudar de estado
+          if(_entregue) _encMostrarPopup('#5a6b5f', '📦 Encomenda entregue', 'A tua encomenda' + (_entregue.numero != null ? (' nº ' + _entregue.numero) : '') + ' foi entregue. Bom apetite! 😋');
         });
       }catch(e){}
     }
