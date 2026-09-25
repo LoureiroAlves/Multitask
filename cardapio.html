@@ -2291,7 +2291,7 @@
      Fechar: desce mais depressa com ease-in. O overlay e o cartão têm transições diferentes
      no estado base (fechar) e no .aberto (abrir), para entrada lenta e saída rápida. */
   #agendaOverlay{ position:fixed; inset:0; z-index:660; background:rgba(0,0,0,0); display:flex; align-items:flex-end; justify-content:center; padding:0; pointer-events:none; visibility:hidden; transition:background .34s cubic-bezier(.4,0,1,1), visibility 0s linear .34s; }
-  body.scroll-lock .info-fixa{ display:none !important; }   /* enquanto uma folha está aberta, esconde a barra fixa do rodapé (não espreita por baixo) */
+  body.scroll-lock .info-fixa{ transform:translateY(130%); }   /* enquanto uma folha está aberta, o rodapé desliza para fora (para baixo) — e volta a subir ao fechar, em vez de desaparecer por corte */
   #agendaOverlay.aberto{ background:rgba(0,0,0,0.5); pointer-events:auto; visibility:visible; transition:background .5s cubic-bezier(.32,.72,0,1), visibility 0s; }
   .ag-card{ background:linear-gradient(180deg,#fffdf9,var(--branco)); width:100%; max-width:440px; max-height:88vh; overflow-y:auto; overscroll-behavior:contain; border-radius:22px 22px 0 0; padding:14px 16px calc(18px + env(safe-area-inset-bottom)); margin-bottom:calc(-1 * env(safe-area-inset-bottom)); transform:translateY(100%); pointer-events:none; border-top:3px solid var(--dourado); box-shadow:0 -10px 34px rgba(0,0,0,.20); transition:transform .34s cubic-bezier(.4,0,1,1); will-change:transform; }
   .ag-card::before{ content:''; display:block; width:42px; height:5px; border-radius:3px; background:var(--linha); margin:0 auto 12px; transition:background .2s; }
@@ -6337,9 +6337,10 @@
     // elástica (rubber-band). O fundo escurece/clareia conforme a posição da folha.
     (function(){
       var card = ov.querySelector('#agCard'); if(!card) return;
-      var y0=0, x0=0, dy=0, drag=false, decidiu=false, naZona=false;
+      var y0=0, x0=0, dy=0, startY=0, drag=false, decidiu=false, naZona=false;
       var H=1, vy=0, yPrev=0, tPrev=0;
-      var ABRE_ESCURO = 0.5, LIMITE = 120, FLICK = 0.55;   // fechar: >120px OU velocidade > 0.55 px/ms
+      var ABRE_ESCURO = 0.5, LIMITE = 110, FLICK = 0.5;   // fechar: >110px OU velocidade > 0.5 px/ms
+      var CURVA_ABRIR='cubic-bezier(.32,.72,0,1)', CURVA_FECHAR='cubic-bezier(.4,0,1,1)';
       function _zonaPega(e){
         // arrastar só pela zona do cabeçalho: a pega, o título "Reservas" e o subtítulo
         var t = e.target;
@@ -6347,6 +6348,7 @@
         return (e.clientY - card.getBoundingClientRect().top) < 92;   // faixa do topo (pega + título)
       }
       function _resist(d){ return d < 0 ? -Math.pow(-d, 0.82) : d; }   // resistência elástica ao subir
+      function _limpar(){ card.style.transition=''; card.style.transform=''; ov.style.transition=''; ov.style.background=''; }
       card.addEventListener('pointerdown', function(e){
         if(e.pointerType==='mouse' && e.button!==0) return;
         y0=e.clientY; x0=e.clientX; dy=0; drag=false; decidiu=false;
@@ -6361,15 +6363,16 @@
         if(!drag){
           if(Math.abs(d) < 6 && Math.abs(dx) < 6) return;
           if(Math.abs(d) > Math.abs(dx)){   // gesto mais vertical que horizontal -> arrasto da folha
-            drag=true; card.style.transition='none'; ov.style.transition='none'; card.classList.add('a-arrastar');
+            drag=true; startY=e.clientY;   // ancora AQUI: o movimento começa em 0, sem o salto do limiar
+            card.style.transition='none'; ov.style.transition='none'; card.classList.add('a-arrastar');
             try{ card.setPointerCapture(e.pointerId); }catch(_){}
           } else { decidiu=true; return; }
         }
         var now=(e.timeStamp||performance.now()), dt=now-tPrev;
         if(dt>0){ vy=(e.clientY-yPrev)/dt; yPrev=e.clientY; tPrev=now; }   // velocidade instantânea (px/ms)
-        dy = e.clientY - y0;
+        dy = e.clientY - startY;
         var eff=_resist(dy);
-        card.style.transform = 'translateY('+eff+'px)';
+        card.style.transform = 'translate3d(0,'+eff+'px,0)';   // 3d -> camada GPU, sem tremura
         var prog = Math.max(0, Math.min(1, (eff>0?eff:0)/H));
         ov.style.background = 'rgba(0,0,0,'+(ABRE_ESCURO*(1-prog)).toFixed(3)+')';
         if(e.cancelable) e.preventDefault();
@@ -6378,17 +6381,19 @@
         naZona=false;
         if(!drag) return; drag=false;
         card.classList.remove('a-arrastar');
-        ov.style.transition=''; card.style.transition='';   // devolve o controlo às transições CSS (abrir lento / fechar rápido)
-        void card.offsetHeight;                             // regista o reset das transições antes de mudar de estado
         var fecha = (dy > LIMITE) || (vy > FLICK);
+        // fim determinístico com transições EXPLÍCITAS (não depende de reflow nem de troca de classe)
         if(fecha){
-          ov.classList.remove('aberto');   // -> CSS: cartão desce (ease-in rápido) e fundo desvanece, em paralelo
-          ov.style.background='';           // deixa a CSS levar o fundo a transparente
-          card.style.transform='';          // -> translateY(100%) do estado base
+          card.style.transition='transform .34s '+CURVA_FECHAR; ov.style.transition='background .34s '+CURVA_FECHAR;
+          card.style.transform='translate3d(0,100%,0)'; ov.style.background='rgba(0,0,0,0)';
+          var doneF=function(ev){ if(ev && ev.propertyName && ev.propertyName!=='transform') return; card.removeEventListener('transitionend', doneF); ov.classList.remove('aberto'); _limpar(); };
+          card.addEventListener('transitionend', doneF); setTimeout(function(){ doneF(); }, 420);
           try{ _fechouSemConcluir(); }catch(_){}
         } else {
-          ov.style.background='';           // volta ao escuro do estado .aberto
-          card.style.transform='';          // volta a translateY(0) com ease-out
+          card.style.transition='transform .5s '+CURVA_ABRIR; ov.style.transition='background .5s '+CURVA_ABRIR;
+          card.style.transform='translate3d(0,0,0)'; ov.style.background='rgba(0,0,0,'+ABRE_ESCURO+')';
+          var doneB=function(ev){ if(ev && ev.propertyName && ev.propertyName!=='transform') return; card.removeEventListener('transitionend', doneB); _limpar(); };
+          card.addEventListener('transitionend', doneB); setTimeout(function(){ doneB(); }, 560);
         }
       }
       card.addEventListener('pointerup', fim);
