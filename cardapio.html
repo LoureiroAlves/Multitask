@@ -1959,8 +1959,10 @@
     padding:4px 14px calc(10px + env(safe-area-inset-bottom));
     min-height:76px;
     opacity:0;
-    transition:opacity .3s ease, transform .42s cubic-bezier(.22,.8,.25,1);
+    transition:opacity .3s ease, transform .34s cubic-bezier(.4,0,1,1);   /* volta a subir (rodapé) com a mesma curva/tempo do FECHAR da folha */
   }
+  /* desliza para fora com a mesma curva/tempo do ABRIR da folha (movimento coordenado) */
+  body.secao-aberta .info-fixa, body.scroll-lock .info-fixa{ transition:opacity .3s ease, transform .5s cubic-bezier(.32,.72,0,1); }
   /* Imagem PNG que "salta" para cima, para fora da barra fixa (ex.: mascote a espreitar) */
   .info-fixa-mascote{
     position:absolute;
