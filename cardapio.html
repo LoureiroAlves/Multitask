@@ -2086,6 +2086,10 @@
     padding:0 4px; border:2px solid var(--branco);
   }
   #cartBtn.escondido{ display:none; }
+  /* Ao adicionar ao carrinho, força o botão a aparecer mesmo dentro de uma categoria (por cima do cart-oculto) */
+  body.cart-forcado #cartBtn{ opacity:1 !important; visibility:visible !important; pointer-events:auto !important; }
+  #cartBtn.pop{ animation:cartPop .42s ease; }
+  @keyframes cartPop{ 0%{ transform:scale(1); } 30%{ transform:scale(1.28); } 60%{ transform:scale(.92); } 100%{ transform:scale(1); } }
 
   #cartOverlay{
     position:fixed; inset:0; z-index:400; background:rgba(0,0,0,0);
@@ -8087,6 +8091,8 @@
       if(ex) ex.qtd++;
       else lista.push({ nome:nome, precoTxt:precoTxt, preco:parsePreco(precoTxt), qtd:1, menu: !!ehMenu });
       guardar(); atualizarBadge();
+      // Torna o carrinho visível de imediato (mesmo dentro de uma categoria) + pequeno "pop"
+      try{ document.body.classList.add('cart-forcado'); var cb=document.getElementById('cartBtn'); if(cb){ cb.classList.remove('pop'); void cb.offsetWidth; cb.classList.add('pop'); } }catch(e){}
     };
 
     // Botão flutuante + overlay
@@ -8183,7 +8189,7 @@
     window.__cartRefresh = function(){ try{ atualizarBadge(); if(overlay.classList.contains('aberto')) render(); }catch(e){} };
     function atualizarVisibilidade(){
       const total = lista.reduce((s,i)=>s+i.qtd,0);
-      if(!_cartCfg().ativo || emJogos() || (total === 0 && !_encTemAtivas())) cartBtn.classList.add('escondido');
+      if(!_cartCfg().ativo || emJogos() || (total === 0 && !_encTemAtivas())){ cartBtn.classList.add('escondido'); document.body.classList.remove('cart-forcado'); }
       else cartBtn.classList.remove('escondido');
     }
     function atualizarBadge(){
