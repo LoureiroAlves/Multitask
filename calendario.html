@@ -2045,41 +2045,49 @@ window.STORY_TEMPLATES = [
     ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
   }
 
-  // ---------- quebrar texto em linhas (com limite e reticências) ----------
-  function wrap(ctx, texto, maxW, maxLinhas) {
-    var palavras = String(texto || '').split(/\s+/).filter(Boolean);
-    var linhas = [], atual = '';
-    for (var i = 0; i < palavras.length; i++) {
-      var teste = atual ? (atual + ' ' + palavras[i]) : palavras[i];
-      if (ctx.measureText(teste).width <= maxW || !atual) {
-        atual = teste;
-      } else {
-        linhas.push(atual); atual = palavras[i];
-        if (linhas.length === maxLinhas) break;
-      }
-    }
-    if (linhas.length < maxLinhas && atual) linhas.push(atual);
-    // reticências se sobrou texto
-    if (linhas.length === maxLinhas) {
-      var usadas = linhas.join(' ').split(/\s+/).length;
-      if (usadas < palavras.length) {
-        var ult = linhas[maxLinhas - 1];
-        while (ult && ctx.measureText(ult + '…').width > maxW) ult = ult.replace(/\s*\S+$/, '');
-        linhas[maxLinhas - 1] = (ult || linhas[maxLinhas - 1]) + '…';
-      }
-    }
-    return linhas;
+  // ---------- quebrar texto em linhas: respeita parágrafos (\n) e parte palavras longas ----------
+  function quebraLinhas(ctx, texto, maxW) {
+    var out = [];
+    String(texto || '').split(/\r?\n/).forEach(function (par) {
+      if (par.trim() === '') { out.push(''); return; }   // linha em branco = parágrafo
+      var palavras = par.split(/\s+/).filter(Boolean);
+      var atual = '';
+      palavras.forEach(function (w) {
+        // parte à força palavras que sozinhas não cabem (ex.: nomes muito longos)
+        while (ctx.measureText(w).width > maxW && w.length > 1) {
+          var corte = w;
+          while (corte.length > 1 && ctx.measureText(corte).width > maxW) corte = corte.slice(0, -1);
+          if (atual) { out.push(atual); atual = ''; }
+          out.push(corte);
+          w = w.slice(corte.length);
+        }
+        var teste = atual ? (atual + ' ' + w) : w;
+        if (ctx.measureText(teste).width <= maxW || !atual) { atual = teste; }
+        else { out.push(atual); atual = w; }
+      });
+      if (atual) out.push(atual);
+    });
+    return out;
+  }
+
+  // ---------- cortar a N linhas, com reticências na última ----------
+  function limitar(ctx, linhas, maxW, maxLinhas) {
+    if (linhas.length <= maxLinhas) return linhas;
+    var r = linhas.slice(0, maxLinhas);
+    var u = r[maxLinhas - 1];
+    while (u && ctx.measureText(u + '…').width > maxW) u = u.slice(0, -1);
+    r[maxLinhas - 1] = (u || r[maxLinhas - 1]) + '…';
+    return r;
   }
 
   // ---------- ajustar tamanho de fonte até caber em N linhas ----------
   function ajustarFonte(ctx, texto, maxW, maxLinhas, tamMax, tamMin, familia, peso) {
     for (var t = tamMax; t >= tamMin; t -= 4) {
       ctx.font = (peso || '800') + ' ' + t + 'px ' + familia;
-      var ls = wrap(ctx, texto, maxW, maxLinhas + 1);
-      if (ls.length <= maxLinhas) return { tam: t, linhas: wrap(ctx, texto, maxW, maxLinhas) };
+      if (quebraLinhas(ctx, texto, maxW).length <= maxLinhas) return { tam: t, linhas: quebraLinhas(ctx, texto, maxW) };
     }
     ctx.font = (peso || '800') + ' ' + tamMin + 'px ' + familia;
-    return { tam: tamMin, linhas: wrap(ctx, texto, maxW, maxLinhas) };
+    return { tam: tamMin, linhas: limitar(ctx, quebraLinhas(ctx, texto, maxW), maxW, maxLinhas) };
   }
 
   var FAMILIA ='"Helvetica Neue", "Segoe UI", Arial, sans-serif';
@@ -2129,11 +2137,12 @@ window.STORY_TEMPLATES = [
 
     // nome do restaurante (base)
     ctx.textAlign = 'left';
-    ctx.font = '700 44px ' + FAMILIA;
+    var nomeTxt = (dados.nome || '').toUpperCase();
+    var nf = ajustarFonte(ctx, nomeTxt, maxW, 1, 44, 22, FAMILIA, '700');   // encolhe até caber numa linha
+    ctx.font = '700 ' + nf.tam + 'px ' + FAMILIA;
     ctx.fillStyle = 'rgba(255,255,255,0.92)';
     sombra(ctx);
-    var nome = (dados.nome || '').toUpperCase();
-    ctx.fillText(cortar(ctx, nome, maxW), M, y);
+    ctx.fillText(nf.linhas[0] || nomeTxt, M, y);
     limparSombra(ctx);
     // linha divisória acima do nome
     ctx.strokeStyle = accent; ctx.lineWidth = 5;
@@ -2142,7 +2151,7 @@ window.STORY_TEMPLATES = [
 
     // descrição (até 3 linhas)
     if (dados.descricao && dados.descricao.trim()) {
-      var d = ajustarFonte(ctx, dados.descricao.trim(), maxW, 3, 52, 34, FAMILIA, '500');
+      var d = ajustarFonte(ctx, dados.descricao.trim(), maxW, 5, 46, 26, FAMILIA, '500');
       ctx.font = '500 ' + d.tam + 'px ' + FAMILIA;
       ctx.fillStyle = 'rgba(255,255,255,0.94)';
       sombra(ctx);
@@ -2153,7 +2162,7 @@ window.STORY_TEMPLATES = [
 
     // título (até 3 linhas, grande)
     var titulo = (dados.titulo && dados.titulo.trim()) || 'A tua promoção';
-    var tt = ajustarFonte(ctx, titulo, maxW, 3, 128, 60, FAMILIA, '800');
+    var tt = ajustarFonte(ctx, titulo, maxW, 4, 104, 44, FAMILIA, '800');
     ctx.font = '800 ' + tt.tam + 'px ' + FAMILIA;
     ctx.fillStyle = '#fff';
     sombra(ctx, 0.55);
