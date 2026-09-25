@@ -648,6 +648,7 @@
       + '<label style="font-size:.85rem;color:#5a4a2c;">Ao tocar, abre</label>'
       + '<input id="ntUrl" value="' + link + '" style="width:100%;box-sizing:border-box;padding:10px;border:1.5px solid #e0d3b5;border-radius:9px;margin:4px 0 12px;font-family:inherit;font-size:.82rem;">'
       + '<button id="ntEnviar" class="pdf-btn" style="width:100%;">📣 Enviar a todos</button>'
+      + '<button id="ntStory" type="button" style="width:100%;margin-top:8px;box-sizing:border-box;border:1.5px solid #a8712f;background:#fff;color:#a8712f;border-radius:10px;padding:12px;font-weight:800;cursor:pointer;font-family:inherit;">🎨 Criar Story (9:16)</button>'
       + '<div id="ntRes" style="margin-top:10px;font-size:.9rem;"></div>'
       + '</div>';
     try{ const { count } = await sb.from('push_subs').select('*', { count:'exact', head:true }).eq('negocio_id', negocio.id); $('ntCount').textContent = (count || 0) + ' cliente(s) a receber as tuas promoções'; }catch(e){ $('ntCount').textContent = ''; }
@@ -664,6 +665,16 @@
       cont.querySelectorAll('button').forEach(function(b){ b.onclick = function(){ const t = tpls[+b.dataset.i]; $('ntTit').value = t.tit; $('ntMsg').value = t.msg; try{ $('ntMsg').focus(); }catch(e){} }; });
     })();
     if(temPromo){ const bp = $('ntUsarPromo'); if(bp) bp.onclick = function(){ $('ntTit').value = 'Promoção de hoje'; $('ntMsg').value = (promoHoje.texto || '').toString().trim(); $('ntTit').focus(); }; }
+    $('ntStory').onclick = function(){
+      if(typeof window.__storyAbrir !== 'function'){ alert('O módulo de Story ainda não carregou. Recarrega a página.'); return; }
+      window.__storyAbrir({
+        nome: (negocio && negocio.nome) || '',
+        titulo: $('ntTit').value.trim(),
+        descricao: $('ntMsg').value.trim(),
+        aparencia: (negocio && negocio.config && negocio.config.aparencia) || {},
+        headerFotos: (negocio && negocio.config && negocio.config.header && negocio.config.header.fotos) || []
+      });
+    };
     $('ntEnviar').onclick = async function(){
       const tit = $('ntTit').value.trim(), msg = $('ntMsg').value.trim(), url = $('ntUrl').value.trim();
       if(!tit && !msg){ alert('Escreve pelo menos um título ou uma mensagem.'); return; }
@@ -1966,6 +1977,10 @@
   window.__amPrompt=function(t,o){ o=o||{}; _p=true; tit.textContent=t||''; msg.textContent=o.texto||''; msg.style.display=o.texto?'block':'none'; inp.style.display='block'; inp.value=(o.valor!=null?o.valor:''); inp.placeholder=o.placeholder||''; inp.type=o.tipo||'text'; bOk.textContent=o.ok||'OK'; bC.textContent=o.cancelar||'Cancelar'; abrir(); setTimeout(function(){ try{inp.focus();inp.select();}catch(e){} },80); return new Promise(function(r){_res=r;}); };
 })();
 </script>
+
+<!-- Stories (Fase 1: só pré-visualização em Canvas) -->
+<script src="story/story-templates.js"></script>
+<script src="story/story-render.js"></script>
 
 </body>
 </html>
