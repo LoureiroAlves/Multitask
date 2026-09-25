@@ -2286,12 +2286,17 @@
   #fidOverlay.aberto{ background:rgba(0,0,0,0.55); pointer-events:auto; }
 
   /* ===== Agenda / Reservas ===== */
-  #agendaOverlay{ position:fixed; inset:0; z-index:660; background:rgba(0,0,0,0); display:flex; align-items:flex-end; justify-content:center; padding:0; pointer-events:none; transition:background .32s ease; }
+  /* ── Folha de reservas: bottom-sheet estilo iOS ──
+     Fechada: invisível e sem interação. Abrir: sobe com ease-out (curva iOS), fundo escurece.
+     Fechar: desce mais depressa com ease-in. O overlay e o cartão têm transições diferentes
+     no estado base (fechar) e no .aberto (abrir), para entrada lenta e saída rápida. */
+  #agendaOverlay{ position:fixed; inset:0; z-index:660; background:rgba(0,0,0,0); display:flex; align-items:flex-end; justify-content:center; padding:0; pointer-events:none; visibility:hidden; transition:background .34s cubic-bezier(.4,0,1,1), visibility 0s linear .34s; }
   body.scroll-lock .info-fixa{ display:none !important; }   /* enquanto uma folha está aberta, esconde a barra fixa do rodapé (não espreita por baixo) */
-  #agendaOverlay.aberto{ background:rgba(0,0,0,0.55); pointer-events:auto; }
-  .ag-card{ background:linear-gradient(180deg,#fffdf9,var(--branco)); width:100%; max-width:440px; max-height:88vh; overflow-y:auto; overscroll-behavior:contain; border-radius:22px 22px 0 0; padding:14px 16px calc(18px + env(safe-area-inset-bottom)); margin-bottom:calc(-1 * env(safe-area-inset-bottom)); transform:translateY(100%); pointer-events:none; border-top:3px solid var(--dourado); box-shadow:0 -10px 34px rgba(0,0,0,.20); }
-  .ag-card::before{ content:''; display:block; width:42px; height:4px; border-radius:3px; background:var(--linha); margin:0 auto 12px; }
-  #agendaOverlay.aberto .ag-card{ transform:translateY(0); pointer-events:auto; }
+  #agendaOverlay.aberto{ background:rgba(0,0,0,0.5); pointer-events:auto; visibility:visible; transition:background .5s cubic-bezier(.32,.72,0,1), visibility 0s; }
+  .ag-card{ background:linear-gradient(180deg,#fffdf9,var(--branco)); width:100%; max-width:440px; max-height:88vh; overflow-y:auto; overscroll-behavior:contain; border-radius:22px 22px 0 0; padding:14px 16px calc(18px + env(safe-area-inset-bottom)); margin-bottom:calc(-1 * env(safe-area-inset-bottom)); transform:translateY(100%); pointer-events:none; border-top:3px solid var(--dourado); box-shadow:0 -10px 34px rgba(0,0,0,.20); transition:transform .34s cubic-bezier(.4,0,1,1); will-change:transform; }
+  .ag-card::before{ content:''; display:block; width:42px; height:5px; border-radius:3px; background:var(--linha); margin:0 auto 12px; transition:background .2s; }
+  .ag-card.a-arrastar::before{ background:var(--castanho-suave); }
+  #agendaOverlay.aberto .ag-card{ transform:translateY(0); pointer-events:auto; transition:transform .5s cubic-bezier(.32,.72,0,1); }
   .ag-card h3{ font-family:var(--fonte-titulo); color:var(--castanho); text-align:center; margin:0 0 2px; font-size:1.35rem; cursor:grab; -webkit-user-select:none; user-select:none; touch-action:none; }
   .ag-sub{ text-align:center; font-size:0.82rem; color:var(--castanho-suave); margin:0 0 14px; -webkit-user-select:none; user-select:none; touch-action:none; }
   .ag-cal-top{ display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
@@ -6309,7 +6314,8 @@
     const ov = document.createElement('div'); ov.id = 'agendaOverlay';
     ov.innerHTML = '<div class="ag-card" id="agCard"></div>';
     document.body.appendChild(ov);
-    (window.__ovAnim||(window.__ovAnim=function(cont,sel){ var pn=cont.querySelector(sel); if(!pn) return; var an=null,was=cont.classList.contains('aberto'); new MutationObserver(function(){ var open=cont.classList.contains('aberto'); if(open!==was){ was=open; if(an){try{an.cancel();}catch(e){}} if(pn.animate){ an=pn.animate(open?[{transform:'translateY(100%)'},{transform:'translateY(0)'}]:[{transform:'translateY(0)'},{transform:'translateY(100%)'}],{duration:open?380:320,easing:'cubic-bezier(.22,.9,.3,1)'}); } } var a=document.querySelector('#cartOverlay.aberto,#favOverlay.aberto,#agendaOverlay.aberto,#fidOverlay.aberto,#escOverlay.aberto,.categoria-painel.aberto'); document.documentElement.classList.toggle('scroll-lock',!!a); document.body.classList.toggle('scroll-lock',!!a); }).observe(cont,{attributes:true,attributeFilter:['class']}); }))(ov,'.ag-card');
+    /* A folha de reservas usa transições CSS próprias (estilo iOS) + arrasto com o dedo, por isso NÃO usa o animador genérico __ovAnim (evita conflito de animações). Mantemos só o bloqueio de scroll do fundo. */
+    (function(){ new MutationObserver(function(){ var a=document.querySelector('#cartOverlay.aberto,#favOverlay.aberto,#agendaOverlay.aberto,#fidOverlay.aberto,#escOverlay.aberto,.categoria-painel.aberto'); document.documentElement.classList.toggle('scroll-lock',!!a); document.body.classList.toggle('scroll-lock',!!a); }).observe(ov,{attributes:true,attributeFilter:['class']}); })();
     ov.addEventListener('click', function(e){ if(e.target === ov){ ov.classList.remove('aberto'); _fechouSemConcluir(); } });
     btn.addEventListener('click', function(){
       // Se há uma reserva por concluir e a folha está fechada, perguntar se quer continuar
@@ -6325,20 +6331,28 @@
     window.__abrirAgenda = abrir;   // permite abrir o calendário a partir do carrinho (menu de grupo)
     window.__reservaRerender = function(){ try{ if(ov.classList.contains('aberto')) render(); }catch(e){} };   // re-desenhar após sincronização com o servidor
 
-    // Arrastar a folha para baixo (pela pega/topo) para fechar
+    // ── Arrasto com o dedo, estilo iOS ──
+    // A folha acompanha o dedo em tempo real. Puxar para baixo além do limite (ou um "flick"
+    // rápido) fecha; largar antes disso volta suavemente. Puxar para cima tem resistência
+    // elástica (rubber-band). O fundo escurece/clareia conforme a posição da folha.
     (function(){
       var card = ov.querySelector('#agCard'); if(!card) return;
       var y0=0, x0=0, dy=0, drag=false, decidiu=false, naZona=false;
+      var H=1, vy=0, yPrev=0, tPrev=0;
+      var ABRE_ESCURO = 0.5, LIMITE = 120, FLICK = 0.55;   // fechar: >120px OU velocidade > 0.55 px/ms
       function _zonaPega(e){
         // arrastar só pela zona do cabeçalho: a pega, o título "Reservas" e o subtítulo
         var t = e.target;
         if(t && t.closest && (t.tagName==='H3' || t.closest('h3') || t.classList.contains('ag-sub'))) return true;
         return (e.clientY - card.getBoundingClientRect().top) < 92;   // faixa do topo (pega + título)
       }
+      function _resist(d){ return d < 0 ? -Math.pow(-d, 0.82) : d; }   // resistência elástica ao subir
       card.addEventListener('pointerdown', function(e){
         if(e.pointerType==='mouse' && e.button!==0) return;
         y0=e.clientY; x0=e.clientX; dy=0; drag=false; decidiu=false;
-        naZona = _zonaPega(e);   // só arranca o arrasto se começar no cabeçalho
+        naZona = _zonaPega(e);
+        yPrev=e.clientY; tPrev=(e.timeStamp||performance.now()); vy=0;
+        H = card.getBoundingClientRect().height || 1;
       });
       card.addEventListener('pointermove', function(e){
         if(!naZona) return;
@@ -6346,30 +6360,35 @@
         var d = e.clientY - y0, dx = e.clientX - x0;
         if(!drag){
           if(Math.abs(d) < 6 && Math.abs(dx) < 6) return;
-          if(d > 0 && Math.abs(d) > Math.abs(dx)){   // gesto para baixo e mais vertical que horizontal
-            drag=true; card.style.transition='none';
+          if(Math.abs(d) > Math.abs(dx)){   // gesto mais vertical que horizontal -> arrasto da folha
+            drag=true; card.style.transition='none'; ov.style.transition='none'; card.classList.add('a-arrastar');
             try{ card.setPointerCapture(e.pointerId); }catch(_){}
           } else { decidiu=true; return; }
         }
-        dy = e.clientY - y0; if(dy<0) dy=0;
-        card.style.transform = 'translateY('+dy+'px)';
+        var now=(e.timeStamp||performance.now()), dt=now-tPrev;
+        if(dt>0){ vy=(e.clientY-yPrev)/dt; yPrev=e.clientY; tPrev=now; }   // velocidade instantânea (px/ms)
+        dy = e.clientY - y0;
+        var eff=_resist(dy);
+        card.style.transform = 'translateY('+eff+'px)';
+        var prog = Math.max(0, Math.min(1, (eff>0?eff:0)/H));
+        ov.style.background = 'rgba(0,0,0,'+(ABRE_ESCURO*(1-prog)).toFixed(3)+')';
         if(e.cancelable) e.preventDefault();
       });
       function fim(){
+        naZona=false;
         if(!drag) return; drag=false;
-        card.style.transition='transform .28s cubic-bezier(.22,.9,.3,1)';
-        if(dy > 140){
-          card.style.transform='translateY(100%)';
-          var done=function(){
-            card.removeEventListener('transitionend', done);
-            ov.classList.remove('aberto');
-            requestAnimationFrame(function(){ try{ card.getAnimations().forEach(function(a){ a.cancel(); }); }catch(_){}; card.style.transition=''; card.style.transform=''; });
-            try{ _fechouSemConcluir(); }catch(_){}
-          };
-          card.addEventListener('transitionend', done);
+        card.classList.remove('a-arrastar');
+        ov.style.transition=''; card.style.transition='';   // devolve o controlo às transições CSS (abrir lento / fechar rápido)
+        void card.offsetHeight;                             // regista o reset das transições antes de mudar de estado
+        var fecha = (dy > LIMITE) || (vy > FLICK);
+        if(fecha){
+          ov.classList.remove('aberto');   // -> CSS: cartão desce (ease-in rápido) e fundo desvanece, em paralelo
+          ov.style.background='';           // deixa a CSS levar o fundo a transparente
+          card.style.transform='';          // -> translateY(100%) do estado base
+          try{ _fechouSemConcluir(); }catch(_){}
         } else {
-          card.style.transform='translateY(0)';
-          setTimeout(function(){ card.style.transition=''; card.style.transform=''; }, 300);
+          ov.style.background='';           // volta ao escuro do estado .aberto
+          card.style.transform='';          // volta a translateY(0) com ease-out
         }
       }
       card.addEventListener('pointerup', fim);
@@ -6511,6 +6530,32 @@
       ligar();
       if(estado.diaSel && estado.slotSel) atualizarResumo();
     }
+    // Expansão/contração suave: quando o conteúdo muda (escolher dia/hora), a altura do cartão
+    // é animada de/para (FLIP), com a curva iOS — sem saltos nem redimensionamentos instantâneos.
+    (function(){
+      var _renderBase = render;
+      render = function(){
+        var card = document.getElementById('agCard');
+        if(!card || !ov.classList.contains('aberto')) return _renderBase.apply(this, arguments);
+        var h0 = card.getBoundingClientRect().height;
+        var r = _renderBase.apply(this, arguments);
+        var h1 = card.getBoundingClientRect().height;
+        if(Math.abs(h1 - h0) < 3) return r;
+        var ovf = card.style.overflow;
+        card.style.transition = 'none'; card.style.overflow = 'hidden'; card.style.height = h0 + 'px';
+        void card.offsetHeight;   // regista a altura inicial antes de animar
+        card.style.transition = 'height .42s cubic-bezier(.32,.72,0,1)';
+        card.style.height = h1 + 'px';
+        var end = function(e){
+          if(e && e.propertyName && e.propertyName !== 'height') return;
+          card.removeEventListener('transitionend', end);
+          card.style.transition = ''; card.style.height = ''; card.style.overflow = ovf || '';
+        };
+        card.addEventListener('transitionend', end);
+        setTimeout(function(){ end(); }, 520);   // salvaguarda se o transitionend não disparar
+        return r;
+      };
+    })();
     function atualizarResumo(){
       const a = cfg();
       const pessoas = estado.pessoas || 1;
