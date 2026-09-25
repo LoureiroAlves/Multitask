@@ -128,11 +128,16 @@
   .dash-card:hover{ transform:translateY(-3px); box-shadow:0 14px 34px rgba(74,56,32,.14); border-color:var(--dourado); }
   .dash-card:active{ transform:translateY(-1px) scale(.995); }
   .dash-card .dc-ico{ font-size:1.7rem; line-height:1; }
+  .cal-ico{ display:inline-flex; flex-direction:column; width:40px; height:40px; border-radius:9px; overflow:hidden; background:#fff; border:1px solid #e4d8bf; box-shadow:0 2px 7px rgba(74,56,32,.18); }
+  .cal-ico-top{ height:12px; background:#e0453a; display:flex; align-items:center; justify-content:space-between; padding:0 5px; }
+  .cal-ico-top i{ width:2px; height:5px; background:#fff; border-radius:1px; margin-top:-2px; opacity:.9; }
+  .cal-ico-d{ flex:1; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:1.2rem; color:var(--castanho); line-height:1; }
   .dash-card .dc-tit{ font-size:1.05rem; font-weight:800; color:var(--castanho); }
   .dash-card .dc-sub{ font-size:.85rem; color:#8a7a5c; font-weight:600; line-height:1.35; }
   .dash-card .dc-badge{ position:absolute; top:14px; right:14px; background:#e0453a; color:#fff; font-size:.76rem; font-weight:800; padding:3px 9px; border-radius:999px; box-shadow:0 2px 8px rgba(224,69,58,.4); }
   .dash-card .dc-seta{ margin-top:auto; color:var(--dourado); font-weight:800; font-size:.84rem; }
   #areaBar{ display:flex; align-items:center; gap:12px; margin-bottom:14px; }
+  #areaBar.hide{ display:none !important; }   /* o seletor de ID vencia o .hide — sem isto a seta "Voltar" ficava visível na home */
   #btnVoltarHome{ border:1px solid #e0d3b5; background:#fff; border-radius:999px; padding:8px 16px; cursor:pointer; font-family:inherit; font-weight:800; color:var(--castanho); font-size:.9rem; box-shadow:0 2px 8px rgba(74,56,32,.08); transition:.15s; }
   #btnVoltarHome:hover{ background:#fbf6ec; transform:translateX(-2px); }
   #areaTit{ font-weight:800; color:var(--castanho); font-size:1.12rem; }
@@ -279,6 +284,7 @@
     <div id="dashHome"></div>
     <div id="areaBar" class="hide"><button id="btnVoltarHome" type="button">‹ Voltar</button><span id="areaTit"></span></div>
     <div id="vistaCal" class="hide">
+      <div id="calResumo"></div>
       <div class="mes-bar">
         <button id="mesPrev" aria-label="Mês anterior">‹</button>
         <div class="mes-nome" id="mesNome"></div>
@@ -474,6 +480,7 @@
     renderCal();
     if(diaSel) renderDia(diaSel);
     if(!$('vistaDash').classList.contains('hide')) renderDashboard();
+    if(!$('vistaCal').classList.contains('hide')) renderCalResumo();
     if(_primeiraCarga){ _primeiraCarga = false; voltarHome(); _aprovacaoInicial(); }
     else if(!$('dashHome').classList.contains('hide')) renderHome();   // se a home estiver visível, atualiza os resumos
   }
@@ -553,6 +560,7 @@
     $('vistaDef').classList.toggle('hide', qual!=='def');
     $('vistaEncomendas').classList.toggle('hide', qual!=='enc');
     $('vistaNotif').classList.toggle('hide', qual!=='notif');
+    if(qual==='cal') renderCalResumo();
     if(qual==='dash') renderDashboard();
     if(qual==='def') renderDefinicoes();
     if(qual==='notif') renderNotif();
@@ -571,6 +579,7 @@
     renderHome();
     try{ window.scrollTo(0,0); }catch(e){}
   }
+  function _iconeCalendario(){ return '<span class="cal-ico"><span class="cal-ico-top"><i></i><i></i></span><span class="cal-ico-d">' + (new Date()).getDate() + '</span></span>'; }
   function _cardHome(ir, ico, tit, sub, seta, badge){
     return '<button class="dash-card" type="button" data-ir="' + ir + '">'
       + (badge ? ('<span class="dc-badge">' + badge + '</span>') : '')
@@ -603,7 +612,7 @@
       +   '<div class="home-kpi' + (encPend?' alerta':'') + '"><div class="n">' + encPend + '</div><div class="l">Encomendas a chegar</div></div>'
       + '</div>'
       + '<div class="cards-grid">'
-      +   _cardHome('cal','📅','Calendário','Agenda do dia e reservas', hojeR.length?('Ver hoje ('+hojeR.length+')'):'Ver agenda', 0)
+      +   _cardHome('cal',_iconeCalendario(),'Calendário','Agenda do dia e reservas', hojeR.length?('Ver hoje ('+hojeR.length+')'):'Ver agenda', 0)
       +   _cardHome('enc','🛍️','Encomendas', encAtivas?(encAtivas+' em curso'):'Gerir pedidos', 'Pendentes · Preparação · Prontas · Entregues', encPend)
       +   _cardHome('notif','📢','Promoções Push','Prato do dia, Happy Hour, eventos…','Criar campanha', 0)
       +   _cardHome('def','⚙️','Definições','Dados, horários, reservas…','Configurar', 0)
@@ -1164,6 +1173,21 @@
       if(r) _setKpiPessoas(r.data);
       abrirModalEdicao(id);
     }; });
+  }
+  // Resumo dentro do Calendário: A precisar de resposta / Hoje / Próximas reservas (mesmo layout do painel)
+  function renderCalResumo(){
+    const c = $('calResumo'); if(!c) return;
+    const hojeIso = isoLocal(hoje);
+    const ativas = reservas.filter(function(r){ return r.estado !== 'cancelada'; });
+    const hojeR = ativas.filter(function(r){ return r.data === hojeIso; }).sort(_cmpR);
+    const futPend = ativas.filter(function(r){ return r.data >= hojeIso && r.estado === 'pendente'; }).sort(_cmpR);
+    const prox = ativas.filter(function(r){ return r.data > hojeIso; }).sort(_cmpR).slice(0, 20);
+    let html = '';
+    if(futPend.length){ html += '<div class="dash-sec"><h3>⏳ A precisar de resposta</h3>' + futPend.map(_linhaReserva).join('') + '</div>'; }
+    html += '<div class="dash-sec"><h3>📆 Hoje</h3>' + (hojeR.length ? hojeR.map(_linhaReserva).join('') : '<div class="vazio-msg">Sem reservas para hoje.</div>') + '</div>';
+    html += '<div class="dash-sec"><h3>➡️ Próximas reservas</h3>' + (prox.length ? prox.map(_linhaReserva).join('') : '<div class="vazio-msg">Sem reservas futuras.</div>') + '</div>';
+    c.innerHTML = html;
+    c.querySelectorAll('.linha-r').forEach(function(el){ el.onclick = function(){ abrirModalEdicao(el.getAttribute('data-id')); }; });
   }
   function _capacidade(){ return (negocio && negocio.config && negocio.config.agenda && parseInt(negocio.config.agenda.capacidade,10)) || 0; }
   function _pessoasDia(iso){ return reservas.filter(function(r){ return r.data === iso && r.estado !== 'cancelada'; }).reduce(function(s,r){ return s + (Number(r.pessoas)||0); }, 0); }
