@@ -3988,7 +3988,7 @@
       const _d = Math.max(0.4, Math.min(3, parseFloat((window.__wipeCfg && window.__wipeCfg.duracao)) || 1.1)) * 1000;
       window.__playWipe(window.__wipeCor || '#a8712f', function(){ painel.classList.remove('aberto'); });
       setTimeout(restaurarCategoria, _d + 20);
-      document.body.classList.remove('secao-aberta');
+      document.body.classList.remove('secao-aberta'); _desbloquearFundo();   // rodapé desliza de volta JÁ (não espera o fim da animação de saída)
       setTimeout(function(){ if(!document.body.classList.contains('secao-aberta')) document.body.classList.remove('cart-oculto'); }, 650);
       return;
     }
@@ -4002,7 +4002,7 @@
     // Rede de segurança: se o transitionend não disparar (efeitos sem transform), restaura/desbloqueia à mesma
     setTimeout(function(){ if(!painel.classList.contains('aberto')) restaurarCategoria(); }, 620);
     // Cabeçalho e barra voltam já (acompanham o fecho); carrinho e fidelidade só reaparecem no fim
-    document.body.classList.remove('secao-aberta');
+    document.body.classList.remove('secao-aberta'); _desbloquearFundo();   // liberta o scroll-lock JÁ, senão ele segurava o rodapé em baixo até ao fim da animação
     setTimeout(function(){ if(!document.body.classList.contains('secao-aberta')) document.body.classList.remove('cart-oculto'); }, 650);
   }
 
