@@ -2375,6 +2375,24 @@ window.STORY_LAYOUTS = [
   .pd-oval .pd-selo{ opacity:.9; }
   .pd-oval .pd-big{ font-size:2rem; margin:5px 0 2px; text-shadow:0 2px 6px rgba(0,0,0,.18); }
   .pd-oval .pd-hora{ display:inline-block; margin-top:8px; background:rgba(255,255,255,.25); font-weight:800; font-size:.76rem; padding:3px 13px; border-radius:20px; }
+  /* ===== Vida & profundidade — só transform/opacity; respeita prefers-reduced-motion ===== */
+  .pd-card{ animation:pdEnter .45s ease both; }
+  @keyframes pdEnter{ from{opacity:0} to{opacity:1} }
+  @keyframes pdBigPulse{ 0%,100%{transform:scale(1)} 50%{transform:scale(1.04)} }
+  @keyframes pdFloatTilt{ 0%,100%{transform:rotate(-2.4deg) translateY(0)} 50%{transform:rotate(-2.4deg) translateY(-5px)} }
+  @keyframes pdEmojiWob{ 0%,100%{transform:rotate(-14deg)} 50%{transform:rotate(-5deg) scale(1.06)} }
+  @keyframes pdMedBreath{ 0%,100%{transform:rotate(-8deg) scale(1)} 50%{transform:rotate(-8deg) scale(1.05)} }
+  @keyframes pdShine{ 0%{transform:translateX(-160%) skewX(-18deg)} 55%,100%{transform:translateX(360%) skewX(-18deg)} }
+  @media (prefers-reduced-motion: no-preference){
+    .pd-card .pd-big{ transform-origin:left center; animation:pdBigPulse 2.4s ease-in-out infinite; }
+    .pd-oval .pd-big{ transform-origin:center; }
+    .pd-autocolante{ animation:pdEnter .45s ease both, pdFloatTilt 3.4s ease-in-out .6s infinite; }
+    .pd-autocolante .pd-emoji{ animation:pdEmojiWob 2.6s ease-in-out infinite; }
+    .pd-seloR .pd-med{ animation:pdMedBreath 2.8s ease-in-out infinite; }
+    .pd-fita > *, .pd-urgencia > *{ position:relative; z-index:1; }
+    .pd-fita::after, .pd-urgencia::after{ content:''; position:absolute; top:0; left:0; width:38%; height:100%; background:linear-gradient(100deg, transparent, rgba(255,255,255,.45), transparent); pointer-events:none; z-index:0; animation:pdShine 3.6s ease-in-out infinite; }
+  }
+  @media (prefers-reduced-motion: reduce){ .pd-card, .pd-card *{ animation:none !important; } }
 </style>
 <script>
 (function(){
