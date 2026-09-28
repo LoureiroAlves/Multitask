@@ -185,8 +185,16 @@
   .preview-dock{ position:static; width:100%; background:#1f2530; border-radius:16px; overflow:hidden; box-shadow:0 6px 18px rgba(0,0,0,0.18); }
   .preview-dock-bar{ display:flex; align-items:center; justify-content:space-between; padding:8px 8px 8px 12px; color:#fff; font-size:0.82rem; font-weight:700; }
   .preview-dock-btn{ background:rgba(255,255,255,0.16); border:none; color:#fff; width:26px; height:26px; border-radius:7px; cursor:pointer; margin-left:5px; font-size:0.9rem; line-height:1; }
-  .preview-dock-corpo{ height:calc(100vh - 150px); min-height:420px; background:#fff; overflow:hidden; }
+  .preview-dock-corpo{ position:relative; height:auto; min-height:200px; background:#fff; overflow:hidden; }
   .preview-dock-corpo iframe{ border:0; display:block; background:#fff; transform-origin:top left; }
+  .preview-dock-sel{ background:rgba(255,255,255,0.16); border:none; color:#fff; height:26px; border-radius:7px; font-size:0.72rem; font-family:inherit; padding:0 4px; max-width:112px; }
+  .preview-dock-sel option{ color:#222; }
+  /* Simulação do iPhone: barra de estado (notch) e indicador inferior — o conteúdo passa por baixo, como no real */
+  .pv-notch{ position:absolute; left:0; right:0; top:0; height:0; display:none; pointer-events:none; z-index:3; }
+  .pv-notch span{ position:absolute; left:50%; top:22%; transform:translateX(-50%); width:36%; height:56%; background:#111; border-radius:999px; }
+  .pv-home{ position:absolute; left:0; right:0; bottom:0; height:0; display:none; pointer-events:none; z-index:3; }
+  .pv-home span{ position:absolute; left:50%; bottom:26%; transform:translateX(-50%); width:36%; height:14%; background:rgba(0,0,0,.55); border-radius:999px; }
+  .pv-nota{ font-size:0.7rem; color:rgba(255,255,255,0.7); padding:6px 10px 8px; line-height:1.35; }
   .preview-dock.min .preview-dock-corpo{ display:none; }
   @media(max-width:1000px){
     .ed-layout{ flex-direction:column; }
@@ -992,66 +1000,6 @@ amesadigital.pt</textarea>
   <details class="grupo" open><summary class="grupo-sum">📋 Conteúdo</summary>
 
   <!-- PROMOÇÃO NA MONTRA — migrada para o painel de Gestão (aba Promoções). Secção escondida aqui. -->
-  <details id="secPromo" class="ed-sec" data-tab="conteudo" style="display:none !important;">
-    <summary>🏷️ Promoção (aparece na montra ÀMesa)</summary>
-    <div class="bloco-conteudo">
-      <div style="font-size:0.82rem; color:var(--castanho-suave); margin-bottom:10px;">Cria a tua própria promoção — grátis. Aparece no cartão do teu restaurante na página do amesadigital (com foto e texto por cima), para atrair clientes. Ex.: "50% no prato do dia" ou "Sobremesa grátis acima de 25€".</div>
-      <label for="promoSel" style="display:block; font-weight:600;">Promoção para</label>
-      <select id="promoSel" style="width:100%; padding:10px 12px; border-radius:10px; border:1.5px solid var(--linha); background:var(--branco); font-family:inherit; color:var(--castanho); font-size:0.95rem; margin-top:6px;">
-        <option value="base">Base — todos os dias</option>
-        <option value="1">Só Segunda-feira</option>
-        <option value="2">Só Terça-feira</option>
-        <option value="3">Só Quarta-feira</option>
-        <option value="4">Só Quinta-feira</option>
-        <option value="5">Só Sexta-feira</option>
-        <option value="6">Só Sábado</option>
-        <option value="0">Só Domingo</option>
-      </select>
-      <div style="font-size:0.78rem; color:var(--castanho-suave); margin:4px 0 10px;">Podes ter uma promoção diferente por dia. Se um dia não tiver promoção própria, usa a <b>Base</b>. As alterações de cada separador guardam-se ao mudar de dia e no "Guardar tudo".</div>
-      <div class="lembrar" style="margin-bottom:10px;">
-        <input type="checkbox" id="promoAtivo" style="width:auto; margin:0;">
-        <label id="promoAtivoLabel" for="promoAtivo" style="margin:0; font-weight:700; color:var(--dourado-escuro); display:inline;">Mostrar promoção na montra</label>
-      </div>
-      <label style="display:flex; align-items:center; gap:8px; margin-top:8px; cursor:pointer; font-size:0.92rem;">
-        <input type="checkbox" id="promoHorario" style="width:auto; margin:0;">
-        Só mostrar em certas horas (entrada / saída)
-      </label>
-      <div id="promoHorarioBox" style="display:none; margin-top:8px; gap:16px; flex-wrap:wrap; align-items:center;">
-        <label style="font-size:0.88rem; color:var(--castanho);">Entra às <input type="time" id="promoHoraIni" value="12:00" style="padding:6px 8px; border:1.5px solid var(--linha); border-radius:8px; font-family:inherit;"></label>
-        <label style="font-size:0.88rem; color:var(--castanho);">Sai às <input type="time" id="promoHoraFim" value="15:00" style="padding:6px 8px; border:1.5px solid var(--linha); border-radius:8px; font-family:inherit;"></label>
-      </div>
-      <div id="promoHorarioNota" style="display:none; font-size:0.78rem; color:var(--castanho-suave); margin-top:4px;"></div>
-      <label for="promoTexto" style="display:block; margin-top:8px; font-weight:600;">Texto da promoção</label>
-      <input type="text" id="promoTexto" maxlength="70" placeholder='Ex.: 50% no prato do dia' style="width:100%; padding:11px 12px; border:1.5px solid var(--linha); border-radius:10px; font-family:inherit; font-size:0.95rem; margin-top:6px;">
-      <div style="font-size:0.78rem; color:var(--castanho-suave); margin-top:4px;">Curto e direto (máx. 70 caracteres). Aparece por cima da foto.</div>
-
-      <div style="display:flex; align-items:center; gap:10px; margin-top:12px; flex-wrap:wrap;">
-        <label for="promoCor" style="margin:0; font-weight:600;">Cor da promoção</label>
-        <input type="color" id="promoCor" value="#e0245e" style="width:52px; height:34px; border:none; background:none; cursor:pointer;">
-      </div>
-      <label for="promoTam" style="display:block; margin-top:12px; font-weight:600;">Tamanho do texto: <span id="promoTamVal">16</span>px</label>
-      <input type="range" id="promoTam" min="11" max="30" step="1" value="16" style="width:100%;">
-      <label for="promoFonte" style="display:block; margin-top:12px; font-weight:600;">Tipo de letra</label>
-      <select id="promoFonte" style="width:100%; padding:10px 12px; border-radius:10px; border:1.5px solid var(--linha); background:var(--branco); font-family:inherit; color:var(--castanho); font-size:0.95rem;">
-        <option value="">Padrão (forte)</option>
-        <option value="anton">Impacto (Anton)</option>
-        <option value="bebas">Condensada (Bebas Neue)</option>
-        <option value="fredoka">Redonda (Fredoka)</option>
-        <option value="playfair">Elegante (Playfair)</option>
-        <option value="pacifico">Manuscrita (Pacifico)</option>
-      </select>
-
-      <div style="display:flex; align-items:center; gap:10px; margin:12px 0 0; flex-wrap:wrap;">
-        <span style="font-size:0.82rem; color:var(--castanho-suave);">Foto da promoção (opcional):</span>
-        <img id="promoFotoPrev" alt="" style="display:none; width:54px; height:54px; object-fit:cover; border-radius:8px; border:1px solid var(--linha);">
-        <label class="mv-mini" style="cursor:pointer;">＋ foto<input type="file" id="promoFotoFile" accept="image/*" style="display:none;"></label>
-        <button type="button" class="mv-mini" id="promoFotoRemover" style="display:none;">sem foto</button>
-      </div>
-      <div style="font-size:0.78rem; color:var(--castanho-suave); margin-top:4px;">Se não puseres foto, o texto aparece por cima da foto normal do restaurante.</div>
-      <label style="display:block; margin-top:16px; font-weight:600;">Pré-visualização (como fica na montra)</label>
-      <div id="promoPreview" style="margin-top:6px; display:flex; justify-content:center;"></div>
-    </div>
-  </details>
 
   <!-- BARRA FIXA -->
   <details id="secRodape" class="ed-sec" data-tab="conteudo">
@@ -1811,7 +1759,9 @@ amesadigital.pt</textarea>
       <div id="previewDock" class="preview-dock">
     <div class="preview-dock-bar">
       <span>👁️ Pré-visualização</span>
-      <span style="display:flex;">
+      <span style="display:flex;align-items:center;gap:4px;">
+        <select id="pvLarg" class="preview-dock-sel" title="Largura do ecrã"><option value="360">360 · Android</option><option value="390" selected>390 · iPhone</option><option value="430">430 · iPhone Max</option></select>
+        <select id="pvModo" class="preview-dock-sel" title="Como o cliente abre o menu"><option value="app" selected>App (ecrã inteiro)</option><option value="safari">Safari</option></select>
         <button type="button" id="btnAtualizarPreview" title="Atualizar" class="preview-dock-btn">↻</button>
         <button type="button" id="previewMin" title="Minimizar" class="preview-dock-btn">—</button>
       </span>
@@ -1819,7 +1769,10 @@ amesadigital.pt</textarea>
     <button type="button" id="btnGuardarDock" style="display:block; width:100%; border:none; background:var(--verde,#3b8a4f); color:#fff; padding:10px; font-weight:700; font-family:inherit; cursor:pointer; font-size:0.9rem;">💾 Guardar tudo</button>
     <div class="preview-dock-corpo">
       <iframe id="previewFrame" title="Pré-visualização do cardápio"></iframe>
+      <div id="pvNotch" class="pv-notch"><span></span></div>
+      <div id="pvHome" class="pv-home"><span></span></div>
     </div>
+    <div id="pvNota" class="pv-nota">Ecrã 390×844 · a pré mostra sempre o prato do dia e as promoções, mesmo fora do horário.</div>
   </div>
     </aside>
   </div>
@@ -2269,15 +2222,6 @@ amesadigital.pt</textarea>
     '12': { nome:'12 — Azeitona',      cores:['#3a3d1c','#8a8a2e','#ecebd6'] }
   };
   // Cores principais de cada tema (para o botão "repor cores do tema")
-  const TEMA_CORES_BASE = {
-    'neutro':{castanho:'#1a1a1a',dourado:'#1a1a1a',bege:'#ffffff'},
-    '1':{castanho:'#4a3820',dourado:'#a8712f',bege:'#f5efe2'}, '2':{castanho:'#26402a',dourado:'#4e8d3f',bege:'#e9f2e4'},
-    '3':{castanho:'#3f1f24',dourado:'#9c2b3b',bege:'#f3e7e2'}, '4':{castanho:'#1f3550',dourado:'#2f6fb0',bege:'#e6eef7'},
-    '5':{castanho:'#1a1a1a',dourado:'#c9a227',bege:'#eceae3'}, '6':{castanho:'#7a3b1f',dourado:'#d97a34',bege:'#f6e6d8'},
-    '7':{castanho:'#123c3c',dourado:'#1f8a86',bege:'#deeeed'}, '8':{castanho:'#3d1f4d',dourado:'#8e44ad',bege:'#ede2f2'},
-    '9':{castanho:'#8a3d0a',dourado:'#f2761b',bege:'#ffe9d1'}, '10':{castanho:'#2b2f36',dourado:'#546073',bege:'#ececef'},
-    '11':{castanho:'#7a2843',dourado:'#d64f7c',bege:'#f9e2ea'}, '12':{castanho:'#3a3d1c',dourado:'#8a8a2e',bege:'#ecebd6'}
-  };
   let layoutSelecionado = 'neutro';
   function renderLayoutCards(){
     const box = document.getElementById('layoutCards');
@@ -2292,13 +2236,7 @@ amesadigital.pt</textarea>
       c.appendChild(sws);
       c.addEventListener('click',()=>{
         layoutSelecionado=k;
-        // Escolher um layout aplica também a PALETA desse layout (atualiza os seletores de cor).
-        const b = TEMA_CORES_BASE[k] || TEMA_CORES_BASE['neutro'];
-        if(b){ const cc=document.getElementById('corCastanho'), cd=document.getElementById('corDourado'), cb=document.getElementById('corBege');
-          if(cc) cc.value=b.castanho; if(cd) cd.value=b.dourado; if(cb) cb.value=b.bege; }
-        // Desligar as cores de texto próprias (menu e cabeçalho) para o menu seguir a paleta do novo tema
-        { const _cm=document.getElementById('corMenuAtiva'); if(_cm && _cm.checked){ _cm.checked=false; const _b=document.getElementById('corMenuBox'); if(_b) _b.style.display='none'; }
-          const _cb=document.getElementById('corCabAtiva'); if(_cb && _cb.checked){ _cb.checked=false; const _b2=document.getElementById('corCabBox'); if(_b2) _b2.style.display='none'; } }
+        // (Os seletores de cor antigos — corCastanho/corDourado/corBege, corMenuAtiva, corCabAtiva — já não existem; as cores vivem em "Cores e Fundos".)
         renderLayoutCards();
         if(window.__agendarPreview) window.__agendarPreview();
       });
@@ -2319,6 +2257,16 @@ amesadigital.pt</textarea>
   function setEstado(msg, tipo){
     estadoEl.className = 'estado ' + (tipo || 'info');
     estadoEl.textContent = msg;
+    // O #estado vive na barra lateral (longe do botão "Guardar tudo" da secção aberta) → mostrar também um aviso flutuante
+    try{
+      let t = document.getElementById('estadoToast');
+      if(!t){ t = document.createElement('div'); t.id = 'estadoToast'; document.body.appendChild(t); }
+      const cor = tipo === 'erro' ? '#b23b2e' : (tipo === 'ok' ? '#2e7d3f' : '#4a3820');
+      t.style.cssText = 'position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:99999;max-width:min(92vw,520px);background:' + cor + ';color:#fff;padding:11px 16px;border-radius:14px;font-weight:700;font-size:.9rem;line-height:1.35;box-shadow:0 10px 30px rgba(0,0,0,.28);transition:opacity .25s;opacity:1;pointer-events:none;';
+      t.textContent = msg;
+      clearTimeout(t._tm);
+      t._tm = setTimeout(function(){ t.style.opacity = '0'; }, tipo === 'info' ? 6000 : 4200);
+    }catch(e){}
   }
 
   // ---- Estilo de texto por secção (tipo de letra, negrito, itálico, contorno) ----
@@ -2412,7 +2360,7 @@ amesadigital.pt</textarea>
       if(ehString){ img.src = file; }
       else { const reader = new FileReader(); reader.onload = e => { img.src = e.target.result; }; reader.onerror = function(){ reject(new Error('Não consegui ler o ficheiro.')); }; reader.readAsDataURL(file); }
       img.onload = () => {
-        const maxLado = 1400;
+        const maxLado = 1600;   // lado maior; 1600 mantém nitidez nas fotos de cabeçalho/mosaico sem pesar demasiado
         let { width, height } = img;
         if(width > maxLado || height > maxLado){
           if(width > height){ height = Math.round(height * maxLado / width); width = maxLado; }
@@ -2436,7 +2384,7 @@ amesadigital.pt</textarea>
             r2.onload = () => resolve({ base64:r2.result.split(',')[1], ext:'jpg' });
             r2.onerror = reject;
             r2.readAsDataURL(blob);
-          }, 'image/jpeg', 0.82);
+          }, 'image/jpeg', 0.86);
         }
       };
       img.onerror = function(){ reject(new Error('Não consegui abrir a imagem. Usa JPG ou PNG (fotos HEIC do iPhone não são aceites pelos navegadores).')); };
@@ -2454,7 +2402,7 @@ amesadigital.pt</textarea>
 
   // Esconde secções conforme o plano (funções) e esconde a publicidade ao dono
   // Secções que são SEMPRE só do administrador (nunca do dono)
-  const SEC_SO_ADMIN = ['secAnuncio', 'secAnuncioJogos', 'secAdJogos', 'secPreAbertura', 'secLimpeza'];
+  const SEC_SO_ADMIN = ['secAnuncio', 'secAnuncioJogos', 'secAdJogos', 'secPreAbertura', 'secLimpeza', 'secCalendario'];
   function aplicarGating(ent){
     ent = ent || {}; const f = ent.funcoes || {};
     const admin = !!window.__admin;
@@ -3057,131 +3005,7 @@ amesadigital.pt</textarea>
     filaMascote = f; _mascotePrev();
     setEstado('Imagem escolhida (guarda para aplicar).', 'info');
   });
-  // ---- Promoção na montra: foto (envia logo) ----
-  let promoFotoUrl = '';
-  function _promoFotoUI(){
-    const prev = document.getElementById('promoFotoPrev'), rm = document.getElementById('promoFotoRemover');
-    if(prev){ if(promoFotoUrl){ prev.src = promoFotoUrl; prev.style.display = ''; } else { prev.src = ''; prev.style.display = 'none'; } }
-    if(rm) rm.style.display = promoFotoUrl ? '' : 'none';
-    _promoPreview();
-  }
-  const _PROMO_FONTES = { anton:"'Anton',sans-serif", bebas:"'Bebas Neue',sans-serif", fredoka:"'Fredoka',sans-serif", playfair:"'Playfair Display',serif", pacifico:"'Pacifico',cursive" };
-  function _promoPreview(){
-    const box = document.getElementById('promoPreview'); if(!box) return;
-    const ativo = !!(document.getElementById('promoAtivo') && document.getElementById('promoAtivo').checked);
-    const txt = (document.getElementById('promoTexto') || {}).value || '';
-    const cor = (document.getElementById('promoCor') || {}).value || '#e0245e';
-    const tam = parseInt((document.getElementById('promoTam') || {}).value, 10) || 16;
-    const fam = _PROMO_FONTES[(document.getElementById('promoFonte') || {}).value] || '';
-    const _esc = function(s){ return String(s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); };
-    const nome = (config.header && config.header.titulo) || (window.__negocio && window.__negocio.nome) || 'O teu restaurante';
-    const fotoBg = promoFotoUrl || (config.header && Array.isArray(config.header.fotos) && config.header.fotos[0]) || '';
-    const temPromo = ativo && (txt || promoFotoUrl);
-    const fotoStyle = fotoBg ? ("background-image:url('" + fotoBg + "');background-size:cover;background-position:center;") : 'background:linear-gradient(135deg,#c9a06a,#7a5a2e);';
-    const band = (ativo && txt) ? ('<div style="position:absolute;left:0;right:0;bottom:0;background:' + cor + ';color:#fff;font-weight:800;text-align:center;padding:9px 8px;line-height:1.2;font-size:' + tam + 'px;' + (fam ? ('font-family:' + fam + ';') : '') + 'text-shadow:0 1px 2px rgba(0,0,0,.35);overflow:hidden;">' + _esc(txt) + '</div>') : '';
-    const ribbon = temPromo ? '<span style="position:absolute;top:14px;left:-40px;width:150px;transform:rotate(-45deg);text-align:center;background:linear-gradient(90deg,#ffb300,#ff7a00);color:#fff;font-size:.62rem;font-weight:800;letter-spacing:1.5px;padding:5px 0;box-shadow:0 3px 8px rgba(0,0,0,.35);">PROMO</span>' : '';
-    const borda = temPromo ? ('box-shadow:0 0 0 2px ' + cor + ',0 10px 24px rgba(0,0,0,.15);') : 'box-shadow:0 6px 18px rgba(120,90,50,.12);';
-    box.innerHTML = '<div style="width:230px;border:1px solid var(--linha);border-radius:16px;overflow:hidden;background:#fff;' + borda + '">'
-      + '<div style="position:relative;height:135px;' + fotoStyle + '">' + ribbon + band + '</div>'
-      + '<div style="padding:10px 12px;">'
-        + '<div style="font-family:\'Poppins\',sans-serif;font-weight:600;font-size:1.02rem;letter-spacing:-.2px;color:var(--castanho);line-height:1.25;">' + _esc(nome) + '</div>'
-        + '<div style="font-size:.8rem;color:var(--castanho-suave);font-weight:600;margin-top:2px;">o teu subtítulo</div>'
-      + '</div>'
-    + '</div>'
-    + (temPromo ? '' : '<div style="align-self:center;font-size:.78rem;color:var(--castanho-suave);margin-left:10px;max-width:150px;">Liga a promoção e escreve o texto para a veres aqui.</div>');
-  }
-  function _promoHorarioNota(){
-    const ch = document.getElementById('promoHorario');
-    const box = document.getElementById('promoHorarioBox');
-    const nota = document.getElementById('promoHorarioNota');
-    const on = !!(ch && ch.checked);
-    if(box) box.style.display = on ? 'flex' : 'none';
-    if(nota){
-      if(on){
-        const i = (document.getElementById('promoHoraIni') || {}).value || '';
-        const f = (document.getElementById('promoHoraFim') || {}).value || '';
-        nota.style.display = 'block';
-        nota.textContent = (i && f) ? ('A promoção aparece na montra todos os dias entre ' + i + ' e ' + f + ' (fora disso fica escondida).') : 'Define a hora de entrada e de saída.';
-      } else { nota.style.display = 'none'; nota.textContent = ''; }
-    }
-  }
-  { ['promoAtivo','promoTexto','promoCor','promoTam','promoFonte','promoHorario','promoHoraIni','promoHoraFim'].forEach(function(id){
-      const el = document.getElementById(id);
-      if(el){ el.addEventListener('input', function(){ _promoHorarioNota(); _promoPreview(); }); el.addEventListener('change', function(){ _promoHorarioNota(); _promoPreview(); }); }
-    }); }
-  // ===== Promoções por dia: uma ficha (slot) para a Base e para cada dia da semana =====
-  var promoSlots = { base:{} };   // chaves '0'..'6' = domingo..sábado
-  var promoSel = 'base';
-  function _promoLerForm(){
-    const $ = function(id){ return document.getElementById(id); };
-    const usaHor = !!($('promoHorario') && $('promoHorario').checked);
-    return {
-      on: !!($('promoAtivo') && $('promoAtivo').checked),
-      texto: $('promoTexto') ? $('promoTexto').value.trim() : '',
-      foto: promoFotoUrl || '',
-      cor: $('promoCor') ? $('promoCor').value : '#e0245e',
-      tamanho: $('promoTam') ? (parseInt($('promoTam').value,10)||16) : 16,
-      fonte: $('promoFonte') ? $('promoFonte').value : '',
-      horaIni: (usaHor && $('promoHoraIni')) ? $('promoHoraIni').value : '',
-      horaFim: (usaHor && $('promoHoraFim')) ? $('promoHoraFim').value : ''
-    };
-  }
-  function _promoEscreverForm(o){
-    o = o || {}; const $ = function(id){ return document.getElementById(id); };
-    if($('promoAtivo')) $('promoAtivo').checked = !!o.on;
-    if($('promoTexto')) $('promoTexto').value = o.texto || '';
-    promoFotoUrl = o.foto || '';
-    if($('promoCor')) $('promoCor').value = /^#[0-9a-fA-F]{3,8}$/.test(String(o.cor||'')) ? o.cor : '#e0245e';
-    { const t = (o.tamanho >= 11 && o.tamanho <= 30) ? o.tamanho : 16; if($('promoTam')) $('promoTam').value = t; if($('promoTamVal')) $('promoTamVal').textContent = t; }
-    if($('promoFonte')) $('promoFonte').value = o.fonte || '';
-    const temHor = !!(o.horaIni && o.horaFim);
-    if($('promoHorario')) $('promoHorario').checked = temHor;
-    if(temHor){ if($('promoHoraIni')) $('promoHoraIni').value = o.horaIni; if($('promoHoraFim')) $('promoHoraFim').value = o.horaFim; }
-    _promoFotoUI(); _promoHorarioNota(); _promoAplicarSelUI(); _promoPreview();
-  }
-  function _promoAplicarSelUI(){
-    const lbl = document.getElementById('promoAtivoLabel');
-    if(lbl) lbl.textContent = (promoSel === 'base') ? 'Mostrar promoção na montra' : 'Usar promoção própria neste dia (senão usa a Base)';
-  }
-  function _promoTrocarSlot(nova){ promoSlots[promoSel] = _promoLerForm(); promoSel = nova; _promoEscreverForm(promoSlots[promoSel] || {}); }
-  { const _ps = document.getElementById('promoSel'); if(_ps) _ps.addEventListener('change', function(){ _promoTrocarSlot(_ps.value); }); }
-  function _promoCarregar(){
-    promoSlots = { base: {
-      on: !!(config.promo && config.promo.ativo === true),
-      texto: (config.promo && config.promo.texto) || '', foto: (config.promo && config.promo.foto) || '',
-      cor: (config.promo && config.promo.cor) || '#e0245e', tamanho: (config.promo && config.promo.tamanho) || 16,
-      fonte: (config.promo && config.promo.fonte) || '', horaIni: (config.promo && config.promo.horaIni) || '', horaFim: (config.promo && config.promo.horaFim) || ''
-    } };
-    const pd = config.promoDias || {};
-    ['0','1','2','3','4','5','6'].forEach(function(k){ const d = pd[k]; if(!d) return;
-      promoSlots[k] = { on: d.usar === true, texto: d.texto||'', foto: d.foto||'', cor: d.cor||'#e0245e', tamanho: d.tamanho||16, fonte: d.fonte||'', horaIni: d.horaIni||'', horaFim: d.horaFim||'' };
-    });
-    promoSel = 'base';
-    const _ps = document.getElementById('promoSel'); if(_ps) _ps.value = 'base';
-    _promoEscreverForm(promoSlots.base);
-  }
-  function _promoGuardar(){
-    promoSlots[promoSel] = _promoLerForm();
-    const b = promoSlots.base || {};
-    config.promo = { ativo: !!b.on, texto: b.texto||'', foto: b.foto||'', cor: b.cor||'#e0245e', tamanho: b.tamanho||16, fonte: b.fonte||'', horaIni: b.horaIni||'', horaFim: b.horaFim||'' };
-    const pd = {};
-    ['0','1','2','3','4','5','6'].forEach(function(k){ const s = promoSlots[k]; if(!s) return;
-      const temConteudo = (s.texto && s.texto.trim()) || s.foto;
-      if(s.on || temConteudo){ pd[k] = { usar: !!s.on, texto: s.texto||'', foto: s.foto||'', cor: s.cor||'#e0245e', tamanho: s.tamanho||16, fonte: s.fonte||'', horaIni: s.horaIni||'', horaFim: s.horaFim||'' }; }
-    });
-    config.promoDias = pd;
-  }
-  { const _pf = document.getElementById('promoFotoFile');
-    if(_pf) _pf.addEventListener('change', async e => {
-      const f = e.target.files && e.target.files[0]; if(!f) return;
-      setEstado('A enviar foto da promoção…', 'info');
-      try{ const url = await _uploadFoto(f); promoFotoUrl = url; _promoFotoUI(); setEstado('Foto da promoção adicionada ✓ — não te esqueças de Guardar.', 'ok'); }
-      catch(err){ setEstado('Erro ao enviar foto: ' + (err && err.message ? err.message : err), 'erro'); }
-    }); }
-  { const _pr = document.getElementById('promoFotoRemover');
-    if(_pr) _pr.addEventListener('click', () => { promoFotoUrl = ''; _promoFotoUI(); setEstado('Foto da promoção removida — Guardar para aplicar.', 'info'); }); }
-  { const _pm = document.getElementById('promoTam'), _pv = document.getElementById('promoTamVal');
-    if(_pm && _pv) _pm.addEventListener('input', () => { _pv.textContent = _pm.value; }); }
+  // (O editor de "Promoção na montra" foi removido — as promoções gerem-se na Gestão → Promoções.)
   function _anuncioPrev(){
     const box = document.getElementById('anuncioFotoPrev');
     if(!box) return;
@@ -3602,7 +3426,6 @@ amesadigital.pt</textarea>
   // ---- Guardar tudo ----
   async function guardarTudo(){
     const token = tokenInput.value.trim();
-    if(!token){ setEstado('Cola primeiro o teu token.', 'erro'); return; }
     if(!configCarregado){
       setEstado('Clica primeiro em "📥 Carregar definições atuais" antes de guardar.', 'erro');
       return;
@@ -3687,7 +3510,7 @@ amesadigital.pt</textarea>
           setEstado('A guardar menu…', 'info');
           const rM = await window.__guardarMenuAgora();
           if(rM && rM.ok){ setEstado('✅ Tudo guardado (aparência + menu).', 'ok'); }
-          else if(rM && rM.erro === 'menu-nao-carregado'){ setEstado('✅ Aparência guardada. (O menu não estava carregado — se editaste pratos, abre o separador "Menu", carrega o menu e Guardar.)', 'ok'); }
+          else if(rM && rM.erro === 'menu-nao-carregado'){ setEstado('✅ Tudo guardado. (O menu não tinha alterações.)', 'ok'); }
           else { setEstado('⚠️ Aparência guardada, mas o MENU NÃO guardou: ' + ((rM && rM.erro) || 'erro desconhecido') + '. Vai ao separador "Menu" e usa "💾 Guardar menu".', 'erro'); }
         } else {
           setEstado('✅ Definições guardadas.', 'ok');
@@ -4698,13 +4521,10 @@ amesadigital.pt</textarea>
 
   // ================= EDITOR DO MENU (menu.json) =================
   (function(){
-    const MENU_PATH = 'menu.json';
-    const MENU_API = 'https://api.github.com/repos/' + REPO + '/contents/' + MENU_PATH;
     const editorEl = document.getElementById('menuEditor');
     const acoesEl = document.getElementById('menuAcoes');
     const estadoMenuEl = document.getElementById('estadoMenu');
     let menuData = null;
-    let menuSha = null;
 
     function setEstadoMenu(msg, tipo){ estadoMenuEl.className = 'estado ' + (tipo||'info'); estadoMenuEl.textContent = msg; }
     function slugMenu(s){ return (s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,''); }
@@ -5381,7 +5201,6 @@ amesadigital.pt</textarea>
         const m = (window.__negocio && window.__negocio.menu) || {};
         menuData = (m && Array.isArray(m.categorias)) ? JSON.parse(JSON.stringify(m)) : { restaurante:'', categorias:[] };
         if(!Array.isArray(menuData.categorias)) menuData.categorias = [];
-        menuSha = null;
         setEstadoMenu('Menu carregado ✓', 'ok');
         renderEditor();
         acoesEl.style.display = 'block';
@@ -5927,20 +5746,39 @@ amesadigital.pt</textarea>
     const frame = document.getElementById('previewFrame');
     if(!dock || !frame) return;
     let pronto = false, temporizador = null;
-    // A pré-visualização renderiza à largura real de um telemóvel (390px) e encolhe para caber no dock,
-    // para o layout (quebras de linha, tamanhos) ser fiel ao que o cliente vê.
-    const LARGURA_TELEMOVEL = 360;   // largura conservadora (telemóvel estreito), para a pré ser fiel
+    // A pré-visualização renderiza com as dimensões REAIS do ecrã de um telemóvel (largura × altura visível,
+    // margens seguras do notch e da barra inferior) e encolhe por "scale" para caber no dock.
+    // Assim quebras de linha, alturas em vh, a barra fixa e a folha das reservas ficam iguais ao telemóvel.
+    const APARELHOS = {
+      '360': { app:{ h:800, top:0,  bottom:0  }, safari:{ h:660, top:0, bottom:0 } },   // Android típico
+      '390': { app:{ h:844, top:47, bottom:34 }, safari:{ h:664, top:0, bottom:0 } },   // iPhone 12–15
+      '430': { app:{ h:932, top:59, bottom:34 }, safari:{ h:746, top:0, bottom:0 } }    // iPhone Pro Max
+    };
+    function aparelho(){
+      const l = (document.getElementById('pvLarg') || {}).value || '390';
+      const m = (document.getElementById('pvModo') || {}).value || 'app';
+      const a = (APARELHOS[l] || APARELHOS['390'])[m] || APARELHOS['390'].app;
+      return { w:parseInt(l, 10), h:a.h, top:a.top, bottom:a.bottom, modo:m };
+    }
     function ajustarEscalaPreview(){
       const corpo = dock.querySelector('.preview-dock-corpo');
       if(!corpo || dock.classList.contains('min')) return;
-      const w = corpo.clientWidth, h = corpo.clientHeight;
-      if(!w || !h) return;
-      const escala = w / LARGURA_TELEMOVEL;
-      frame.style.width = LARGURA_TELEMOVEL + 'px';
-      frame.style.height = Math.ceil(h / escala) + 'px';
+      const w = corpo.clientWidth; if(!w) return;
+      const ap = aparelho();
+      const escala = w / ap.w;
+      frame.style.width = ap.w + 'px';
+      frame.style.height = ap.h + 'px';
       frame.style.transformOrigin = 'top left';
       frame.style.transform = 'scale(' + escala + ')';
+      corpo.style.height = Math.ceil(ap.h * escala) + 'px';
+      const nt = document.getElementById('pvNotch'), hm = document.getElementById('pvHome');
+      if(nt){ nt.style.display = ap.top ? 'block' : 'none'; nt.style.height = Math.round(ap.top * escala) + 'px'; }
+      if(hm){ hm.style.display = ap.bottom ? 'block' : 'none'; hm.style.height = Math.round(ap.bottom * escala) + 'px'; }
+      const nota = document.getElementById('pvNota');
+      if(nota) nota.textContent = 'Ecrã ' + ap.w + '×' + ap.h + (ap.modo === 'app' ? ' (instalado como app)' : ' (Safari)') + ' · a pré mostra sempre o prato do dia e as promoções, mesmo fora do horário.';
     }
+    function urlPreview(){ const ap = aparelho(); return 'cardapio.html?n=' + encodeURIComponent(SLUG) + '&preview=1&safeTop=' + ap.top + '&safeBottom=' + ap.bottom + '&t=' + Date.now(); }
+    ['pvLarg','pvModo'].forEach(function(id){ const el = document.getElementById(id); if(el) el.addEventListener('change', function(){ pronto = false; frame.src = urlPreview(); ajustarEscalaPreview(); }); });
     window.addEventListener('resize', ajustarEscalaPreview);
     // Recalcular sempre que a coluna mudar de tamanho (mais fiável que só 'resize')
     try{
@@ -6121,7 +5959,7 @@ amesadigital.pt</textarea>
       });
     }
     // Arranca a pré-visualização logo
-    frame.src = 'cardapio.html?n=' + encodeURIComponent(SLUG) + '&preview=1&t=' + Date.now();
+    frame.src = urlPreview();
   })();
 
   // Guardar começa desativado até carregar (evita apagar dados sem querer)
@@ -6464,6 +6302,27 @@ amesadigital.pt</textarea>
     if(iniSec && !_gated(document.getElementById(iniSec))) abrirSec(iniSec); else irInicio();
     try{ window.__edSyncNav(); }catch(e){}
   })();
+</script>
+
+<!-- Detetor de versão: se o servidor tiver um ficheiro mais recente do que o carregado (cache iOS/PWA), recarrega uma vez com cache-busting -->
+<script>
+(function(){
+  try{
+    if(window.__PREVIEW) return;
+    var mine = Date.parse(document.lastModified); if(!mine) return;
+    fetch(location.pathname + "?_v=" + Date.now(), { method:"HEAD", cache:"no-store" }).then(function(r){
+      var lm = r.headers.get("last-modified"); if(!lm) return;
+      var srv = Date.parse(lm); if(!srv) return;
+      if(srv - mine > 60000){
+        var k = "amVerReload:" + srv;
+        try{ if(sessionStorage.getItem(k)) return; sessionStorage.setItem(k, "1"); }catch(e){}
+        var q = location.search.replace(/^\?/,"").split("&").filter(function(p){ return p && p.indexOf("_cb=")!==0 && p.indexOf("_v=")!==0; });
+        q.push("_cb=" + Date.now());
+        location.replace(location.pathname + "?" + q.join("&") + location.hash);
+      }
+    }).catch(function(){});
+  }catch(e){}
+})();
 </script>
 
 <!-- Caixa preta: regista erros JS não tratados na tabela "erros" (máx. 5 por sessão, sem repetidos, sem ruído) -->
