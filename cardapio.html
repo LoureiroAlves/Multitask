@@ -3013,6 +3013,7 @@
   function _mItem(it){
     const item = document.createElement('div');
     item.className = 'item';
+    try{ item.dataset.alvoNome = (typeof it.nome === 'string') ? it.nome : ((it.nome && (it.nome.pt || it.nome[Object.keys(it.nome)[0]])) || ''); }catch(e){}
     if(it.vinho){ item.classList.add('vinho-clicavel'); item.setAttribute('data-vinho', it.vinho); }
     if(it.foto){ item.classList.add('prato-clicavel'); item.setAttribute('data-foto', it.foto); }
     const nomeEl = document.createElement('div');
@@ -3305,6 +3306,7 @@
       grid.innerHTML = '';
       var vp = document.createElement('div');
       vp.style.cssText = 'position:relative;overflow:hidden;border-radius:22px;height:140px;box-shadow:0 4px 14px rgba(0,0,0,.14);';
+      try{ vp.dataset.alvo = 'pd:' + (pd === cfg.pratoFixo ? 'fixo' : _pdIso); vp.dataset.alvoRotulo = 'Prato do dia: ' + ((lista[0] && lista[0].titulo) || ''); vp.dataset.alvoSeccao = 'Prato do dia'; }catch(e){}
       grid.appendChild(vp);
       function _mapaSlide(c){ var m = _mapa(c); m.neonAtivo = false; return m; }   // o neon fica na moldura
       function _buildSlide(c){
@@ -3662,6 +3664,7 @@
     try{ window.__aplicarJanelaHoraria(); }catch(e){}
     window.__menuOk = true; window.__tryReveal();
     if(window.__ajustarCapa){ setTimeout(window.__ajustarCapa, 60); setTimeout(window.__ajustarCapa, 400); }
+    try{ if(window.__ovoMarcarAlvos) window.__ovoMarcarAlvos(); }catch(e){}
   }
 
   // Janela horária das categorias (ex.: menu de almoço só entre 12:00 e 15:00).
@@ -4699,6 +4702,7 @@
           // Renderiza o estilo escolhido (autocolante, fita, etiqueta, cupão, néon, urgência, selo, oval)
           try{ el.style.setProperty('--pd-fundo', getComputedStyle(document.body).backgroundColor || '#fbf7ef'); }catch(e){}
           el.innerHTML = (typeof window.__amPromoCard === 'function') ? window.__amPromoCard(p) : ('<div style="padding:14px;background:'+(p.cor||'#e0245e')+';color:#fff;border-radius:14px;font-weight:800;">'+String(p.texto||'').replace(/</g,'&lt;')+'</div>');
+          try{ el.dataset.alvo = 'promo:' + (p.id || 'hoje'); el.dataset.alvoRotulo = 'Promoção: ' + String(p.texto || '').split('\n')[0].slice(0, 40); el.dataset.alvoSeccao = 'Promoções'; }catch(e){}
           el.style.display = '';
         }catch(e){}
       };
@@ -5098,7 +5102,7 @@
         const intro = config.intro || {};
         const ov = document.getElementById('introOverlay');
         if(!ov) return;
-        if(intro.ativo && !window.__PREVIEW && !window.__refrescando){
+        if(intro.ativo && !window.__PREVIEW && !window.__refrescando && !window.__esconderijo){
           window.__introAtiva = true;
           const nEl = document.getElementById('introNome');
           const sEl = document.getElementById('introSub');
@@ -5775,7 +5779,7 @@
     return new Promise(function(resolve){
       cfg = cfg || {};
       var ov = document.getElementById('preAbertura');
-      if(!ov || !cfg.ativo || !cfg.foto){ resolve(); return; }
+      if(!ov || !cfg.ativo || !cfg.foto || window.__esconderijo){ resolve(); return; }
       var dur = Math.max(1, Math.min(15, parseInt(cfg.duracao, 10) || 3));
       var _anim = cfg.animacao || 'nenhuma';
       var link = cfg.link && String(cfg.link).trim();
@@ -9407,6 +9411,7 @@
         if(cfg.cerimonias && temCerimonias()) modos.push('cerimonias');
         if(cfg.reservas && !!window._agenda) modos.push('reservas');
         if(!modos.length){ var _w0 = document.getElementById('introModosWrap'); if(_w0) _w0.remove(); return; }
+        if(window.__esconderijo){ modosAtuais = modos; aplicarModo('normal'); return; }   // modo esconderijo: menu normal, sem ecrã de escolha
         // Já há um modo escolhido (ex.: "puxar para atualizar" reaplica a configuração) → NÃO voltar a mostrar a abertura/ecrã de escolha
         { var _mAt = /\bmodo-(normal|takeaway|grupos|cerimonias)\b/.exec(document.body.className);
           if(_mAt){ modosAtuais = modos; try{ aplicarModo(_mAt[1]); }catch(e){} return; }   // reaplica o modo atual (carrinho ligado/desligado) sem mostrar nada
@@ -9658,6 +9663,294 @@
       }
     }).catch(function(){});
   }catch(e){}
+})();
+</script>
+
+<!-- ===== NO CU DA GALINHA · alvos escondíveis + MODO ESCONDERIJO (?modo=esconderijo, usado pela Gestão) ===== -->
+<style>
+  [data-alvo].ovo-escolhido{ outline:3px solid #f2b705 !important; outline-offset:3px; box-shadow:0 0 0 6px rgba(242,183,5,.25), 0 0 22px rgba(242,183,5,.6) !important; animation:ovoPulse 1s ease-in-out infinite; position:relative; z-index:5; }
+  @keyframes ovoPulse{ 0%,100%{ box-shadow:0 0 0 6px rgba(242,183,5,.25), 0 0 22px rgba(242,183,5,.6); } 50%{ box-shadow:0 0 0 10px rgba(242,183,5,.05), 0 0 34px rgba(242,183,5,.9); } }
+  body.modo-esconderijo{ padding-top:62px; }
+  body.modo-esconderijo [data-alvo]{ cursor:pointer; }
+  body.modo-esconderijo .ovo-chip-cat{ display:block; }
+  .ovo-chip-cat{ display:none; width:calc(100% - 28px); margin:10px 14px 4px; box-sizing:border-box; border:2px dashed #f2b705; background:#fff8dc; color:#7a5a00; border-radius:12px; padding:11px 12px; font-weight:800; font-family:inherit; font-size:.92rem; cursor:pointer; text-align:left; }
+  #ovoBarra{ position:fixed; top:0; left:0; right:0; z-index:9000; background:#1f2530; color:#fff; padding:calc(10px + var(--sa-top, env(safe-area-inset-top))) 12px 10px; display:flex; align-items:center; gap:10px; box-shadow:0 4px 16px rgba(0,0,0,.35); font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; }
+  #ovoBarra .t{ flex:1; font-weight:800; font-size:.9rem; line-height:1.25; }
+  #ovoBarra .t small{ display:block; font-weight:600; opacity:.8; font-size:.74rem; }
+  #ovoBarra button{ border:none; background:rgba(255,255,255,.16); color:#fff; border-radius:10px; padding:9px 12px; font-weight:800; font-family:inherit; cursor:pointer; }
+  #ovoConf{ position:fixed; left:0; right:0; bottom:0; z-index:9001; background:#fff; border-radius:20px 20px 0 0; padding:18px 18px calc(18px + var(--sa-bottom, env(safe-area-inset-bottom))); box-shadow:0 -12px 40px rgba(0,0,0,.35); font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; color:#3a2c18; transform:translateY(110%); transition:transform .32s cubic-bezier(.22,.9,.3,1); }
+  #ovoConf.on{ transform:translateY(0); }
+  #ovoConf .k{ font-size:.72rem; font-weight:800; letter-spacing:.5px; color:#8a7a5c; text-transform:uppercase; }
+  #ovoConf .v{ font-size:1.25rem; font-weight:900; margin:2px 0 10px; }
+  #ovoConf .v.s{ font-size:1rem; font-weight:700; color:#6b4a1f; }
+  #ovoConf .acts{ display:flex; gap:8px; margin-top:6px; }
+  #ovoConf .acts button{ flex:1; border:none; border-radius:12px; padding:14px; font-weight:900; font-family:inherit; font-size:1rem; cursor:pointer; }
+  #ovoConf .ok{ background:#f2b705; color:#3a2c18; }
+  #ovoConf .outro{ background:#f3ead8; color:#6b4a1f; }
+</style>
+<script>
+(function(){
+  var Q; try{ Q = new URLSearchParams(location.search); }catch(e){ Q = { get:function(){ return null; } }; }
+  var MODO = Q.get('modo') === 'esconderijo';
+  window.__esconderijo = MODO;
+  function slug(s){ return String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''); }
+  function nomePt(v){ if(!v) return ''; if(typeof v === 'string') return v; try{ return v.pt || v[Object.keys(v)[0]] || ''; }catch(e){ return ''; } }
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]; }); }
+
+  // Marca os elementos escondíveis do menu com data-alvo (ids estáveis; nomes em PT, independentes da língua escolhida)
+  window.__ovoMarcarAlvos = function(){
+    var menu = window._menu; if(!menu || !Array.isArray(menu.categorias)) return;
+    menu.categorias.forEach(function(cat){
+      if(!cat || !cat.id) return;
+      var rot = nomePt(cat.tile) || cat.id;
+      document.querySelectorAll('.tile[data-target="' + String(cat.id).replace(/"/g, '') + '"]').forEach(function(t){ t.dataset.alvo = 'cat:' + cat.id; t.dataset.alvoRotulo = rot; t.dataset.alvoSeccao = ''; });
+      var sec = document.getElementById(cat.id); if(!sec) return;
+      var usados = {};
+      sec.querySelectorAll('.item').forEach(function(el){
+        var n = el.dataset.alvoNome || ((el.querySelector('.nome') || {}).textContent || '');
+        var sl = slug(n); if(!sl) return;
+        usados[sl] = (usados[sl] || 0) + 1;
+        el.dataset.alvo = 'item:' + cat.id + '/' + sl + (usados[sl] > 1 ? ('#' + usados[sl]) : '');
+        el.dataset.alvoRotulo = String(n).trim(); el.dataset.alvoSeccao = rot;
+      });
+      sec.querySelectorAll('.mos-box').forEach(function(b, i){ b.dataset.alvo = 'mos:' + cat.id + '#' + i; b.dataset.alvoRotulo = ((b.querySelector('.mos-tit') || {}).textContent || ('Caixa ' + (i + 1))).trim(); b.dataset.alvoSeccao = rot; });
+      if(MODO && !sec.querySelector('.ovo-chip-cat')){
+        var c = document.createElement('button'); c.type = 'button'; c.className = 'ovo-chip-cat'; c.textContent = '🥚 Esconder o ovo nesta categoria (' + rot + ')';
+        c.dataset.alvo = 'cat:' + cat.id; c.dataset.alvoRotulo = rot; c.dataset.alvoSeccao = '';
+        sec.insertBefore(c, sec.firstChild);
+      }
+    });
+  };
+
+  if(!MODO) return;
+  // ---------- MODO ESCONDERIJO ----------
+  var escolhido = null;
+  function enviar(msg){ try{ if(window.parent && window.parent !== window) window.parent.postMessage(msg, '*'); }catch(e){} try{ if(window.opener) window.opener.postMessage(msg, '*'); }catch(e){} }
+  function montar(){
+    document.body.classList.add('modo-esconderijo');
+    var b = document.createElement('div'); b.id = 'ovoBarra';
+    b.innerHTML = '<span style="font-size:1.6rem;">🥚</span><div class="t">Toca no sítio onde queres esconder o ovo<small>Abre as categorias normalmente. Podes escolher um prato, uma caixa, a promoção, o prato do dia ou a própria categoria.</small></div><button type="button" id="ovoCancelar">Cancelar</button>';
+    document.body.appendChild(b);
+    var c = document.createElement('div'); c.id = 'ovoConf';
+    c.innerHTML = '<div class="k">Local escolhido</div><div class="v" id="ovoRot">—</div><div class="k" id="ovoSecK">Secção</div><div class="v s" id="ovoSec">—</div><div class="acts"><button type="button" class="outro" id="ovoOutro">Escolher outro local</button><button type="button" class="ok" id="ovoOk">✔ Confirmar esconderijo</button></div>';
+    document.body.appendChild(c);
+    document.getElementById('ovoCancelar').onclick = function(){ enviar({ type:'ovo-cancelar' }); };
+    document.getElementById('ovoOutro').onclick = function(){ limpar(); };
+    document.getElementById('ovoOk').onclick = function(){ if(!escolhido) return; enviar({ type:'ovo-esconderijo', alvo:escolhido }); try{ localStorage.setItem('amesaOvoAlvo', JSON.stringify(escolhido)); }catch(e){} document.getElementById('ovoOk').textContent = '✔ Guardado'; };
+  }
+  function limpar(){ escolhido = null; document.querySelectorAll('.ovo-escolhido').forEach(function(x){ x.classList.remove('ovo-escolhido'); }); var c = document.getElementById('ovoConf'); if(c) c.classList.remove('on'); }
+  function escolher(el){
+    var a = String(el.dataset.alvo || ''); var i = a.indexOf(':'); if(i < 0) return;
+    limpar();
+    escolhido = { tipo:a.slice(0, i), ref:a.slice(i + 1), rotulo:el.dataset.alvoRotulo || a, seccao:el.dataset.alvoSeccao || '' };
+    el.classList.add('ovo-escolhido');
+    document.getElementById('ovoRot').textContent = escolhido.rotulo;
+    var temSec = !!escolhido.seccao; document.getElementById('ovoSecK').style.display = temSec ? '' : 'none'; document.getElementById('ovoSec').style.display = temSec ? '' : 'none'; document.getElementById('ovoSec').textContent = escolhido.seccao;
+    document.getElementById('ovoOk').textContent = '✔ Confirmar esconderijo';
+    document.getElementById('ovoConf').classList.add('on');
+    try{ if(navigator.vibrate) navigator.vibrate(30); }catch(e){}
+  }
+  // Interceta os toques nos alvos ANTES do menu (fase de captura). As categorias (tiles) continuam a abrir normalmente —
+  // para esconder numa categoria usa-se o chip amarelo dentro dela.
+  document.addEventListener('click', function(e){
+    var el = e.target && e.target.closest ? e.target.closest('[data-alvo]') : null;
+    if(!el || el.classList.contains('tile')) return;
+    e.preventDefault(); e.stopImmediatePropagation(); e.stopPropagation();
+    escolher(el);
+  }, true);
+  ['pointerdown','pointerup','touchend','mousedown','mouseup'].forEach(function(ev){
+    document.addEventListener(ev, function(e){ var el = e.target && e.target.closest ? e.target.closest('[data-alvo]') : null; if(el && !el.classList.contains('tile') && ev !== 'pointerdown' && ev !== 'mousedown'){ e.stopImmediatePropagation(); } }, true);
+  });
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', montar); else montar();
+  // Menu já construído? marca; senão o construirMenu chama __ovoMarcarAlvos no fim
+  setTimeout(function(){ try{ window.__ovoMarcarAlvos(); }catch(e){} }, 800);
+})();
+</script>
+
+<!-- ===== NO CU DA GALINHA · o jogo no menu (selo, abertura, caça, vitória, popup global) ===== -->
+<style>
+  #ovoSelo{ max-width:640px; margin:10px auto 0; padding:0 14px; display:none; }
+  #ovoSelo button{ width:100%; border:none; border-radius:16px; padding:12px 14px; background:linear-gradient(135deg,#f2b705,#e0245e); color:#fff; font-weight:900; font-family:inherit; font-size:.95rem; text-align:left; display:flex; align-items:center; gap:10px; cursor:pointer; box-shadow:0 8px 22px rgba(224,36,94,.25); }
+  #ovoSelo button .ov{ font-size:1.6rem; animation:ovoBounce 1.6s ease-in-out infinite; }
+  #ovoSelo button small{ display:block; font-weight:600; opacity:.92; font-size:.78rem; }
+  #ovoSelo.fim button{ background:linear-gradient(135deg,#5a6b5f,#3a4a3f); box-shadow:none; }
+  @keyframes ovoBounce{ 0%,100%{ transform:translateY(0) rotate(-6deg); } 50%{ transform:translateY(-4px) rotate(6deg); } }
+  #ovoOv{ position:fixed; inset:0; z-index:9200; background:rgba(20,14,6,.62); display:flex; align-items:flex-end; justify-content:center; opacity:0; transition:opacity .3s; }
+  #ovoOv.on{ opacity:1; }
+  #ovoCard{ width:100%; max-width:520px; background:linear-gradient(180deg,#fffdf6,#fff); border-radius:24px 24px 0 0; padding:20px 20px calc(22px + var(--sa-bottom, env(safe-area-inset-bottom))); box-shadow:0 -14px 44px rgba(0,0,0,.35); transform:translateY(100%); transition:transform .38s cubic-bezier(.2,.9,.3,1); font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; color:#3a2c18; max-height:92vh; overflow:auto; }
+  #ovoOv.on #ovoCard{ transform:translateY(0); }
+  #ovoCard .big{ font-size:3.2rem; text-align:center; line-height:1; }
+  #ovoCard h2{ margin:8px 0 4px; font-size:1.5rem; font-weight:900; text-align:center; }
+  #ovoCard p{ margin:6px 0; font-size:.95rem; line-height:1.4; text-align:center; }
+  #ovoCard .premio{ margin:12px 0; padding:12px 14px; border-radius:14px; background:#fff3c4; border:1.5px solid #f2b705; text-align:center; }
+  #ovoCard .premio b{ display:block; font-size:1.15rem; }
+  #ovoCard .dica{ margin:10px 0; padding:10px 12px; border-radius:12px; background:#eef4ff; color:#1f4e9c; font-weight:700; font-size:.9rem; text-align:center; }
+  #ovoCard .meta{ font-size:.78rem; color:#8a7a5c; text-align:center; }
+  #ovoCard .btn{ width:100%; margin-top:14px; border:none; border-radius:14px; padding:16px; font-size:1.1rem; font-weight:900; font-family:inherit; cursor:pointer; background:linear-gradient(135deg,#f2b705,#e0245e); color:#fff; box-shadow:0 8px 20px rgba(224,36,94,.3); }
+  #ovoCard .btn.sec{ background:#f3ead8; color:#6b4a1f; box-shadow:none; margin-top:8px; padding:12px; font-size:.95rem; }
+  #ovoCard input{ width:100%; box-sizing:border-box; padding:12px; border:1.5px solid #e0d3b5; border-radius:12px; font-family:inherit; font-size:1rem; margin-top:8px; }
+  #ovoCard .codigo{ font-family:ui-monospace,Menlo,monospace; font-size:1.7rem; font-weight:900; letter-spacing:2px; text-align:center; padding:12px; border:2px dashed #f2b705; border-radius:14px; background:#fff8dc; margin:12px 0; }
+  #ovoFlut{ position:fixed; left:12px; bottom:calc(84px + var(--sa-bottom, env(safe-area-inset-bottom))); z-index:390; border:none; border-radius:999px; padding:8px 12px 8px 8px; background:#fff; color:#3a2c18; box-shadow:0 6px 18px rgba(0,0,0,.28); font-weight:900; font-family:inherit; display:none; align-items:center; gap:6px; cursor:pointer; }
+  #ovoFlut .ov{ font-size:1.4rem; animation:ovoBounce 1.6s ease-in-out infinite; }
+  #ovoFlut small{ font-weight:700; color:#8a7a5c; font-size:.72rem; }
+  #ovoToast{ position:fixed; left:50%; bottom:calc(150px + var(--sa-bottom, env(safe-area-inset-bottom))); transform:translateX(-50%); z-index:9100; background:rgba(58,44,24,.92); color:#fff; padding:10px 16px; border-radius:999px; font-weight:800; font-size:.9rem; opacity:0; transition:opacity .25s; pointer-events:none; white-space:nowrap; max-width:92vw; text-overflow:ellipsis; overflow:hidden; }
+  #ovoToast.on{ opacity:1; }
+  .ovo-shake{ animation:ovoShake .35s ease-in-out; }
+  @keyframes ovoShake{ 0%,100%{ transform:translateX(0); } 25%{ transform:translateX(-5px); } 75%{ transform:translateX(5px); } }
+  .ovo-conf{ position:fixed; top:-10px; width:10px; height:14px; z-index:9300; pointer-events:none; animation:ovoConf linear forwards; }
+  @keyframes ovoConf{ to{ transform:translateY(110vh) rotate(720deg); opacity:.9; } }
+</style>
+<script>
+(function(){
+  if(window.__PREVIEW || window.__esconderijo) return;
+  var J = null, P = null, canal = null, pollT = null, tentativas = 0, tentPend = 0, dicasMostradas = {}, cache = {}, aCacar = false, terminouVisto = false, venci = null, encoder = null;
+  function $(id){ return document.getElementById(id); }
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]; }); }
+  function disp(){ try{ var d = localStorage.getItem('amesaDisp'); if(!d){ d = (crypto.randomUUID ? crypto.randomUUID() : ('xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c){ var r = Math.random()*16|0, v = c === 'x' ? r : (r&0x3|0x8); return v.toString(16); }))); localStorage.setItem('amesaDisp', d); } return d; }catch(e){ return '00000000-0000-4000-8000-000000000000'; } }
+  function hhmm(ts){ var d = new Date(ts); return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0'); }
+  function ls(k, v){ try{ if(v === undefined) return localStorage.getItem(k); if(v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); }catch(e){ return null; } }
+  async function sha(txt){ if(cache[txt]) return cache[txt]; try{ encoder = encoder || new TextEncoder(); var b = await crypto.subtle.digest('SHA-256', encoder.encode(txt)); var h = Array.prototype.map.call(new Uint8Array(b), function(x){ return ('0' + x.toString(16)).slice(-2); }).join(''); cache[txt] = h; return h; }catch(e){ return ''; } }
+  function toast(t){ var el = $('ovoToast'); if(!el){ el = document.createElement('div'); el.id = 'ovoToast'; document.body.appendChild(el); } el.textContent = t; el.classList.add('on'); clearTimeout(el._t); el._t = setTimeout(function(){ el.classList.remove('on'); }, 1400); }
+  function vib(p){ try{ if(navigator.vibrate) navigator.vibrate(p); }catch(e){} }
+  // ---------- carregar o jogo ----------
+  async function carregar(){
+    if(typeof sbC === 'undefined' || !sbC || !window.__negocioId) return;
+    var r = await sbC.from('ovo_jogos_publico').select('*').eq('negocio_id', window.__negocioId).gte('fim', new Date(Date.now() - 24*3600*1000).toISOString()).order('inicio', { ascending:false }).limit(5);
+    if(r.error || !r.data) return;
+    var ativo = r.data.filter(function(j){ return j.estado === 'ativo'; })[0];
+    var term = r.data.filter(function(j){ return j.estado === 'terminado' && j.terminado_em && (Date.now() - new Date(j.terminado_em).getTime()) < 24*3600*1000; })[0];
+    aplicar(ativo || term || null);
+  }
+  function aplicar(j){
+    J = j; var selo = $('ovoSelo');
+    if(!selo){ selo = document.createElement('div'); selo.id = 'ovoSelo'; var ref = $('promoDia'); if(ref && ref.parentNode) ref.parentNode.insertBefore(selo, ref); else document.body.appendChild(selo); }
+    if(!J){ selo.style.display = 'none'; pararCaca(); return; }
+    var venc = Array.isArray(J.vencedores_lista) ? J.vencedores_lista : [];
+    if(J.estado === 'terminado'){
+      selo.className = 'fim'; selo.style.display = 'block';
+      selo.innerHTML = '<button type="button"><span class="ov">🥚</span><span>Jogo terminado<small>' + (venc.length ? ('O ovo foi encontrado por ' + esc(venc.map(function(v){ return v.nome; }).join(', ')) + ' às ' + hhmm(venc[0].quando)) : 'O ovo ficou por encontrar') + '</small></span></button>';
+      selo.querySelector('button').onclick = function(){ abrirFolha('fim'); };
+      pararCaca(); return;
+    }
+    selo.className = ''; selo.style.display = 'block';
+    selo.innerHTML = '<button type="button"><span class="ov">🥚</span><span>' + esc(J.nome) + ' — caça ao ovo a decorrer<small>🎁 ' + esc(J.premio_nome) + ' · até às ' + hhmm(J.fim) + (J.participantes ? (' · ' + J.participantes + ' a procurar') : '') + '</small></span></button>';
+    selo.querySelector('button').onclick = function(){ abrirFolha(aCacar ? 'caca' : 'abertura'); };
+    P = ls('amesaOvoPart:' + J.id);
+    if(P){ iniciarCaca(); }
+    else if(!ls('amesaOvoVisto:' + J.id)){ ls('amesaOvoVisto:' + J.id, '1'); setTimeout(function(){ abrirFolha('abertura'); }, 1400); }
+  }
+  // ---------- folhas ----------
+  function fecharFolha(){ var ov = $('ovoOv'); if(!ov) return; ov.classList.remove('on'); setTimeout(function(){ ov.remove(); }, 320); }
+  function folha(html){ var ov = $('ovoOv'); if(ov) ov.remove(); ov = document.createElement('div'); ov.id = 'ovoOv'; ov.innerHTML = '<div id="ovoCard">' + html + '</div>'; document.body.appendChild(ov); ov.addEventListener('click', function(e){ if(e.target === ov) fecharFolha(); }); requestAnimationFrame(function(){ ov.classList.add('on'); }); return ov; }
+  function dicasAtivas(){ if(!J) return []; var out = []; if(J.dica_auto) out.push(J.dica_auto); if(J.charada) out.push(J.charada); var min = (Date.now() - new Date(J.inicio).getTime()) / 60000; (Array.isArray(J.dicas) ? J.dicas : []).forEach(function(d){ if(d && d.texto && min >= (parseFloat(d.minutos) || 0)) out.push(d.texto); }); return out; }
+  function abrirFolha(tipo){
+    if(!J) return;
+    var dicas = dicasAtivas();
+    if(tipo === 'abertura' || tipo === 'caca'){
+      folha('<div class="big">🥚</div><h2>' + esc(J.nome) + '</h2><p>' + esc(J.descricao || 'Há um ovo escondido algures neste menu. Encontra-o antes de toda a gente!') + '</p>'
+        + '<div class="premio"><span style="font-size:.78rem;font-weight:800;color:#8a5a10;">PRÉMIO</span><b>🎁 ' + esc(J.premio_nome) + '</b>' + (J.premio_descricao ? ('<span style="font-size:.85rem;">' + esc(J.premio_descricao) + '</span>') : '') + '</div>'
+        + dicas.map(function(d){ return '<div class="dica">💡 ' + esc(d) + '</div>'; }).join('')
+        + '<p class="meta">Válido até às ' + hhmm(J.fim) + ' · ' + (J.participantes || 0) + ' a procurar · ' + (J.limite_vencedores > 1 ? (J.limite_vencedores + ' prémios') : '1 prémio') + '</p>'
+        + (tipo === 'abertura' ? '<button type="button" class="btn" id="ovoComecar">🔍 Começar a Procurar</button><button type="button" class="btn sec" id="ovoDepois">Agora não</button>'
+                              : '<p style="font-weight:800;">Estás a procurar · ' + tentativas + ' tentativa(s)</p><button type="button" class="btn" id="ovoDepois">Continuar a procurar</button>'));
+      var c = $('ovoComecar'); if(c) c.onclick = comecar;
+      $('ovoDepois').onclick = fecharFolha;
+    } else if(tipo === 'fim'){
+      var venc = Array.isArray(J.vencedores_lista) ? J.vencedores_lista : [];
+      folha('<div class="big">🎉</div><h2>Já temos vencedor!</h2><p>' + (venc.length ? ('O ovo foi encontrado por <b>' + esc(venc.map(function(v){ return v.nome; }).join(', ')) + '</b> às ' + hhmm(venc[0].quando) + '.') : 'O jogo terminou.') + '</p><p>Obrigado por participares — fica atento à próxima caça.</p><button type="button" class="btn sec" id="ovoDepois">Fechar</button>');
+      $('ovoDepois').onclick = fecharFolha;
+    }
+  }
+  async function comecar(){
+    var b = $('ovoComecar'); if(b){ b.disabled = true; b.textContent = 'A entrar…'; }
+    try{ var r = await sbC.rpc('ovo_entrar', { p_jogo:J.id, p_dispositivo:disp() }); if(r.error) throw r.error; P = r.data; ls('amesaOvoPart:' + J.id, P); }
+    catch(e){ if(b){ b.disabled = false; b.textContent = '🔍 Começar a Procurar'; } toast(String(e && e.message || e).indexOf('jogo_inativo') >= 0 ? 'O jogo já terminou.' : 'Não foi possível entrar. Tenta outra vez.'); return; }
+    fecharFolha(); iniciarCaca(); toast('Boa caça! Toca nos pratos, categorias, promoções… 🥚');
+  }
+  // ---------- caça ----------
+  function iniciarCaca(){
+    if(aCacar) return; aCacar = true;
+    tentativas = parseInt(ls('amesaOvoTent:' + J.id) || '0', 10) || 0;
+    var f = $('ovoFlut'); if(!f){ f = document.createElement('button'); f.id = 'ovoFlut'; f.type = 'button'; document.body.appendChild(f); f.onclick = function(){ abrirFolha('caca'); }; }
+    pintaFlut(); f.style.display = 'flex';
+    dicasAtivas().forEach(function(d){ dicasMostradas[d] = 1; });   // as que já estão na abertura não voltam a avisar
+    try{ var vj = ls('amesaOvoVenci:' + J.id); if(vj){ venci = JSON.parse(vj); f.innerHTML = '<span class="ov">🏆</span><span>Ganhaste!<small style="display:block;">' + esc(venci.codigo) + '</small></span>'; f.onclick = function(){ folhaVitoria(venci); }; } }catch(e){}
+    if(!venci) document.addEventListener('click', onToque, true);
+    ligarRealtime(); if(!pollT) pollT = setInterval(sincronizar, 15000);
+    document.addEventListener('visibilitychange', function(){ if(!document.hidden) sincronizar(); });
+    window.addEventListener('pagehide', enviarTentativas);
+    setInterval(function(){ enviarTentativas(); verificarDicas(); }, 30000);
+  }
+  function pararCaca(){ aCacar = false; var f = $('ovoFlut'); if(f) f.style.display = 'none'; document.removeEventListener('click', onToque, true); if(canal){ try{ sbC.removeChannel(canal); }catch(e){} canal = null; } if(pollT){ clearInterval(pollT); pollT = null; } }
+  function pintaFlut(){ var f = $('ovoFlut'); if(f) f.innerHTML = '<span class="ov">🥚</span><span>À caça<small style="display:block;">' + tentativas + ' tentativa(s)' + (dicasAtivas().length ? ' · 💡 dica' : '') + '</small></span>'; }
+  async function onToque(e){
+    if(!aCacar || !J || venci) return;
+    var el = e.target && e.target.closest ? e.target.closest('[data-alvo]') : null; if(!el) return;
+    var a = String(el.dataset.alvo || ''); var i = a.indexOf(':'); if(i < 0) return;
+    var tipo = a.slice(0, i), ref = a.slice(i + 1);
+    var h = await sha((J.sal || '') + tipo + ':' + ref);
+    if(h && J.alvo_hash && h === J.alvo_hash){ reclamar(tipo, ref, el); return; }
+    tentativas++; tentPend++; ls('amesaOvoTent:' + J.id, String(tentativas)); pintaFlut();
+    var quente = (J.dificuldade === 'facil' && J.alvo_seccao && (el.dataset.alvoSeccao === J.alvo_seccao || (tipo === 'cat' && el.dataset.alvoRotulo === J.alvo_seccao)));
+    var frases = quente ? ['Estás quente 🔥', 'Muito perto… 🔥', 'É por aqui! 🔥🔥'] : ['Aqui não… 🐔', 'Nada. Continua a procurar 🐔', 'Frio como gelo ❄️', 'Hmm, aqui só há comida 🍽️', 'O ovo não está aqui 🥚❌'];
+    toast(frases[Math.floor(Math.random() * frases.length)]); vib(quente ? [40,40,40] : 25);
+    el.classList.remove('ovo-shake'); void el.offsetWidth; el.classList.add('ovo-shake');
+  }
+  async function reclamar(tipo, ref, el){
+    venci = 'a_reclamar'; enviarTentativas();
+    try{
+      var r = await sbC.rpc('ovo_reclamar', { p_jogo:J.id, p_participacao:P, p_alvo:{ tipo:tipo, ref:ref }, p_nome:'', p_telefone:'' });
+      if(r.error) throw r.error;
+      var w = (r.data || [])[0]; if(!w) throw new Error('sem_resposta');
+      venci = w; ls('amesaOvoVenci:' + J.id, JSON.stringify(w));
+      confetti(); vib([80,40,80,40,200]);
+      folhaVitoria(w);
+    }catch(e){
+      venci = null;
+      var m = String(e && e.message || e);
+      if(m.indexOf('sem_vagas') >= 0 || m.indexOf('jogo_terminado') >= 0){ toast('Encontraste… mas alguém chegou primeiro 😢'); sincronizar(); }
+      else if(m.indexOf('alvo_errado') >= 0){ toast('Aqui não… 🐔'); }
+      else toast('Não foi possível confirmar. Tenta outra vez.');
+    }
+  }
+  function folhaVitoria(w){
+    var nomeG = ls('amesaEncNome') || '', telG = ls('amesaEncTel') || '';
+    folha('<div class="big">🥚🎉</div><h2>Ovo encontrado!</h2><p><b>Parabéns, ' + (w.posicao > 1 ? ('foste o ' + w.posicao + '.º a encontrar') : 'foste o vencedor') + '!</b></p>'
+      + '<div class="premio"><span style="font-size:.78rem;font-weight:800;color:#8a5a10;">GANHASTE</span><b>🎁 ' + esc(w.premio || J.premio_nome) + '</b></div>'
+      + '<p>Mostra este código no restaurante para levantar o prémio:</p><div class="codigo">' + esc(w.codigo) + '</div>'
+      + '<p style="font-size:.85rem;">Diz-nos quem és, para o restaurante saber a quem entregar:</p>'
+      + '<input id="ovoNome" placeholder="O teu nome" value="' + esc(nomeG) + '"><input id="ovoTel" type="tel" inputmode="tel" placeholder="Telemóvel" value="' + esc(telG) + '">'
+      + '<button type="button" class="btn" id="ovoIdent">Guardar</button><p class="meta" style="margin-top:10px;">O código fica guardado neste telemóvel — toca no ovo para o veres outra vez.</p>');
+    $('ovoIdent').onclick = async function(){ var n = ($('ovoNome').value || '').trim(), t = ($('ovoTel').value || '').trim(); if(!n){ $('ovoNome').focus(); return; } this.disabled = true; try{ await sbC.rpc('ovo_identificar', { p_codigo:w.codigo, p_nome:n, p_telefone:t }); ls('amesaEncNome', n); if(t) ls('amesaEncTel', t); }catch(e){} this.textContent = '✓ Guardado'; setTimeout(fecharFolha, 900); };
+    var f = $('ovoFlut'); if(f){ f.innerHTML = '<span class="ov">🏆</span><span>Ganhaste!<small style="display:block;">' + esc(w.codigo) + '</small></span>'; f.onclick = function(){ folhaVitoria(w); }; }
+    document.removeEventListener('click', onToque, true);
+  }
+  function confetti(){ var cores = ['#f2b705','#e0245e','#1e8c4a','#2a5aa8','#ff8c42']; for(var i = 0; i < 80; i++){ var c = document.createElement('div'); c.className = 'ovo-conf'; c.style.left = (Math.random()*100) + 'vw'; c.style.background = cores[i % cores.length]; c.style.animationDuration = (2 + Math.random()*2) + 's'; c.style.animationDelay = (Math.random()*0.8) + 's'; c.style.borderRadius = (Math.random() > .5 ? '50%' : '2px'); document.body.appendChild(c); setTimeout(function(x){ return function(){ x.remove(); }; }(c), 5000); } }
+  // ---------- sincronização (Realtime + reserva) ----------
+  function ligarRealtime(){
+    try{
+      if(canal || !sbC.channel) return;
+      canal = sbC.channel('ovo-' + J.id).on('postgres_changes', { event:'UPDATE', schema:'public', table:'ovo_jogos', filter:'id=eq.' + J.id }, function(){ sincronizar(); }).subscribe();
+    }catch(e){ canal = null; }
+  }
+  async function sincronizar(){
+    if(!J) return;
+    try{
+      var r = await sbC.from('ovo_jogos_publico').select('*').eq('id', J.id).maybeSingle(); if(r.error || !r.data) return;
+      var antes = J; J = r.data;
+      var vAntes = Array.isArray(antes.vencedores_lista) ? antes.vencedores_lista.length : 0, vAgora = Array.isArray(J.vencedores_lista) ? J.vencedores_lista.length : 0;
+      if(J.estado === 'terminado' || J.estado === 'expirado'){
+        if(!terminouVisto){ terminouVisto = true; if(!venci || venci === 'a_reclamar'){ if(J.estado === 'terminado') abrirFolha('fim'); else toast('O tempo acabou — o ovo ficou por encontrar 🥚'); } }
+        aplicar(J.estado === 'terminado' ? J : null); return;
+      }
+      if(vAgora > vAntes && !venci){ var ult = J.vencedores_lista[vAgora - 1]; toast('🥚 ' + (ult && ult.nome ? ult.nome : 'Alguém') + ' encontrou um ovo — ainda há ' + (J.limite_vencedores - vAgora) + '!'); vib([60,40,60]); }
+      verificarDicas(); pintaFlut();
+    }catch(e){}
+  }
+  function verificarDicas(){ if(!aCacar) return; dicasAtivas().forEach(function(d){ if(!dicasMostradas[d]){ dicasMostradas[d] = 1; toast('💡 Dica: ' + d); vib([40,40,40]); pintaFlut(); } }); }
+  function enviarTentativas(){ if(!P || tentPend <= 0) return; var n = tentPend; tentPend = 0; try{ sbC.rpc('ovo_tentativas', { p_participacao:P, p_n:n }); }catch(e){} }
+  // ---------- arranque: depois do negócio estar carregado ----------
+  var tent = 0; var esperar = setInterval(function(){ tent++; if(window.__negocioId && typeof sbC !== 'undefined' && sbC){ clearInterval(esperar); carregar(); } else if(tent > 60) clearInterval(esperar); }, 500);
 })();
 </script>
 
