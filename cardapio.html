@@ -5017,7 +5017,7 @@
         const intro = config.intro || {};
         const ov = document.getElementById('introOverlay');
         if(!ov) return;
-        if(intro.ativo && !window.__PREVIEW){
+        if(intro.ativo && !window.__PREVIEW && !window.__refrescando){
           window.__introAtiva = true;
           const nEl = document.getElementById('introNome');
           const sEl = document.getElementById('introSub');
@@ -5755,9 +5755,16 @@
       const { data:neg } = await sbC.from('negocios').select('config,menu,nome,ativo,apagado_em').eq('slug', SLUG).maybeSingle();
       if(!neg || neg.apagado_em || neg.ativo === false) return false;
       const config = neg.config || {};
+      // Aparência/cabeçalho/rodapé/modos… — TUDO o que o editor grava (antes só refrescava promoção, prato e menu,
+      // por isso um subtítulo novo não aparecia ao puxar para atualizar). A abertura não volta a correr.
+      window.__refrescando = true;
+      try{ aplicarConfig(config); }catch(e){}
+      window.__refrescando = false;
+      try{ document.title = ((config.header && config.header.titulo) || neg.nome || 'Cardápio'); }catch(e){}
       // Promoção do dia (novo banner) + Prato do dia
       try{ window.__cfgPromo = config; if(window.__renderPromoDia) window.__renderPromoDia(config); }catch(e){}
       try{ if(window.__renderPratoDia) window.__renderPratoDia(config); }catch(e){}
+      window.__ultimoRefresh = Date.now();
       // Menu (novos pratos/categorias)
       const menu = neg.menu || {}; if(!Array.isArray(menu.categorias)) menu.categorias = [];
       window._menu = menu;
@@ -5768,6 +5775,14 @@
     }catch(e){ return false; }
   };
 
+  // Ao voltar à app (PWA que ficou em segundo plano) refresca tudo se já passaram > 3 min
+  (function(){
+    if(window.__PREVIEW) return;
+    window.__ultimoRefresh = Date.now();
+    function talvez(){ if(document.hidden) return; if(Date.now() - (window.__ultimoRefresh || 0) < 180000) return; if(document.querySelector('.categoria-painel.aberto, #cartOverlay.aberto')) return; try{ window.__refrescarDados(); }catch(e){} }
+    document.addEventListener('visibilitychange', talvez);
+    window.addEventListener('pageshow', function(ev){ if(ev && ev.persisted) talvez(); });
+  })();
   // Atualização automática leve: refresca só a promoção e o prato do dia (não reconstrói o menu)
   (function(){
     if(window.__PREVIEW) return;
