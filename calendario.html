@@ -240,10 +240,10 @@
   .nova-btn{ width:100%; border:1.5px dashed var(--dourado); background:#fff; color:var(--dourado-escuro); border-radius:12px; padding:12px; cursor:pointer; font-weight:800; font-size:.92rem; margin-bottom:12px; }
   .nova-btn:hover{ background:#fffaf0; }
   /* Countdown até ao levantamento */
-  .enc-cd{ display:flex; flex-direction:column; align-items:center; justify-content:center; min-width:96px; padding:6px 10px; border-radius:12px; background:#e6f7ec; color:#1e6b3c; transition:background .6s, color .6s; flex-shrink:0; }
-  .enc-cd-n{ font-size:1.5rem; font-weight:900; line-height:1; font-variant-numeric:tabular-nums; letter-spacing:.5px; }
-  .enc-cd-l{ font-size:.62rem; font-weight:800; text-transform:uppercase; letter-spacing:.5px; opacity:.85; margin-top:3px; }
-  .enc-cd.g{ min-width:128px; padding:8px 14px; } .enc-cd.g .enc-cd-n{ font-size:2.1rem; } .enc-cd.g .enc-cd-l{ font-size:.7rem; }
+  .enc-cd{ display:flex; flex-direction:column; align-items:flex-end; justify-content:center; min-width:150px; padding:8px 14px 6px; border-radius:14px; background:#e6f7ec; color:#1e6b3c; transition:background .6s, color .6s; flex-shrink:0; }
+  .enc-cd-n{ font-size:2.7rem; font-weight:900; line-height:1; font-variant-numeric:tabular-nums; letter-spacing:.5px; }
+  .enc-cd-l{ font-size:.66rem; font-weight:800; text-transform:uppercase; letter-spacing:.6px; opacity:.85; margin-bottom:2px; }
+  .enc-cd.g{ min-width:160px; } .enc-cd.g .enc-cd-n{ font-size:2.9rem; } .enc-cd.g .enc-cd-l{ font-size:.72rem; }
   .enc-cd.c-green{ background:#e6f7ec; color:#1e6b3c; }
   .enc-cd.c-orange{ background:#fff2df; color:#a85d10; }
   .enc-cd.c-red{ background:#fbe7e4; color:#b23; animation:cdPulse 1s ease-in-out infinite; }
@@ -1472,7 +1472,7 @@
   // ---- COUNTDOWN até à hora de levantamento (verde → laranja → vermelho) ----
   function _encCdHTML(e, grande){
     const d = _encLevDate(e); if(!d) return '';
-    return '<div class="enc-cd' + (grande ? ' g' : '') + '" data-lev="' + d.getTime() + '"><span class="enc-cd-n">--:--</span><span class="enc-cd-l">para levantar</span></div>';
+    return '<div class="enc-cd' + (grande ? ' g' : '') + '" data-lev="' + d.getTime() + '"><span class="enc-cd-l">para levantar falta</span><span class="enc-cd-n">--:--</span></div>';
   }
   function _encCdPinta(el){
     const t = parseInt(el.dataset.lev, 10); if(!t) return;
@@ -1481,8 +1481,8 @@
     const txt = (h > 0 ? (h + 'h ' + String(m).padStart(2,'0') + 'm') : (String(m).padStart(2,'0') + ':' + String(sg).padStart(2,'0')));
     const n = el.querySelector('.enc-cd-n'), l = el.querySelector('.enc-cd-l');
     let cls = 'enc-cd' + (el.classList.contains('g') ? ' g' : '');
-    if(seg <= 0){ cls += ' c-red c-late'; if(n) n.textContent = '+' + txt; if(l) l.textContent = 'atrasada'; }
-    else { if(seg <= 5*60) cls += ' c-red'; else if(seg <= 20*60) cls += ' c-orange'; else cls += ' c-green'; if(n) n.textContent = txt; if(l) l.textContent = (abs >= 24*3600) ? 'noutro dia' : 'para levantar'; }
+    if(seg <= 0){ cls += ' c-red c-late'; if(n) n.textContent = '+' + txt; if(l) l.textContent = 'atrasada há'; }
+    else { if(seg <= 5*60) cls += ' c-red'; else if(seg <= 20*60) cls += ' c-orange'; else cls += ' c-green'; if(n) n.textContent = txt; if(l) l.textContent = (abs >= 24*3600) ? 'levantar' : 'para levantar falta'; }
     if(abs >= 24*3600){ const d = new Date(t); if(n) n.textContent = ['dom','seg','ter','qua','qui','sex','sáb'][d.getDay()] + ' ' + _encHHMM(d); cls = cls.replace(/ c-(red|orange|green|late)/g, '') + ' c-grey'; }
     if(el.className !== cls) el.className = cls;
   }
@@ -1604,13 +1604,16 @@
     const selo = entregue ? '<div class="enc-selo"><span>Entregue</span></div>' : '';
     return '<div class="card enc-card' + pulsa + '" style="position:relative; margin-bottom:10px; border-color:' + cor + '; --nc:' + cor + '; --ng:' + glow + '; ' + neon + '">'
       + '<div style="' + fade + '">'
-      +   '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;"><div style="font-weight:800; color:var(--castanho);">Encomenda nº ' + (e.numero != null ? e.numero : '—') + '</div>' + ((est === 'pendente' || est === 'confirmada' || est === 'pronta') ? _encCdHTML(e, false) : '') + '</div>'
+      +   '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;"><div style="font-weight:800; color:var(--castanho);">Encomenda nº ' + (e.numero != null ? e.numero : '—') + '</div></div>'
       +   '<div style="font-size:.82rem; color:#8a7a5c; margin:2px 0 8px;">Recebida ' + dia + ' às ' + hh + (e.nome ? (' · ' + esc(e.nome)) : '') + (e.levantamento ? (' · 🕒 ' + _levTxt(e.levantamento)) : '') + '</div>'
       +   '<div style="font-size:.9rem; color:var(--castanho); line-height:1.5;">' + (linhas || '—') + '</div>'
       +   (e.obs ? ('<div style="margin-top:6px;padding:6px 9px;background:#fff8d6;border-left:3px solid #e0b000;border-radius:6px;font-size:.86rem;color:#5a4a10;">📝 ' + esc(e.obs) + '</div>') : '')
       +   (e.telefone ? ('<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">' + _encTelLinks(e, false) + '</div>') : '')
       +   (Number(e.total) > 0 ? ('<div style="margin-top:8px; font-weight:800; color:var(--castanho);">Total: ' + Number(e.total).toFixed(2).replace('.', ',') + '€</div>') : '')
-      +   '<div style="display:flex; gap:7px; flex-wrap:wrap; margin-top:10px;">' + acoes + '</div>'
+      +   '<div style="display:flex; justify-content:space-between; align-items:flex-end; gap:10px; margin-top:10px;">'
+      +     '<div style="display:flex; gap:7px; flex-wrap:wrap; align-content:flex-end;">' + acoes + '</div>'
+      +     ((est === 'pendente' || est === 'confirmada' || est === 'pronta') ? _encCdHTML(e, false) : '')
+      +   '</div>'
       + '</div>'
       + selo
       + '</div>';
