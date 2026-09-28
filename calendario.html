@@ -239,6 +239,18 @@
   .dia:not(.vazio){ cursor:pointer; }
   .nova-btn{ width:100%; border:1.5px dashed var(--dourado); background:#fff; color:var(--dourado-escuro); border-radius:12px; padding:12px; cursor:pointer; font-weight:800; font-size:.92rem; margin-bottom:12px; }
   .nova-btn:hover{ background:#fffaf0; }
+  /* Countdown até ao levantamento */
+  .enc-cd{ display:flex; flex-direction:column; align-items:center; justify-content:center; min-width:96px; padding:6px 10px; border-radius:12px; background:#e6f7ec; color:#1e6b3c; transition:background .6s, color .6s; flex-shrink:0; }
+  .enc-cd-n{ font-size:1.5rem; font-weight:900; line-height:1; font-variant-numeric:tabular-nums; letter-spacing:.5px; }
+  .enc-cd-l{ font-size:.62rem; font-weight:800; text-transform:uppercase; letter-spacing:.5px; opacity:.85; margin-top:3px; }
+  .enc-cd.g{ min-width:128px; padding:8px 14px; } .enc-cd.g .enc-cd-n{ font-size:2.1rem; } .enc-cd.g .enc-cd-l{ font-size:.7rem; }
+  .enc-cd.c-green{ background:#e6f7ec; color:#1e6b3c; }
+  .enc-cd.c-orange{ background:#fff2df; color:#a85d10; }
+  .enc-cd.c-red{ background:#fbe7e4; color:#b23; animation:cdPulse 1s ease-in-out infinite; }
+  .enc-cd.c-late{ background:#c0392b; color:#fff; }
+  .enc-cd.c-grey{ background:#f3ead8; color:#6b4a1f; }
+  @keyframes cdPulse{ 0%,100%{ box-shadow:0 0 0 0 rgba(192,57,43,.45); } 50%{ box-shadow:0 0 0 7px rgba(192,57,43,0); } }
+  .en-hora{ justify-content:space-between; align-items:center; }
   /* Folha "NOVA ENCOMENDA" (linha da frente) */
   #encNovaOv{ z-index:95; }
   .modal.enc-nova{ border-top-color:#c0392b; max-width:520px; width:100%; }
@@ -1457,6 +1469,25 @@
     if(min < 24*60) return { txt:'daqui a ' + Math.floor(min/60) + 'h' + String(min%60).padStart(2,'0'), urg:0 };
     return { txt:'', urg:0 };
   }
+  // ---- COUNTDOWN até à hora de levantamento (verde → laranja → vermelho) ----
+  function _encCdHTML(e, grande){
+    const d = _encLevDate(e); if(!d) return '';
+    return '<div class="enc-cd' + (grande ? ' g' : '') + '" data-lev="' + d.getTime() + '"><span class="enc-cd-n">--:--</span><span class="enc-cd-l">para levantar</span></div>';
+  }
+  function _encCdPinta(el){
+    const t = parseInt(el.dataset.lev, 10); if(!t) return;
+    const seg = Math.round((t - Date.now()) / 1000); const abs = Math.abs(seg);
+    const h = Math.floor(abs / 3600), m = Math.floor((abs % 3600) / 60), sg = abs % 60;
+    const txt = (h > 0 ? (h + 'h ' + String(m).padStart(2,'0') + 'm') : (String(m).padStart(2,'0') + ':' + String(sg).padStart(2,'0')));
+    const n = el.querySelector('.enc-cd-n'), l = el.querySelector('.enc-cd-l');
+    let cls = 'enc-cd' + (el.classList.contains('g') ? ' g' : '');
+    if(seg <= 0){ cls += ' c-red c-late'; if(n) n.textContent = '+' + txt; if(l) l.textContent = 'atrasada'; }
+    else { if(seg <= 5*60) cls += ' c-red'; else if(seg <= 20*60) cls += ' c-orange'; else cls += ' c-green'; if(n) n.textContent = txt; if(l) l.textContent = (abs >= 24*3600) ? 'noutro dia' : 'para levantar'; }
+    if(abs >= 24*3600){ const d = new Date(t); if(n) n.textContent = ['dom','seg','ter','qua','qui','sex','sáb'][d.getDay()] + ' ' + _encHHMM(d); cls = cls.replace(/ c-(red|orange|green|late)/g, '') + ' c-grey'; }
+    if(el.className !== cls) el.className = cls;
+  }
+  function _encCdTick(){ try{ document.querySelectorAll('.enc-cd').forEach(_encCdPinta); }catch(e){} }
+  setInterval(_encCdTick, 1000);
   function _encTelLinks(e, grande){
     const t = String(e.telefone || '').replace(/[^\d+]/g, ''); if(!t) return '';
     const wa = (typeof _telWA === 'function') ? _telWA(t) : t.replace(/\D/g, '');
@@ -1495,7 +1526,7 @@
     const ov = document.createElement('div'); ov.id = 'encNovaOv'; ov.className = 'modal-bg';
     ov.innerHTML = '<div class="modal enc-nova">'
       + '<div class="en-cab"><span class="en-tag">🛍️ NOVA ENCOMENDA</span><span class="en-num">nº ' + (e.numero != null ? e.numero : '—') + '</span></div>'
-      + (d ? ('<div class="en-hora"><span class="en-dia">' + _encDiaTxt(d) + '</span><span class="en-hh">' + horaBase + '</span>' + (falta.txt ? ('<span class="en-falta u' + falta.urg + '">' + falta.txt + '</span>') : '') + '</div>') : '<div class="en-hora"><span class="en-dia">SEM HORA</span></div>')
+      + (d ? ('<div class="en-hora"><div><span class="en-dia">' + _encDiaTxt(d) + '</span> <span class="en-hh">' + horaBase + '</span></div>' + _encCdHTML(e, true) + '</div>') : '<div class="en-hora"><span class="en-dia">SEM HORA</span></div>')
       + '<div class="en-itens">' + (itens.length ? itens.map(function(it){ return '<div class="en-it"><span class="en-q">' + (it.qtd||1) + '×</span><span class="en-n">' + esc(it.nome||'') + '</span></div>'; }).join('') : '<div class="en-it"><span class="en-n">—</span></div>') + '</div>'
       + (e.obs ? ('<div class="en-obs">📝 ' + esc(e.obs) + '</div>') : '')
       + '<div class="en-quem">' + (e.nome ? ('<span class="en-nome">👤 ' + esc(e.nome) + '</span>') : '') + _encTelLinks(e, false) + (Number(e.total) > 0 ? ('<span class="en-total">' + Number(e.total).toFixed(2).replace('.', ',') + ' €</span>') : '') + '</div>'
@@ -1511,6 +1542,7 @@
       + '<div id="enMsg" class="msg"></div>'
       + '</div>';
     document.body.appendChild(ov);
+    _encCdTick();
     _encSomLoop(true);
     let ajuste = 0;
     ov.querySelectorAll('.en-chip').forEach(function(b){ b.onclick = function(){ ajuste = parseInt(b.dataset.min, 10) || 0; ov.querySelectorAll('.en-chip').forEach(function(x){ x.classList.toggle('on', x === b); }); if(d){ const nd = new Date(d.getTime() + ajuste*60000); ov.querySelector('.en-chip[data-min="0"]').textContent = ajuste ? (horaBase + ' → ' + _encHHMM(nd)) : horaBase; } }; });
@@ -1572,7 +1604,7 @@
     const selo = entregue ? '<div class="enc-selo"><span>Entregue</span></div>' : '';
     return '<div class="card enc-card' + pulsa + '" style="position:relative; margin-bottom:10px; border-color:' + cor + '; --nc:' + cor + '; --ng:' + glow + '; ' + neon + '">'
       + '<div style="' + fade + '">'
-      +   '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;"><div style="font-weight:800; color:var(--castanho);">Encomenda nº ' + (e.numero != null ? e.numero : '—') + '</div>' + (falta.txt ? ('<span style="font-size:.78rem;font-weight:800;padding:3px 9px;border-radius:999px;' + (falta.urg === 2 ? 'background:#fbe7e4;color:#b23;' : (falta.urg === 1 ? 'background:#fff2df;color:#a85d10;' : 'background:#f3ead8;color:#6b4a1f;')) + '">' + falta.txt + '</span>') : '') + '</div>'
+      +   '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;"><div style="font-weight:800; color:var(--castanho);">Encomenda nº ' + (e.numero != null ? e.numero : '—') + '</div>' + ((est === 'pendente' || est === 'confirmada' || est === 'pronta') ? _encCdHTML(e, false) : '') + '</div>'
       +   '<div style="font-size:.82rem; color:#8a7a5c; margin:2px 0 8px;">Recebida ' + dia + ' às ' + hh + (e.nome ? (' · ' + esc(e.nome)) : '') + (e.levantamento ? (' · 🕒 ' + _levTxt(e.levantamento)) : '') + '</div>'
       +   '<div style="font-size:.9rem; color:var(--castanho); line-height:1.5;">' + (linhas || '—') + '</div>'
       +   (e.obs ? ('<div style="margin-top:6px;padding:6px 9px;background:#fff8d6;border-left:3px solid #e0b000;border-radius:6px;font-size:.86rem;color:#5a4a10;">📝 ' + esc(e.obs) + '</div>') : '')
@@ -1637,6 +1669,7 @@
       doFiltro.forEach(function(e){ html += _cartaEnc(e, _ENC_GRP[_encFiltro]); });
     }
     v.innerHTML = html;
+    _encCdTick();
     // som
     const sb2 = document.getElementById('encSomBtn'); if(sb2) sb2.onclick = function(){ const novo = _encSomOn() ? '0' : '1'; try{ localStorage.setItem('amesaEncSom', novo); }catch(e){} _somPronto = false; _prepararSom(); sb2.textContent = (novo === '1') ? '🔔 Som ligado' : '🔕 Som desligado'; if(novo === '1') setTimeout(_beep, 60); };
     // filtros
