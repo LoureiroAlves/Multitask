@@ -412,7 +412,7 @@
   function _feriado(iso){ return _feriadosAno(parseInt(iso.slice(0,4),10))[iso] || null; }
   function _agCfg(){ return (negocio && negocio.config && negocio.config.agenda) || {}; }
   function _ferMunicipal(iso){ const a=_agCfg(); return (a.feriadoMunicipal && iso.slice(5)===a.feriadoMunicipal) ? 'Feriado municipal' : null; }
-  function _encerrado(iso){ const a=_agCfg(); const wd=new Date(iso+'T00:00:00').getDay(); if(Array.isArray(a.diasFecho) && a.diasFecho.indexOf(wd)>=0) return true; const fs=a.fechos||[]; for(var i=0;i<fs.length;i++){ if(fs[i].de && iso>=fs[i].de && iso<=(fs[i].a||fs[i].de)) return true; } return false; }
+  function _encerrado(iso){ const a=_agCfg(); const wd=new Date(iso+'T00:00:00').getDay(); if(Array.isArray(a.diasFecho) && a.diasFecho.indexOf(wd)>=0) return true; { const t=(a.turnos&&a.turnos[wd])||null; if(t && t.a===false && t.j===false) return true; } const fs=a.fechos||[]; for(var i=0;i<fs.length;i++){ if(fs[i].de && iso>=fs[i].de && iso<=(fs[i].a||fs[i].de)) return true; } return false; }
 
   $('btnEntrar').onclick = entrar;
   $('pass').addEventListener('keydown', e => { if(e.key==='Enter') entrar(); });
@@ -1309,6 +1309,8 @@
     cancelada:  { cor:'#c9a9a0', glow:'rgba(0,0,0,0)',        nome:'Canceladas', cls:'f-cancelada' }
   };
   const _ENC_ORDEM = ['pendente','confirmada','pronta','entregue','cancelada'];
+  // "HH:MM" = hoje; "AAAA-MM-DD HH:MM" = levantamento noutro dia
+  function _levTxt(l){ const m = /^(\d{4}-\d{2}-\d{2})\s+(\d{1,2}:\d{2})$/.exec(String(l||'').trim()); if(!m) return 'levantar às ' + esc(l); const hoje = (function(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); })(); if(m[1] === hoje) return 'levantar HOJE às ' + esc(m[2]); const d = new Date(m[1]+'T00:00:00'); return '<strong style="color:#a85d10;">levantar ' + ['dom','seg','ter','qua','qui','sex','sáb'][d.getDay()] + ' ' + d.getDate() + '/' + (d.getMonth()+1) + ' às ' + esc(m[2]) + '</strong>'; }
   function _cartaEnc(e, g){
     const cor = g.cor, glow = g.glow, est = (e.estado || 'pendente');
     const entregue = (est === 'entregue');
@@ -1331,7 +1333,7 @@
     return '<div class="card enc-card' + pulsa + '" style="position:relative; margin-bottom:10px; border-color:' + cor + '; --nc:' + cor + '; --ng:' + glow + '; ' + neon + '">'
       + '<div style="' + fade + '">'
       +   '<div style="font-weight:800; color:var(--castanho);">Encomenda nº ' + (e.numero != null ? e.numero : '—') + '</div>'
-      +   '<div style="font-size:.82rem; color:#8a7a5c; margin:2px 0 8px;">Recebida ' + dia + ' às ' + hh + (e.nome ? (' · ' + esc(e.nome)) : '') + (e.levantamento ? (' · 🕒 levantar às ' + esc(e.levantamento)) : '') + '</div>'
+      +   '<div style="font-size:.82rem; color:#8a7a5c; margin:2px 0 8px;">Recebida ' + dia + ' às ' + hh + (e.nome ? (' · ' + esc(e.nome)) : '') + (e.levantamento ? (' · 🕒 ' + _levTxt(e.levantamento)) : '') + '</div>'
       +   '<div style="font-size:.9rem; color:var(--castanho); line-height:1.5;">' + (linhas || '—') + '</div>'
       +   (Number(e.total) > 0 ? ('<div style="margin-top:8px; font-weight:800; color:var(--castanho);">Total: ' + Number(e.total).toFixed(2).replace('.', ',') + '€</div>') : '')
       +   '<div style="display:flex; gap:7px; flex-wrap:wrap; margin-top:10px;">' + acoes + '</div>'
@@ -1707,6 +1709,11 @@
           + '<label>Nota de pagamento (opcional)</label><input type="text" id="dfPagNota" value="'+esc(a.pagamentoNota||'')+'">'
         + '</div>'
       + '</div>'
+      + '<div style="margin-top:18px;padding:12px;border:1.5px solid var(--linha);border-radius:12px;background:#fff;">'
+      +   '<div style="font-weight:800;color:var(--castanho);">🍽️ Turnos de funcionamento</div>'
+      +   '<div class="subt2" style="margin:2px 0 8px;">Vale para as <b>reservas</b> e para as <b>encomendas</b>: num dia só de almoço não há reservas nem levantamentos ao jantar; um dia sem nenhum turno é folga.</div>'
+      +   '<div id="dfTurnos"></div>'
+      + '</div>'
       + '<button class="acao" id="dfGuardar" style="width:100%; margin-top:16px;">Guardar definições</button>'
       + '<div class="msg" id="dfMsg" style="margin-top:8px;"></div>'
       + '</div>';
@@ -1717,6 +1724,8 @@
     _renderFechos();
     _dfHorDia = (a.horariosDia && typeof a.horariosDia === 'object') ? JSON.parse(JSON.stringify(a.horariosDia)) : {};
     _dfHorSel = null;
+    _dfTurnos = (a.turnos && typeof a.turnos === 'object') ? JSON.parse(JSON.stringify(a.turnos)) : {};
+    _renderTurnos();
     _renderHorDiaBtns();
     $('dfAtivo').onchange = function(){ $('dfBox').style.display = this.checked ? '' : 'none'; };
     $('dfMaisBtn').onclick = function(){ const av=$('dfAvancado'); const aberto = av.classList.toggle('hide'); this.textContent = aberto ? '⚙️ Opções avançadas ▾' : '⚙️ Opções avançadas ▴'; };
@@ -1724,7 +1733,20 @@
     $('dfAddFecho').onclick = function(){ _dfFechos.push({ de:'', a:'' }); _renderFechos(); };
     $('dfGuardar').onclick = guardarDefinicoes;
   }
-  let _dfHorDia = {}, _dfHorSel = null;
+  let _dfHorDia = {}, _dfHorSel = null, _dfTurnos = {};
+  function _turnoDe(t, wd){ const o = (t && t[wd]) || {}; return { a: o.a !== false, j: o.j !== false }; }   // por defeito: almoço e jantar
+  function _renderTurnos(){
+    const box = $('dfTurnos'); if(!box) return;
+    const ordem = [[1,'Segunda'],[2,'Terça'],[3,'Quarta'],[4,'Quinta'],[5,'Sexta'],[6,'Sábado'],[0,'Domingo']];
+    box.innerHTML = '<div style="display:grid;grid-template-columns:1fr auto auto;gap:6px 14px;align-items:center;font-size:.9rem;">'
+      + '<div></div><div style="font-size:.72rem;color:#8a7a5c;font-weight:800;text-align:center;">Almoço</div><div style="font-size:.72rem;color:#8a7a5c;font-weight:800;text-align:center;">Jantar</div>'
+      + ordem.map(function(o){ const t = _turnoDe(_dfTurnos, o[0]); const folga = !t.a && !t.j;
+          return '<div style="font-weight:700;color:' + (folga ? '#b23b2e' : 'var(--castanho)') + ';">' + o[1] + (folga ? ' <span style="font-size:.72rem;font-weight:800;">FOLGA</span>' : '') + '</div>'
+            + '<label style="text-align:center;cursor:pointer;"><input type="checkbox" data-tw="' + o[0] + '" data-tk="a"' + (t.a ? ' checked' : '') + ' style="width:auto;transform:scale(1.25);"></label>'
+            + '<label style="text-align:center;cursor:pointer;"><input type="checkbox" data-tw="' + o[0] + '" data-tk="j"' + (t.j ? ' checked' : '') + ' style="width:auto;transform:scale(1.25);"></label>'; }).join('')
+      + '</div>';
+    box.querySelectorAll('input[data-tw]').forEach(function(c){ c.onchange = function(){ const w = c.getAttribute('data-tw'), k = c.getAttribute('data-tk'); _dfTurnos[w] = _dfTurnos[w] || { a:true, j:true }; _dfTurnos[w][k] = c.checked; _renderTurnos(); }; });
+  }
   const _WD_NOMES = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
   function _horGlobais(){ return (($('dfHor')||{}).value || '').split(',').map(function(s){ return s.trim(); }).filter(Boolean); }
   function _renderHorDiaBtns(){
@@ -1867,6 +1889,7 @@
       horarios: hor,
       capacidade: parseInt($('dfCap').value,10)||0,
       horariosDia: _dfHorDia,
+      turnos: _dfTurnos,
       feriadoMunicipal: (($('dfFerMun')||{}).value || '').slice(5),   // guarda só MM-DD (repete todos os anos)
       diasFecho: (function(){ const o=[]; $('vistaDef').querySelectorAll('input[data-fdia]').forEach(function(c){ if(c.checked) o.push(+c.getAttribute('data-fdia')); }); return o; })(),
       fechos: _dfFechos.filter(function(f){ return f.de; }).map(function(f){ return { de:f.de, a:(f.a||f.de) }; }),

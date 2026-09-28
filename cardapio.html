@@ -5663,6 +5663,19 @@
         }
       }catch(e){}
       window._agenda = (config.agenda && config.agenda.ativo) ? config.agenda : null;
+      window.__agendaCfg = (config.agenda && typeof config.agenda === 'object') ? config.agenda : {};
+      // Regras de funcionamento partilhadas (Gestão → Definições): folgas, férias, feriado municipal e turnos (almoço/jantar)
+      window.__diaRegras = function(iso){
+        var a = window.__agendaCfg || {}; var d = new Date(iso + 'T00:00:00'); var wd = d.getDay();
+        var t = (a.turnos && a.turnos[wd]) || {}; var alm = t.a !== false, jan = t.j !== false;
+        var fechado = false;
+        if(Array.isArray(a.diasFecho) && a.diasFecho.indexOf(wd) >= 0) fechado = true;
+        if(Array.isArray(a.dias) && a.dias.length === 7 && a.dias[wd] === false && a.ativo) fechado = true;
+        (a.fechos || []).forEach(function(f){ if(f && f.de && iso >= f.de && iso <= (f.a || f.de)) fechado = true; });
+        if(a.feriadoMunicipal && iso.slice(5) === String(a.feriadoMunicipal)) fechado = true;
+        if(!alm && !jan) fechado = true;
+        return { fechado:fechado, almoco:alm && !fechado, jantar:jan && !fechado };
+      };
       const agb = document.getElementById('linkAgenda');
       if(agb) agb.style.display = (window._agenda && config.mostrarAgendaIcon !== false) ? 'flex' : 'none';
       // Ícones do topo: câmara e traduções (ligar/desligar pelo dono)
@@ -6510,8 +6523,11 @@
       const max = new Date(h); max.setDate(max.getDate() + (a.maxDias || 30));
       return d >= min && d <= max;
     }
-    function horariosDoDia(iso){ const a = cfg(); const wd = new Date(iso+'T00:00:00').getDay(); const hd = a.horariosDia || {}; return (hd[wd] && Array.isArray(hd[wd])) ? hd[wd] : (a.horarios || []); }
-    function diaFechado(iso){ const a = cfg(); const wd = new Date(iso+'T00:00:00').getDay(); if(Array.isArray(a.diasFecho) && a.diasFecho.indexOf(wd) >= 0) return true; const fs = a.fechos || []; for(var i=0;i<fs.length;i++){ if(fs[i].de && iso >= fs[i].de && iso <= (fs[i].a || fs[i].de)) return true; } return false; }
+    function horariosDoDia(iso){ const a = cfg(); const wd = new Date(iso+'T00:00:00').getDay(); const hd = a.horariosDia || {}; let hs = (hd[wd] && Array.isArray(hd[wd])) ? hd[wd] : (a.horarios || []);
+      // Turnos (Definições): num dia só de almoço saem as horas de jantar (≥ 17:00) e vice-versa
+      try{ const r = window.__diaRegras ? window.__diaRegras(iso) : null; if(r){ hs = hs.filter(function(h){ const hh = parseInt(String(h).split(':')[0], 10); const ehJantar = hh >= 17; return ehJantar ? r.jantar : r.almoco; }); } }catch(e){}
+      return hs; }
+    function diaFechado(iso){ const a = cfg(); const wd = new Date(iso+'T00:00:00').getDay(); if(Array.isArray(a.diasFecho) && a.diasFecho.indexOf(wd) >= 0) return true; try{ const r = window.__diaRegras ? window.__diaRegras(iso) : null; if(r && r.fechado) return true; }catch(e){} const fs = a.fechos || []; for(var i=0;i<fs.length;i++){ if(fs[i].de && iso >= fs[i].de && iso <= (fs[i].a || fs[i].de)) return true; } return false; }
     function abrir(retomar){
       const h = hoje0();
       if(estado.mes === null){ estado.mes = h.getMonth(); estado.ano = h.getFullYear(); }
@@ -8091,7 +8107,7 @@
         const itensTxt = (o.itens||[]).map(function(it){ return (it.qtd||1)+'× '+it.nome; }).join(', ');
         h += '<div class="enc-card" data-encid="'+o.id+'" style="position:relative; border:1.5px solid '+inf.cor+'; background:'+inf.bg+'; border-radius:12px; padding:11px 13px; margin-bottom:10px; touch-action:pan-y; will-change:transform;">'
           + '<div style="font-weight:800; color:'+inf.cor+';">'+inf.ic+' Encomenda nº '+(o.numero!=null?o.numero:'—')+' — '+inf.txt+'</div>'
-          + '<div style="font-size:.8rem; color:var(--castanho-suave); margin-top:3px;">'+itensTxt+(o.levant?(' · levantar às '+o.levant):'')+'</div>'
+          + '<div style="font-size:.8rem; color:var(--castanho-suave); margin-top:3px;">'+itensTxt+(o.levant?(' · levantar ' + (/^\d{4}-/.test(o.levant) ? (function(){ const m = /^(\d{4}-\d{2}-\d{2})\s+(.+)$/.exec(o.levant); const d = new Date(m[1]+'T00:00:00'); return ['dom','seg','ter','qua','qui','sex','sáb'][d.getDay()] + ' ' + d.getDate() + '/' + (d.getMonth()+1) + ' às ' + m[2]; })() : ('às ' + o.levant))):'')+'</div>'
           + '<div style="font-size:.68rem; color:var(--castanho-suave); opacity:.7; margin-top:5px;">‹ desliza para remover</div>'
           + '</div>';
       });
@@ -8368,26 +8384,46 @@
       const _hhmm = function(dt){ return String(dt.getHours()).padStart(2,'0') + ':' + String(dt.getMinutes()).padStart(2,'0'); };
       const _mkHoje = function(s){ if(!/^\d{1,2}:\d{2}/.test(s||'')) return null; const pp = String(s).split(':'); const d = new Date(); d.setHours(parseInt(pp[0],10)||0, parseInt(pp[1],10)||0, 0, 0); return d; };
       const _agora = new Date();
-      // Janelas da cozinha (1 ou 2 períodos: almoço e jantar)
-      const _mkWin = function(a, f){ const A = _mkHoje((a||'').trim()), F = _mkHoje((f||'').trim()); return (A && F && F.getTime() > A.getTime()) ? { abre:A.getTime(), fecha:F.getTime() } : null; };
-      const _wins = [ _mkWin(_ccfg.horaAbre, _ccfg.horaFecha), _mkWin(_ccfg.horaAbre2, _ccfg.horaFecha2) ].filter(Boolean);
+      const _isoDe = function(d){ return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); };
+      const _mkEm = function(iso, s){ if(!/^\d{1,2}:\d{2}/.test(s||'')) return null; const pp = String(s).split(':'); const d = new Date(iso + 'T00:00:00'); d.setHours(parseInt(pp[0],10)||0, parseInt(pp[1],10)||0, 0, 0); return d; };
       const _BUF = 15*60000, _GRACE = 5*60000;
-      const _ranges = [];   // períodos ainda abertos para encomendar hoje
-      _wins.forEach(function(w){
-        if(_agora.getTime() <= (w.fecha - antMin*60000) + _GRACE){   // ainda dentro do prazo (fecho − antecedência)
-          const start = Math.max(_agora.getTime() + _BUF, w.abre);
-          if(start <= w.fecha) _ranges.push({ start:start, end:w.fecha });
-        }
-      });
-      _ranges.sort(function(x,y){ return x.start - y.start; });
-      const _fecharam = (_wins.length > 0 && _ranges.length === 0);
-      const _fecharamMsg = 'As encomendas de hoje já fecharam.';
-      const _rangesTxt = _ranges.map(function(r){ return _hhmm(new Date(r.start)) + '–' + _hhmm(new Date(r.end)); }).join(' ou ');
-      let _pickMin, _pickMax = null;
-      if(_ranges.length){ _pickMin = new Date(_ranges[0].start); _pickMax = new Date(_ranges[_ranges.length-1].end); }
-      else { _pickMin = new Date(_agora.getTime() + _BUF); }
-      const _pickMinHHMM = _hhmm(_pickMin);
-      const _pickMaxHHMM = _pickMax ? _hhmm(_pickMax) : '';
+      // Janelas da cozinha (editor: 1 ou 2 períodos) — a 1.ª conta como almoço e a 2.ª como jantar (se só houver uma e começar ≥ 17:00, é jantar)
+      const _janelasDia = function(iso){
+        const mk = function(a, f){ const A = _mkEm(iso, (a||'').trim()), F = _mkEm(iso, (f||'').trim()); return (A && F && F.getTime() > A.getTime()) ? { abre:A.getTime(), fecha:F.getTime(), ini:A.getHours() } : null; };
+        let ws = [ mk(_ccfg.horaAbre, _ccfg.horaFecha), mk(_ccfg.horaAbre2, _ccfg.horaFecha2) ].filter(Boolean);
+        const r = window.__diaRegras ? window.__diaRegras(iso) : { fechado:false, almoco:true, jantar:true };
+        if(r.fechado) return [];
+        ws = ws.filter(function(w, i){ const ehJantar = (ws.length === 1) ? (w.ini >= 17) : (i === 1); return ehJantar ? r.jantar : r.almoco; });
+        const out = [];
+        ws.forEach(function(w){
+          if(_agora.getTime() <= (w.fecha - antMin*60000) + _GRACE){   // ainda dentro do prazo (fecho − antecedência)
+            const start = Math.max(_agora.getTime() + _BUF, w.abre);
+            if(start <= w.fecha) out.push({ start:start, end:w.fecha });
+          }
+        });
+        return out.sort(function(x,y){ return x.start - y.start; });
+      };
+      const _temJanelas = !!(_ccfg.horaAbre && _ccfg.horaFecha) || !!(_ccfg.horaAbre2 && _ccfg.horaFecha2);
+      // Dias em que se pode encomendar: hoje e os próximos 6 (folgas/férias/turnos vêm das Definições)
+      const _hojeIso = _isoDe(_agora);
+      const _dias = [];
+      for(let k = 0; k < 7; k++){ const d = new Date(_agora); d.setDate(d.getDate() + k); const iso = _isoDe(d); const rs = _janelasDia(iso); const rg = window.__diaRegras ? window.__diaRegras(iso) : { fechado:false };
+        if(!_temJanelas){ if(!rg.fechado) _dias.push({ iso:iso, ranges:[], k:k }); }
+        else if(rs.length) _dias.push({ iso:iso, ranges:rs, k:k }); }
+      const _diaTxt = function(o){ const d = new Date(o.iso + 'T00:00:00'); const nm = ['domingo','segunda','terça','quarta','quinta','sexta','sábado'][d.getDay()]; return o.k === 0 ? 'Hoje' : (o.k === 1 ? 'Amanhã' : (nm.charAt(0).toUpperCase() + nm.slice(1) + ' ' + d.getDate() + '/' + (d.getMonth()+1))); };
+      const _fecharam = (_dias.length === 0);
+      const _fecharamMsg = (_temJanelas && _janelasDia(_hojeIso).length === 0 && !(window.__diaRegras && window.__diaRegras(_hojeIso).fechado)) ? 'As encomendas de hoje já fecharam e não há outro dia disponível.' : 'De momento não é possível encomendar.';
+      let _diaSel = _dias.length ? _dias[0] : null;
+      let _ranges = _diaSel ? _diaSel.ranges : [];
+      let _rangesTxt = '', _pickMin = null, _pickMax = null, _pickMinHHMM = '', _pickMaxHHMM = '';
+      const _calcDia = function(){
+        _ranges = _diaSel ? _diaSel.ranges : [];
+        _rangesTxt = _ranges.map(function(r){ return _hhmm(new Date(r.start)) + '–' + _hhmm(new Date(r.end)); }).join(' ou ');
+        if(_ranges.length){ _pickMin = new Date(_ranges[0].start); _pickMax = new Date(_ranges[_ranges.length-1].end); }
+        else { _pickMin = (_diaSel && _diaSel.k > 0) ? _mkEm(_diaSel.iso, '12:00') : new Date(_agora.getTime() + _BUF); _pickMax = null; }
+        _pickMinHHMM = _hhmm(_pickMin); _pickMaxHHMM = _pickMax ? _hhmm(_pickMax) : '';
+      };
+      _calcDia();
       const _dentroRange = function(dt){ const t = dt.getTime(); for(var i=0;i<_ranges.length;i++){ if(t >= _ranges[i].start - 60000 && t <= _ranges[i].end + 60000) return true; } return false; };
       p.innerHTML = '<h3>Confirmar encomenda</h3>' +
         '<div class="cart-vazio" style="padding:0 0 10px; font-size:0.84rem;">Enviamos o teu pedido diretamente ao restaurante. Só fica confirmado quando o restaurante responder — podes acompanhar aqui.</div>' +
@@ -8398,14 +8434,19 @@
         (pedeLev ? (
           _fecharam
             ? ('<div style="margin:12px 0 4px; padding:10px 12px; background:#fbe7e4; border-radius:10px; color:#b23; font-size:0.84rem; font-weight:700;">' + _fecharamMsg + '</div>')
-            : ('<label for="cartHora" style="display:block; font-size:0.82rem; color:var(--castanho-suave); margin:12px 0 4px;">🕒 A que horas vais levantar? <span style="color:var(--castanho-suave);">(hoje)</span></label>' +
+            : ('<label for="cartDia" style="display:block; font-size:0.82rem; color:var(--castanho-suave); margin:12px 0 4px;">📅 Que dia vais levantar?</label>' +
+               '<select id="cartDia" style="width:100%; padding:11px 12px; border:1.5px solid var(--linha); border-radius:10px; font-family:inherit; font-size:0.95rem; background:#fff;">' + _dias.map(function(o, i){ return '<option value="' + o.iso + '"' + (i === 0 ? ' selected' : '') + '>' + _diaTxt(o) + '</option>'; }).join('') + '</select>' +
+               '<label for="cartHora" style="display:block; font-size:0.82rem; color:var(--castanho-suave); margin:12px 0 4px;">🕒 A que horas vais levantar?</label>' +
                '<input id="cartHora" type="time" min="' + _pickMinHHMM + '"' + (_pickMaxHHMM ? (' max="' + _pickMaxHHMM + '"') : '') + ' value="' + _pickMinHHMM + '" style="width:100%; padding:11px 12px; border:1.5px solid var(--linha); border-radius:10px; font-family:inherit; font-size:0.95rem;">' +
-               '<div style="font-size:0.78rem; color:var(--castanho-suave); margin-top:4px;">' + (_ranges.length ? ('Levantamento hoje: ' + _rangesTxt + '.') : ('A partir das ' + _pickMinHHMM + ' (hoje).')) + '</div>')
+               '<div id="cartHoraNota" style="font-size:0.78rem; color:var(--castanho-suave); margin-top:4px;">' + (_ranges.length ? ('Levantamento: ' + _rangesTxt + '.') : ('A partir das ' + _pickMinHHMM + '.')) + '</div>')
         ) : '') +
         '<div id="cartErro" style="display:none; color:#c0392b; font-size:0.82rem; font-weight:700; margin-top:8px;"></div>' +
         '<div class="cart-acoes"><button class="cart-fechar" id="cartVoltar">‹ Voltar</button><button class="cart-whats" id="cartEnviar">✅ Enviar pedido</button></div>';
       const voltar = document.getElementById('cartVoltar');
       if(voltar) voltar.onclick = () => render();
+      { const selD = document.getElementById('cartDia'); if(selD) selD.onchange = function(){ _diaSel = _dias.filter(function(o){ return o.iso === selD.value; })[0] || _dias[0]; _calcDia();
+          const h = document.getElementById('cartHora'); if(h){ h.min = _pickMinHHMM; if(_pickMaxHHMM) h.max = _pickMaxHHMM; else h.removeAttribute('max'); h.value = _pickMinHHMM; }
+          const n = document.getElementById('cartHoraNota'); if(n) n.textContent = _ranges.length ? ('Levantamento: ' + _rangesTxt + '.') : ('A partir das ' + _pickMinHHMM + '.'); }; }
       const inp = document.getElementById('cartNome');
       const enviar = document.getElementById('cartEnviar');
       if(enviar) enviar.onclick = () => {
@@ -8418,17 +8459,19 @@
           if(_fecharam){ _erro(_fecharamMsg); return; }
           horaLev = ((document.getElementById('cartHora') || {}).value || '').trim();
           if(!horaLev){ _erro('Escolhe a hora de levantamento.'); return; }
-          const alvo = _mkHoje(horaLev);
+          const alvo = _mkEm(_diaSel ? _diaSel.iso : _hojeIso, horaLev);
           if(!alvo){ _erro('Hora inválida.'); return; }
           if(_ranges.length){ if(!_dentroRange(alvo)){ _erro('A cozinha só aceita levantamento em: ' + _rangesTxt + '.'); return; } }
           else if(alvo.getTime() < _pickMin.getTime() - 60000){ _erro('A hora de levantamento tem de ser a partir das ' + _pickMinHHMM + '.'); return; }
+          if(_diaSel && _diaSel.iso !== _hojeIso) horaLev = _diaSel.iso + ' ' + horaLev;   // noutro dia guarda a data junto
         }
+        const _levTxt = function(){ const m = /^(\d{4}-\d{2}-\d{2})\s+(.+)$/.exec(horaLev); if(!m) return 'hoje às ' + horaLev; const d = new Date(m[1] + 'T00:00:00'); return ['domingo','segunda','terça','quarta','quinta','sexta','sábado'][d.getDay()] + ' ' + d.getDate() + '/' + (d.getMonth()+1) + ' às ' + m[2]; };
         let t = 0; const linhas = []; const itensJson = [];
         lista.forEach(it => { const lt = it.preco * it.qtd; t += lt; linhas.push('• ' + it.qtd + '× ' + it.nome + ' — ' + lt.toFixed(2).replace('.', ',') + '€'); itensJson.push({ nome: it.nome, qtd: it.qtd, preco: it.preco }); });
         const _totalTxt = t.toFixed(2).replace('.', ',');
         const _msgWhats = function(numero){
           let msg = 'Nova encomenda (take away)' + (numero ? (' nº ' + numero) : '') + (nome ? ' — ' + nome : '') + ':\n' + linhas.join('\n') + '\nTotal: ' + _totalTxt + '€';
-          if(pedeLev && horaLev) msg += '\n🕒 Levantamento hoje às ' + horaLev;
+          if(pedeLev && horaLev) msg += '\n🕒 Levantamento ' + _levTxt();
           msg += '\n\nObrigado!';
           return msg;
         };
