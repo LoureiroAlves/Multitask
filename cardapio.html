@@ -2107,6 +2107,9 @@
   }
   .cart-x{ position:sticky; top:-10px; float:right; margin:-8px -6px 0 0; width:38px; height:38px; border-radius:50%; border:none; background:var(--bege); color:var(--castanho); font-size:1.15rem; font-weight:800; cursor:pointer; z-index:5; display:flex; align-items:center; justify-content:center; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
   .cart-acoes button, .cart-whats, .cart-x{ touch-action:manipulation; }
+  .cart-chips{ display:flex; gap:6px; flex-wrap:wrap; }
+  .cart-chip{ border:1.5px solid var(--linha); background:#fff; color:var(--castanho); border-radius:999px; padding:9px 13px; font-weight:800; font-family:inherit; font-size:.9rem; cursor:pointer; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
+  .cart-chip.on{ background:var(--castanho); border-color:var(--castanho); color:#fff; }
   #cartOverlay.aberto .cart-painel, #favOverlay.aberto .cart-painel{ transform:translateY(0); pointer-events:auto; }
   /* Botão + painel de FAVORITOS (pratos) */
   #favBtn{ position:fixed; right:14px; bottom:77px; z-index:200; width:46px; height:46px; border-radius:50%; border:none; background:#e0245e; color:#fff; font-size:1.35rem; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,0.4); display:none; align-items:center; justify-content:center; }
@@ -8256,7 +8259,15 @@
     overlay.id = 'cartOverlay';
     overlay.innerHTML = '<div class="cart-painel" id="cartPainel"></div>';
     document.body.appendChild(overlay);
-    overlay.addEventListener('click', e => { const x = e.target && e.target.closest && e.target.closest('[data-cart-x]'); if(x){ e.preventDefault(); try{ document.activeElement && document.activeElement.blur(); }catch(_){} overlay.classList.remove('aberto'); } });
+    (function(){ let _ult = 0;
+      // Fechar / Voltar / ✕: responde ao pointerup (não depende do click, que no iOS se perde com o teclado ou uma roda aberta),
+      // ignora o click que vem logo a seguir, e só age no tick seguinte para o click não cair num botão novo depois de redesenhar.
+      const fechaX = function(e){ const x = e.target && e.target.closest && e.target.closest('[data-cart-x], #cartFechar, #cartVoltar'); if(!x) return;
+        if(Date.now() - _ult < 500) { e.preventDefault(); return; } _ult = Date.now(); e.preventDefault();
+        try{ document.activeElement && document.activeElement.blur(); }catch(_){}
+        const acao = (x.id === 'cartVoltar') ? function(){ render(); } : function(){ overlay.classList.remove('aberto'); };
+        setTimeout(acao, 80); };
+      overlay.addEventListener('pointerup', fechaX); overlay.addEventListener('click', fechaX); })();
     (window.__ovAnim||(window.__ovAnim=function(cont,sel){ var pn=cont.querySelector(sel); if(!pn) return; var an=null,was=cont.classList.contains('aberto'); new MutationObserver(function(){ var open=cont.classList.contains('aberto'); if(open!==was){ was=open; if(an){try{an.cancel();}catch(e){}} if(pn.animate){ an=pn.animate(open?[{transform:'translateY(100%)'},{transform:'translateY(0)'}]:[{transform:'translateY(0)'},{transform:'translateY(100%)'}],{duration:open?380:320,easing:'cubic-bezier(.22,.9,.3,1)'}); } } var a=document.querySelector('#cartOverlay.aberto,#favOverlay.aberto,#agendaOverlay.aberto,#fidOverlay.aberto,#escOverlay.aberto,.categoria-painel.aberto'); document.documentElement.classList.toggle('scroll-lock',!!a); document.body.classList.toggle('scroll-lock',!!a); }).observe(cont,{attributes:true,attributeFilter:['class']}); }))(overlay,'.cart-painel');
     overlay.addEventListener('click', e => { if(e.target === overlay) overlay.classList.remove('aberto'); });
     cartBtn.addEventListener('click', () => { try{ _encSync(); }catch(e){} render(); requestAnimationFrame(() => overlay.classList.add('aberto')); });
@@ -8410,7 +8421,7 @@
         }
       }
       const fechar = document.getElementById('cartFechar');
-      if(fechar) fechar.onclick = () => overlay.classList.remove('aberto');
+      // (Fechar / Voltar / ✕ são tratados por delegação no overlay — ver fechaX)
       const limpar = document.getElementById('cartLimpar');
       if(limpar) limpar.onclick = () => { lista = []; guardar(); atualizarBadge(); overlay.classList.remove('aberto'); };
       const whatsBtn = document.getElementById('cartWhats');
@@ -8501,7 +8512,9 @@
         else { let t = Math.ceil(_pickMin.getTime() / (15*60000)) * (15*60000); const fim = _mkEm(_diaSel ? _diaSel.iso : _hojeIso, '23:45').getTime(); for(; t <= fim; t += 15*60000) out.push(_hhmm(new Date(t))); }
         return out.filter(function(v, i, a){ return a.indexOf(v) === i; });
       };
-      const _slotsHTML = function(){ return _slotsDia().map(function(hh, i){ return '<option value="' + hh + '"' + (i === 0 ? ' selected' : '') + '>' + hh + '</option>'; }).join(''); };
+      let _horaSel = '';
+      const _slotsHTML = function(){ const ss = _slotsDia(); _horaSel = ss[0] || ''; return ss.length ? ss.map(function(hh, i){ return '<button type="button" class="cart-chip' + (i === 0 ? ' on' : '') + '" data-hh="' + hh + '">' + hh + '</button>'; }).join('') : '<div style="font-size:.84rem;color:var(--castanho-suave);">Sem horas disponíveis neste dia.</div>'; };
+      const _diasHTML = function(){ return _dias.map(function(o, i){ return '<button type="button" class="cart-chip' + (i === 0 ? ' on' : '') + '" data-iso="' + o.iso + '">' + _diaTxt(o) + '</button>'; }).join(''); };
       const _dentroRange = function(dt){ const t = dt.getTime(); for(var i=0;i<_ranges.length;i++){ if(t >= _ranges[i].start - 60000 && t <= _ranges[i].end + 60000) return true; } return false; };
       p.innerHTML = '<button type="button" class="cart-x" data-cart-x aria-label="Fechar">✕</button><h3>Confirmar encomenda</h3>' +
         '<div class="cart-vazio" style="padding:0 0 10px; font-size:0.84rem;">Enviamos o teu pedido diretamente ao restaurante. Só fica confirmado quando o restaurante responder — podes acompanhar aqui.</div>' +
@@ -8517,18 +8530,22 @@
           _fecharam
             ? ('<div style="margin:12px 0 4px; padding:10px 12px; background:#fbe7e4; border-radius:10px; color:#b23; font-size:0.84rem; font-weight:700;">' + _fecharamMsg + '</div>')
             : ('<label for="cartDia" style="display:block; font-size:0.82rem; color:var(--castanho-suave); margin:12px 0 4px;">📅 Que dia vais levantar?</label>' +
-               '<select id="cartDia" style="width:100%; padding:11px 12px; border:1.5px solid var(--linha); border-radius:10px; font-family:inherit; font-size:0.95rem; background:#fff;">' + _dias.map(function(o, i){ return '<option value="' + o.iso + '"' + (i === 0 ? ' selected' : '') + '>' + _diaTxt(o) + '</option>'; }).join('') + '</select>' +
-               '<label for="cartHora" style="display:block; font-size:0.82rem; color:var(--castanho-suave); margin:12px 0 4px;">🕒 A que horas vais levantar?</label>' +
-               '<select id="cartHora" style="width:100%; padding:11px 12px; border:1.5px solid var(--linha); border-radius:10px; font-family:inherit; font-size:0.95rem; background:#fff;">' + _slotsHTML() + '</select>' +
+               '<div id="cartDia" class="cart-chips">' + _diasHTML() + '</div>' +
+               '<label style="display:block; font-size:0.82rem; color:var(--castanho-suave); margin:12px 0 4px;">🕒 A que horas vais levantar?</label>' +
+               '<div id="cartHora" class="cart-chips">' + _slotsHTML() + '</div>' +
                '<div id="cartHoraNota" style="font-size:0.78rem; color:var(--castanho-suave); margin-top:4px;">' + (_ranges.length ? ('Levantamento: ' + _rangesTxt + '.') : ('A partir das ' + _pickMinHHMM + '.')) + '</div>')
         ) : '') +
         '<div id="cartErro" style="display:none; color:#c0392b; font-size:0.82rem; font-weight:700; margin-top:8px;"></div>' +
         '<div class="cart-acoes"><button class="cart-fechar" id="cartVoltar">‹ Voltar</button><button class="cart-whats" id="cartEnviar">✅ Enviar pedido</button></div>';
       const voltar = document.getElementById('cartVoltar');
-      if(voltar) voltar.onclick = () => render();
-      { const selD = document.getElementById('cartDia'); if(selD) selD.onchange = function(){ _diaSel = _dias.filter(function(o){ return o.iso === selD.value; })[0] || _dias[0]; _calcDia();
-          const h = document.getElementById('cartHora'); if(h){ h.innerHTML = _slotsHTML(); }
-          const n = document.getElementById('cartHoraNota'); if(n) n.textContent = _ranges.length ? ('Levantamento: ' + _rangesTxt + '.') : ('A partir das ' + _pickMinHHMM + '.'); }; }
+      // (Voltar tratado por delegação — fechaX)
+      const _wireHoras = function(){ const h = document.getElementById('cartHora'); if(!h) return; h.querySelectorAll('.cart-chip').forEach(function(b){ b.onclick = function(){ _horaSel = b.dataset.hh; h.querySelectorAll('.cart-chip').forEach(function(x){ x.classList.toggle('on', x === b); }); }; }); };
+      _wireHoras();
+      { const dv = document.getElementById('cartDia'); if(dv) dv.querySelectorAll('.cart-chip').forEach(function(b){ b.onclick = function(){
+          dv.querySelectorAll('.cart-chip').forEach(function(x){ x.classList.toggle('on', x === b); });
+          _diaSel = _dias.filter(function(o){ return o.iso === b.dataset.iso; })[0] || _dias[0]; _calcDia();
+          const h = document.getElementById('cartHora'); if(h){ h.innerHTML = _slotsHTML(); _wireHoras(); }
+          const n = document.getElementById('cartHoraNota'); if(n) n.textContent = _ranges.length ? ('Levantamento: ' + _rangesTxt + '.') : ('A partir das ' + _pickMinHHMM + '.'); }; }); }
       const inp = document.getElementById('cartNome');
       const enviar = document.getElementById('cartEnviar');
       if(enviar) enviar.onclick = () => {
@@ -8543,7 +8560,7 @@
         let horaLev = '';
         if(pedeLev){
           if(_fecharam){ _erro(_fecharamMsg); return; }
-          horaLev = ((document.getElementById('cartHora') || {}).value || '').trim();
+          horaLev = String(_horaSel || '').trim();
           if(!horaLev){ _erro('Escolhe a hora de levantamento.'); return; }
           const alvo = _mkEm(_diaSel ? _diaSel.iso : _hojeIso, horaLev);
           if(!alvo){ _erro('Hora inválida.'); return; }
