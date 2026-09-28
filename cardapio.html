@@ -2264,6 +2264,7 @@
   #introModosWrap .im-guia{ position:absolute; background:rgba(120,200,255,.9); pointer-events:none; z-index:6; box-shadow:0 0 4px rgba(120,200,255,.7); }
   #introModosWrap .im-guia-h{ left:0; right:0; height:1px; }
   #introModosWrap .im-guia-v{ top:0; bottom:0; width:1px; }
+  #introModosWrap .im-guia-centro{ background:rgba(255,196,64,.95); box-shadow:0 0 5px rgba(255,196,64,.8); }   /* dourada = centro exato do ecrã */
   @keyframes imSubir{ from{ opacity:0; transform:translateY(44px); } to{ opacity:1; transform:translateY(0); } }
   @keyframes imDescer{ from{ opacity:0; transform:translateY(-44px); } to{ opacity:1; transform:translateY(0); } }
   @keyframes imFade{ from{ opacity:0; } to{ opacity:1; } }
@@ -5845,7 +5846,8 @@
     var TH = 9;   // limiar do íman (px)
     function outros(){ if(!wrap) return []; return Array.prototype.filter.call(wrap.querySelectorAll('.im-opt'), function(s){ return s !== el; }); }
     function pv(s, v){ return parseFloat(s.style.getPropertyValue(v)) || 0; }
-    function limparGuias(){ if(gh){ gh.remove(); gh=null; } if(gv){ gv.remove(); gv=null; } }
+    var gh2=null;
+    function limparGuias(){ if(gh){ gh.remove(); gh=null; } if(gv){ gv.remove(); gv=null; } if(gh2){ gh2.remove(); gh2=null; } }
     el.onclick = function(ev){ ev.stopPropagation(); ev.preventDefault(); };
     el.onpointerdown = function(ev){ ev.preventDefault(); ev.stopPropagation(); wrap = el.parentNode; drag=true; moveu=false; sx=ev.clientX; sy=ev.clientY; bx=pv(el,'--mx'); by=pv(el,'--my'); try{ el.setPointerCapture(ev.pointerId); }catch(e){} };
     el.onpointermove = function(ev){ if(!drag) return;
@@ -5866,13 +5868,23 @@
         }
         return null;
       }
-      var snapX = _snap(x, xs); if(snapX != null) x = snapX;
-      var snapY = _snap(y, ys); if(snapY != null) y = snapY;
+      // Ímanes ao CENTRO DO ECRÃ (x=0 é o meio exato do ecrã; y=0 é a linha base dos ícones) e ESPELHO:
+      // um ícone à mesma distância do centro que outro (−x do outro) → uma fila de 2/3 fica centrada no ecrã.
+      var centroX = false, centroY = false;
+      var snapX = _snap(x, xs);
+      if(Math.abs(x) <= TH){ snapX = 0; centroX = true; }
+      else if(snapX == null){ for(var m=0;m<xs.length;m++){ if(xs[m] !== 0 && Math.abs(x + xs[m]) <= TH){ snapX = -xs[m]; break; } } }
+      if(snapX != null) x = snapX;
+      var snapY = _snap(y, ys);
+      if(Math.abs(y) <= TH){ snapY = 0; centroY = true; }
+      if(snapY != null) y = snapY;
       el.style.setProperty('--mx', x+'px'); el.style.setProperty('--my', y+'px');
       limparGuias();
       var W = wrap.clientWidth, H = wrap.clientHeight;
-      if(snapY != null){ gh = document.createElement('div'); gh.className='im-guia im-guia-h'; gh.style.top = (0.58*H + y)+'px'; wrap.appendChild(gh); }
-      if(snapX != null){ gv = document.createElement('div'); gv.className='im-guia im-guia-v'; gv.style.left = (0.5*W + x)+'px'; wrap.appendChild(gv); }
+      if(snapY != null){ gh = document.createElement('div'); gh.className='im-guia im-guia-h' + (centroY ? ' im-guia-centro' : ''); gh.style.top = (0.58*H + y)+'px'; wrap.appendChild(gh); }
+      if(snapX != null){ gv = document.createElement('div'); gv.className='im-guia im-guia-v' + (centroX ? ' im-guia-centro' : ''); gv.style.left = (0.5*W + x)+'px'; wrap.appendChild(gv); }
+      // O espelho mostra também a linha do centro do ecrã (para se perceber a simetria)
+      if(snapX != null && !centroX && xs.some(function(v){ return v === -x; })){ var gc = document.createElement('div'); gc.className='im-guia im-guia-v im-guia-centro'; gc.style.left = (0.5*W)+'px'; gc.style.opacity = '.55'; wrap.appendChild(gc); gh2 = gc; }
       try{ ev.preventDefault(); }catch(_){}
     };
     el.onpointerup = function(ev){ if(!drag) return; drag=false; limparGuias();
