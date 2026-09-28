@@ -1484,6 +1484,8 @@
   function _encAbrirProxima(){ const e = _encFila.shift(); if(!e) return; _encMostrarFolha(e); }
   function _encSomLoop(on){ if(_encSomTimer){ clearInterval(_encSomTimer); _encSomTimer = null; } if(on){ try{ _beep(); }catch(e){} _encSomTimer = setInterval(function(){ try{ _beep(); if(navigator.vibrate) navigator.vibrate([120,80,120]); }catch(e){} }, 8000); } }
   function _encFecharFolha(){ const ov = document.getElementById('encNovaOv'); if(ov) ov.remove(); _encSomLoop(false); _encAbertaId = null; if(_encFila.length) setTimeout(_encAbrirProxima, 300); }
+  // Depois de responder (ou adiar), abre a área Encomendas já na lista certa
+  function _encIrParaLista(filtro){ try{ _encFiltro = filtro || 'pendente'; if($('vistaEncomendas').classList.contains('hide')) mostrarVista('enc'); else renderEncomendas(); }catch(e){} }
   function _encMarcarVisto(id){ if(_encVigiaVistos === null) _encVigiaVistos = _encVistosLer(); _encVigiaVistos[String(id)] = 1; _encVistosGravar(); }
   function _encMostrarFolha(e){
     _encAbertaId = e.id;
@@ -1522,7 +1524,7 @@
       if(error){ msg.textContent = 'Erro: ' + error.message; msg.className = 'msg erro'; this.disabled = false; return; }
       _encMarcarVisto(e.id);
       try{ _encAvisarCliente(e.id, 'confirmada', novaHora ? ('Levantamento às ' + novaHora.replace(/^\d{4}-\d{2}-\d{2}\s+/, '') + '.') : ''); }catch(err){}
-      _encFecharFolha(); try{ renderEncomendas(); }catch(err){}
+      _encFecharFolha(); _encIrParaLista('confirmada');
     };
     ov.querySelector('#enRecusar').onclick = function(){ ov.querySelector('#enMotivos').classList.toggle('hide'); };
     ov.querySelectorAll('#enMotivos button').forEach(function(b){ b.onclick = async function(){
@@ -1531,9 +1533,11 @@
       if(error){ msg.textContent = 'Erro: ' + error.message; msg.className = 'msg erro'; return; }
       _encMarcarVisto(e.id);
       try{ _encAvisarCliente(e.id, 'cancelada', b.dataset.m || ''); }catch(err){}
-      _encFecharFolha(); try{ renderEncomendas(); }catch(err){}
+      _encFecharFolha(); _encIrParaLista('cancelada');
     }; });
-    ov.querySelector('#enDepois').onclick = function(){ _encAdiadas[String(e.id)] = Date.now(); setTimeout(function(){ delete _encAdiadas[String(e.id)]; }, 5*60000); _encFecharFolha(); };
+    const adiar = function(){ _encAdiadas[String(e.id)] = Date.now(); setTimeout(function(){ delete _encAdiadas[String(e.id)]; }, 5*60000); _encFecharFolha(); _encIrParaLista('pendente'); };
+    ov.querySelector('#enDepois').onclick = adiar;
+    ov.addEventListener('click', function(ev){ if(ev.target === ov) adiar(); });   // tocar fora = ver depois (a encomenda fica em Pendentes)
   }
   let _encFiltro = 'pendente', _encCache = [];
   const _ENC_GRP = {
