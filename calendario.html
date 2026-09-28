@@ -257,6 +257,9 @@
   .pd-prev.mos-plate .mos-sub{ margin-top:5px; }
   .pd-prev .mos-tit{ font-family:var(--pd-fonte-titulo,'Fredoka',sans-serif); font-size:1.15rem; line-height:1.1; }
   .pd-prev .mos-sub{ font-size:.86rem; line-height:1.2; opacity:.95; margin-top:2px; white-space:pre-line; }
+  /* Pré-visualização da promoção: ecrã de telemóvel 390px com a margem real do menu (#promoDia: 22px 20px 8px) */
+  .pr-frame{ width:390px; padding:0; }
+  .pr-phone{ width:390px; box-sizing:border-box; padding:22px 20px 14px; min-height:90px; background:#fbf8f2; border-radius:14px; border:1px solid #eee5d2; overflow:visible; font-size:16px; line-height:normal; }
   /* Stepper [−] N [+] */
   .pd-step{ display:inline-flex; align-items:center; border:1.5px solid #e0d3b5; border-radius:10px; overflow:hidden; background:#fff; }
   .pd-step button, .nova-form .pd-step button{ width:38px; flex:none; margin:0; border-radius:0; height:36px; border:none; background:#f3ead8; color:#6b4a1f; font-size:1.25rem; font-weight:800; cursor:pointer; font-family:inherit; line-height:1; }
@@ -839,7 +842,7 @@
       +   '<div><label>Cor</label><input type="color" id="prCor" value="' + esc(p.cor || '#e0245e') + '" style="height:40px;width:64px;padding:3px;"></div>'
       +   '<div><label>Tamanho do texto</label>' + _pdStepperHTML('pr-escala', 0, pct, 60, 160, '%') + '</div>'
       + '</div>'
-      + '<label style="margin-top:12px;">📱 Como fica no menu</label><div id="prPrev" style="margin-top:2px;padding:22px 8px 8px;overflow:visible;"></div>'
+      + '<label style="margin-top:12px;display:flex;justify-content:space-between;gap:8px;">📱 Como fica no menu <span class="pd-escala-nota" style="color:#b9ab8e;font-weight:600;"></span></label><div class="pd-stage" style="margin-top:2px;"><div class="pd-frame pr-frame" data-w="390"><div id="prPrev" class="pr-phone"></div></div></div>'
       // ---- Quando ----
       + '<label style="margin-top:14px;">📅 Quando aparece</label>'
       + '<div id="prQTipos" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;">'
@@ -871,7 +874,7 @@
       $('prQSemFimBox').style.display = $('prQSemFim').checked ? '' : 'none'; }
     function pintaDias(){ var ds = ((_prEdit.quando || {}).dias || []).map(Number); $('prQDias').querySelectorAll('button').forEach(function(b){ var on = ds.indexOf(+b.dataset.d) >= 0; b.style.background = on ? '#a8712f' : '#fff'; b.style.color = on ? '#fff' : '#4a3820'; b.style.borderColor = on ? '#a8712f' : '#e0d3b5'; }); }
     function pintaEst(){ var atual = _prEdit.estilo || 'autocolante'; $('prEstilos').querySelectorAll('button').forEach(function(x){ var on = x.dataset.e === atual; x.style.background = on ? '#a8712f' : '#fff'; x.style.color = on ? '#fff' : '#4a3820'; x.style.borderColor = on ? '#a8712f' : '#e0d3b5'; }); }
-    function prev(){ var box = $('prPrev'); if(!box) return; box.style.setProperty('--pd-fundo', '#fffdf8'); if(!(_prEdit.texto || '').trim()){ box.innerHTML = '<div style="color:#b9ab8e;font-size:.82rem;">Escreve o texto para veres a pré-visualização.</div>'; return; } box.innerHTML = (typeof window.__amPromoCard === 'function') ? window.__amPromoCard(_prEdit) : ''; }
+    function prev(){ var box = $('prPrev'); if(!box) return; box.style.setProperty('--pd-fundo', '#fbf8f2'); if(!(_prEdit.texto || '').trim()){ box.innerHTML = '<div style="color:#b9ab8e;font-size:.82rem;">Escreve o texto para veres a pré-visualização.</div>'; } else { box.innerHTML = (typeof window.__amPromoCard === 'function') ? window.__amPromoCard(_prEdit) : ''; } _pdFit(); setTimeout(_pdFit, 60); }
     if(!_prEdit.quando) _prEdit.quando = { tipo:'dia', data:_prHoje() };
     if(_prEdit.quando.tipo === 'semanal' && !Array.isArray(_prEdit.quando.dias)) _prEdit.quando.dias = [];
     pintaTipo(); pintaDias(); pintaEst(); prev();
@@ -1080,9 +1083,10 @@
   function _pdFit(){
     document.querySelectorAll('.pd-stage').forEach(function(st){
       var fr = st.querySelector('.pd-frame'); if(!fr) return;
-      var w = st.clientWidth || _PD_LARG; var s = Math.min(1, w / (_PD_LARG + 6));
+      var w0 = parseFloat(fr.dataset.w) || (_PD_LARG + 6);
+      var w = st.clientWidth || w0; var s = Math.min(1, w / w0);
       fr.style.transform = 'scale(' + s + ')';
-      st.style.height = Math.ceil((_PD_ALT + 6) * s) + 'px';
+      st.style.height = Math.ceil((fr.offsetHeight || (_PD_ALT + 6)) * s) + 'px';
       var lab = st.parentNode && st.parentNode.querySelector('.pd-escala-nota'); if(lab) lab.textContent = s < 0.999 ? ('a ' + Math.round(s*100) + '% do tamanho real') : 'tamanho real';
     });
   }
