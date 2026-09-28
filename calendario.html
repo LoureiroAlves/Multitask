@@ -239,6 +239,53 @@
   .dia:not(.vazio){ cursor:pointer; }
   .nova-btn{ width:100%; border:1.5px dashed var(--dourado); background:#fff; color:var(--dourado-escuro); border-radius:12px; padding:12px; cursor:pointer; font-weight:800; font-size:.92rem; margin-bottom:12px; }
   .nova-btn:hover{ background:#fffaf0; }
+  /* Folha "NOVA ENCOMENDA" (linha da frente) */
+  #encNovaOv{ z-index:95; }
+  .modal.enc-nova{ border-top-color:#c0392b; max-width:520px; width:100%; }
+  .en-cab{ display:flex; justify-content:space-between; align-items:center; }
+  .en-tag{ font-size:.8rem; font-weight:900; letter-spacing:.6px; color:#fff; background:#c0392b; padding:5px 10px; border-radius:999px; animation:enPulse 1.2s ease-in-out infinite; }
+  @keyframes enPulse{ 0%,100%{ box-shadow:0 0 0 0 rgba(192,57,43,.55); } 50%{ box-shadow:0 0 0 8px rgba(192,57,43,0); } }
+  .en-num{ font-weight:900; font-size:1.2rem; color:var(--castanho); }
+  .en-hora{ display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; margin:12px 0 8px; }
+  .en-dia{ font-size:.85rem; font-weight:900; color:#8a5a10; letter-spacing:.5px; }
+  .en-hh{ font-size:2.6rem; font-weight:900; color:var(--castanho); line-height:1; }
+  .en-falta{ font-size:.85rem; font-weight:800; padding:4px 10px; border-radius:999px; background:#f3ead8; color:#6b4a1f; }
+  .en-falta.u1{ background:#fff2df; color:#a85d10; } .en-falta.u2{ background:#fbe7e4; color:#b23; }
+  .en-itens{ background:#fffdf8; border:1.5px solid #eadfc6; border-radius:12px; padding:6px 12px; max-height:34vh; overflow:auto; }
+  .en-it{ display:flex; gap:10px; padding:7px 0; border-bottom:1px dashed #eadfc6; font-size:1.05rem; color:var(--castanho); }
+  .en-it:last-child{ border-bottom:none; }
+  .en-q{ font-weight:900; min-width:34px; color:#8a5a10; }
+  .en-n{ font-weight:700; }
+  .en-obs{ margin-top:8px; padding:8px 10px; background:#fff8d6; border-left:4px solid #e0b000; border-radius:8px; font-weight:700; color:#5a4a10; font-size:.95rem; }
+  .en-quem{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:10px; font-size:.9rem; color:var(--castanho); }
+  .en-nome{ font-weight:800; }
+  .en-total{ margin-left:auto; font-weight:900; font-size:1.05rem; }
+  .en-ajuste{ display:flex; gap:6px; flex-wrap:wrap; align-items:center; margin-top:12px; font-size:.82rem; font-weight:800; color:#8a7a5c; }
+  .en-chip{ border:1.5px solid #e0d3b5; background:#fff; color:var(--castanho); border-radius:999px; padding:8px 12px; font-weight:800; font-family:inherit; cursor:pointer; font-size:.85rem; }
+  .en-chip.on{ background:#a8712f; border-color:#a8712f; color:#fff; }
+  .en-btn-ok{ width:100%; margin-top:12px; border:none; border-radius:14px; padding:18px; font-size:1.25rem; font-weight:900; color:#fff; background:#1e8c4a; cursor:pointer; font-family:inherit; box-shadow:0 8px 20px rgba(30,140,74,.3); }
+  .en-btn-ok:active{ transform:scale(.985); }
+  .en-linha2{ display:flex; gap:8px; margin-top:8px; }
+  .en-btn-no{ flex:1; border:1.5px solid #e8c4bf; background:#fff; color:#b23; border-radius:12px; padding:12px; font-weight:800; font-family:inherit; cursor:pointer; }
+  .en-btn-later{ flex:1; border:1.5px solid var(--linha); background:#fff; color:#8a7a5c; border-radius:12px; padding:12px; font-weight:700; font-family:inherit; cursor:pointer; }
+  .en-motivos{ margin-top:10px; display:flex; gap:6px; flex-wrap:wrap; }
+  .en-motivos button{ border:1.5px solid #e8c4bf; background:#fff5f3; color:#b23; border-radius:999px; padding:8px 12px; font-weight:800; font-family:inherit; cursor:pointer; font-size:.82rem; }
+  .en-motivos .subt2{ width:100%; }
+  .def-sec{ margin-top:16px; padding:12px; border:1.5px solid var(--linha); border-radius:12px; background:#fff; }
+  .def-sec-t{ font-weight:800; color:var(--castanho); font-size:1rem; margin-bottom:4px; }
+  .hd-dia{ border:1px solid #eadfc6; border-radius:10px; padding:8px 10px; margin-top:8px; background:#fffdf8; }
+  .hd-dia.folga{ background:#fbe7e4; border-color:#f3c7c0; }
+  .hd-dia-cab{ display:flex; justify-content:space-between; align-items:center; }
+  .hd-dia-nome{ font-weight:800; color:var(--castanho); }
+  .hd-folga{ font-size:.82rem; font-weight:700; color:#b23b2e; display:flex; align-items:center; gap:6px; cursor:pointer; }
+  .hd-turno{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:6px; }
+  .hd-turno.off{ opacity:.55; }
+  .hd-turno-on{ display:flex; align-items:center; gap:6px; font-size:.86rem; font-weight:700; min-width:96px; cursor:pointer; }
+  .hd-turno-h{ display:flex; align-items:center; gap:4px; flex-wrap:wrap; }
+  .hd-turno-h input[type=time]{ width:auto; min-height:0; padding:6px 6px; font-size:.86rem; margin:0; }
+  .hd-dia input[type=checkbox]{ width:auto; margin:0; }
+  #dfPasso{ width:100%; padding:10px 12px; border:1.5px solid var(--linha); border-radius:9px; font-family:inherit; font-size:.95rem; margin-bottom:9px; background:#fff; }
+  .hd-ult{ font-size:.72rem; color:#8a7a5c; margin-left:6px; }
   .nova-form{ border:1px solid var(--linha); border-radius:12px; padding:14px; margin-bottom:14px; background:#fffdf8; }
   /* ===== Pré-visualização do prato do dia: moldura 362×140 (iPhone 390px) com o MESMO CSS do menu ===== */
   .pd-stage{ position:relative; width:100%; overflow:hidden; margin-top:6px; }
@@ -410,9 +457,85 @@
     return map;
   }
   function _feriado(iso){ return _feriadosAno(parseInt(iso.slice(0,4),10))[iso] || null; }
+  // ===== HORÁRIO SEMANAL — fonte única para reservas e encomendas (o MESMO código no Gestor e no cardápio) =====
+  // agenda.horario = { '0'..'6': { folga, almoco:{on,de,ate,ultima?}, jantar:{on,de,ate,ultima?} } }  (ultima = última reserva, HH:MM, opcional)
+  // agenda.reservaPasso (min entre reservas), agenda.reservaAntes (última reserva: min antes do fecho do turno),
+  // agenda.encAntes (última encomenda: min antes do fecho). Fechos/feriado municipal continuam em agenda.fechos / feriadoMunicipal.
+  window.__amHor = (function(){
+    function min(s){ var m = /^(\d{1,2}):(\d{2})/.exec(String(s || '').trim()); return m ? (parseInt(m[1],10)*60 + parseInt(m[2],10)) : null; }
+    function hhmm(m){ return String(Math.floor(m/60)).padStart(2,'0') + ':' + String(m%60).padStart(2,'0'); }
+    function diaDef(){ return { folga:false, almoco:{ on:true, de:'12:00', ate:'15:00' }, jantar:{ on:true, de:'19:00', ate:'22:00' } }; }
+    function dia(a, wd){ var h = a && a.horario; var d = (h && h[wd]) || (h && h[String(wd)]); if(!d) return diaDef(); return { folga:!!d.folga, almoco:{ on:!!(d.almoco && d.almoco.on), de:(d.almoco && d.almoco.de) || '12:00', ate:(d.almoco && d.almoco.ate) || '15:00', ultima:(d.almoco && d.almoco.ultima) || '' }, jantar:{ on:!!(d.jantar && d.jantar.on), de:(d.jantar && d.jantar.de) || '19:00', ate:(d.jantar && d.jantar.ate) || '22:00', ultima:(d.jantar && d.jantar.ultima) || '' } }; }
+    function temHorario(a){ return !!(a && a.horario && typeof a.horario === 'object'); }
+    // Migração do modelo antigo (dias / diasFecho / horarios / horariosDia / turnos / turnosHoras / carrinho.hora*) → horario
+    function migrar(a, carrinho){
+      a = a || {}; var cc = carrinho || {}; var th = (a.turnosHoras && typeof a.turnosHoras === 'object') ? a.turnosHoras : null;
+      var alm = th ? [(th.almoco||{}).de, (th.almoco||{}).ate] : [cc.horaAbre, cc.horaFecha];
+      var jan = th ? [(th.jantar||{}).de, (th.jantar||{}).ate] : [cc.horaAbre2, cc.horaFecha2];
+      var janDef = !!(jan[0] && jan[1]);
+      if(!(alm[0] && alm[1])) alm = ['12:00','15:00']; if(!janDef) jan = ['19:00','22:00'];
+      var horarios = Array.isArray(a.horarios) ? a.horarios : [];
+      var h = {};
+      for(var wd = 0; wd < 7; wd++){
+        var t = (a.turnos && a.turnos[wd]) || {};
+        var folga = (Array.isArray(a.diasFecho) && a.diasFecho.indexOf(wd) >= 0) || (Array.isArray(a.dias) && a.dias.length === 7 && a.dias[wd] === false && !!a.ativo) || (t.a === false && t.j === false);
+        var slots = (a.horariosDia && Array.isArray(a.horariosDia[wd])) ? a.horariosDia[wd] : horarios;
+        var temAlm = slots.length ? slots.some(function(s){ var m = min(s); return m != null && m < 17*60; }) : true;
+        var temJan = slots.length ? slots.some(function(s){ var m = min(s); return m != null && m >= 17*60; }) : janDef;
+        var uA = -1, uJ = -1; slots.forEach(function(s){ var m = min(s); if(m == null) return; if(m < 17*60){ if(m > uA) uA = m; } else if(m > uJ) uJ = m; });
+        h[wd] = { folga:folga, almoco:{ on:(t.a !== false) && temAlm, de:alm[0], ate:alm[1], ultima:(uA >= 0 ? hhmm(uA) : '') }, jantar:{ on:(t.j !== false) && temJan, de:jan[0], ate:jan[1], ultima:(uJ >= 0 ? hhmm(uJ) : '') } };
+      }
+      var out = { horario:h, reservaPasso:30, reservaAntes:60, encAntes:(th ? (parseInt(th.antesFecho,10) || 0) : (cc.antecedenciaLev != null ? (parseInt(cc.antecedenciaLev,10) || 0) : 60)) };
+      // intervalo e "última reserva" deduzidos da lista de horas antiga
+      var ms = horarios.map(min).filter(function(x){ return x != null; }).sort(function(p,q){ return p-q; });
+      if(ms.length >= 2){ var best = 999; for(var i = 1; i < ms.length; i++){ var d = ms[i] - ms[i-1]; if(d > 0 && d < best) best = d; } if([15,20,30,45,60,90,120].indexOf(best) >= 0) out.reservaPasso = best; }
+      return out;
+    }
+    // Regras de um dia: fechado? que turnos? (fechos, férias, feriado municipal, folga)
+    function regras(a, iso){
+      a = a || {}; var d = new Date(iso + 'T00:00:00'); var wd = d.getDay(); var dd = dia(a, wd);
+      var fechado = !!dd.folga;
+      (a.fechos || []).forEach(function(f){ if(f && f.de && iso >= f.de && iso <= (f.a || f.de)) fechado = true; });
+      if(a.feriadoMunicipal && iso.slice(5) === String(a.feriadoMunicipal)) fechado = true;
+      if(!dd.almoco.on && !dd.jantar.on) fechado = true;
+      var jan = [];
+      if(!fechado){ if(dd.almoco.on && min(dd.almoco.de) != null && min(dd.almoco.ate) != null && min(dd.almoco.ate) > min(dd.almoco.de)) jan.push({ tipo:'almoco', de:dd.almoco.de, ate:dd.almoco.ate, ultima:dd.almoco.ultima });
+                    if(dd.jantar.on && min(dd.jantar.de) != null && min(dd.jantar.ate) != null && min(dd.jantar.ate) > min(dd.jantar.de)) jan.push({ tipo:'jantar', de:dd.jantar.de, ate:dd.jantar.ate, ultima:dd.jantar.ultima }); }
+      return { fechado:fechado, almoco:!fechado && dd.almoco.on, jantar:!fechado && dd.jantar.on, janelas:jan };
+    }
+    // Horas de reserva de um dia (calculadas): do início de cada turno até "última reserva", de passo em passo
+    function slots(a, iso){
+      var r = regras(a, iso); if(r.fechado) return [];
+      var passo = parseInt(a.reservaPasso, 10) || 30, antes = (a.reservaAntes != null ? parseInt(a.reservaAntes, 10) : 60) || 0;
+      var out = [];
+      r.janelas.forEach(function(j){ var de = min(j.de); var ate = (j.ultima && min(j.ultima) != null) ? min(j.ultima) : (min(j.ate) - antes); for(var m = de; m <= ate; m += passo) out.push(hhmm(m)); });
+      return out.filter(function(v, i, arr){ return arr.indexOf(v) === i; });
+    }
+    // Campos antigos gerados a partir do horario — para menus/versões em cache que ainda os leem
+    function legado(a){
+      a = a || {}; var dias = [], diasFecho = [], turnos = {}, horariosDia = {}; var uniao = {}, porDia = {};
+      var hojeIso = (function(){ var d = new Date(); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); })();
+      for(var wd = 0; wd < 7; wd++){
+        var dd = dia(a, wd); var folga = dd.folga || (!dd.almoco.on && !dd.jantar.on);
+        dias[wd] = !folga; if(folga) diasFecho.push(wd);
+        turnos[wd] = { a:!folga && dd.almoco.on, j:!folga && dd.jantar.on };
+        // slots por dia da semana (usa uma data qualquer com esse dia da semana, sem fechos)
+        var base = new Date(hojeIso + 'T00:00:00'); base.setDate(base.getDate() + ((wd - base.getDay() + 7) % 7));
+        var iso = base.getFullYear() + '-' + String(base.getMonth()+1).padStart(2,'0') + '-' + String(base.getDate()).padStart(2,'0');
+        var s = folga ? [] : slots({ horario:a.horario, reservaPasso:a.reservaPasso, reservaAntes:a.reservaAntes }, iso);
+        porDia[wd] = s; s.forEach(function(x){ uniao[x] = 1; });
+      }
+      var horarios = Object.keys(uniao).sort();
+      for(var w = 0; w < 7; w++){ if(dias[w] && porDia[w].length !== horarios.length) horariosDia[w] = porDia[w]; }
+      var ref = null; for(var k = 0; k < 7; k++){ var q = dia(a, k); if(!q.folga){ ref = q; break; } } ref = ref || diaDef();
+      return { dias:dias, diasFecho:diasFecho, horarios:horarios, horariosDia:horariosDia, turnos:turnos,
+               turnosHoras:{ almoco:{ de:ref.almoco.de, ate:ref.almoco.ate }, jantar:{ de:ref.jantar.on ? ref.jantar.de : '', ate:ref.jantar.on ? ref.jantar.ate : '' }, antesFecho:(parseInt(a.encAntes,10) || 0) } };
+    }
+    return { min:min, hhmm:hhmm, diaDef:diaDef, dia:dia, temHorario:temHorario, migrar:migrar, regras:regras, slots:slots, legado:legado };
+  })();
   function _agCfg(){ return (negocio && negocio.config && negocio.config.agenda) || {}; }
   function _ferMunicipal(iso){ const a=_agCfg(); return (a.feriadoMunicipal && iso.slice(5)===a.feriadoMunicipal) ? 'Feriado municipal' : null; }
-  function _encerrado(iso){ const a=_agCfg(); const wd=new Date(iso+'T00:00:00').getDay(); if(Array.isArray(a.diasFecho) && a.diasFecho.indexOf(wd)>=0) return true; { const t=(a.turnos&&a.turnos[wd])||null; if(t && t.a===false && t.j===false) return true; } const fs=a.fechos||[]; for(var i=0;i<fs.length;i++){ if(fs[i].de && iso>=fs[i].de && iso<=(fs[i].a||fs[i].de)) return true; } return false; }
+  function _encerrado(iso){ try{ return window.__amHor.regras(_agCfg(), iso).fechado; }catch(e){ return false; } }
 
   $('btnEntrar').onclick = entrar;
   $('pass').addEventListener('keydown', e => { if(e.key==='Enter') entrar(); });
@@ -460,6 +583,8 @@
     $('loginCard').classList.add('hide'); $('painel').classList.remove('hide'); $('btnSair').classList.remove('hide');
     await _limparSemanaAntiga();
     carregar();
+    try{ _encVigiaIniciar(); }catch(e){}
+    document.addEventListener('pointerdown', function(){ try{ _prepararSom(); }catch(e){} }, { once:true });
   }
 
   // ISO da 2ª feira desta semana (início da semana)
@@ -490,6 +615,8 @@
       if(cfg.pratoDia){ delete cfg.pratoDia; m1=true; }   // limpa também restos legado
       // Promoções: migrar o formato antigo (por data) para a lista, arquivar as passadas há +30 dias e regenerar o espelho promoDatas
       var m2=_prMigrar(cfg); if(_prArquivar(cfg)) m2=true; if(_prEspelho(cfg)) m2=true;
+      // Horário semanal: migrar o modelo antigo (dias/horários/turnos + horas do editor) uma vez
+      if(cfg.agenda && typeof cfg.agenda==='object' && !window.__amHor.temHorario(cfg.agenda)){ Object.assign(cfg.agenda, window.__amHor.migrar(cfg.agenda, cfg.carrinho||{})); Object.assign(cfg.agenda, window.__amHor.legado(cfg.agenda)); m2=true; }
       if(m1||m2){
         var up=await sb.from('negocios').update({ config:cfg }).eq('id', negocio.id);
         if(!up.error) negocio.config=cfg;
@@ -1264,11 +1391,12 @@
   async function _encSetEstado(id, estado){
     const { error } = await sb.from('encomendas').update({ estado: estado }).eq('id', id);
     if(error){ alert('Erro: ' + error.message); return; }
+    try{ _encMarcarVisto(id); if(_encAbertaId === id) _encFecharFolha(); }catch(e){}
     try{ _encAvisarCliente(id, estado); }catch(e){}   // avisa o cliente por push (se tiver notificações ativas)
     renderEncomendas();
   }
   // Envia push ao cliente da encomenda quando o estado muda
-  async function _encAvisarCliente(id, estado){
+  async function _encAvisarCliente(id, estado, extra){
     if(['confirmada','pronta','cancelada'].indexOf(estado) < 0) return;
     let ep = '', n = '';
     try{
@@ -1280,6 +1408,7 @@
     if(estado === 'confirmada'){ titulo = '✅ Encomenda confirmada'; corpo = 'A tua encomenda' + (n ? (' nº ' + n) : '') + ' foi confirmada e já está a ser preparada.'; }
     else if(estado === 'pronta'){ titulo = '🎉 Encomenda pronta!'; corpo = 'A tua encomenda' + (n ? (' nº ' + n) : '') + ' está pronta para levantar.'; }
     else { titulo = '❌ Encomenda não confirmada'; corpo = 'A tua encomenda' + (n ? (' nº ' + n) : '') + ' não foi confirmada. Fala com o restaurante.'; }
+    if(extra) corpo += ' ' + extra;
     try{ await sb.functions.invoke('enviar-push', { body: { negocio: negocio.id, titulo: titulo, corpo: corpo, url: (typeof _linkCardapio === 'function' ? _linkCardapio() : '/'), endpoints: [ep] } }); }catch(e){}
   }
   let _encSig = '', _encTimer = null, _encIdsVistos = null, _somPronto = false;
@@ -1299,6 +1428,112 @@
     for(let i=0;i<peixe.length;i++){ if(s.indexOf(peixe[i])>=0) return 'Peixe'; }
     for(let i=0;i<carne.length;i++){ if(s.indexOf(carne[i])>=0) return 'Carne'; }
     return '';
+  }
+  // ============================================================
+  // CHEGADA DE ENCOMENDAS — linha da frente do take-away
+  //  • vigia global (5 s) em todo o Gestor, não só na área Encomendas
+  //  • folha "NOVA ENCOMENDA" por cima de tudo: hora de levantamento em grande, itens, contacto,
+  //    Aceitar (com ajuste de hora) / Recusar (com motivo) — som a repetir até responder
+  //  • lista de Pendentes agrupada Hoje / Próximos dias, ordenada pela hora de levantamento, com urgência
+  // ============================================================
+  function _encLevDate(e){
+    const l = String(e.levantamento || '').trim();
+    let m = /^(\d{4}-\d{2}-\d{2})\s+(\d{1,2}):(\d{2})$/.exec(l);
+    if(m){ const d = new Date(m[1] + 'T00:00:00'); d.setHours(+m[2], +m[3], 0, 0); return d; }
+    m = /^(\d{1,2}):(\d{2})$/.exec(l);
+    if(m){ const d = new Date(e.criado_em || Date.now()); d.setHours(+m[1], +m[2], 0, 0); return d; }
+    return null;
+  }
+  function _encHojeIso(){ const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
+  function _encIsoDe(d){ return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
+  function _encDiaTxt(d){ const hoje = _encHojeIso(), iso = _encIsoDe(d); if(iso === hoje) return 'HOJE'; const am = new Date(); am.setDate(am.getDate()+1); if(iso === _encIsoDe(am)) return 'AMANHÃ'; return ['DOM','SEG','TER','QUA','QUI','SEX','SÁB'][d.getDay()] + ' ' + d.getDate() + '/' + (d.getMonth()+1); }
+  function _encHHMM(d){ return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0'); }
+  // "faltam 25 min" / "atrasada 10 min" / "daqui a 2h15"
+  function _encFaltaTxt(e){
+    const d = _encLevDate(e); if(!d) return { txt:'', urg:0 };
+    const min = Math.round((d.getTime() - Date.now()) / 60000);
+    if(min < 0) return { txt:'⚠️ atrasada ' + Math.abs(min) + ' min', urg:2 };
+    if(min <= 30) return { txt:'⏱ faltam ' + min + ' min', urg:1 };
+    if(min < 24*60) return { txt:'daqui a ' + Math.floor(min/60) + 'h' + String(min%60).padStart(2,'0'), urg:0 };
+    return { txt:'', urg:0 };
+  }
+  function _encTelLinks(e, grande){
+    const t = String(e.telefone || '').replace(/[^\d+]/g, ''); if(!t) return '';
+    const wa = (typeof _telWA === 'function') ? _telWA(t) : t.replace(/\D/g, '');
+    const st = grande ? 'padding:12px 14px;font-size:1rem;' : 'padding:6px 10px;font-size:.8rem;';
+    return '<a href="tel:' + esc(t) + '" style="' + st + 'border-radius:10px;background:#e6f0ff;color:#1f4e9c;font-weight:800;text-decoration:none;display:inline-flex;align-items:center;gap:6px;">📞 ' + esc(t) + '</a>'
+      + (wa ? '<a href="https://wa.me/' + esc(wa) + '" target="_blank" rel="noopener" style="' + st + 'border-radius:10px;background:#e7f9ec;color:#1e6b3c;font-weight:800;text-decoration:none;display:inline-flex;align-items:center;gap:6px;">💬 WhatsApp</a>' : '');
+  }
+  // ---- vigia global ----
+  let _encVigiaTimer = null, _encVigiaVistos = null, _encFila = [], _encAbertaId = null, _encSomTimer = null, _encAdiadas = {};
+  function _encVistosLer(){ try{ const a = JSON.parse(localStorage.getItem('amesaEncVistos:' + (SLUG||'')) || '[]'); const o = {}; a.forEach(function(id){ o[id] = 1; }); return o; }catch(e){ return {}; } }
+  function _encVistosGravar(){ try{ localStorage.setItem('amesaEncVistos:' + (SLUG||''), JSON.stringify(Object.keys(_encVigiaVistos || {}).slice(-300))); }catch(e){} }
+  async function _encVigiar(){
+    try{
+      if(!negocio || !negocio.id) return;
+      const { data, error } = await sb.from('encomendas').select('*').eq('negocio_id', negocio.id).eq('estado', 'pendente').order('criado_em', { ascending:true });
+      if(error || !data) return;
+      if(_encVigiaVistos === null) _encVigiaVistos = _encVistosLer();
+      const novas = data.filter(function(e){ return !_encVigiaVistos[String(e.id)] && !_encAdiadas[String(e.id)]; });
+      // encomendas pendentes nunca vistas neste aparelho contam como novas (o dono pode ter estado fora)
+      novas.forEach(function(e){ if(!_encFila.some(function(x){ return x.id === e.id; }) && _encAbertaId !== e.id) _encFila.push(e); });
+      if(_encFila.length && !_encAbertaId) _encAbrirProxima();
+    }catch(e){}
+  }
+  function _encVigiaIniciar(){ if(_encVigiaTimer) return; _encVigiar(); _encVigiaTimer = setInterval(function(){ if(!document.hidden) _encVigiar(); }, 5000); document.addEventListener('visibilitychange', function(){ if(!document.hidden) _encVigiar(); }); }
+  function _encAbrirProxima(){ const e = _encFila.shift(); if(!e) return; _encMostrarFolha(e); }
+  function _encSomLoop(on){ if(_encSomTimer){ clearInterval(_encSomTimer); _encSomTimer = null; } if(on){ try{ _beep(); }catch(e){} _encSomTimer = setInterval(function(){ try{ _beep(); if(navigator.vibrate) navigator.vibrate([120,80,120]); }catch(e){} }, 8000); } }
+  function _encFecharFolha(){ const ov = document.getElementById('encNovaOv'); if(ov) ov.remove(); _encSomLoop(false); _encAbertaId = null; if(_encFila.length) setTimeout(_encAbrirProxima, 300); }
+  function _encMarcarVisto(id){ if(_encVigiaVistos === null) _encVigiaVistos = _encVistosLer(); _encVigiaVistos[String(id)] = 1; _encVistosGravar(); }
+  function _encMostrarFolha(e){
+    _encAbertaId = e.id;
+    const d = _encLevDate(e); const itens = Array.isArray(e.itens) ? e.itens : [];
+    const falta = _encFaltaTxt(e);
+    const horaBase = d ? _encHHMM(d) : '';
+    const ov = document.createElement('div'); ov.id = 'encNovaOv'; ov.className = 'modal-bg';
+    ov.innerHTML = '<div class="modal enc-nova">'
+      + '<div class="en-cab"><span class="en-tag">🛍️ NOVA ENCOMENDA</span><span class="en-num">nº ' + (e.numero != null ? e.numero : '—') + '</span></div>'
+      + (d ? ('<div class="en-hora"><span class="en-dia">' + _encDiaTxt(d) + '</span><span class="en-hh">' + horaBase + '</span>' + (falta.txt ? ('<span class="en-falta u' + falta.urg + '">' + falta.txt + '</span>') : '') + '</div>') : '<div class="en-hora"><span class="en-dia">SEM HORA</span></div>')
+      + '<div class="en-itens">' + (itens.length ? itens.map(function(it){ return '<div class="en-it"><span class="en-q">' + (it.qtd||1) + '×</span><span class="en-n">' + esc(it.nome||'') + '</span></div>'; }).join('') : '<div class="en-it"><span class="en-n">—</span></div>') + '</div>'
+      + (e.obs ? ('<div class="en-obs">📝 ' + esc(e.obs) + '</div>') : '')
+      + '<div class="en-quem">' + (e.nome ? ('<span class="en-nome">👤 ' + esc(e.nome) + '</span>') : '') + _encTelLinks(e, false) + (Number(e.total) > 0 ? ('<span class="en-total">' + Number(e.total).toFixed(2).replace('.', ',') + ' €</span>') : '') + '</div>'
+      + '<div class="en-ajuste"><span>Pronta às</span>'
+      +   '<button type="button" class="en-chip on" data-min="0">' + (horaBase || '—') + '</button>'
+      +   '<button type="button" class="en-chip" data-min="15">+15</button><button type="button" class="en-chip" data-min="30">+30</button><button type="button" class="en-chip" data-min="45">+45</button><button type="button" class="en-chip" data-min="60">+1h</button>'
+      + '</div>'
+      + '<button type="button" id="enAceitar" class="en-btn-ok">✔ ACEITAR</button>'
+      + '<div class="en-linha2"><button type="button" id="enRecusar" class="en-btn-no">✕ Recusar</button><button type="button" id="enDepois" class="en-btn-later">Ver depois</button></div>'
+      + '<div id="enMotivos" class="en-motivos hide"><div class="subt2" style="margin:0 0 6px;">Motivo (o cliente recebe este aviso):</div>'
+      +   '<button type="button" data-m="Já não temos esse prato">Sem stock</button><button type="button" data-m="A cozinha está cheia a essa hora">Cozinha cheia</button><button type="button" data-m="Não fazemos levantamento a essa hora">Hora impossível</button><button type="button" data-m="">Sem motivo</button>'
+      + '</div>'
+      + '<div id="enMsg" class="msg"></div>'
+      + '</div>';
+    document.body.appendChild(ov);
+    _encSomLoop(true);
+    let ajuste = 0;
+    ov.querySelectorAll('.en-chip').forEach(function(b){ b.onclick = function(){ ajuste = parseInt(b.dataset.min, 10) || 0; ov.querySelectorAll('.en-chip').forEach(function(x){ x.classList.toggle('on', x === b); }); if(d){ const nd = new Date(d.getTime() + ajuste*60000); ov.querySelector('.en-chip[data-min="0"]').textContent = ajuste ? (horaBase + ' → ' + _encHHMM(nd)) : horaBase; } }; });
+    const msg = ov.querySelector('#enMsg');
+    ov.querySelector('#enAceitar').onclick = async function(){
+      this.disabled = true; msg.textContent = 'A confirmar…';
+      const upd = { estado:'confirmada' };
+      let novaHora = null;
+      if(d && ajuste){ const nd = new Date(d.getTime() + ajuste*60000); const iso = _encIsoDe(nd); novaHora = (iso === _encHojeIso() && !/^\d{4}-/.test(String(e.levantamento||''))) ? _encHHMM(nd) : (iso + ' ' + _encHHMM(nd)); upd.levantamento = novaHora; }
+      const { error } = await sb.from('encomendas').update(upd).eq('id', e.id);
+      if(error){ msg.textContent = 'Erro: ' + error.message; msg.className = 'msg erro'; this.disabled = false; return; }
+      _encMarcarVisto(e.id);
+      try{ _encAvisarCliente(e.id, 'confirmada', novaHora ? ('Levantamento às ' + novaHora.replace(/^\d{4}-\d{2}-\d{2}\s+/, '') + '.') : ''); }catch(err){}
+      _encFecharFolha(); try{ renderEncomendas(); }catch(err){}
+    };
+    ov.querySelector('#enRecusar').onclick = function(){ ov.querySelector('#enMotivos').classList.toggle('hide'); };
+    ov.querySelectorAll('#enMotivos button').forEach(function(b){ b.onclick = async function(){
+      msg.textContent = 'A recusar…';
+      const { error } = await sb.from('encomendas').update({ estado:'cancelada' }).eq('id', e.id);
+      if(error){ msg.textContent = 'Erro: ' + error.message; msg.className = 'msg erro'; return; }
+      _encMarcarVisto(e.id);
+      try{ _encAvisarCliente(e.id, 'cancelada', b.dataset.m || ''); }catch(err){}
+      _encFecharFolha(); try{ renderEncomendas(); }catch(err){}
+    }; });
+    ov.querySelector('#enDepois').onclick = function(){ _encAdiadas[String(e.id)] = Date.now(); setTimeout(function(){ delete _encAdiadas[String(e.id)]; }, 5*60000); _encFecharFolha(); };
   }
   let _encFiltro = 'pendente', _encCache = [];
   const _ENC_GRP = {
@@ -1326,15 +1561,18 @@
     if(est === 'pronta') acoes += '<button class="enc-a" data-a="entregue" data-id="' + e.id + '" style="border:none; background:#eef1ee; color:#5a6b5f; border-radius:8px; padding:7px 11px; cursor:pointer; font-family:inherit; font-weight:800; font-size:.82rem;">📦 Entregue</button>';
     if(['cancelada','entregue'].indexOf(est) < 0) acoes += '<button class="enc-a" data-a="cancelada" data-id="' + e.id + '" style="border:none; background:#fbe7e4; color:#b23; border-radius:8px; padding:7px 11px; cursor:pointer; font-family:inherit; font-weight:800; font-size:.82rem;">✕ Cancelar</button>';
     acoes += '<button class="enc-del" data-id="' + e.id + '" style="border:1px solid #e8c4bf; color:var(--vermelho); background:#fff; border-radius:8px; padding:7px 10px; cursor:pointer; font-family:inherit; font-weight:700; font-size:.82rem;">🗑</button>';
+    const falta = (est === 'pendente' || est === 'confirmada') ? _encFaltaTxt(e) : { txt:'', urg:0 };
     const neon = entregue ? 'box-shadow:none;' : (est === 'pendente' ? '' : ('box-shadow:0 0 0 1.5px ' + cor + ', 0 0 12px ' + glow + ';'));
     const pulsa = (est === 'pendente') ? ' pulsa' : '';
     const fade = entregue ? 'opacity:.5; filter:grayscale(.35);' : '';
     const selo = entregue ? '<div class="enc-selo"><span>Entregue</span></div>' : '';
     return '<div class="card enc-card' + pulsa + '" style="position:relative; margin-bottom:10px; border-color:' + cor + '; --nc:' + cor + '; --ng:' + glow + '; ' + neon + '">'
       + '<div style="' + fade + '">'
-      +   '<div style="font-weight:800; color:var(--castanho);">Encomenda nº ' + (e.numero != null ? e.numero : '—') + '</div>'
+      +   '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;"><div style="font-weight:800; color:var(--castanho);">Encomenda nº ' + (e.numero != null ? e.numero : '—') + '</div>' + (falta.txt ? ('<span style="font-size:.78rem;font-weight:800;padding:3px 9px;border-radius:999px;' + (falta.urg === 2 ? 'background:#fbe7e4;color:#b23;' : (falta.urg === 1 ? 'background:#fff2df;color:#a85d10;' : 'background:#f3ead8;color:#6b4a1f;')) + '">' + falta.txt + '</span>') : '') + '</div>'
       +   '<div style="font-size:.82rem; color:#8a7a5c; margin:2px 0 8px;">Recebida ' + dia + ' às ' + hh + (e.nome ? (' · ' + esc(e.nome)) : '') + (e.levantamento ? (' · 🕒 ' + _levTxt(e.levantamento)) : '') + '</div>'
       +   '<div style="font-size:.9rem; color:var(--castanho); line-height:1.5;">' + (linhas || '—') + '</div>'
+      +   (e.obs ? ('<div style="margin-top:6px;padding:6px 9px;background:#fff8d6;border-left:3px solid #e0b000;border-radius:6px;font-size:.86rem;color:#5a4a10;">📝 ' + esc(e.obs) + '</div>') : '')
+      +   (e.telefone ? ('<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;">' + _encTelLinks(e, false) + '</div>') : '')
       +   (Number(e.total) > 0 ? ('<div style="margin-top:8px; font-weight:800; color:var(--castanho);">Total: ' + Number(e.total).toFixed(2).replace('.', ',') + '€</div>') : '')
       +   '<div style="display:flex; gap:7px; flex-wrap:wrap; margin-top:10px;">' + acoes + '</div>'
       + '</div>'
@@ -1353,7 +1591,7 @@
     _encSig = sig;
     // Som quando chega uma encomenda NOVA (id que ainda não tínhamos visto)
     const _ids = arr.map(function(e){ return String(e.id); });
-    if(_encIdsVistos !== null){ let _nova = false; _ids.forEach(function(id){ if(!_encIdsVistos[id]) _nova = true; }); if(_nova) _beep(); }
+    if(_encIdsVistos !== null){ let _nova = false; _ids.forEach(function(id){ if(!_encIdsVistos[id]) _nova = true; }); if(_nova && !_encAbertaId) _beep(); }
     _encIdsVistos = {}; _ids.forEach(function(id){ _encIdsVistos[id] = 1; });
     _encCache = arr;
     _pintaEnc();
@@ -1378,9 +1616,19 @@
         + '<button id="entApagarTodas" type="button" style="border:1px solid #e8c4bf; background:#fff; color:var(--vermelho,#b23); border-radius:10px; padding:10px 13px; cursor:pointer; font-family:inherit; font-weight:800; font-size:.86rem;">🗑 Apagar todas</button>'
         + '</div>';
     }
-    const doFiltro = arr.filter(function(e){ return (e.estado || 'pendente') === _encFiltro; });
+    let doFiltro = arr.filter(function(e){ return (e.estado || 'pendente') === _encFiltro; });
     if(!doFiltro.length){
       html += '<div class="card"><div style="color:#8a7a5c; font-size:.9rem;">Sem encomendas em "' + _ENC_GRP[_encFiltro].nome + '".</div></div>';
+    } else if(_encFiltro === 'pendente' || _encFiltro === 'confirmada' || _encFiltro === 'pronta'){
+      // ordem de trabalho: pela hora de levantamento (as sem hora ficam pela hora de chegada), Hoje primeiro
+      const chave = function(e){ const d = _encLevDate(e); return d ? d.getTime() : new Date(e.criado_em).getTime(); };
+      doFiltro = doFiltro.slice().sort(function(a, b){ return chave(a) - chave(b); });
+      const hojeIso = _encHojeIso();
+      const hoje = doFiltro.filter(function(e){ const d = _encLevDate(e); return !d || _encIsoDe(d) <= hojeIso; });
+      const prox = doFiltro.filter(function(e){ const d = _encLevDate(e); return d && _encIsoDe(d) > hojeIso; });
+      if(hoje.length){ html += '<div style="font-size:.8rem;font-weight:800;color:#8a7a5c;margin:6px 0 6px;">HOJE · ' + hoje.length + '</div>'; hoje.forEach(function(e){ html += _cartaEnc(e, _ENC_GRP[_encFiltro]); }); }
+      if(prox.length){ html += '<div style="font-size:.8rem;font-weight:800;color:#8a7a5c;margin:14px 0 6px;">PRÓXIMOS DIAS · ' + prox.length + '</div>'; prox.forEach(function(e){ html += _cartaEnc(e, _ENC_GRP[_encFiltro]); }); }
+      if(_encFiltro === 'pendente'){ try{ doFiltro.forEach(function(e){ _encMarcarVisto(e.id); }); }catch(e){} }
     } else {
       doFiltro.forEach(function(e){ html += _cartaEnc(e, _ENC_GRP[_encFiltro]); });
     }
@@ -1660,40 +1908,36 @@
   let _dfMesas = [];
   function renderDefinicoes(){
     const a = (negocio && negocio.config && negocio.config.agenda) || {};
-    const dias = (Array.isArray(a.dias) && a.dias.length===7) ? a.dias : [true,true,true,true,true,true,true];
-    const hor = Array.isArray(a.horarios) ? a.horarios.join(', ') : '';
     const on = function(v){ return v ? ' checked' : ''; };
-    const ordem = [[1,'Seg'],[2,'Ter'],[3,'Qua'],[4,'Qui'],[5,'Sex'],[6,'Sáb'],[0,'Dom']];
-    const diasHtml = ordem.map(function(o){ return '<label class="dia-chip"><input type="checkbox" data-dia="'+o[0]+'"'+on(dias[o[0]])+'> '+o[1]+'</label>'; }).join('');
-    const fech = Array.isArray(a.diasFecho) ? a.diasFecho : [];
-    const fechHtml = ordem.map(function(o){ return '<label class="dia-chip"><input type="checkbox" data-fdia="'+o[0]+'"'+(fech.indexOf(o[0])>=0?' checked':'')+'> '+o[1]+'</label>'; }).join('');
     let html = '<div class="card">'
-      + '<div class="def-h">⚙️ Definições de reservas</div>'
-      + '<div class="subt">Define como os clientes pedem reserva a partir do cardápio.</div>'
-      // ---- WhatsApp em destaque ----
-      + '<div class="wa-dest">'
-        + '<div class="wa-tit">📲 WhatsApp das reservas</div>'
-        + '<div class="wa-sub">É este o número que recebe os pedidos de pré-reserva dos clientes.</div>'
-        + '<input type="text" id="dfWa" value="'+esc(a.whatsapp||'')+'" inputmode="tel" placeholder="351912345678">'
-        + '<div class="wa-nota">Com indicativo do país e sem espaços — Portugal começa por <b>351</b>.</div>'
+      + '<div class="def-h">⚙️ Definições</div>'
+      // ---- 1) HORÁRIO SEMANAL (fonte única) ----
+      + '<div class="def-sec"><div class="def-sec-t">🗓️ Horário semanal</div>'
+      + '<div class="subt2">É daqui que saem as horas das <b>reservas</b> e das <b>encomendas</b>, os dias de folga e o que o cliente vê como "fechado". Cada dia tem um turno de almoço e um de jantar; desliga o que não houver.</div>'
+      + '<div id="dfHorario"></div>'
+      + '<button type="button" id="dfHorCopiar" class="mini-btn" style="margin-top:8px;">⧉ Copiar a segunda-feira para os outros dias</button>'
       + '</div>'
-      + '<label>Capacidade do restaurante <span style="font-weight:400; color:#8a7a5c;">(nº máximo de lugares)</span></label>'
-      + '<input type="number" id="dfCap" min="0" value="'+(a.capacidade!=null?a.capacidade:0)+'" placeholder="Ex: 80">'
+      // ---- 2) FECHOS ----
+      + '<div class="def-sec"><div class="def-sec-t">🔒 Fechos e férias</div>'
+      + '<label>Feriado municipal <span style="font-weight:400; color:#8a7a5c;">(dia da cidade — repete todos os anos)</span></label>'
+      + '<input type="date" id="dfFerMun"'+(a.feriadoMunicipal ? (' value="'+hoje.getFullYear()+'-'+esc(a.feriadoMunicipal)+'"') : '')+'>'
+      + '<label style="margin-top:10px;">Períodos de encerramento</label>'
+      + '<div id="dfFechos"></div><button type="button" id="dfAddFecho" class="mini-btn">＋ período de fecho</button>'
+      + '<div class="subt2" style="margin-top:6px;">Nas folgas, feriado e férias o cliente não consegue reservar nem encomendar.</div>'
+      + '</div>'
+      // ---- 3) RESERVAS ----
+      + '<div class="def-sec"><div class="def-sec-t">📅 Reservas</div>'
       + '<label class="sw"><input type="checkbox" id="dfAtivo"'+on(a.ativo)+'> Ativar reservas no cardápio</label>'
       + '<div id="dfBox"'+(a.ativo?'':' style="display:none;"')+'>'
-        + '<label>Dias disponíveis</label><div class="dias-chips">'+diasHtml+'</div>'
-        + '<label>🔒 Encerra semanalmente <span style="font-weight:400; color:#8a7a5c;">(dia(s) de folga fixos)</span></label><div class="dias-chips">'+fechHtml+'</div>'
-        + '<label>Horários <span style="font-weight:400; color:#8a7a5c;">(separados por vírgula)</span></label>'
-        + '<input type="text" id="dfHor" value="'+esc(hor)+'" placeholder="12:00, 13:00, 20:00, 20:30">'
-        + '<label>Horários por dia <span style="font-weight:400; color:#8a7a5c;">(se algum dia tem menos horas — ex.: Domingo sem jantar)</span></label>'
-        + '<div id="dfHorDiaBtns" class="dias-chips"></div>'
-        + '<div id="dfHorDiaPainel"></div>'
-        + '<label>Feriado municipal <span style="font-weight:400; color:#8a7a5c;">(dia da cidade — repete todos os anos)</span></label>'
-        + '<input type="date" id="dfFerMun"'+(a.feriadoMunicipal ? (' value="'+hoje.getFullYear()+'-'+esc(a.feriadoMunicipal)+'"') : '')+'>'
-        + '<label style="margin-top:12px;">🔒 Encerramentos / férias</label>'
-        + '<div class="subt2">Períodos em que o restaurante fecha. Quem tentar reservar nessas datas vê a mensagem em baixo.</div>'
-        + '<div id="dfFechos"></div><button type="button" id="dfAddFecho" class="mini-btn">＋ período de fecho</button>'
-        + '<div class="subt2" style="margin-top:6px;">Nos dias de folga e de férias o cliente não consegue reservar — o dia fica trancado no cardápio.</div>'
+        + '<div class="wa-dest">'
+          + '<div class="wa-tit">📲 WhatsApp das reservas</div>'
+          + '<div class="wa-sub">É este o número que recebe os pedidos de pré-reserva dos clientes.</div>'
+          + '<input type="text" id="dfWa" value="'+esc(a.whatsapp||'')+'" inputmode="tel" placeholder="351912345678">'
+          + '<div class="wa-nota">Com indicativo do país e sem espaços — Portugal começa por <b>351</b>.</div>'
+        + '</div>'
+        + '<div class="lin"><div><label>Capacidade <span style="font-weight:400; color:#8a7a5c;">(lugares)</span></label><input type="number" id="dfCap" min="0" value="'+(a.capacidade!=null?a.capacidade:0)+'" placeholder="Ex: 80"></div>'
+        + '<div><label>Intervalo entre reservas</label><select id="dfPasso">' + [15,20,30,45,60,90,120].map(function(v){ return '<option value="'+v+'"'+((parseInt(a.reservaPasso,10)||30)===v?' selected':'')+'>'+v+' min</option>'; }).join('') + '</select></div></div>'
+        + '<div class="subt2">As horas que o cliente vê são calculadas: do início de cada turno até à "última reserva", de intervalo em intervalo. Ex.: almoço 12:00–15:00, última reserva 14:00, 30 min → 12:00, 12:30, 13:00, 13:30, 14:00.</div>'
         + '<button type="button" id="dfMaisBtn" class="av-btn">⚙️ Opções avançadas ▾</button>'
         + '<div id="dfAvancado" class="hide">'
           + '<div class="lin"><div><label>Antecedência (dias)</label><input type="number" id="dfAnt" min="0" value="'+(a.antecedencia!=null?a.antecedencia:1)+'"></div>'
@@ -1707,17 +1951,15 @@
           + '<label class="sw"><input type="checkbox" id="dfPorPessoa"'+on(a.porPessoa)+'> O valor é por pessoa</label>'
           + '<label>Link de pagamento do sinal (opcional)</label><input type="text" id="dfPagLink" value="'+esc(a.pagamentoLink||'')+'" placeholder="https://...">'
           + '<label>Nota de pagamento (opcional)</label><input type="text" id="dfPagNota" value="'+esc(a.pagamentoNota||'')+'">'
+          + '<label>Mensagem nos dias fechados (opcional)</label><input type="text" id="dfFechoMsg" value="'+esc(a.fechoMsg||'')+'" placeholder="Ex.: Estamos de férias até dia 31.">'
         + '</div>'
       + '</div>'
-      + '<div style="margin-top:18px;padding:12px;border:1.5px solid var(--linha);border-radius:12px;background:#fff;">'
-      +   '<div style="font-weight:800;color:var(--castanho);">🍽️ Turnos de funcionamento</div>'
-      +   '<div class="subt2" style="margin:2px 0 8px;">Vale para as <b>reservas</b> e para as <b>encomendas</b>: num dia só de almoço não há reservas nem levantamentos ao jantar; um dia sem nenhum turno é folga.</div>'
-      +   '<div id="dfTurnos"></div>'
-      +   '<div style="font-weight:800;color:var(--castanho);margin-top:14px;">🕒 Horas da cozinha (encomendas / take away)</div>'
-      +   '<div class="subt2" style="margin:2px 0 6px;">O cliente só pode marcar levantamento dentro destas horas, nos dias em que o turno está ligado.</div>'
-      +   '<div class="lin"><div><label>Almoço · de</label><input type="time" id="dfThAlmDe"></div><div><label>até</label><input type="time" id="dfThAlmAte"></div></div>'
-      +   '<div class="lin"><div><label>Jantar · de</label><input type="time" id="dfThJanDe"></div><div><label>até</label><input type="time" id="dfThJanAte"></div></div>'
-      +   '<label>Última encomenda <span style="font-weight:400;color:#8a7a5c;">(minutos antes do fecho)</span></label><input type="number" id="dfThAntes" min="0" step="5" style="width:120px;">'
+      + '</div>'
+      // ---- 4) ENCOMENDAS ----
+      + '<div class="def-sec"><div class="def-sec-t">🛍️ Encomendas / take-away</div>'
+      + '<div class="subt2">O cliente escolhe o dia e a hora de levantamento dentro dos turnos do horário semanal. (Ligar/desligar o take-away e o carrinho faz-se no editor do menu.)</div>'
+      + '<label>Última encomenda <span style="font-weight:400; color:#8a7a5c;">(minutos antes do fecho do turno)</span></label>'
+      + '<input type="number" id="dfEncAntes" min="0" step="5" style="width:120px;" value="'+(a.encAntes!=null?a.encAntes:60)+'">'
       + '</div>'
       + '<button class="acao" id="dfGuardar" style="width:100%; margin-top:16px;">Guardar definições</button>'
       + '<div class="msg" id="dfMsg" style="margin-top:8px;"></div>'
@@ -1727,63 +1969,46 @@
     _renderMesas();
     _dfFechos = Array.isArray(a.fechos) ? JSON.parse(JSON.stringify(a.fechos)) : [];
     _renderFechos();
-    _dfHorDia = (a.horariosDia && typeof a.horariosDia === 'object') ? JSON.parse(JSON.stringify(a.horariosDia)) : {};
-    _dfHorSel = null;
-    _dfTurnos = (a.turnos && typeof a.turnos === 'object') ? JSON.parse(JSON.stringify(a.turnos)) : {};
-    _renderTurnos();
-    { // horas da cozinha: novas (agenda.turnosHoras) ou, se ainda não houver, as antigas do editor (config.carrinho)
-      const th = (a.turnosHoras && typeof a.turnosHoras === 'object') ? a.turnosHoras : null;
-      const cc = (negocio && negocio.config && negocio.config.carrinho) || {};
-      const v = function(id, val){ const el = $(id); if(el) el.value = val || ''; };
-      v('dfThAlmDe', th ? (th.almoco||{}).de : cc.horaAbre); v('dfThAlmAte', th ? (th.almoco||{}).ate : cc.horaFecha);
-      v('dfThJanDe', th ? (th.jantar||{}).de : cc.horaAbre2); v('dfThJanAte', th ? (th.jantar||{}).ate : cc.horaFecha2);
-      v('dfThAntes', th ? th.antesFecho : (cc.antecedenciaLev != null ? cc.antecedenciaLev : 60)); }
-    _renderHorDiaBtns();
+    // horário semanal (já migrado ao abrir a Gestão; se ainda não estiver, migra agora só para mostrar)
+    { const src = window.__amHor.temHorario(a) ? a.horario : window.__amHor.migrar(a, (negocio && negocio.config && negocio.config.carrinho) || {}).horario;
+      _dfHorario = {}; for(let wd = 0; wd < 7; wd++) _dfHorario[wd] = window.__amHor.dia({ horario:src }, wd); }
+    _renderHorario();
+    $('dfHorCopiar').onclick = function(){ const b = JSON.parse(JSON.stringify(_dfHorario[1])); for(let wd = 0; wd < 7; wd++){ if(wd !== 1) _dfHorario[wd] = JSON.parse(JSON.stringify(b)); } _renderHorario(); };
     $('dfAtivo').onchange = function(){ $('dfBox').style.display = this.checked ? '' : 'none'; };
     $('dfMaisBtn').onclick = function(){ const av=$('dfAvancado'); const aberto = av.classList.toggle('hide'); this.textContent = aberto ? '⚙️ Opções avançadas ▾' : '⚙️ Opções avançadas ▴'; };
     $('dfAddMesa').onclick = function(){ _dfMesas.push({ lugares:2, quantidade:1 }); _renderMesas(); };
     $('dfAddFecho').onclick = function(){ _dfFechos.push({ de:'', a:'' }); _renderFechos(); };
     $('dfGuardar').onclick = guardarDefinicoes;
   }
-  let _dfHorDia = {}, _dfHorSel = null, _dfTurnos = {};
-  function _turnoDe(t, wd){ const o = (t && t[wd]) || {}; return { a: o.a !== false, j: o.j !== false }; }   // por defeito: almoço e jantar
-  function _renderTurnos(){
-    const box = $('dfTurnos'); if(!box) return;
-    const ordem = [[1,'Segunda'],[2,'Terça'],[3,'Quarta'],[4,'Quinta'],[5,'Sexta'],[6,'Sábado'],[0,'Domingo']];
-    box.innerHTML = '<div style="display:grid;grid-template-columns:1fr auto auto;gap:6px 14px;align-items:center;font-size:.9rem;">'
-      + '<div></div><div style="font-size:.72rem;color:#8a7a5c;font-weight:800;text-align:center;">Almoço</div><div style="font-size:.72rem;color:#8a7a5c;font-weight:800;text-align:center;">Jantar</div>'
-      + ordem.map(function(o){ const t = _turnoDe(_dfTurnos, o[0]); const folga = !t.a && !t.j;
-          return '<div style="font-weight:700;color:' + (folga ? '#b23b2e' : 'var(--castanho)') + ';">' + o[1] + (folga ? ' <span style="font-size:.72rem;font-weight:800;">FOLGA</span>' : '') + '</div>'
-            + '<label style="text-align:center;cursor:pointer;"><input type="checkbox" data-tw="' + o[0] + '" data-tk="a"' + (t.a ? ' checked' : '') + ' style="width:auto;transform:scale(1.25);"></label>'
-            + '<label style="text-align:center;cursor:pointer;"><input type="checkbox" data-tw="' + o[0] + '" data-tk="j"' + (t.j ? ' checked' : '') + ' style="width:auto;transform:scale(1.25);"></label>'; }).join('')
-      + '</div>';
-    box.querySelectorAll('input[data-tw]').forEach(function(c){ c.onchange = function(){ const w = c.getAttribute('data-tw'), k = c.getAttribute('data-tk'); _dfTurnos[w] = _dfTurnos[w] || { a:true, j:true }; _dfTurnos[w][k] = c.checked; _renderTurnos(); }; });
-  }
+  let _dfHorario = {};
   const _WD_NOMES = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
-  function _horGlobais(){ return (($('dfHor')||{}).value || '').split(',').map(function(s){ return s.trim(); }).filter(Boolean); }
-  function _renderHorDiaBtns(){
-    const box = $('dfHorDiaBtns'); if(!box) return;
-    const ordem = [[1,'Seg'],[2,'Ter'],[3,'Qua'],[4,'Qui'],[5,'Sex'],[6,'Sáb'],[0,'Dom']];
-    box.innerHTML = ordem.map(function(o){
-      const tem = !!_dfHorDia[o[0]];
-      return '<button type="button" class="dia-chip'+(tem?' hd-on':'')+(_dfHorSel===o[0]?' hd-sel':'')+'" data-hd="'+o[0]+'">'+o[1]+(tem?' •':'')+'</button>';
+  function _renderHorario(){
+    const box = $('dfHorario'); if(!box) return;
+    const ordem = [1,2,3,4,5,6,0];
+    box.innerHTML = ordem.map(function(wd){
+      const d = _dfHorario[wd]; const folga = !!d.folga;
+      const turno = function(k, nome){ const t = d[k];
+        return '<div class="hd-turno' + (t.on ? '' : ' off') + '">'
+          + '<label class="hd-turno-on"><input type="checkbox" data-hw="' + wd + '" data-hk="' + k + '" data-hf="on"' + (t.on ? ' checked' : '') + ' style="width:auto;"> ' + nome + '</label>'
+          + '<div class="hd-turno-h"><input type="time" data-hw="' + wd + '" data-hk="' + k + '" data-hf="de" value="' + esc(t.de) + '"' + (t.on ? '' : ' disabled') + '><span>–</span><input type="time" data-hw="' + wd + '" data-hk="' + k + '" data-hf="ate" value="' + esc(t.ate) + '"' + (t.on ? '' : ' disabled') + '>'
+          + '<span class="hd-ult">últ. reserva</span><input type="time" data-hw="' + wd + '" data-hk="' + k + '" data-hf="ultima" value="' + esc(t.ultima || '') + '"' + (t.on ? '' : ' disabled') + ' title="Última hora que aparece ao cliente para reservar (vazio = 60 min antes do fecho)"></div>'
+          + '</div>'; };
+      return '<div class="hd-dia' + (folga ? ' folga' : '') + '">'
+        + '<div class="hd-dia-cab"><span class="hd-dia-nome">' + _WD_NOMES[wd] + '</span>'
+        + '<label class="hd-folga"><input type="checkbox" data-hw="' + wd + '" data-hf="folga"' + (folga ? ' checked' : '') + ' style="width:auto;"> Folga</label></div>'
+        + (folga ? '<div class="subt2" style="margin:0;">Fechado todo o dia.</div>' : (turno('almoco', '🌤️ Almoço') + turno('jantar', '🌙 Jantar')))
+        + '</div>';
     }).join('');
-    box.querySelectorAll('[data-hd]').forEach(function(b){ b.onclick = function(){ const w=+b.getAttribute('data-hd'); _dfHorSel = (_dfHorSel===w)?null:w; _renderHorDiaBtns(); _renderHorDiaPainel(); }; });
-  }
-  function _renderHorDiaPainel(){
-    const p = $('dfHorDiaPainel'); if(!p) return;
-    if(_dfHorSel == null){ p.innerHTML = ''; return; }
-    const globais = _horGlobais();
-    const atuais = _dfHorDia[_dfHorSel] || globais.slice();
-    p.innerHTML = '<div class="hd-painel"><div class="hd-tit">Horas disponíveis à '+_WD_NOMES[_dfHorSel]+' <span style="font-weight:400; color:#8a7a5c;">(desmarca as que não há)</span></div>'
-      + '<div class="hd-chips">' + globais.map(function(hh){ return '<label class="hd-chip"><input type="checkbox" data-hh="'+hh+'"'+(atuais.indexOf(hh)>=0?' checked':'')+'> '+hh+'</label>'; }).join('') + '</div>'
-      + '<button type="button" id="hdRepor" class="mini-btn" style="margin-top:8px;">Repor todas</button></div>';
-    p.querySelectorAll('input[data-hh]').forEach(function(inp){ inp.onchange = function(){
-      const sel = []; p.querySelectorAll('input[data-hh]').forEach(function(c){ if(c.checked) sel.push(c.getAttribute('data-hh')); });
-      if(sel.length === globais.length){ delete _dfHorDia[_dfHorSel]; } else { _dfHorDia[_dfHorSel] = sel; }
-      _renderHorDiaBtns();
-    }; });
-    const rep = $('hdRepor'); if(rep) rep.onclick = function(){ delete _dfHorDia[_dfHorSel]; _renderHorDiaPainel(); _renderHorDiaBtns(); };
+    box.querySelectorAll('input[data-hw]').forEach(function(inp){
+      inp.onchange = function(){
+        const wd = +inp.getAttribute('data-hw'), k = inp.getAttribute('data-hk'), f = inp.getAttribute('data-hf');
+        const d = _dfHorario[wd];
+        if(f === 'folga'){ d.folga = inp.checked; _renderHorario(); return; }
+        if(f === 'on'){ d[k].on = inp.checked; _renderHorario(); return; }
+        d[k][f] = inp.value;
+        if(f === 'ate' && d[k].ultima && d[k].ultima > inp.value){ d[k].ultima = ''; _renderHorario(); }
+      };
+    });
   }
   let _dfFechos = [];
   function _renderFechos(){
@@ -1890,21 +2115,23 @@
   }
   async function guardarDefinicoes(){
     const prev = (negocio.config && negocio.config.agenda) || {};
-    const dias = [true,true,true,true,true,true,true];
-    $('vistaDef').querySelectorAll('input[data-dia]').forEach(function(c){ dias[+c.getAttribute('data-dia')] = c.checked; });
-    const hor = ($('dfHor').value||'').split(',').map(function(s){ return s.trim(); }).filter(Boolean);
     let sinal = parseInt($('dfSinal').value,10); if(isNaN(sinal)) sinal = 50;
+    // validação do horário
+    for(let wd = 0; wd < 7; wd++){ const d = _dfHorario[wd]; if(d.folga) continue;
+      for(const k of ['almoco','jantar']){ const t = d[k]; if(!t.on) continue;
+        if(!(t.de && t.ate) || t.ate <= t.de){ const m = $('dfMsg'); m.textContent = 'Horário inválido em ' + _WD_NOMES[wd] + ' (' + (k === 'almoco' ? 'almoço' : 'jantar') + '): a hora de fecho tem de ser depois da de abertura.'; m.className = 'msg erro'; return; }
+        if(t.ultima && (t.ultima < t.de || t.ultima > t.ate)){ const m = $('dfMsg'); m.textContent = 'Em ' + _WD_NOMES[wd] + ', a última reserva do ' + (k === 'almoco' ? 'almoço' : 'jantar') + ' tem de ficar entre a abertura e o fecho.'; m.className = 'msg erro'; return; }
+      } }
+    const horario = {}; for(let wd = 0; wd < 7; wd++){ const d = _dfHorario[wd]; horario[wd] = { folga:!!d.folga, almoco:{ on:!!d.almoco.on, de:d.almoco.de, ate:d.almoco.ate, ultima:d.almoco.ultima || '' }, jantar:{ on:!!d.jantar.on, de:d.jantar.de, ate:d.jantar.ate, ultima:d.jantar.ultima || '' } }; }
     const ag = {
       ativo: $('dfAtivo').checked,
       titulo: prev.titulo || 'Reservas',
-      dias: dias,
-      horarios: hor,
+      horario: horario,
+      reservaPasso: parseInt($('dfPasso').value,10) || 30,
+      reservaAntes: (prev.reservaAntes != null ? prev.reservaAntes : 60),
+      encAntes: parseInt($('dfEncAntes').value,10) || 0,
       capacidade: parseInt($('dfCap').value,10)||0,
-      horariosDia: _dfHorDia,
-      turnos: _dfTurnos,
-      turnosHoras: { almoco:{ de:(($('dfThAlmDe')||{}).value||''), ate:(($('dfThAlmAte')||{}).value||'') }, jantar:{ de:(($('dfThJanDe')||{}).value||''), ate:(($('dfThJanAte')||{}).value||'') }, antesFecho:(parseInt(($('dfThAntes')||{}).value,10)||0) },
       feriadoMunicipal: (($('dfFerMun')||{}).value || '').slice(5),   // guarda só MM-DD (repete todos os anos)
-      diasFecho: (function(){ const o=[]; $('vistaDef').querySelectorAll('input[data-fdia]').forEach(function(c){ if(c.checked) o.push(+c.getAttribute('data-fdia')); }); return o; })(),
       fechos: _dfFechos.filter(function(f){ return f.de; }).map(function(f){ return { de:f.de, a:(f.a||f.de) }; }),
       fechoMsg: (($('dfFechoMsg')||{}).value || '').trim(),
       antecedencia: parseInt($('dfAnt').value,10)||0,
@@ -1919,12 +2146,14 @@
       pagamentoNota: ($('dfPagNota').value||'').trim(),
       corTexto: prev.corTexto || ''
     };
+    Object.assign(ag, window.__amHor.legado(ag));   // campos antigos (dias, diasFecho, horarios, horariosDia, turnos, turnosHoras) para menus em cache
     const msg = $('dfMsg'); const g = $('dfGuardar'); g.disabled = true; msg.textContent = 'A guardar...'; msg.className = 'msg';
     const err = await _gravarAgenda(ag);
     g.disabled = false;
     if(err){ msg.textContent = 'Erro: ' + err.message; msg.className = 'msg erro'; return; }
-    msg.textContent = ag.ativo ? 'Definições guardadas ✓ As reservas estão ativas no cardápio.' : 'Definições guardadas ✓ As reservas estão desativadas.';
+    msg.textContent = 'Definições guardadas ✓' + (ag.ativo ? ' As reservas estão ativas no cardápio.' : ' As reservas estão desativadas.');
     msg.className = 'msg';
+    try{ renderCal(); }catch(e){}
   }
 
   let _mdId = null;

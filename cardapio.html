@@ -4531,6 +4531,82 @@
     }
   };
 
+  // ===== HORÁRIO SEMANAL — fonte única para reservas e encomendas (o MESMO código no Gestor e no cardápio) =====
+  // agenda.horario = { '0'..'6': { folga, almoco:{on,de,ate,ultima?}, jantar:{on,de,ate,ultima?} } }  (ultima = última reserva, HH:MM, opcional)
+  // agenda.reservaPasso (min entre reservas), agenda.reservaAntes (última reserva: min antes do fecho do turno),
+  // agenda.encAntes (última encomenda: min antes do fecho). Fechos/feriado municipal continuam em agenda.fechos / feriadoMunicipal.
+  window.__amHor = (function(){
+    function min(s){ var m = /^(\d{1,2}):(\d{2})/.exec(String(s || '').trim()); return m ? (parseInt(m[1],10)*60 + parseInt(m[2],10)) : null; }
+    function hhmm(m){ return String(Math.floor(m/60)).padStart(2,'0') + ':' + String(m%60).padStart(2,'0'); }
+    function diaDef(){ return { folga:false, almoco:{ on:true, de:'12:00', ate:'15:00' }, jantar:{ on:true, de:'19:00', ate:'22:00' } }; }
+    function dia(a, wd){ var h = a && a.horario; var d = (h && h[wd]) || (h && h[String(wd)]); if(!d) return diaDef(); return { folga:!!d.folga, almoco:{ on:!!(d.almoco && d.almoco.on), de:(d.almoco && d.almoco.de) || '12:00', ate:(d.almoco && d.almoco.ate) || '15:00', ultima:(d.almoco && d.almoco.ultima) || '' }, jantar:{ on:!!(d.jantar && d.jantar.on), de:(d.jantar && d.jantar.de) || '19:00', ate:(d.jantar && d.jantar.ate) || '22:00', ultima:(d.jantar && d.jantar.ultima) || '' } }; }
+    function temHorario(a){ return !!(a && a.horario && typeof a.horario === 'object'); }
+    // Migração do modelo antigo (dias / diasFecho / horarios / horariosDia / turnos / turnosHoras / carrinho.hora*) → horario
+    function migrar(a, carrinho){
+      a = a || {}; var cc = carrinho || {}; var th = (a.turnosHoras && typeof a.turnosHoras === 'object') ? a.turnosHoras : null;
+      var alm = th ? [(th.almoco||{}).de, (th.almoco||{}).ate] : [cc.horaAbre, cc.horaFecha];
+      var jan = th ? [(th.jantar||{}).de, (th.jantar||{}).ate] : [cc.horaAbre2, cc.horaFecha2];
+      var janDef = !!(jan[0] && jan[1]);
+      if(!(alm[0] && alm[1])) alm = ['12:00','15:00']; if(!janDef) jan = ['19:00','22:00'];
+      var horarios = Array.isArray(a.horarios) ? a.horarios : [];
+      var h = {};
+      for(var wd = 0; wd < 7; wd++){
+        var t = (a.turnos && a.turnos[wd]) || {};
+        var folga = (Array.isArray(a.diasFecho) && a.diasFecho.indexOf(wd) >= 0) || (Array.isArray(a.dias) && a.dias.length === 7 && a.dias[wd] === false && !!a.ativo) || (t.a === false && t.j === false);
+        var slots = (a.horariosDia && Array.isArray(a.horariosDia[wd])) ? a.horariosDia[wd] : horarios;
+        var temAlm = slots.length ? slots.some(function(s){ var m = min(s); return m != null && m < 17*60; }) : true;
+        var temJan = slots.length ? slots.some(function(s){ var m = min(s); return m != null && m >= 17*60; }) : janDef;
+        var uA = -1, uJ = -1; slots.forEach(function(s){ var m = min(s); if(m == null) return; if(m < 17*60){ if(m > uA) uA = m; } else if(m > uJ) uJ = m; });
+        h[wd] = { folga:folga, almoco:{ on:(t.a !== false) && temAlm, de:alm[0], ate:alm[1], ultima:(uA >= 0 ? hhmm(uA) : '') }, jantar:{ on:(t.j !== false) && temJan, de:jan[0], ate:jan[1], ultima:(uJ >= 0 ? hhmm(uJ) : '') } };
+      }
+      var out = { horario:h, reservaPasso:30, reservaAntes:60, encAntes:(th ? (parseInt(th.antesFecho,10) || 0) : (cc.antecedenciaLev != null ? (parseInt(cc.antecedenciaLev,10) || 0) : 60)) };
+      // intervalo e "última reserva" deduzidos da lista de horas antiga
+      var ms = horarios.map(min).filter(function(x){ return x != null; }).sort(function(p,q){ return p-q; });
+      if(ms.length >= 2){ var best = 999; for(var i = 1; i < ms.length; i++){ var d = ms[i] - ms[i-1]; if(d > 0 && d < best) best = d; } if([15,20,30,45,60,90,120].indexOf(best) >= 0) out.reservaPasso = best; }
+      return out;
+    }
+    // Regras de um dia: fechado? que turnos? (fechos, férias, feriado municipal, folga)
+    function regras(a, iso){
+      a = a || {}; var d = new Date(iso + 'T00:00:00'); var wd = d.getDay(); var dd = dia(a, wd);
+      var fechado = !!dd.folga;
+      (a.fechos || []).forEach(function(f){ if(f && f.de && iso >= f.de && iso <= (f.a || f.de)) fechado = true; });
+      if(a.feriadoMunicipal && iso.slice(5) === String(a.feriadoMunicipal)) fechado = true;
+      if(!dd.almoco.on && !dd.jantar.on) fechado = true;
+      var jan = [];
+      if(!fechado){ if(dd.almoco.on && min(dd.almoco.de) != null && min(dd.almoco.ate) != null && min(dd.almoco.ate) > min(dd.almoco.de)) jan.push({ tipo:'almoco', de:dd.almoco.de, ate:dd.almoco.ate, ultima:dd.almoco.ultima });
+                    if(dd.jantar.on && min(dd.jantar.de) != null && min(dd.jantar.ate) != null && min(dd.jantar.ate) > min(dd.jantar.de)) jan.push({ tipo:'jantar', de:dd.jantar.de, ate:dd.jantar.ate, ultima:dd.jantar.ultima }); }
+      return { fechado:fechado, almoco:!fechado && dd.almoco.on, jantar:!fechado && dd.jantar.on, janelas:jan };
+    }
+    // Horas de reserva de um dia (calculadas): do início de cada turno até "última reserva", de passo em passo
+    function slots(a, iso){
+      var r = regras(a, iso); if(r.fechado) return [];
+      var passo = parseInt(a.reservaPasso, 10) || 30, antes = (a.reservaAntes != null ? parseInt(a.reservaAntes, 10) : 60) || 0;
+      var out = [];
+      r.janelas.forEach(function(j){ var de = min(j.de); var ate = (j.ultima && min(j.ultima) != null) ? min(j.ultima) : (min(j.ate) - antes); for(var m = de; m <= ate; m += passo) out.push(hhmm(m)); });
+      return out.filter(function(v, i, arr){ return arr.indexOf(v) === i; });
+    }
+    // Campos antigos gerados a partir do horario — para menus/versões em cache que ainda os leem
+    function legado(a){
+      a = a || {}; var dias = [], diasFecho = [], turnos = {}, horariosDia = {}; var uniao = {}, porDia = {};
+      var hojeIso = (function(){ var d = new Date(); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); })();
+      for(var wd = 0; wd < 7; wd++){
+        var dd = dia(a, wd); var folga = dd.folga || (!dd.almoco.on && !dd.jantar.on);
+        dias[wd] = !folga; if(folga) diasFecho.push(wd);
+        turnos[wd] = { a:!folga && dd.almoco.on, j:!folga && dd.jantar.on };
+        // slots por dia da semana (usa uma data qualquer com esse dia da semana, sem fechos)
+        var base = new Date(hojeIso + 'T00:00:00'); base.setDate(base.getDate() + ((wd - base.getDay() + 7) % 7));
+        var iso = base.getFullYear() + '-' + String(base.getMonth()+1).padStart(2,'0') + '-' + String(base.getDate()).padStart(2,'0');
+        var s = folga ? [] : slots({ horario:a.horario, reservaPasso:a.reservaPasso, reservaAntes:a.reservaAntes }, iso);
+        porDia[wd] = s; s.forEach(function(x){ uniao[x] = 1; });
+      }
+      var horarios = Object.keys(uniao).sort();
+      for(var w = 0; w < 7; w++){ if(dias[w] && porDia[w].length !== horarios.length) horariosDia[w] = porDia[w]; }
+      var ref = null; for(var k = 0; k < 7; k++){ var q = dia(a, k); if(!q.folga){ ref = q; break; } } ref = ref || diaDef();
+      return { dias:dias, diasFecho:diasFecho, horarios:horarios, horariosDia:horariosDia, turnos:turnos,
+               turnosHoras:{ almoco:{ de:ref.almoco.de, ate:ref.almoco.ate }, jantar:{ de:ref.jantar.on ? ref.jantar.de : '', ate:ref.jantar.on ? ref.jantar.ate : '' }, antesFecho:(parseInt(a.encAntes,10) || 0) } };
+    }
+    return { min:min, hhmm:hhmm, diaDef:diaDef, dia:dia, temHorario:temHorario, migrar:migrar, regras:regras, slots:slots, legado:legado };
+  })();
   function aplicarConfig(config){
     try{
       if(!config) return;
@@ -5666,18 +5742,10 @@
       }catch(e){}
       window._agenda = (config.agenda && config.agenda.ativo) ? config.agenda : null;
       window.__agendaCfg = (config.agenda && typeof config.agenda === 'object') ? config.agenda : {};
-      // Regras de funcionamento partilhadas (Gestão → Definições): folgas, férias, feriado municipal e turnos (almoço/jantar)
-      window.__diaRegras = function(iso){
-        var a = window.__agendaCfg || {}; var d = new Date(iso + 'T00:00:00'); var wd = d.getDay();
-        var t = (a.turnos && a.turnos[wd]) || {}; var alm = t.a !== false, jan = t.j !== false;
-        var fechado = false;
-        if(Array.isArray(a.diasFecho) && a.diasFecho.indexOf(wd) >= 0) fechado = true;
-        if(Array.isArray(a.dias) && a.dias.length === 7 && a.dias[wd] === false && a.ativo) fechado = true;
-        (a.fechos || []).forEach(function(f){ if(f && f.de && iso >= f.de && iso <= (f.a || f.de)) fechado = true; });
-        if(a.feriadoMunicipal && iso.slice(5) === String(a.feriadoMunicipal)) fechado = true;
-        if(!alm && !jan) fechado = true;
-        return { fechado:fechado, almoco:alm && !fechado, jantar:jan && !fechado };
-      };
+      // Se a Gestão ainda não gravou o horário semanal novo, deriva-o do modelo antigo (mesma migração do Gestor) só em memória
+      try{ if(!window.__amHor.temHorario(window.__agendaCfg)){ window.__agendaCfg = Object.assign({}, window.__agendaCfg, window.__amHor.migrar(window.__agendaCfg, config.carrinho || {})); } }catch(e){}
+      // Regras de funcionamento partilhadas (Gestão → Definições → Horário semanal): folgas, férias, feriado, turnos e janelas
+      window.__diaRegras = function(iso){ try{ return window.__amHor.regras(window.__agendaCfg || {}, iso); }catch(e){ return { fechado:false, almoco:true, jantar:true, janelas:[] }; } };
       const agb = document.getElementById('linkAgenda');
       if(agb) agb.style.display = (window._agenda && config.mostrarAgendaIcon !== false) ? 'flex' : 'none';
       // Ícones do topo: câmara e traduções (ligar/desligar pelo dono)
@@ -6525,10 +6593,7 @@
       const max = new Date(h); max.setDate(max.getDate() + (a.maxDias || 30));
       return d >= min && d <= max;
     }
-    function horariosDoDia(iso){ const a = cfg(); const wd = new Date(iso+'T00:00:00').getDay(); const hd = a.horariosDia || {}; let hs = (hd[wd] && Array.isArray(hd[wd])) ? hd[wd] : (a.horarios || []);
-      // Turnos (Definições): num dia só de almoço saem as horas de jantar (≥ 17:00) e vice-versa
-      try{ const r = window.__diaRegras ? window.__diaRegras(iso) : null; if(r){ hs = hs.filter(function(h){ const hh = parseInt(String(h).split(':')[0], 10); const ehJantar = hh >= 17; return ehJantar ? r.jantar : r.almoco; }); } }catch(e){}
-      return hs; }
+    function horariosDoDia(iso){ try{ return window.__amHor.slots(window.__agendaCfg || cfg(), iso); }catch(e){ const a = cfg(); const wd = new Date(iso+'T00:00:00').getDay(); const hd = a.horariosDia || {}; return (hd[wd] && Array.isArray(hd[wd])) ? hd[wd] : (a.horarios || []); } }
     function diaFechado(iso){ const a = cfg(); const wd = new Date(iso+'T00:00:00').getDay(); if(Array.isArray(a.diasFecho) && a.diasFecho.indexOf(wd) >= 0) return true; try{ const r = window.__diaRegras ? window.__diaRegras(iso) : null; if(r && r.fechado) return true; }catch(e){} const fs = a.fechos || []; for(var i=0;i<fs.length;i++){ if(fs[i].de && iso >= fs[i].de && iso <= (fs[i].a || fs[i].de)) return true; } return false; }
     function abrir(retomar){
       const h = hoje0();
@@ -8148,6 +8213,7 @@
           const a = [];
           a0.forEach(function(o){
             const s = srv[String(o.id)];
+            if(s && s.levantamento && o.levant && s.levantamento !== o.levant && s.estado !== 'entregue'){ const _ant = o.levant; o.levant = s.levantamento; mudou = true; _encMostrarPopup('#a85d10', '🕒 Hora de levantamento alterada', 'O restaurante ajustou a tua encomenda' + (o.numero != null ? (' nº ' + o.numero) : '') + ' para <strong>' + String(s.levantamento).replace(/^\d{4}-\d{2}-\d{2}\s+/, '') + '</strong> (era ' + String(_ant).replace(/^\d{4}-\d{2}-\d{2}\s+/, '') + ').'); }
             if(s && s.estado && s.estado !== o.estado){
               if(s.estado === 'entregue'){ _entregue = { numero:o.numero }; mudou = true; return; }   // entregue → sai da lista (carrinho volta ao normal)
               o.estado = s.estado; mudou = true;
@@ -8383,13 +8449,12 @@
       lista.forEach(it => { resumo += '<div class="cart-linha"><span class="cart-nome">' + it.qtd + '× ' + it.nome + '</span><span class="cart-preco">' + (it.preco * it.qtd).toFixed(2).replace('.', ',') + '€</span></div>'; });
       const _ccfg = _cartCfg();
       const pedeLev = _ccfg.levantamento !== false;
-      // Horas da cozinha: Gestão → Definições → Turnos (agenda.turnosHoras); se ainda não estiverem lá, as antigas do editor
-      const _th = (window.__agendaCfg && window.__agendaCfg.turnosHoras && typeof window.__agendaCfg.turnosHoras === 'object') ? window.__agendaCfg.turnosHoras : null;
-      const _hAlm = _th ? [(_th.almoco||{}).de, (_th.almoco||{}).ate] : [_ccfg.horaAbre, _ccfg.horaFecha];
-      const _hJan = _th ? [(_th.jantar||{}).de, (_th.jantar||{}).ate] : [_ccfg.horaAbre2, _ccfg.horaFecha2];
-      const antMin = _th ? (parseInt(_th.antesFecho, 10) || 0) : (parseInt(_ccfg.antecedenciaLev, 10) || 60);
+      // Horas da cozinha e turnos: Gestão → Definições → Horário semanal (agenda.horario / encAntes)
+      const _ag = window.__agendaCfg || {};
+      const antMin = (_ag.encAntes != null) ? (parseInt(_ag.encAntes, 10) || 0) : (parseInt(_ccfg.antecedenciaLev, 10) || 60);
       const _hhmm = function(dt){ return String(dt.getHours()).padStart(2,'0') + ':' + String(dt.getMinutes()).padStart(2,'0'); };
       const _mkHoje = function(s){ if(!/^\d{1,2}:\d{2}/.test(s||'')) return null; const pp = String(s).split(':'); const d = new Date(); d.setHours(parseInt(pp[0],10)||0, parseInt(pp[1],10)||0, 0, 0); return d; };
+      const _lembrado = function(k){ try{ return String(localStorage.getItem(k) || '').replace(/"/g, '&quot;'); }catch(e){ return ''; } };
       const _agora = new Date();
       const _isoDe = function(d){ return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); };
       const _mkEm = function(iso, s){ if(!/^\d{1,2}:\d{2}/.test(s||'')) return null; const pp = String(s).split(':'); const d = new Date(iso + 'T00:00:00'); d.setHours(parseInt(pp[0],10)||0, parseInt(pp[1],10)||0, 0, 0); return d; };
@@ -8397,12 +8462,9 @@
       // Janelas da cozinha (editor: 1 ou 2 períodos) — a 1.ª conta como almoço e a 2.ª como jantar (se só houver uma e começar ≥ 17:00, é jantar)
       const _janelasDia = function(iso){
         const mk = function(a, f){ const A = _mkEm(iso, (a||'').trim()), F = _mkEm(iso, (f||'').trim()); return (A && F && F.getTime() > A.getTime()) ? { abre:A.getTime(), fecha:F.getTime(), ini:A.getHours() } : null; };
-        const wA = mk(_hAlm[0], _hAlm[1]), wJ = mk(_hJan[0], _hJan[1]);
-        const r = window.__diaRegras ? window.__diaRegras(iso) : { fechado:false, almoco:true, jantar:true };
+        const r = window.__diaRegras ? window.__diaRegras(iso) : { fechado:false, janelas:[] };
         if(r.fechado) return [];
-        let ws = [];
-        if(wA && (_th ? r.almoco : ((wJ || wA.ini < 17) ? r.almoco : r.jantar))) ws.push(wA);   // sem turnosHoras: uma janela única que começa ≥ 17h conta como jantar
-        if(wJ && r.jantar) ws.push(wJ);
+        let ws = (r.janelas || []).map(function(j){ return mk(j.de, j.ate); }).filter(Boolean);
         const out = [];
         ws.forEach(function(w){
           if(_agora.getTime() <= (w.fecha - antMin*60000) + _GRACE){   // ainda dentro do prazo (fecho − antecedência)
@@ -8412,7 +8474,7 @@
         });
         return out.sort(function(x,y){ return x.start - y.start; });
       };
-      const _temJanelas = !!(_hAlm[0] && _hAlm[1]) || !!(_hJan[0] && _hJan[1]);
+      const _temJanelas = true;   // o horário semanal existe sempre (migrado em memória se preciso)
       // Dias em que se pode encomendar: hoje e os próximos 6 (folgas/férias/turnos vêm das Definições)
       const _hojeIso = _isoDe(_agora);
       const _dias = [];
@@ -8446,7 +8508,11 @@
         resumo +
         '<div class="cart-total"><span>Total</span><span>' + total.toFixed(2).replace('.', ',') + '€</span></div>' +
         '<label for="cartNome" style="display:block; font-size:0.82rem; color:var(--castanho-suave); margin:12px 0 4px;">O teu nome</label>' +
-        '<input id="cartNome" type="text" placeholder="Ex.: Ana" autocomplete="name" style="width:100%; padding:11px 12px; border:1.5px solid var(--linha); border-radius:10px; font-family:inherit; font-size:0.95rem;">' +
+        '<input id="cartNome" type="text" placeholder="Ex.: Ana" autocomplete="name" value="' + _lembrado('amesaEncNome') + '" style="width:100%; padding:11px 12px; border:1.5px solid var(--linha); border-radius:10px; font-family:inherit; font-size:0.95rem;">' +
+        '<label for="cartTel" style="display:block; font-size:0.82rem; color:var(--castanho-suave); margin:12px 0 4px;">📞 Telemóvel <span style="font-weight:400;">(para o restaurante te ligar se precisar)</span></label>' +
+        '<input id="cartTel" type="tel" inputmode="tel" autocomplete="tel" placeholder="9xx xxx xxx" value="' + _lembrado('amesaEncTel') + '" style="width:100%; padding:11px 12px; border:1.5px solid var(--linha); border-radius:10px; font-family:inherit; font-size:0.95rem;">' +
+        '<label for="cartObs" style="display:block; font-size:0.82rem; color:var(--castanho-suave); margin:12px 0 4px;">📝 Observações <span style="font-weight:400;">(opcional — ex.: sem cebola, alergias)</span></label>' +
+        '<textarea id="cartObs" rows="2" maxlength="300" style="width:100%; padding:11px 12px; border:1.5px solid var(--linha); border-radius:10px; font-family:inherit; font-size:0.95rem; resize:vertical;"></textarea>' +
         (pedeLev ? (
           _fecharam
             ? ('<div style="margin:12px 0 4px; padding:10px 12px; background:#fbe7e4; border-radius:10px; color:#b23; font-size:0.84rem; font-weight:700;">' + _fecharamMsg + '</div>')
@@ -8470,6 +8536,10 @@
         const erroEl = document.getElementById('cartErro');
         const _erro = function(tt){ if(erroEl){ erroEl.innerHTML = tt; erroEl.style.display = 'block'; } };
         const nome = (inp && inp.value.trim()) || '';
+        const telC = ((document.getElementById('cartTel') || {}).value || '').replace(/[^\d+]/g, '').slice(0, 20);
+        const obsC = ((document.getElementById('cartObs') || {}).value || '').trim().slice(0, 300);
+        if(telC && telC.replace(/\D/g, '').length < 9){ _erro('Confirma o telemóvel (9 dígitos).'); return; }
+        try{ localStorage.setItem('amesaEncNome', nome); localStorage.setItem('amesaEncTel', telC); }catch(e){}
         let horaLev = '';
         if(pedeLev){
           if(_fecharam){ _erro(_fecharamMsg); return; }
@@ -8488,6 +8558,8 @@
         const _msgWhats = function(numero){
           let msg = 'Nova encomenda (take away)' + (numero ? (' nº ' + numero) : '') + (nome ? ' — ' + nome : '') + ':\n' + linhas.join('\n') + '\nTotal: ' + _totalTxt + '€';
           if(pedeLev && horaLev) msg += '\n🕒 Levantamento ' + _levTxt();
+          if(telC) msg += '\n📞 ' + telC;
+          if(obsC) msg += '\n📝 ' + obsC;
           msg += '\n\nObrigado!';
           return msg;
         };
@@ -8510,8 +8582,10 @@
         if(window.__PREVIEW){ alert('Pré-visualização: aqui seria enviada a encomenda.'); return; }
         enviar.disabled = true;
         if(typeof sbC !== 'undefined' && sbC && window.__negocioId){
-          sbC.rpc('criar_encomenda', { p_negocio: window.__negocioId, p_nome: nome, p_tel: '', p_levant: horaLev, p_itens: itensJson, p_total: t })
-            .then(function(res){ const rec = (res && res.data && res.data[0]) ? res.data[0] : null; if(rec && rec.id){ _registado(rec); } else { _falhou(); } })
+          const _args = { p_negocio: window.__negocioId, p_nome: nome, p_tel: telC, p_levant: horaLev, p_itens: itensJson, p_total: t, p_obs: obsC };
+          const _trata = function(res){ const rec = (res && res.data && res.data[0]) ? res.data[0] : null; if(rec && rec.id){ _registado(rec); return true; } return false; };
+          sbC.rpc('criar_encomenda', _args)
+            .then(function(res){ if(_trata(res)) return; if(res && res.error){ const a2 = Object.assign({}, _args); delete a2.p_obs; return sbC.rpc('criar_encomenda', a2).then(function(r2){ if(!_trata(r2)) _falhou(); }); } _falhou(); })   // base ainda sem p_obs → tenta sem
             .catch(function(){ _falhou(); });
         } else {
           // Sem base de dados neste contexto → WhatsApp é o único canal (abre já, no gesto do toque)
