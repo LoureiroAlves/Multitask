@@ -208,6 +208,8 @@
     }catch(e){ return ''; }
   }
   try{ window.__PREVIEW = (new URLSearchParams(location.search)).get('preview') === '1'; }catch(e){ window.__PREVIEW = false; }
+  // Pré-visualização no editor: simular as margens seguras do iPhone (notch / barra inferior), que num iframe são 0
+  try{ if(window.__PREVIEW){ var _sp = new URLSearchParams(location.search); ['top','bottom','left','right'].forEach(function(k){ var v = parseInt(_sp.get('safe' + k.charAt(0).toUpperCase() + k.slice(1)), 10); if(v >= 0 && !isNaN(v)) document.documentElement.style.setProperty('--sa-' + k, v + 'px'); }); } }catch(e){}
   // Pintar o ecrã de carregamento com a cor do tema deste restaurante (guardada da última visita),
   // para não mostrar o neutro azul num restaurante de outra cor.
   try{
@@ -265,20 +267,20 @@
     color:var(--castanho);
     min-height:100vh;
     min-height:100svh;
-    padding-bottom:calc(112px + env(safe-area-inset-bottom));
+    padding-bottom:calc(112px + var(--sa-bottom, env(safe-area-inset-bottom)));
     overflow-x:hidden;   /* nunca arrastar a página na horizontal (ex.: promoção com rotação/spill) */
     max-width:100%;
   }
   html{ background:var(--intro-bg,#1f2530); overflow-x:hidden; }
-  body.barra-oculta{ padding-bottom:env(safe-area-inset-bottom); }
+  body.barra-oculta{ padding-bottom:var(--sa-bottom, env(safe-area-inset-bottom)); }
   /* Cabeçalho desligado: garante afastamento do topo (notch/status bar) para o conteúdo não colar ao limite */
-  body.cabecalho-oculto{ padding-top:calc(env(safe-area-inset-top) + 10px); }
+  body.cabecalho-oculto{ padding-top:calc(var(--sa-top, env(safe-area-inset-top)) + 10px); }
   /* Realce da zona ao arrastar uma imagem para a pré-visualização */
   .drop-alvo{ outline:3px dashed #ffd75e !important; outline-offset:-3px; box-shadow:0 0 0 100vmax rgba(255,215,94,.10) inset !important; position:relative; }
   header{
     position:relative; z-index:50;
     background:var(--cab-cor, var(--castanho));
-    padding:calc(16px + env(safe-area-inset-top)) 16px 14px;
+    padding:calc(16px + var(--sa-top, env(safe-area-inset-top))) 16px 14px;
     border-bottom:1px solid var(--cab-cor, var(--castanho));
     text-align:center;
   }
@@ -319,7 +321,7 @@
   body.secao-aberta header{ transform:translateY(-110%); }
   body.secao-aberta .info-fixa{ transform:translateY(130%); }
   /* Setinha "voltar à montra" — só aparece quando aberto como app (ecrã principal) */
-  #btnHome{ position:fixed; top:calc(env(safe-area-inset-top) + 8px); left:8px; z-index:60; width:40px; height:40px; padding:0; border:none; border-radius:50%; background:rgba(0,0,0,.34); color:#fff; font-size:1.6rem; font-weight:700; line-height:38px; text-align:center; cursor:pointer; -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px); box-shadow:0 2px 8px rgba(0,0,0,.28); display:none; }
+  #btnHome{ position:fixed; top:calc(var(--sa-top, env(safe-area-inset-top)) + 8px); left:8px; z-index:60; width:40px; height:40px; padding:0; border:none; border-radius:50%; background:rgba(0,0,0,.34); color:#fff; font-size:1.6rem; font-weight:700; line-height:38px; text-align:center; cursor:pointer; -webkit-backdrop-filter:blur(4px); backdrop-filter:blur(4px); box-shadow:0 2px 8px rgba(0,0,0,.28); display:none; }
   body.pwa-standalone #btnHome{ display:block; }
   body.pwa-standalone.secao-aberta #btnHome{ display:none; }
   /* Isolar o scroll: com uma secção aberta, o fundo (menu principal, rodapé e publicidade) não faz scroll.
@@ -1495,7 +1497,7 @@
     display:flex; align-items:center; gap:10px;
     background:var(--branco);
     border-bottom:1px solid var(--linha);
-    padding:calc(14px + env(safe-area-inset-top)) 16px 14px;
+    padding:calc(14px + var(--sa-top, env(safe-area-inset-top))) 16px 14px;
   }
   .categoria-painel-header .voltar{
     background:var(--bege);
@@ -1958,7 +1960,7 @@
     display:flex;
     align-items:center;
     gap:12px;
-    padding:4px 14px calc(10px + env(safe-area-inset-bottom));
+    padding:4px 14px calc(10px + var(--sa-bottom, env(safe-area-inset-bottom)));
     min-height:76px;
     opacity:0;
     transition:opacity .3s ease, transform .34s cubic-bezier(.4,0,1,1);   /* volta a subir (rodapé) com a mesma curva/tempo do FECHAR da folha */
@@ -2182,7 +2184,7 @@
   body.modelo-slider #expAba{ display:none; }
 
   /* ===== Modos de entrada (Menu / Take away / Grupos) ===== */
-  #modoGate{ position:fixed; inset:0; z-index:9600; background:linear-gradient(160deg, var(--castanho,#3a2c18), #241a0e); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px; padding:28px calc(24px + env(safe-area-inset-right)) 28px calc(24px + env(safe-area-inset-left)); text-align:center; }
+  #modoGate{ position:fixed; inset:0; z-index:9600; background:linear-gradient(160deg, var(--castanho,#3a2c18), #241a0e); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px; padding:28px calc(24px + var(--sa-right, env(safe-area-inset-right))) 28px calc(24px + var(--sa-left, env(safe-area-inset-left))); text-align:center; }
   #modoGate .mg-tit{ font-family:var(--fonte-titulo); color:#fff; font-size:1.4rem; font-weight:800; margin:0; }
   #modoGate .mg-sub{ color:rgba(255,255,255,.78); font-size:.9rem; margin:-8px 0 8px; }
   #modoGate .mg-opts{ display:flex; flex-wrap:wrap; gap:14px; justify-content:center; max-width:460px; }
@@ -2269,7 +2271,7 @@
   @keyframes imRodar{ from{ opacity:0; transform:rotate(-22deg) scale(.5); } to{ opacity:1; transform:rotate(0) scale(1); } }
   #expOverlay{ position:fixed; inset:0; z-index:640; background:rgba(0,0,0,0); display:flex; align-items:flex-end; justify-content:center; padding:0; pointer-events:none; transition:background .3s ease; }
   #expOverlay.aberto{ background:rgba(0,0,0,0.5); pointer-events:auto; }
-  .exp-card{ background:#fff; width:100%; max-width:460px; max-height:88vh; overflow-y:auto; border-radius:18px 18px 0 0; padding:18px 18px calc(20px + env(safe-area-inset-bottom)); transform:translateY(100%); }
+  .exp-card{ background:#fff; width:100%; max-width:460px; max-height:88vh; overflow-y:auto; border-radius:18px 18px 0 0; padding:18px 18px calc(20px + var(--sa-bottom, env(safe-area-inset-bottom))); transform:translateY(100%); }
   #expOverlay.aberto .exp-card{ transform:translateY(0); }
   .exp-card h3{ font-family:var(--fonte-titulo); color:#3a2c18; margin:0 0 2px; font-size:1.25rem; text-align:center; }
   .exp-sub{ text-align:center; color:#8a7a5c; font-size:.82rem; margin:0 0 14px; }
@@ -2306,7 +2308,7 @@
   #agendaOverlay{ position:fixed; inset:0; z-index:660; background:rgba(0,0,0,0); display:flex; align-items:flex-end; justify-content:center; padding:0; pointer-events:none; visibility:hidden; transition:background .34s cubic-bezier(.4,0,1,1), visibility 0s linear .34s; }
   body.scroll-lock .info-fixa{ transform:translateY(130%); }   /* enquanto uma folha está aberta, o rodapé desliza para fora (para baixo) — e volta a subir ao fechar, em vez de desaparecer por corte */
   #agendaOverlay.aberto{ background:rgba(0,0,0,0.5); pointer-events:auto; visibility:visible; transition:background .5s cubic-bezier(.32,.72,0,1), visibility 0s; }
-  .ag-card{ background:linear-gradient(180deg,#fffdf9,var(--branco)); width:100%; max-width:440px; max-height:88vh; overflow-y:auto; overscroll-behavior:contain; border-radius:22px 22px 0 0; padding:14px 16px calc(18px + env(safe-area-inset-bottom)); margin-bottom:calc(-1 * env(safe-area-inset-bottom)); transform:translateY(100%); pointer-events:none; border-top:3px solid var(--dourado); box-shadow:0 -10px 34px rgba(0,0,0,.20); transition:transform .34s cubic-bezier(.4,0,1,1); will-change:transform; }
+  .ag-card{ background:linear-gradient(180deg,#fffdf9,var(--branco)); width:100%; max-width:440px; max-height:88vh; overflow-y:auto; overscroll-behavior:contain; border-radius:22px 22px 0 0; padding:14px 16px calc(18px + var(--sa-bottom, env(safe-area-inset-bottom))); margin-bottom:calc(-1 * var(--sa-bottom, env(safe-area-inset-bottom))); transform:translateY(100%); pointer-events:none; border-top:3px solid var(--dourado); box-shadow:0 -10px 34px rgba(0,0,0,.20); transition:transform .34s cubic-bezier(.4,0,1,1); will-change:transform; }
   .ag-card::before{ content:''; display:block; width:42px; height:5px; border-radius:3px; background:var(--linha); margin:0 auto 12px; transition:background .2s; }
   .ag-card.a-arrastar::before{ background:var(--castanho-suave); }
   #agendaOverlay.aberto .ag-card{ transform:translateY(0); pointer-events:auto; transition:transform .5s cubic-bezier(.32,.72,0,1); }
@@ -2357,7 +2359,7 @@
   .ag-btn:disabled{ opacity:.45; cursor:default; }
   .ag-fechar{ background:none; border:none; color:var(--castanho-suave); font-size:0.9rem; cursor:pointer; display:block; margin:12px auto 0; text-decoration:underline; }
   .ag-passo-tit{ font-size:0.8rem; font-weight:700; color:var(--dourado-escuro); margin:14px 0 4px; }
-  .fid-card{ background:var(--branco); width:100%; max-width:440px; border-radius:18px 18px 0 0; padding:20px 18px calc(20px + env(safe-area-inset-bottom)); transform:translateY(100%); pointer-events:none; }
+  .fid-card{ background:var(--branco); width:100%; max-width:440px; border-radius:18px 18px 0 0; padding:20px 18px calc(20px + var(--sa-bottom, env(safe-area-inset-bottom))); transform:translateY(100%); pointer-events:none; }
   #fidOverlay.aberto .fid-card{ transform:translateY(0); pointer-events:auto; }
   .fid-stamps{ display:grid; grid-template-columns:repeat(4, 1fr); gap:10px; margin:6px 0; }
   .fid-stamp{ aspect-ratio:1/1; border-radius:50%; border:2px dashed var(--linha); display:flex; align-items:center; justify-content:center; font-size:1.4rem; color:var(--castanho-suave); }
@@ -2582,7 +2584,7 @@
 </div>
 
 <header>
-  <div class="header-fotos" id="headerFotos" style="position:absolute; top:calc(-1 * env(safe-area-inset-top)); left:0; right:0; width:100%; height:calc(100% + env(safe-area-inset-top)); z-index:0;">
+  <div class="header-fotos" id="headerFotos" style="position:absolute; top:calc(-1 * var(--sa-top, env(safe-area-inset-top))); left:0; right:0; width:100%; height:calc(100% + var(--sa-top, env(safe-area-inset-top))); z-index:0;">
   </div>
   <div class="brand-mark" style="position:relative; z-index:2;"></div>
   <div class="brand-sub" style="position:relative; z-index:2;"></div>
@@ -4571,6 +4573,33 @@
       try{ if(window.__expRefresh) window.__expRefresh(); }catch(e){}
       // Promoção do dia (vinda do calendário) — aparece por baixo do cabeçalho, só no dia (e no horário, se definido)
       window.__cfgPromo = config;
+      // Qual a promoção em vigor num dia? Lê config.promocoes (novo: dia / intervalo / semanal) e,
+      // se não houver nenhuma, cai no formato antigo config.promoDatas[AAAA-MM-DD]. (Mesma função no Gestor.)
+      window.__amPromoResolver = function(cfg, d){
+        cfg = cfg || {}; d = d || new Date();
+        var iso = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+        var wd = d.getDay();
+        function temTexto(p){ return !!(p && p.ativo !== false && p.texto && String(p.texto).trim()); }
+        function bate(q){
+          if(!q) return false;
+          if(q.tipo === 'dia') return q.data === iso;
+          if(q.tipo === 'intervalo') return !!q.de && q.de <= iso && (!q.ate || iso <= q.ate);
+          if(q.tipo === 'semanal'){ var ds = Array.isArray(q.dias) ? q.dias.map(Number) : []; return ds.indexOf(wd) >= 0 && (!q.de || q.de <= iso) && (!q.ate || iso <= q.ate); }
+          return false;
+        }
+        var ordem = { dia:0, intervalo:1, semanal:2 };
+        var lista = Array.isArray(cfg.promocoes) ? cfg.promocoes : [];
+        var melhor = null, melhorR = 99, melhorIdx = -1;
+        lista.forEach(function(p, i){
+          if(!temTexto(p) || !bate(p.quando)) return;
+          var r = ordem[p.quando.tipo]; if(r == null) return;
+          if(r < melhorR || (r === melhorR && i > melhorIdx)){ melhor = p; melhorR = r; melhorIdx = i; }   // específico ganha; em empate, a mais recente
+        });
+        if(melhor) return melhor;
+        var pDatas = (cfg.promoDatas && typeof cfg.promoDatas === 'object') ? cfg.promoDatas : {};
+        var pl = pDatas[iso];
+        return temTexto(pl) ? pl : null;
+      };
       window.__renderPromoDia = function(cfg){
         try{
           var el = document.getElementById('promoDia'); if(!el) return;
@@ -4582,10 +4611,9 @@
           var now = d.getHours()*60 + d.getMinutes();
           var _m = function(s){ var a = String(s).split(':'); return (parseInt(a[0],10)||0)*60 + (parseInt(a[1],10)||0); };
           function _dentroHora(o){ if(o.horaIni && o.horaFim){ return (now >= _m(o.horaIni) && now <= _m(o.horaFim)); } return true; }
-          // Promoção por DATA (gerida no calendário)
-          var pDatas = (cfg.promoDatas && typeof cfg.promoDatas === 'object') ? cfg.promoDatas : {};
-          var p = pDatas[iso];
-          if(!p || p.ativo === false || !(p.texto && String(p.texto).trim()) || !_dentroHora(p)){ _off(); return; }
+          // Promoção em vigor hoje (config.promocoes → fallback config.promoDatas)
+          var p = window.__amPromoResolver(cfg, d);
+          if(!p || !_dentroHora(p)){ _off(); return; }
           // Renderiza o estilo escolhido (autocolante, fita, etiqueta, cupão, néon, urgência, selo, oval)
           try{ el.style.setProperty('--pd-fundo', getComputedStyle(document.body).backgroundColor || '#fbf7ef'); }catch(e){}
           el.innerHTML = (typeof window.__amPromoCard === 'function') ? window.__amPromoCard(p) : ('<div style="padding:14px;background:'+(p.cor||'#e0245e')+';color:#fff;border-radius:14px;font-weight:800;">'+String(p.texto||'').replace(/</g,'&lt;')+'</div>');
@@ -5325,7 +5353,7 @@
             const ov = document.createElement('div');
             ov.id = 'gerirOverlay';
             ov.style.cssText = 'position:fixed; inset:0; z-index:9000; background:rgba(0,0,0,.55); display:flex; align-items:flex-end; justify-content:center; padding:0;';
-            ov.innerHTML = '<div style="background:linear-gradient(180deg,#fffdf9,var(--branco,#fff)); border-radius:22px 22px 0 0; border-top:3px solid var(--dourado,#a8712f); max-width:440px; width:100%; max-height:92vh; overflow:auto; padding:20px 18px calc(20px + env(safe-area-inset-bottom)); margin-bottom:calc(-1 * env(safe-area-inset-bottom)); box-shadow:0 -12px 40px rgba(0,0,0,.30); transform:translateY(100%); transition:transform .36s cubic-bezier(.2,.9,.3,1);">'
+            ov.innerHTML = '<div style="background:linear-gradient(180deg,#fffdf9,var(--branco,#fff)); border-radius:22px 22px 0 0; border-top:3px solid var(--dourado,#a8712f); max-width:440px; width:100%; max-height:92vh; overflow:auto; padding:20px 18px calc(20px + var(--sa-bottom, env(safe-area-inset-bottom))); margin-bottom:calc(-1 * var(--sa-bottom, env(safe-area-inset-bottom))); box-shadow:0 -12px 40px rgba(0,0,0,.30); transform:translateY(100%); transition:transform .36s cubic-bezier(.2,.9,.3,1);">'
               + '<h3 style="margin:0 0 4px; text-align:center; font-family:var(--fonte-titulo); color:var(--castanho);">A tua reserva</h3>'
               + '<div style="text-align:center; color:var(--castanho-suave); font-size:.9rem; margin-bottom:14px;">' + resumo + '</div>'
               + (tel
@@ -6279,7 +6307,7 @@
   (function(){
     var ov = document.createElement('div'); ov.id = 'amModal';
     ov.style.cssText = 'position:fixed;inset:0;z-index:1200;display:none;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.5);padding:0;opacity:0;transition:opacity .28s ease;';
-    ov.innerHTML = '<div id="amCard" style="background:linear-gradient(180deg,#fffdf9,var(--branco,#fff));width:100%;max-width:440px;border-radius:22px 22px 0 0;border-top:3px solid var(--dourado,#a8712f);box-shadow:0 -12px 40px rgba(0,0,0,.30);padding:20px 18px calc(20px + env(safe-area-inset-bottom));margin-bottom:calc(-1 * env(safe-area-inset-bottom));transform:translateY(100%);transition:transform .36s cubic-bezier(.2,.9,.3,1);will-change:transform;">'
+    ov.innerHTML = '<div id="amCard" style="background:linear-gradient(180deg,#fffdf9,var(--branco,#fff));width:100%;max-width:440px;border-radius:22px 22px 0 0;border-top:3px solid var(--dourado,#a8712f);box-shadow:0 -12px 40px rgba(0,0,0,.30);padding:20px 18px calc(20px + var(--sa-bottom, env(safe-area-inset-bottom)));margin-bottom:calc(-1 * var(--sa-bottom, env(safe-area-inset-bottom)));transform:translateY(100%);transition:transform .36s cubic-bezier(.2,.9,.3,1);will-change:transform;">'
       + '<div id="amTit" style="font-family:var(--fonte-titulo,inherit);color:var(--castanho,#4a3820);font-size:1.12rem;font-weight:800;text-align:center;margin-bottom:6px;"></div>'
       + '<div id="amMsg" style="color:var(--castanho-suave,#8a7350);font-size:.9rem;line-height:1.4;text-align:center;margin-bottom:12px;white-space:pre-line;"></div>'
       + '<input id="amInput" style="display:none;width:100%;box-sizing:border-box;padding:12px 13px;border:1.5px solid var(--linha,#e6dcc8);border-radius:12px;font-family:inherit;font-size:1rem;color:var(--castanho,#4a3820);background:var(--branco,#fff);margin-bottom:14px;">'
@@ -6418,7 +6446,7 @@
     function _limparPendente(){ pend = false; concluida = true; btn.classList.remove('res-pendente'); document.body.classList.remove('res-pend'); }
     function _agToast(msg){
       try{ var t=document.createElement('div'); t.textContent=msg;
-        t.style.cssText='position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--castanho,#4a3820);color:#fff;padding:11px 18px;border-radius:22px;font-size:.92rem;z-index:900;box-shadow:0 4px 16px rgba(0,0,0,.28);opacity:0;transition:opacity .25s;';
+        t.style.cssText='position:fixed;left:50%;bottom:calc(24px + var(--sa-bottom, env(safe-area-inset-bottom)));transform:translateX(-50%);background:var(--castanho,#4a3820);color:#fff;padding:11px 18px;border-radius:22px;font-size:.92rem;z-index:900;box-shadow:0 4px 16px rgba(0,0,0,.28);opacity:0;transition:opacity .25s;';
         document.body.appendChild(t); requestAnimationFrame(function(){ t.style.opacity='1'; });
         setTimeout(function(){ t.style.opacity='0'; setTimeout(function(){ if(t.parentNode) t.parentNode.removeChild(t); },300); },2200);
       }catch(e){ alert(msg); }
