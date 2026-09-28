@@ -99,6 +99,7 @@
         <button class="side-item" data-tab="negocios">🏪 Negócios</button>
         <div id="negSublist" class="side-sublist"></div>
         <button class="side-item" data-tab="publicidade">📢 Publicidade</button>
+        <button class="side-item" data-tab="erros">🩺 Erros</button>
         <div id="pubSublist" class="side-sublist"></div>
         <div class="side-sep"></div>
         <a class="side-item hide" id="linkEstat" href="estatisticas.html" style="text-decoration:none;">📊 Estatísticas</a>
@@ -193,6 +194,15 @@
     </div>
         </section>
 
+        <section class="tab-panel hide" data-panel="erros">
+          <h2 style="margin:0 0 6px;">🩺 Caixa preta — erros das páginas</h2>
+          <div style="font-size:.85rem; color:#8a7a5c; margin-bottom:12px;">Erros de JavaScript registados automaticamente pelo cardápio, gestão, editor e painel. Serve para perceberes o que falha nos clientes sem eles te dizerem.</div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
+            <button type="button" id="errosRecarregar" style="border:none; background:#a8712f; color:#fff; border-radius:8px; padding:8px 14px; font-weight:700; cursor:pointer; font-family:inherit;">🔄 Recarregar</button>
+            <button type="button" id="errosLimpar" style="border:1px solid #e8c4bf; background:#fff; color:#b23; border-radius:8px; padding:8px 14px; font-weight:700; cursor:pointer; font-family:inherit;">🗑 Apagar todos</button>
+          </div>
+          <div id="errosLista" style="font-size:.9rem;">Ainda não carregado.</div>
+        </section>
         <section class="tab-panel" data-panel="negocios">
     <div class="card">
       <h2 style="margin:0 0 4px; font-size:1.05rem;">🛟 Cópia de segurança (todos os negócios)</h2>
@@ -1158,6 +1168,7 @@
       if(t === 'negocios') _prompt();
       if(t === 'formulario'){ try{ if(window.__carregarRegistos) window.__carregarRegistos(); }catch(e){} }
       if(t === 'publicidade') _pubAplicar();
+      if(t === 'erros'){ try{ if(window.__carregarErros) window.__carregarErros(); }catch(e){} }
       try{ localStorage.setItem('painelAba', t); }catch(e){}
     }
     navs.forEach(function(n){ n.addEventListener('click', function(){ irPara(n.getAttribute('data-tab')); }); });
@@ -1267,5 +1278,60 @@
 })();
 </script>
 
+
+<!-- Caixa preta: regista erros JS não tratados na tabela "erros" (máx. 5 por sessão, sem repetidos, sem ruído) -->
+<script>
+(function(){
+  var MAX = 5, n = 0, vistos = {};
+  function cli(){ try{ if(typeof sbC!=="undefined" && sbC) return sbC; }catch(e){} try{ if(typeof sb!=="undefined" && sb) return sb; }catch(e){} try{ if(typeof sbc!=="undefined" && sbc) return sbc; }catch(e){} return null; }
+  function slug(){ try{ return (new URLSearchParams(location.search).get("n")) || (typeof SLUG!=="undefined" ? (SLUG||"") : "") || ""; }catch(e){ return ""; } }
+  function reg(msg, stack){
+    try{
+      if(!msg) return; msg = String(msg).slice(0,500);
+      if(/ResizeObserver|^Script error\.?$|Load failed|NetworkError|AbortError|The operation was aborted/i.test(msg)) return;
+      var k = msg.slice(0,120); if(vistos[k]) return; vistos[k] = 1;
+      if(n++ >= MAX) return;
+      var c = cli(); if(!c || !c.from) return;
+      c.from("erros").insert({ slug: slug().slice(0,80), pagina: (location.pathname.split("/").pop()||"").slice(0,80), mensagem: msg, stack: String(stack||"").slice(0,2000), url: location.href.slice(0,300), agente: navigator.userAgent.slice(0,200) }).then(function(){}, function(){});
+    }catch(e){}
+  }
+  window.addEventListener("error", function(e){ reg(e.message || (e.error && e.error.message), e.error && e.error.stack); });
+  window.addEventListener("unhandledrejection", function(e){ var r = e && e.reason; reg((r && r.message) || String(r), r && r.stack); });
+  window.__amErro = reg;   // para registar erros manualmente: window.__amErro("mensagem")
+})();
+</script>
+
+<!-- Visualizador da caixa preta (aba Erros) -->
+<script>
+window.__carregarErros = async function(){
+  var box = document.getElementById("errosLista"); if(!box) return;
+  box.innerHTML = "A carregar…";
+  try{
+    var r = await sb.from("erros").select("id,criado_em,slug,pagina,mensagem,stack,url,agente").order("criado_em", { ascending:false }).limit(150);
+    if(r.error) throw r.error;
+    var a = r.data || [];
+    if(!a.length){ box.innerHTML = "<div style=\"color:#8a7a5c;\">Sem erros registados. 👍</div>"; return; }
+    var esc = function(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); };
+    box.innerHTML = a.map(function(e){
+      var d = new Date(e.criado_em);
+      var q = String(d.getDate()).padStart(2,"0")+"/"+String(d.getMonth()+1).padStart(2,"0")+" "+String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0");
+      return "<div style=\"border:1px solid #eadfc6;border-radius:12px;padding:10px 12px;margin-bottom:8px;background:#fff;\">"
+        + "<div style=\"display:flex;gap:8px;flex-wrap:wrap;font-size:.78rem;color:#8a7a5c;\"><span>"+q+"</span><span>·</span><span><b>"+esc(e.slug||"—")+"</b></span><span>·</span><span>"+esc(e.pagina||"")+"</span></div>"
+        + "<div style=\"font-weight:700;color:#b23;margin-top:4px;word-break:break-word;\">"+esc(e.mensagem)+"</div>"
+        + (e.stack ? ("<details style=\"margin-top:4px;\"><summary style=\"cursor:pointer;font-size:.78rem;color:#8a7a5c;\">stack</summary><pre style=\"white-space:pre-wrap;font-size:.72rem;color:#5a4a2c;margin:6px 0 0;\">"+esc(e.stack)+"</pre></details>") : "")
+        + "<div style=\"font-size:.72rem;color:#b9ab8e;margin-top:4px;word-break:break-all;\">"+esc(e.url||"")+" · "+esc(String(e.agente||"").slice(0,90))+"</div>"
+        + "</div>";
+    }).join("");
+  }catch(err){ box.innerHTML = "<span style=\"color:#b23;\">Erro a carregar: "+((err&&err.message)||err)+" — já correste o <b>erros.sql</b> no Supabase?</span>"; }
+};
+(function(){
+  var r = document.getElementById("errosRecarregar"); if(r) r.onclick = function(){ window.__carregarErros(); };
+  var l = document.getElementById("errosLimpar"); if(l) l.onclick = async function(){
+    var ok = window.__amConfirm ? await window.__amConfirm("Apagar todos", { texto:"Apagar TODOS os erros registados?", ok:"Apagar", cancelar:"Cancelar" }) : confirm("Apagar TODOS os erros registados?");
+    if(!ok) return;
+    try{ var d = await sb.from("erros").delete().gt("id", 0); if(d.error) throw d.error; window.__carregarErros(); }catch(e){ alert("Erro: "+((e&&e.message)||e)); }
+  };
+})();
+</script>
 </body>
 </html>

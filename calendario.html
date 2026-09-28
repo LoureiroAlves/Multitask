@@ -2470,5 +2470,27 @@ window.STORY_LAYOUTS = [
   }catch(e){}
 })();
 </script>
+
+<!-- Caixa preta: regista erros JS não tratados na tabela "erros" (máx. 5 por sessão, sem repetidos, sem ruído) -->
+<script>
+(function(){
+  var MAX = 5, n = 0, vistos = {};
+  function cli(){ try{ if(typeof sbC!=="undefined" && sbC) return sbC; }catch(e){} try{ if(typeof sb!=="undefined" && sb) return sb; }catch(e){} try{ if(typeof sbc!=="undefined" && sbc) return sbc; }catch(e){} return null; }
+  function slug(){ try{ return (new URLSearchParams(location.search).get("n")) || (typeof SLUG!=="undefined" ? (SLUG||"") : "") || ""; }catch(e){ return ""; } }
+  function reg(msg, stack){
+    try{
+      if(!msg) return; msg = String(msg).slice(0,500);
+      if(/ResizeObserver|^Script error\.?$|Load failed|NetworkError|AbortError|The operation was aborted/i.test(msg)) return;
+      var k = msg.slice(0,120); if(vistos[k]) return; vistos[k] = 1;
+      if(n++ >= MAX) return;
+      var c = cli(); if(!c || !c.from) return;
+      c.from("erros").insert({ slug: slug().slice(0,80), pagina: (location.pathname.split("/").pop()||"").slice(0,80), mensagem: msg, stack: String(stack||"").slice(0,2000), url: location.href.slice(0,300), agente: navigator.userAgent.slice(0,200) }).then(function(){}, function(){});
+    }catch(e){}
+  }
+  window.addEventListener("error", function(e){ reg(e.message || (e.error && e.error.message), e.error && e.error.stack); });
+  window.addEventListener("unhandledrejection", function(e){ var r = e && e.reason; reg((r && r.message) || String(r), r && r.stack); });
+  window.__amErro = reg;   // para registar erros manualmente: window.__amErro("mensagem")
+})();
+</script>
 </body>
 </html>

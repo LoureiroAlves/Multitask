@@ -3682,7 +3682,17 @@ amesadigital.pt</textarea>
       setEstado('A guardar definições…', 'info');
       await gravarConfigJson(token);
       // 4. Gravar também o menu (fotos de sub-menu/itens e edições ao menu) — "Guardar tudo" grava mesmo tudo
-      try{ if(window.__guardarMenuAgora){ setEstado('A guardar menu…', 'info'); const okM = await window.__guardarMenuAgora(); setEstado(okM ? '✅ Tudo guardado (aparência + menu).' : '✅ Definições guardadas.', 'ok'); } }catch(e){}
+      try{
+        if(window.__guardarMenuAgora){
+          setEstado('A guardar menu…', 'info');
+          const rM = await window.__guardarMenuAgora();
+          if(rM && rM.ok){ setEstado('✅ Tudo guardado (aparência + menu).', 'ok'); }
+          else if(rM && rM.erro === 'menu-nao-carregado'){ setEstado('✅ Aparência guardada. (O menu não estava carregado — se editaste pratos, abre o separador "Menu", carrega o menu e Guardar.)', 'ok'); }
+          else { setEstado('⚠️ Aparência guardada, mas o MENU NÃO guardou: ' + ((rM && rM.erro) || 'erro desconhecido') + '. Vai ao separador "Menu" e usa "💾 Guardar menu".', 'erro'); }
+        } else {
+          setEstado('✅ Definições guardadas.', 'ok');
+        }
+      }catch(e){ setEstado('⚠️ Aparência guardada, mas houve um erro a guardar o menu: ' + ((e && e.message) || e), 'erro'); }
       document.getElementById('btnGuardar').disabled = false;
       return;
     }catch(err){
@@ -5422,13 +5432,14 @@ amesadigital.pt</textarea>
     // Gravação silenciosa do menu — usada pelo "Guardar tudo" para gravar também o menu (fotos de sub-menu/itens, edições)
     window.__guardarMenuAgora = async function(){
       try{
-        if(!menuData || !window.__negocio || !window.__negocio.id) return false;
+        if(!menuData) return { ok:false, erro:'menu-nao-carregado' };
+        if(!window.__negocio || !window.__negocio.id) return { ok:false, erro:'negócio não carregado' };
         pruneMenu();
         const { error } = await sbc.from('negocios').update({ menu: menuData }).eq('id', window.__negocio.id);
-        if(error) return false;
+        if(error) return { ok:false, erro:error.message };
         window.__negocio.menu = JSON.parse(JSON.stringify(menuData));
-        return true;
-      }catch(e){ return false; }
+        return { ok:true };
+      }catch(e){ return { ok:false, erro:(e && e.message) || String(e) }; }
     };
     // Exposto para a pré-visualização ao vivo (garante ids estáveis para o arrasto casar as secções)
     window.__getMenuPreview = function(){ try{
@@ -6451,6 +6462,28 @@ amesadigital.pt</textarea>
     if(iniSec && !_gated(document.getElementById(iniSec))) abrirSec(iniSec); else irInicio();
     try{ window.__edSyncNav(); }catch(e){}
   })();
+</script>
+
+<!-- Caixa preta: regista erros JS não tratados na tabela "erros" (máx. 5 por sessão, sem repetidos, sem ruído) -->
+<script>
+(function(){
+  var MAX = 5, n = 0, vistos = {};
+  function cli(){ try{ if(typeof sbC!=="undefined" && sbC) return sbC; }catch(e){} try{ if(typeof sb!=="undefined" && sb) return sb; }catch(e){} try{ if(typeof sbc!=="undefined" && sbc) return sbc; }catch(e){} return null; }
+  function slug(){ try{ return (new URLSearchParams(location.search).get("n")) || (typeof SLUG!=="undefined" ? (SLUG||"") : "") || ""; }catch(e){ return ""; } }
+  function reg(msg, stack){
+    try{
+      if(!msg) return; msg = String(msg).slice(0,500);
+      if(/ResizeObserver|^Script error\.?$|Load failed|NetworkError|AbortError|The operation was aborted/i.test(msg)) return;
+      var k = msg.slice(0,120); if(vistos[k]) return; vistos[k] = 1;
+      if(n++ >= MAX) return;
+      var c = cli(); if(!c || !c.from) return;
+      c.from("erros").insert({ slug: slug().slice(0,80), pagina: (location.pathname.split("/").pop()||"").slice(0,80), mensagem: msg, stack: String(stack||"").slice(0,2000), url: location.href.slice(0,300), agente: navigator.userAgent.slice(0,200) }).then(function(){}, function(){});
+    }catch(e){}
+  }
+  window.addEventListener("error", function(e){ reg(e.message || (e.error && e.error.message), e.error && e.error.stack); });
+  window.addEventListener("unhandledrejection", function(e){ var r = e && e.reason; reg((r && r.message) || String(r), r && r.stack); });
+  window.__amErro = reg;   // para registar erros manualmente: window.__amErro("mensagem")
+})();
 </script>
 </body>
 </html>
