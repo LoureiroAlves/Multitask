@@ -2067,7 +2067,6 @@
     if(_encerrado(iso)) html += '<div style="margin:-4px 0 12px; font-size:.85rem; font-weight:700; color:#b23;">🔒 Encerrado</div>';
     if(_fer) html += '<div style="margin:-4px 0 12px; font-size:.85rem; font-weight:700; color:#c0392b;">★ Feriado: '+esc(_fer)+'</div>';
     html += '<button class="nova-btn" id="btnNova" type="button">➕ Nova reserva</button>' + _formNovaHTML();
-    html += _promoDoDiaHTML(iso);
     html += _pratoDoDiaHTML(iso);
     if(!rs.length) html += '<div style="color:#8a7a5c; font-size:.9rem;">Sem reservas neste dia.</div>';
     html += '</div>';
@@ -2089,28 +2088,8 @@
     });
     $('detalhe').innerHTML = html;
     _wireNova(iso);
-    _wirePromo(iso);
     _wirePrato(iso);
     $('detalhe').querySelectorAll('[data-a]').forEach(function(btn){ btn.onclick = function(){ accao(btn.getAttribute('data-id'), btn.getAttribute('data-a')); }; });
-  }
-
-  // Promoção do dia no painel do calendário — só leitura (a gestão é na área Promoções)
-  function _promoDoDiaHTML(iso){
-    var p = _prResolver(_prLista(), iso);
-    if(!p){
-      return '<button class="promo-btn" id="btnPromoNova" type="button" data-iso="' + esc(iso) + '">🏷️ Criar promoção para este dia</button>';
-    }
-    return '<div class="promo-wrap" style="border:1.5px solid #f3c7d5;background:#fff5f8;border-radius:12px;padding:10px 12px;margin-bottom:12px;">'
-      + '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">'
-      +   '<div style="min-width:0;"><div style="font-size:.72rem;font-weight:800;color:#c01e50;letter-spacing:.3px;">🏷️ PROMOÇÃO NESTE DIA</div>'
-      +   '<div style="font-weight:800;color:var(--castanho);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + esc(String(p.texto).split('\n')[0]) + '</div>'
-      +   '<div style="font-size:.76rem;color:#8a7a5c;">📅 ' + esc(_prQuandoTxt(p.quando)) + esc(_prHoraTxt(p)) + '</div></div>'
-      +   '<button type="button" id="btnPromoEditar" data-id="' + esc(p.id || '') + '" style="flex-shrink:0;border:1px solid #e0245e;background:#fff;color:#c01e50;border-radius:10px;padding:8px 12px;font-weight:800;cursor:pointer;font-family:inherit;font-size:.82rem;">Editar ›</button>'
-      + '</div></div>';
-  }
-  function _wirePromo(iso){
-    var n = $('btnPromoNova'); if(n) n.onclick = function(){ _prAbrir(null, { quando:{ tipo:'dia', data:iso } }); };
-    var e = $('btnPromoEditar'); if(e) e.onclick = function(){ _prAbrir(e.dataset.id); };
   }
 
   function _telWA(t){
