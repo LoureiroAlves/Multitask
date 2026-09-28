@@ -8383,7 +8383,11 @@
       lista.forEach(it => { resumo += '<div class="cart-linha"><span class="cart-nome">' + it.qtd + '× ' + it.nome + '</span><span class="cart-preco">' + (it.preco * it.qtd).toFixed(2).replace('.', ',') + '€</span></div>'; });
       const _ccfg = _cartCfg();
       const pedeLev = _ccfg.levantamento !== false;
-      const antMin = parseInt(_ccfg.antecedenciaLev, 10) || 60;
+      // Horas da cozinha: Gestão → Definições → Turnos (agenda.turnosHoras); se ainda não estiverem lá, as antigas do editor
+      const _th = (window.__agendaCfg && window.__agendaCfg.turnosHoras && typeof window.__agendaCfg.turnosHoras === 'object') ? window.__agendaCfg.turnosHoras : null;
+      const _hAlm = _th ? [(_th.almoco||{}).de, (_th.almoco||{}).ate] : [_ccfg.horaAbre, _ccfg.horaFecha];
+      const _hJan = _th ? [(_th.jantar||{}).de, (_th.jantar||{}).ate] : [_ccfg.horaAbre2, _ccfg.horaFecha2];
+      const antMin = _th ? (parseInt(_th.antesFecho, 10) || 0) : (parseInt(_ccfg.antecedenciaLev, 10) || 60);
       const _hhmm = function(dt){ return String(dt.getHours()).padStart(2,'0') + ':' + String(dt.getMinutes()).padStart(2,'0'); };
       const _mkHoje = function(s){ if(!/^\d{1,2}:\d{2}/.test(s||'')) return null; const pp = String(s).split(':'); const d = new Date(); d.setHours(parseInt(pp[0],10)||0, parseInt(pp[1],10)||0, 0, 0); return d; };
       const _agora = new Date();
@@ -8393,10 +8397,12 @@
       // Janelas da cozinha (editor: 1 ou 2 períodos) — a 1.ª conta como almoço e a 2.ª como jantar (se só houver uma e começar ≥ 17:00, é jantar)
       const _janelasDia = function(iso){
         const mk = function(a, f){ const A = _mkEm(iso, (a||'').trim()), F = _mkEm(iso, (f||'').trim()); return (A && F && F.getTime() > A.getTime()) ? { abre:A.getTime(), fecha:F.getTime(), ini:A.getHours() } : null; };
-        let ws = [ mk(_ccfg.horaAbre, _ccfg.horaFecha), mk(_ccfg.horaAbre2, _ccfg.horaFecha2) ].filter(Boolean);
+        const wA = mk(_hAlm[0], _hAlm[1]), wJ = mk(_hJan[0], _hJan[1]);
         const r = window.__diaRegras ? window.__diaRegras(iso) : { fechado:false, almoco:true, jantar:true };
         if(r.fechado) return [];
-        ws = ws.filter(function(w, i){ const ehJantar = (ws.length === 1) ? (w.ini >= 17) : (i === 1); return ehJantar ? r.jantar : r.almoco; });
+        let ws = [];
+        if(wA && (_th ? r.almoco : ((wJ || wA.ini < 17) ? r.almoco : r.jantar))) ws.push(wA);   // sem turnosHoras: uma janela única que começa ≥ 17h conta como jantar
+        if(wJ && r.jantar) ws.push(wJ);
         const out = [];
         ws.forEach(function(w){
           if(_agora.getTime() <= (w.fecha - antMin*60000) + _GRACE){   // ainda dentro do prazo (fecho − antecedência)
@@ -8406,7 +8412,7 @@
         });
         return out.sort(function(x,y){ return x.start - y.start; });
       };
-      const _temJanelas = !!(_ccfg.horaAbre && _ccfg.horaFecha) || !!(_ccfg.horaAbre2 && _ccfg.horaFecha2);
+      const _temJanelas = !!(_hAlm[0] && _hAlm[1]) || !!(_hJan[0] && _hJan[1]);
       // Dias em que se pode encomendar: hoje e os próximos 6 (folgas/férias/turnos vêm das Definições)
       const _hojeIso = _isoDe(_agora);
       const _dias = [];

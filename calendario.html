@@ -1713,6 +1713,11 @@
       +   '<div style="font-weight:800;color:var(--castanho);">🍽️ Turnos de funcionamento</div>'
       +   '<div class="subt2" style="margin:2px 0 8px;">Vale para as <b>reservas</b> e para as <b>encomendas</b>: num dia só de almoço não há reservas nem levantamentos ao jantar; um dia sem nenhum turno é folga.</div>'
       +   '<div id="dfTurnos"></div>'
+      +   '<div style="font-weight:800;color:var(--castanho);margin-top:14px;">🕒 Horas da cozinha (encomendas / take away)</div>'
+      +   '<div class="subt2" style="margin:2px 0 6px;">O cliente só pode marcar levantamento dentro destas horas, nos dias em que o turno está ligado.</div>'
+      +   '<div class="lin"><div><label>Almoço · de</label><input type="time" id="dfThAlmDe"></div><div><label>até</label><input type="time" id="dfThAlmAte"></div></div>'
+      +   '<div class="lin"><div><label>Jantar · de</label><input type="time" id="dfThJanDe"></div><div><label>até</label><input type="time" id="dfThJanAte"></div></div>'
+      +   '<label>Última encomenda <span style="font-weight:400;color:#8a7a5c;">(minutos antes do fecho)</span></label><input type="number" id="dfThAntes" min="0" step="5" style="width:120px;">'
       + '</div>'
       + '<button class="acao" id="dfGuardar" style="width:100%; margin-top:16px;">Guardar definições</button>'
       + '<div class="msg" id="dfMsg" style="margin-top:8px;"></div>'
@@ -1726,6 +1731,13 @@
     _dfHorSel = null;
     _dfTurnos = (a.turnos && typeof a.turnos === 'object') ? JSON.parse(JSON.stringify(a.turnos)) : {};
     _renderTurnos();
+    { // horas da cozinha: novas (agenda.turnosHoras) ou, se ainda não houver, as antigas do editor (config.carrinho)
+      const th = (a.turnosHoras && typeof a.turnosHoras === 'object') ? a.turnosHoras : null;
+      const cc = (negocio && negocio.config && negocio.config.carrinho) || {};
+      const v = function(id, val){ const el = $(id); if(el) el.value = val || ''; };
+      v('dfThAlmDe', th ? (th.almoco||{}).de : cc.horaAbre); v('dfThAlmAte', th ? (th.almoco||{}).ate : cc.horaFecha);
+      v('dfThJanDe', th ? (th.jantar||{}).de : cc.horaAbre2); v('dfThJanAte', th ? (th.jantar||{}).ate : cc.horaFecha2);
+      v('dfThAntes', th ? th.antesFecho : (cc.antecedenciaLev != null ? cc.antecedenciaLev : 60)); }
     _renderHorDiaBtns();
     $('dfAtivo').onchange = function(){ $('dfBox').style.display = this.checked ? '' : 'none'; };
     $('dfMaisBtn').onclick = function(){ const av=$('dfAvancado'); const aberto = av.classList.toggle('hide'); this.textContent = aberto ? '⚙️ Opções avançadas ▾' : '⚙️ Opções avançadas ▴'; };
@@ -1890,6 +1902,7 @@
       capacidade: parseInt($('dfCap').value,10)||0,
       horariosDia: _dfHorDia,
       turnos: _dfTurnos,
+      turnosHoras: { almoco:{ de:(($('dfThAlmDe')||{}).value||''), ate:(($('dfThAlmAte')||{}).value||'') }, jantar:{ de:(($('dfThJanDe')||{}).value||''), ate:(($('dfThJanAte')||{}).value||'') }, antesFecho:(parseInt(($('dfThAntes')||{}).value,10)||0) },
       feriadoMunicipal: (($('dfFerMun')||{}).value || '').slice(5),   // guarda só MM-DD (repete todos os anos)
       diasFecho: (function(){ const o=[]; $('vistaDef').querySelectorAll('input[data-fdia]').forEach(function(c){ if(c.checked) o.push(+c.getAttribute('data-fdia')); }); return o; })(),
       fechos: _dfFechos.filter(function(f){ return f.de; }).map(function(f){ return { de:f.de, a:(f.a||f.de) }; }),
