@@ -2102,9 +2102,11 @@
   #cartOverlay.aberto{ background:rgba(0,0,0,0.5); pointer-events:auto; }
   .cart-painel{
     background:var(--branco); width:100%; max-width:520px; max-height:82vh;
-    border-radius:18px 18px 0 0; padding:18px 16px 26px; overflow-y:auto;
-    transform:translateY(100%); pointer-events:none;
+    border-radius:18px 18px 0 0; padding:18px 16px calc(26px + var(--sa-bottom, env(safe-area-inset-bottom))); overflow-y:auto;
+    transform:translateY(100%); pointer-events:none; position:relative;
   }
+  .cart-x{ position:sticky; top:-10px; float:right; margin:-8px -6px 0 0; width:38px; height:38px; border-radius:50%; border:none; background:var(--bege); color:var(--castanho); font-size:1.15rem; font-weight:800; cursor:pointer; z-index:5; display:flex; align-items:center; justify-content:center; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
+  .cart-acoes button, .cart-whats, .cart-x{ touch-action:manipulation; }
   #cartOverlay.aberto .cart-painel, #favOverlay.aberto .cart-painel{ transform:translateY(0); pointer-events:auto; }
   /* Botão + painel de FAVORITOS (pratos) */
   #favBtn{ position:fixed; right:14px; bottom:77px; z-index:200; width:46px; height:46px; border-radius:50%; border:none; background:#e0245e; color:#fff; font-size:1.35rem; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,0.4); display:none; align-items:center; justify-content:center; }
@@ -8188,6 +8190,7 @@
     overlay.id = 'cartOverlay';
     overlay.innerHTML = '<div class="cart-painel" id="cartPainel"></div>';
     document.body.appendChild(overlay);
+    overlay.addEventListener('click', e => { const x = e.target && e.target.closest && e.target.closest('[data-cart-x]'); if(x){ e.preventDefault(); try{ document.activeElement && document.activeElement.blur(); }catch(_){} overlay.classList.remove('aberto'); } });
     (window.__ovAnim||(window.__ovAnim=function(cont,sel){ var pn=cont.querySelector(sel); if(!pn) return; var an=null,was=cont.classList.contains('aberto'); new MutationObserver(function(){ var open=cont.classList.contains('aberto'); if(open!==was){ was=open; if(an){try{an.cancel();}catch(e){}} if(pn.animate){ an=pn.animate(open?[{transform:'translateY(100%)'},{transform:'translateY(0)'}]:[{transform:'translateY(0)'},{transform:'translateY(100%)'}],{duration:open?380:320,easing:'cubic-bezier(.22,.9,.3,1)'}); } } var a=document.querySelector('#cartOverlay.aberto,#favOverlay.aberto,#agendaOverlay.aberto,#fidOverlay.aberto,#escOverlay.aberto,.categoria-painel.aberto'); document.documentElement.classList.toggle('scroll-lock',!!a); document.body.classList.toggle('scroll-lock',!!a); }).observe(cont,{attributes:true,attributeFilter:['class']}); }))(overlay,'.cart-painel');
     overlay.addEventListener('click', e => { if(e.target === overlay) overlay.classList.remove('aberto'); });
     cartBtn.addEventListener('click', () => { try{ _encSync(); }catch(e){} render(); requestAnimationFrame(() => overlay.classList.add('aberto')); });
@@ -8291,9 +8294,9 @@
       const _encH = _encStatusHTML();
       if(lista.length === 0){
         const _vazioTxt = _encH ? 'Para uma nova encomenda, toca no <strong>+</strong> junto a um prato.' : 'A lista está vazia.<br>Toca no <strong>+</strong> junto a um prato ou bebida para adicionar.';
-        p.innerHTML = '<h3>' + titulo + '</h3>' + _encH + '<div class="cart-vazio">' + _vazioTxt + '</div><div class="cart-acoes"><button class="cart-fechar" id="cartFechar">Fechar</button></div>';
+        p.innerHTML = '<button type="button" class="cart-x" data-cart-x aria-label="Fechar">✕</button><h3>' + titulo + '</h3>' + _encH + '<div class="cart-vazio">' + _vazioTxt + '</div><div class="cart-acoes"><button class="cart-fechar" id="cartFechar">Fechar</button></div>';
       } else {
-        let html = '<h3>' + titulo + '</h3>' + _encH;
+        let html = '<button type="button" class="cart-x" data-cart-x aria-label="Fechar">✕</button><h3>' + titulo + '</h3>' + _encH;
         if(!mostrarPrecos){ html += '<div class="cart-vazio" style="padding:2px 0 12px; font-size:0.82rem;">Mostra esta lista ao empregado para fazer o pedido.</div>'; }
         let total = 0;
         lista.forEach((it, idx) => {
@@ -8424,8 +8427,15 @@
         _pickMinHHMM = _hhmm(_pickMin); _pickMaxHHMM = _pickMax ? _hhmm(_pickMax) : '';
       };
       _calcDia();
+      const _slotsDia = function(){
+        const out = [];
+        if(_ranges.length){ _ranges.forEach(function(r){ let t = Math.ceil(r.start / (15*60000)) * (15*60000); for(; t <= r.end; t += 15*60000) out.push(_hhmm(new Date(t))); }); }
+        else { let t = Math.ceil(_pickMin.getTime() / (15*60000)) * (15*60000); const fim = _mkEm(_diaSel ? _diaSel.iso : _hojeIso, '23:45').getTime(); for(; t <= fim; t += 15*60000) out.push(_hhmm(new Date(t))); }
+        return out.filter(function(v, i, a){ return a.indexOf(v) === i; });
+      };
+      const _slotsHTML = function(){ return _slotsDia().map(function(hh, i){ return '<option value="' + hh + '"' + (i === 0 ? ' selected' : '') + '>' + hh + '</option>'; }).join(''); };
       const _dentroRange = function(dt){ const t = dt.getTime(); for(var i=0;i<_ranges.length;i++){ if(t >= _ranges[i].start - 60000 && t <= _ranges[i].end + 60000) return true; } return false; };
-      p.innerHTML = '<h3>Confirmar encomenda</h3>' +
+      p.innerHTML = '<button type="button" class="cart-x" data-cart-x aria-label="Fechar">✕</button><h3>Confirmar encomenda</h3>' +
         '<div class="cart-vazio" style="padding:0 0 10px; font-size:0.84rem;">Enviamos o teu pedido diretamente ao restaurante. Só fica confirmado quando o restaurante responder — podes acompanhar aqui.</div>' +
         resumo +
         '<div class="cart-total"><span>Total</span><span>' + total.toFixed(2).replace('.', ',') + '€</span></div>' +
@@ -8437,7 +8447,7 @@
             : ('<label for="cartDia" style="display:block; font-size:0.82rem; color:var(--castanho-suave); margin:12px 0 4px;">📅 Que dia vais levantar?</label>' +
                '<select id="cartDia" style="width:100%; padding:11px 12px; border:1.5px solid var(--linha); border-radius:10px; font-family:inherit; font-size:0.95rem; background:#fff;">' + _dias.map(function(o, i){ return '<option value="' + o.iso + '"' + (i === 0 ? ' selected' : '') + '>' + _diaTxt(o) + '</option>'; }).join('') + '</select>' +
                '<label for="cartHora" style="display:block; font-size:0.82rem; color:var(--castanho-suave); margin:12px 0 4px;">🕒 A que horas vais levantar?</label>' +
-               '<input id="cartHora" type="time" min="' + _pickMinHHMM + '"' + (_pickMaxHHMM ? (' max="' + _pickMaxHHMM + '"') : '') + ' value="' + _pickMinHHMM + '" style="width:100%; padding:11px 12px; border:1.5px solid var(--linha); border-radius:10px; font-family:inherit; font-size:0.95rem;">' +
+               '<select id="cartHora" style="width:100%; padding:11px 12px; border:1.5px solid var(--linha); border-radius:10px; font-family:inherit; font-size:0.95rem; background:#fff;">' + _slotsHTML() + '</select>' +
                '<div id="cartHoraNota" style="font-size:0.78rem; color:var(--castanho-suave); margin-top:4px;">' + (_ranges.length ? ('Levantamento: ' + _rangesTxt + '.') : ('A partir das ' + _pickMinHHMM + '.')) + '</div>')
         ) : '') +
         '<div id="cartErro" style="display:none; color:#c0392b; font-size:0.82rem; font-weight:700; margin-top:8px;"></div>' +
@@ -8445,7 +8455,7 @@
       const voltar = document.getElementById('cartVoltar');
       if(voltar) voltar.onclick = () => render();
       { const selD = document.getElementById('cartDia'); if(selD) selD.onchange = function(){ _diaSel = _dias.filter(function(o){ return o.iso === selD.value; })[0] || _dias[0]; _calcDia();
-          const h = document.getElementById('cartHora'); if(h){ h.min = _pickMinHHMM; if(_pickMaxHHMM) h.max = _pickMaxHHMM; else h.removeAttribute('max'); h.value = _pickMinHHMM; }
+          const h = document.getElementById('cartHora'); if(h){ h.innerHTML = _slotsHTML(); }
           const n = document.getElementById('cartHoraNota'); if(n) n.textContent = _ranges.length ? ('Levantamento: ' + _rangesTxt + '.') : ('A partir das ' + _pickMinHHMM + '.'); }; }
       const inp = document.getElementById('cartNome');
       const enviar = document.getElementById('cartEnviar');
@@ -9300,6 +9310,10 @@
         if(cfg.cerimonias && temCerimonias()) modos.push('cerimonias');
         if(cfg.reservas && !!window._agenda) modos.push('reservas');
         if(!modos.length){ var _w0 = document.getElementById('introModosWrap'); if(_w0) _w0.remove(); return; }
+        // Já há um modo escolhido (ex.: "puxar para atualizar" reaplica a configuração) → NÃO voltar a mostrar a abertura/ecrã de escolha
+        { var _mAt = /\bmodo-(normal|takeaway|grupos|cerimonias)\b/.exec(document.body.className);
+          if(_mAt){ modosAtuais = modos; try{ aplicarModo(_mAt[1]); }catch(e){} return; }   // reaplica o modo atual (carrinho ligado/desligado) sem mostrar nada
+          if(window.__refrescando) return; }
         var ov = document.getElementById('introOverlay');
         var introViva = window.__introAtiva && ov && !ov.dataset.saiu && ov.style.display !== 'none';
         if(introViva){ integrarNoIntro(modos); }               // desenha o(s) ícone(s) sobre a abertura, mesmo que só haja 1
