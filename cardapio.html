@@ -2987,13 +2987,31 @@
   // Deteta se um URL é vídeo (upload de vídeo em vez de foto)
   window.__ehVideo = function(u){ return /\.(mp4|webm|mov|m4v|ogv)(\?|#|$)/i.test(String(u || '')); };
   // Cria <video> (autoplay, mudo, loop — como fundo animado) ou <img>, com a mesma classe/alt.
-  function _mkMedia(url, cls, alt){
+  // adiar=true: guarda o endereço em data-src e não começa a descarregar. Serve para os slides
+  // de carrossel que ainda não estão à vista — um vídeo pode ter 20MB (limite do editor) e sem
+  // isto os 3 ou 4 slides eram todos descarregados de uma vez, ainda que só um se veja.
+  // O __mediaAtivar() liga-os quando chegar a vez.
+  window.__mediaAtivar = function(el){
+    if(!el || el.tagName !== 'VIDEO') return;
+    try{
+      if(!el.getAttribute('src') && el.dataset.src){ el.setAttribute('preload','auto'); el.src = el.dataset.src; }
+      const p = el.play(); if(p && p.catch) p.catch(function(){});
+    }catch(e){}
+  };
+  window.__mediaPausar = function(el){ if(el && el.tagName === 'VIDEO'){ try{ el.pause(); }catch(e){} } };
+  function _mkMedia(url, cls, alt, adiar){
     if(window.__ehVideo(url)){
       const v = document.createElement('video');
-      v.src = url; v.muted = true; v.defaultMuted = true; v.autoplay = true; v.loop = true; v.playsInline = true;
-      v.setAttribute('muted',''); v.setAttribute('autoplay',''); v.setAttribute('loop',''); v.setAttribute('playsinline',''); v.setAttribute('preload','metadata');
+      v.muted = true; v.defaultMuted = true; v.loop = true; v.playsInline = true;
+      v.setAttribute('muted',''); v.setAttribute('loop',''); v.setAttribute('playsinline','');
       if(cls) v.className = cls;
-      try{ const p = v.play(); if(p && p.catch) p.catch(function(){}); }catch(e){}
+      if(adiar){
+        v.dataset.src = url; v.setAttribute('preload','none');
+      } else {
+        v.src = url; v.autoplay = true;
+        v.setAttribute('autoplay',''); v.setAttribute('preload','metadata');
+        try{ const p = v.play(); if(p && p.catch) p.catch(function(){}); }catch(e){}
+      }
       return v;
     }
     const im = document.createElement('img');
@@ -4193,7 +4211,7 @@
     container.innerHTML = '';
     fotos.forEach((caminho, i) => {
       if(!caminho) return;
-      const img = _mkMedia(RAW_BASE + caminho, null, 'Foto ' + (i+1));
+      const img = _mkMedia(RAW_BASE + caminho, null, 'Foto ' + (i+1), i !== 0);   // só o 1.º slide arranca já
       if(i === 0) img.classList.add('ativa');
       container.appendChild(img);
     });
@@ -4201,13 +4219,17 @@
   }
 
   function iniciarRotacao(container){
-    const imagens = container.querySelectorAll('img');
+    // Era querySelectorAll('img'): os vídeos ficavam de fora, por isso um carrossel só com
+    // vídeos nunca rodava (0 elementos) e num carrossel misto o vídeo ficava parado no lugar.
+    const imagens = container.querySelectorAll('img, video');
     if(imagens.length <= 1) return;
     let idx = 0;
     setInterval(() => {
       imagens[idx].classList.remove('ativa');
+      try{ window.__mediaPausar(imagens[idx]); }catch(e){}
       idx = (idx + 1) % imagens.length;
       imagens[idx].classList.add('ativa');
+      try{ window.__mediaAtivar(imagens[idx]); }catch(e){}   // só aqui é que um vídeo adiado começa a descarregar
     }, 30000);
   }
 
