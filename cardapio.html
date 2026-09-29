@@ -9871,7 +9871,7 @@
 <script>
 (function(){
   if(window.__PREVIEW || window.__esconderijo) return;
-  var J = null, P = null, canal = null, pollT = null, tentativas = 0, tentPend = 0, dicasMostradas = {}, cache = {}, aCacar = false, terminouVisto = false, venci = null, encoder = null;
+  var J = null, P = null, canal = null, pollT = null, tentT = null, tentativas = 0, tentPend = 0, dicasMostradas = {}, cache = {}, aCacar = false, terminouVisto = false, venci = null, encoder = null;
   function $(id){ return document.getElementById(id); }
   function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]; }); }
   function disp(){ try{ var d = localStorage.getItem('amesaDisp'); if(!d){ d = (crypto.randomUUID ? crypto.randomUUID() : ('xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c){ var r = Math.random()*16|0, v = c === 'x' ? r : (r&0x3|0x8); return v.toString(16); }))); localStorage.setItem('amesaDisp', d); } return d; }catch(e){ return '00000000-0000-4000-8000-000000000000'; } }
@@ -9945,11 +9945,11 @@
     try{ var vj = ls('amesaOvoVenci:' + J.id); if(vj){ venci = JSON.parse(vj); f.innerHTML = '<span class="ov">🏆</span><span>Ganhaste!<small style="display:block;">' + esc(venci.codigo) + '</small></span>'; f.onclick = function(){ folhaVitoria(venci); }; } }catch(e){}
     if(!venci) document.addEventListener('click', onToque, true);
     ligarRealtime(); if(!pollT) pollT = setInterval(sincronizar, 15000);
-    document.addEventListener('visibilitychange', function(){ if(!document.hidden) sincronizar(); });
-    window.addEventListener('pagehide', enviarTentativas);
-    setInterval(function(){ enviarTentativas(); verificarDicas(); }, 30000);
+    // O visibilitychange e o pagehide passaram para o arranque do módulo: registados aqui, só
+    // existiam para quem já tinha entrado no jogo, e voltavam a somar-se a cada iniciarCaca().
+    if(!tentT) tentT = setInterval(function(){ enviarTentativas(); verificarDicas(); }, 30000);
   }
-  function pararCaca(){ aCacar = false; var f = $('ovoFlut'); if(f) f.style.display = 'none'; document.removeEventListener('click', onToque, true); if(canal){ try{ sbC.removeChannel(canal); }catch(e){} canal = null; } if(pollT){ clearInterval(pollT); pollT = null; } }
+  function pararCaca(){ aCacar = false; var f = $('ovoFlut'); if(f) f.style.display = 'none'; document.removeEventListener('click', onToque, true); if(canal){ try{ sbC.removeChannel(canal); }catch(e){} canal = null; } if(pollT){ clearInterval(pollT); pollT = null; } if(tentT){ clearInterval(tentT); tentT = null; } }
   function pintaFlut(){ var f = $('ovoFlut'); if(f) f.innerHTML = '<span class="ov">🥚</span><span>À caça<small style="display:block;">' + tentativas + ' tentativa(s)' + (dicasAtivas().length ? ' · 💡 dica' : '') + '</small></span>'; }
   async function onToque(e){
     if(!aCacar || !J || venci) return;
@@ -10022,6 +10022,25 @@
   function enviarTentativas(){ if(!P || tentPend <= 0) return; var n = tentPend; tentPend = 0; try{ sbC.rpc('ovo_tentativas', { p_participacao:P, p_n:n }); }catch(e){} }
   // ---------- arranque: depois do negócio estar carregado ----------
   var tent = 0; var esperar = setInterval(function(){ tent++; if(window.__negocioId && typeof sbC !== 'undefined' && sbC){ clearInterval(esperar); carregar(); } else if(tent > 60) clearInterval(esperar); }, 500);
+
+  // ---------- voltar à app: procurar o jogo outra vez ----------
+  // O carregar() só corria UMA vez, no arranque. Quem abrisse o menu antes de a campanha começar
+  // ficava sem selo e sem forma de o ver, porque o único visibilitychange do módulo estava dentro
+  // do iniciarCaca() (ou seja, só para quem já tinha entrado) e o sincronizar() começa com
+  // "if(!J) return" — sabe actualizar um jogo em memória, nunca descobrir um novo.
+  // Numa PWA no ecrã principal isto nota-se mais: tocar no ícone retoma a página em memória e os
+  // scripts não voltam a correr, daí só resultar quando o sistema chega mesmo a descartar a página.
+  // O resto do cardápio (config, encomendas, reservas) já reage assim; o jogo era a excepção.
+  function acordar(){
+    if(document.hidden) return;
+    if(typeof sbC === 'undefined' || !sbC || !window.__negocioId) return;
+    if(aCacar) sincronizar();   // já a jogar: basta actualizar o jogo em curso
+    else carregar();            // ainda não: procurar campanhas novas
+  }
+  document.addEventListener('visibilitychange', acordar);
+  window.addEventListener('pageshow', function(ev){ if(ev && ev.persisted) acordar(); });
+  window.addEventListener('pagehide', enviarTentativas);
+  setInterval(function(){ if(!aCacar) acordar(); }, 120000);   // rede de segurança para campanhas criadas com a página já aberta
 })();
 </script>
 

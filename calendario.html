@@ -1742,7 +1742,10 @@
   async function _ovVigiar(){
     try{
       if(!negocio || !negocio.id) return;
-      const r = await sb.from('ovo_jogos').select('id,nome,premio_nome,estado,inicio,fim').eq('negocio_id', negocio.id).in('estado', ['publicado','terminado']).gte('fim', new Date(Date.now() - 6*3600*1000).toISOString());
+      // 'ativo' é o estado que o menu procura (cardapio.html) e o que o _ovEstado trata como a decorrer.
+      // 'publicado' fica na lista por segurança, caso alguma campanha antiga o tenha gravado assim —
+      // sem 'ativo', este vigia só encontrava jogos JÁ terminados e o aviso de vencedor nunca chegava a tempo.
+      const r = await sb.from('ovo_jogos').select('id,nome,premio_nome,estado,inicio,fim').eq('negocio_id', negocio.id).in('estado', ['ativo','publicado','terminado']).gte('fim', new Date(Date.now() - 6*3600*1000).toISOString());
       const ids = (r.data || []).map(function(j){ return j.id; }); if(!ids.length) return;
       const w = await sb.from('ovo_vencedores').select('id,jogo_id,nome,telefone,codigo,posicao,ganhou_em').in('jogo_id', ids).order('ganhou_em');
       const lista = w.data || [];
