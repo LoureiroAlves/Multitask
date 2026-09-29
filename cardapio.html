@@ -6782,14 +6782,27 @@
       if(menuTxt) waMsg += 'Menu de grupo: ' + menuTxt + '\n';
       if(obs) waMsg += 'Obs: ' + obs + '\n';
       if(sinal > 0) waMsg += 'Sinal (' + pct + '%): ' + sinal.toFixed(2) + '€\n';
-      try{ if(SLUG){ waMsg += '\n✅ Confirmar no calendário: ' + location.origin + '/calendario.html?n=' + SLUG + (estado.diaSel ? ('&d=' + estado.diaSel) : '') + '\n'; } }catch(e){}
-      waMsg += 'Obrigado!';
+      // O link para o dono leva o ID da reserva (&rid=), por isso só pode ser montado DEPOIS de gravar.
+      // Sem ele, o calendário tinha de adivinhar qual era a reserva a partir do dia: escolhia a
+      // pendente mais cedo desse dia (_cmpR ordena por data+hora), ou seja, num dia com várias
+      // pré-reservas abria quase sempre a errada — e nenhuma quando não encontrava nada.
+      // O calendário já sabe receber o rid (ramo RID_PARAM); era só o link que não o levava.
+      let _msgFechada = false;
+      function _fecharMsg(rid){
+        if(_msgFechada) return; _msgFechada = true;
+        try{
+          if(SLUG) waMsg += '\n✅ Confirmar no calendário: ' + location.origin + '/calendario.html?n=' + SLUG
+            + (estado.diaSel ? ('&d=' + estado.diaSel) : '')
+            + (rid ? ('&rid=' + encodeURIComponent(rid)) : '') + '\n';
+        }catch(e){}
+        waMsg += 'Obrigado!';
+      }
 
       // A reserva SÓ é gravada aqui — quando o cliente decide enviar/registar (não no "Pedir pré-reserva")
       let _jaGravou = false;
       async function _gravarReserva(){
         if(_jaGravou) return true;
-        if(!(typeof sbC !== 'undefined' && sbC && window.__negocioId)) return true;   // sem base de dados: nada a gravar
+        if(!(typeof sbC !== 'undefined' && sbC && window.__negocioId)){ _fecharMsg(''); return true; }   // sem base de dados: nada a gravar
         const { data, error } = await sbC.rpc('criar_reserva', {
           p_negocio: window.__negocioId, p_data: estado.diaSel, p_hora: estado.slotSel,
           p_nome: nome, p_tel: tel, p_pessoas: pessoas, p_obs: obsFull || null,
@@ -6802,6 +6815,7 @@
         _jaGravou = true;
         _limparPendente();   // reserva concluída — deixa de estar pendente e apaga o destaque do ícone
         const _rid = (typeof data === 'string') ? data : ((data && data.id) || '');   // criar_reserva devolve o uuid da reserva
+        _fecharMsg(_rid);   // agora sim: o link do WhatsApp já pode apontar para ESTA reserva
         try{ if(window._guardarMinhaReserva) window._guardarMinhaReserva({ rid: _rid, rn: nome, rd: estado.diaSel, rh: estado.slotSel, rp: pessoas }); }catch(e){}
         try{ if(window._guardarMeuTelefone) window._guardarMeuTelefone(tel); }catch(e){}   // lembra o número, para recuperar as reservas em qualquer dispositivo
         return true;

@@ -685,8 +685,13 @@
     }
     let alvo = null;
     if(DIA_PARAM){
-      const doDia = reservas.filter(function(r){ return r.data === DIA_PARAM && r.estado === 'pendente'; }).sort(_cmpR);
-      alvo = doDia[0] || reservas.filter(function(r){ return r.data === DIA_PARAM; }).sort(_cmpR)[0] || null;
+      // Links antigos (enviados antes de o cardápio passar a incluir &rid=) só trazem o dia.
+      // Nesse caso a reserva certa é quase sempre a ÚLTIMA a ser criada — foi a que gerou a
+      // mensagem. Ordenar por _cmpR (data+hora) abria a mais cedo do dia, que num dia com
+      // várias pré-reservas costumava ser outra.
+      const _recente = function(a, b){ return String(b.criado_em||b.created_at||b.data||'').localeCompare(String(a.criado_em||a.created_at||a.data||'')); };
+      const doDia = reservas.filter(function(r){ return r.data === DIA_PARAM && r.estado === 'pendente'; }).sort(_recente);
+      alvo = doDia[0] || reservas.filter(function(r){ return r.data === DIA_PARAM; }).sort(_recente)[0] || null;
       if(!alvo){ irParaDia(DIA_PARAM); return; }   // dia sem reservas: abre só o dia
     } else {
       const pend = reservas.filter(function(r){ return r.estado === 'pendente'; });
