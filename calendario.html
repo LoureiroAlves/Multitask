@@ -360,6 +360,7 @@
     <label for="pass">Password</label>
     <input type="password" id="pass" autocomplete="current-password">
     <button class="acao" id="btnEntrar">Entrar</button>
+    <button type="button" id="btnEsqueci" style="display:block; width:100%; margin-top:8px; background:none; border:none; color:var(--castanho); font-family:inherit; font-size:.85rem; text-decoration:underline; cursor:pointer; padding:6px;">Esqueci-me da password</button>
     <div id="loginMsg" class="msg"></div>
   </div>
 
@@ -580,6 +581,20 @@
   $('modalAprovar').onclick = (e) => { if(e.target === $('modalAprovar')) fecharAprovar(); };
 
   async function entrar(){
+    // Depois do link do email, o mesmo botão grava a nova password (a sessão de recuperação já está ativa).
+    if(_modoNovaPass){
+      const nova = $('pass').value;
+      const msg = $('loginMsg');
+      if(!nova || nova.length < 6){ msg.textContent = 'A password tem de ter pelo menos 6 caracteres.'; msg.className = 'msg erro'; return; }
+      $('btnEntrar').disabled = true; msg.textContent = 'A guardar…'; msg.className = 'msg';
+      const { error } = await sb.auth.updateUser({ password: nova, data: { senhaDefinida: true } });
+      $('btnEntrar').disabled = false;
+      if(error){ msg.textContent = 'Erro: ' + error.message; msg.className = 'msg erro'; return; }
+      _modoNovaPass = false;
+      msg.textContent = 'Password alterada ✓'; msg.className = 'msg ok';
+      iniciar();   // a sessão de recuperação já está ativa — entra sem pedir de novo
+      return;
+    }
     const email = $('email').value.trim(), pass = $('pass').value;
     if(!email || !pass){ $('loginMsg').textContent='Preenche email e password.'; $('loginMsg').className='msg erro'; return; }
     $('btnEntrar').disabled = true;
@@ -588,6 +603,39 @@
     if(error){ $('loginMsg').textContent='Erro: '+error.message; $('loginMsg').className='msg erro'; return; }
     iniciar();
   }
+
+  // ---- Recuperar a password ----
+  // O calendário é onde o dono trabalha todos os dias (reservas, encomendas), mas era a única
+  // página de entrada sem forma de repor a password: quem se esquecesse ficava preso e tinha de
+  // telefonar. Mesmo fluxo que o editar.html já usa.
+  let _modoNovaPass = false;
+  { const be = $('btnEsqueci'); if(be) be.onclick = async function(){
+      const email = $('email').value.trim();
+      const msg = $('loginMsg');
+      if(!email){ msg.textContent = 'Escreve primeiro o teu email, depois carrega em "Esqueci-me da password".'; msg.className = 'msg erro'; $('email').focus(); return; }
+      be.disabled = true; msg.textContent = 'A enviar…'; msg.className = 'msg';
+      const redir = location.origin + location.pathname + (SLUG ? ('?n=' + encodeURIComponent(SLUG)) : '');
+      const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: redir });
+      be.disabled = false;
+      if(error){ msg.textContent = 'Erro: ' + error.message; msg.className = 'msg erro'; return; }
+      msg.textContent = 'Enviámos um email para ' + email + '. Abre-o e clica no link para definires uma nova password.';
+      msg.className = 'msg ok';
+    }; }
+  // Regresso do email: o Supabase dispara PASSWORD_RECOVERY e a caixa passa a "nova password".
+  try{
+    sb.auth.onAuthStateChange(function(event){
+      if(event !== 'PASSWORD_RECOVERY') return;
+      _modoNovaPass = true;
+      $('loginCard').classList.remove('hide');
+      $('loginCard').querySelector('h2').textContent = 'Nova password';
+      $('email').style.display = 'none';
+      $('email').previousElementSibling.style.display = 'none';   // a etiqueta "Email"
+      const p = $('pass'); p.value = ''; p.placeholder = 'nova password'; p.setAttribute('autocomplete','new-password');
+      $('btnEntrar').textContent = 'Guardar nova password';
+      $('btnEsqueci').style.display = 'none';
+      $('loginMsg').textContent = ''; $('loginMsg').className = 'msg';
+    });
+  }catch(e){}
 
   async function iniciar(){
     const { data:{ session } } = await sb.auth.getSession();
