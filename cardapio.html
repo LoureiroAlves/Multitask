@@ -8633,8 +8633,27 @@
         if(typeof sbC !== 'undefined' && sbC && window.__negocioId){
           const _args = { p_negocio: window.__negocioId, p_nome: nome, p_tel: telC, p_levant: horaLev, p_itens: itensJson, p_total: t, p_obs: obsC };
           const _trata = function(res){ const rec = (res && res.data && res.data[0]) ? res.data[0] : null; if(rec && rec.id){ _registado(rec); return true; } return false; };
+          // A 2.ª tentativa sem p_obs existe só para bases que ainda não têm esse parâmetro na
+          // função. Antes repetia-se a CADA erro, e isso era perigoso: se a 1.ª chamada chegou a
+          // gravar mas a resposta se perdeu (timeout, 5xx do gateway), a repetição criava uma
+          // SEGUNDA encomenda real — o cliente pagava uma e a cozinha via duas. Além disso
+          // descartava silenciosamente as observações do cliente em erros que nada tinham a ver
+          // com o p_obs. Agora só repete quando o erro é mesmo de assinatura em falta.
+          const _faltaObs = function(err){
+            if(!err) return false;
+            if(String(err.code || '') === 'PGRST202') return true;   // função não encontrada com esta assinatura
+            const m = String(err.message || '').toLowerCase();
+            return m.indexOf('could not find the function') >= 0 || m.indexOf('p_obs') >= 0;
+          };
           sbC.rpc('criar_encomenda', _args)
-            .then(function(res){ if(_trata(res)) return; if(res && res.error){ const a2 = Object.assign({}, _args); delete a2.p_obs; return sbC.rpc('criar_encomenda', a2).then(function(r2){ if(!_trata(r2)) _falhou(); }); } _falhou(); })   // base ainda sem p_obs → tenta sem
+            .then(function(res){
+              if(_trata(res)) return;
+              if(res && res.error && _faltaObs(res.error)){
+                const a2 = Object.assign({}, _args); delete a2.p_obs;
+                return sbC.rpc('criar_encomenda', a2).then(function(r2){ if(!_trata(r2)) _falhou(); });
+              }
+              _falhou();
+            })
             .catch(function(){ _falhou(); });
         } else {
           // Sem base de dados neste contexto → WhatsApp é o único canal (abre já, no gesto do toque)
