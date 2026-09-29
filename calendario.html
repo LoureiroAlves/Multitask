@@ -685,8 +685,13 @@
     }
     let alvo = null;
     if(DIA_PARAM){
-      const doDia = reservas.filter(function(r){ return r.data === DIA_PARAM && r.estado === 'pendente'; }).sort(_cmpR);
-      alvo = doDia[0] || reservas.filter(function(r){ return r.data === DIA_PARAM; }).sort(_cmpR)[0] || null;
+      // Links antigos (enviados antes de o cardápio passar a incluir &rid=) só trazem o dia.
+      // Nesse caso a reserva certa é quase sempre a ÚLTIMA a ser criada — foi a que gerou a
+      // mensagem. Ordenar por _cmpR (data+hora) abria a mais cedo do dia, que num dia com
+      // várias pré-reservas costumava ser outra.
+      const _recente = function(a, b){ return String(b.criado_em||b.created_at||b.data||'').localeCompare(String(a.criado_em||a.created_at||a.data||'')); };
+      const doDia = reservas.filter(function(r){ return r.data === DIA_PARAM && r.estado === 'pendente'; }).sort(_recente);
+      alvo = doDia[0] || reservas.filter(function(r){ return r.data === DIA_PARAM; }).sort(_recente)[0] || null;
       if(!alvo){ irParaDia(DIA_PARAM); return; }   // dia sem reservas: abre só o dia
     } else {
       const pend = reservas.filter(function(r){ return r.estado === 'pendente'; });
@@ -1611,6 +1616,14 @@
     html += '<div class="card" style="padding:12px 14px;"><div style="font-weight:800;color:var(--castanho);">🎟️ Validar código de resgate</div>'
       + '<div style="display:flex;gap:8px;margin-top:8px;"><input id="ovCod" placeholder="GALINHA-XXXXXX" autocapitalize="characters" style="flex:1;margin:0;text-transform:uppercase;letter-spacing:1px;font-weight:800;"><button type="button" id="ovValidar" class="acao" style="margin:0;width:auto;padding:0 16px;">Validar</button></div>'
       + '<div id="ovCodRes" style="margin-top:8px;"></div></div>';
+    // Depois de uma campanha terminar, o menu mostrava um selo cinzento "Jogo terminado" no topo
+    // durante 24h, a todos os clientes. Passa a ser opção do dono, desligada por omissão.
+    const _mf = !!((negocio && negocio.config && negocio.config.ovoMostrarFim));
+    html += '<div class="card" style="padding:12px 14px;"><label style="display:flex;gap:10px;align-items:flex-start;cursor:pointer;margin:0;">'
+      + '<input type="checkbox" id="ovMostrarFim"' + (_mf ? ' checked' : '') + ' style="margin:3px 0 0;width:auto;">'
+      + '<span><span style="font-weight:800;color:var(--castanho);">Mostrar o vencedor no menu depois de terminar</span>'
+      + '<span style="display:block;font-size:.8rem;color:#8a7a5c;margin-top:2px;">Durante 24 horas, quem abrir o menu vê quem encontrou o ovo. Desligado, o menu fica limpo assim que a campanha acaba.</span></span>'
+      + '</label><div id="ovMostrarFimMsg" style="margin-top:6px;font-size:.8rem;color:#8a7a5c;"></div></div>';
     if(atual){ html += _ovCartaoAtual(atual); }
     else { html += '<button type="button" id="ovNova" class="pdf-btn" style="margin:0 0 14px;border-color:#c0392b;color:#c0392b;background:#fff5f3;font-size:1rem;">＋ Nova campanha</button>'; }
     const hist = _ovLista.filter(function(j){ return j !== atual; });
@@ -1624,6 +1637,21 @@
     v.innerHTML = html;
     const nv = $('ovNova'); if(nv) nv.onclick = function(){ _ovEdit = _ovNovo(); renderOvo(); };
     $('ovValidar').onclick = _ovValidarCodigo; $('ovCod').addEventListener('keydown', function(e){ if(e.key === 'Enter') _ovValidarCodigo(); });
+    { const mf = $('ovMostrarFim'); if(mf) mf.onchange = async function(){
+        const msg = $('ovMostrarFimMsg'); const val = mf.checked; mf.disabled = true;
+        if(msg) msg.textContent = 'A guardar…';
+        // Relê a config fresca antes de gravar, para não escrever por cima de alterações feitas no editor.
+        try{
+          const sel = await sb.from('negocios').select('config').eq('id', negocio.id).maybeSingle();
+          const cfg = (sel && sel.data && sel.data.config) || {};
+          cfg.ovoMostrarFim = val;
+          const up = await sb.from('negocios').update({ config: cfg }).eq('id', negocio.id);
+          if(up.error) throw up.error;
+          negocio.config = cfg;
+          if(msg) msg.textContent = val ? '✓ O menu mostra o vencedor durante 24h.' : '✓ O menu fica limpo quando a campanha terminar.';
+        }catch(e){ mf.checked = !val; if(msg) msg.textContent = 'Não consegui guardar: ' + ((e && e.message) || e); }
+        mf.disabled = false;
+      }; }
     v.querySelectorAll('.ov-hist').forEach(function(el){ el.onclick = function(){ const j = _ovLista.filter(function(x){ return x.id === el.dataset.id; })[0]; if(j) _ovAbrirDetalhe(j); }; });
     if(atual) _ovWireAtual(atual);
   }
@@ -1742,7 +1770,10 @@
   async function _ovVigiar(){
     try{
       if(!negocio || !negocio.id) return;
-      const r = await sb.from('ovo_jogos').select('id,nome,premio_nome,estado,inicio,fim').eq('negocio_id', negocio.id).in('estado', ['publicado','terminado']).gte('fim', new Date(Date.now() - 6*3600*1000).toISOString());
+      // 'ativo' é o estado que o menu procura (cardapio.html) e o que o _ovEstado trata como a decorrer.
+      // 'publicado' fica na lista por segurança, caso alguma campanha antiga o tenha gravado assim —
+      // sem 'ativo', este vigia só encontrava jogos JÁ terminados e o aviso de vencedor nunca chegava a tempo.
+      const r = await sb.from('ovo_jogos').select('id,nome,premio_nome,estado,inicio,fim').eq('negocio_id', negocio.id).in('estado', ['ativo','publicado','terminado']).gte('fim', new Date(Date.now() - 6*3600*1000).toISOString());
       const ids = (r.data || []).map(function(j){ return j.id; }); if(!ids.length) return;
       const w = await sb.from('ovo_vencedores').select('id,jogo_id,nome,telefone,codigo,posicao,ganhou_em').in('jogo_id', ids).order('ganhou_em');
       const lista = w.data || [];

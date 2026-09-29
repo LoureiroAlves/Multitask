@@ -475,7 +475,6 @@
       var fotoCartao = promoFoto || foto;   // se houver foto de promoção, é essa que aparece no cartão
       var estiloFoto = fotoCartao ? ('background-image:url(\'' + esc(fotoCartao) + '\')') : (cor ? ('background:' + esc(cor)) : '');
       var cardapio = '/' + encodeURIComponent(slug);
-      var reservas = 'reservas.html?n=' + encodeURIComponent(slug);
       return '' +
         '<article class="card' + (promo ? ' tem-promo' : '') + '"' + (promo ? (' style="--promo-cor:' + promoCor + '"') : '') + ' data-slug="' + esc(slug) + '">' +
           '<button type="button" class="fav-btn' + (favTem(slug) ? ' on' : '') + '" data-fav="' + esc(slug) + '" aria-label="Favorito">' + (favTem(slug) ? '♥' : '♡') + '</button>' +
