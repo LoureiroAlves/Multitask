@@ -5834,6 +5834,9 @@
       window.__negocioId = neg.id;
       window.__negNome = neg.nome || '';
       const config = neg.config || {};
+      // Lido aqui (da config completa) e não do __cfgPromo, que a atualização automática substitui
+      // por uma versão só com as chaves da promoção e do prato do dia.
+      window.__ovoMostrarFim = !!config.ovoMostrarFim;
       // Modo pré-visualização: permitir mostrar exemplos de estilos via URL (?modelo=... &textura=...),
       // sem mexer no negócio real. Usado no mostruário de estilos do formulário de registo.
       if(window.__PREVIEW){ try{
@@ -9941,7 +9944,10 @@
     var r = await sbC.from('ovo_jogos_publico').select('*').eq('negocio_id', window.__negocioId).gte('fim', new Date(Date.now() - 24*3600*1000).toISOString()).order('inicio', { ascending:false }).limit(5);
     if(r.error || !r.data) return;
     var ativo = r.data.filter(function(j){ return j.estado === 'ativo'; })[0];
-    var term = r.data.filter(function(j){ return j.estado === 'terminado' && j.terminado_em && (Date.now() - new Date(j.terminado_em).getTime()) < 24*3600*1000; })[0];
+    // Selo cinzento "Jogo terminado" depois de a campanha acabar: ficava 24h no topo do menu,
+    // à frente de toda a gente — inclusive de quem só quer ver a ementa. Passa a depender do
+    // config.ovoMostrarFim do negócio (Gestão → 🥚 No Cu da Galinha), desligado por omissão.
+    var term = window.__ovoMostrarFim ? r.data.filter(function(j){ return j.estado === 'terminado' && j.terminado_em && (Date.now() - new Date(j.terminado_em).getTime()) < 24*3600*1000; })[0] : null;
     aplicar(ativo || term || null);
   }
   function aplicar(j){
@@ -9981,7 +9987,10 @@
     } else if(tipo === 'fim'){
       var venc = Array.isArray(J.vencedores_lista) ? J.vencedores_lista : [];
       folha('<div class="big">🎉</div><h2>Já temos vencedor!</h2><p>' + (venc.length ? ('O ovo foi encontrado por <b>' + esc(venc.map(function(v){ return v.nome; }).join(', ')) + '</b> às ' + hhmm(venc[0].quando) + '.') : 'O jogo terminou.') + '</p><p>Obrigado por participares — fica atento à próxima caça.</p><button type="button" class="btn sec" id="ovoDepois">Fechar</button>');
-      $('ovoDepois').onclick = fecharFolha;
+      // Guardar o fecho, como a folha de abertura já faz com o amesaOvoVisto. Sem isto a única
+      // guarda era o terminouVisto, uma variável em memória: reiniciava a cada carregamento e a
+      // folha voltava a abrir sempre que o jogador regressava ao menu.
+      $('ovoDepois').onclick = function(){ ls('amesaOvoFimVisto:' + J.id, '1'); fecharFolha(); };
     }
   }
   async function comecar(){
@@ -10066,7 +10075,7 @@
       var antes = J; J = r.data;
       var vAntes = Array.isArray(antes.vencedores_lista) ? antes.vencedores_lista.length : 0, vAgora = Array.isArray(J.vencedores_lista) ? J.vencedores_lista.length : 0;
       if(J.estado === 'terminado' || J.estado === 'expirado'){
-        if(!terminouVisto){ terminouVisto = true; if(!venci || venci === 'a_reclamar'){ if(J.estado === 'terminado') abrirFolha('fim'); else toast('O tempo acabou — o ovo ficou por encontrar 🥚'); } }
+        if(!terminouVisto && !ls('amesaOvoFimVisto:' + J.id)){ terminouVisto = true; if(!venci || venci === 'a_reclamar'){ if(J.estado === 'terminado') abrirFolha('fim'); else toast('O tempo acabou — o ovo ficou por encontrar 🥚'); } }
         aplicar(J.estado === 'terminado' ? J : null); return;
       }
       if(vAgora > vAntes && !venci){ var ult = J.vencedores_lista[vAgora - 1]; toast('🥚 ' + (ult && ult.nome ? ult.nome : 'Alguém') + ' encontrou um ovo — ainda há ' + (J.limite_vencedores - vAgora) + '!'); vib([60,40,60]); }
