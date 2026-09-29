@@ -508,6 +508,7 @@
         '<div style="margin-top:12px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">' +
           '<button class="acao" data-act="guardar">Guardar</button>' +
           '<button class="mini" data-act="magic">✉️ Enviar acesso ao dono</button>' +
+          '<button class="mini" data-act="reporPass">🔑 Repor password do dono</button>' +
           '<button class="mini" data-act="copiar">📋 Copiar acessos</button>' +
           '<button class="mini" data-act="migrarFotos">📦 Migrar fotos p/ definitivo</button>' +
           '<button class="mini perigo" data-act="reporRating">⭐ Repor avaliações</button>' +
@@ -546,6 +547,7 @@
     div.querySelector('[data-act="apagar"]').onclick = function(){ apagar(n); };
     div.querySelector('[data-act="guardar"]').onclick = function(){ guardarEnt(n, div); };
     div.querySelector('[data-act="magic"]').onclick = function(){ enviarAcessoDono(n, div); };
+    div.querySelector('[data-act="reporPass"]').onclick = function(){ reporPassDono(n, div); };
     div.querySelector('[data-act="copiar"]').onclick = function(e){ copiarAcessos(n, e.currentTarget); };
     div.querySelector('[data-act="migrarFotos"]').onclick = function(e){ migrarFotosNegocio(n, e.currentTarget); };
     div.querySelector('[data-act="reporRating"]').onclick = function(){ reporRating(n, div); };
@@ -763,6 +765,23 @@
     const { error } = await sb.auth.signInWithOtp({ email: email, options: { emailRedirectTo: redir, shouldCreateUser: true, data: { negocio: n.slug, negocio_nome: n.nome } } });
     if(error){ msg(box, 'Erro: ' + error.message, 'erro'); }
     else { msg(box, 'Link de acesso enviado para ' + email + ' ✓ — ele clica no email e entra direto no editor.', 'ok'); }
+  }
+
+  // Envia ao dono um link de REPOSIÇÃO de password.
+  // Diferente do "Enviar acesso ao dono" acima: esse é um magic link (signInWithOtp) e serve o
+  // primeiro acesso — a quem já tem password definida, entra e pronto, continua sem a saber.
+  // Este obriga mesmo a escolher uma nova, porque o editar.html apanha o PASSWORD_RECOVERY e
+  // troca a caixa de entrada por "Nova password".
+  async function reporPassDono(n, div){
+    const box = div.querySelector('[data-msg]');
+    const email = ((div.querySelector('[data-email]') || {}).value || n.dono_email || '').trim().toLowerCase();
+    if(!email){ msg(box, 'Este negócio ainda não tem email de dono. Preenche o email e carrega em Guardar primeiro.', 'erro'); return; }
+    if(!(await window.__amConfirm('Repor password', { texto:'Enviar a ' + email + ' um link para definir uma nova password?\n\nA password atual continua a funcionar até ele definir outra.', ok:'Enviar', cancelar:'Não' }))) return;
+    msg(box, 'A enviar…', 'ok');
+    const redir = QR_BASE + 'editar.html?n=' + n.slug;
+    const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: redir });
+    if(error){ msg(box, 'Erro: ' + error.message, 'erro'); }
+    else { msg(box, 'Link de reposição enviado para ' + email + ' ✓ — ao clicar, ele define a nova password no editor.', 'ok'); }
   }
 
   async function toggleAtivo(n){
