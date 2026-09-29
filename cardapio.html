@@ -5776,7 +5776,13 @@
       // Regras de funcionamento partilhadas (Gestão → Definições → Horário semanal): folgas, férias, feriado, turnos e janelas
       window.__diaRegras = function(iso){ try{ return window.__amHor.regras(window.__agendaCfg || {}, iso); }catch(e){ return { fechado:false, almoco:true, jantar:true, janelas:[] }; } };
       const agb = document.getElementById('linkAgenda');
-      if(agb) agb.style.display = (window._agenda && config.mostrarAgendaIcon !== false) ? 'flex' : 'none';
+      // Um interruptor só: o "Ativar reservas" da Gestão → Definições (config.agenda.ativo).
+      // Havia um segundo, config.mostrarAgendaIcon, escrito em DOIS sítios — o _gravarAgenda()
+      // do calendário força-o a seguir o ativo, e o editar.html tinha um visto escondido que
+      // também lhe mexia. Bastava esse ficar a false para o ícone desaparecer com as reservas
+      // ligadas, sem nada na Gestão a explicar porquê. O calendário continua a gravá-lo, para
+      // menus ainda em cache antiga não mudarem de comportamento.
+      if(agb) agb.style.display = window._agenda ? 'flex' : 'none';
       // Ícones do topo: câmara e traduções (ligar/desligar pelo dono)
       { const cam = document.getElementById('linkCamera'); if(cam) cam.style.display = (config.mostrarCamera === false) ? 'none' : ''; }
       // A visibilidade/localização dos idiomas é decidida por _colocarExtras (cabeçalho/rodapé/flutuante). Aqui só escondemos se estiver desligado.
