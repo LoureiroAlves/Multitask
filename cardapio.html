@@ -9943,7 +9943,29 @@
     if(typeof sbC === 'undefined' || !sbC || !window.__negocioId) return;
     var r = await sbC.from('ovo_jogos_publico').select('*').eq('negocio_id', window.__negocioId).gte('fim', new Date(Date.now() - 24*3600*1000).toISOString()).order('inicio', { ascending:false }).limit(5);
     if(r.error || !r.data) return;
-    var ativo = r.data.filter(function(j){ return j.estado === 'ativo'; })[0];
+    // Um jogo está a decorrer se NÃO está num estado terminal e estamos dentro da janela
+    // inicio→fim. É a mesma regra que o _ovEstado() do calendario.html usa para escrever
+    // "A DECORRER" ao dono, e por isso os dois lados não voltam a divergir.
+    //
+    // Antes isto era um === 'ativo'. O calendário nunca compara com esse valor: trata à parte
+    // 'cancelado', 'terminado' e 'rascunho' e deixa o resto ser decidido pelas datas — ou seja,
+    // funciona com qualquer nome. Se a função ovo_publicar grava outro valor (o vigia de
+    // vencedores, por exemplo, procurava 'publicado'), o menu não reconhecia o jogo e o selo
+    // nunca aparecia, mesmo com a campanha a decorrer.
+    //
+    // Passa também a respeitar o 'inicio': uma campanha agendada deixa de aparecer como
+    // "a decorrer" antes da hora — antes aparecia, e o botão de entrar dava erro.
+    var agora = Date.now();
+    function _aDecorrer(j){
+      if(!j) return false;
+      if(j.estado === 'cancelado' || j.estado === 'terminado' || j.estado === 'rascunho') return false;
+      var ini = j.inicio ? new Date(j.inicio).getTime() : NaN;
+      var fim = j.fim    ? new Date(j.fim).getTime()    : NaN;
+      if(!isNaN(ini) && agora < ini) return false;   // ainda não começou
+      if(!isNaN(fim) && agora > fim) return false;   // já passou da hora de fim
+      return true;
+    }
+    var ativo = r.data.filter(_aDecorrer)[0];
     // Selo cinzento "Jogo terminado" depois de a campanha acabar: ficava 24h no topo do menu,
     // à frente de toda a gente — inclusive de quem só quer ver a ementa. Passa a depender do
     // config.ovoMostrarFim do negócio (Gestão → 🥚 No Cu da Galinha), desligado por omissão.
