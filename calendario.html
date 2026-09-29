@@ -436,14 +436,17 @@
   const SUPA_KEY = 'sb_publishable_6LP7x2v5c-c9DQkQslnUmA_g13SEjp3';
   const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
   const SLUG = ((new URLSearchParams(location.search)).get('n') || '').toLowerCase().replace(/[^a-z0-9]/g,'');
-  const DIA_PARAM = (((new URLSearchParams(location.search)).get('d') || '').match(/^\d{4}-\d{2}-\d{2}$/) || [''])[0];
-  // Pedido do cliente vindo por link (alterar/cancelar uma reserva pelo código)
-  const _QS = new URLSearchParams(location.search);
-  const RID_PARAM  = (_QS.get('rid') || '').trim();
-  const ALT_PARAM  = _QS.get('alt') === '1';
-  const AP_PARAM   = parseInt(_QS.get('ap'), 10) || 0;
-  const AH_PARAM   = (_QS.get('ah') || '').trim();
-  const CANC_PARAM = _QS.get('canc') === '1';
+  // Os parâmetros do link são lidos AO VIVO, não uma vez no arranque. Quando o dono já tem a
+  // gestão aberta e toca no link que lhe chegou por WhatsApp, o sistema traz a app para a frente
+  // sem recarregar a página: com constantes fixas, o rid novo nunca era visto e o resultado era
+  // "abre só o calendário".
+  function _qs(){ try{ return new URLSearchParams(location.search); }catch(e){ return new URLSearchParams(''); } }
+  function DIA_PARAM(){ return ((_qs().get('d') || '').match(/^\d{4}-\d{2}-\d{2}$/) || [''])[0]; }
+  function RID_PARAM(){ return (_qs().get('rid') || '').trim(); }
+  function ALT_PARAM(){ return _qs().get('alt') === '1'; }
+  function AP_PARAM(){ return parseInt(_qs().get('ap'), 10) || 0; }
+  function AH_PARAM(){ return (_qs().get('ah') || '').trim(); }
+  function CANC_PARAM(){ return _qs().get('canc') === '1'; }
   const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
   const $ = id => document.getElementById(id);
   let negocio = null, reservas = [], porDia = {};
@@ -650,6 +653,7 @@
     carregar();
     try{ _encVigiaIniciar(); }catch(e){}
     try{ _ovVigiaIniciar(); }catch(e){}
+    try{ _resVigiaIniciar(); }catch(e){}
     document.addEventListener('pointerdown', function(){ try{ _prepararSom(); }catch(e){} }, { once:true });
   }
 
@@ -702,45 +706,96 @@
     if(diaSel) renderDia(diaSel);
     if(!$('vistaDash').classList.contains('hide')) renderDashboard();
     if(!$('vistaCal').classList.contains('hide')) renderCalResumo();
-    if(_primeiraCarga){ _primeiraCarga = false; voltarHome(); _aprovacaoInicial(); }
+    _resAssinatura = _resAssinar(reservas);   // mantém o vigia em sincronia com o que acabámos de ler
+    if(_primeiraCarga){ _primeiraCarga = false; _apMarcarTratado(); voltarHome(); _aprovacaoInicial(); }
     else if(!$('dashHome').classList.contains('hide')) renderHome();   // se a home estiver visível, atualiza os resumos
+  }
+
+  // ---- As reservas novas caem sozinhas ----
+  // As encomendas já tinham vigia (de 5 em 5s) e o jogo do ovo também (12s). As reservas não
+  // tinham nada: depois da primeira leitura, só apareciam com um recarregamento à mão. Como o
+  // pedido chega ao dono por WhatsApp, ele tocava no link, a app vinha para a frente com os
+  // dados velhos e a pré-reserva não estava em lado nenhum.
+  let _resAssinatura = '', _resTimer = null;
+  function _resAssinar(lista){ return (lista || []).map(function(r){ return r.id + ':' + r.estado; }).sort().join('|'); }
+  function _resOcupado(){   // não interromper quem está a meio de responder a alguma coisa
+    return !$('modalEdit').classList.contains('hide') || !$('modalAprovar').classList.contains('hide');
+  }
+  async function _resVigiar(){
+    try{
+      if(!negocio || !negocio.id || document.hidden || _resOcupado()) return;
+      // consulta leve: só ids e estados. Só vai buscar tudo quando alguma coisa mudou mesmo.
+      const { data, error } = await sb.from('reservas').select('id,estado').eq('negocio_id', negocio.id);
+      if(error || !data) return;
+      const sig = _resAssinar(data);
+      if(sig === _resAssinatura) return;
+      const novas = data.filter(function(r){ return r.estado === 'pendente' && _resAssinatura.indexOf(r.id + ':') < 0; });
+      _resAssinatura = sig;
+      await carregar();
+      if(novas.length){ try{ _beep(); if(navigator.vibrate) navigator.vibrate([100,60,100]); }catch(e){} }
+    }catch(e){}
+  }
+  function _resVigiaIniciar(){
+    if(_resTimer) return;
+    _resTimer = setInterval(function(){ if(!document.hidden) _resVigiar(); }, 15000);
+    document.addEventListener('visibilitychange', function(){ if(!document.hidden){ _resVigiar(); _apTalvezAbrir(); } });
+    window.addEventListener('pageshow', function(ev){ if(ev && ev.persisted){ _resVigiar(); _apTalvezAbrir(); } });
+  }
+
+  // ---- Tocar no link do WhatsApp com a gestão já aberta ----
+  // O sistema traz a app para a frente sem recarregar a página, por isso o _aprovacaoInicial()
+  // (que só corre na primeira carga) nunca voltava a ver o rid novo.
+  let _apTratados = {};
+  function _apChave(){ const r = RID_PARAM(), d = DIA_PARAM(); return r || (d ? ('d:' + d) : ''); }
+  function _apMarcarTratado(){ const k = _apChave(); if(k) _apTratados[k] = 1; }
+  async function _apTalvezAbrir(){
+    const k = _apChave();
+    if(!k || _apTratados[k] || _resOcupado()) return;
+    _apTratados[k] = 1;
+    await carregar();          // a reserva pode ainda não estar em memória
+    _aprovacaoInicial();
   }
 
   // Ao abrir o calendário, salta logo para o dia da pré-reserva a aguardar e mostra um pop-up
   function _aprovacaoInicial(){
+    const _rid = RID_PARAM(), _dia = DIA_PARAM();
     // Pedido do cliente por link: abrir a reserva pelo CÓDIGO, já preenchida com a alteração/cancelamento
-    if(RID_PARAM){
-      const alvoR = reservas.find(function(x){ return String(x.id) === String(RID_PARAM); });
+    if(_rid){
+      const alvoR = reservas.find(function(x){ return String(x.id) === String(_rid); });
       if(alvoR){
         const dd = new Date(alvoR.data+'T00:00:00');
         vAno = dd.getFullYear(); vMes = dd.getMonth(); diaSel = alvoR.data;
         mostrarVista('cal'); renderCal(); renderDia(alvoR.data);
-        if(CANC_PARAM){
+        if(CANC_PARAM()){
           _pedidoCancelamento(alvoR);   // "Cliente X quer cancelar a reserva Y" → aceitar e responder
-        } else {
+        } else if(ALT_PARAM()){
           abrirModalEdicao(alvoR.id);
-          if(ALT_PARAM){
-            if(AP_PARAM) $('mdPessoas').value = AP_PARAM;
-            if(AH_PARAM) $('mdHora').value = AH_PARAM;
-            $('mdEstado').value = 'confirmada';
-            $('mdMsg').textContent = '✏️ O cliente pediu esta alteração: ' + (AP_PARAM || alvoR.pessoas) + ' pessoa(s)' + (AH_PARAM ? (' às ' + AH_PARAM) : '') + '. Revê e clica Guardar para confirmar.';
-            $('mdMsg').className = 'msg';
-          }
+          const _ap = AP_PARAM(), _ah = AH_PARAM();
+          if(_ap) $('mdPessoas').value = _ap;
+          if(_ah) $('mdHora').value = _ah;
+          $('mdEstado').value = 'confirmada';
+          $('mdMsg').textContent = '✏️ O cliente pediu esta alteração: ' + (_ap || alvoR.pessoas) + ' pessoa(s)' + (_ah ? (' às ' + _ah) : '') + '. Revê e clica Guardar para confirmar.';
+          $('mdMsg').className = 'msg';
+        } else {
+          // Link do pedido de pré-reserva: o dono quer o pop-up de aprovar/recusar, com o botão
+          // que responde ao cliente pelo WhatsApp — não o formulário de edição.
+          _abrirAprovacao(alvoR);
         }
         return;
       }
       // Não encontrada pelo código (apagada?) — segue o comportamento normal por dia
     }
     let alvo = null;
-    if(DIA_PARAM){
+    const DIA_PARAM_V = _dia;
+    if(DIA_PARAM_V){
       // Links antigos (enviados antes de o cardápio passar a incluir &rid=) só trazem o dia.
       // Nesse caso a reserva certa é quase sempre a ÚLTIMA a ser criada — foi a que gerou a
       // mensagem. Ordenar por _cmpR (data+hora) abria a mais cedo do dia, que num dia com
       // várias pré-reservas costumava ser outra.
       const _recente = function(a, b){ return String(b.criado_em||b.created_at||b.data||'').localeCompare(String(a.criado_em||a.created_at||a.data||'')); };
-      const doDia = reservas.filter(function(r){ return r.data === DIA_PARAM && r.estado === 'pendente'; }).sort(_recente);
-      alvo = doDia[0] || reservas.filter(function(r){ return r.data === DIA_PARAM; }).sort(_recente)[0] || null;
-      if(!alvo){ irParaDia(DIA_PARAM); return; }   // dia sem reservas: abre só o dia
+      const doDia = reservas.filter(function(r){ return r.data === DIA_PARAM_V && r.estado === 'pendente'; }).sort(_recente);
+      alvo = doDia[0] || reservas.filter(function(r){ return r.data === DIA_PARAM_V; }).sort(_recente)[0] || null;
+      if(!alvo){ irParaDia(DIA_PARAM_V); return; }   // dia sem reservas: abre só o dia
     } else {
       const pend = reservas.filter(function(r){ return r.estado === 'pendente'; });
       pend.sort(function(a,b){ return String(b.criado_em||b.created_at||b.data||'').localeCompare(String(a.criado_em||a.created_at||a.data||'')); });
