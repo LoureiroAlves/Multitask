@@ -550,6 +550,14 @@
     }
     return { min:min, hhmm:hhmm, diaDef:diaDef, dia:dia, temHorario:temHorario, migrar:migrar, regras:regras, slots:slots, legado:legado };
   })();
+  // Grava a config do negócio e CONFIRMA que foi mesmo gravada. Quando as regras da base de dados recusam
+  // (conta sem permissão), o Supabase não dá erro — só altera 0 linhas; aqui isso passa a ser um erro visível.
+  async function _updNeg(cfg){
+    const r = await sb.from('negocios').update({ config: cfg }).eq('id', negocio.id).select('id');
+    if(r.error) return r;
+    if(!r.data || !r.data.length) return { data:null, error:{ message:'A base de dados não deixou gravar (esta conta não tem permissão para alterar este negócio). Sai e volta a entrar; se continuar, avisa o administrador.' } };
+    return r;
+  }
   function _agCfg(){ return (negocio && negocio.config && negocio.config.agenda) || {}; }
   function _ferMunicipal(iso){ const a=_agCfg(); return (a.feriadoMunicipal && iso.slice(5)===a.feriadoMunicipal) ? 'Feriado municipal' : null; }
   function _encerrado(iso){ try{ return window.__amHor.regras(_agCfg(), iso).fechado; }catch(e){ return false; } }
@@ -649,7 +657,7 @@
       // Horário semanal: migrar o modelo antigo (dias/horários/turnos + horas do editor) uma vez
       if(cfg.agenda && typeof cfg.agenda==='object' && !window.__amHor.temHorario(cfg.agenda)){ Object.assign(cfg.agenda, window.__amHor.migrar(cfg.agenda, cfg.carrinho||{})); Object.assign(cfg.agenda, window.__amHor.legado(cfg.agenda)); m2=true; }
       if(m1||m2){
-        var up=await sb.from('negocios').update({ config:cfg }).eq('id', negocio.id);
+        var up=await _updNeg(cfg);
         if(!up.error) negocio.config=cfg;
       } else {
         negocio.config=cfg;   // mantém a cópia local em dia
@@ -920,7 +928,7 @@
     cfg.promocoes = Array.isArray(cfg.promocoes) ? cfg.promocoes : [];
     if(typeof mutar === 'function') mutar(cfg);
     _prEspelho(cfg);
-    var up = await sb.from('negocios').update({ config:cfg }).eq('id', negocio.id);
+    var up = await _updNeg(cfg);
     if(up.error) return up.error;
     negocio.config = cfg;
     return null;
@@ -1353,7 +1361,7 @@
     if(Array.isArray(pd.caixas)&&pd.caixas.length){ _pdCaixas = pd.caixas.map(_pdMapCaixa); }        // este dia tem um prato específico
     else if(Array.isArray(fixo.caixas)&&fixo.caixas.length){ _pdCaixas = fixo.caixas.map(_pdMapCaixa); usarFixo=true; }   // senão, carrega o fixo
     else { _pdCaixas = [ _pdNovaCaixa() ]; }
-    { var af=$('pd_ativo'); if(af) af.checked = usarFixo ? (fixo.ativo!==false) : !!pd.ativo; }
+    { var af=$('pd_ativo'); var _novo = !(Array.isArray(pd.caixas)&&pd.caixas.length) && !usarFixo; if(af) af.checked = usarFixo ? (fixo.ativo!==false) : (_novo ? true : !!pd.ativo); }
     { var fx=$('pd_fixo'); if(fx){ fx.checked = usarFixo; var nota=$('pd_fixoNota'); if(nota) nota.style.display = fx.checked?'block':'none'; fx.addEventListener('change', function(){ var n=$('pd_fixoNota'); if(n) n.style.display = fx.checked?'block':'none'; }); } }
     // janela horária do prato do dia (vem da fonte carregada)
     { var _src = usarFixo ? fixo : pd; var jn=$('pd_janela'), jr=$('pd_janelaRow'), jd=$('pd_horaDe'), ja=$('pd_horaA');
@@ -1383,24 +1391,24 @@
     // Segurança: se ao gravar (sem caixas / desligado) fôssemos APAGAR um prato que já existe, confirmar primeiro
     { var _jaTinha = ehFixo ? (cfg.pratoFixo && Array.isArray(cfg.pratoFixo.caixas) && cfg.pratoFixo.caixas.length)
                             : (cfg.pratoDatas[iso] && Array.isArray(cfg.pratoDatas[iso].caixas) && cfg.pratoDatas[iso].caixas.length);
-      if(_jaTinha && (!novo.ativo || !caixas.length)){
+      if(_jaTinha && !caixas.length){
         if(!(await window.__amConfirm('Confirmar',{texto:'Isto vai REMOVER o prato'+(ehFixo?' fixo':' deste dia')+' (ficas sem nada). Tens a certeza?', ok:'Sim', cancelar:'Não'}))){ g.disabled=false; msg.textContent=''; return; }
       }
     }
     delete cfg.pratoDia;   // limpa o legado (evita caixa fantasma no cardápio)
     if(ehFixo){
       // Prato FIXO: repete todos os dias. Guarda em cfg.pratoFixo e não prende a este dia.
-      if(novo.ativo && caixas.length){ cfg.pratoFixo=novo; } else { delete cfg.pratoFixo; }
+      if(caixas.length){ cfg.pratoFixo=novo; } else { delete cfg.pratoFixo; }
       delete cfg.pratoDatas[iso];   // este dia passa a seguir o fixo
     } else {
       // Prato só deste dia
-      if(novo.ativo && caixas.length){ cfg.pratoDatas[iso]=novo; } else { delete cfg.pratoDatas[iso]; }
+      if(caixas.length){ cfg.pratoDatas[iso]=novo; } else { delete cfg.pratoDatas[iso]; }
     }
-    var up=await sb.from('negocios').update({ config:cfg }).eq('id',negocio.id);
+    var up=await _updNeg(cfg);
     g.disabled=false;
     if(up.error){ msg.textContent='Erro: '+up.error.message; msg.className='msg erro'; return; }
-    negocio.config=cfg; msg.textContent=(ehFixo?'Prato fixo guardado ✓ (repete todos os dias)':'Prato do dia guardado ✓'); msg.className='msg';
-    { var rmb=$('pd_remover'); if(rmb) rmb.style.display = (novo.ativo&&caixas.length)?'':'none'; }
+    negocio.config=cfg; msg.textContent=(!caixas.length ? 'Nada para guardar — escreve um título ou põe uma foto.' : (ehFixo?'Prato fixo guardado ✓ (repete todos os dias)':'Prato do dia guardado ✓') + (novo.ativo ? '' : ' — atenção: está ESCONDIDO (marca "Mostrar no cardápio" para aparecer)')); msg.className = (!caixas.length || !novo.ativo) ? 'msg erro' : 'msg';
+    { var rmb=$('pd_remover'); if(rmb) rmb.style.display = caixas.length?'':'none'; }
     renderCal();
   }
   async function removerPrato(iso){
@@ -1410,7 +1418,7 @@
     if(sel.error){ return; }
     var cfg=(sel.data&&sel.data.config)||{}; cfg.pratoDatas=cfg.pratoDatas||{};
     if(ehFixo){ delete cfg.pratoFixo; } else { delete cfg.pratoDatas[iso]; }
-    var up=await sb.from('negocios').update({ config:cfg }).eq('id',negocio.id);
+    var up=await _updNeg(cfg);
     if(up.error){ return; }
     negocio.config=cfg; renderCal(); renderDia(iso);
   }
@@ -2271,7 +2279,7 @@
     const cfg = (data && data.config) || {};
     cfg.agenda = ag;
     cfg.mostrarAgendaIcon = !!ag.ativo;   // o ícone das reservas segue o "Ativar reservas"
-    const up = await sb.from('negocios').update({ config: cfg }).eq('id', negocio.id);
+    const up = await _updNeg(cfg);
     if(up.error) return up.error;
     negocio.config = cfg;
     return null;
@@ -2285,7 +2293,7 @@
       var cfg=(sel.data&&sel.data.config)||{};
       var snap=JSON.parse(JSON.stringify(cfg)); delete snap.__bkp;   // não guardar cópia dentro da cópia
       cfg.__bkp={ ts:new Date().toISOString(), config:snap };
-      var up=await sb.from('negocios').update({ config:cfg }).eq('id',negocio.id);
+      var up=await _updNeg(cfg);
       if(up.error) throw up.error;
       negocio.config=cfg;
       if(msg){ msg.textContent='Cópia de segurança guardada ✓ ('+new Date(cfg.__bkp.ts).toLocaleString('pt-PT')+')'; msg.className='msg'; }
@@ -2304,7 +2312,7 @@
       if(!(await window.__amConfirm('Confirmar',{texto:'Repor todas as definições da cópia de '+quando+'?\n\nSubstitui as definições atuais. As reservas e encomendas já feitas não são afetadas.', ok:'Sim', cancelar:'Não'}))) return;
       var nova=JSON.parse(JSON.stringify(bk.config));
       nova.__bkp=cfg.__bkp;   // manter a cópia para poderes repor de novo
-      var up=await sb.from('negocios').update({ config:nova }).eq('id',negocio.id);
+      var up=await _updNeg(nova);
       if(up.error) throw up.error;
       negocio.config=nova;
       if(msg){ msg.textContent='Definições repostas da cópia de '+quando+' ✓'; msg.className='msg'; }
@@ -2343,7 +2351,7 @@
       if(!cfgNova) throw new Error('ficheiro inválido');
       var quando = pac.exportadoEm ? (' de '+new Date(pac.exportadoEm).toLocaleString('pt-PT')) : '';
       if(!(await window.__amConfirm('Confirmar',{texto:'Repor TODAS as definições deste negócio a partir da cópia'+quando+'?\n\nIsto substitui as definições atuais. As reservas e encomendas já feitas não são afetadas.', ok:'Sim', cancelar:'Não'}))) { if(inputEl) inputEl.value=''; if(msg){msg.textContent='';} return; }
-      var up=await sb.from('negocios').update({ config:cfgNova }).eq('id',negocio.id);
+      var up=await _updNeg(cfgNova);
       if(up.error) throw up.error;
       negocio.config=cfgNova;
       if(msg){ msg.textContent='Definições repostas ✓ A atualizar...'; msg.className='msg'; }
