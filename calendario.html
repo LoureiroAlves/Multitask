@@ -360,7 +360,6 @@
     <label for="pass">Password</label>
     <input type="password" id="pass" autocomplete="current-password">
     <button class="acao" id="btnEntrar">Entrar</button>
-    <button type="button" id="btnEsqueci" style="display:block; width:100%; margin-top:8px; background:none; border:none; color:var(--castanho); font-family:inherit; font-size:.85rem; text-decoration:underline; cursor:pointer; padding:6px;">Esqueci-me da password</button>
     <div id="loginMsg" class="msg"></div>
   </div>
 
@@ -436,17 +435,14 @@
   const SUPA_KEY = 'sb_publishable_6LP7x2v5c-c9DQkQslnUmA_g13SEjp3';
   const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
   const SLUG = ((new URLSearchParams(location.search)).get('n') || '').toLowerCase().replace(/[^a-z0-9]/g,'');
-  // Os parâmetros do link são lidos AO VIVO, não uma vez no arranque. Quando o dono já tem a
-  // gestão aberta e toca no link que lhe chegou por WhatsApp, o sistema traz a app para a frente
-  // sem recarregar a página: com constantes fixas, o rid novo nunca era visto e o resultado era
-  // "abre só o calendário".
-  function _qs(){ try{ return new URLSearchParams(location.search); }catch(e){ return new URLSearchParams(''); } }
-  function DIA_PARAM(){ return ((_qs().get('d') || '').match(/^\d{4}-\d{2}-\d{2}$/) || [''])[0]; }
-  function RID_PARAM(){ return (_qs().get('rid') || '').trim(); }
-  function ALT_PARAM(){ return _qs().get('alt') === '1'; }
-  function AP_PARAM(){ return parseInt(_qs().get('ap'), 10) || 0; }
-  function AH_PARAM(){ return (_qs().get('ah') || '').trim(); }
-  function CANC_PARAM(){ return _qs().get('canc') === '1'; }
+  const DIA_PARAM = (((new URLSearchParams(location.search)).get('d') || '').match(/^\d{4}-\d{2}-\d{2}$/) || [''])[0];
+  // Pedido do cliente vindo por link (alterar/cancelar uma reserva pelo código)
+  const _QS = new URLSearchParams(location.search);
+  const RID_PARAM  = (_QS.get('rid') || '').trim();
+  const ALT_PARAM  = _QS.get('alt') === '1';
+  const AP_PARAM   = parseInt(_QS.get('ap'), 10) || 0;
+  const AH_PARAM   = (_QS.get('ah') || '').trim();
+  const CANC_PARAM = _QS.get('canc') === '1';
   const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
   const $ = id => document.getElementById(id);
   let negocio = null, reservas = [], porDia = {};
@@ -584,20 +580,6 @@
   $('modalAprovar').onclick = (e) => { if(e.target === $('modalAprovar')) fecharAprovar(); };
 
   async function entrar(){
-    // Depois do link do email, o mesmo botão grava a nova password (a sessão de recuperação já está ativa).
-    if(_modoNovaPass){
-      const nova = $('pass').value;
-      const msg = $('loginMsg');
-      if(!nova || nova.length < 6){ msg.textContent = 'A password tem de ter pelo menos 6 caracteres.'; msg.className = 'msg erro'; return; }
-      $('btnEntrar').disabled = true; msg.textContent = 'A guardar…'; msg.className = 'msg';
-      const { error } = await sb.auth.updateUser({ password: nova, data: { senhaDefinida: true } });
-      $('btnEntrar').disabled = false;
-      if(error){ msg.textContent = 'Erro: ' + error.message; msg.className = 'msg erro'; return; }
-      _modoNovaPass = false;
-      msg.textContent = 'Password alterada ✓'; msg.className = 'msg ok';
-      iniciar();   // a sessão de recuperação já está ativa — entra sem pedir de novo
-      return;
-    }
     const email = $('email').value.trim(), pass = $('pass').value;
     if(!email || !pass){ $('loginMsg').textContent='Preenche email e password.'; $('loginMsg').className='msg erro'; return; }
     $('btnEntrar').disabled = true;
@@ -607,45 +589,25 @@
     iniciar();
   }
 
-  // ---- Recuperar a password ----
-  // O calendário é onde o dono trabalha todos os dias (reservas, encomendas), mas era a única
-  // página de entrada sem forma de repor a password: quem se esquecesse ficava preso e tinha de
-  // telefonar. Mesmo fluxo que o editar.html já usa.
-  let _modoNovaPass = false;
-  { const be = $('btnEsqueci'); if(be) be.onclick = async function(){
-      const email = $('email').value.trim();
-      const msg = $('loginMsg');
-      if(!email){ msg.textContent = 'Escreve primeiro o teu email, depois carrega em "Esqueci-me da password".'; msg.className = 'msg erro'; $('email').focus(); return; }
-      be.disabled = true; msg.textContent = 'A enviar…'; msg.className = 'msg';
-      const redir = location.origin + location.pathname + (SLUG ? ('?n=' + encodeURIComponent(SLUG)) : '');
-      const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: redir });
-      be.disabled = false;
-      if(error){ msg.textContent = 'Erro: ' + error.message; msg.className = 'msg erro'; return; }
-      msg.textContent = 'Enviámos um email para ' + email + '. Abre-o e clica no link para definires uma nova password.';
-      msg.className = 'msg ok';
-    }; }
-  // Regresso do email: o Supabase dispara PASSWORD_RECOVERY e a caixa passa a "nova password".
-  try{
-    sb.auth.onAuthStateChange(function(event){
-      if(event !== 'PASSWORD_RECOVERY') return;
-      _modoNovaPass = true;
-      $('loginCard').classList.remove('hide');
-      $('loginCard').querySelector('h2').textContent = 'Nova password';
-      $('email').style.display = 'none';
-      $('email').previousElementSibling.style.display = 'none';   // a etiqueta "Email"
-      const p = $('pass'); p.value = ''; p.placeholder = 'nova password'; p.setAttribute('autocomplete','new-password');
-      $('btnEntrar').textContent = 'Guardar nova password';
-      $('btnEsqueci').style.display = 'none';
-      $('loginMsg').textContent = ''; $('loginMsg').className = 'msg';
-    });
-  }catch(e){}
-
   async function iniciar(){
     const { data:{ session } } = await sb.auth.getSession();
     if(!session) return;
     if(!SLUG){ $('loginMsg').textContent='Falta ?n=slug no endereço.'; $('loginMsg').className='msg erro'; return; }
-    const { data:neg } = await sb.from('negocios').select('id,nome,slug,config').eq('slug', SLUG).maybeSingle();
+    const { data:neg } = await sb.from('negocios').select('id,nome,slug,config,dono_email').eq('slug', SLUG).maybeSingle();
     if(!neg){ $('loginMsg').textContent='Negócio não encontrado.'; $('loginMsg').className='msg erro'; return; }
+    // Só entra o DONO deste negócio (dono_email = email da conta) ou um administrador — o restaurante X não abre o Gestor do Y
+    { const email = String((session.user && session.user.email) || '').toLowerCase().trim();
+      const eDono = !!email && String(neg.dono_email || '').toLowerCase().trim() === email;
+      let eAdmin = false;
+      if(!eDono){ try{ const r = await sb.rpc('is_admin'); eAdmin = !!(r && r.data === true); }catch(e){} if(!eAdmin){ try{ const r2 = await sb.from('admins').select('user_id').eq('user_id', session.user.id).maybeSingle(); eAdmin = !!(r2 && r2.data); }catch(e){} } }
+      if(!eDono && !eAdmin){
+        try{ await sb.auth.signOut(); }catch(e){}
+        $('painel').classList.add('hide'); $('loginCard').classList.remove('hide'); $('btnSair').classList.add('hide');
+        $('loginMsg').textContent = 'Esta conta não tem acesso a este negócio. Entra com o email do dono de "' + (neg.nome || SLUG) + '".'; $('loginMsg').className = 'msg erro';
+        return;
+      }
+      delete neg.dono_email;
+    }
     negocio = neg;
     $('topTit').textContent = 'Gestão · ' + neg.nome;
     $('loginCard').classList.add('hide'); $('painel').classList.remove('hide'); $('btnSair').classList.remove('hide');
@@ -653,7 +615,6 @@
     carregar();
     try{ _encVigiaIniciar(); }catch(e){}
     try{ _ovVigiaIniciar(); }catch(e){}
-    try{ _resVigiaIniciar(); }catch(e){}
     document.addEventListener('pointerdown', function(){ try{ _prepararSom(); }catch(e){} }, { once:true });
   }
 
@@ -706,96 +667,40 @@
     if(diaSel) renderDia(diaSel);
     if(!$('vistaDash').classList.contains('hide')) renderDashboard();
     if(!$('vistaCal').classList.contains('hide')) renderCalResumo();
-    _resAssinatura = _resAssinar(reservas);   // mantém o vigia em sincronia com o que acabámos de ler
-    if(_primeiraCarga){ _primeiraCarga = false; _apMarcarTratado(); voltarHome(); _aprovacaoInicial(); }
+    if(_primeiraCarga){ _primeiraCarga = false; voltarHome(); _aprovacaoInicial(); }
     else if(!$('dashHome').classList.contains('hide')) renderHome();   // se a home estiver visível, atualiza os resumos
-  }
-
-  // ---- As reservas novas caem sozinhas ----
-  // As encomendas já tinham vigia (de 5 em 5s) e o jogo do ovo também (12s). As reservas não
-  // tinham nada: depois da primeira leitura, só apareciam com um recarregamento à mão. Como o
-  // pedido chega ao dono por WhatsApp, ele tocava no link, a app vinha para a frente com os
-  // dados velhos e a pré-reserva não estava em lado nenhum.
-  let _resAssinatura = '', _resTimer = null;
-  function _resAssinar(lista){ return (lista || []).map(function(r){ return r.id + ':' + r.estado; }).sort().join('|'); }
-  function _resOcupado(){   // não interromper quem está a meio de responder a alguma coisa
-    return !$('modalEdit').classList.contains('hide') || !$('modalAprovar').classList.contains('hide');
-  }
-  async function _resVigiar(){
-    try{
-      if(!negocio || !negocio.id || document.hidden || _resOcupado()) return;
-      // consulta leve: só ids e estados. Só vai buscar tudo quando alguma coisa mudou mesmo.
-      const { data, error } = await sb.from('reservas').select('id,estado').eq('negocio_id', negocio.id);
-      if(error || !data) return;
-      const sig = _resAssinar(data);
-      if(sig === _resAssinatura) return;
-      const novas = data.filter(function(r){ return r.estado === 'pendente' && _resAssinatura.indexOf(r.id + ':') < 0; });
-      _resAssinatura = sig;
-      await carregar();
-      if(novas.length){ try{ _beep(); if(navigator.vibrate) navigator.vibrate([100,60,100]); }catch(e){} }
-    }catch(e){}
-  }
-  function _resVigiaIniciar(){
-    if(_resTimer) return;
-    _resTimer = setInterval(function(){ if(!document.hidden) _resVigiar(); }, 15000);
-    document.addEventListener('visibilitychange', function(){ if(!document.hidden){ _resVigiar(); _apTalvezAbrir(); } });
-    window.addEventListener('pageshow', function(ev){ if(ev && ev.persisted){ _resVigiar(); _apTalvezAbrir(); } });
-  }
-
-  // ---- Tocar no link do WhatsApp com a gestão já aberta ----
-  // O sistema traz a app para a frente sem recarregar a página, por isso o _aprovacaoInicial()
-  // (que só corre na primeira carga) nunca voltava a ver o rid novo.
-  let _apTratados = {};
-  function _apChave(){ const r = RID_PARAM(), d = DIA_PARAM(); return r || (d ? ('d:' + d) : ''); }
-  function _apMarcarTratado(){ const k = _apChave(); if(k) _apTratados[k] = 1; }
-  async function _apTalvezAbrir(){
-    const k = _apChave();
-    if(!k || _apTratados[k] || _resOcupado()) return;
-    _apTratados[k] = 1;
-    await carregar();          // a reserva pode ainda não estar em memória
-    _aprovacaoInicial();
   }
 
   // Ao abrir o calendário, salta logo para o dia da pré-reserva a aguardar e mostra um pop-up
   function _aprovacaoInicial(){
-    const _rid = RID_PARAM(), _dia = DIA_PARAM();
     // Pedido do cliente por link: abrir a reserva pelo CÓDIGO, já preenchida com a alteração/cancelamento
-    if(_rid){
-      const alvoR = reservas.find(function(x){ return String(x.id) === String(_rid); });
+    if(RID_PARAM){
+      const alvoR = reservas.find(function(x){ return String(x.id) === String(RID_PARAM); });
       if(alvoR){
         const dd = new Date(alvoR.data+'T00:00:00');
         vAno = dd.getFullYear(); vMes = dd.getMonth(); diaSel = alvoR.data;
         mostrarVista('cal'); renderCal(); renderDia(alvoR.data);
-        if(CANC_PARAM()){
+        if(CANC_PARAM){
           _pedidoCancelamento(alvoR);   // "Cliente X quer cancelar a reserva Y" → aceitar e responder
-        } else if(ALT_PARAM()){
-          abrirModalEdicao(alvoR.id);
-          const _ap = AP_PARAM(), _ah = AH_PARAM();
-          if(_ap) $('mdPessoas').value = _ap;
-          if(_ah) $('mdHora').value = _ah;
-          $('mdEstado').value = 'confirmada';
-          $('mdMsg').textContent = '✏️ O cliente pediu esta alteração: ' + (_ap || alvoR.pessoas) + ' pessoa(s)' + (_ah ? (' às ' + _ah) : '') + '. Revê e clica Guardar para confirmar.';
-          $('mdMsg').className = 'msg';
         } else {
-          // Link do pedido de pré-reserva: o dono quer o pop-up de aprovar/recusar, com o botão
-          // que responde ao cliente pelo WhatsApp — não o formulário de edição.
-          _abrirAprovacao(alvoR);
+          abrirModalEdicao(alvoR.id);
+          if(ALT_PARAM){
+            if(AP_PARAM) $('mdPessoas').value = AP_PARAM;
+            if(AH_PARAM) $('mdHora').value = AH_PARAM;
+            $('mdEstado').value = 'confirmada';
+            $('mdMsg').textContent = '✏️ O cliente pediu esta alteração: ' + (AP_PARAM || alvoR.pessoas) + ' pessoa(s)' + (AH_PARAM ? (' às ' + AH_PARAM) : '') + '. Revê e clica Guardar para confirmar.';
+            $('mdMsg').className = 'msg';
+          }
         }
         return;
       }
       // Não encontrada pelo código (apagada?) — segue o comportamento normal por dia
     }
     let alvo = null;
-    const DIA_PARAM_V = _dia;
-    if(DIA_PARAM_V){
-      // Links antigos (enviados antes de o cardápio passar a incluir &rid=) só trazem o dia.
-      // Nesse caso a reserva certa é quase sempre a ÚLTIMA a ser criada — foi a que gerou a
-      // mensagem. Ordenar por _cmpR (data+hora) abria a mais cedo do dia, que num dia com
-      // várias pré-reservas costumava ser outra.
-      const _recente = function(a, b){ return String(b.criado_em||b.created_at||b.data||'').localeCompare(String(a.criado_em||a.created_at||a.data||'')); };
-      const doDia = reservas.filter(function(r){ return r.data === DIA_PARAM_V && r.estado === 'pendente'; }).sort(_recente);
-      alvo = doDia[0] || reservas.filter(function(r){ return r.data === DIA_PARAM_V; }).sort(_recente)[0] || null;
-      if(!alvo){ irParaDia(DIA_PARAM_V); return; }   // dia sem reservas: abre só o dia
+    if(DIA_PARAM){
+      const doDia = reservas.filter(function(r){ return r.data === DIA_PARAM && r.estado === 'pendente'; }).sort(_cmpR);
+      alvo = doDia[0] || reservas.filter(function(r){ return r.data === DIA_PARAM; }).sort(_cmpR)[0] || null;
+      if(!alvo){ irParaDia(DIA_PARAM); return; }   // dia sem reservas: abre só o dia
     } else {
       const pend = reservas.filter(function(r){ return r.estado === 'pendente'; });
       pend.sort(function(a,b){ return String(b.criado_em||b.created_at||b.data||'').localeCompare(String(a.criado_em||a.created_at||a.data||'')); });
@@ -1719,14 +1624,6 @@
     html += '<div class="card" style="padding:12px 14px;"><div style="font-weight:800;color:var(--castanho);">🎟️ Validar código de resgate</div>'
       + '<div style="display:flex;gap:8px;margin-top:8px;"><input id="ovCod" placeholder="GALINHA-XXXXXX" autocapitalize="characters" style="flex:1;margin:0;text-transform:uppercase;letter-spacing:1px;font-weight:800;"><button type="button" id="ovValidar" class="acao" style="margin:0;width:auto;padding:0 16px;">Validar</button></div>'
       + '<div id="ovCodRes" style="margin-top:8px;"></div></div>';
-    // Depois de uma campanha terminar, o menu mostrava um selo cinzento "Jogo terminado" no topo
-    // durante 24h, a todos os clientes. Passa a ser opção do dono, desligada por omissão.
-    const _mf = !!((negocio && negocio.config && negocio.config.ovoMostrarFim));
-    html += '<div class="card" style="padding:12px 14px;"><label style="display:flex;gap:10px;align-items:flex-start;cursor:pointer;margin:0;">'
-      + '<input type="checkbox" id="ovMostrarFim"' + (_mf ? ' checked' : '') + ' style="margin:3px 0 0;width:auto;">'
-      + '<span><span style="font-weight:800;color:var(--castanho);">Mostrar o vencedor no menu depois de terminar</span>'
-      + '<span style="display:block;font-size:.8rem;color:#8a7a5c;margin-top:2px;">Durante 24 horas, quem abrir o menu vê quem encontrou o ovo. Desligado, o menu fica limpo assim que a campanha acaba.</span></span>'
-      + '</label><div id="ovMostrarFimMsg" style="margin-top:6px;font-size:.8rem;color:#8a7a5c;"></div></div>';
     if(atual){ html += _ovCartaoAtual(atual); }
     else { html += '<button type="button" id="ovNova" class="pdf-btn" style="margin:0 0 14px;border-color:#c0392b;color:#c0392b;background:#fff5f3;font-size:1rem;">＋ Nova campanha</button>'; }
     const hist = _ovLista.filter(function(j){ return j !== atual; });
@@ -1740,21 +1637,6 @@
     v.innerHTML = html;
     const nv = $('ovNova'); if(nv) nv.onclick = function(){ _ovEdit = _ovNovo(); renderOvo(); };
     $('ovValidar').onclick = _ovValidarCodigo; $('ovCod').addEventListener('keydown', function(e){ if(e.key === 'Enter') _ovValidarCodigo(); });
-    { const mf = $('ovMostrarFim'); if(mf) mf.onchange = async function(){
-        const msg = $('ovMostrarFimMsg'); const val = mf.checked; mf.disabled = true;
-        if(msg) msg.textContent = 'A guardar…';
-        // Relê a config fresca antes de gravar, para não escrever por cima de alterações feitas no editor.
-        try{
-          const sel = await sb.from('negocios').select('config').eq('id', negocio.id).maybeSingle();
-          const cfg = (sel && sel.data && sel.data.config) || {};
-          cfg.ovoMostrarFim = val;
-          const up = await sb.from('negocios').update({ config: cfg }).eq('id', negocio.id);
-          if(up.error) throw up.error;
-          negocio.config = cfg;
-          if(msg) msg.textContent = val ? '✓ O menu mostra o vencedor durante 24h.' : '✓ O menu fica limpo quando a campanha terminar.';
-        }catch(e){ mf.checked = !val; if(msg) msg.textContent = 'Não consegui guardar: ' + ((e && e.message) || e); }
-        mf.disabled = false;
-      }; }
     v.querySelectorAll('.ov-hist').forEach(function(el){ el.onclick = function(){ const j = _ovLista.filter(function(x){ return x.id === el.dataset.id; })[0]; if(j) _ovAbrirDetalhe(j); }; });
     if(atual) _ovWireAtual(atual);
   }
@@ -1873,10 +1755,7 @@
   async function _ovVigiar(){
     try{
       if(!negocio || !negocio.id) return;
-      // 'ativo' é o estado que o menu procura (cardapio.html) e o que o _ovEstado trata como a decorrer.
-      // 'publicado' fica na lista por segurança, caso alguma campanha antiga o tenha gravado assim —
-      // sem 'ativo', este vigia só encontrava jogos JÁ terminados e o aviso de vencedor nunca chegava a tempo.
-      const r = await sb.from('ovo_jogos').select('id,nome,premio_nome,estado,inicio,fim').eq('negocio_id', negocio.id).in('estado', ['ativo','publicado','terminado']).gte('fim', new Date(Date.now() - 6*3600*1000).toISOString());
+      const r = await sb.from('ovo_jogos').select('id,nome,premio_nome,estado,inicio,fim').eq('negocio_id', negocio.id).in('estado', ['publicado','terminado']).gte('fim', new Date(Date.now() - 6*3600*1000).toISOString());
       const ids = (r.data || []).map(function(j){ return j.id; }); if(!ids.length) return;
       const w = await sb.from('ovo_vencedores').select('id,jogo_id,nome,telefone,codigo,posicao,ganhou_em').in('jogo_id', ids).order('ganhou_em');
       const lista = w.data || [];
