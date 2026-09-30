@@ -2987,31 +2987,13 @@
   // Deteta se um URL é vídeo (upload de vídeo em vez de foto)
   window.__ehVideo = function(u){ return /\.(mp4|webm|mov|m4v|ogv)(\?|#|$)/i.test(String(u || '')); };
   // Cria <video> (autoplay, mudo, loop — como fundo animado) ou <img>, com a mesma classe/alt.
-  // adiar=true: guarda o endereço em data-src e não começa a descarregar. Serve para os slides
-  // de carrossel que ainda não estão à vista — um vídeo pode ter 20MB (limite do editor) e sem
-  // isto os 3 ou 4 slides eram todos descarregados de uma vez, ainda que só um se veja.
-  // O __mediaAtivar() liga-os quando chegar a vez.
-  window.__mediaAtivar = function(el){
-    if(!el || el.tagName !== 'VIDEO') return;
-    try{
-      if(!el.getAttribute('src') && el.dataset.src){ el.setAttribute('preload','auto'); el.src = el.dataset.src; }
-      const p = el.play(); if(p && p.catch) p.catch(function(){});
-    }catch(e){}
-  };
-  window.__mediaPausar = function(el){ if(el && el.tagName === 'VIDEO'){ try{ el.pause(); }catch(e){} } };
-  function _mkMedia(url, cls, alt, adiar){
+  function _mkMedia(url, cls, alt){
     if(window.__ehVideo(url)){
       const v = document.createElement('video');
-      v.muted = true; v.defaultMuted = true; v.loop = true; v.playsInline = true;
-      v.setAttribute('muted',''); v.setAttribute('loop',''); v.setAttribute('playsinline','');
+      v.src = url; v.muted = true; v.defaultMuted = true; v.autoplay = true; v.loop = true; v.playsInline = true;
+      v.setAttribute('muted',''); v.setAttribute('autoplay',''); v.setAttribute('loop',''); v.setAttribute('playsinline',''); v.setAttribute('preload','metadata');
       if(cls) v.className = cls;
-      if(adiar){
-        v.dataset.src = url; v.setAttribute('preload','none');
-      } else {
-        v.src = url; v.autoplay = true;
-        v.setAttribute('autoplay',''); v.setAttribute('preload','metadata');
-        try{ const p = v.play(); if(p && p.catch) p.catch(function(){}); }catch(e){}
-      }
+      try{ const p = v.play(); if(p && p.catch) p.catch(function(){}); }catch(e){}
       return v;
     }
     const im = document.createElement('img');
@@ -4211,7 +4193,7 @@
     container.innerHTML = '';
     fotos.forEach((caminho, i) => {
       if(!caminho) return;
-      const img = _mkMedia(RAW_BASE + caminho, null, 'Foto ' + (i+1), i !== 0);   // só o 1.º slide arranca já
+      const img = _mkMedia(RAW_BASE + caminho, null, 'Foto ' + (i+1));
       if(i === 0) img.classList.add('ativa');
       container.appendChild(img);
     });
@@ -4219,17 +4201,13 @@
   }
 
   function iniciarRotacao(container){
-    // Era querySelectorAll('img'): os vídeos ficavam de fora, por isso um carrossel só com
-    // vídeos nunca rodava (0 elementos) e num carrossel misto o vídeo ficava parado no lugar.
-    const imagens = container.querySelectorAll('img, video');
+    const imagens = container.querySelectorAll('img');
     if(imagens.length <= 1) return;
     let idx = 0;
     setInterval(() => {
       imagens[idx].classList.remove('ativa');
-      try{ window.__mediaPausar(imagens[idx]); }catch(e){}
       idx = (idx + 1) % imagens.length;
       imagens[idx].classList.add('ativa');
-      try{ window.__mediaAtivar(imagens[idx]); }catch(e){}   // só aqui é que um vídeo adiado começa a descarregar
     }, 30000);
   }
 
@@ -5834,9 +5812,6 @@
       window.__negocioId = neg.id;
       window.__negNome = neg.nome || '';
       const config = neg.config || {};
-      // Lido aqui (da config completa) e não do __cfgPromo, que a atualização automática substitui
-      // por uma versão só com as chaves da promoção e do prato do dia.
-      window.__ovoMostrarFim = !!config.ovoMostrarFim;
       // Modo pré-visualização: permitir mostrar exemplos de estilos via URL (?modelo=... &textura=...),
       // sem mexer no negócio real. Usado no mostruário de estilos do formulário de registo.
       if(window.__PREVIEW){ try{
@@ -5898,35 +5873,21 @@
     document.addEventListener('visibilitychange', talvez);
     window.addEventListener('pageshow', function(ev){ if(ev && ev.persisted) talvez(); });
   })();
-  // Atualização automática leve: refresca só a promoção e o prato do dia (não reconstrói o menu).
-  // Pede apenas as 5 chaves que o __renderPromoDia (promocoes, promoDatas) e o __renderPratoDia
-  // (pratoDatas, pratoDia, pratoFixo) leem — em vez da coluna config inteira, que arrasta o __undo
-  // (uma cópia da config e do menu anteriores) em cada pedido, de cada telemóvel com o menu aberto.
+  // Atualização automática leve: refresca só a promoção e o prato do dia (não reconstrói o menu)
   (function(){
     if(window.__PREVIEW) return;
-    var CHAVES = 'promocoes:config->promocoes,promoDatas:config->promoDatas,pratoDatas:config->pratoDatas,pratoDia:config->pratoDia,pratoFixo:config->pratoFixo';
-    var completo = false;   // se a base não aceitar a selecção por chave, volta a pedir o config inteiro
     setInterval(async function(){
       try{
         if(!(typeof sbC !== 'undefined' && sbC && SLUG)) return;
         if(document.hidden) return;   // separador em segundo plano — não gasta pedidos
         if(document.querySelector('.categoria-painel.aberto, #cartOverlay.aberto, #favOverlay.aberto, #agendaOverlay.aberto, #escOverlay.aberto, #expOverlay.aberto, #fidOverlay.aberto')) return;   // não perturbar quem está a usar algo
-        var cfg = null;
-        if(!completo){
-          var r = await sbC.from('negocios').select(CHAVES).eq('slug', SLUG).maybeSingle();
-          if(r && r.error) completo = true;   // uma vez que falhe, não volta a tentar nesta sessão
-          else cfg = r && r.data;
-        }
-        if(completo){
-          var rc = await sbC.from('negocios').select('config').eq('slug', SLUG).maybeSingle();
-          cfg = rc && rc.data && rc.data.config;
-        }
-        if(!cfg) return;
+        var r = await sbC.from('negocios').select('config').eq('slug', SLUG).maybeSingle();
+        var cfg = r && r.data && r.data.config; if(!cfg) return;
         window.__cfgPromo = cfg;
         try{ if(window.__renderPromoDia) window.__renderPromoDia(cfg); }catch(e){}
         try{ if(window.__renderPratoDia) window.__renderPratoDia(cfg); }catch(e){}
       }catch(e){}
-    }, 300000);
+    }, 90000);
   })();
 
   // ---- Métricas: visitas ao menu e vistas à publicidade (1 por dispositivo/dia) ----
@@ -6807,27 +6768,14 @@
       if(menuTxt) waMsg += 'Menu de grupo: ' + menuTxt + '\n';
       if(obs) waMsg += 'Obs: ' + obs + '\n';
       if(sinal > 0) waMsg += 'Sinal (' + pct + '%): ' + sinal.toFixed(2) + '€\n';
-      // O link para o dono leva o ID da reserva (&rid=), por isso só pode ser montado DEPOIS de gravar.
-      // Sem ele, o calendário tinha de adivinhar qual era a reserva a partir do dia: escolhia a
-      // pendente mais cedo desse dia (_cmpR ordena por data+hora), ou seja, num dia com várias
-      // pré-reservas abria quase sempre a errada — e nenhuma quando não encontrava nada.
-      // O calendário já sabe receber o rid (ramo RID_PARAM); era só o link que não o levava.
-      let _msgFechada = false;
-      function _fecharMsg(rid){
-        if(_msgFechada) return; _msgFechada = true;
-        try{
-          if(SLUG) waMsg += '\n✅ Confirmar no calendário: ' + location.origin + '/calendario.html?n=' + SLUG
-            + (estado.diaSel ? ('&d=' + estado.diaSel) : '')
-            + (rid ? ('&rid=' + encodeURIComponent(rid)) : '') + '\n';
-        }catch(e){}
-        waMsg += 'Obrigado!';
-      }
+      try{ if(SLUG){ waMsg += '\n✅ Confirmar no calendário: ' + location.origin + '/calendario.html?n=' + SLUG + (estado.diaSel ? ('&d=' + estado.diaSel) : '') + '\n'; } }catch(e){}
+      waMsg += 'Obrigado!';
 
       // A reserva SÓ é gravada aqui — quando o cliente decide enviar/registar (não no "Pedir pré-reserva")
       let _jaGravou = false;
       async function _gravarReserva(){
         if(_jaGravou) return true;
-        if(!(typeof sbC !== 'undefined' && sbC && window.__negocioId)){ _fecharMsg(''); return true; }   // sem base de dados: nada a gravar
+        if(!(typeof sbC !== 'undefined' && sbC && window.__negocioId)) return true;   // sem base de dados: nada a gravar
         const { data, error } = await sbC.rpc('criar_reserva', {
           p_negocio: window.__negocioId, p_data: estado.diaSel, p_hora: estado.slotSel,
           p_nome: nome, p_tel: tel, p_pessoas: pessoas, p_obs: obsFull || null,
@@ -6840,7 +6788,6 @@
         _jaGravou = true;
         _limparPendente();   // reserva concluída — deixa de estar pendente e apaga o destaque do ícone
         const _rid = (typeof data === 'string') ? data : ((data && data.id) || '');   // criar_reserva devolve o uuid da reserva
-        _fecharMsg(_rid);   // agora sim: o link do WhatsApp já pode apontar para ESTA reserva
         try{ if(window._guardarMinhaReserva) window._guardarMinhaReserva({ rid: _rid, rn: nome, rd: estado.diaSel, rh: estado.slotSel, rp: pessoas }); }catch(e){}
         try{ if(window._guardarMeuTelefone) window._guardarMeuTelefone(tel); }catch(e){}   // lembra o número, para recuperar as reservas em qualquer dispositivo
         return true;
@@ -8658,27 +8605,8 @@
         if(typeof sbC !== 'undefined' && sbC && window.__negocioId){
           const _args = { p_negocio: window.__negocioId, p_nome: nome, p_tel: telC, p_levant: horaLev, p_itens: itensJson, p_total: t, p_obs: obsC };
           const _trata = function(res){ const rec = (res && res.data && res.data[0]) ? res.data[0] : null; if(rec && rec.id){ _registado(rec); return true; } return false; };
-          // A 2.ª tentativa sem p_obs existe só para bases que ainda não têm esse parâmetro na
-          // função. Antes repetia-se a CADA erro, e isso era perigoso: se a 1.ª chamada chegou a
-          // gravar mas a resposta se perdeu (timeout, 5xx do gateway), a repetição criava uma
-          // SEGUNDA encomenda real — o cliente pagava uma e a cozinha via duas. Além disso
-          // descartava silenciosamente as observações do cliente em erros que nada tinham a ver
-          // com o p_obs. Agora só repete quando o erro é mesmo de assinatura em falta.
-          const _faltaObs = function(err){
-            if(!err) return false;
-            if(String(err.code || '') === 'PGRST202') return true;   // função não encontrada com esta assinatura
-            const m = String(err.message || '').toLowerCase();
-            return m.indexOf('could not find the function') >= 0 || m.indexOf('p_obs') >= 0;
-          };
           sbC.rpc('criar_encomenda', _args)
-            .then(function(res){
-              if(_trata(res)) return;
-              if(res && res.error && _faltaObs(res.error)){
-                const a2 = Object.assign({}, _args); delete a2.p_obs;
-                return sbC.rpc('criar_encomenda', a2).then(function(r2){ if(!_trata(r2)) _falhou(); });
-              }
-              _falhou();
-            })
+            .then(function(res){ if(_trata(res)) return; if(res && res.error){ const a2 = Object.assign({}, _args); delete a2.p_obs; return sbC.rpc('criar_encomenda', a2).then(function(r2){ if(!_trata(r2)) _falhou(); }); } _falhou(); })   // base ainda sem p_obs → tenta sem
             .catch(function(){ _falhou(); });
         } else {
           // Sem base de dados neste contexto → WhatsApp é o único canal (abre já, no gesto do toque)
@@ -9929,7 +9857,7 @@
 <script>
 (function(){
   if(window.__PREVIEW || window.__esconderijo) return;
-  var J = null, P = null, canal = null, pollT = null, tentT = null, tentativas = 0, tentPend = 0, dicasMostradas = {}, cache = {}, aCacar = false, terminouVisto = false, venci = null, encoder = null;
+  var J = null, P = null, canal = null, pollT = null, fimT = null, tentativas = 0, tentPend = 0, dicasMostradas = {}, cache = {}, aCacar = false, terminouVisto = false, venci = null, encoder = null;
   function $(id){ return document.getElementById(id); }
   function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]; }); }
   function disp(){ try{ var d = localStorage.getItem('amesaDisp'); if(!d){ d = (crypto.randomUUID ? crypto.randomUUID() : ('xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c){ var r = Math.random()*16|0, v = c === 'x' ? r : (r&0x3|0x8); return v.toString(16); }))); localStorage.setItem('amesaDisp', d); } return d; }catch(e){ return '00000000-0000-4000-8000-000000000000'; } }
@@ -9943,52 +9871,46 @@
     if(typeof sbC === 'undefined' || !sbC || !window.__negocioId) return;
     var r = await sbC.from('ovo_jogos_publico').select('*').eq('negocio_id', window.__negocioId).gte('fim', new Date(Date.now() - 24*3600*1000).toISOString()).order('inicio', { ascending:false }).limit(5);
     if(r.error || !r.data) return;
-    // Um jogo está a decorrer se NÃO está num estado terminal e estamos dentro da janela
-    // inicio→fim. É a mesma regra que o _ovEstado() do calendario.html usa para escrever
-    // "A DECORRER" ao dono, e por isso os dois lados não voltam a divergir.
-    //
-    // Antes isto era um === 'ativo'. O calendário nunca compara com esse valor: trata à parte
-    // 'cancelado', 'terminado' e 'rascunho' e deixa o resto ser decidido pelas datas — ou seja,
-    // funciona com qualquer nome. Se a função ovo_publicar grava outro valor (o vigia de
-    // vencedores, por exemplo, procurava 'publicado'), o menu não reconhecia o jogo e o selo
-    // nunca aparecia, mesmo com a campanha a decorrer.
-    //
-    // Passa também a respeitar o 'inicio': uma campanha agendada deixa de aparecer como
-    // "a decorrer" antes da hora — antes aparecia, e o botão de entrar dava erro.
-    var agora = Date.now();
-    function _aDecorrer(j){
-      if(!j) return false;
-      if(j.estado === 'cancelado' || j.estado === 'terminado' || j.estado === 'rascunho') return false;
-      var ini = j.inicio ? new Date(j.inicio).getTime() : NaN;
-      var fim = j.fim    ? new Date(j.fim).getTime()    : NaN;
-      if(!isNaN(ini) && agora < ini) return false;   // ainda não começou
-      if(!isNaN(fim) && agora > fim) return false;   // já passou da hora de fim
-      return true;
-    }
-    var ativo = r.data.filter(_aDecorrer)[0];
-    // Selo cinzento "Jogo terminado" depois de a campanha acabar: ficava 24h no topo do menu,
-    // à frente de toda a gente — inclusive de quem só quer ver a ementa. Passa a depender do
-    // config.ovoMostrarFim do negócio (Gestão → 🥚 No Cu da Galinha), desligado por omissão.
-    var term = window.__ovoMostrarFim ? r.data.filter(function(j){ return j.estado === 'terminado' && j.terminado_em && (Date.now() - new Date(j.terminado_em).getTime()) < 24*3600*1000; })[0] : null;
-    aplicar(ativo || term || null);
+    var ativo = r.data.filter(function(j){ return j.estado === 'ativo'; })[0];
+    var term = r.data.filter(function(j){ return j.estado === 'terminado' && j.terminado_em && (Date.now() - new Date(j.terminado_em).getTime()) < 24*3600*1000; })[0];
+    var exp = r.data.filter(function(j){ return j.estado === 'expirado' && (Date.now() - new Date(j.fim).getTime()) < 24*3600*1000; })[0];
+    aplicar(ativo || term || exp || null);
   }
   function aplicar(j){
     J = j; var selo = $('ovoSelo');
     if(!selo){ selo = document.createElement('div'); selo.id = 'ovoSelo'; var ref = $('promoDia'); if(ref && ref.parentNode) ref.parentNode.insertBefore(selo, ref); else document.body.appendChild(selo); }
     if(!J){ selo.style.display = 'none'; pararCaca(); return; }
     var venc = Array.isArray(J.vencedores_lista) ? J.vencedores_lista : [];
+    if(fimT){ clearTimeout(fimT); fimT = null; }
+    if(J.estado === 'expirado'){
+      selo.className = 'fim'; selo.style.display = 'block';
+      selo.innerHTML = '<button type="button"><span class="ov">⏰</span><span>Tempo esgotado<small>Ninguém encontrou o ovo · terminou às ' + hhmm(J.fim) + '</small></span></button>';
+      selo.querySelector('button').onclick = function(){ abrirFolha('expirado'); };
+      pararCaca(); return;
+    }
     if(J.estado === 'terminado'){
       selo.className = 'fim'; selo.style.display = 'block';
       selo.innerHTML = '<button type="button"><span class="ov">🥚</span><span>Jogo terminado<small>' + (venc.length ? ('O ovo foi encontrado por ' + esc(venc.map(function(v){ return v.nome; }).join(', ')) + ' às ' + hhmm(venc[0].quando)) : 'O ovo ficou por encontrar') + '</small></span></button>';
       selo.querySelector('button').onclick = function(){ abrirFolha('fim'); };
       pararCaca(); return;
     }
+    // relógio até ao fim: quando o tempo acaba, todos (a procurar ou não) recebem o aviso — o fim não muda a base de dados, por isso não chega pelo Realtime
+    { var ms = new Date(J.fim).getTime() - Date.now() + 1500; if(ms > 0 && ms < 2147483000) fimT = setTimeout(fimDoTempo, ms); }
     selo.className = ''; selo.style.display = 'block';
     selo.innerHTML = '<button type="button"><span class="ov">🥚</span><span>' + esc(J.nome) + ' — caça ao ovo a decorrer<small>🎁 ' + esc(J.premio_nome) + ' · até às ' + hhmm(J.fim) + (J.participantes ? (' · ' + J.participantes + ' a procurar') : '') + '</small></span></button>';
     selo.querySelector('button').onclick = function(){ abrirFolha(aCacar ? 'caca' : 'abertura'); };
     P = ls('amesaOvoPart:' + J.id);
     if(P){ iniciarCaca(); }
     else if(!ls('amesaOvoVisto:' + J.id)){ ls('amesaOvoVisto:' + J.id, '1'); setTimeout(function(){ abrirFolha('abertura'); }, 1400); }
+  }
+  async function fimDoTempo(){
+    fimT = null; if(!J) return;
+    try{ var r = await sbC.from('ovo_jogos_publico').select('*').eq('id', J.id).maybeSingle(); if(r && r.data) J = r.data; }catch(e){}
+    if(J.estado === 'ativo'){ J.estado = 'expirado'; }   // relógio do telemóvel ligeiramente adiantado → trata como fim
+    if(venci && venci !== 'a_reclamar'){ aplicar(J); return; }   // quem ganhou não precisa de aviso
+    terminouVisto = true;
+    abrirFolha(J.estado === 'terminado' ? 'fim' : 'expirado'); vib([120,60,120]);
+    aplicar(J);
   }
   // ---------- folhas ----------
   function fecharFolha(){ var ov = $('ovoOv'); if(!ov) return; ov.classList.remove('on'); setTimeout(function(){ ov.remove(); }, 320); }
@@ -10006,13 +9928,13 @@
                               : '<p style="font-weight:800;">Estás a procurar · ' + tentativas + ' tentativa(s)</p><button type="button" class="btn" id="ovoDepois">Continuar a procurar</button>'));
       var c = $('ovoComecar'); if(c) c.onclick = comecar;
       $('ovoDepois').onclick = fecharFolha;
+    } else if(tipo === 'expirado'){
+      folha('<div class="big">⏰</div><h2>Tempo esgotado!</h2><p>Desta vez ninguém encontrou o ovo — continua escondido no nosso menu.</p><p>Obrigado por participares. Fica atento à próxima caça! 🥚</p><button type="button" class="btn sec" id="ovoDepois">Fechar</button>');
+      $('ovoDepois').onclick = fecharFolha;
     } else if(tipo === 'fim'){
       var venc = Array.isArray(J.vencedores_lista) ? J.vencedores_lista : [];
       folha('<div class="big">🎉</div><h2>Já temos vencedor!</h2><p>' + (venc.length ? ('O ovo foi encontrado por <b>' + esc(venc.map(function(v){ return v.nome; }).join(', ')) + '</b> às ' + hhmm(venc[0].quando) + '.') : 'O jogo terminou.') + '</p><p>Obrigado por participares — fica atento à próxima caça.</p><button type="button" class="btn sec" id="ovoDepois">Fechar</button>');
-      // Guardar o fecho, como a folha de abertura já faz com o amesaOvoVisto. Sem isto a única
-      // guarda era o terminouVisto, uma variável em memória: reiniciava a cada carregamento e a
-      // folha voltava a abrir sempre que o jogador regressava ao menu.
-      $('ovoDepois').onclick = function(){ ls('amesaOvoFimVisto:' + J.id, '1'); fecharFolha(); };
+      $('ovoDepois').onclick = fecharFolha;
     }
   }
   async function comecar(){
@@ -10031,11 +9953,11 @@
     try{ var vj = ls('amesaOvoVenci:' + J.id); if(vj){ venci = JSON.parse(vj); f.innerHTML = '<span class="ov">🏆</span><span>Ganhaste!<small style="display:block;">' + esc(venci.codigo) + '</small></span>'; f.onclick = function(){ folhaVitoria(venci); }; } }catch(e){}
     if(!venci) document.addEventListener('click', onToque, true);
     ligarRealtime(); if(!pollT) pollT = setInterval(sincronizar, 15000);
-    // O visibilitychange e o pagehide passaram para o arranque do módulo: registados aqui, só
-    // existiam para quem já tinha entrado no jogo, e voltavam a somar-se a cada iniciarCaca().
-    if(!tentT) tentT = setInterval(function(){ enviarTentativas(); verificarDicas(); }, 30000);
+    document.addEventListener('visibilitychange', function(){ if(!document.hidden) sincronizar(); });
+    window.addEventListener('pagehide', enviarTentativas);
+    setInterval(function(){ enviarTentativas(); verificarDicas(); }, 30000);
   }
-  function pararCaca(){ aCacar = false; var f = $('ovoFlut'); if(f) f.style.display = 'none'; document.removeEventListener('click', onToque, true); if(canal){ try{ sbC.removeChannel(canal); }catch(e){} canal = null; } if(pollT){ clearInterval(pollT); pollT = null; } if(tentT){ clearInterval(tentT); tentT = null; } }
+  function pararCaca(){ aCacar = false; var f = $('ovoFlut'); if(f) f.style.display = 'none'; document.removeEventListener('click', onToque, true); if(canal){ try{ sbC.removeChannel(canal); }catch(e){} canal = null; } if(pollT){ clearInterval(pollT); pollT = null; } }
   function pintaFlut(){ var f = $('ovoFlut'); if(f) f.innerHTML = '<span class="ov">🥚</span><span>À caça<small style="display:block;">' + tentativas + ' tentativa(s)' + (dicasAtivas().length ? ' · 💡 dica' : '') + '</small></span>'; }
   async function onToque(e){
     if(!aCacar || !J || venci) return;
@@ -10097,8 +10019,8 @@
       var antes = J; J = r.data;
       var vAntes = Array.isArray(antes.vencedores_lista) ? antes.vencedores_lista.length : 0, vAgora = Array.isArray(J.vencedores_lista) ? J.vencedores_lista.length : 0;
       if(J.estado === 'terminado' || J.estado === 'expirado'){
-        if(!terminouVisto && !ls('amesaOvoFimVisto:' + J.id)){ terminouVisto = true; if(!venci || venci === 'a_reclamar'){ if(J.estado === 'terminado') abrirFolha('fim'); else toast('O tempo acabou — o ovo ficou por encontrar 🥚'); } }
-        aplicar(J.estado === 'terminado' ? J : null); return;
+        if(!terminouVisto){ terminouVisto = true; if(!venci || venci === 'a_reclamar'){ abrirFolha(J.estado === 'terminado' ? 'fim' : 'expirado'); vib([120,60,120]); } }
+        aplicar(J); return;
       }
       if(vAgora > vAntes && !venci){ var ult = J.vencedores_lista[vAgora - 1]; toast('🥚 ' + (ult && ult.nome ? ult.nome : 'Alguém') + ' encontrou um ovo — ainda há ' + (J.limite_vencedores - vAgora) + '!'); vib([60,40,60]); }
       verificarDicas(); pintaFlut();
@@ -10108,25 +10030,6 @@
   function enviarTentativas(){ if(!P || tentPend <= 0) return; var n = tentPend; tentPend = 0; try{ sbC.rpc('ovo_tentativas', { p_participacao:P, p_n:n }); }catch(e){} }
   // ---------- arranque: depois do negócio estar carregado ----------
   var tent = 0; var esperar = setInterval(function(){ tent++; if(window.__negocioId && typeof sbC !== 'undefined' && sbC){ clearInterval(esperar); carregar(); } else if(tent > 60) clearInterval(esperar); }, 500);
-
-  // ---------- voltar à app: procurar o jogo outra vez ----------
-  // O carregar() só corria UMA vez, no arranque. Quem abrisse o menu antes de a campanha começar
-  // ficava sem selo e sem forma de o ver, porque o único visibilitychange do módulo estava dentro
-  // do iniciarCaca() (ou seja, só para quem já tinha entrado) e o sincronizar() começa com
-  // "if(!J) return" — sabe actualizar um jogo em memória, nunca descobrir um novo.
-  // Numa PWA no ecrã principal isto nota-se mais: tocar no ícone retoma a página em memória e os
-  // scripts não voltam a correr, daí só resultar quando o sistema chega mesmo a descartar a página.
-  // O resto do cardápio (config, encomendas, reservas) já reage assim; o jogo era a excepção.
-  function acordar(){
-    if(document.hidden) return;
-    if(typeof sbC === 'undefined' || !sbC || !window.__negocioId) return;
-    if(aCacar) sincronizar();   // já a jogar: basta actualizar o jogo em curso
-    else carregar();            // ainda não: procurar campanhas novas
-  }
-  document.addEventListener('visibilitychange', acordar);
-  window.addEventListener('pageshow', function(ev){ if(ev && ev.persisted) acordar(); });
-  window.addEventListener('pagehide', enviarTentativas);
-  setInterval(function(){ if(!aCacar) acordar(); }, 120000);   // rede de segurança para campanhas criadas com a página já aberta
 })();
 </script>
 
