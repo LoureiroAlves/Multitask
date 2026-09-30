@@ -1649,13 +1649,14 @@
     if(atual) _ovWireAtual(atual);
   }
   function _ovNovo(){ const d = new Date(); d.setMinutes(0,0,0); d.setHours(d.getHours() + 1); const f = new Date(d.getTime() + 3*3600*1000);
-    return { id:null, nome:'No Cu da Galinha', descricao:'Há um ovo escondido no nosso menu. Encontra-o antes de toda a gente!', premio_nome:'', premio_descricao:'', inicio:_ovLocal(d), fim:_ovLocal(f), limite_vencedores:1, dificuldade:'medio', charada:'', dicas:[], alvo:null }; }
+    return { id:null, nome:'No Cu da Galinha', descricao:'Há um ovo escondido no nosso menu. Encontra-o antes de toda a gente!', premio_nome:'', premio_descricao:'', inicio:_ovLocal(d), fim:_ovLocal(f), limite_vencedores:1, dificuldade:'medio', charada:'', dicas:[], alvo:null, avisar_push:true }; }
   function _ovCartaoAtual(j){
     const e = _ovEstado(j), g = _OV_EST[e], p = _ovPub[j.id] || {}; const vl = Array.isArray(p.vencedores_lista) ? p.vencedores_lista : [];
     return '<div class="card" style="border:2px solid ' + g.c + ';">'
       + '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;"><div style="font-weight:900;color:var(--castanho);font-size:1.05rem;">' + esc(j.nome) + '</div><span style="font-size:.74rem;font-weight:900;padding:4px 10px;border-radius:999px;background:' + g.b + ';color:' + g.c + ';">' + g.t + '</span></div>'
       + '<div style="font-size:.88rem;color:#5a4a2c;margin-top:4px;">🎁 <b>' + esc(j.premio_nome) + '</b>' + (j.premio_descricao ? (' — ' + esc(j.premio_descricao)) : '') + '</div>'
       + '<div style="font-size:.82rem;color:#8a7a5c;margin-top:4px;">📅 ' + _ovDataTxt(j.inicio) + ' → ' + _ovDataTxt(j.fim) + ' · ' + (j.limite_vencedores > 1 ? (j.limite_vencedores + ' vencedores') : '1 vencedor') + ' · ' + ({ facil:'Fácil', medio:'Médio', dificil:'Difícil' }[j.dificuldade] || '') + '</div>'
+      + (j.avisar_push !== false && j.avisar_push !== undefined ? ('<div style="font-size:.82rem;color:#8a7a5c;margin-top:2px;">🔔 Aviso por notificação: ' + (j.aviso_inicio_em ? ('enviado às ' + _ovDataTxt(j.aviso_inicio_em)) : (j.aviso_antes_em ? '15 min antes enviado · falta o do início' : '15 min antes e ao começar')) + '</div>') : '')
       + '<div style="font-size:.82rem;color:#8a7a5c;margin-top:2px;">🥚 Esconderijo: <b style="color:var(--castanho);">' + (j.alvo_rotulo ? esc(j.alvo_rotulo) : '<span style="color:#b23;">ainda não escolhido</span>') + '</b></div>'
       + (e !== 'rascunho' ? ('<div style="display:flex;gap:10px;margin-top:10px;"><div class="ov-kpi"><div class="n">' + (p.participantes || 0) + '</div><div class="l">a procurar</div></div><div class="ov-kpi"><div class="n">' + (p.vencedores || 0) + '/' + j.limite_vencedores + '</div><div class="l">encontrado</div></div></div>') : '')
       + (vl.length ? ('<div style="margin-top:8px;font-size:.88rem;">🏆 ' + vl.map(function(x){ return esc(x.nome) + ' (' + _ovDataTxt(x.quando) + ')'; }).join(' · ') + '</div>') : '')
@@ -1668,7 +1669,7 @@
   }
   function _ovWireAtual(j){
     const ed = $('ovEditar'); if(ed) ed.onclick = async function(){ let alvo = null; try{ const r = await sb.from('ovo_segredos').select('alvo').eq('jogo_id', j.id).maybeSingle(); alvo = r.data && r.data.alvo; }catch(e){}
-      _ovEdit = { id:j.id, nome:j.nome, descricao:j.descricao || '', premio_nome:j.premio_nome, premio_descricao:j.premio_descricao || '', inicio:_ovLocal(j.inicio), fim:_ovLocal(j.fim), limite_vencedores:j.limite_vencedores, dificuldade:j.dificuldade, charada:j.charada || '', dicas:Array.isArray(j.dicas) ? j.dicas : [], alvo:alvo, estado:j.estado }; renderOvo(); };
+      _ovEdit = { id:j.id, nome:j.nome, descricao:j.descricao || '', premio_nome:j.premio_nome, premio_descricao:j.premio_descricao || '', inicio:_ovLocal(j.inicio), fim:_ovLocal(j.fim), limite_vencedores:j.limite_vencedores, dificuldade:j.dificuldade, charada:j.charada || '', dicas:Array.isArray(j.dicas) ? j.dicas : [], alvo:alvo, estado:j.estado, avisar_push:(j.avisar_push !== false) }; renderOvo(); };
     const pb = $('ovPublicar'); if(pb) pb.onclick = async function(){ const m = $('ovMsg'); m.textContent = 'A publicar…'; const r = await sb.rpc('ovo_publicar', { p_jogo:j.id }); if(r.error){ m.textContent = 'Erro: ' + (r.error.message.indexOf('sem_esconderijo') >= 0 ? 'ainda não escolheste o esconderijo.' : r.error.message); m.className = 'msg erro'; return; } renderOvo(); };
     const tm = $('ovTerminar'); if(tm) tm.onclick = async function(){ if(!(await window.__amConfirm('Terminar', { texto:'Terminar a campanha agora? O ovo desaparece para todos os clientes.', ok:'Terminar', cancelar:'Não' }))) return; await sb.from('ovo_jogos').update({ estado:'terminado', terminado_em:new Date().toISOString() }).eq('id', j.id); renderOvo(); };
     const vr = $('ovVer'); if(vr) vr.onclick = function(){ _ovAbrirDetalhe(j); };
@@ -1688,6 +1689,7 @@
       + '<div><label>Dificuldade</label><select id="ovDif" style="width:100%;padding:10px 12px;border:1.5px solid var(--linha);border-radius:9px;font-family:inherit;background:#fff;">' + [['facil','Fácil — dica automática + quente/frio'],['medio','Médio — sem dicas'],['dificil','Difícil — charada tua']].map(function(o){ return '<option value="' + o[0] + '"' + (p.dificuldade === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select></div></div>'
       + '<div id="ovCharBox"' + (p.dificuldade === 'dificil' ? '' : ' class="hide"') + '><label>Charada</label><textarea id="ovChar" rows="2" placeholder="Ex.: Procura onde os clientes terminam a refeição.">' + esc(p.charada) + '</textarea></div>'
       + '<label>Dicas ao longo do jogo (opcional) <span style="font-weight:400;color:#8a7a5c;">— uma por linha: minutos | texto</span></label><textarea id="ovDicas" rows="2" placeholder="30 | Começa por F&#10;60 | Está numa secção de carne">' + esc(dicasTxt) + '</textarea>'
+      + '<label style="display:flex;gap:8px;align-items:center;font-weight:800;margin-top:12px;cursor:pointer;color:var(--castanho);font-size:.9rem;"><input type="checkbox" id="ovAvisar"' + (p.avisar_push !== false ? ' checked' : '') + ' style="width:auto;"> 🔔 Avisar os clientes por notificação (15 min antes e quando começar)</label>'
       + '<label style="margin-top:14px;">🥚 Esconderijo</label>'
       + '<div id="ovAlvo" style="padding:10px 12px;border:1.5px dashed ' + (p.alvo ? '#1e8c4a' : '#e0245e') + ';border-radius:10px;background:' + (p.alvo ? '#eef8f0' : '#fff5f3') + ';font-weight:800;color:var(--castanho);">' + (p.alvo ? ('🥚 ' + esc(p.alvo.rotulo) + (p.alvo.seccao ? (' <span style="font-weight:600;color:#8a7a5c;">· ' + esc(p.alvo.seccao) + '</span>') : '')) : '<span style="color:#c01e50;">Ainda não escolhido</span>') + '</div>'
       + '<button type="button" id="ovEscolher" class="pdf-btn" style="margin:8px 0 0;border-color:#f2b705;background:#fff8dc;color:#7a5a00;">🗺️ ' + (p.alvo ? 'Escolher outro esconderijo' : 'Escolher esconderijo no menu') + '</button>'
@@ -1703,6 +1705,7 @@
     const p = _ovEdit;
     p.nome = ($('ovNome').value || '').trim() || 'No Cu da Galinha'; p.descricao = ($('ovDesc').value || '').trim(); p.premio_nome = ($('ovPremio').value || '').trim(); p.premio_descricao = ($('ovPremioD').value || '').trim();
     p.inicio = $('ovIni').value; p.fim = $('ovFim').value; p.limite_vencedores = Math.max(1, Math.min(100, parseInt($('ovLim').value, 10) || 1)); p.dificuldade = $('ovDif').value; p.charada = ($('ovChar').value || '').trim();
+    p.avisar_push = !!($('ovAvisar') && $('ovAvisar').checked);
     p.dicas = ($('ovDicas').value || '').split('\n').map(function(l){ const m = /^\s*(\d+)\s*\|\s*(.+)$/.exec(l); return m ? { minutos:parseInt(m[1], 10), texto:m[2].trim() } : null; }).filter(Boolean);
   }
   async function _ovGuardar(){
@@ -1711,9 +1714,11 @@
     if(!p.inicio || !p.fim || new Date(p.fim) <= new Date(p.inicio)){ m.textContent = 'O fim tem de ser depois do início.'; m.className = 'msg erro'; return; }
     m.textContent = 'A guardar…'; m.className = 'msg';
     const row = { negocio_id:negocio.id, nome:p.nome, descricao:p.descricao, premio_nome:p.premio_nome, premio_descricao:p.premio_descricao, inicio:new Date(p.inicio).toISOString(), fim:new Date(p.fim).toISOString(), limite_vencedores:p.limite_vencedores, dificuldade:p.dificuldade, charada:p.charada, dicas:p.dicas, alvo_rotulo:p.alvo ? (p.alvo.rotulo + (p.alvo.seccao ? (' · ' + p.alvo.seccao) : '')) : null };
+    row.avisar_push = p.avisar_push !== false;
     let id = p.id, r;
-    if(id){ r = await sb.from('ovo_jogos').update(row).eq('id', id); }
-    else { r = await sb.from('ovo_jogos').insert(row).select('id').single(); if(!r.error) id = r.data.id; }
+    const gravar = async function(){ if(id){ return await sb.from('ovo_jogos').update(row).eq('id', id); } const x = await sb.from('ovo_jogos').insert(row).select('id').single(); if(!x.error) id = x.data.id; return x; };
+    r = await gravar();
+    if(r.error && /avisar_push/.test(r.error.message || '')){ delete row.avisar_push; r = await gravar(); }   // base ainda sem a coluna (ovo-avisos.sql por correr)
     if(r.error){ m.textContent = 'Erro: ' + r.error.message; m.className = 'msg erro'; return; }
     if(p.alvo){ const r2 = await sb.from('ovo_segredos').upsert({ jogo_id:id, alvo:p.alvo }, { onConflict:'jogo_id' }); if(r2.error){ m.textContent = 'Erro no esconderijo: ' + r2.error.message; m.className = 'msg erro'; return; }
       if(p.estado && p.estado !== 'rascunho'){ await sb.rpc('ovo_publicar', { p_jogo:id }); } }   // campanha já publicada → refaz o hash com o novo alvo
