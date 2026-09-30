@@ -9828,6 +9828,8 @@
   #ovoSelo button .ov{ font-size:1.6rem; animation:ovoBounce 1.6s ease-in-out infinite; }
   #ovoSelo button small{ display:block; font-weight:600; opacity:.92; font-size:.78rem; }
   #ovoSelo.fim button{ background:linear-gradient(135deg,#5a6b5f,#3a4a3f); box-shadow:none; }
+  #ovoSelo.agend button{ background:linear-gradient(135deg,#2a5aa8,#7b3fb0); box-shadow:0 8px 22px rgba(42,90,168,.25); }
+  #ovoSelo .ovo-cd{ font-variant-numeric:tabular-nums; }
   @keyframes ovoBounce{ 0%,100%{ transform:translateY(0) rotate(-6deg); } 50%{ transform:translateY(-4px) rotate(6deg); } }
   #ovoOv{ position:fixed; inset:0; z-index:9200; background:rgba(20,14,6,.62); display:flex; align-items:flex-end; justify-content:center; opacity:0; transition:opacity .3s; }
   #ovoOv.on{ opacity:1; }
@@ -9857,7 +9859,7 @@
 <script>
 (function(){
   if(window.__PREVIEW || window.__esconderijo) return;
-  var J = null, P = null, canal = null, pollT = null, fimT = null, tentativas = 0, tentPend = 0, dicasMostradas = {}, cache = {}, aCacar = false, terminouVisto = false, venci = null, encoder = null;
+  var J = null, P = null, canal = null, pollT = null, fimT = null, iniT = null, cdT = null, vigiaT = null, tentativas = 0, tentPend = 0, dicasMostradas = {}, cache = {}, aCacar = false, terminouVisto = false, venci = null, encoder = null;
   function $(id){ return document.getElementById(id); }
   function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]; }); }
   function disp(){ try{ var d = localStorage.getItem('amesaDisp'); if(!d){ d = (crypto.randomUUID ? crypto.randomUUID() : ('xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c){ var r = Math.random()*16|0, v = c === 'x' ? r : (r&0x3|0x8); return v.toString(16); }))); localStorage.setItem('amesaDisp', d); } return d; }catch(e){ return '00000000-0000-4000-8000-000000000000'; } }
@@ -9874,7 +9876,10 @@
     var ativo = r.data.filter(function(j){ return j.estado === 'ativo'; })[0];
     var term = r.data.filter(function(j){ return j.estado === 'terminado' && j.terminado_em && (Date.now() - new Date(j.terminado_em).getTime()) < 24*3600*1000; })[0];
     var exp = r.data.filter(function(j){ return j.estado === 'expirado' && (Date.now() - new Date(j.fim).getTime()) < 24*3600*1000; })[0];
-    aplicar(ativo || term || exp || null);
+    var agend = r.data.filter(function(j){ return j.estado === 'agendado' && (new Date(j.inicio).getTime() - Date.now()) < 7*24*3600*1000; }).sort(function(a, b){ return new Date(a.inicio) - new Date(b.inicio); })[0];
+    aplicar(ativo || agend || term || exp || null);
+    // campanha publicada depois de o menu estar aberto: volta a ver de 2 em 2 min (consulta pequena)
+    if(!vigiaT) vigiaT = setInterval(function(){ if(document.hidden) return; if(!J || J.estado === 'terminado' || J.estado === 'expirado') carregar(); }, 120000);
   }
   function aplicar(j){
     J = j; var selo = $('ovoSelo');
@@ -9882,6 +9887,21 @@
     if(!J){ selo.style.display = 'none'; pararCaca(); return; }
     var venc = Array.isArray(J.vencedores_lista) ? J.vencedores_lista : [];
     if(fimT){ clearTimeout(fimT); fimT = null; }
+    if(iniT){ clearTimeout(iniT); iniT = null; }
+    if(cdT){ clearInterval(cdT); cdT = null; }
+    if(J.estado === 'agendado'){
+      selo.className = 'agend'; selo.style.display = 'block';
+      selo.innerHTML = '<button type="button"><span class="ov">🥚</span><span>' + esc(J.nome) + ' — a caça ao ovo vai começar<small>🎁 ' + esc(J.premio_nome) + ' · começa ' + quandoTxt(J.inicio) + ' · <b class="ovo-cd"></b></small></span></button>';
+      selo.querySelector('button').onclick = function(){ abrirFolha('agendado'); };
+      var pinta = function(){ document.querySelectorAll('.ovo-cd').forEach(function(el){ el.textContent = contagem(J.inicio); }); };
+      pinta(); cdT = setInterval(pinta, 1000);
+      // aviso 5 minutos antes (uma vez por dispositivo)
+      var ms5 = new Date(J.inicio).getTime() - Date.now() - 5*60000;
+      if(ms5 > 0 && ms5 < 2147483000) setTimeout(function(){ if(J && J.estado === 'agendado' && !ls('amesaOvoAviso5:' + J.id)){ ls('amesaOvoAviso5:' + J.id, '1'); abrirFolha('agendado'); vib([60,40,60]); } }, ms5);
+      var msI = new Date(J.inicio).getTime() - Date.now() + 800;
+      if(msI < 2147483000) iniT = setTimeout(arranque, Math.max(0, msI));
+      return;
+    }
     if(J.estado === 'expirado'){
       selo.className = 'fim'; selo.style.display = 'block';
       selo.innerHTML = '<button type="button"><span class="ov">⏰</span><span>Tempo esgotado<small>Ninguém encontrou o ovo · terminou às ' + hhmm(J.fim) + '</small></span></button>';
@@ -9902,6 +9922,18 @@
     P = ls('amesaOvoPart:' + J.id);
     if(P){ iniciarCaca(); }
     else if(!ls('amesaOvoVisto:' + J.id)){ ls('amesaOvoVisto:' + J.id, '1'); setTimeout(function(){ abrirFolha('abertura'); }, 1400); }
+  }
+  function quandoTxt(ts){ var d = new Date(ts), h = new Date(); var am = new Date(); am.setDate(am.getDate() + 1); var mesmo = function(a, b){ return a.toDateString() === b.toDateString(); }; return (mesmo(d, h) ? 'hoje às ' : (mesmo(d, am) ? 'amanhã às ' : (d.getDate() + '/' + (d.getMonth()+1) + ' às '))) + hhmm(ts); }
+  function contagem(ts){ var s = Math.max(0, Math.round((new Date(ts).getTime() - Date.now()) / 1000)); var d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m = Math.floor((s % 3600) / 60), x = s % 60;
+    if(d > 0) return 'faltam ' + d + 'd ' + h + 'h'; if(h > 0) return 'faltam ' + h + 'h ' + String(m).padStart(2,'0') + 'm'; return 'faltam ' + String(m).padStart(2,'0') + ':' + String(x).padStart(2,'0'); }
+  async function arranque(tent){
+    iniT = null; tent = tent || 0; if(!J) return;
+    try{ var r = await sbC.from('ovo_jogos_publico').select('*').eq('id', J.id).maybeSingle(); if(r && r.data) J = r.data; }catch(e){}
+    if(J.estado === 'agendado' && tent < 8){ iniT = setTimeout(function(){ arranque(tent + 1); }, 2000); return; }   // relógio do telemóvel adiantado → espera pelo servidor
+    if(J.estado !== 'ativo'){ aplicar(J); return; }
+    ls('amesaOvoVisto:' + J.id, '1');
+    aplicar(J);
+    fecharFolha(); setTimeout(function(){ abrirFolha('comecou'); vib([120,60,120,60,200]); }, 350);
   }
   async function fimDoTempo(){
     fimT = null; if(!J) return;
@@ -9928,6 +9960,19 @@
                               : '<p style="font-weight:800;">Estás a procurar · ' + tentativas + ' tentativa(s)</p><button type="button" class="btn" id="ovoDepois">Continuar a procurar</button>'));
       var c = $('ovoComecar'); if(c) c.onclick = comecar;
       $('ovoDepois').onclick = fecharFolha;
+    } else if(tipo === 'agendado'){
+      folha('<div class="big">🥚⏳</div><h2>' + esc(J.nome) + '</h2><p>' + esc(J.descricao || 'Vamos esconder um ovo neste menu. O primeiro a encontrá-lo ganha!') + '</p>'
+        + '<div class="premio"><span style="font-size:.78rem;font-weight:800;color:#8a5a10;">PRÉMIO</span><b>🎁 ' + esc(J.premio_nome) + '</b>' + (J.premio_descricao ? ('<span style="font-size:.85rem;">' + esc(J.premio_descricao) + '</span>') : '') + '</div>'
+        + '<p style="font-weight:900;font-size:1.1rem;">Começa ' + quandoTxt(J.inicio) + '</p><p class="ovo-cd" style="font-size:2rem;font-weight:900;font-variant-numeric:tabular-nums;margin:4px 0;">' + contagem(J.inicio) + '</p>'
+        + '<p class="meta">Deixa o menu aberto: quando começar, avisamos aqui. Termina às ' + hhmm(J.fim) + '.</p><button type="button" class="btn sec" id="ovoDepois">OK</button>');
+      $('ovoDepois').onclick = fecharFolha;
+    } else if(tipo === 'comecou'){
+      folha('<div class="big">🥚🔔</div><h2>A caça começou!</h2><p><b>' + esc(J.nome) + '</b> — o ovo já está escondido no menu.</p>'
+        + '<div class="premio"><span style="font-size:.78rem;font-weight:800;color:#8a5a10;">PRÉMIO</span><b>🎁 ' + esc(J.premio_nome) + '</b></div>'
+        + dicasAtivas().map(function(d){ return '<div class="dica">💡 ' + esc(d) + '</div>'; }).join('')
+        + '<p class="meta">Até às ' + hhmm(J.fim) + ' · ' + (J.limite_vencedores > 1 ? (J.limite_vencedores + ' prémios') : '1 prémio') + '</p>'
+        + '<button type="button" class="btn" id="ovoComecar">🔍 Começar a Procurar</button><button type="button" class="btn sec" id="ovoDepois">Agora não</button>');
+      $('ovoComecar').onclick = comecar; $('ovoDepois').onclick = fecharFolha;
     } else if(tipo === 'expirado'){
       folha('<div class="big">⏰</div><h2>Tempo esgotado!</h2><p>Desta vez ninguém encontrou o ovo — continua escondido no nosso menu.</p><p>Obrigado por participares. Fica atento à próxima caça! 🥚</p><button type="button" class="btn sec" id="ovoDepois">Fechar</button>');
       $('ovoDepois').onclick = fecharFolha;
