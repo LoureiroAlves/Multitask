@@ -8249,7 +8249,7 @@
         const inf = _encInfo(o.estado);
         const itensTxt = (o.itens||[]).map(function(it){ return (it.qtd||1)+'× '+it.nome; }).join(', ');
         h += '<div class="enc-card" data-encid="'+o.id+'" style="position:relative; border:1.5px solid '+inf.cor+'; background:'+inf.bg+'; border-radius:12px; padding:11px 13px; margin-bottom:10px; touch-action:pan-y; will-change:transform;">'
-          + '<div style="font-weight:800; color:'+inf.cor+';">'+inf.ic+' Encomenda nº '+(o.numero!=null?o.numero:'—')+' — '+inf.txt+'</div>'
+          + '<div style="font-weight:800; color:'+inf.cor+';">'+inf.ic+' Encomenda nº '+_encN(o.numero)+(_encDiaTxt(o.levant)?(' <span style="font-weight:600;font-size:.82rem;">('+_encDiaTxt(o.levant)+')</span>'):'')+' — '+inf.txt+'</div>'
           + '<div style="font-size:.8rem; color:var(--castanho-suave); margin-top:3px;">'+itensTxt+(o.levant?(' · levantar ' + (/^\d{4}-/.test(o.levant) ? (function(){ const m = /^(\d{4}-\d{2}-\d{2})\s+(.+)$/.exec(o.levant); const d = new Date(m[1]+'T00:00:00'); return ['dom','seg','ter','qua','qui','sex','sáb'][d.getDay()] + ' ' + d.getDate() + '/' + (d.getMonth()+1) + ' às ' + m[2]; })() : ('às ' + o.levant))):'')+'</div>'
           + '<div style="font-size:.68rem; color:var(--castanho-suave); opacity:.7; margin-top:5px;">‹ desliza para remover</div>'
           + '</div>';
@@ -8271,7 +8271,7 @@
     }
     function _encMostrarPopup(cor, titulo, sub){ try{ if(window.__amAlert) window.__amAlert(titulo, { texto:sub, cor:cor }); }catch(e){} }
     function _encAvisar(av){
-      const _n = (av.numero != null ? av.numero : '—');
+      const _n = _encN(av.numero);
       if(av.estado === 'pronta') _encMostrarPopup('#8a4b10', '🎉 Encomenda pronta!', 'A tua encomenda nº ' + _n + ' está <strong>pronta para levantar</strong>.');
       else if(av.estado === 'confirmada') _encMostrarPopup('#1e6b3c', '✅ Encomenda confirmada', 'O restaurante confirmou a tua encomenda nº ' + _n + '. Já está a ser preparada.');
       else if(av.estado === 'cancelada') _encMostrarPopup('#b23', '❌ Encomenda não confirmada', 'A tua encomenda nº ' + _n + ' não foi confirmada pelo restaurante.');
@@ -8289,7 +8289,7 @@
           const a = [];
           a0.forEach(function(o){
             const s = srv[String(o.id)];
-            if(s && s.levantamento && o.levant && s.levantamento !== o.levant && s.estado !== 'entregue'){ const _ant = o.levant; o.levant = s.levantamento; mudou = true; _encMostrarPopup('#a85d10', '🕒 Hora de levantamento alterada', 'O restaurante ajustou a tua encomenda' + (o.numero != null ? (' nº ' + o.numero) : '') + ' para <strong>' + String(s.levantamento).replace(/^\d{4}-\d{2}-\d{2}\s+/, '') + '</strong> (era ' + String(_ant).replace(/^\d{4}-\d{2}-\d{2}\s+/, '') + ').'); }
+            if(s && s.levantamento && o.levant && s.levantamento !== o.levant && s.estado !== 'entregue'){ const _ant = o.levant; o.levant = s.levantamento; mudou = true; _encMostrarPopup('#a85d10', '🕒 Hora de levantamento alterada', 'O restaurante ajustou a tua encomenda' + (o.numero != null ? (' nº ' + _encN(o.numero)) : '') + ' para <strong>' + String(s.levantamento).replace(/^\d{4}-\d{2}-\d{2}\s+/, '') + '</strong> (era ' + String(_ant).replace(/^\d{4}-\d{2}-\d{2}\s+/, '') + ').'); }
             if(s && s.estado && s.estado !== o.estado){
               if(s.estado === 'entregue'){ _entregue = { numero:o.numero }; mudou = true; return; }   // entregue → sai da lista (carrinho volta ao normal)
               o.estado = s.estado; mudou = true;
@@ -8299,7 +8299,7 @@
           });
           if(mudou){ _encEscrever(a); atualizarBadge(); if(overlay.classList.contains('aberto')) render(); }
           if(_aviso) _encAvisar(_aviso);   // popup no telemóvel do cliente ao mudar de estado
-          if(_entregue) _encMostrarPopup('#5a6b5f', '📦 Encomenda entregue', 'A tua encomenda' + (_entregue.numero != null ? (' nº ' + _entregue.numero) : '') + ' foi entregue. Bom apetite! 😋');
+          if(_entregue) _encMostrarPopup('#5a6b5f', '📦 Encomenda entregue', 'A tua encomenda' + (_entregue.numero != null ? (' nº ' + _encN(_entregue.numero)) : '') + ' foi entregue. Bom apetite! 😋');
         });
       }catch(e){}
     }
@@ -8417,6 +8417,10 @@
       if(painel && painel.classList.contains('aberto') && jogos && jogos.closest('#categoriaPainel')) return true;
       return false;
     }
+    // Número da encomenda com 3 dígitos (001…) — recomeça em cada dia de levantamento
+    function _encN(n){ return (n == null || n === '') ? '—' : String(n).padStart(3, '0'); }
+    // "sex 3/10" quando o levantamento é noutro dia (vazio se for hoje)
+    function _encDiaTxt(l){ const m = /^(\d{4}-\d{2}-\d{2})/.exec(String(l || '')); if(!m) return ''; const d = new Date(m[1] + 'T00:00:00'), h = new Date(); if(d.toDateString() === h.toDateString()) return ''; return ['dom','seg','ter','qua','qui','sex','sáb'][d.getDay()] + ' ' + d.getDate() + '/' + (d.getMonth()+1); }
     function _cartCfg(){ return window.__cartCfg || { ativo:true, precos:true }; }
     // WhatsApp só fica ativo se houver um número E (a lista tiver um menu de grupo, para reservar,
     // OU o negócio esteja marcado para encomendar tudo por WhatsApp — ex.: pastelaria/encomendas).
@@ -8646,7 +8650,7 @@
         lista.forEach(it => { const lt = it.preco * it.qtd; t += lt; linhas.push('• ' + it.qtd + '× ' + it.nome + ' — ' + lt.toFixed(2).replace('.', ',') + '€'); itensJson.push({ nome: it.nome, qtd: it.qtd, preco: it.preco }); });
         const _totalTxt = t.toFixed(2).replace('.', ',');
         const _msgWhats = function(numero){
-          let msg = 'Nova encomenda (take away)' + (numero ? (' nº ' + numero) : '') + (nome ? ' — ' + nome : '') + ':\n' + linhas.join('\n') + '\nTotal: ' + _totalTxt + '€';
+          let msg = 'Nova encomenda (take away)' + (numero ? (' nº ' + _encN(numero)) : '') + (nome ? ' — ' + nome : '') + ':\n' + linhas.join('\n') + '\nTotal: ' + _totalTxt + '€';
           if(pedeLev && horaLev) msg += '\n🕒 Levantamento ' + _levTxt();
           if(telC) msg += '\n📞 ' + telC;
           if(obsC) msg += '\n📝 ' + obsC;

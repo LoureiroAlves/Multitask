@@ -243,6 +243,14 @@
   .ov-kpi{ flex:1; background:#fffdf8; border:1.5px solid #eadfc6; border-radius:12px; padding:8px 10px; text-align:center; }
   .ov-kpi .n{ font-size:1.4rem; font-weight:900; color:var(--castanho); line-height:1.1; }
   .ov-kpi .l{ font-size:.68rem; font-weight:800; color:#8a7a5c; text-transform:uppercase; letter-spacing:.4px; margin-top:2px; }
+  /* Barra do dia nas Encomendas */
+  .enc-diabar{ display:flex; align-items:center; gap:8px; background:#fff; border:1.5px solid var(--linha); border-radius:14px; padding:8px 10px; margin-bottom:10px; flex-wrap:wrap; }
+  .enc-dia-nav{ width:38px; height:38px; border-radius:50%; border:1.5px solid var(--linha); background:#fbf6ec; color:var(--castanho); font-size:1.3rem; font-weight:900; cursor:pointer; line-height:1; }
+  .enc-dia-c{ flex:1; min-width:140px; text-align:center; }
+  .enc-dia-n{ font-weight:900; color:var(--castanho); font-size:1.05rem; }
+  .enc-dia-r{ font-size:.78rem; color:#8a7a5c; }
+  #encDiaData{ width:auto; margin:0; padding:6px 8px; font-size:.85rem; }
+  .enc-dia-hoje{ border:none; background:var(--castanho); color:#fff; border-radius:999px; padding:7px 12px; font-weight:800; font-family:inherit; cursor:pointer; font-size:.8rem; }
   /* Countdown até ao levantamento */
   .enc-cd{ display:flex; flex-direction:column; align-items:flex-end; justify-content:center; min-width:150px; padding:8px 14px 6px; border-radius:14px; background:#e6f7ec; color:#1e6b3c; transition:background .6s, color .6s; flex-shrink:0; }
   .enc-cd-n{ font-size:2.7rem; font-weight:900; line-height:1; font-variant-numeric:tabular-nums; letter-spacing:.5px; }
@@ -1531,7 +1539,7 @@
     let ep = '', n = '';
     try{
       const { data } = await sb.from('encomendas').select('numero, push_sub').eq('id', id).maybeSingle();
-      ep = data && data.push_sub && data.push_sub.endpoint; n = (data && data.numero) || '';
+      ep = data && data.push_sub && data.push_sub.endpoint; n = (data && data.numero) ? _encNum(data.numero) : '';
     }catch(e){ return; }
     if(!ep) return;   // o cliente não ativou notificações
     let titulo, corpo;
@@ -1566,6 +1574,10 @@
   //    Aceitar (com ajuste de hora) / Recusar (com motivo) — som a repetir até responder
   //  • lista de Pendentes agrupada Hoje / Próximos dias, ordenada pela hora de levantamento, com urgência
   // ============================================================
+  // Número da encomenda com 3 dígitos (001, 002…) — recomeça em cada dia de levantamento
+  function _encNum(n){ return (n == null || n === '') ? '—' : String(n).padStart(3, '0'); }
+  // Dia de levantamento (AAAA-MM-DD): o guardado na base de dados; se ainda não existir, calcula
+  function _encDiaDe(e){ if(e && e.data_levant) return String(e.data_levant).slice(0, 10); const d = _encLevDate(e); if(d) return _encIsoDe(d); return _encIsoDe(new Date(e.criado_em)); }
   function _encLevDate(e){
     const l = String(e.levantamento || '').trim();
     let m = /^(\d{4}-\d{2}-\d{2})\s+(\d{1,2}):(\d{2})$/.exec(l);
@@ -1643,7 +1655,7 @@
     const horaBase = d ? _encHHMM(d) : '';
     const ov = document.createElement('div'); ov.id = 'encNovaOv'; ov.className = 'modal-bg';
     ov.innerHTML = '<div class="modal enc-nova">'
-      + '<div class="en-cab"><span class="en-tag">🛍️ NOVA ENCOMENDA</span><span class="en-num">nº ' + (e.numero != null ? e.numero : '—') + '</span></div>'
+      + '<div class="en-cab"><span class="en-tag">🛍️ NOVA ENCOMENDA</span><span class="en-num">nº ' + _encNum(e.numero) + '</span></div>'
       + (d ? ('<div class="en-hora"><div><span class="en-dia">' + _encDiaTxt(d) + '</span> <span class="en-hh">' + horaBase + '</span></div>' + _encCdHTML(e, true) + '</div>') : '<div class="en-hora"><span class="en-dia">SEM HORA</span></div>')
       + '<div class="en-itens">' + (itens.length ? itens.map(function(it){ return '<div class="en-it"><span class="en-q">' + (it.qtd||1) + '×</span><span class="en-n">' + esc(it.nome||'') + '</span></div>'; }).join('') : '<div class="en-it"><span class="en-n">—</span></div>') + '</div>'
       + (e.obs ? ('<div class="en-obs">📝 ' + esc(e.obs) + '</div>') : '')
@@ -1903,7 +1915,9 @@
     if(['pronta','entregue','cancelada'].indexOf(est) < 0) acoes += '<button class="enc-a" data-a="pronta" data-id="' + e.id + '" style="border:none; background:#e6f7ec; color:#1e6b3c; border-radius:8px; padding:7px 11px; cursor:pointer; font-family:inherit; font-weight:800; font-size:.82rem;">🍳 Pronta</button>';
     if(est === 'pronta') acoes += '<button class="enc-a" data-a="entregue" data-id="' + e.id + '" style="border:none; background:#eef1ee; color:#5a6b5f; border-radius:8px; padding:7px 11px; cursor:pointer; font-family:inherit; font-weight:800; font-size:.82rem;">📦 Entregue</button>';
     if(['cancelada','entregue'].indexOf(est) < 0) acoes += '<button class="enc-a" data-a="cancelada" data-id="' + e.id + '" style="border:none; background:#fbe7e4; color:#b23; border-radius:8px; padding:7px 11px; cursor:pointer; font-family:inherit; font-weight:800; font-size:.82rem;">✕ Cancelar</button>';
-    acoes += '<button class="enc-del" data-id="' + e.id + '" style="border:1px solid #e8c4bf; color:var(--vermelho); background:#fff; border-radius:8px; padding:7px 10px; cursor:pointer; font-family:inherit; font-weight:700; font-size:.82rem;">🗑</button>';
+    if(est === 'cancelada') acoes += '<button class="enc-del" data-id="' + e.id + '" title="Apagar definitivamente" style="border:1px solid #e8c4bf; color:var(--vermelho); background:#fff; border-radius:8px; padding:7px 10px; cursor:pointer; font-family:inherit; font-weight:700; font-size:.82rem;">🗑</button>';
+    else if(e.arquivada) acoes += '<button class="enc-arq" data-id="' + e.id + '" data-v="0" title="Voltar a mostrar" style="border:1px solid var(--linha); color:#6b4a1f; background:#fff; border-radius:8px; padding:7px 10px; cursor:pointer; font-family:inherit; font-weight:700; font-size:.82rem;">↩ Desarquivar</button>';
+    else acoes += '<button class="enc-arq" data-id="' + e.id + '" data-v="1" title="Arquivar (sai da lista, fica guardada para as contas)" style="border:1px solid var(--linha); color:#6b4a1f; background:#fff; border-radius:8px; padding:7px 10px; cursor:pointer; font-family:inherit; font-weight:700; font-size:.82rem;">📦</button>';
     const falta = (est === 'pendente' || est === 'confirmada') ? _encFaltaTxt(e) : { txt:'', urg:0 };
     const neon = entregue ? 'box-shadow:none;' : (est === 'pendente' ? '' : ('box-shadow:0 0 0 1.5px ' + cor + ', 0 0 12px ' + glow + ';'));
     const pulsa = (est === 'pendente') ? ' pulsa' : '';
@@ -1911,7 +1925,7 @@
     const selo = entregue ? '<div class="enc-selo"><span>Entregue</span></div>' : '';
     return '<div class="card enc-card' + pulsa + '" style="position:relative; margin-bottom:10px; border-color:' + cor + '; --nc:' + cor + '; --ng:' + glow + '; ' + neon + '">'
       + '<div style="' + fade + '">'
-      +   '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;"><div style="font-weight:800; color:var(--castanho);">Encomenda nº ' + (e.numero != null ? e.numero : '—') + '</div></div>'
+      +   '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;"><div style="font-weight:800; color:var(--castanho);">Encomenda nº ' + _encNum(e.numero) + '</div></div>'
       +   '<div style="font-size:.82rem; color:#8a7a5c; margin:2px 0 8px;">Recebida ' + dia + ' às ' + hh + (e.nome ? (' · ' + esc(e.nome)) : '') + (e.levantamento ? (' · 🕒 ' + _levTxt(e.levantamento)) : '') + '</div>'
       +   '<div style="font-size:.9rem; color:var(--castanho); line-height:1.5;">' + (linhas || '—') + '</div>'
       +   (e.obs ? ('<div style="margin-top:6px;padding:6px 9px;background:#fff8d6;border-left:3px solid #e0b000;border-radius:6px;font-size:.86rem;color:#5a4a10;">📝 ' + esc(e.obs) + '</div>') : '')
@@ -1928,11 +1942,14 @@
   async function renderEncomendas(silencioso){
     const v = $('vistaEncomendas');
     if(!silencioso && !v.innerHTML) v.innerHTML = '<div class="msg">A carregar…</div>';
-    // Sem filtro de data: as encomendas entregues ficam disponíveis até o dono as apagar
-    const { data, error } = await sb.from('encomendas').select('*').eq('negocio_id', negocio.id).order('criado_em', { ascending:false });
+    // Últimos 120 dias de levantamento (as mais antigas continuam guardadas na base de dados)
+    const _desde = (function(){ const d = new Date(); d.setDate(d.getDate() - 120); return _encIsoDe(d); })();
+    let q = sb.from('encomendas').select('*').eq('negocio_id', negocio.id).order('criado_em', { ascending:false });
+    let { data, error } = await q.or('data_levant.gte.' + _desde + ',data_levant.is.null');
+    if(error && /data_levant/.test(error.message || '')){ const r2 = await sb.from('encomendas').select('*').eq('negocio_id', negocio.id).order('criado_em', { ascending:false }); data = r2.data; error = r2.error; }   // base ainda sem a coluna (encomendas-dias.sql por correr)
     if(error){ if(!silencioso) v.innerHTML = '<div class="msg erro">Erro: ' + esc(error.message) + '</div>'; return; }
     const arr = data || [];
-    const sig = JSON.stringify(arr.map(function(e){ return [e.id, e.estado]; })) + '|' + _encFiltro;
+    const sig = JSON.stringify(arr.map(function(e){ return [e.id, e.estado, e.arquivada, e.levantamento]; })) + '|' + _encFiltro + '|' + _encDia + '|' + _encVerArq;
     if(silencioso && sig === _encSig) return;   // nada mudou → não re-desenha (evita piscar)
     _encSig = sig;
     // Som quando chega uma encomenda NOVA (id que ainda não tínhamos visto)
@@ -1942,74 +1959,103 @@
     _encCache = arr;
     _pintaEnc();
   }
+  let _encDia = null, _encVerArq = false;
   function _pintaEnc(){
     const v = $('vistaEncomendas'); if(!v) return;
-    const arr = _encCache || [];
-    const cont = { pendente:0, confirmada:0, pronta:0, entregue:0, cancelada:0 };
-    arr.forEach(function(e){ const s = e.estado || 'pendente'; if(cont[s] == null) cont[s] = 0; cont[s]++; });
+    const todas = _encCache || [];
+    if(!_encDia) _encDia = _encHojeIso();
+    const hojeIso = _encHojeIso();
+    const ativas = todas.filter(function(e){ return _encVerArq || !e.arquivada; });
+    const doDia = ativas.filter(function(e){ return _encDiaDe(e) === _encDia; });
+    const nArq = todas.filter(function(e){ return e.arquivada && _encDiaDe(e) === _encDia; }).length;
     if(!_ENC_GRP[_encFiltro]) _encFiltro = 'pendente';
-    // barra de som + filtros
+    // contagens: Pendentes = todas as que esperam resposta (qualquer dia); as outras = do dia escolhido
+    const cont = { pendente:0, confirmada:0, pronta:0, entregue:0, cancelada:0 };
+    ativas.forEach(function(e){ if((e.estado || 'pendente') === 'pendente') cont.pendente++; });
+    doDia.forEach(function(e){ const st = e.estado || 'pendente'; if(st !== 'pendente') cont[st] = (cont[st] || 0) + 1; });
     const somBtn = '<button id="encSomBtn" type="button" style="border:1px solid var(--linha); background:#fff; border-radius:999px; padding:6px 12px; cursor:pointer; font-family:inherit; font-weight:700; font-size:.8rem; color:var(--castanho);">' + (_encSomOn() ? '🔔 Som ligado' : '🔕 Som desligado') + '</button>';
+    // barra do dia
+    const dd = new Date(_encDia + 'T00:00:00');
+    const nomeDia = (_encDia === hojeIso) ? 'Hoje' : (function(){ const am = new Date(); am.setDate(am.getDate() + 1); const on = new Date(); on.setDate(on.getDate() - 1); if(_encDia === _encIsoDe(am)) return 'Amanhã'; if(_encDia === _encIsoDe(on)) return 'Ontem'; return ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'][dd.getDay()]; })();
+    const totDia = doDia.filter(function(e){ return e.estado === 'entregue'; }).reduce(function(t, e){ return t + (Number(e.total) || 0); }, 0);
+    const nDia = doDia.filter(function(e){ return e.estado !== 'cancelada'; }).length;
+    let html = '<div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap;"><div style="font-weight:800; color:var(--castanho);">🛍️ Encomendas</div>' + somBtn + '</div>'
+      + '<div class="enc-diabar">'
+      +   '<button type="button" class="enc-dia-nav" id="encDiaAnt" aria-label="Dia anterior">‹</button>'
+      +   '<div class="enc-dia-c"><div class="enc-dia-n">' + nomeDia + ' · ' + dd.getDate() + '/' + (dd.getMonth()+1) + '</div><div class="enc-dia-r">' + nDia + ' encomenda(s)' + (totDia ? (' · ' + totDia.toFixed(2).replace('.', ',') + ' € entregues') : '') + '</div></div>'
+      +   '<button type="button" class="enc-dia-nav" id="encDiaSeg" aria-label="Dia seguinte">›</button>'
+      +   '<input type="date" id="encDiaData" value="' + _encDia + '" title="Escolher dia">'
+      +   (_encDia !== hojeIso ? '<button type="button" class="enc-dia-hoje" id="encDiaHoje">Hoje</button>' : '')
+      + '</div>';
     let chips = '<div class="enc-filtros">';
-    _ENC_ORDEM.forEach(function(s){ const g = _ENC_GRP[s]; chips += '<button class="enc-chip ' + g.cls + (s === _encFiltro ? ' on' : '') + '" data-f="' + s + '" type="button">' + g.nome + '<span class="cnt">' + (cont[s] || 0) + '</span></button>'; });
+    _ENC_ORDEM.forEach(function(st){ const g = _ENC_GRP[st]; chips += '<button class="enc-chip ' + g.cls + (st === _encFiltro ? ' on' : '') + '" data-f="' + st + '" type="button">' + g.nome + '<span class="cnt">' + (cont[st] || 0) + '</span></button>'; });
     chips += '</div>';
-    let html = '<div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap;"><div style="font-weight:800; color:var(--castanho);">🛍️ Encomendas <span style="color:#8a7a5c; font-weight:600; font-size:.85rem;">(' + arr.length + ')</span></div>' + somBtn + '</div>' + chips;
-    // barra específica dos Entregues: exportar PDF (dia/mês) + apagar todas
+    html += chips;
     if(_encFiltro === 'entregue'){
       html += '<div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;">'
-        + '<button id="entPdfDia" type="button" style="flex:1; min-width:130px; border:none; background:var(--verde,#2e9e5b); color:#fff; border-radius:10px; padding:10px; cursor:pointer; font-family:inherit; font-weight:800; font-size:.86rem;">📄 PDF do dia</button>'
+        + '<button id="entPdfDia" type="button" style="flex:1; min-width:130px; border:none; background:var(--verde,#2e9e5b); color:#fff; border-radius:10px; padding:10px; cursor:pointer; font-family:inherit; font-weight:800; font-size:.86rem;">📄 PDF deste dia</button>'
         + '<button id="entPdfMes" type="button" style="flex:1; min-width:130px; border:none; background:#3a7a52; color:#fff; border-radius:10px; padding:10px; cursor:pointer; font-family:inherit; font-weight:800; font-size:.86rem;">📄 PDF do mês</button>'
-        + '<button id="entApagarTodas" type="button" style="border:1px solid #e8c4bf; background:#fff; color:var(--vermelho,#b23); border-radius:10px; padding:10px 13px; cursor:pointer; font-family:inherit; font-weight:800; font-size:.86rem;">🗑 Apagar todas</button>'
+        + '<button id="entArqTodas" type="button" style="border:1px solid var(--linha); background:#fff; color:#6b4a1f; border-radius:10px; padding:10px 13px; cursor:pointer; font-family:inherit; font-weight:800; font-size:.86rem;">📦 Arquivar as deste dia</button>'
         + '</div>';
     }
-    let doFiltro = arr.filter(function(e){ return (e.estado || 'pendente') === _encFiltro; });
-    if(!doFiltro.length){
-      html += '<div class="card"><div style="color:#8a7a5c; font-size:.9rem;">Sem encomendas em "' + _ENC_GRP[_encFiltro].nome + '".</div></div>';
-    } else if(_encFiltro === 'pendente' || _encFiltro === 'confirmada' || _encFiltro === 'pronta'){
-      // ordem de trabalho: pela hora de levantamento (as sem hora ficam pela hora de chegada), Hoje primeiro
+    let lista;
+    if(_encFiltro === 'pendente'){
+      // a responder: de todos os dias, por ordem de levantamento
       const chave = function(e){ const d = _encLevDate(e); return d ? d.getTime() : new Date(e.criado_em).getTime(); };
-      doFiltro = doFiltro.slice().sort(function(a, b){ return chave(a) - chave(b); });
-      const hojeIso = _encHojeIso();
-      const hoje = doFiltro.filter(function(e){ const d = _encLevDate(e); return !d || _encIsoDe(d) <= hojeIso; });
-      const prox = doFiltro.filter(function(e){ const d = _encLevDate(e); return d && _encIsoDe(d) > hojeIso; });
-      if(hoje.length){ html += '<div style="font-size:.8rem;font-weight:800;color:#8a7a5c;margin:6px 0 6px;">HOJE · ' + hoje.length + '</div>'; hoje.forEach(function(e){ html += _cartaEnc(e, _ENC_GRP[_encFiltro]); }); }
-      if(prox.length){ html += '<div style="font-size:.8rem;font-weight:800;color:#8a7a5c;margin:14px 0 6px;">PRÓXIMOS DIAS · ' + prox.length + '</div>'; prox.forEach(function(e){ html += _cartaEnc(e, _ENC_GRP[_encFiltro]); }); }
-      if(_encFiltro === 'pendente'){ try{ doFiltro.forEach(function(e){ _encMarcarVisto(e.id); }); }catch(e){} }
+      lista = ativas.filter(function(e){ return (e.estado || 'pendente') === 'pendente'; }).sort(function(x, y){ return chave(x) - chave(y); });
+      if(!lista.length){ html += '<div class="card"><div style="color:#8a7a5c; font-size:.9rem;">Nenhuma encomenda à espera de resposta.</div></div>'; }
+      else {
+        const hoje = lista.filter(function(e){ return _encDiaDe(e) <= hojeIso; }), prox = lista.filter(function(e){ return _encDiaDe(e) > hojeIso; });
+        if(hoje.length){ html += '<div style="font-size:.8rem;font-weight:800;color:#8a7a5c;margin:6px 0 6px;">HOJE · ' + hoje.length + '</div>'; hoje.forEach(function(e){ html += _cartaEnc(e, _ENC_GRP.pendente); }); }
+        if(prox.length){ html += '<div style="font-size:.8rem;font-weight:800;color:#8a7a5c;margin:14px 0 6px;">PRÓXIMOS DIAS · ' + prox.length + '</div>'; prox.forEach(function(e){ html += _cartaEnc(e, _ENC_GRP.pendente); }); }
+        try{ lista.forEach(function(e){ _encMarcarVisto(e.id); }); }catch(e){}
+      }
     } else {
-      doFiltro.forEach(function(e){ html += _cartaEnc(e, _ENC_GRP[_encFiltro]); });
+      const chave = function(e){ const d = _encLevDate(e); return d ? d.getTime() : new Date(e.criado_em).getTime(); };
+      lista = doDia.filter(function(e){ return (e.estado || 'pendente') === _encFiltro; }).sort(function(x, y){ return (_encFiltro === 'entregue') ? ((y.numero || 0) - (x.numero || 0)) : (chave(x) - chave(y)); });
+      if(!lista.length) html += '<div class="card"><div style="color:#8a7a5c; font-size:.9rem;">Sem encomendas em "' + _ENC_GRP[_encFiltro].nome + '" neste dia.</div></div>';
+      else lista.forEach(function(e){ html += _cartaEnc(e, _ENC_GRP[_encFiltro]); });
     }
+    if(nArq || _encVerArq) html += '<label style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:.85rem;color:#8a7a5c;cursor:pointer;"><input type="checkbox" id="encVerArq"' + (_encVerArq ? ' checked' : '') + ' style="width:auto;"> Mostrar arquivadas deste dia (' + nArq + ')</label>';
     v.innerHTML = html;
     _encCdTick();
     // som
-    const sb2 = document.getElementById('encSomBtn'); if(sb2) sb2.onclick = function(){ const novo = _encSomOn() ? '0' : '1'; try{ localStorage.setItem('amesaEncSom', novo); }catch(e){} _somPronto = false; _prepararSom(); sb2.textContent = (novo === '1') ? '🔔 Som ligado' : '🔕 Som desligado'; if(novo === '1') setTimeout(_beep, 60); };
+    const sb2 = document.getElementById('encSomBtn'); if(sb2) sb2.onclick = function(){ const novo = _encSomOn() ? '0' : '1'; try{ localStorage.setItem('amesaEncSom', novo); }catch(e){} _somPronto = false; _prepararSom(); sb2.textContent = (novo === '1') ? '🔔 Som ligado' : '🔕 Som desligado'; if(novo === '1') setTimeout(_beep, 120); };
+    // dia
+    const mudaDia = function(n){ const x = new Date(_encDia + 'T00:00:00'); x.setDate(x.getDate() + n); _encDia = _encIsoDe(x); _pintaEnc(); };
+    $('encDiaAnt').onclick = function(){ mudaDia(-1); };
+    $('encDiaSeg').onclick = function(){ mudaDia(1); };
+    $('encDiaData').onchange = function(){ if(this.value){ _encDia = this.value; _pintaEnc(); } };
+    const bh = $('encDiaHoje'); if(bh) bh.onclick = function(){ _encDia = hojeIso; _pintaEnc(); };
+    const va = $('encVerArq'); if(va) va.onchange = function(){ _encVerArq = va.checked; _pintaEnc(); };
     // filtros
     v.querySelectorAll('.enc-chip').forEach(function(b){ b.onclick = function(){ _encFiltro = b.getAttribute('data-f'); _pintaEnc(); }; });
-    // ações de estado / apagar
+    // ações de estado / arquivar / apagar
     v.querySelectorAll('.enc-a').forEach(function(b){ b.onclick = function(){ _encSetEstado(b.dataset.id, b.dataset.a); }; });
-    v.querySelectorAll('.enc-del').forEach(function(b){ b.onclick = async function(){ if(!(await window.__amConfirm('Confirmar',{texto:'Apagar esta encomenda da lista?', ok:'Sim', cancelar:'Não'}))) return; const { error } = await sb.from('encomendas').delete().eq('id', b.dataset.id); if(error){ alert('Erro: ' + error.message); return; } renderEncomendas(); }; });
-    // entregues: PDF + apagar todas
+    v.querySelectorAll('.enc-arq').forEach(function(b){ b.onclick = async function(){ b.disabled = true; const { error } = await sb.from('encomendas').update({ arquivada: b.dataset.v === '1' }).eq('id', b.dataset.id); if(error){ alert(/arquivada/.test(error.message) ? 'Falta correr o encomendas-dias.sql no Supabase.' : ('Erro: ' + error.message)); b.disabled = false; return; } renderEncomendas(); }; });
+    v.querySelectorAll('.enc-del').forEach(function(b){ b.onclick = async function(){ if(!(await window.__amConfirm('Apagar', { texto:'Apagar definitivamente esta encomenda cancelada?', ok:'Apagar', cancelar:'Não' }))) return; const { error } = await sb.from('encomendas').delete().eq('id', b.dataset.id); if(error){ alert('Erro: ' + error.message); return; } renderEncomendas(); }; });
+    // entregues: PDF + arquivar
     const pd = document.getElementById('entPdfDia'); if(pd) pd.onclick = function(){ _exportEntreguesPDF('dia'); };
     const pm = document.getElementById('entPdfMes'); if(pm) pm.onclick = function(){ _exportEntreguesPDF('mes'); };
-    const ap = document.getElementById('entApagarTodas'); if(ap) ap.onclick = async function(){
-      const lista = (_encCache || []).filter(function(e){ return (e.estado||'') === 'entregue'; });
-      if(!lista.length) return;
-      if(!(await window.__amConfirm('Apagar todas', { texto:'Apagar TODAS as ' + lista.length + ' encomendas entregues? Esta ação não se pode desfazer.', ok:'Apagar todas', cancelar:'Cancelar' }))) return;
-      const ids = lista.map(function(e){ return e.id; });
-      const { error } = await sb.from('encomendas').delete().in('id', ids);
-      if(error){ alert('Erro: ' + error.message); return; }
+    const ar = document.getElementById('entArqTodas'); if(ar) ar.onclick = async function(){
+      const ids = doDia.filter(function(e){ return e.estado === 'entregue' && !e.arquivada; }).map(function(e){ return e.id; });
+      if(!ids.length) return;
+      if(!(await window.__amConfirm('Arquivar', { texto:'Arquivar as ' + ids.length + ' encomendas entregues deste dia? Saem da lista mas ficam guardadas (contam para os PDF).', ok:'Arquivar', cancelar:'Cancelar' }))) return;
+      const { error } = await sb.from('encomendas').update({ arquivada:true }).in('id', ids);
+      if(error){ alert(/arquivada/.test(error.message) ? 'Falta correr o encomendas-dias.sql no Supabase.' : ('Erro: ' + error.message)); return; }
       renderEncomendas();
     };
   }
   // Exportar as encomendas entregues em PDF — escopo 'dia' (hoje) ou 'mes' (mês atual). Agrega por prato com Carne/Peixe e soma final.
   async function _exportEntreguesPDF(escopo){
-    const todas = (_encCache || []).filter(function(e){ return (e.estado||'') === 'entregue'; });
-    const hoje0 = new Date(); const hojeIso = isoLocal(hoje0);
+    const todas = (_encCache || []).filter(function(e){ return (e.estado||'') === 'entregue'; });   // inclui arquivadas
+    const hoje0 = new Date((_encDia || _encHojeIso()) + 'T00:00:00'); const hojeIso = _encIsoDe(hoje0);
     const mesPref = hoje0.getFullYear() + '-' + String(hoje0.getMonth()+1).padStart(2,'0');
     const arr = todas.filter(function(e){
-      const d = new Date(e.criado_em); const iso = isoLocal(d);
+      const iso = _encDiaDe(e);
       return escopo === 'dia' ? (iso === hojeIso) : (iso.indexOf(mesPref) === 0);
     });
-    if(!arr.length){ alert('Não há encomendas entregues ' + (escopo === 'dia' ? 'hoje' : 'neste mês') + '.'); return; }
+    if(!arr.length){ alert('Não há encomendas entregues ' + (escopo === 'dia' ? 'neste dia' : 'neste mês') + '.'); return; }
     const mapa = {}; let totalGeral = 0, qtdGeral = 0;
     arr.forEach(function(e){ (Array.isArray(e.itens)?e.itens:[]).forEach(function(it){
       const nome = (it.nome||'').trim(); if(!nome) return;
