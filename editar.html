@@ -984,6 +984,16 @@ amesadigital.pt</textarea>
             <option value="pilula">Pílula — ícone + texto lado a lado</option>
             <option value="quadrado">Quadrado — ícone com legenda por baixo</option>
           </select>
+          <label style="display:flex; align-items:center; gap:8px; margin-top:14px; font-size:.85rem; color:var(--castanho); font-weight:700; cursor:pointer;"><input type="checkbox" id="modoCoresOn" style="width:auto;"> 🎨 Escolher as cores dos ícones (senão usa as do modelo)</label>
+          <div id="modoCoresBox" style="display:none; margin-top:6px; padding:10px 12px; border:1px solid #e3d9c4; border-radius:10px;">
+            <div style="display:flex; gap:14px; flex-wrap:wrap; align-items:flex-end;">
+              <div><label style="display:block; font-size:.78rem; color:var(--castanho);">Ícone</label><input type="color" id="modoCorIcone" value="#ffffff" style="width:52px; height:36px; padding:2px;"></div>
+              <div><label style="display:block; font-size:.78rem; color:var(--castanho);">Fundo da caixa</label><input type="color" id="modoCorFundo" value="#000000" style="width:52px; height:36px; padding:2px;"></div>
+              <div><label style="display:block; font-size:.78rem; color:var(--castanho);">Legenda</label><input type="color" id="modoCorTexto" value="#ffffff" style="width:52px; height:36px; padding:2px;"></div>
+            </div>
+            <label style="display:block; margin-top:8px; font-size:.78rem; color:var(--castanho);">Opacidade do fundo — <span id="modoCorOpVal">70%</span></label>
+            <input type="range" id="modoCorOp" min="0" max="100" step="5" value="70" style="width:100%; accent-color:var(--dourado);">
+          </div>
           <label style="display:block; margin-top:12px; font-size:.85rem; color:var(--castanho);">Alinhamento do conteúdo (pílula)</label>
           <select id="modoAlinhar" style="width:100%; padding:9px; border-radius:10px; border:1px solid #d9c9a8;">
             <option value="esquerda">À esquerda</option>
@@ -2815,6 +2825,10 @@ amesadigital.pt</textarea>
           const s = document.getElementById(p[0] + 'Val'); if(s) s.textContent = v + '%';
         }); }
       { const _es = document.getElementById('modoEstilo'); if(_es) _es.value = _m.estilo || 'pilula'; }
+      { const _c = (_m.cores && typeof _m.cores === 'object') ? _m.cores : {}; const $c = function(id){ return document.getElementById(id); };
+        if($c('modoCoresOn')) $c('modoCoresOn').checked = !!_c.on; if($c('modoCoresBox')) $c('modoCoresBox').style.display = _c.on ? 'block' : 'none';
+        if($c('modoCorIcone')) $c('modoCorIcone').value = _c.icone || '#ffffff'; if($c('modoCorFundo')) $c('modoCorFundo').value = _c.fundo || '#000000'; if($c('modoCorTexto')) $c('modoCorTexto').value = _c.texto || '#ffffff';
+        const _op = (_c.opacidade != null ? _c.opacidade : 70); if($c('modoCorOp')) $c('modoCorOp').value = _op; if($c('modoCorOpVal')) $c('modoCorOpVal').textContent = _op + '%'; }
       { const _al = document.getElementById('modoAlinhar'); if(_al) _al.value = _m.alinhar || 'esquerda'; }
       { const _an = document.getElementById('modoAnim'); if(_an) _an.value = _m.anim || 'subir'; }
       { const _en = document.getElementById('modoEntrada'); if(_en){ const v = parseFloat(_m.entrada) || 0; _en.value = v; const s = document.getElementById('modoEntradaVal'); if(s) s.textContent = v.toFixed(1).replace('.', ',') + ' s'; } } }
@@ -3172,6 +3186,8 @@ amesadigital.pt</textarea>
   { const _ma = document.getElementById('modoAnim'); if(_ma) _ma.addEventListener('change', function(){ if(window.__agendarPreview) window.__agendarPreview(); }); }
   { const _mal = document.getElementById('modoAlinhar'); if(_mal) _mal.addEventListener('change', function(){ if(window.__agendarPreview) window.__agendarPreview(); }); }
   { const _me2 = document.getElementById('modoEstilo'); if(_me2) _me2.addEventListener('change', function(){ if(window.__agendarPreview) window.__agendarPreview(); }); }
+  { const _co = document.getElementById('modoCoresOn'); if(_co) _co.addEventListener('change', function(){ const b = document.getElementById('modoCoresBox'); if(b) b.style.display = _co.checked ? 'block' : 'none'; });
+    const _op = document.getElementById('modoCorOp'); if(_op) _op.addEventListener('input', function(){ const v = document.getElementById('modoCorOpVal'); if(v) v.textContent = _op.value + '%'; }); }
   document.getElementById('abrirEfeitoSel').addEventListener('change', e => {
     const wb = document.getElementById('wipeBox'); if(wb) wb.style.display = (e.target.value === 'wipe') ? 'block' : 'none';
   });
@@ -3754,7 +3770,7 @@ amesadigital.pt</textarea>
         const _estilo = (document.getElementById('modoEstilo') || {}).value || 'pilula';
         const _alinhar = (document.getElementById('modoAlinhar') || {}).value || 'esquerda';
         const _entrada = parseFloat((document.getElementById('modoEntrada') || {}).value) || 0;
-        config.modos = { ativo:_gm('modosAtivo'), normal:_gm('modoNormal'), takeaway:_gm('modoTakeaway'), grupos:_gm('modoGrupos'), cerimonias:_gm('modoCerimonias'), reservas:_gm('modoReservas'), verBotao:_gm('modoVerBotao'), estilo:_estilo, alinhar:_alinhar, anim:_anim, entrada:_entrada, tam: { normal:_tv('modoTamNormal'), takeaway:_tv('modoTamTakeaway'), grupos:_tv('modoTamGrupos'), cerimonias:_tv('modoTamCerimonias'), reservas:_tv('modoTamReservas') }, pos:_mpos }; }
+        config.modos = { ativo:_gm('modosAtivo'), normal:_gm('modoNormal'), takeaway:_gm('modoTakeaway'), grupos:_gm('modoGrupos'), cerimonias:_gm('modoCerimonias'), reservas:_gm('modoReservas'), verBotao:_gm('modoVerBotao'), estilo:_estilo, cores:{ on:_gm('modoCoresOn'), icone:((document.getElementById('modoCorIcone')||{}).value||'#ffffff'), fundo:((document.getElementById('modoCorFundo')||{}).value||'#000000'), texto:((document.getElementById('modoCorTexto')||{}).value||'#ffffff'), opacidade:(parseInt((document.getElementById('modoCorOp')||{}).value,10)||0) }, alinhar:_alinhar, anim:_anim, entrada:_entrada, tam: { normal:_tv('modoTamNormal'), takeaway:_tv('modoTamTakeaway'), grupos:_tv('modoTamGrupos'), cerimonias:_tv('modoTamCerimonias'), reservas:_tv('modoTamReservas') }, pos:_mpos }; }
       { const _ca = document.getElementById('carrinhoAtivo'), _cp = document.getElementById('carrinhoPrecos'), _cw = document.getElementById('carrinhoWhats'), _cws = document.getElementById('carrinhoWhatsSempre');
         config.carrinho = { ativo: _ca ? _ca.checked : true, precos: _cp ? _cp.checked : true, whatsapp: _cw ? _cw.value.trim() : '', whatsappSempre: _cws ? _cws.checked : false,
           levantamento: ((document.getElementById('cartLevAtivo') || {}).checked !== false),

@@ -2302,6 +2302,11 @@
   #modoGate.estilo-quadrado .im-lb{ font-size:calc(.9rem * var(--ic-scale, 1)); font-weight:600; color:#f4ead2; letter-spacing:.3px; }
   #modoGate .im-opt:active{ filter:brightness(1.12); }
   #introModosWrap .im-opt:active{ filter:brightness(1.12); }
+  /* Cores próprias dos ícones (sobrepõem as do modelo) */
+  #introModosWrap.im-cores .im-inner, #modoGate.im-cores .im-inner{ color:var(--im-cor-ic) !important; }
+  #introModosWrap.im-cores.estilo-quadrado .im-ic, #modoGate.im-cores.estilo-quadrado .im-ic,
+  #introModosWrap.im-cores.estilo-pilula .im-inner, #modoGate.im-cores.estilo-pilula .im-inner{ background:var(--im-cor-fundo) !important; border-color:var(--im-cor-borda) !important; }
+  #introModosWrap.im-cores .im-lb, #modoGate.im-cores .im-lb{ color:var(--im-cor-txt) !important; }
   #introModosWrap .im-guia{ position:absolute; background:rgba(120,200,255,.9); pointer-events:none; z-index:6; box-shadow:0 0 4px rgba(120,200,255,.7); }
   #introModosWrap .im-guia-h{ left:0; right:0; height:1px; }
   #introModosWrap .im-guia-v{ top:0; bottom:0; width:1px; }
@@ -6058,6 +6063,19 @@
     reservas: ['Reservas', '<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><rect x="12" y="14" width="24" height="22" rx="3"/><path d="M12 21H36"/><path d="M18 11V16"/><path d="M30 11V16"/><path d="M18 28H24"/></g></svg>']
   };
   window.__IC_MODOS = IC_MODOS;
+  // Cores próprias dos ícones da abertura (Aparência → Ecrã de abertura): ícone, fundo da caixa/pílula e legenda
+  window.__imAplicarCores = function(el, cfg){
+    if(!el) return;
+    var c = (cfg && cfg.cores && typeof cfg.cores === 'object') ? cfg.cores : null;
+    el.classList.toggle('im-cores', !!(c && c.on));
+    if(!(c && c.on)) return;
+    var hex = function(h, a){ h = String(h || '#000000').replace('#',''); if(h.length === 3) h = h.split('').map(function(x){ return x + x; }).join(''); var n = parseInt(h, 16) || 0; return 'rgba(' + ((n>>16)&255) + ',' + ((n>>8)&255) + ',' + (n&255) + ',' + a + ')'; };
+    var op = Math.max(0, Math.min(100, parseInt(c.opacidade, 10))); if(isNaN(op)) op = 70;
+    el.style.setProperty('--im-cor-ic', c.icone || '#ffffff');
+    el.style.setProperty('--im-cor-fundo', hex(c.fundo || '#000000', op / 100));
+    el.style.setProperty('--im-cor-borda', hex(c.icone || '#ffffff', .45));
+    el.style.setProperty('--im-cor-txt', c.texto || '#ffffff');
+  };
   window.__renderIntroModos = function(preview){
     try{
       var ov = document.getElementById('introOverlay'); if(!ov) return;
@@ -6081,6 +6099,7 @@
       var animCls = 'anim-' + (cfg.anim || 'subir');
       var wrap = document.createElement('div'); wrap.id = 'introModosWrap';
       wrap.classList.add('estilo-' + (cfg.estilo || 'pilula'));
+      try{ window.__imAplicarCores(wrap, cfg); }catch(e){}
       wrap.style.setProperty('--im-just', { esquerda:'flex-start', centro:'center', direita:'flex-end' }[cfg.alinhar] || 'flex-start');
       modos.forEach(function(m, i){
         var n = IC_MODOS[m]; if(!n) return;
@@ -9436,6 +9455,7 @@
       var animCls = 'anim-' + (_cfg.anim || 'subir');
       g.classList.remove('estilo-pilula','estilo-quadrado');
       g.classList.add('estilo-' + (_cfg.estilo || 'pilula'));
+      try{ window.__imAplicarCores(g, _cfg); }catch(e){}
       g.style.setProperty('--im-just', { esquerda:'flex-start', centro:'center', direita:'flex-end' }[_cfg.alinhar] || 'flex-start');
       var h = '<div class="mg-tit">Bem-vindo 👋</div><div class="mg-sub">Como queres ver o menu?</div><div class="mg-icons">';
       modos.forEach(function(m, i){
