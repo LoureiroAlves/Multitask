@@ -9830,8 +9830,6 @@
   #ovoSelo button small{ display:block; font-weight:600; opacity:.92; font-size:.78rem; }
   #ovoSelo.fim button{ background:linear-gradient(135deg,#5a6b5f,#3a4a3f); box-shadow:none; }
   #ovoSelo{ position:relative; }
-  #ovoSelo .ovo-x{ display:none; position:absolute; top:6px; right:20px; width:28px; height:28px; border-radius:50%; background:rgba(255,255,255,.22); color:#fff; font-weight:900; font-size:.9rem; align-items:center; justify-content:center; cursor:pointer; }
-  #ovoSelo.fim .ovo-x{ display:flex; }
   #ovoSelo.agend button{ background:linear-gradient(135deg,#2a5aa8,#7b3fb0); box-shadow:0 8px 22px rgba(42,90,168,.25); }
   #ovoSelo .ovo-cd{ font-variant-numeric:tabular-nums; }
   @keyframes ovoBounce{ 0%,100%{ transform:translateY(0) rotate(-6deg); } 50%{ transform:translateY(-4px) rotate(6deg); } }
@@ -9878,7 +9876,7 @@
     var r = await sbC.from('ovo_jogos_publico').select('*').eq('negocio_id', window.__negocioId).gte('fim', new Date(Date.now() - 24*3600*1000).toISOString()).order('inicio', { ascending:false }).limit(5);
     if(r.error || !r.data) return;
     var ativo = r.data.filter(function(j){ return j.estado === 'ativo'; })[0];
-    var visivel = function(j){ return !j.esconder_menu && !ls('amesaOvoFechado:' + j.id); };   // o restaurante tirou-o do menu, ou o cliente fechou-o
+    var visivel = function(j){ return !j.esconder_menu; };   // o restaurante tirou-o do menu
     var term = r.data.filter(function(j){ return visivel(j) && j.estado === 'terminado' && j.terminado_em && (Date.now() - new Date(j.terminado_em).getTime()) < 24*3600*1000; })[0];
     var exp = r.data.filter(function(j){ return visivel(j) && j.estado === 'expirado' && (Date.now() - new Date(j.fim).getTime()) < 24*3600*1000; })[0];
     var agend = r.data.filter(function(j){ return j.estado === 'agendado' && (new Date(j.inicio).getTime() - Date.now()) < 7*24*3600*1000; }).sort(function(a, b){ return new Date(a.inicio) - new Date(b.inicio); })[0];
@@ -9909,14 +9907,14 @@
     }
     if(J.estado === 'expirado'){
       selo.className = 'fim'; selo.style.display = 'block';
-      selo.innerHTML = '<button type="button"><span class="ov">⏰</span><span>Tempo esgotado<small>Ninguém encontrou o ovo · terminou às ' + hhmm(J.fim) + '</small></span></button>' + xSelo();
-      selo.querySelector('button').onclick = function(){ abrirFolha('expirado'); }; ligarX(selo);
+      selo.innerHTML = '<button type="button"><span class="ov">⏰</span><span>Tempo esgotado<small>Ninguém encontrou o ovo · terminou às ' + hhmm(J.fim) + '</small></span></button>';
+      selo.querySelector('button').onclick = function(){ abrirFolha('expirado'); };
       pararCaca(); return;
     }
     if(J.estado === 'terminado'){
       selo.className = 'fim'; selo.style.display = 'block';
-      selo.innerHTML = '<button type="button"><span class="ov">🥚</span><span>Jogo terminado<small>' + (venc.length ? ('O ovo foi encontrado por ' + esc(venc.map(function(v){ return v.nome; }).join(', ')) + ' às ' + hhmm(venc[0].quando)) : 'O ovo ficou por encontrar') + '</small></span></button>' + xSelo();
-      selo.querySelector('button').onclick = function(){ abrirFolha('fim'); }; ligarX(selo);
+      selo.innerHTML = '<button type="button"><span class="ov">🥚</span><span>Jogo terminado<small>' + (venc.length ? ('O ovo foi encontrado por ' + esc(venc.map(function(v){ return v.nome; }).join(', ')) + ' às ' + hhmm(venc[0].quando)) : 'O ovo ficou por encontrar') + '</small></span></button>';
+      selo.querySelector('button').onclick = function(){ abrirFolha('fim'); };
       pararCaca(); return;
     }
     // relógio até ao fim: quando o tempo acaba, todos (a procurar ou não) recebem o aviso — o fim não muda a base de dados, por isso não chega pelo Realtime
@@ -9928,8 +9926,6 @@
     if(P){ iniciarCaca(); }
     else if(!ls('amesaOvoVisto:' + J.id)){ ls('amesaOvoVisto:' + J.id, '1'); setTimeout(function(){ abrirFolha('abertura'); }, 1400); }
   }
-  function xSelo(){ return '<span class="ovo-x" role="button" aria-label="Fechar">✕</span>'; }
-  function ligarX(selo){ var x = selo.querySelector('.ovo-x'); if(!x || !J) return; var id = J.id; x.onclick = function(e){ e.stopPropagation(); ls('amesaOvoFechado:' + id, '1'); selo.style.display = 'none'; }; }
   function quandoTxt(ts){ var d = new Date(ts), h = new Date(); var am = new Date(); am.setDate(am.getDate() + 1); var mesmo = function(a, b){ return a.toDateString() === b.toDateString(); }; return (mesmo(d, h) ? 'hoje às ' : (mesmo(d, am) ? 'amanhã às ' : (d.getDate() + '/' + (d.getMonth()+1) + ' às '))) + hhmm(ts); }
   function contagem(ts){ var s = Math.max(0, Math.round((new Date(ts).getTime() - Date.now()) / 1000)); var d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m = Math.floor((s % 3600) / 60), x = s % 60;
     if(d > 0) return 'faltam ' + d + 'd ' + h + 'h'; if(h > 0) return 'faltam ' + h + 'h ' + String(m).padStart(2,'0') + 'm'; return 'faltam ' + String(m).padStart(2,'0') + ':' + String(x).padStart(2,'0'); }

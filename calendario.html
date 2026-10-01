@@ -1774,7 +1774,7 @@
   async function _ovVigiar(){
     try{
       if(!negocio || !negocio.id) return;
-      const r = await sb.from('ovo_jogos').select('id,nome,premio_nome,estado,inicio,fim').eq('negocio_id', negocio.id).in('estado', ['publicado','terminado']).gte('fim', new Date(Date.now() - 6*3600*1000).toISOString());
+      const r = await sb.from('ovo_jogos').select('id,nome,premio_nome,estado,inicio,fim,limite_vencedores').eq('negocio_id', negocio.id).in('estado', ['publicado','terminado']).gte('fim', new Date(Date.now() - 6*3600*1000).toISOString());
       const ids = (r.data || []).map(function(j){ return j.id; }); if(!ids.length) return;
       const w = await sb.from('ovo_vencedores').select('id,jogo_id,nome,telefone,codigo,posicao,ganhou_em').in('jogo_id', ids).order('ganhou_em');
       const lista = w.data || [];
@@ -1782,7 +1782,9 @@
       lista.forEach(function(v){ if(_ovVencVistos[v.id]) return; _ovVencVistos[v.id] = 1; const j = (r.data || []).filter(function(x){ return x.id === v.jogo_id; })[0] || {};
         try{ localStorage.setItem('amesaOvoVencVistos:' + (SLUG||''), JSON.stringify(Object.keys(_ovVencVistos).slice(-200))); }catch(e){}
         try{ _beep(); if(navigator.vibrate) navigator.vibrate([100,60,100]); }catch(e){}
-        window.__amConfirm('🎉 Temos vencedor!', { html:'<div style="font-size:1.05rem;"><b>' + esc(v.nome || 'Alguém') + '</b> encontrou o ovo' + (v.posicao > 1 ? (' (' + v.posicao + '.º)') : '') + ' · ' + _ovDataTxt(v.ganhou_em) + '</div><div style="margin-top:6px;">🎁 ' + esc(j.premio_nome || '') + '</div><div style="font-family:ui-monospace,Menlo,monospace;font-weight:900;font-size:1.3rem;letter-spacing:1px;margin:8px 0;">' + esc(v.codigo) + '</div>' + (v.telefone ? ('<a href="tel:' + esc(v.telefone) + '" style="font-weight:800;color:#1f4e9c;text-decoration:none;">📞 ' + esc(v.telefone) + '</a>') : ''), ok:'OK', cancelar:null });
+        const _terminou = (v.posicao >= (j.limite_vencedores || 1));
+        window.__amConfirm('🎉 Temos vencedor!', { ok: _terminou ? '🙈 Tirar o aviso do menu' : 'OK', cancelar: _terminou ? 'Deixar visível' : null, html:'<div style="font-size:1.05rem;"><b>' + esc(v.nome || 'Alguém') + '</b> encontrou o ovo' + (v.posicao > 1 ? (' (' + v.posicao + '.º)') : '') + ' · ' + _ovDataTxt(v.ganhou_em) + '</div><div style="margin-top:6px;">🎁 ' + esc(j.premio_nome || '') + '</div><div style="font-family:ui-monospace,Menlo,monospace;font-weight:900;font-size:1.3rem;letter-spacing:1px;margin:8px 0;">' + esc(v.codigo) + '</div>' + (v.telefone ? ('<a href="tel:' + esc(v.telefone) + '" style="font-weight:800;color:#1f4e9c;text-decoration:none;">📞 ' + esc(v.telefone) + '</a>') : '') + (_terminou ? '<div style="margin-top:10px;font-size:.85rem;color:#8a7a5c;">O jogo terminou. Os clientes estão a ver no menu "Jogo terminado — encontrado por …". Queres tirar já esse aviso?</div>' : '') })
+          .then(async function(sim){ if(sim === true && _terminou){ await sb.from('ovo_jogos').update({ esconder_menu:true }).eq('id', v.jogo_id); if(!$('vistaOvo').classList.contains('hide')) renderOvo(); } });
         if(!$('vistaOvo').classList.contains('hide')) renderOvo();
       });
     }catch(e){}
