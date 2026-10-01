@@ -1536,18 +1536,28 @@
   // Envia push ao cliente da encomenda quando o estado muda
   async function _encAvisarCliente(id, estado, extra){
     if(['confirmada','pronta','cancelada'].indexOf(estado) < 0) return;
-    let ep = '', n = '';
+    let ep = '', n = '', enc = null;
     try{
-      const { data } = await sb.from('encomendas').select('numero, push_sub').eq('id', id).maybeSingle();
-      ep = data && data.push_sub && data.push_sub.endpoint; n = (data && data.numero) ? _encNum(data.numero) : '';
+      const { data } = await sb.from('encomendas').select('numero, push_sub, levantamento, itens, total').eq('id', id).maybeSingle();
+      enc = data; ep = data && data.push_sub && data.push_sub.endpoint; n = (data && data.numero) ? _encNum(data.numero) : '';
     }catch(e){ return; }
     if(!ep) return;   // o cliente não ativou notificações
-    let titulo, corpo;
-    if(estado === 'confirmada'){ titulo = '✅ Encomenda confirmada'; corpo = 'A tua encomenda' + (n ? (' nº ' + n) : '') + ' foi confirmada e já está a ser preparada.'; }
-    else if(estado === 'pronta'){ titulo = '🎉 Encomenda pronta!'; corpo = 'A tua encomenda' + (n ? (' nº ' + n) : '') + ' está pronta para levantar.'; }
-    else { titulo = '❌ Encomenda não confirmada'; corpo = 'A tua encomenda' + (n ? (' nº ' + n) : '') + ' não foi confirmada. Fala com o restaurante.'; }
-    if(extra) corpo += ' ' + extra;
-    try{ await sb.functions.invoke('enviar-push', { body: { negocio: negocio.id, titulo: titulo, corpo: corpo, url: (typeof _linkCardapio === 'function' ? _linkCardapio() : '/'), endpoints: [ep] } }); }catch(e){}
+    // O telemóvel mostra sempre o nome da app que recebeu o aviso (ex.: "ÀMesa") — por isso o RESTAURANTE vai no título
+    const rest = (negocio && negocio.nome) || 'O restaurante';
+    const qtd = (enc && Array.isArray(enc.itens)) ? enc.itens.reduce(function(t, it){ return t + (Number(it.qtd) || 1); }, 0) : 0;
+    const tot = (enc && Number(enc.total) > 0) ? (Number(enc.total).toFixed(2).replace('.', ',') + ' €') : '';
+    const lev = (enc && enc.levantamento) ? _levTxt(enc.levantamento).replace(/<[^>]+>/g, '') : '';
+    const resumo = [qtd ? (qtd + (qtd === 1 ? ' artigo' : ' artigos')) : '', tot].filter(Boolean).join(' · ');
+    let titulo, corpo, fixa = false;
+    if(estado === 'confirmada'){ titulo = '👨‍🍳 ' + rest + ' · nº ' + n + ' aceite!'; corpo = 'Já estamos a preparar a tua encomenda.' + (lev ? (' 🕒 ' + lev.charAt(0).toUpperCase() + lev.slice(1) + '.') : '') + (resumo ? ('\n' + resumo) : ''); }
+    else if(estado === 'pronta'){ titulo = '🎉 Está pronta! · ' + rest; corpo = 'A encomenda nº ' + n + ' está à tua espera no balcão. Bom apetite! 🍽️' + (tot ? ('\nA pagar: ' + tot) : ''); fixa = true; }
+    else { titulo = '😔 ' + rest + ' · nº ' + n + ' não aceite'; corpo = 'Pedimos desculpa, não conseguimos aceitar esta encomenda.'; }
+    if(extra) corpo += (estado === 'cancelada' ? ' Motivo: ' : ' ') + extra;
+    if(estado === 'cancelada') corpo += ' Fala connosco se precisares.';
+    // foto do restaurante (cabeçalho) como imagem grande do aviso — no Android aparece por baixo do texto
+    let foto = '';
+    try{ const fs = (negocio && negocio.config && negocio.config.header && negocio.config.header.fotos) || []; const f = fs.find(function(u){ return /^https?:\/\//.test(String(u)) && !/\.(mp4|webm|mov)$/i.test(String(u)); }); if(f) foto = f; }catch(e){}
+    try{ await sb.functions.invoke('enviar-push', { body: { negocio: negocio.id, titulo: titulo, corpo: corpo, url: (typeof _linkCardapio === 'function' ? _linkCardapio() : '/'), endpoints: [ep], tag: 'enc-' + id, image: (estado !== 'cancelada' ? foto : ''), fixa: fixa } }); }catch(e){}
   }
   let _encSig = '', _encTimer = null, _encIdsVistos = null, _somPronto = false;
   function _encSomOn(){ try{ return localStorage.getItem('amesaEncSom') !== '0'; }catch(e){ return true; } }

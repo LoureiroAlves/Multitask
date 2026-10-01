@@ -16,10 +16,14 @@ self.addEventListener('push', function(event){
     icon: data.icon || '/icon-192.png',
     badge: data.badge || '/icon-192.png',
     data: { url: data.url || '/' },
-    vibrate: [80, 40, 80],
+    vibrate: data.fixa ? [120, 60, 120, 60, 240] : [80, 40, 80],
     renotify: !!data.tag,
-    tag: data.tag || undefined
+    tag: data.tag || undefined,
+    timestamp: Date.now()
   };
+  if (data.image) opcoes.image = data.image;                 // imagem grande (Android/Chrome; o iPhone ignora)
+  if (data.fixa) opcoes.requireInteraction = true;           // "está pronta": fica no ecrã até o cliente tocar
+  if (data.url) opcoes.actions = [{ action: 'abrir', title: data.fixa ? 'Ver encomenda' : 'Abrir menu' }];
   event.waitUntil(self.registration.showNotification(titulo, opcoes));
 });
 
