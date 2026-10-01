@@ -9625,7 +9625,8 @@
     var big = _esc(linhas.shift() || 'Promoção');
     var msg = _esc(linhas.join(' '));
     var emoji = _esc((p.emoji && String(p.emoji).trim()) || '🔥');
-    var selo = 'Promoção de hoje';
+    var seloP = _esc(String(p.selo || '').trim().slice(0, 28));   // texto do selo escolhido pelo restaurante
+    var selo = seloP || 'Promoção de hoje';
     var hora = (p.horaIni && p.horaFim) ? ('🕒 '+_esc(p.horaIni)+' – '+_esc(p.horaFim)) : '';
     var horaH = hora ? '<span class="pd-hora">'+hora+'</span>' : '';
     var msgH = msg ? '<div class="pd-msg">'+msg+'</div>' : '';
@@ -9634,9 +9635,9 @@
     switch(estilo){
       case 'fita':     return card('pd-fita','<span class="pd-fita-lbl">'+selo+'</span><div class="pd-big">'+big+'</div>'+msgH+horaH);
       case 'etiqueta': return card('pd-etiqueta','<span class="pd-selo">'+selo+'</span><div class="pd-big">'+big+'</div>'+msgH+horaH);
-      case 'cupao':    return card('pd-cupao','<span class="pd-selo">Vale de hoje</span><div class="pd-big">'+big+'</div>'+msgH+horaH);
+      case 'cupao':    return card('pd-cupao','<span class="pd-selo">'+(seloP||'Vale de hoje')+'</span><div class="pd-big">'+big+'</div>'+msgH+horaH);
       case 'neon':     return card('pd-neon','<span class="pd-selo">'+selo+'</span><div class="pd-big">'+big+'</div>'+msgH+horaH);
-      case 'urgencia': return card('pd-urgencia','<span class="pd-alerta"><span class="pd-dot"></span> Só hoje</span><div class="pd-big">'+big+'</div>'+msgH+horaH);
+      case 'urgencia': return card('pd-urgencia','<span class="pd-alerta"><span class="pd-dot"></span> '+(seloP||'Só hoje')+'</span><div class="pd-big">'+big+'</div>'+msgH+horaH);
       case 'selo':     return card('pd-seloR','<div class="pd-med"><span class="pd-med-v">'+big+'</span></div><div class="pd-med-txt">'+(msg?('<div class="pd-msg">'+msg+'</div>'):('<div class="pd-msg">'+selo+'</div>'))+horaH+'</div>');
       case 'oval':     return card('pd-oval','<span class="pd-selo">'+selo+'</span><div class="pd-big">'+big+'</div>'+msgH+horaH);
       default:         return card('pd-autocolante','<span class="pd-emoji">'+emoji+'</span><span class="pd-selo">'+selo+'</span><div class="pd-big">'+big+'</div>'+msgH+horaH);

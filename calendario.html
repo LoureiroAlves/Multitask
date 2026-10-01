@@ -910,7 +910,7 @@
     for(var i = 0; i < 14; i++){
       var iso = _prIsoAdd(hoje, i); var p = _prResolver(lista, iso); if(!p) continue;
       var o = { texto:p.texto, cor:p.cor || '#e0245e', estilo:p.estilo || 'autocolante', escala:(parseFloat(p.escala) || 1), ativo:true };
-      if(p.emoji) o.emoji = p.emoji; if(p.horaIni && p.horaFim){ o.horaIni = p.horaIni; o.horaFim = p.horaFim; }
+      if(p.emoji) o.emoji = p.emoji; if(p.selo) o.selo = p.selo; if(p.horaIni && p.horaFim){ o.horaIni = p.horaIni; o.horaFim = p.horaFim; }
       novo[iso] = o;
     }
     var mudou = JSON.stringify(cfg.promoDatas || {}) !== JSON.stringify(novo);
@@ -1011,6 +1011,9 @@
       + '<div id="prTpls" style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 4px;">' + _PR_TPLS.map(function(t, i){ return '<button type="button" data-i="' + i + '" style="border:1px solid #e0d3b5;background:#fbf6ec;border-radius:999px;padding:6px 11px;cursor:pointer;font-family:inherit;font-weight:700;font-size:.78rem;color:var(--castanho);">' + t.ico + ' ' + t.nome + '</button>'; }).join('') + '</div>'
       + '<label>Texto da promoção</label><textarea id="prTexto" maxlength="300" rows="3" placeholder="Ex.: Menu de Natal · 25€&#10;(Enter muda de linha)" style="resize:vertical;">' + esc(p.texto || '') + '</textarea>'
       + '<label>Estilo</label><div id="prEstilos" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;">' + ests.map(function(e){ return '<button type="button" data-e="' + e.id + '" style="border:1px solid #e0d3b5;background:#fff;color:#4a3820;border-radius:999px;padding:6px 11px;cursor:pointer;font-family:inherit;font-weight:800;font-size:.78rem;">' + e.nome + '</button>'; }).join('') + '</div>'
+      + '<label>Texto do selo <span style="font-weight:400;color:#8a7a5c;">(a etiqueta pequena — vazio = "Promoção de hoje")</span></label>'
+      + '<div style="display:flex;gap:8px;align-items:center;"><input id="prSelo" maxlength="28" value="' + esc(p.selo || '') + '" placeholder="Ex.: Só este fim de semana" style="flex:1;margin:0;"><input id="prEmoji" maxlength="4" value="' + esc(p.emoji || '') + '" placeholder="🔥" title="Emoji (autocolante)" style="width:58px;margin:0;text-align:center;font-size:1.2rem;"></div>'
+      + '<div id="prSeloSug" style="display:flex;gap:5px;flex-wrap:wrap;margin:6px 0 2px;">' + ['Só hoje','Promoção','Novidade','Happy Hour','Fim de semana','Esta semana','Última hora','Oferta especial','Menu do dia','Só ao almoço','Só ao jantar','Imperdível'].map(function(t){ return '<button type="button" data-s="' + t + '" style="border:1px solid #e0d3b5;background:#fbf6ec;border-radius:999px;padding:5px 10px;cursor:pointer;font-family:inherit;font-weight:700;font-size:.76rem;color:var(--castanho);">' + t + '</button>'; }).join('') + '</div>'
       + '<div style="display:flex;gap:16px;align-items:flex-end;flex-wrap:wrap;margin-top:4px;">'
       +   '<div><label>Cor</label><input type="color" id="prCor" value="' + esc(p.cor || '#e0245e') + '" style="height:40px;width:64px;padding:3px;"></div>'
       +   '<div><label>Tamanho do texto</label>' + _pdStepperHTML('pr-escala', 0, pct, 60, 160, '%') + '</div>'
@@ -1056,6 +1059,9 @@
     $('prTexto').addEventListener('input', function(){ _prEdit.texto = $('prTexto').value; prev(); });
     $('prEstilos').querySelectorAll('button').forEach(function(b){ b.onclick = function(){ _prEdit.estilo = b.dataset.e; pintaEst(); prev(); }; });
     $('prCor').addEventListener('input', function(){ _prEdit.cor = $('prCor').value; prev(); });
+    $('prSelo').addEventListener('input', function(){ _prEdit.selo = $('prSelo').value; prev(); });
+    $('prEmoji').addEventListener('input', function(){ _prEdit.emoji = $('prEmoji').value.trim(); prev(); });
+    $('prSeloSug').querySelectorAll('button').forEach(function(b){ b.onclick = function(){ $('prSelo').value = b.dataset.s; _prEdit.selo = b.dataset.s; prev(); }; });
     _pdWireSteppers(v);
     v.querySelector('.pr-escala').addEventListener('input', function(ev){ var n = parseInt(ev.target.value, 10); if(n) { _prEdit.escala = Math.round(n) / 100; prev(); } });
     $('prQTipos').querySelectorAll('button').forEach(function(b){ b.onclick = function(){ var t = b.dataset.t; var q0 = _prEdit.quando || {}; if(t === 'dia') _prEdit.quando = { tipo:'dia', data:$('prQData').value || _prHoje() }; else if(t === 'intervalo') _prEdit.quando = { tipo:'intervalo', de:$('prQDe').value || _prHoje(), ate:$('prQAte').value || '' }; else _prEdit.quando = { tipo:'semanal', dias:(Array.isArray(q0.dias) ? q0.dias : []), de:'', ate:($('prQSemFim').checked ? $('prQSemAte').value : '') }; pintaTipo(); pintaDias(); }; });
@@ -1091,7 +1097,7 @@
     }
     async function guardar(comPush){
       var msg = $('prMsg'); var e = validar(); if(e){ msg.textContent = e; msg.className = 'msg erro'; return; }
-      syncHora(); _prEdit.texto = ($('prTexto').value || '').trim(); _prEdit.push = { titulo:($('prPushTit').value || '').trim(), url:($('prPushUrl').value || '').trim() };
+      syncHora(); _prEdit.texto = ($('prTexto').value || '').trim(); _prEdit.selo = ($('prSelo').value || '').trim(); _prEdit.emoji = ($('prEmoji').value || '').trim(); _prEdit.push = { titulo:($('prPushTit').value || '').trim(), url:($('prPushUrl').value || '').trim() };
       if(comPush){
         var est = _prEstado(_prEdit); if(est !== 'ativa' || !_prBate(_prEdit.quando, _prHoje(), new Date().getDay())){
           if(!(await window.__amConfirm('Enviar aviso?', { texto:'Esta promoção não está no menu hoje (' + _prQuandoTxt(_prEdit.quando) + '). Queres enviar o aviso mesmo assim?', ok:'Sim, enviar', cancelar:'Não' }))) return;
@@ -3237,7 +3243,8 @@ window.STORY_LAYOUTS = [
     var big = _esc(linhas.shift() || 'Promoção');
     var msg = _esc(linhas.join(' '));
     var emoji = _esc((p.emoji && String(p.emoji).trim()) || '🔥');
-    var selo = 'Promoção de hoje';
+    var seloP = _esc(String(p.selo || '').trim().slice(0, 28));   // texto do selo escolhido pelo restaurante
+    var selo = seloP || 'Promoção de hoje';
     var hora = (p.horaIni && p.horaFim) ? ('🕒 '+_esc(p.horaIni)+' – '+_esc(p.horaFim)) : '';
     var horaH = hora ? '<span class="pd-hora">'+hora+'</span>' : '';
     var msgH = msg ? '<div class="pd-msg">'+msg+'</div>' : '';
@@ -3246,9 +3253,9 @@ window.STORY_LAYOUTS = [
     switch(estilo){
       case 'fita':     return card('pd-fita','<span class="pd-fita-lbl">'+selo+'</span><div class="pd-big">'+big+'</div>'+msgH+horaH);
       case 'etiqueta': return card('pd-etiqueta','<span class="pd-selo">'+selo+'</span><div class="pd-big">'+big+'</div>'+msgH+horaH);
-      case 'cupao':    return card('pd-cupao','<span class="pd-selo">Vale de hoje</span><div class="pd-big">'+big+'</div>'+msgH+horaH);
+      case 'cupao':    return card('pd-cupao','<span class="pd-selo">'+(seloP||'Vale de hoje')+'</span><div class="pd-big">'+big+'</div>'+msgH+horaH);
       case 'neon':     return card('pd-neon','<span class="pd-selo">'+selo+'</span><div class="pd-big">'+big+'</div>'+msgH+horaH);
-      case 'urgencia': return card('pd-urgencia','<span class="pd-alerta"><span class="pd-dot"></span> Só hoje</span><div class="pd-big">'+big+'</div>'+msgH+horaH);
+      case 'urgencia': return card('pd-urgencia','<span class="pd-alerta"><span class="pd-dot"></span> '+(seloP||'Só hoje')+'</span><div class="pd-big">'+big+'</div>'+msgH+horaH);
       case 'selo':     return card('pd-seloR','<div class="pd-med"><span class="pd-med-v">'+big+'</span></div><div class="pd-med-txt">'+(msg?('<div class="pd-msg">'+msg+'</div>'):('<div class="pd-msg">'+selo+'</div>'))+horaH+'</div>');
       case 'oval':     return card('pd-oval','<span class="pd-selo">'+selo+'</span><div class="pd-big">'+big+'</div>'+msgH+horaH);
       default:         return card('pd-autocolante','<span class="pd-emoji">'+emoji+'</span><span class="pd-selo">'+selo+'</span><div class="pd-big">'+big+'</div>'+msgH+horaH);
