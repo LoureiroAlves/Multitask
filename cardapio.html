@@ -5881,8 +5881,9 @@
         if(!(typeof sbC !== 'undefined' && sbC && SLUG)) return;
         if(document.hidden) return;   // separador em segundo plano — não gasta pedidos
         if(document.querySelector('.categoria-painel.aberto, #cartOverlay.aberto, #favOverlay.aberto, #agendaOverlay.aberto, #escOverlay.aberto, #expOverlay.aberto, #fidOverlay.aberto')) return;   // não perturbar quem está a usar algo
-        var r = await sbC.from('negocios').select('config').eq('slug', SLUG).maybeSingle();
-        var cfg = r && r.data && r.data.config; if(!cfg) return;
+        var r = await sbC.from('negocios').select('promocoes:config->promocoes,promoDatas:config->promoDatas,pratoDatas:config->pratoDatas,pratoFixo:config->pratoFixo,pratoDia:config->pratoDia').eq('slug', SLUG).maybeSingle();
+        if(!r || !r.data) return;
+        var cfg = Object.assign({}, window.__cfgPromo || {}, r.data);   // junta aos restantes campos já conhecidos
         window.__cfgPromo = cfg;
         try{ if(window.__renderPromoDia) window.__renderPromoDia(cfg); }catch(e){}
         try{ if(window.__renderPratoDia) window.__renderPratoDia(cfg); }catch(e){}
@@ -9859,7 +9860,7 @@
 <script>
 (function(){
   if(window.__PREVIEW || window.__esconderijo) return;
-  var J = null, P = null, canal = null, pollT = null, fimT = null, iniT = null, cdT = null, vigiaT = null, tentativas = 0, tentPend = 0, dicasMostradas = {}, cache = {}, aCacar = false, terminouVisto = false, venci = null, encoder = null;
+  var J = null, P = null, canal = null, pollT = null, rtOk = false, fimT = null, iniT = null, cdT = null, vigiaT = null, tentativas = 0, tentPend = 0, dicasMostradas = {}, cache = {}, aCacar = false, terminouVisto = false, venci = null, encoder = null;
   function $(id){ return document.getElementById(id); }
   function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]; }); }
   function disp(){ try{ var d = localStorage.getItem('amesaDisp'); if(!d){ d = (crypto.randomUUID ? crypto.randomUUID() : ('xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c){ var r = Math.random()*16|0, v = c === 'x' ? r : (r&0x3|0x8); return v.toString(16); }))); localStorage.setItem('amesaDisp', d); } return d; }catch(e){ return '00000000-0000-4000-8000-000000000000'; } }
@@ -9997,7 +9998,7 @@
     dicasAtivas().forEach(function(d){ dicasMostradas[d] = 1; });   // as que já estão na abertura não voltam a avisar
     try{ var vj = ls('amesaOvoVenci:' + J.id); if(vj){ venci = JSON.parse(vj); f.innerHTML = '<span class="ov">🏆</span><span>Ganhaste!<small style="display:block;">' + esc(venci.codigo) + '</small></span>'; f.onclick = function(){ folhaVitoria(venci); }; } }catch(e){}
     if(!venci) document.addEventListener('click', onToque, true);
-    ligarRealtime(); if(!pollT) pollT = setInterval(sincronizar, 15000);
+    ligarRealtime(); if(!pollT) pollT = setInterval(function(){ if(!rtOk && !document.hidden) sincronizar(); }, 30000);   // reserva: só quando o tempo real não está ligado
     document.addEventListener('visibilitychange', function(){ if(!document.hidden) sincronizar(); });
     window.addEventListener('pagehide', enviarTentativas);
     setInterval(function(){ enviarTentativas(); verificarDicas(); }, 30000);
@@ -10054,7 +10055,7 @@
   function ligarRealtime(){
     try{
       if(canal || !sbC.channel) return;
-      canal = sbC.channel('ovo-' + J.id).on('postgres_changes', { event:'UPDATE', schema:'public', table:'ovo_jogos', filter:'id=eq.' + J.id }, function(){ sincronizar(); }).subscribe();
+      canal = sbC.channel('ovo-' + J.id).on('postgres_changes', { event:'UPDATE', schema:'public', table:'ovo_jogos', filter:'id=eq.' + J.id }, function(){ sincronizar(); }).subscribe(function(st){ rtOk = (st === 'SUBSCRIBED'); if(rtOk) sincronizar(); });
     }catch(e){ canal = null; }
   }
   async function sincronizar(){

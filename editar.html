@@ -1598,7 +1598,7 @@ amesadigital.pt</textarea>
         <label for="agPagNota" style="margin-top:8px;">Nota de pagamento (opcional)</label>
         <input type="text" id="agPagNota" placeholder="Ex: Após pagar, envia o comprovativo por WhatsApp.">
         <div class="subtitulo" style="margin-top:8px;">O cliente escolhe dia e hora (as horas cheias deixam de aparecer), a reserva fica guardada e vês tudo no teu painel de reservas.</div>
-        <a id="agLinkReservas" href="calendario.html" target="_blank" style="display:inline-block; margin-top:10px; background:var(--castanho); color:#fff; text-decoration:none; border-radius:10px; padding:11px 16px; font-weight:700;">📊 Abrir painel de gestão</a>
+        <a id="agLinkReservas" href="reservas.html" target="_blank" style="display:inline-block; margin-top:10px; background:var(--castanho); color:#fff; text-decoration:none; border-radius:10px; padding:11px 16px; font-weight:700;">📊 Abrir painel de gestão</a>
       </div>
     </div>
   </details>
@@ -1693,7 +1693,7 @@ amesadigital.pt</textarea>
           🕒 Pedir hora de levantamento (take away)
         </label>
         <p style="margin:4px 0 8px; font-size:0.82rem; color:var(--castanho-suave);">O cliente escolhe a que horas levanta. A hora fica limitada ao horário da cozinha, e as encomendas fecham um pouco antes do fecho.</p>
-        <div style="margin:6px 0 4px; padding:10px 12px; background:#f3ead8; border-radius:10px; font-size:.82rem; color:var(--castanho);">🕒 As horas da cozinha e os turnos (almoço/jantar, folgas) definem-se na <b>Gestão → Definições → Turnos de funcionamento</b>.</div>
+        <div style="margin:6px 0 4px; padding:10px 12px; background:#f3ead8; border-radius:10px; font-size:.82rem; color:var(--castanho);">🕒 As horas de levantamento, os turnos (almoço/jantar) e as folgas definem-se na <b>Gestão → Definições → Horário semanal</b>.</div>
         <div id="cartLevBox" style="display:none;">
           <div style="font-size:.8rem; font-weight:600; color:var(--castanho); margin-bottom:4px;">1º período (ex.: almoço)</div>
           <div style="display:flex; gap:12px; flex-wrap:wrap;">
@@ -1818,7 +1818,7 @@ amesadigital.pt</textarea>
     const buf = new Uint8Array(await file.arrayBuffer());
     const resp = await fetch(SUPA_URL + '/storage/v1/object/imagens/' + nome, {
       method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + session.access_token, 'apikey': SUPA_KEY, 'Content-Type': file.type || ('video/' + ext), 'x-upsert': 'true' },
+      headers: { 'Authorization': 'Bearer ' + session.access_token, 'apikey': SUPA_KEY, 'Content-Type': file.type || ('video/' + ext), 'x-upsert': 'true', 'cache-control': 'max-age=31536000' },
       body: buf
     });
     if(!resp.ok){
@@ -1850,7 +1850,8 @@ amesadigital.pt</textarea>
         'Authorization': 'Bearer ' + token,
         'apikey': SUPA_KEY,
         'Content-Type': 'image/' + (dados.ext === 'jpg' ? 'jpeg' : dados.ext),
-        'x-upsert': 'true'
+        'x-upsert': 'true',
+        'cache-control': 'max-age=31536000'
       },
       body: arr
     });
@@ -2361,7 +2362,7 @@ amesadigital.pt</textarea>
       if(ehString){ img.src = file; }
       else { const reader = new FileReader(); reader.onload = e => { img.src = e.target.result; }; reader.onerror = function(){ reject(new Error('Não consegui ler o ficheiro.')); }; reader.readAsDataURL(file); }
       img.onload = () => {
-        const maxLado = 1600;   // lado maior; 1600 mantém nitidez nas fotos de cabeçalho/mosaico sem pesar demasiado
+        const maxLado = 1280;   // lado maior: nítido no telemóvel e leve (cada foto ~150-250 KB) — é o que mais gasta dados no plano
         let { width, height } = img;
         if(width > maxLado || height > maxLado){
           if(width > height){ height = Math.round(height * maxLado / width); width = maxLado; }
@@ -2385,7 +2386,7 @@ amesadigital.pt</textarea>
             r2.onload = () => resolve({ base64:r2.result.split(',')[1], ext:'jpg' });
             r2.onerror = reject;
             r2.readAsDataURL(blob);
-          }, 'image/jpeg', 0.86);
+          }, 'image/jpeg', 0.8);
         }
       };
       img.onerror = function(){ reject(new Error('Não consegui abrir a imagem. Usa JPG ou PNG (fotos HEIC do iPhone não são aceites pelos navegadores).')); };

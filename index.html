@@ -335,6 +335,15 @@
   var _promoSig = '';
   function _promoSignature(){ return (TODOS || []).filter(temPromoAtiva).map(function(n){ return n.slug; }).sort().join(','); }
   function _promoTick(){ if(!TODOS || !TODOS.length) return; var s = _promoSignature(); if(s !== _promoSig){ _promoSig = s; renderFiltros(); aplicar(); } }
+  // Fotos dos cartões: só quando estão quase visíveis (200 px antes de entrarem no ecrã)
+  var _obsFotos = null;
+  function _fotosPreguica(raiz){
+    var els = (raiz || document).querySelectorAll('[data-bg]');
+    var mostra = function(el){ var u = el.getAttribute('data-bg'); if(!u) return; el.style.backgroundImage = "url('" + u.replace(/'/g, "\\'") + "')"; el.removeAttribute('data-bg'); };
+    if(!('IntersectionObserver' in window)){ els.forEach(mostra); return; }
+    if(!_obsFotos) _obsFotos = new IntersectionObserver(function(ents){ ents.forEach(function(en){ if(en.isIntersecting){ mostra(en.target); _obsFotos.unobserve(en.target); } }); }, { rootMargin:'200px 0px' });
+    els.forEach(function(el){ _obsFotos.observe(el); });
+  }
   function favGet(){ try{ return JSON.parse(localStorage.getItem('amesaFavNeg') || '[]'); }catch(e){ return []; } }
   function favTem(slug){ return favGet().indexOf(slug) >= 0; }
   function favToggle(slug){ var a = favGet(); var i = a.indexOf(slug); if(i >= 0) a.splice(i,1); else a.push(slug); try{ localStorage.setItem('amesaFavNeg', JSON.stringify(a)); }catch(e){} return i < 0; }
@@ -473,12 +482,15 @@
       var promoFonteCss = (promo && FONTES_PROMO[promo.fonte]) ? FONTES_PROMO[promo.fonte] : '';
       var promoBandStyle = 'font-size:' + promoTam + 'px;' + (promoFonteCss ? (' font-family:' + promoFonteCss + ';') : '');
       var fotoCartao = promoFoto || foto;   // se houver foto de promoção, é essa que aparece no cartão
-      var estiloFoto = fotoCartao ? ('background-image:url(\'' + esc(fotoCartao) + '\')') : (cor ? ('background:' + esc(cor)) : '');
+      // A foto só é descarregada quando o cartão aparece no ecrã (poupa dados: a montra tem muitos restaurantes)
+      var estiloFoto = fotoCartao ? '' : (cor ? ('background:' + esc(cor)) : '');
+      var bgAttr = fotoCartao ? (' data-bg="' + esc(fotoCartao) + '"') : '';
       var cardapio = '/' + encodeURIComponent(slug);
+      var reservas = 'reservas.html?n=' + encodeURIComponent(slug);
       return '' +
         '<article class="card' + (promo ? ' tem-promo' : '') + '"' + (promo ? (' style="--promo-cor:' + promoCor + '"') : '') + ' data-slug="' + esc(slug) + '">' +
           '<button type="button" class="fav-btn' + (favTem(slug) ? ' on' : '') + '" data-fav="' + esc(slug) + '" aria-label="Favorito">' + (favTem(slug) ? '♥' : '♡') + '</button>' +
-          '<a class="foto" style="' + estiloFoto + '" href="' + cardapio + '" aria-label="' + esc(nome) + '">' +
+          '<a class="foto" style="' + estiloFoto + '"' + bgAttr + ' href="' + cardapio + '" aria-label="' + esc(nome) + '">' +
             (fotoCartao ? '' : '<span class="inicial">' + inicial + '</span>') +
             (promo ? '<span class="promo-ribbon">PROMO</span>' : '') +
             (promoTxt ? '<div class="promo-band" style="' + promoBandStyle + '">' + esc(promoTxt) + '</div>' : '') +
@@ -498,6 +510,7 @@
       if((i + 1) % 6 === 0 && (i + 1) < cards.length && ADS.length){ out.push('<div class="ad-slot" data-off="' + (slot++) + '"></div>'); }
     });
     grid.innerHTML = out.join('');
+    _fotosPreguica(grid);
     pintarAds();
   }
 

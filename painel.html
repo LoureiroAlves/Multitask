@@ -100,6 +100,7 @@
         <div id="negSublist" class="side-sublist"></div>
         <button class="side-item" data-tab="publicidade">📢 Publicidade</button>
         <button class="side-item" data-tab="erros">🩺 Erros</button>
+        <button class="side-item" data-tab="fotos">⚡ Otimizar fotos</button>
         <div id="pubSublist" class="side-sublist"></div>
         <div class="side-sep"></div>
         <a class="side-item hide" id="linkEstat" href="estatisticas.html" style="text-decoration:none;">📊 Estatísticas</a>
@@ -192,6 +193,18 @@
       </div>
       <div id="adsMsg"></div>
     </div>
+        </section>
+
+        <section class="tab-panel hide" data-panel="fotos">
+          <h2 style="margin:0 0 6px;">⚡ Otimizar fotos</h2>
+          <div style="font-size:.85rem; color:#8a7a5c; margin-bottom:12px;">Reduz as fotos pesadas que já estão guardadas (máx. 1280 px, JPEG 80%). Ficam no mesmo endereço — nada muda nos menus, só ficam mais leves. As fotos passam também a ficar guardadas no telemóvel do cliente durante 1 ano (não voltam a gastar dados em visitas seguintes). Fotos com transparência (PNG) mantêm a transparência; vídeos não são tocados.</div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:12px;">
+            <select id="fotNeg" style="padding:8px 10px; border-radius:8px; border:1.5px solid #e3d9c4; font-family:inherit;"><option value="">Todos os negócios</option></select>
+            <label style="font-size:.85rem;">Só fotos acima de <input type="number" id="fotMin" value="250" min="50" step="50" style="width:70px;"> KB</label>
+            <button type="button" id="fotAnalisar" style="border:1px solid #e3d9c4; background:#fff; border-radius:8px; padding:8px 14px; font-weight:700; cursor:pointer; font-family:inherit;">🔍 Analisar</button>
+            <button type="button" id="fotOtimizar" disabled style="border:none; background:#2e7d3f; color:#fff; border-radius:8px; padding:8px 14px; font-weight:800; cursor:pointer; font-family:inherit;">⚡ Otimizar</button>
+          </div>
+          <div id="fotRes" style="font-size:.9rem;">Carrega em Analisar para ver quanto se poupa.</div>
         </section>
 
         <section class="tab-panel hide" data-panel="erros">
@@ -1168,6 +1181,7 @@
       if(t === 'formulario'){ try{ if(window.__carregarRegistos) window.__carregarRegistos(); }catch(e){} }
       if(t === 'publicidade') _pubAplicar();
       if(t === 'erros'){ try{ if(window.__carregarErros) window.__carregarErros(); }catch(e){} }
+      if(t === 'fotos'){ try{ if(window.__fotosPrep) window.__fotosPrep(); }catch(e){} }
       try{ localStorage.setItem('painelAba', t); }catch(e){}
     }
     navs.forEach(function(n){ n.addEventListener('click', function(){ irPara(n.getAttribute('data-tab')); }); });
@@ -1330,6 +1344,82 @@ window.__carregarErros = async function(){
     if(!ok) return;
     try{ var d = await sb.from("erros").delete().gt("id", 0); if(d.error) throw d.error; window.__carregarErros(); }catch(e){ alert("Erro: "+((e&&e.message)||e)); }
   };
+})();
+</script>
+
+<!-- Otimizar fotos (admin): recomprime as fotos pesadas do bucket "imagens", mesmo caminho, cache 1 ano -->
+<script>
+(function(){
+  var lista = [];   // [{path, kb}]
+  function $(id){ return document.getElementById(id); }
+  function kb(n){ return Math.round(n / 1024); }
+  window.__fotosPrep = async function(){
+    var sel = $('fotNeg'); if(!sel || sel.dataset.ok) return;
+    try{ var r = await sb.from('negocios').select('slug,nome').order('nome'); (r.data || []).forEach(function(n){ var o = document.createElement('option'); o.value = n.slug; o.textContent = n.nome + ' (' + n.slug + ')'; sel.appendChild(o); }); sel.dataset.ok = '1'; }catch(e){}
+  };
+  async function pastas(){ var v = $('fotNeg').value; if(v) return [v];
+    var ps = {}; (await sb.from('negocios').select('slug')).data.forEach(function(n){ ps[n.slug] = 1; });
+    try{ var raiz = await sb.storage.from('imagens').list('', { limit:1000 }); (raiz.data || []).forEach(function(f){ if(f && f.name && !f.id) ps[f.name] = 1; }); }catch(e){}   // + outras pastas (ex.: geral)
+    return [''].concat(Object.keys(ps)); }
+  async function analisar(){
+    var res = $('fotRes'), min = (parseInt($('fotMin').value, 10) || 250) * 1024;
+    res.textContent = 'A analisar…'; $('fotOtimizar').disabled = true; lista = [];
+    var total = 0, n = 0, ps = await pastas();
+    for(var i = 0; i < ps.length; i++){
+      var r = await sb.storage.from('imagens').list(ps[i], { limit:2000 });
+      (r.data || []).forEach(function(f){
+        var sz = (f.metadata && f.metadata.size) || 0, mt = (f.metadata && f.metadata.mimetype) || '';
+        if(!f.name || /^\./.test(f.name) || !f.id) return; n++; total += sz;
+        var cc = String((f.metadata && f.metadata.cacheControl) || '');
+        var semCache = cc.indexOf('31536000') < 0;
+        if(/^image\/(jpeg|jpg|png|webp)$/i.test(mt) && (sz >= min || semCache)) lista.push({ path: (ps[i] ? (ps[i] + '/') : '') + f.name, kb: kb(sz), mt: mt, pesada: sz >= min });
+      });
+      res.textContent = 'A analisar… ' + (i + 1) + '/' + ps.length + ' negócios';
+    }
+    var pesadas = lista.filter(function(x){ return x.pesada; }), pesado = pesadas.reduce(function(s, x){ return s + x.kb; }, 0);
+    res.innerHTML = '<b>' + n + '</b> ficheiros · ' + (total/1048576).toFixed(1) + ' MB no total.<br>'
+      + '<b>' + pesadas.length + '</b> fotos acima do limite somam <b>' + (pesado/1024).toFixed(1) + ' MB</b> — depois de otimizar devem ficar em cerca de <b>' + (pesadas.length * 0.2).toFixed(1) + ' MB</b>.'
+      + '<br><b>' + (lista.length - pesadas.length) + '</b> fotos já leves vão só receber a "memória de 1 ano" no telemóvel.'
+      + (lista.length ? '<div style="margin-top:8px;max-height:220px;overflow:auto;font-size:.8rem;color:#6b5a3c;">' + lista.sort(function(a,b){ return b.kb - a.kb; }).map(function(x){ return x.path + ' — ' + x.kb + ' KB'; }).join('<br>') + '</div>' : '');
+    $('fotOtimizar').disabled = !lista.length;
+  }
+  function carregarImg(blob){ return new Promise(function(ok, ko){ var u = URL.createObjectURL(blob), im = new Image(); im.onload = function(){ URL.revokeObjectURL(u); ok(im); }; im.onerror = function(){ URL.revokeObjectURL(u); ko(new Error('imagem ilegível')); }; im.src = u; }); }
+  function temAlfa(ctx, w, h){ try{ var d = ctx.getImageData(0, 0, w, h).data; for(var i = 3; i < d.length; i += 16){ if(d[i] < 250) return true; } }catch(e){} return false; }
+  async function reduzir(blob, mt){
+    var im = await carregarImg(blob), max = 1280, w = im.naturalWidth, h = im.naturalHeight;
+    if(w > max || h > max){ if(w >= h){ h = Math.round(h * max / w); w = max; } else { w = Math.round(w * max / h); h = max; } }
+    var c = document.createElement('canvas'); c.width = w; c.height = h; var ctx = c.getContext('2d'); ctx.drawImage(im, 0, 0, w, h);
+    var png = /png/i.test(mt) && temAlfa(ctx, w, h);
+    if(!png){ var c2 = document.createElement('canvas'); c2.width = w; c2.height = h; var x2 = c2.getContext('2d'); x2.fillStyle = '#fff'; x2.fillRect(0, 0, w, h); x2.drawImage(c, 0, 0); c = c2; }
+    var out = await new Promise(function(ok){ c.toBlob(ok, png ? 'image/png' : 'image/jpeg', png ? undefined : 0.8); });
+    return { blob: out, tipo: png ? 'image/png' : 'image/jpeg' };
+  }
+  async function otimizar(){
+    if(!lista.length) return;
+    if(!confirm('Otimizar ' + lista.length + ' fotos? Ficam no mesmo endereço (os menus não mudam). Recomendo fazer antes a cópia de segurança.')) return;
+    var res = $('fotRes'), antes = 0, depois = 0, feitas = 0, falhas = 0, saltadas = 0;
+    $('fotOtimizar').disabled = true; $('fotAnalisar').disabled = true;
+    for(var i = 0; i < lista.length; i++){
+      var x = lista[i];
+      res.textContent = 'A otimizar ' + (i + 1) + '/' + lista.length + ' — ' + x.path;
+      try{
+        var d = await sb.storage.from('imagens').download(x.path); if(d.error) throw d.error;
+        var r = await reduzir(d.data, x.mt);
+        var usar = r, mantida = false;
+        if(!r.blob || r.blob.size >= d.data.size * 0.9){ usar = { blob:d.data, tipo:(d.data.type || x.mt) }; mantida = true; }   // reduzir não compensa: fica igual, só ganha a cache longa
+        var up = await sb.storage.from('imagens').upload(x.path, usar.blob, { upsert:true, contentType:usar.tipo, cacheControl:'31536000' });
+        if(mantida){ if(up.error) throw up.error; saltadas++; continue; }
+        if(up.error) throw up.error;
+        antes += d.data.size; depois += r.blob.size; feitas++;
+      }catch(e){ falhas++; console.warn('otimizar', x.path, e); }
+    }
+    res.innerHTML = '✅ <b>' + feitas + '</b> fotos otimizadas: de ' + (antes/1048576).toFixed(1) + ' MB para <b>' + (depois/1048576).toFixed(1) + ' MB</b> (−' + (antes ? Math.round((1 - depois/antes) * 100) : 0) + '%).'
+      + (saltadas ? ('<br>' + saltadas + ' já estavam leves: ficaram iguais, só com a memória de 1 ano.') : '') + (falhas ? ('<br><span style="color:#b23;">' + falhas + ' falharam — vê a consola.</span>') : '')
+      + '<br><span style="font-size:.8rem;color:#8a7a5c;">Os telemóveis que já tinham a foto antiga em memória mostram-na até a limparem; os novos visitantes recebem logo a versão leve.</span>';
+    $('fotAnalisar').disabled = false; lista = [];
+  }
+  document.addEventListener('DOMContentLoaded', function(){ var a = $('fotAnalisar'), o = $('fotOtimizar'); if(a) a.onclick = analisar; if(o) o.onclick = otimizar; });
+  setTimeout(function(){ var a = $('fotAnalisar'), o = $('fotOtimizar'); if(a && !a.onclick) a.onclick = analisar; if(o && !o.onclick) o.onclick = otimizar; }, 500);
 })();
 </script>
 </body>
