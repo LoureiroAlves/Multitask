@@ -4769,8 +4769,44 @@ amesadigital.pt</textarea>
       wrap.appendChild(campoMulti(m.nome,'Nome'));
       wrap.appendChild(mkLabel('Preço'));
       wrap.appendChild(mkInput(m.preco,'ex: 20 € por pessoa', v=>{ m.preco=v; }));
-      wrap.appendChild(mkLabel('Descrição — o que inclui (uma linha por item)'));
-      wrap.appendChild(campoArea(m.desc,'Entrada: ...\nPrato principal: ...\nSobremesa: ...\nBebidas incluídas'));
+      const temSec = Array.isArray(m.seccoes) && m.seccoes.length;
+      const temDesc = m.desc && (m.desc.pt || m.desc.en);
+      if(!temSec && temDesc){
+        // formato antigo: descrição em texto corrido — pode continuar assim ou passar a secções
+        wrap.appendChild(mkLabel('Descrição — o que inclui (uma linha por item)'));
+        wrap.appendChild(campoArea(m.desc,'Entrada: ...\nPrato principal: ...\nSobremesa: ...\nBebidas incluídas'));
+        const conv = mkBtn('➕ Passar a secções (Entradas, Prato, Sobremesa…)','var(--dourado-escuro)',()=>{
+          // cada linha "Título: texto" vira uma secção; linhas sem ":" juntam-se à anterior
+          const linhas = String(m.desc.pt||'').split('\n'); const out = [];
+          linhas.forEach(l=>{ const t=l.trim(); if(!t) return; const k=t.indexOf(':'); if(k>0 && k<40){ out.push({ titulo:{pt:t.slice(0,k).trim()}, texto:{pt:t.slice(k+1).trim()} }); } else if(out.length){ const o=out[out.length-1]; o.texto.pt = (o.texto.pt ? o.texto.pt+'\n' : '') + t; } else { out.push({ titulo:{pt:'Inclui'}, texto:{pt:t} }); } });
+          m.seccoes = out.length ? out : [{ titulo:{pt:'Entradas'}, texto:{pt:''} }]; delete m.desc; renderEditor();
+        });
+        conv.style.marginTop='4px'; wrap.appendChild(conv);
+      } else {
+        m.seccoes = Array.isArray(m.seccoes) ? m.seccoes : [];
+        wrap.appendChild(mkLabel('Secções do menu (ex.: Aperitivos, Prato, Sobremesa, Bebidas)'));
+        const lista = document.createElement('div');
+        m.seccoes.forEach((sx, si)=>{
+          sx.titulo = sx.titulo || {pt:''}; sx.texto = sx.texto || {pt:''};
+          const b = document.createElement('div'); b.style.cssText='border:1px dashed var(--linha);border-radius:10px;padding:8px 10px;margin:6px 0;background:#fffdf8;';
+          const top = document.createElement('div'); top.style.cssText='display:flex;gap:6px;align-items:center;';
+          const ti = mkInput(sx.titulo.pt,'Título (ex: Prato)', v=>{ sx.titulo.pt=v; }); ti.style.flex='2 1 0'; ti.style.minWidth='0'; ti.style.fontWeight='700';
+          const sb = mkInput(sx.sub && sx.sub.pt,'Nota (ex: (1 opção))', v=>{ v=v.trim(); if(v){ sx.sub = sx.sub || {}; sx.sub.pt=v; } else delete sx.sub; }, true); sb.style.flex='1 1 0'; sb.style.minWidth='0';
+          top.appendChild(ti); top.appendChild(sb);
+          top.appendChild(mkBtn('↑','var(--castanho-suave)',()=>{ mover(m.seccoes,si,-1); renderEditor(); }));
+          top.appendChild(mkBtn('↓','var(--castanho-suave)',()=>{ mover(m.seccoes,si,1); renderEditor(); }));
+          top.appendChild(mkBtn('🗑','var(--vermelho)',()=>{ m.seccoes.splice(si,1); renderEditor(); }));
+          b.appendChild(top);
+          b.appendChild(campoArea(sx.texto,'Uma linha por prato/item (vazio = só o título, ex: "Café")'));
+          lista.appendChild(b);
+        });
+        wrap.appendChild(lista);
+        const add = mkBtn('＋ secção','var(--castanho)',()=>{ m.seccoes.push({ titulo:{pt:''}, texto:{pt:''} }); renderEditor(); });
+        add.style.marginTop='2px'; wrap.appendChild(add);
+      }
+      m.rodape = m.rodape || {pt:''};
+      wrap.appendChild(mkLabel('Rodapé (opcional — normas, condições, "decoração a combinar")'));
+      wrap.appendChild(campoArea(m.rodape,'Ex.: Crianças até 5 anos não pagam…'));
       return wrap;
     }
 
@@ -5045,7 +5081,7 @@ amesadigital.pt</textarea>
         cat.menus.forEach((m,mi)=> lista.appendChild(mvMenu(cat,m,mi)));
         p.appendChild(lista);
         const addM=document.createElement('button'); addM.className='mv-add'; addM.type='button'; addM.textContent='＋ adicionar menu'; addM.style.background='var(--verde)';
-        addM.addEventListener('click',()=>{ cat.menus.push({nome:{pt:''},preco:'',desc:{pt:''}}); renderEditor(); });
+        addM.addEventListener('click',()=>{ cat.menus.push({ nome:{pt:''}, preco:'', seccoes:[ {titulo:{pt:'Entradas'},texto:{pt:''}}, {titulo:{pt:'Prato'},sub:{pt:'(1 opção)'},texto:{pt:''}}, {titulo:{pt:'Sobremesa'},texto:{pt:''}}, {titulo:{pt:'Bebidas'},texto:{pt:''}} ] }); renderEditor(); });
         p.appendChild(addM);
       } else {
         const g = cat.grupos[0]; g.itens = g.itens || [];
