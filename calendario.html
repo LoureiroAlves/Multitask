@@ -393,6 +393,7 @@
     <div id="vistaEncomendas" class="hide"></div>
     <div id="vistaNotif" class="hide"></div>
     <div id="vistaOvo" class="hide"></div>
+    <div id="vistaPrato" class="hide"></div>
   </div>
 </div>
 
@@ -744,7 +745,7 @@
     await accao(id, a);
   }
 
-  const _AREA_TIT = { cal:'📅 Calendário', dash:'📊 Painel', enc:'🛍️ Encomendas', notif:'🏷️ Promoções', ovo:'🥚 No Cu da Galinha', def:'⚙️ Definições' };
+  const _AREA_TIT = { cal:'📅 Calendário', dash:'📊 Painel', enc:'🛍️ Encomendas', notif:'🏷️ Promoções', ovo:'🥚 No Cu da Galinha', prato:'🍽️ Prato do dia', def:'⚙️ Definições' };
   function mostrarVista(qual){
     $('dashHome').classList.add('hide');
     $('areaBar').classList.remove('hide');
@@ -755,11 +756,13 @@
     $('vistaEncomendas').classList.toggle('hide', qual!=='enc');
     $('vistaNotif').classList.toggle('hide', qual!=='notif');
     $('vistaOvo').classList.toggle('hide', qual!=='ovo');
+    $('vistaPrato').classList.toggle('hide', qual!=='prato');
     if(qual==='cal') renderCalResumo();
     if(qual==='dash') renderDashboard();
     if(qual==='def') renderDefinicoes();
     if(qual==='notif') renderNotif();
     if(qual==='ovo') renderOvo();
+    if(qual==='prato'){ _ppDia = null; renderPrato(); }
     if(_encTimer){ clearInterval(_encTimer); _encTimer = null; }
     if(qual==='enc'){
       renderEncomendas();
@@ -769,7 +772,7 @@
   }
   function voltarHome(){
     if(_encTimer){ clearInterval(_encTimer); _encTimer = null; }
-    ['vistaCal','vistaDash','vistaDef','vistaEncomendas','vistaNotif','vistaOvo'].forEach(function(id){ var el=$(id); if(el) el.classList.add('hide'); });
+    ['vistaCal','vistaDash','vistaDef','vistaEncomendas','vistaNotif','vistaOvo','vistaPrato'].forEach(function(id){ var el=$(id); if(el) el.classList.add('hide'); });
     $('areaBar').classList.add('hide');
     $('dashHome').classList.remove('hide');
     renderHome();
@@ -810,6 +813,7 @@
       + '<div class="cards-grid">'
       +   _cardHome('cal',_iconeCalendario(),'Calendário','Agenda do dia e reservas', hojeR.length?('Ver hoje ('+hojeR.length+')'):'Ver agenda', 0)
       +   _cardHome('enc','🛍️','Encomendas', encAtivas?(encAtivas+' em curso'):'Gerir pedidos', 'Pendentes · Preparação · Prontas · Entregues', encPend)
+      +   _cardHome('prato','🍽️','Prato do dia','Os destaques por baixo do cabeçalho, dia a dia ou fixo','Gerir', 0)
       +   _cardHome('notif','🏷️','Promoções','No menu e por notificação, nos dias que escolheres','Gerir promoções', 0)
       +   _cardHome('ovo','🥚','No Cu da Galinha','Esconde um ovo no menu · o 1.º a encontrar ganha','Jogo', 0)
       +   _cardHome('def','⚙️','Definições','Dados, horários, reservas…','Configurar', 0)
@@ -1117,6 +1121,83 @@
     $('prGuardar').onclick = function(){ guardar(false); };
     $('prGuardarPush').onclick = function(){ guardar(true); };
   }
+
+  // ============================================================
+  // PRATO DO DIA — área própria (lista dos próximos dias + editor de um dia)
+  // Os dados não mudam: config.pratoDatas[AAAA-MM-DD] e config.pratoFixo (o editor é o mesmo de antes)
+  // ============================================================
+  let _ppDia = null;   // null = lista; 'AAAA-MM-DD' = a editar esse dia
+  function _ppIso(d){ return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
+  function _ppNomeDia(iso, k){ const d = new Date(iso + 'T00:00:00'); if(k === 0) return 'Hoje'; if(k === 1) return 'Amanhã'; return ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'][d.getDay()] + ' ' + d.getDate() + '/' + (d.getMonth()+1); }
+  function _ppResumo(iso){
+    const cfg = (negocio && negocio.config) || {}; const pd = (cfg.pratoDatas || {})[iso]; const fx = cfg.pratoFixo;
+    const tit = function(o){ const c = (o && Array.isArray(o.caixas)) ? o.caixas : []; const t = c.map(function(x){ return (x.titulo || '').trim(); }).filter(Boolean); return t.length ? t.join(' · ') : (c.length ? (c.length + (c.length === 1 ? ' caixa' : ' caixas') + ' sem título') : ''); };
+    const foto = function(o){ const c = (o && Array.isArray(o.caixas)) ? o.caixas : []; for(let i = 0; i < c.length; i++){ if(c[i].foto) return c[i].foto; } return ''; };
+    if(pd && Array.isArray(pd.caixas) && pd.caixas.length) return { tipo: pd.ativo === false ? 'escondido' : 'dia', txt: tit(pd), foto: foto(pd), hora: (pd.horaDe && pd.horaA) ? (pd.horaDe + '–' + pd.horaA) : '' };
+    if(fx && Array.isArray(fx.caixas) && fx.caixas.length && fx.ativo !== false) return { tipo:'fixo', txt: tit(fx), foto: foto(fx), hora: (fx.horaDe && fx.horaA) ? (fx.horaDe + '–' + fx.horaA) : '' };
+    return { tipo:'nada', txt:'', foto:'', hora:'' };
+  }
+  function renderPrato(){
+    const v = $('vistaPrato'); if(!v) return;
+    if(_ppDia){ _ppEditor(_ppDia); return; }
+    const cfg = (negocio && negocio.config) || {}; const fx = cfg.pratoFixo;
+    const fxOn = !!(fx && Array.isArray(fx.caixas) && fx.caixas.length && fx.ativo !== false);
+    let html = '<div style="background:linear-gradient(135deg,#8a5a10,#c79a3e);border-radius:16px;padding:18px;margin-bottom:14px;color:#fff;box-shadow:0 8px 24px rgba(138,90,16,.22);">'
+      + '<div style="font-size:1.25rem;font-weight:800;">🍽️ Prato do dia</div>'
+      + '<div style="font-size:.88rem;opacity:.95;margin-top:4px;">As caixas em destaque por baixo do cabeçalho do menu. Podes ter um prato diferente em cada dia, ou um prato fixo que se repete quando o dia não tem nada próprio.</div></div>';
+    html += '<div class="card" style="padding:12px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px;">'
+      + '<div style="min-width:0;"><div style="font-weight:800;color:var(--castanho);">📌 Prato fixo</div><div style="font-size:.82rem;color:#8a7a5c;margin-top:2px;">' + (fxOn ? ('Ativo — ' + esc(_ppResumo('0000-00-00').txt || '')) : 'Desligado — os dias sem prato próprio não mostram nada.') + '</div></div>'
+      + '<button type="button" class="mini-btn" id="ppFixo">' + (fxOn ? 'Editar' : 'Criar') + '</button></div>';
+    html += '<div style="font-size:.8rem;font-weight:800;color:#8a7a5c;margin:14px 0 6px;">PRÓXIMOS 14 DIAS</div>';
+    const hoje = new Date();
+    for(let k = 0; k < 14; k++){
+      const d = new Date(hoje); d.setDate(hoje.getDate() + k); const iso = _ppIso(d); const r = _ppResumo(iso); const fechado = (typeof _encerrado === 'function') && _encerrado(iso);
+      const est = { dia:{ t:'Prato próprio', c:'#1e6b3c', b:'#e6f7ec' }, fixo:{ t:'Prato fixo', c:'#6b4a1f', b:'#f3ead8' }, escondido:{ t:'Escondido', c:'#a85d10', b:'#fff2df' }, nada:{ t:'Sem prato', c:'#8a7a5c', b:'#f6f2ea' } }[r.tipo];
+      html += '<div class="card pp-dia" data-iso="' + iso + '" style="padding:10px 12px;margin-bottom:8px;cursor:pointer;display:flex;gap:10px;align-items:center;' + (fechado ? 'opacity:.55;' : '') + '">'
+        + (r.foto ? ('<img src="' + esc(r.foto) + '" alt="" loading="lazy" style="width:52px;height:52px;object-fit:cover;border-radius:10px;flex-shrink:0;">') : '<div style="width:52px;height:52px;border-radius:10px;background:#f3ead8;display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;">🍽️</div>')
+        + '<div style="flex:1;min-width:0;"><div style="font-weight:800;color:var(--castanho);">' + _ppNomeDia(iso, k) + (fechado ? ' <span style="font-size:.72rem;color:#b23;">· encerrado</span>' : '') + '</div>'
+        + '<div style="font-size:.82rem;color:#8a7a5c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + (r.txt ? esc(r.txt) : '—') + (r.hora ? (' · ⏰ ' + esc(r.hora)) : '') + '</div></div>'
+        + '<span style="font-size:.72rem;font-weight:800;padding:3px 9px;border-radius:999px;background:' + est.b + ';color:' + est.c + ';white-space:nowrap;">' + est.t + '</span>'
+        + '<span style="color:#b9ab8e;font-size:1.1rem;">›</span></div>';
+    }
+    v.innerHTML = html;
+    v.querySelectorAll('.pp-dia').forEach(function(el){ el.onclick = function(){ _ppDia = el.dataset.iso; renderPrato(); try{ window.scrollTo(0,0); }catch(e){} }; });
+    $('ppFixo').onclick = function(){ _ppDia = 'fixo'; renderPrato(); try{ window.scrollTo(0,0); }catch(e){} };
+  }
+  function _ppEditor(iso){
+    const v = $('vistaPrato');
+    if(iso === 'fixo'){
+      // Prato FIXO: o mesmo editor, sempre em modo "repetir todos os dias"
+      v.innerHTML = '<button type="button" id="ppVoltar" style="background:none;border:none;color:var(--dourado-escuro);font-weight:800;cursor:pointer;font-family:inherit;padding:0 0 10px;font-size:.9rem;">‹ Prato do dia</button>'
+        + '<div class="card" style="padding:12px 14px;"><div style="font-size:1.1rem;font-weight:900;color:var(--castanho);">📌 Prato fixo</div>'
+        + '<div class="subt2" style="margin:2px 0 0;">Aparece em todos os dias que não tenham um prato próprio.</div><div id="ppForm" style="margin-top:8px;"></div></div>';
+      $('ppForm').innerHTML = _pratoDoDiaHTML('fixo');
+      { const b = $('btnPrato'); if(b) b.style.display = 'none'; const f = $('pratoForm'); if(f) f.classList.remove('hide'); }
+      _wirePrato('fixo');
+      { const fx = $('pd_fixo'); if(fx){ fx.checked = true; fx.dispatchEvent(new Event('change')); const l = fx.closest('label'); if(l) l.style.display = 'none'; } const n = $('pd_fixoNota'); if(n) n.style.display = 'none'; const cp = $('pd_copiar'); if(cp) cp.style.display = 'none'; }
+      $('ppVoltar').onclick = function(){ _ppDia = null; renderPrato(); };
+      return;
+    }
+    const d = new Date(iso + 'T00:00:00'); const k = Math.round((d - new Date(_ppIso(new Date()) + 'T00:00:00')) / 86400000);
+    v.innerHTML = '<button type="button" id="ppVoltar" style="background:none;border:none;color:var(--dourado-escuro);font-weight:800;cursor:pointer;font-family:inherit;padding:0 0 10px;font-size:.9rem;">‹ Prato do dia</button>'
+      + '<div class="card" style="padding:12px 14px;">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;">'
+      +   '<div style="font-size:1.1rem;font-weight:900;color:var(--castanho);">🍽️ ' + (k >= 0 && k <= 13 ? _ppNomeDia(iso, k) : (d.getDate() + '/' + (d.getMonth()+1))) + '</div>'
+      +   '<div style="display:flex;gap:6px;align-items:center;"><button type="button" class="mini-btn" id="ppAnt">‹</button><input type="date" id="ppData" value="' + iso + '" style="width:auto;margin:0;padding:6px 8px;"><button type="button" class="mini-btn" id="ppSeg">›</button></div>'
+      + '</div>'
+      + (((typeof _encerrado === 'function') && _encerrado(iso)) ? '<div style="margin-top:6px;font-size:.82rem;font-weight:700;color:#b23;">🔒 O restaurante está encerrado neste dia.</div>' : '')
+      + '<div id="ppForm" style="margin-top:8px;"></div></div>';
+    $('ppForm').innerHTML = _pratoDoDiaHTML(iso);
+    // na área própria o formulário está sempre aberto (sem o botão de abrir/fechar do calendário)
+    { const b = $('btnPrato'); if(b) b.style.display = 'none'; const f = $('pratoForm'); if(f) f.classList.remove('hide'); }
+    _wirePrato(iso);
+    { const b = $('btnPrato'); if(b) b.onclick = null; }
+    const mudar = function(n){ const x = new Date(iso + 'T00:00:00'); x.setDate(x.getDate() + n); _ppDia = _ppIso(x); renderPrato(); };
+    $('ppVoltar').onclick = function(){ _ppDia = null; renderPrato(); };
+    $('ppAnt').onclick = function(){ mudar(-1); };
+    $('ppSeg').onclick = function(){ mudar(1); };
+    $('ppData').onchange = function(){ if(this.value){ _ppDia = this.value; renderPrato(); } };
+  }
   // ===== Prato do dia — caixa estilo mosaico, gerida aqui =====
   var _pdCaixas = [];
   async function _pdUpload(file){
@@ -1420,7 +1501,8 @@
     if(ehFixo){ delete cfg.pratoFixo; } else { delete cfg.pratoDatas[iso]; }
     var up=await _updNeg(cfg);
     if(up.error){ return; }
-    negocio.config=cfg; renderCal(); renderDia(iso);
+    negocio.config=cfg; renderCal();
+    if(!$('vistaPrato').classList.contains('hide')) renderPrato(); else renderDia(iso);
   }
 
   function _encEstadoInfo(est){
@@ -2595,7 +2677,6 @@
     if(_encerrado(iso)) html += '<div style="margin:-4px 0 12px; font-size:.85rem; font-weight:700; color:#b23;">🔒 Encerrado</div>';
     if(_fer) html += '<div style="margin:-4px 0 12px; font-size:.85rem; font-weight:700; color:#c0392b;">★ Feriado: '+esc(_fer)+'</div>';
     html += '<button class="nova-btn" id="btnNova" type="button">➕ Nova reserva</button>' + _formNovaHTML();
-    html += _pratoDoDiaHTML(iso);
     if(!rs.length) html += '<div style="color:#8a7a5c; font-size:.9rem;">Sem reservas neste dia.</div>';
     html += '</div>';
     rs.forEach(function(r){
@@ -2616,7 +2697,6 @@
     });
     $('detalhe').innerHTML = html;
     _wireNova(iso);
-    _wirePrato(iso);
     $('detalhe').querySelectorAll('[data-a]').forEach(function(btn){ btn.onclick = function(){ accao(btn.getAttribute('data-id'), btn.getAttribute('data-a')); }; });
   }
 
