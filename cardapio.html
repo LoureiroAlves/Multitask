@@ -1615,7 +1615,7 @@
   .menu-rodape{ white-space:pre-line; color:var(--castanho-suave); font-size:0.72rem; line-height:1.5; padding:10px 16px 12px; margin-top:10px; border-top:1px solid rgba(0,0,0,.08); text-align:center; opacity:.8; }
   .menu-sec-tit{ text-align:center; font-family:var(--fonte-titulo); font-weight:800; color:var(--castanho); letter-spacing:.6px; text-transform:uppercase; font-size:0.98rem; margin:16px 0 3px; }
   .menu-sec-tit:first-child{ margin-top:6px; }
-  .menu-sec-sub{ font-size:0.68rem; font-weight:600; opacity:.65; text-transform:none; letter-spacing:0; }
+  .menu-sec-sub{ display:block; text-align:center; font-size:0.74rem; font-style:italic; font-weight:600; opacity:.65; text-transform:none; letter-spacing:0; color:var(--castanho); margin:-1px 0 3px; }
   .menu-sec-txt{ text-align:center; color:var(--castanho); font-size:0.9rem; line-height:1.5; padding:0 16px; white-space:pre-line; }
   .menu-card > summary{ position:relative; padding-right:76px; }
   .menu-card > summary .btn-add-menu{ position:absolute; right:42px; top:50%; transform:translateY(-50%); }
@@ -3627,8 +3627,8 @@
             m.seccoes.forEach(function(sx){
               const h=document.createElement('div'); h.className='menu-sec-tit';
               const ht=document.createElement('span'); _mLang(ht, sx.titulo); h.appendChild(ht);
-              if(sx.sub && (sx.sub.pt||sx.sub.en)){ const sp=document.createElement('span'); sp.className='menu-sec-sub'; _mLang(sp, sx.sub); h.appendChild(document.createTextNode(' ')); h.appendChild(sp); }
               lista.appendChild(h);
+              if(sx.sub && (sx.sub.pt||sx.sub.en)){ const sp=document.createElement('div'); sp.className='menu-sec-sub'; _mLang(sp, sx.sub); lista.appendChild(sp); }
               if(sx.texto && (sx.texto.pt||sx.texto.en||sx.texto.fr||sx.texto.es)){ const t=document.createElement('div'); t.className='menu-sec-txt'; _mLang(t, sx.texto); lista.appendChild(t); }
             });
           } else if(m.desc){ const d=document.createElement('div'); d.className='menu-desc'; _mLang(d, m.desc); lista.appendChild(d); }
