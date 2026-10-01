@@ -1640,11 +1640,17 @@
       hist.forEach(function(j){ const e = _ovEstado(j), g = _OV_EST[e], p = _ovPub[j.id] || {}; const vl = Array.isArray(p.vencedores_lista) ? p.vencedores_lista : [];
         html += '<div class="card ov-hist" data-id="' + j.id + '" style="padding:12px 14px;margin-bottom:8px;cursor:pointer;"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center;"><div style="min-width:0;"><div style="font-weight:800;color:var(--castanho);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + esc(j.nome) + ' · ' + esc(j.premio_nome) + '</div>'
           + '<div style="font-size:.78rem;color:#8a7a5c;margin-top:2px;">' + _ovDataTxt(j.inicio) + ' → ' + _ovDataTxt(j.fim) + ' · ' + (p.participantes || 0) + ' participante(s)' + (vl.length ? (' · 🏆 ' + vl.map(function(x){ return esc(x.nome); }).join(', ')) : '') + '</div></div>'
-          + '<span style="font-size:.72rem;font-weight:800;padding:3px 9px;border-radius:999px;background:' + g.b + ';color:' + g.c + ';white-space:nowrap;">' + g.t + '</span></div></div>'; });
+          + '<span style="font-size:.72rem;font-weight:800;padding:3px 9px;border-radius:999px;background:' + g.b + ';color:' + g.c + ';white-space:nowrap;">' + g.t + '</span></div>'
+          + ((e === 'terminado' || e === 'expirado') ? ('<div style="margin-top:8px;"><button type="button" class="mini-btn ov-esc" data-id="' + j.id + '" data-v="' + (j.esconder_menu ? '0' : '1') + '">' + (j.esconder_menu ? '👁 Voltar a mostrar no menu' : '🙈 Tirar o aviso do menu') + '</button></div>') : '')
+          + '</div>'; });
     }
     v.innerHTML = html;
     const nv = $('ovNova'); if(nv) nv.onclick = function(){ _ovEdit = _ovNovo(); renderOvo(); };
     $('ovValidar').onclick = _ovValidarCodigo; $('ovCod').addEventListener('keydown', function(e){ if(e.key === 'Enter') _ovValidarCodigo(); });
+    v.querySelectorAll('.ov-esc').forEach(function(b){ b.onclick = async function(ev){ ev.stopPropagation(); b.disabled = true;
+      const r = await sb.from('ovo_jogos').update({ esconder_menu: b.dataset.v === '1' }).eq('id', b.dataset.id).select('id');
+      if(r.error){ alert(/esconder_menu/.test(r.error.message) ? 'Falta correr o ovo-esconder.sql no Supabase.' : ('Erro: ' + r.error.message)); b.disabled = false; return; }
+      renderOvo(); }; });
     v.querySelectorAll('.ov-hist').forEach(function(el){ el.onclick = function(){ const j = _ovLista.filter(function(x){ return x.id === el.dataset.id; })[0]; if(j) _ovAbrirDetalhe(j); }; });
     if(atual) _ovWireAtual(atual);
   }
