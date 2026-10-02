@@ -4246,7 +4246,7 @@
     if(!config || !ex || typeof ex !== 'object') return;
     var off = function(k){ return ex[k] !== true; };
     if(off('reservas')) config.agenda = Object.assign({}, config.agenda || {}, { ativo:false });
-    if(off('encomendas')){ config.modos = Object.assign({}, config.modos || {}, { takeaway:false }); config.carrinho = Object.assign({}, config.carrinho || {}, { ativo:false }); }
+    if(off('encomendas')){ config.modos = Object.assign({}, config.modos || {}); config.modos.__tinha = Object.assign({}, config.modos.__tinha || {}, { takeaway: !!config.modos.takeaway }); config.modos.takeaway = false; config.carrinho = Object.assign({}, config.carrinho || {}, { ativo:false }); }
     if(off('promocoes')){ config.promocoes = []; config.promoDatas = {}; }
     if(off('prato')){ config.pratoDatas = {}; config.pratoFixo = null; config.pratoDia = null; }
     if(off('favoritos')) config.favoritosPratos = false;
@@ -6116,6 +6116,21 @@
       try{ document.body.classList.toggle('usa-verbotao', !!cfg.verBotao); }catch(e){}
       var _vb = document.getElementById('introBtn'); if(_vb) _vb.style.display = '';   // deixa o CSS/classe mandar
       var pos = cfg.pos || {}, tam = cfg.tam || {};
+      // Se algum botão configurado não aparece (extra bloqueado, sem grupos/cerimónias, reservas desligadas…),
+      // os restantes voltam a arrumar-se sozinhos: centrados no mesmo sítio, na mesma linha, com o mesmo espaçamento.
+      var reflow = null;
+      try{
+        var tinha = cfg.__tinha || {};
+        var configurados = ['normal','takeaway','grupos','cerimonias','reservas'].filter(function(m){ return cfg[m] || tinha[m]; });
+        if(!preview && modos.length < configurados.length){
+          var xs = [], ys = [];
+          configurados.forEach(function(m, k){ var p0 = pos[m]; xs.push((p0 && p0.x != null) ? parseFloat(p0.x) : ((k - (configurados.length - 1) / 2) * 98)); ys.push((p0 && p0.y != null) ? parseFloat(p0.y) : 0); });
+          var minX = Math.min.apply(null, xs), maxX = Math.max.apply(null, xs);
+          var passo = configurados.length > 1 ? (maxX - minX) / (configurados.length - 1) : 98;
+          passo = Math.max(76, Math.min(130, passo || 98));
+          reflow = { cx:(minX + maxX) / 2, y: ys.reduce(function(a, b){ return a + b; }, 0) / ys.length, passo:passo };
+        }
+      }catch(e){ reflow = null; }
       var baseDelay = Math.max(0, Math.round((parseFloat(cfg.entrada) || 0) * 1000));   // momento de entrada (ms)
       var animCls = 'anim-' + (cfg.anim || 'subir');
       var wrap = document.createElement('div'); wrap.id = 'introModosWrap';
@@ -6128,8 +6143,8 @@
         b.className = 'im-opt'; b.setAttribute('data-modo', m);
         var sc = parseFloat(tam[m]) || 1; b.style.setProperty('--ic-scale', sc);
         var p = pos[m];
-        var dx = (p && p.x != null) ? parseFloat(p.x) : ((i - (modos.length - 1) / 2) * 98);
-        var dy = (p && p.y != null) ? parseFloat(p.y) : 0;
+        var dx = reflow ? (reflow.cx + (i - (modos.length - 1) / 2) * reflow.passo) : ((p && p.x != null) ? parseFloat(p.x) : ((i - (modos.length - 1) / 2) * 98));
+        var dy = reflow ? reflow.y : ((p && p.y != null) ? parseFloat(p.y) : 0);
         b.style.setProperty('--mx', dx + 'px'); b.style.setProperty('--my', dy + 'px');
         b.style.setProperty('--ic-delay', (baseDelay + i * 220) + 'ms');
         b.innerHTML = '<span class="im-inner' + (preview ? '' : ' im-anima ' + animCls) + '"><span class="im-ic">' + n[1] + '</span><span class="im-lb">' + n[0] + '</span></span>';
@@ -9478,7 +9493,9 @@
       document.body.classList.remove('modo-normal','modo-takeaway','modo-grupos','modo-cerimonias');
       document.body.classList.add('modo-' + vista);
       // Carrinho / "+": ligado no Take away, Grupos e Cerimónias (contacto por WhatsApp); desligado só no Menu normal
-      var comCarrinho = (vista === 'takeaway' || vista === 'grupos' || vista === 'cerimonias');
+      var _exP = (window.__funcoesPlano || {}).extras;
+      var _cartBloq = !!(_exP && typeof _exP === 'object' && _exP.encomendas !== true);   // carrinho só com Encomendas desbloqueadas
+      var comCarrinho = !_cartBloq && (vista === 'takeaway' || vista === 'grupos' || vista === 'cerimonias');
       try{
         if(window.__cartCfg) window.__cartCfg.ativo = comCarrinho;
         document.body.classList.toggle('carrinho-off', !comCarrinho);
