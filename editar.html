@@ -6133,6 +6133,7 @@ amesadigital.pt</textarea>
       setMsg('');
       try{ passI.focus(); }catch(e){}
     }
+    function __amSeloAdmin(email){ try{ if(document.getElementById('amSeloAdmin')) return; var d = document.createElement('div'); d.id = 'amSeloAdmin'; d.title = 'Sessão de administrador: tens acesso a todos os negócios. Os donos não vêem este selo.'; d.textContent = '👑 A ver como administrador' + (email ? (' · ' + email) : ''); d.style.cssText = 'position:fixed; left:10px; bottom:calc(10px + env(safe-area-inset-bottom)); z-index:99999; background:rgba(122,83,32,.92); color:#fff; font:700 12px/1.2 system-ui,-apple-system,sans-serif; padding:6px 11px; border-radius:999px; box-shadow:0 3px 10px rgba(0,0,0,.25); pointer-events:none; max-width:calc(100vw - 20px); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;'; document.body.appendChild(d); }catch(e){} }
     async function iniciarSessao(){
       const { data:{ session } } = await sbc.auth.getSession();
       if(!session) return;
@@ -6150,6 +6151,7 @@ amesadigital.pt</textarea>
       const { data:ent } = await sbc.from('entitlements').select('*').eq('negocio_id', neg.id).maybeSingle();
       window.__negocio = neg; window.__ent = ent || { plano:'basico', funcoes:{}, publicidade:{} };
       window.__admin = admin;
+      if(admin) __amSeloAdmin(email);
       ov.style.display = 'none';
       { const bs = document.getElementById('btnSair');
         if(bs){ bs.style.display = 'inline-block'; bs.onclick = async function(){ if(!confirm('Terminar sessão?')) return; try{ await sbc.auth.signOut(); }catch(e){} location.reload(); }; } }
