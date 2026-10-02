@@ -419,6 +419,7 @@
     <div id="vistaOvo" class="hide"></div>
     <div id="vistaPrato" class="hide"></div>
     <div id="vistaExtras" class="hide"></div>
+    <div id="vistaQR" class="hide"></div>
   </div>
 </div>
 
@@ -456,6 +457,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
   const SUPA_URL = 'https://zewiijcrkyxjkhudlplk.supabase.co';
   const SUPA_KEY = 'sb_publishable_6LP7x2v5c-c9DQkQslnUmA_g13SEjp3';
@@ -500,35 +502,10 @@
     mapa:'Desce até ao fim do menu para veres o mapa e "Como chegar".',
     jogos:'Abre o separador dos jogos.'
   };
-  // o teu menu já tem este extra preparado? (senão, a pré-visualização usa um restaurante de exemplo)
-  function _extraTemConteudo(k){
-    const c = (negocio && negocio.config) || {};
-    try{
-      if(k === 'reservas') return !!(c.agenda && c.agenda.ativo);
-      if(k === 'encomendas') return !!(c.modos && c.modos.takeaway);
-      if(k === 'promocoes') return Array.isArray(c.promocoes) && c.promocoes.length > 0;
-      if(k === 'prato') return !!((c.pratoFixo && Array.isArray(c.pratoFixo.caixas) && c.pratoFixo.caixas.length) || (c.pratoDatas && Object.keys(c.pratoDatas).length));
-      if(k === 'favoritos') return c.favoritosPratos === true;
-      if(k === 'decoracao') return !!(c.decor && c.decor.tema && c.decor.tema !== 'nenhum');
-      if(k === 'fidelidade') return !!(c.fidelidade && c.fidelidade.ativo);
-      if(k === 'redes') return c.mostrarRedes !== false && !!(c.redes && (c.redes.instagram || c.redes.facebook));
-      if(k === 'mapa') return !!(c.local && (c.local.morada || c.local.link));
-      if(k === 'jogos') return c.jogos !== false;
-    }catch(e){}
-    return false;
-  }
-  let _slugExemplo = null;
-  async function _slugDemo(k){
-    if(_extraTemConteudo(k)) return SLUG;
-    if(_slugExemplo) return _slugExemplo;
-    try{   // um restaurante marcado como exemplo (leitura pública)
-      const r = await fetch(SUPA_URL + '/rest/v1/negocios?select=slug&config->>exemplo=eq.true&apagado_em=is.null&ativo=eq.true&order=nome&limit=1', { headers:{ apikey:SUPA_KEY, Authorization:'Bearer ' + SUPA_KEY } });
-      const a = r.ok ? await r.json() : []; _slugExemplo = (a && a[0] && a[0].slug) || 'exemplo1';
-    }catch(e){ _slugExemplo = 'exemplo1'; }
-    return _slugExemplo;
-  }
+  // a pré-visualização dos extras usa SEMPRE o restaurante de exemplo "exemplo1" (preparado pelo administrador)
+  const SLUG_DEMO = 'exemplo1';
   async function _extraVer(k){
-    const x = _extraInfo(k); const slug = await _slugDemo(k); const proprio = (slug === SLUG);
+    const x = _extraInfo(k); const slug = SLUG_DEMO, proprio = false;
     const old = document.getElementById('exDemoOv'); if(old) old.remove();
     const ov = document.createElement('div'); ov.id = 'exDemoOv';
     ov.style.cssText = 'position:fixed;inset:0;z-index:9600;background:rgba(30,20,10,.72);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px;gap:10px;';
@@ -864,7 +841,7 @@
     await accao(id, a);
   }
 
-  const _AREA_TIT = { cal:'📅 Calendário', dash:'📊 Painel', enc:'🛍️ Encomendas', notif:'🏷️ Promoções', ovo:'🥚 No Cu da Galinha', prato:'🍽️ Prato do dia', def:'⚙️ Definições', extras:'✨ Extras' };
+  const _AREA_TIT = { cal:'📅 Calendário', dash:'📊 Painel', enc:'🛍️ Encomendas', notif:'🏷️ Promoções', ovo:'🥚 No Cu da Galinha', prato:'🍽️ Prato do dia', def:'⚙️ Definições', extras:'✨ Extras', qr:'📱 QR code do menu' };
   function mostrarVista(qual){
     if(!SOU_ADMIN && AREA_EXTRA[qual] && !extraOn(AREA_EXTRA[qual])){ _extraBloqueado(AREA_EXTRA[qual]); return; }   // área paga ainda bloqueada
     $('dashHome').classList.add('hide');
@@ -878,6 +855,8 @@
     $('vistaOvo').classList.toggle('hide', qual!=='ovo');
     $('vistaPrato').classList.toggle('hide', qual!=='prato');
     $('vistaExtras').classList.toggle('hide', qual!=='extras');
+    $('vistaQR').classList.toggle('hide', qual!=='qr');
+    if(qual==='qr') renderQR();
     if(qual==='extras') renderExtras();
     if(qual==='cal') renderCalResumo();
     if(qual==='dash') renderDashboard();
@@ -894,7 +873,7 @@
   }
   function voltarHome(){
     if(_encTimer){ clearInterval(_encTimer); _encTimer = null; }
-    ['vistaCal','vistaDash','vistaDef','vistaEncomendas','vistaNotif','vistaOvo','vistaPrato','vistaExtras'].forEach(function(id){ var el=$(id); if(el) el.classList.add('hide'); });
+    ['vistaCal','vistaDash','vistaDef','vistaEncomendas','vistaNotif','vistaOvo','vistaPrato','vistaExtras','vistaQR'].forEach(function(id){ var el=$(id); if(el) el.classList.add('hide'); });
     $('areaBar').classList.add('hide');
     $('dashHome').classList.remove('hide');
     renderHome();
@@ -944,6 +923,7 @@
       +   _cardExtra('enc','encomendas','🛍️','Encomendas', encAtivas?(encAtivas+' em curso'):'Pedidos take-away', 'Pendentes · Preparação · Prontas · Entregues', encPend)
       +   _cardExtra('prato','prato','🍽️','Prato do dia','Os destaques por baixo do cabeçalho, dia a dia ou fixo','Gerir', 0)
       +   _cardExtra('notif','promocoes','🏷️','Promoções','No menu e por notificação, nos dias que escolheres','Gerir promoções', 0)
+      +   _cardHome('qr','📱','QR code','O código para as mesas, montra e redes — descarregar ou imprimir','Abrir', 0)
       +   _cardHome('extras','✨','Extras', SOU_ADMIN ? 'Desbloquear funcionalidades deste restaurante' : 'Tudo o que a tua app pode fazer', SOU_ADMIN ? 'Gerir' : 'Ver', 0)
       +   (SOU_ADMIN ? _cardHome('ovo','🥚','No Cu da Galinha','Esconde um ovo no menu · o 1.º a encontrar ganha','Jogo', 0)
               : '')   // o jogo (e a validação dos prémios) é só do administrador
@@ -951,6 +931,67 @@
       + '</div>';
   }
 
+  // ===== QR CODE do menu: ver, descarregar, imprimir (folha A4 ou cartões de mesa) =====
+  function _qrLink(){ return 'https://amesadigital.pt/' + SLUG; }
+  function _qrCanvas(tam, comNome){
+    return new Promise(function(res){
+      const tmp = document.createElement('div');
+      try{ new QRCode(tmp, { text:_qrLink(), width:tam, height:tam, colorDark:'#1f170c', colorLight:'#ffffff', correctLevel:QRCode.CorrectLevel.H }); }catch(e){ res(null); return; }
+      setTimeout(function(){
+        const src = tmp.querySelector('canvas') || tmp.querySelector('img'); if(!src){ res(null); return; }
+        const cv = document.createElement('canvas'); cv.width = tam; cv.height = tam; const ctx = cv.getContext('2d');
+        ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, tam, tam); ctx.drawImage(src, 0, 0, tam, tam);
+        if(comNome){   // nome do restaurante numa caixa ao centro (o QR aguenta: nível de correção alto)
+          const nome = ((negocio && negocio.nome) || '').slice(0, 18); ctx.font = '800 ' + Math.round(tam * 0.06) + 'px system-ui, sans-serif';
+          const w = Math.min(tam * 0.56, ctx.measureText(nome).width + tam * 0.08), h = tam * 0.14, x = (tam - w) / 2, y = (tam - h) / 2;
+          ctx.fillStyle = '#fff'; ctx.fillRect(x, y, w, h); ctx.lineWidth = Math.max(2, tam * 0.008); ctx.strokeStyle = '#1f170c'; ctx.strokeRect(x, y, w, h);
+          ctx.fillStyle = '#1f170c'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(nome, tam / 2, tam / 2, w - tam * 0.04);
+        }
+        res(cv);
+      }, 60);
+    });
+  }
+  async function renderQR(){
+    const v = $('vistaQR'); if(!v) return;
+    v.innerHTML = '<div class="card" style="text-align:center;">'
+      + '<div style="font-weight:900;font-size:1.1rem;color:var(--castanho);">' + esc((negocio && negocio.nome) || '') + '</div>'
+      + '<div style="font-size:.85rem;color:#8a7a5c;margin:2px 0 12px;">Aponta a câmara do telemóvel para abrir o menu</div>'
+      + '<div id="qrVer" style="display:flex;justify-content:center;"><span class="msg">A gerar…</span></div>'
+      + '<div style="margin-top:10px;font-weight:800;color:#1f4e9c;word-break:break-all;">' + esc(_qrLink()) + '</div>'
+      + '<label style="display:flex;gap:8px;align-items:center;justify-content:center;margin-top:10px;font-weight:700;cursor:pointer;"><input type="checkbox" id="qrNome" checked style="width:auto;"> Nome do restaurante no meio do código</label>'
+      + '</div>'
+      + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">'
+      +   '<button type="button" class="pdf-btn" id="qrDesc">⬇️ Descarregar imagem</button>'
+      +   '<button type="button" class="pdf-btn" id="qrCopiar">🔗 Copiar link</button>'
+      +   '<button type="button" class="pdf-btn" id="qrImp1">🖨️ Imprimir folha A4</button>'
+      +   '<button type="button" class="pdf-btn" id="qrImp6">🖨️ Cartões de mesa (6 por folha)</button>'
+      + '</div>'
+      + '<div class="subt2" style="margin-top:8px;">O código leva sempre ao teu menu atualizado — podes imprimir uma vez e mudar pratos e preços quando quiseres.</div>';
+    const pinta = async function(){ const cv = await _qrCanvas(520, $('qrNome').checked); const box = $('qrVer'); if(!box) return; box.innerHTML = ''; if(!cv){ box.textContent = 'Não foi possível gerar o código.'; return; } cv.style.cssText = 'width:min(260px,70vw);height:auto;border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,.12);'; box.appendChild(cv); };
+    await pinta();
+    $('qrNome').onchange = pinta;
+    $('qrDesc').onclick = async function(){ const cv = await _qrCanvas(1200, $('qrNome').checked); if(!cv) return; const a = document.createElement('a'); a.href = cv.toDataURL('image/png'); a.download = 'qr-menu-' + SLUG + '.png'; document.body.appendChild(a); a.click(); a.remove(); };
+    $('qrCopiar').onclick = function(){ const b = this; const ok = function(){ const t = b.textContent; b.textContent = '✓ Copiado'; setTimeout(function(){ b.textContent = t; }, 1500); }; if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(_qrLink()).then(ok, function(){ prompt('Copia o link:', _qrLink()); }); } else prompt('Copia o link:', _qrLink()); };
+    $('qrImp1').onclick = function(){ _qrImprimir(1); };
+    $('qrImp6').onclick = function(){ _qrImprimir(6); };
+  }
+  async function _qrImprimir(n){
+    const cv = await _qrCanvas(900, $('qrNome') ? $('qrNome').checked : true); if(!cv) return;
+    const img = cv.toDataURL('image/png'), nome = esc((negocio && negocio.nome) || ''), link = esc(_qrLink().replace(/^https:\/\//, ''));
+    const cartao = function(grande){
+      return '<div class="c' + (grande ? ' g' : '') + '"><div class="n">' + nome + '</div><img src="' + img + '"><div class="t">📱 Aponta a câmara para ver o menu</div><div class="l">' + link + '</div></div>';
+    };
+    const corpo = n === 1 ? cartao(true) : ('<div class="grelha">' + new Array(6).fill(0).map(function(){ return cartao(false); }).join('') + '</div>');
+    const html = '<!DOCTYPE html><html lang="pt"><head><meta charset="utf-8"><title>QR — ' + nome + '</title><style>'
+      + '@page{ size:A4; margin:10mm; } *{ box-sizing:border-box; } body{ margin:0; font-family:system-ui,-apple-system,Segoe UI,sans-serif; color:#1f170c; }'
+      + '.c{ text-align:center; border:1.5px dashed #b9a988; border-radius:10px; padding:6mm; }'
+      + '.c img{ width:52mm; height:52mm; display:block; margin:3mm auto; } .c .n{ font-weight:900; font-size:15pt; } .c .t{ font-weight:700; font-size:10pt; } .c .l{ font-size:9pt; color:#6b5a3c; margin-top:1mm; }'
+      + '.c.g{ border:none; margin-top:20mm; } .c.g img{ width:120mm; height:120mm; margin:8mm auto; } .c.g .n{ font-size:30pt; } .c.g .t{ font-size:18pt; } .c.g .l{ font-size:13pt; }'
+      + '.grelha{ display:grid; grid-template-columns:1fr 1fr; grid-template-rows:repeat(3, 89mm); gap:5mm; }'
+      + '</style></head><body>' + corpo + '<script>window.onload=function(){ setTimeout(function(){ window.print(); }, 300); };<\/script></body></html>';
+    const w = window.open('', '_blank'); if(!w){ alert('O browser bloqueou a janela de impressão. Permite janelas deste site e tenta outra vez.'); return; }
+    w.document.open(); w.document.write(html); w.document.close();
+  }
   function renderExtras(){
     const v = $('vistaExtras'); if(!v) return;
     let html = '<div style="background:linear-gradient(135deg,#7a5320,#c79a3e);border-radius:16px;padding:18px;margin-bottom:14px;color:#fff;">'
