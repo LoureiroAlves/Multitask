@@ -635,7 +635,7 @@
     await _limparSemanaAntiga();
     carregar();
     try{ _encVigiaIniciar(); }catch(e){}
-    try{ _ovVigiaIniciar(); }catch(e){}
+    try{ if(SOU_ADMIN) _ovVigiaIniciar(); }catch(e){}   // avisos de vencedor: só para o administrador
     document.addEventListener('pointerdown', function(){ try{ _prepararSom(); }catch(e){} }, { once:true });
   }
 
@@ -813,9 +813,6 @@
       (data||[]).forEach(function(e){ const s=e.estado||'pendente'; if(s==='pendente'){ encPend++; encAtivas++; } else if(s==='confirmada'||s==='pronta'){ encAtivas++; } });
     }catch(e){}
     const nome = (negocio && negocio.nome) || 'Restaurante';
-    // dono: o cartão do jogo só aparece se a ÀMesa já fez algum jogo neste restaurante
-    let temOvo = false;
-    if(!SOU_ADMIN){ try{ const c = await sb.from('ovo_jogos_publico').select('id', { count:'exact', head:true }).eq('negocio_id', negocio.id); temOvo = (c.count || 0) > 0; }catch(e){} }
     const dd = new Date();
     const diaTxt = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'][dd.getDay()] + ', ' + dd.getDate() + ' ' + MESES[dd.getMonth()];
     h.innerHTML =
@@ -831,7 +828,7 @@
       +   _cardHome('prato','🍽️','Prato do dia','Os destaques por baixo do cabeçalho, dia a dia ou fixo','Gerir', 0)
       +   _cardHome('notif','🏷️','Promoções','No menu e por notificação, nos dias que escolheres','Gerir promoções', 0)
       +   (SOU_ADMIN ? _cardHome('ovo','🥚','No Cu da Galinha','Esconde um ovo no menu · o 1.º a encontrar ganha','Jogo', 0)
-              : (temOvo ? _cardHome('ovo','🎟️','Prémios do jogo','Valida o código de quem ganhou o No Cu da Galinha','Validar código', 0) : ''))
+              : '')   // o jogo (e a validação dos prémios) é só do administrador
       +   _cardHome('def','⚙️','Definições','Dados, horários, reservas…','Configurar', 0)
       + '</div>';
   }
@@ -1742,7 +1739,8 @@
     return r.error || null;
   }
   async function renderOvo(){
-    const v = $('vistaOvo'); if(_ovEdit){ _ovRenderEditor(); return; }
+    const v = $('vistaOvo');
+    if(!SOU_ADMIN){ v.innerHTML = '<div class="card"><div class="msg">O jogo No Cu da Galinha é gerido pela ÀMesa.</div></div>'; return; } if(_ovEdit){ _ovRenderEditor(); return; }
     v.innerHTML = '<div class="msg">A carregar…</div>';
     const err = await _ovCarregar();
     if(err){ v.innerHTML = '<div class="card"><div class="msg erro">Erro: ' + esc(err.message) + '</div><div class="subt2" style="margin-top:8px;">Se disser que a tabela não existe, corre o <b>ovo.sql</b> no Supabase.</div></div>'; return; }
