@@ -10061,8 +10061,18 @@
   }
   async function comecar(){
     var b = $('ovoComecar'); if(b){ b.disabled = true; b.textContent = 'A entrar…'; }
-    try{ var r = await sbC.rpc('ovo_entrar', { p_jogo:J.id, p_dispositivo:disp() }); if(r.error) throw r.error; P = r.data; ls('amesaOvoPart:' + J.id, P); }
-    catch(e){ if(b){ b.disabled = false; b.textContent = '🔍 Começar a Procurar'; } toast(String(e && e.message || e).indexOf('jogo_inativo') >= 0 ? 'O jogo já terminou.' : 'Não foi possível entrar. Tenta outra vez.'); return; }
+    // ao acordar o telemóvel a rede pode demorar uns segundos: tenta até 4 vezes antes de desistir
+    var erroFinal = null;
+    for(var k = 0; k < 4; k++){
+      try{ var r = await sbC.rpc('ovo_entrar', { p_jogo:J.id, p_dispositivo:disp() }); if(r.error) throw r.error; P = r.data; ls('amesaOvoPart:' + J.id, P); erroFinal = null; break; }
+      catch(e){ erroFinal = e; if(String(e && e.message || e).indexOf('jogo_inativo') >= 0) break; await new Promise(function(ok){ setTimeout(ok, 1500); }); }
+    }
+    if(erroFinal){
+      var inat = String(erroFinal && erroFinal.message || erroFinal).indexOf('jogo_inativo') >= 0;
+      if(inat){ try{ var q = await sbC.from('ovo_jogos_publico').select('*').eq('id', J.id).maybeSingle(); if(q && q.data && q.data.estado === 'ativo'){ J = q.data; return comecar(); } }catch(_e){} }
+      if(b){ b.disabled = false; b.textContent = '🔍 Começar a Procurar'; }
+      toast(inat ? 'O jogo já terminou.' : 'Sem ligação à internet. Tenta outra vez.'); return;
+    }
     fecharFolha(); iniciarCaca(); toast('Boa caça! Toca nos pratos, categorias, promoções… 🥚');
   }
   // ---------- caça ----------
@@ -10151,6 +10161,26 @@
   }
   function verificarDicas(){ if(!aCacar) return; dicasAtivas().forEach(function(d){ if(!dicasMostradas[d]){ dicasMostradas[d] = 1; toast('💡 Dica: ' + d); vib([40,40,40]); pintaFlut(); } }); }
   function enviarTentativas(){ if(!P || tentPend <= 0) return; var n = tentPend; tentPend = 0; try{ sbC.rpc('ovo_tentativas', { p_participacao:P, p_n:n }); }catch(e){} }
+  // ---------- voltar à app: com o ecrã desligado os relógios param — confirma tudo com o servidor ----------
+  var retT = null, retUlt = 0;
+  function retomar(){
+    if(document.hidden) return;
+    if(Date.now() - retUlt < 1500) return; retUlt = Date.now();
+    clearTimeout(retT);
+    retT = setTimeout(async function(){
+      if(!J){ carregar(); return; }
+      var agora = Date.now();
+      if(J.estado === 'agendado' && agora >= new Date(J.inicio).getTime() - 1000){ if(iniT){ clearTimeout(iniT); iniT = null; } arranque(); return; }   // começou enquanto o telemóvel dormia
+      if(J.estado === 'ativo' && agora >= new Date(J.fim).getTime()){ if(fimT){ clearTimeout(fimT); fimT = null; } fimDoTempo(); return; }   // acabou enquanto dormia
+      if(J.estado === 'ativo' && aCacar){ sincronizar(); return; }
+      carregar();   // agendado ainda por começar, ou jogo novo publicado entretanto
+    }, 300);
+  }
+  document.addEventListener('visibilitychange', retomar);
+  window.addEventListener('pageshow', retomar);
+  window.addEventListener('focus', retomar);
+  window.addEventListener('online', function(){ retUlt = 0; retomar(); });
+
   // ---------- arranque: depois do negócio estar carregado ----------
   var tent = 0; var esperar = setInterval(function(){ tent++; if(window.__negocioId && typeof sbC !== 'undefined' && sbC){ clearInterval(esperar); carregar(); } else if(tent > 60) clearInterval(esperar); }, 500);
 })();
