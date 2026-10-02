@@ -513,15 +513,27 @@
       + '<div style="font-weight:900;color:var(--castanho);">' + x[1] + ' ' + esc(x[2]) + ' — pré-visualização</div>'
       + '<div style="font-size:.84rem;color:#5a4a2c;margin-top:3px;">' + esc(EXTRA_DICA[k] || '') + '</div>'
       + (proprio ? '' : '<div style="font-size:.76rem;color:#8a7a5c;margin-top:3px;">Mostramos um restaurante de exemplo — no teu menu fica com as tuas cores e pratos.</div>') + '</div>'
-      + '<div style="background:linear-gradient(160deg,#2a2018,#15100b);border-radius:34px;padding:9px;box-shadow:0 16px 40px rgba(0,0,0,.45);">'
-      + '<iframe src="cardapio.html?n=' + encodeURIComponent(slug) + '&demo=' + k + '" style="width:min(330px,86vw);height:min(600px,calc(100vh - 230px));border:0;border-radius:26px;background:#fff;display:block;"></iframe></div>'
+      + '<div id="exDemoCaixa" style="position:relative;flex:none;">'
+      +   '<div id="exDemoFone" style="position:absolute;left:0;top:0;transform-origin:0 0;background:linear-gradient(160deg,#2a2018,#15100b);border-radius:52px;padding:12px;box-shadow:0 16px 40px rgba(0,0,0,.45);">'
+      +   '<iframe src="cardapio.html?n=' + encodeURIComponent(slug) + '&demo=' + k + '" style="width:390px;height:844px;border:0;border-radius:42px;background:#fff;display:block;"></iframe></div></div>'
       + '<div style="display:flex;gap:8px;width:min(350px,90vw);">'
       + (SOU_ADMIN || extraOn(k) ? '' : '<button type="button" id="exDemoQuero" class="acao" style="margin:0;flex:1;">✉️ Quero ativar</button>')
       + '<button type="button" id="exDemoFechar" style="flex:0 0 34%;border:1px solid #e0d3b5;background:#fff;border-radius:10px;font-weight:800;cursor:pointer;font-family:inherit;padding:10px;">Fechar</button></div>';
     document.body.appendChild(ov);
-    ov.addEventListener('click', function(e){ if(e.target === ov) ov.remove(); });
-    document.getElementById('exDemoFechar').onclick = function(){ ov.remove(); };
-    const q = document.getElementById('exDemoQuero'); if(q) q.onclick = function(){ ov.remove(); _extraPedir(k); };
+    // telemóvel à escala real (390×844, como um iPhone/Android comum), reduzido por inteiro para caber no ecrã
+    const escalar = function(){
+      const caixa = document.getElementById('exDemoCaixa'), fone = document.getElementById('exDemoFone'); if(!caixa || !fone) return;
+      const W = 390 + 24, H = 844 + 24;
+      let livreH = window.innerHeight - 24 - 20; ov.querySelectorAll(':scope > div').forEach(function(d){ if(d !== caixa) livreH -= d.offsetHeight; });
+      const esc = Math.max(0.3, Math.min(1, (window.innerWidth - 24) / W, livreH / H));
+      fone.style.transform = 'scale(' + esc + ')';
+      caixa.style.width = Math.floor(W * esc) + 'px'; caixa.style.height = Math.floor(H * esc) + 'px';
+    };
+    escalar(); window.addEventListener('resize', escalar);
+    const _fechar = function(){ window.removeEventListener('resize', escalar); ov.remove(); };
+    ov.addEventListener('click', function(e){ if(e.target === ov) _fechar(); });
+    document.getElementById('exDemoFechar').onclick = _fechar;
+    const q = document.getElementById('exDemoQuero'); if(q) q.onclick = function(){ _fechar(); _extraPedir(k); };
   }
   function _extraPedir(k){
     const x = _extraInfo(k);

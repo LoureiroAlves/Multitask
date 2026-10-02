@@ -69,11 +69,13 @@
   .modal{ position:fixed; inset:0; z-index:50; background:rgba(30,20,10,.62); display:none; align-items:center; justify-content:center; padding:14px; }
   .modal.on{ display:flex; }
   .modal-in{ display:flex; flex-direction:column; align-items:center; gap:10px; max-height:100%; }
-  .fone{ background:linear-gradient(160deg,#2a2018,#15100b); border-radius:38px; padding:10px; box-shadow:0 16px 40px rgba(0,0,0,.45); }
-  .fone-ecra{ width:min(330px, 86vw); height:min(640px, calc(100vh - 150px)); border-radius:29px; overflow:hidden; background:#fff; position:relative; }
+  /* telemóvel à escala real (390×844) reduzido por inteiro para caber — as proporções do menu ficam iguais às de um telemóvel */
+  .fone-caixa{ position:relative; flex:none; }
+  .fone{ position:absolute; left:0; top:0; transform-origin:0 0; background:linear-gradient(160deg,#2a2018,#15100b); border-radius:52px; padding:12px; box-shadow:0 16px 40px rgba(0,0,0,.45); }
+  .fone-ecra{ width:390px; height:844px; border-radius:42px; overflow:hidden; background:#fff; position:relative; }
   .fone-ecra iframe{ position:relative; z-index:1; width:100%; height:100%; border:0; display:block; background:transparent; }
   .fone-load{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:var(--muted); font-size:.9rem; }
-  .modal-bts{ display:flex; gap:8px; width:min(350px, 90vw); }
+  .modal-bts{ display:flex; gap:8px; width:min(380px, 90vw); }
 
   /* Fotos da marca */
   .brand-row{ display:flex; align-items:center; gap:10px; padding:9px 0; border-top:1px solid #f0e6d6; }
@@ -267,7 +269,7 @@
 <!-- Pré-visualização do exemplo -->
 <div class="modal" id="modal">
   <div class="modal-in">
-    <div class="fone"><div class="fone-ecra"><div class="fone-load">A abrir o menu…</div><iframe id="foneFrame" title="Menu de exemplo"></iframe></div></div>
+    <div class="fone-caixa" id="foneCaixa"><div class="fone" id="foneTel"><div class="fone-ecra"><div class="fone-load">A abrir o menu…</div><iframe id="foneFrame" title="Menu de exemplo"></iframe></div></div></div>
     <div class="modal-bts">
       <button class="btn sec" id="mFechar" type="button" style="flex:0 0 38%;">Fechar</button>
       <button class="btn" id="mQuero" type="button">Quero este ✓</button>
@@ -348,7 +350,15 @@
     modalSlug = slug;
     var fr = $('foneFrame'); fr.src = 'cardapio.html?n=' + encodeURIComponent(slug);
     $('modal').classList.add('on'); document.body.style.overflow = 'hidden';
+    escalaFone();
   }
+  function escalaFone(){
+    var caixa = $('foneCaixa'), tel = $('foneTel'); if(!caixa || !tel) return;
+    var W = 390 + 24, H = 844 + 24;
+    var esc = Math.max(0.3, Math.min(1, (window.innerWidth - 28) / W, (window.innerHeight - 28 - 10 - 56) / H));
+    tel.style.transform = 'scale(' + esc + ')'; caixa.style.width = Math.floor(W * esc) + 'px'; caixa.style.height = Math.floor(H * esc) + 'px';
+  }
+  window.addEventListener('resize', function(){ if($('modal').classList.contains('on')) escalaFone(); });
   function fechaModal(){ $('modal').classList.remove('on'); document.body.style.overflow = ''; $('foneFrame').src = 'about:blank'; }
   $('mFechar').onclick = fechaModal;
   $('modal').addEventListener('click', function(e){ if(e.target === this) fechaModal(); });
@@ -361,6 +371,11 @@
       var r = await api('/rest/v1/negocios?select=slug,nome,desc:config->>exemploDesc,tipo:config->>tipo,montra:config->>montraFoto,fotos:config->header->fotos&config->>exemplo=eq.true&ativo=eq.true&apagado_em=is.null&order=nome');
       if(!r.ok) throw new Error(r.status);
       exemplos = await r.json();
+      // enquanto nenhum negócio estiver marcado como exemplo no painel, mostra o exemplo1
+      if(!exemplos.length){
+        var r2 = await api('/rest/v1/negocios?select=slug,nome,desc:config->>exemploDesc,tipo:config->>tipo,montra:config->>montraFoto,fotos:config->header->fotos&slug=eq.exemplo1&apagado_em=is.null');
+        if(r2.ok) exemplos = await r2.json();
+      }
     }catch(e){ exemplos = []; }
     if(!exemplos.length){ box.innerHTML = '<div class="dica" style="grid-column:1/-1;">Os exemplos ainda não estão disponíveis. Marca “Ainda não sei” e segue — escolhemos contigo depois.</div>'; return; }
     box.innerHTML = '';
