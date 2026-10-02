@@ -384,6 +384,7 @@
     <label for="pass">Password</label>
     <input type="password" id="pass" autocomplete="current-password">
     <button class="acao" id="btnEntrar">Entrar</button>
+    <div style="text-align:center;margin-top:12px;"><a id="lnkEsqueci" href="nova-password.html" style="color:var(--dourado-escuro,#7a5320);font-weight:700;font-size:.9rem;">Esqueci-me da password</a></div>
     <div id="loginMsg" class="msg"></div>
   </div>
 
@@ -475,6 +476,7 @@
   const $ = id => document.getElementById(id);
   let negocio = null, reservas = [], porDia = {};
   let SOU_ADMIN = false;
+  try{ (function(){ var l = document.getElementById('lnkEsqueci'); if(!l) return; l.onclick = function(e){ e.preventDefault(); var em = (document.getElementById('email') || {}).value || ''; location.href = 'nova-password.html?volta=' + encodeURIComponent('calendario.html' + (SLUG ? ('?n=' + SLUG) : '')) + (em ? ('&email=' + encodeURIComponent(em.trim())) : ''); }; })(); }catch(e){}
   // ===== EXTRAS (funcionalidades pagas): o administrador desbloqueia por restaurante; o dono vê-as com cadeado =====
   // Guardado em entitlements.funcoes.extras = { reservas:true, ... }. Sem "extras" (restaurantes antigos) = tudo desbloqueado.
   const EXTRAS_LISTA = [
