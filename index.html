@@ -616,8 +616,14 @@
   var _hdr = { headers: { apikey: SUPA_KEY, Authorization: 'Bearer ' + SUPA_KEY } };
   // MONTRA LEVE: só os sub-campos do config que o cartão precisa (reconstruído em _montaConfig).
   var _subcfg = 'montraFoto:config->montraFoto,header:config->header,intro:config->intro,footer:config->footer,fundo:config->fundo,tipo:config->tipo,promo:config->promo,promoDias:config->promoDias,promoDatas:config->promoDatas,promocoes:config->promocoes,oculto:config->oculto';
-  var _selRico = 'slug,nome,apagado_em,rating_soma,rating_contagem,' + _subcfg;
-  var _selSimples = 'slug,nome,apagado_em,' + _subcfg;
+  var _selRico = 'id,slug,nome,apagado_em,rating_soma,rating_contagem,' + _subcfg;
+  var _selSimples = 'id,slug,nome,apagado_em,' + _subcfg;
+  // Extras desbloqueados por restaurante (Gestão do administrador): sem "Promoções" desbloqueadas, a montra não mostra promoções desse restaurante
+  var _EXTRAS = {};
+  var _extrasP = fetch(SUPA_URL + '/rest/v1/entitlements?select=negocio_id,extras:funcoes->extras', _hdr)
+    .then(function(r){ return r.ok ? r.json() : []; })
+    .then(function(rows){ (rows || []).forEach(function(x){ if(x && x.negocio_id) _EXTRAS[x.negocio_id] = x.extras; }); })
+    .catch(function(){});
   var PAGINA = 24;            // restaurantes por página
   var _offset = 0;           // próximo índice a pedir
   var _loadedAll = false;    // já trouxemos tudo?
@@ -627,6 +633,7 @@
 
   function _montaConfig(n){
     if(!n) return;
+    { var ex = _EXTRAS[n.id]; if(ex && typeof ex === 'object' && ex.promocoes !== true){ n.promo = null; n.promoDias = null; n.promoDatas = {}; n.promocoes = []; } }
     n.config = { montraFoto:n.montraFoto, header:n.header, intro:n.intro, footer:n.footer, fundo:n.fundo, tipo:n.tipo, promo:n.promo, promoDias:n.promoDias, promoDatas:n.promoDatas, promocoes:n.promocoes, oculto:n.oculto };
   }
   function _filtraReais(arr){
@@ -661,7 +668,7 @@
     _loadingPage = true;
     var primeiro = (_selectStr === null);
     var sel = _selectStr || _selRico;
-    return fetch(_urlPagina(sel), _hdr).then(function(r){
+    return _extrasP.then(function(){ return fetch(_urlPagina(sel), _hdr); }).then(function(r){
       if(r.ok){ if(primeiro) _selectStr = _selRico; return r.json(); }
       // sem colunas de estrelas? cai para o select simples e fixa-o
       if(primeiro){ _selectStr = _selSimples; return fetch(_urlPagina(_selSimples), _hdr).then(function(r2){ if(!r2.ok) throw new Error(r2.status); return r2.json(); }); }

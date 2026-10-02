@@ -4237,7 +4237,26 @@
     // Mantém-se apenas o controlo de publicidade (decidido pelo administrador).
     if(!pub || !pub.ativo){ if(config.adJogos) config.adJogos.ativo = false; if(config.footer) config.footer.link = ''; }
     window.__semTraducoes = false;
+    window.__funcoesPlano = f || {}; window.__pubPlano = pub || {};
+    _trancarExtras(config, f && f.extras);
   }
+  // EXTRAS (decididos pelo administrador na Gestão): o que não está desbloqueado não aparece ao cliente.
+  // Sem "extras" (restaurantes antigos) = tudo desbloqueado. Encomendas bloqueadas também desligam o carrinho.
+  function _trancarExtras(config, ex){
+    if(!config || !ex || typeof ex !== 'object') return;
+    var off = function(k){ return ex[k] !== true; };
+    if(off('reservas')) config.agenda = Object.assign({}, config.agenda || {}, { ativo:false });
+    if(off('encomendas')){ config.modos = Object.assign({}, config.modos || {}, { takeaway:false }); config.carrinho = Object.assign({}, config.carrinho || {}, { ativo:false }); }
+    if(off('promocoes')){ config.promocoes = []; config.promoDatas = {}; }
+    if(off('prato')){ config.pratoDatas = {}; config.pratoFixo = null; config.pratoDia = null; }
+    if(off('favoritos')) config.favoritosPratos = false;
+    if(off('decoracao')) config.decor = null;
+    if(off('fidelidade')) config.fidelidade = null;
+    if(off('redes')) config.mostrarRedes = false;
+    if(off('mapa')) config.local = {};
+    if(off('jogos')) config.jogos = false;
+  }
+  window.__trancarExtras = function(cfg){ try{ _trancarExtras(cfg, (window.__funcoesPlano || {}).extras); }catch(e){} return cfg; };
 
   function preencherFotos(container, fotos){
     if(!container || !Array.isArray(fotos) || fotos.length === 0) return;
@@ -5902,6 +5921,7 @@
       // Aparência/cabeçalho/rodapé/modos… — TUDO o que o editor grava (antes só refrescava promoção, prato e menu,
       // por isso um subtítulo novo não aparecia ao puxar para atualizar). A abertura não volta a correr.
       window.__refrescando = true;
+      try{ window.__trancarExtras(config); }catch(e){}
       try{ aplicarConfig(config); }catch(e){}
       window.__refrescando = false;
       try{ document.title = ((config.header && config.header.titulo) || neg.nome || 'Cardápio'); }catch(e){}
@@ -5938,6 +5958,7 @@
         var r = await sbC.from('negocios').select('promocoes:config->promocoes,promoDatas:config->promoDatas,pratoDatas:config->pratoDatas,pratoFixo:config->pratoFixo,pratoDia:config->pratoDia').eq('slug', SLUG).maybeSingle();
         if(!r || !r.data) return;
         var cfg = Object.assign({}, window.__cfgPromo || {}, r.data);   // junta aos restantes campos já conhecidos
+        try{ window.__trancarExtras(cfg); }catch(e){}
         window.__cfgPromo = cfg;
         try{ if(window.__renderPromoDia) window.__renderPromoDia(cfg); }catch(e){}
         try{ if(window.__renderPratoDia) window.__renderPratoDia(cfg); }catch(e){}

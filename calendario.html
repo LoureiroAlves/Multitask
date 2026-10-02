@@ -134,6 +134,22 @@
   .cal-ico-top i{ width:2px; height:5px; background:#fff; border-radius:1px; margin-top:-2px; opacity:.9; }
   .cal-ico-d{ flex:1; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:1.2rem; color:var(--castanho); line-height:1; }
   .dash-card .dc-tit{ font-size:1.05rem; font-weight:800; color:var(--castanho); }
+  .dash-card.bloq{ background:#f6f2ea; border-style:dashed; box-shadow:none; }
+  .dash-card.bloq .dc-ico, .dash-card.bloq .dc-tit, .dash-card.bloq .dc-sub{ opacity:.55; }
+  .dash-card .dc-lock{ position:absolute; top:12px; right:12px; font-size:.72rem; font-weight:800; color:#7a5320; background:#fff3d6; border:1px solid #ecd59f; padding:3px 9px; border-radius:999px; }
+  .ex-linha{ display:flex; align-items:center; gap:12px; background:#fff; border:1px solid #ece0c8; border-radius:14px; padding:12px 14px; margin-bottom:8px; }
+  .ex-linha.off{ background:#f8f4ec; }
+  .ex-linha .ex-ico{ font-size:1.5rem; width:34px; text-align:center; flex:none; }
+  .ex-linha .ex-txt{ flex:1; min-width:0; }
+  .ex-linha .ex-nome{ font-weight:800; color:var(--castanho); }
+  .ex-linha .ex-desc{ font-size:.8rem; color:#8a7a5c; margin-top:2px; }
+  .ex-linha .ex-est{ font-size:.76rem; font-weight:800; padding:4px 10px; border-radius:999px; white-space:nowrap; }
+  .ex-sw{ position:relative; width:46px; height:26px; flex:none; }
+  .ex-sw input{ opacity:0; width:0; height:0; }
+  .ex-sw span{ position:absolute; inset:0; background:#d9cfbd; border-radius:999px; transition:background .2s; cursor:pointer; }
+  .ex-sw span:before{ content:''; position:absolute; left:3px; top:3px; width:20px; height:20px; background:#fff; border-radius:50%; transition:transform .2s; box-shadow:0 1px 3px rgba(0,0,0,.25); }
+  .ex-sw input:checked + span{ background:#2e9e5b; }
+  .ex-sw input:checked + span:before{ transform:translateX(20px); }
   .dash-card .dc-sub{ font-size:.85rem; color:#8a7a5c; font-weight:600; line-height:1.35; }
   .dash-card .dc-badge{ position:absolute; top:14px; right:14px; background:#e0453a; color:#fff; font-size:.76rem; font-weight:800; padding:3px 9px; border-radius:999px; box-shadow:0 2px 8px rgba(224,69,58,.4); }
   .dash-card .dc-seta{ margin-top:auto; color:var(--dourado); font-weight:800; font-size:.84rem; }
@@ -402,6 +418,7 @@
     <div id="vistaNotif" class="hide"></div>
     <div id="vistaOvo" class="hide"></div>
     <div id="vistaPrato" class="hide"></div>
+    <div id="vistaExtras" class="hide"></div>
   </div>
 </div>
 
@@ -456,6 +473,33 @@
   const $ = id => document.getElementById(id);
   let negocio = null, reservas = [], porDia = {};
   let SOU_ADMIN = false;
+  // ===== EXTRAS (funcionalidades pagas): o administrador desbloqueia por restaurante; o dono vê-as com cadeado =====
+  // Guardado em entitlements.funcoes.extras = { reservas:true, ... }. Sem "extras" (restaurantes antigos) = tudo desbloqueado.
+  const EXTRAS_LISTA = [
+    ['reservas',   '📅', 'Reservas de mesa',          'Os clientes pedem mesa pelo menu e tu respondes no Calendário.'],
+    ['encomendas', '🛍️', 'Encomendas take-away',       'Os clientes encomendam pelo menu para levantar. Inclui o carrinho.'],
+    ['promocoes',  '🏷️', 'Promoções e notificações',   'Destaques no menu nos dias que escolheres e avisos no telemóvel dos clientes.'],
+    ['prato',      '🍽️', 'Prato do dia',               'O prato em destaque no topo do menu, dia a dia ou fixo.'],
+    ['favoritos',  '♥',  'Favoritos',                  'Os clientes guardam os pratos de que mais gostam.'],
+    ['decoracao',  '🎨', 'Decoração do menu',          'Ilustrações e adornos temáticos no menu.'],
+    ['fidelidade', '⭐', 'Cartão de fidelidade',        'Carimbos por visita e um prémio no fim.'],
+    ['redes',      '📱', 'Redes sociais',              'Ligações para o Instagram e o Facebook do restaurante.'],
+    ['mapa',       '📍', 'Mapa e "Como chegar"',        'A morada no menu com o caminho no Google Maps.'],
+    ['jogos',      '🎮', 'Jogos',                      'Jogos para os clientes passarem o tempo à mesa.']
+  ];
+  const AREA_EXTRA = { cal:'reservas', enc:'encomendas', notif:'promocoes', prato:'prato' };
+  const AMESA_CONTACTO = 'info@amesadigital.pt';
+  let EXTRAS = null;   // null = restaurante antigo (tudo desbloqueado)
+  function extraOn(k){ return !EXTRAS || EXTRAS[k] === true; }
+  function _extraInfo(k){ return EXTRAS_LISTA.filter(function(x){ return x[0] === k; })[0] || [k, '✨', k, '']; }
+  function _extraBloqueado(k){
+    const x = _extraInfo(k);
+    const assunto = encodeURIComponent('Ativar "' + x[2] + '" — ' + ((negocio && negocio.nome) || ''));
+    window.__amConfirm('🔒 ' + x[2], { html:'<div style="font-size:2.4rem;text-align:center;line-height:1;margin-bottom:6px;">' + x[1] + '</div>'
+      + '<div style="text-align:center;font-weight:700;color:var(--castanho);">' + esc(x[3]) + '</div>'
+      + '<div style="text-align:center;margin-top:10px;color:#8a7a5c;font-size:.9rem;">Esta funcionalidade ainda não está ativa no teu restaurante. Fala com a ÀMesa para a ativar.</div>',
+      ok:'✉️ Pedir à ÀMesa', cancelar:'Agora não' }).then(function(sim){ if(sim === true){ location.href = 'mailto:' + AMESA_CONTACTO + '?subject=' + assunto; } });
+  }
   function __amSeloAdmin(email){ try{ if(document.getElementById('amSeloAdmin')) return; var d = document.createElement('div'); d.id = 'amSeloAdmin'; d.title = 'Sessão de administrador: tens acesso a todos os negócios. Os donos não vêem este selo.'; d.textContent = '👑 A ver como administrador' + (email ? (' · ' + email) : ''); d.style.cssText = 'position:fixed; left:10px; bottom:calc(10px + env(safe-area-inset-bottom)); z-index:99999; background:rgba(122,83,32,.92); color:#fff; font:700 12px/1.2 system-ui,-apple-system,sans-serif; padding:6px 11px; border-radius:999px; box-shadow:0 3px 10px rgba(0,0,0,.25); pointer-events:none; max-width:calc(100vw - 20px); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;'; document.body.appendChild(d); }catch(e){} }   // administrador ÀMesa (o jogo No Cu da Galinha é gerido só por ele)
   let _primeiraCarga = true, _apId = null;
   const hoje = new Date(); let vAno = hoje.getFullYear(), vMes = hoje.getMonth(), diaSel = null;
@@ -584,7 +628,7 @@
   $('tabEnc').onclick = () => mostrarVista('enc');
   $('tabNotif').onclick = () => mostrarVista('notif');
   $('btnVoltarHome').onclick = voltarHome;
-  $('dashHome').addEventListener('click', function(e){ var c = e.target.closest('[data-ir]'); if(c) mostrarVista(c.getAttribute('data-ir')); });
+  $('dashHome').addEventListener('click', function(e){ var c = e.target.closest('[data-ir]'); if(!c) return; var ir = c.getAttribute('data-ir'); if(ir.indexOf('bloq:') === 0){ _extraBloqueado(ir.slice(5)); return; } mostrarVista(ir); });
   $('btnPdf').onclick = exportarPdf;
   $('btnPdfDia').onclick = exportarPdfDia;
   $('mdFechar').onclick = fecharModal;
@@ -630,11 +674,12 @@
       if(eAdmin) __amSeloAdmin(email);
     }
     negocio = neg;
+    try{ const er = await sb.from('entitlements').select('funcoes').eq('negocio_id', neg.id).maybeSingle(); const fx = er && er.data && er.data.funcoes; EXTRAS = (fx && fx.extras && typeof fx.extras === 'object') ? fx.extras : null; }catch(e){ EXTRAS = null; }
     $('topTit').textContent = 'Gestão · ' + neg.nome;
     $('loginCard').classList.add('hide'); $('painel').classList.remove('hide'); $('btnSair').classList.remove('hide');
     await _limparSemanaAntiga();
     carregar();
-    try{ _encVigiaIniciar(); }catch(e){}
+    try{ if(SOU_ADMIN || extraOn('encomendas')) _encVigiaIniciar(); }catch(e){}
     try{ if(SOU_ADMIN) _ovVigiaIniciar(); }catch(e){}   // avisos de vencedor: só para o administrador
     document.addEventListener('pointerdown', function(){ try{ _prepararSom(); }catch(e){} }, { once:true });
   }
@@ -757,8 +802,9 @@
     await accao(id, a);
   }
 
-  const _AREA_TIT = { cal:'📅 Calendário', dash:'📊 Painel', enc:'🛍️ Encomendas', notif:'🏷️ Promoções', ovo:'🥚 No Cu da Galinha', prato:'🍽️ Prato do dia', def:'⚙️ Definições' };
+  const _AREA_TIT = { cal:'📅 Calendário', dash:'📊 Painel', enc:'🛍️ Encomendas', notif:'🏷️ Promoções', ovo:'🥚 No Cu da Galinha', prato:'🍽️ Prato do dia', def:'⚙️ Definições', extras:'✨ Extras' };
   function mostrarVista(qual){
+    if(!SOU_ADMIN && AREA_EXTRA[qual] && !extraOn(AREA_EXTRA[qual])){ _extraBloqueado(AREA_EXTRA[qual]); return; }   // área paga ainda bloqueada
     $('dashHome').classList.add('hide');
     $('areaBar').classList.remove('hide');
     $('areaTit').textContent = _AREA_TIT[qual] || '';
@@ -769,6 +815,8 @@
     $('vistaNotif').classList.toggle('hide', qual!=='notif');
     $('vistaOvo').classList.toggle('hide', qual!=='ovo');
     $('vistaPrato').classList.toggle('hide', qual!=='prato');
+    $('vistaExtras').classList.toggle('hide', qual!=='extras');
+    if(qual==='extras') renderExtras();
     if(qual==='cal') renderCalResumo();
     if(qual==='dash') renderDashboard();
     if(qual==='def') renderDefinicoes();
@@ -784,13 +832,20 @@
   }
   function voltarHome(){
     if(_encTimer){ clearInterval(_encTimer); _encTimer = null; }
-    ['vistaCal','vistaDash','vistaDef','vistaEncomendas','vistaNotif','vistaOvo','vistaPrato'].forEach(function(id){ var el=$(id); if(el) el.classList.add('hide'); });
+    ['vistaCal','vistaDash','vistaDef','vistaEncomendas','vistaNotif','vistaOvo','vistaPrato','vistaExtras'].forEach(function(id){ var el=$(id); if(el) el.classList.add('hide'); });
     $('areaBar').classList.add('hide');
     $('dashHome').classList.remove('hide');
     renderHome();
     try{ window.scrollTo(0,0); }catch(e){}
   }
   function _iconeCalendario(){ return '<span class="cal-ico"><span class="cal-ico-top"><i></i><i></i></span><span class="cal-ico-d">' + (new Date()).getDate() + '</span></span>'; }
+  // cartão de uma área paga: desbloqueada → normal; bloqueada → dono vê cadeado; admin vê normal com aviso
+  function _cardExtra(ir, k, ico, tit, sub, seta, badge){
+    if(extraOn(k)) return _cardHome(ir, ico, tit, sub, seta, badge);
+    if(SOU_ADMIN) return _cardHome(ir, ico, tit, sub + ' · <b style="color:#a85d10;">🔒 bloqueado ao dono</b>', seta, badge);
+    return '<button class="dash-card bloq" type="button" data-ir="bloq:' + k + '"><span class="dc-lock">🔒 Ativar</span>'
+      + '<span class="dc-ico">' + ico + '</span><span class="dc-tit">' + tit + '</span><span class="dc-sub">' + sub + '</span><span class="dc-seta">Saber mais ›</span></button>';
+  }
   function _cardHome(ir, ico, tit, sub, seta, badge){
     return '<button class="dash-card" type="button" data-ir="' + ir + '">'
       + (badge ? ('<span class="dc-badge">' + badge + '</span>') : '')
@@ -818,21 +873,56 @@
     h.innerHTML =
       '<div class="home-hi">Olá 👋 <span>' + esc(nome) + ' · ' + diaTxt + '</span></div>'
       + '<div class="home-kpis">'
-      +   '<div class="home-kpi"><div class="n">' + hojeR.length + '</div><div class="l">Reservas hoje</div></div>'
-      +   '<div class="home-kpi' + (futPend.length?' alerta':'') + '"><div class="n">' + futPend.length + '</div><div class="l">Reservas por responder</div></div>'
-      +   '<div class="home-kpi' + (encPend?' alerta':'') + '"><div class="n">' + encPend + '</div><div class="l">Encomendas a chegar</div></div>'
+      +   (extraOn('reservas') ? ('<div class="home-kpi"><div class="n">' + hojeR.length + '</div><div class="l">Reservas hoje</div></div>'
+      +   '<div class="home-kpi' + (futPend.length?' alerta':'') + '"><div class="n">' + futPend.length + '</div><div class="l">Reservas por responder</div></div>') : '')
+      +   (extraOn('encomendas') ? ('<div class="home-kpi' + (encPend?' alerta':'') + '"><div class="n">' + encPend + '</div><div class="l">Encomendas a chegar</div></div>') : '')
       + '</div>'
       + '<div class="cards-grid">'
-      +   _cardHome('cal',_iconeCalendario(),'Calendário','Agenda do dia e reservas', hojeR.length?('Ver hoje ('+hojeR.length+')'):'Ver agenda', 0)
-      +   _cardHome('enc','🛍️','Encomendas', encAtivas?(encAtivas+' em curso'):'Gerir pedidos', 'Pendentes · Preparação · Prontas · Entregues', encPend)
-      +   _cardHome('prato','🍽️','Prato do dia','Os destaques por baixo do cabeçalho, dia a dia ou fixo','Gerir', 0)
-      +   _cardHome('notif','🏷️','Promoções','No menu e por notificação, nos dias que escolheres','Gerir promoções', 0)
+      +   _cardExtra('cal','reservas',_iconeCalendario(),'Calendário','Agenda do dia e reservas', hojeR.length?('Ver hoje ('+hojeR.length+')'):'Ver agenda', 0)
+      +   _cardExtra('enc','encomendas','🛍️','Encomendas', encAtivas?(encAtivas+' em curso'):'Pedidos take-away', 'Pendentes · Preparação · Prontas · Entregues', encPend)
+      +   _cardExtra('prato','prato','🍽️','Prato do dia','Os destaques por baixo do cabeçalho, dia a dia ou fixo','Gerir', 0)
+      +   _cardExtra('notif','promocoes','🏷️','Promoções','No menu e por notificação, nos dias que escolheres','Gerir promoções', 0)
+      +   _cardHome('extras','✨','Extras', SOU_ADMIN ? 'Desbloquear funcionalidades deste restaurante' : 'Tudo o que a tua app pode fazer', SOU_ADMIN ? 'Gerir' : 'Ver', 0)
       +   (SOU_ADMIN ? _cardHome('ovo','🥚','No Cu da Galinha','Esconde um ovo no menu · o 1.º a encontrar ganha','Jogo', 0)
               : '')   // o jogo (e a validação dos prémios) é só do administrador
       +   _cardHome('def','⚙️','Definições','Dados, horários, reservas…','Configurar', 0)
       + '</div>';
   }
 
+  function renderExtras(){
+    const v = $('vistaExtras'); if(!v) return;
+    let html = '<div style="background:linear-gradient(135deg,#7a5320,#c79a3e);border-radius:16px;padding:18px;margin-bottom:14px;color:#fff;">'
+      + '<div style="font-size:1.2rem;font-weight:900;">✨ Extras</div>'
+      + '<div style="font-size:.88rem;opacity:.95;margin-top:4px;">' + (SOU_ADMIN ? 'Liga o que este restaurante pode usar. O dono vê o que está desligado com um cadeado.' : 'Funcionalidades da tua app. As que têm cadeado podem ser ativadas — fala com a ÀMesa.') + '</div></div>';
+    EXTRAS_LISTA.forEach(function(x){
+      const on = extraOn(x[0]);
+      html += '<div class="ex-linha' + (on ? '' : ' off') + '"><span class="ex-ico">' + x[1] + '</span><div class="ex-txt"><div class="ex-nome">' + esc(x[2]) + '</div><div class="ex-desc">' + esc(x[3]) + '</div></div>'
+        + (SOU_ADMIN ? ('<label class="ex-sw"><input type="checkbox" data-ex="' + x[0] + '"' + (on ? ' checked' : '') + '><span></span></label>')
+                     : (on ? '<span class="ex-est" style="background:#e6f7ec;color:#1e6b3c;">✓ Ativo</span>'
+                           : '<button type="button" class="ex-est" data-pedir="' + x[0] + '" style="background:#fff3d6;color:#7a5320;border:1px solid #ecd59f;cursor:pointer;font-family:inherit;">🔒 Ativar</button>'))
+        + '</div>';
+    });
+    if(SOU_ADMIN) html += '<button type="button" class="acao" id="exGuardar" style="margin-top:6px;">💾 Guardar extras</button><div class="msg" id="exMsg"></div>'
+      + '<div class="subt2" style="margin-top:8px;">Encomendas desligadas também desligam o carrinho no menu. O que ligares aqui só aparece no menu se estiver configurado no editor.</div>';
+    v.innerHTML = html;
+    v.querySelectorAll('[data-pedir]').forEach(function(b){ b.onclick = function(){ _extraBloqueado(b.dataset.pedir); }; });
+    const g = $('exGuardar'); if(g) g.onclick = _guardarExtras;
+  }
+  async function _guardarExtras(){
+    const m = $('exMsg'), b = $('exGuardar'); b.disabled = true; m.textContent = 'A guardar…'; m.className = 'msg';
+    const novo = {}; document.querySelectorAll('#vistaExtras [data-ex]').forEach(function(i){ novo[i.dataset.ex] = !!i.checked; });
+    try{
+      const cur = await sb.from('entitlements').select('negocio_id,funcoes').eq('negocio_id', negocio.id).maybeSingle();
+      if(cur.error) throw cur.error;
+      const funcoes = Object.assign({}, (cur.data && cur.data.funcoes) || {}); funcoes.extras = novo;
+      const r = cur.data ? await sb.from('entitlements').update({ funcoes:funcoes, atualizado_em:new Date().toISOString() }).eq('negocio_id', negocio.id).select('negocio_id')
+                         : await sb.from('entitlements').insert({ negocio_id:negocio.id, plano:'pro', funcoes:funcoes, publicidade:{ ativo:true } }).select('negocio_id');
+      if(r.error) throw r.error;
+      if(!r.data || !r.data.length) throw new Error('sem permissão para gravar (só o administrador)');
+      EXTRAS = novo; renderExtras(); const m2 = $('exMsg'); if(m2){ m2.textContent = 'Guardado ✓ — o menu do cliente já segue estas escolhas.'; m2.className = 'msg'; } return;
+    }catch(e){ m.textContent = 'Erro: ' + (e.message || e); m.className = 'msg erro'; }
+    b.disabled = false;
+  }
   function _linkCardapio(){
     var b = location.href.split('#')[0].split('?')[0];
     var u = /cardapio\.html$/i.test(b) ? b : (/\/$/.test(b) ? b + 'cardapio.html' : b.replace(/\/[^\/]*$/, '/') + 'cardapio.html');
@@ -1051,7 +1141,6 @@
       +   '<label>Título do aviso</label><input id="prPushTit" maxlength="60" value="' + esc((p.push && p.push.titulo) || (negocio && negocio.nome) || '') + '" placeholder="Ex.: Hoje há novidades 🍽️">'
       +   '<div style="font-size:.76rem;color:#8a7a5c;margin-top:4px;">A mensagem do aviso é o texto da promoção.</div>'
       +   '<label>Ao tocar, abre</label><input id="prPushUrl" value="' + esc((p.push && p.push.url) || _linkCardapio()) + '" style="font-size:.82rem;">'
-      +   (typeof window.__storyAbrir === 'function' ? '<button type="button" id="prStory" style="width:100%;margin-top:10px;box-sizing:border-box;border:1.5px solid #a8712f;background:#fff;color:#a8712f;border-radius:10px;padding:10px;font-weight:800;cursor:pointer;font-family:inherit;">🎨 Criar Story (9:16) com este texto</button>' : '')
       + '</details>'
       + '<div class="acts">' + (novo ? '' : '<button id="prRemover" type="button" style="color:#b23b2e;">Remover</button>') + '<button id="prGuardar" type="button">' + (novo ? '💾 Guardar' : '🔄 Atualizar') + '</button><button class="guardar" id="prGuardarPush" type="button">📣 ' + (novo ? 'Guardar e avisar' : 'Atualizar e avisar') + '</button></div>'
       + '<div class="msg" id="prMsg" style="margin-top:8px;"></div>'
@@ -1090,8 +1179,6 @@
     $('prPushTit').addEventListener('input', function(){ _prEdit.push.titulo = $('prPushTit').value; });
     $('prPushUrl').addEventListener('input', function(){ _prEdit.push.url = $('prPushUrl').value; });
     sb.from('push_subs').select('*', { count:'exact', head:true }).eq('negocio_id', negocio.id).then(function(r){ var el = $('prCount'); if(el) el.textContent = '· ' + ((r && r.count) || 0) + ' cliente(s)'; }).catch(function(){});
-    var st = $('prStory'); if(st) st.onclick = function(){ var cfg = (negocio && negocio.config) || {}; var hojeIso = _prHoje(); var pd = (cfg.pratoDatas && cfg.pratoDatas[hojeIso]); if(!(pd && Array.isArray(pd.caixas) && pd.caixas.length) && cfg.pratoFixo && cfg.pratoFixo.ativo !== false) pd = cfg.pratoFixo;
-      window.__storyAbrir({ nome:(negocio && negocio.nome) || '', titulo:$('prPushTit').value.trim(), descricao:(_prEdit.texto || '').trim(), aparencia:cfg.aparencia || {}, headerFotos:(cfg.header && cfg.header.fotos) || [], pratoCaixas:(pd && Array.isArray(pd.caixas)) ? pd.caixas : [] }); };
     var rm = $('prRemover'); if(rm) rm.onclick = async function(){
       if(!(await window.__amConfirm('Confirmar', { texto:'Remover esta promoção? Deixa de aparecer no menu.', ok:'Sim, remover', cancelar:'Não' }))) return;
       var id = _prEdit.id; var err = await _prGuardarCfg(function(cfg){ cfg.promocoes = cfg.promocoes.filter(function(x){ return x.id !== id; }); });
@@ -2890,328 +2977,6 @@
 })();
 </script>
 
-<!-- Stories — CONTEÚDO (blocos) separado do LAYOUT; embutido (não depende de ficheiros externos) -->
-<script>
-/* ÀMesa · Stories — estilo base + registo de LAYOUTS (conteúdo separado do layout)
-   - STORY_BASE: o "tema" visual (cores, badge, escurecimento). Comum a todos os layouts.
-   - STORY_LAYOUTS: lista de layouts disponíveis. Cada um só diz quantos blocos usa e o nome.
-     As funções de desenho de cada layout vivem no motor (story-render.js), associadas por id.
-   Para adicionar um layout novo no futuro: acrescenta aqui um objeto e a função de desenho no motor. */
-window.STORY_BASE = {
-  badge: '',   /* etiqueta do topo removida; para reativar, escreve aqui um texto (ex.: 'HOJE') */
-  corAccentKeys: ['destaque', 'precos'],   // usa estas chaves de config.aparencia
-  fallback: { bg1: '#2a1d10', bg2: '#a8712f', accent: '#e0245e', texto: '#ffffff' },
-  escurecer: 0.55
-};
-window.STORY_LAYOUTS = [
-  { id: 'layout1', nome: 'Layout 1 · Destaque',     maxBlocos: 1 },
-  { id: 'layout2', nome: 'Layout 2 · 3 destaques',  maxBlocos: 3 }
-];
-
-</script>
-<script>
-/* ÀMesa · Stories — motor de composição 9:16 (Canvas 1080×1920), 100% no browser.
-   Arquitetura: CONTEÚDO (blocos: título+mensagem) separado do LAYOUT (como se desenha).
-   Sem Storage/base de dados. Partilha nativa (Web Share API) + download.
-   Uso: window.__storyAbrir({ nome, titulo, descricao, aparencia, headerFotos }) */
-(function () {
-  'use strict';
-  var W = 1080, H = 1920;
-  var FAMILIA = '"Helvetica Neue", "Segoe UI", Arial, sans-serif';
-  function BASE() { return window.STORY_BASE || { badge: 'PROMOÇÃO', corAccentKeys: ['destaque'], fallback: { bg1: '#2a1d10', bg2: '#a8712f', accent: '#e0245e', texto: '#fff' }, escurecer: 0.55 }; }
-  function LAYOUTS() { return window.STORY_LAYOUTS || [{ id: 'layout1', nome: 'Layout 1', maxBlocos: 1 }]; }
-
-  // ---------- utilitários ----------
-  function primeiraCor(aparencia, chaves, fallback) {
-    aparencia = aparencia || {};
-    for (var i = 0; i < (chaves || []).length; i++) { var v = aparencia[chaves[i]]; if (v && String(v).trim()) return String(v).trim(); }
-    return fallback;
-  }
-  function _esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
-  function carregarImagem(src) {
-    return new Promise(function (resolve) {
-      if (!src) { resolve(null); return; }
-      var img = new Image(); img.crossOrigin = 'anonymous';
-      img.onload = function () { resolve(img); };
-      img.onerror = function () { var i2 = new Image(); i2.onload = function () { resolve(i2); }; i2.onerror = function () { resolve(null); }; i2.src = src; };
-      img.src = src;
-    });
-  }
-  function drawCover(ctx, img, x, y, w, h) {
-    var ir = img.width / img.height, r = w / h, sw, sh, sx, sy;
-    if (ir > r) { sh = img.height; sw = sh * r; sx = (img.width - sw) / 2; sy = 0; }
-    else { sw = img.width; sh = sw / r; sx = 0; sy = (img.height - sh) / 2; }
-    ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
-  }
-  // quebra respeitando parágrafos (\n) e partindo palavras longas
-  function quebraLinhas(ctx, texto, maxW) {
-    var out = [];
-    String(texto || '').split(/\r?\n/).forEach(function (par) {
-      if (par.trim() === '') { out.push(''); return; }
-      var palavras = par.split(/\s+/).filter(Boolean), atual = '';
-      palavras.forEach(function (w) {
-        while (ctx.measureText(w).width > maxW && w.length > 1) {
-          var corte = w;
-          while (corte.length > 1 && ctx.measureText(corte).width > maxW) corte = corte.slice(0, -1);
-          if (atual) { out.push(atual); atual = ''; }
-          out.push(corte); w = w.slice(corte.length);
-        }
-        var teste = atual ? (atual + ' ' + w) : w;
-        if (ctx.measureText(teste).width <= maxW || !atual) atual = teste;
-        else { out.push(atual); atual = w; }
-      });
-      if (atual) out.push(atual);
-    });
-    return out;
-  }
-  function limitar(ctx, linhas, maxW, maxLinhas) {
-    if (linhas.length <= maxLinhas) return linhas;
-    var r = linhas.slice(0, maxLinhas), u = r[maxLinhas - 1];
-    while (u && ctx.measureText(u + '…').width > maxW) u = u.slice(0, -1);
-    r[maxLinhas - 1] = (u || r[maxLinhas - 1]) + '…';
-    return r;
-  }
-  function ajustarFonte(ctx, texto, maxW, maxLinhas, tamMax, tamMin, peso) {
-    for (var t = tamMax; t >= tamMin; t -= 4) {
-      ctx.font = (peso || '800') + ' ' + t + 'px ' + FAMILIA;
-      if (quebraLinhas(ctx, texto, maxW).length <= maxLinhas) return { tam: t, linhas: quebraLinhas(ctx, texto, maxW) };
-    }
-    ctx.font = (peso || '800') + ' ' + tamMin + 'px ' + FAMILIA;
-    return { tam: tamMin, linhas: limitar(ctx, quebraLinhas(ctx, texto, maxW), maxW, maxLinhas) };
-  }
-  function roundRect(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
-  function sombra(ctx, a) { ctx.shadowColor = 'rgba(0,0,0,' + (a || 0.45) + ')'; ctx.shadowBlur = 18; ctx.shadowOffsetY = 3; }
-  function limparSombra(ctx) { ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0; }
-
-  // desenha um bloco (mensagem em baixo, título por cima) de baixo para cima; devolve o novo y (topo)
-  function drawBloco(ctx, bloco, x, maxW, yBase, op) {
-    var y = yBase;
-    if (bloco.mensagem && bloco.mensagem.trim()) {
-      var d = ajustarFonte(ctx, bloco.mensagem.trim(), maxW, op.msgLinhas, op.tamMsg, Math.max(24, op.tamMsg - 14), '500');
-      ctx.font = '500 ' + d.tam + 'px ' + FAMILIA; ctx.fillStyle = 'rgba(255,255,255,0.95)'; sombra(ctx);
-      for (var i = d.linhas.length - 1; i >= 0; i--) { ctx.fillText(d.linhas[i], x, y); y -= d.tam * 1.28; }
-      limparSombra(ctx); y -= 8;
-    }
-    if (bloco.titulo && bloco.titulo.trim()) {
-      var t = ajustarFonte(ctx, bloco.titulo.trim(), maxW, op.titLinhas, op.tamTit, Math.max(30, op.tamTit - 20), '800');
-      ctx.font = '800 ' + t.tam + 'px ' + FAMILIA; ctx.fillStyle = op.corTit; sombra(ctx, 0.5);
-      for (var j = t.linhas.length - 1; j >= 0; j--) { ctx.fillText(t.linhas[j], x, y); y -= t.tam * 1.12; }
-      limparSombra(ctx);
-    }
-    return y;
-  }
-
-  // ---------- funções de desenho por layout ----------
-  var DRAW = {
-    // 1 bloco em destaque (título grande + mensagem), junto à base
-    layout1: function (ctx, dados, accent, M, maxW, yBase) {
-      var b = (dados.blocos && dados.blocos[0]) || { titulo: '', mensagem: '' };
-      drawBloco(ctx, b, M, maxW, yBase, { tamTit: 100, titLinhas: 4, corTit: '#ffffff', tamMsg: 46, msgLinhas: 10 });
-    },
-    // até 3 destaques empilhados (título curto colorido + mensagem)
-    layout2: function (ctx, dados, accent, M, maxW, yBase) {
-      var blocos = (dados.blocos || []).slice(0, 3).filter(function (b) { return (b.titulo && b.titulo.trim()) || (b.mensagem && b.mensagem.trim()); });
-      if (!blocos.length) blocos = [{ titulo: '', mensagem: '' }];
-      var y = yBase;
-      for (var i = blocos.length - 1; i >= 0; i--) {
-        y = drawBloco(ctx, blocos[i], M, maxW, y, { tamTit: 50, titLinhas: 3, corTit: accent, tamMsg: 36, msgLinhas: 10 });
-        y -= 34; // espaço entre blocos
-      }
-    }
-  };
-
-  // ---------- desenhar a Story (comum + dispatch de layout) ----------
-  async function desenhar(canvas, payload, fotoSrc) {
-    var base = BASE(), ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, W, H);
-    try { if (document.fonts && document.fonts.ready) await document.fonts.ready; } catch (e) {}
-    var accent = primeiraCor(payload.aparencia, base.corAccentKeys, base.fallback.accent);
-    var img = await carregarImagem(fotoSrc || ((payload.headerFotos && payload.headerFotos[0]) || ''));
-
-    if (img) { drawCover(ctx, img, 0, 0, W, H); }
-    else {
-      var g = ctx.createLinearGradient(0, 0, W, H);
-      g.addColorStop(0, primeiraCor(payload.aparencia, ['bgMain'], base.fallback.bg1));
-      g.addColorStop(1, base.fallback.bg2);
-      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-    }
-    var esc = ctx.createLinearGradient(0, 0, 0, H);
-    esc.addColorStop(0, 'rgba(0,0,0,0.28)');
-    esc.addColorStop(0.40, 'rgba(0,0,0,0.05)');
-    esc.addColorStop(0.66, 'rgba(0,0,0,' + (base.escurecer * 0.7).toFixed(2) + ')');
-    esc.addColorStop(1, 'rgba(0,0,0,' + Math.min(0.92, base.escurecer + 0.35).toFixed(2) + ')');
-    ctx.fillStyle = esc; ctx.fillRect(0, 0, W, H);
-
-    var M = 90, maxW = W - M * 2;
-    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
-
-    // etiqueta topo (só desenha se base.badge tiver texto — atualmente vazia)
-    if (base.badge && String(base.badge).trim()) {
-      ctx.font = '800 40px ' + FAMILIA;
-      var badge = String(base.badge).toUpperCase();
-      var bw = ctx.measureText(badge).width, padX = 30, padY = 20, by = 96, bh = 40 + padY * 2;
-      ctx.fillStyle = accent; roundRect(ctx, M, by, bw + padX * 2, bh, 14); ctx.fill();
-      ctx.fillStyle = '#fff'; ctx.fillText(badge, M + padX, by + padY + 32);
-    }
-
-    // nome do restaurante (base), encolhe até caber numa linha
-    var nomeTxt = (payload.nome || '').toUpperCase();
-    var nomeY = H - 140;
-    var nf = ajustarFonte(ctx, nomeTxt, maxW, 1, 44, 22, '700');
-    ctx.font = '700 ' + nf.tam + 'px ' + FAMILIA; ctx.fillStyle = 'rgba(255,255,255,0.92)'; sombra(ctx);
-    ctx.fillText(nf.linhas[0] || nomeTxt, M, nomeY); limparSombra(ctx);
-    ctx.strokeStyle = accent; ctx.lineWidth = 5;
-    ctx.beginPath(); ctx.moveTo(M, nomeY - 62); ctx.lineTo(M + 90, nomeY - 62); ctx.stroke();
-
-    // conteúdo do layout escolhido (área acima do nome)
-    var yBase = nomeY - 96;
-    var fn = DRAW[payload.layoutId] || DRAW.layout1;
-    fn(ctx, payload, accent, M, maxW, yBase);
-  }
-
-  // ---------- estado + overlay ----------
-  var estado = { dados: null, fotoSrc: null, layoutId: null, blocos: [], blob: null, file: null };
-
-  function _payload() {
-    var d = estado.dados || {};
-    return { nome: d.nome, aparencia: d.aparencia, headerFotos: d.headerFotos, layoutId: estado.layoutId, blocos: estado.blocos };
-  }
-  function _nomeFicheiro() {
-    var base = 'story-' + ((estado.dados && estado.dados.nome) || 'restaurante');
-    return base.replace(/[^a-z0-9.\-]+/gi, '-').replace(/^-+|-+$/g, '').toLowerCase() + '-' + Date.now() + '.jpg';
-  }
-  function render() {
-    var c = document.getElementById('stCanvas'); if (!c) return;
-    estado.blob = null; estado.file = null;
-    desenhar(c, _payload(), estado.fotoSrc).then(function () {
-      try { c.toBlob(function (b) { if (!b) return; estado.blob = b; try { estado.file = new File([b], _nomeFicheiro(), { type: 'image/jpeg' }); } catch (e) { estado.file = null; } }, 'image/jpeg', 0.92); }
-      catch (e) { estado.blob = null; estado.file = null; }
-    });
-  }
-  async function partilhar() {
-    if (estado.file && navigator.canShare && navigator.canShare({ files: [estado.file] })) {
-      try { await navigator.share({ files: [estado.file], title: 'Story' }); } catch (e) {} return;
-    }
-    if (estado.blob) { descarregar(); alert('O teu dispositivo não permite partilha direta de imagens. A imagem foi transferida — abre o Instagram/WhatsApp e adiciona-a manualmente.'); return; }
-    alert('A imagem ainda está a ser preparada. Espera um instante e tenta de novo.');
-  }
-  function descarregar() {
-    if (!estado.blob) { alert('A imagem ainda está a ser preparada. Tenta daqui a um instante.'); return; }
-    var url = URL.createObjectURL(estado.blob), a = document.createElement('a');
-    a.href = url; a.download = _nomeFicheiro(); document.body.appendChild(a); a.click();
-    setTimeout(function () { try { document.body.removeChild(a); } catch (e) {} URL.revokeObjectURL(url); }, 600);
-  }
-
-  function usarPrato() {
-    var caixas = (estado.dados && estado.dados.pratoCaixas) || [];
-    if (!caixas.length) { alert('Não há prato do dia definido para hoje. Cria o prato do dia primeiro.'); return; }
-    estado.blocos = caixas.slice(0, 3).map(function (cx) { return { titulo: (cx.titulo || '').trim(), mensagem: (cx.subtitulo || '').trim() }; });
-    if (!estado.blocos.length) estado.blocos = [{ titulo: '', mensagem: '' }];
-    estado.layoutId = (estado.blocos.length >= 2) ? 'layout2' : 'layout1';   // 1 caixa -> Layout 1, 2/3 -> Layout 2
-    pintarLayouts(); pintarBlocos(); render();
-  }
-  function maxBlocosLayout() {
-    var l = LAYOUTS().find(function (x) { return x.id === estado.layoutId; });
-    return (l && l.maxBlocos) || 1;
-  }
-  function pintarLayouts() {
-    var cont = document.getElementById('stLayouts'); if (!cont) return;
-    cont.innerHTML = LAYOUTS().map(function (l) {
-      var on = (estado.layoutId === l.id);
-      return '<button type="button" data-id="' + l.id + '" style="border:1px solid ' + (on ? '#a8712f' : '#e0d3b5') + ';background:' + (on ? '#a8712f' : '#fff') + ';color:' + (on ? '#fff' : '#4a3820') + ';border-radius:999px;padding:7px 13px;cursor:pointer;font-weight:800;font-size:.82rem;">' + l.nome + '</button>';
-    }).join('');
-    cont.querySelectorAll('button').forEach(function (b) {
-      b.onclick = function () { estado.layoutId = b.dataset.id; pintarLayouts(); pintarBlocos(); render(); };
-    });
-    var hint = document.getElementById('stHint');
-    if (hint) hint.textContent = (maxBlocosLayout() === 1) ? 'Este layout mostra o 1.º bloco.' : ('Este layout mostra até ' + maxBlocosLayout() + ' blocos.');
-  }
-  function atualizarAddBloco() {
-    var add = document.getElementById('stAddBloco'); if (!add) return;
-    add.style.display = (estado.blocos.length >= 3) ? 'none' : 'block';
-  }
-  function pintarBlocos() {
-    var c = document.getElementById('stBlocos'); if (!c) return;
-    c.innerHTML = estado.blocos.map(function (b, i) {
-      return '<div style="border:1px solid #eadfc6;border-radius:12px;padding:10px;margin-bottom:8px;background:#fff;">'
-        + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;"><span style="font-size:.76rem;font-weight:800;color:#8a7a5c;">Bloco ' + (i + 1) + '</span>'
-        + (i > 0 ? ('<button type="button" data-rm="' + i + '" style="border:none;background:none;color:#c0392b;font-weight:800;cursor:pointer;font-size:.78rem;">remover</button>') : '')
-        + '</div>'
-        + '<input data-t="' + i + '" placeholder="Título" value="' + _esc(b.titulo) + '" style="width:100%;box-sizing:border-box;padding:9px;border:1px solid #e0d3b5;border-radius:8px;margin-bottom:6px;font-family:inherit;">'
-        + '<textarea data-m="' + i + '" rows="2" placeholder="Mensagem" style="width:100%;box-sizing:border-box;padding:9px;border:1px solid #e0d3b5;border-radius:8px;font-family:inherit;resize:vertical;">' + _esc(b.mensagem) + '</textarea>'
-        + '</div>';
-    }).join('');
-    c.querySelectorAll('[data-t]').forEach(function (el) { el.oninput = function () { estado.blocos[+el.dataset.t].titulo = el.value; render(); }; });
-    c.querySelectorAll('[data-m]').forEach(function (el) { el.oninput = function () { estado.blocos[+el.dataset.m].mensagem = el.value; render(); }; });
-    c.querySelectorAll('[data-rm]').forEach(function (el) { el.onclick = function () { estado.blocos.splice(+el.dataset.rm, 1); pintarBlocos(); render(); }; });
-    atualizarAddBloco();
-  }
-
-  function construirOverlay() {
-    if (document.getElementById('storyOverlay')) return;
-    var ov = document.createElement('div');
-    ov.id = 'storyOverlay';
-    ov.style.cssText = 'position:fixed;inset:0;z-index:9000;background:rgba(20,14,6,.72);display:none;align-items:center;justify-content:center;padding:16px;';
-    ov.innerHTML =
-      '<div style="width:fit-content;max-width:96vw;max-height:96vh;overflow:auto;background:#fffdf9;border-radius:20px;padding:12px;box-shadow:0 20px 60px rgba(0,0,0,.4);margin:auto;">'
-      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">'
-      +   '<div style="font-weight:800;color:#4a3820;font-size:1.05rem;">🎨 Pré-visualização da Story</div>'
-      +   '<button id="stFechar2" type="button" style="border:none;background:#efe4cf;border-radius:999px;width:34px;height:34px;cursor:pointer;font-size:1.1rem;color:#4a3820;">✕</button>'
-      + '</div>'
-      + '<div id="stLayouts" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px;"></div>'
-      + '<div id="stHint" style="font-size:.74rem;color:#8a7a5c;margin-bottom:10px;"></div>'
-      + '<div style="display:flex;justify-content:center;background:#140d05;border-radius:14px;padding:4px;">'
-      +   '<canvas id="stCanvas" width="' + W + '" height="' + H + '" style="height:min(66vh, calc(90vw * 16 / 9));width:auto;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.4);"></canvas>'
-      + '</div>'
-      + '<div style="display:flex;gap:8px;margin-top:12px;">'
-      +   '<label style="flex:1;text-align:center;border:1px solid #e0d3b5;background:#fff;border-radius:10px;padding:11px;cursor:pointer;font-weight:800;color:#4a3820;font-size:.9rem;">📷 Escolher foto<input id="stFoto" type="file" accept="image/*" style="display:none;"></label>'
-      +   '<button id="stSemFoto" type="button" style="border:1px solid #e0d3b5;background:#fff;border-radius:10px;padding:11px 14px;cursor:pointer;font-weight:800;color:#8a7a5c;font-size:.9rem;">Sem foto</button>'
-      + '</div>'
-      + '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin:12px 0 6px;"><span style="font-size:.78rem;color:#8a7a5c;font-weight:800;">Conteúdo</span>'
-      +   '<button id="stUsarPrato" type="button" style="border:1px solid #a8712f;background:#fff;color:#a8712f;border-radius:999px;padding:6px 11px;cursor:pointer;font-weight:800;font-size:.78rem;">🍽️ Usar o prato do dia</button>'
-      + '</div>'
-      + '<div id="stBlocos"></div>'
-      + '<button id="stAddBloco" type="button" style="width:100%;box-sizing:border-box;border:1.5px dashed #a8712f;background:#fff;color:#a8712f;border-radius:10px;padding:10px;cursor:pointer;font-weight:800;font-size:.86rem;">＋ Adicionar bloco</button>'
-      + '<button id="stPartilhar" type="button" style="width:100%;box-sizing:border-box;margin-top:12px;border:none;background:#25a05b;color:#fff;border-radius:10px;padding:13px;cursor:pointer;font-weight:800;font-size:.95rem;">📲 Partilhar Story</button>'
-      + '<div style="display:flex;gap:8px;margin-top:8px;">'
-      +   '<button id="stGuardar" type="button" style="flex:1;border:1px solid #e0d3b5;background:#fff;color:#4a3820;border-radius:10px;padding:12px;cursor:pointer;font-weight:800;font-size:.9rem;">⬇️ Guardar imagem</button>'
-      +   '<button id="stRegerar" type="button" style="flex:1;border:none;background:#a8712f;color:#fff;border-radius:10px;padding:12px;cursor:pointer;font-weight:800;font-size:.9rem;">🔄 Gerar novamente</button>'
-      + '</div>'
-      + '<button id="stFechar" type="button" style="width:100%;box-sizing:border-box;margin-top:8px;border:1px solid #e0d3b5;background:#fff;color:#8a7a5c;border-radius:10px;padding:11px;cursor:pointer;font-weight:800;font-size:.88rem;">Fechar</button>'
-      + '<div style="font-size:.76rem;color:#8a7a5c;text-align:center;margin-top:10px;">No telemóvel, "Partilhar" abre o menu do sistema (Instagram, WhatsApp…). No computador, transfere a imagem.</div>'
-      + '</div>';
-    document.body.appendChild(ov);
-
-    ov.addEventListener('click', function (e) { if (e.target === ov) fechar(); });
-    document.getElementById('stFechar').onclick = fechar;
-    document.getElementById('stFechar2').onclick = fechar;
-    document.getElementById('stRegerar').onclick = render;
-    document.getElementById('stSemFoto').onclick = function () { estado.fotoSrc = null; render(); };
-    document.getElementById('stFoto').onchange = function (e) {
-      var f = e.target.files && e.target.files[0]; if (!f) return;
-      var fr = new FileReader(); fr.onload = function () { estado.fotoSrc = fr.result; render(); }; fr.readAsDataURL(f);
-    };
-    document.getElementById('stAddBloco').onclick = function () { if (estado.blocos.length < 3) { estado.blocos.push({ titulo: '', mensagem: '' }); pintarBlocos(); render(); } };
-    document.getElementById('stUsarPrato').onclick = usarPrato;
-    document.getElementById('stPartilhar').onclick = partilhar;
-    document.getElementById('stGuardar').onclick = descarregar;
-  }
-
-  function fechar() { var ov = document.getElementById('storyOverlay'); if (ov) ov.style.display = 'none'; }
-
-  window.__storyAbrir = function (dados) {
-    construirOverlay();
-    estado.dados = dados || {};
-    estado.fotoSrc = null;
-    estado.layoutId = (LAYOUTS()[0] || {}).id;
-    estado.blocos = [{ titulo: (dados && dados.titulo) || '', mensagem: (dados && dados.descricao) || '' }];
-    pintarLayouts(); pintarBlocos();
-    document.getElementById('storyOverlay').style.display = 'flex';
-    render();
-  };
-})();
-
-</script>
 
 
 <!-- ===== Estilos de Promoção do dia (partilhado: cardápio + calendário) ===== -->

@@ -407,6 +407,7 @@
     const { data:entO } = await sb.from('entitlements').select('plano,funcoes,publicidade').eq('negocio_id', orig.id).maybeSingle();
     const plano = (entO && entO.plano) || 'basico';
     const funcoes = (entO && entO.funcoes) ? JSON.parse(JSON.stringify(entO.funcoes)) : Object.assign({}, PLANOS[plano]||{});
+    funcoes.extras = {};   // o negócio novo nasce com os extras bloqueados
     const publicidade = (entO && entO.publicidade) ? JSON.parse(JSON.stringify(entO.publicidade)) : { ativo: plano==='basico' };
     const { error:e2 } = await sb.from('entitlements').insert({ negocio_id:neg.id, plano:plano, funcoes:funcoes, publicidade:publicidade });
     $('btnDuplicar').disabled = false;
@@ -516,9 +517,7 @@
         '<div class="linha-pub" style="background:#fbf6e6; border:1.5px solid #c9a24a; border-radius:9px; padding:9px 11px; flex-wrap:wrap;"><input type="checkbox" data-exemplo' + ((n.config && n.config.exemplo === true) ? ' checked' : '') + '> <label style="margin:0; color:#7a5320; font-weight:700;">⭐ Usar como exemplo no formulário de registo</label>' +
           '<input type="text" data-exdesc value="' + ((n.config && n.config.exemploDesc) || '').replace(/"/g, '&quot;') + '" placeholder="Frase curta que o cliente vê (ex.: Clássico e elegante, ideal para marisqueiras)" style="flex-basis:100%; margin-top:7px;"></div>' +
         '<label style="margin-top:12px;">Tipo de cozinha (filtro da ÀMesa)</label><input type="text" data-tipo value="' + ((n.config && n.config.tipo) || '').replace(/"/g, '&quot;') + '" placeholder="Ex.: Português, Pizzaria, Sushi, Pastelaria…">' +
-        '<label style="margin-top:14px;">🔑 Secções do editor a que o dono tem acesso</label>' +
-        '<div style="font-size:.76rem; color:#9a8b6f; margin:-2px 0 6px;">Desliga as que não queres que o dono mexa. Os anúncios (Publicidade no menu/nos jogos) e a Limpeza de fotos são sempre só teus.</div>' +
-        '<div class="funcoes" data-secs></div>' +
+        '<div style="margin-top:14px; font-size:.82rem; color:#7a5320; background:#fbf6e6; border:1.5px solid #e9d6a6; border-radius:9px; padding:9px 11px;">✨ <b>Extras:</b> ' + (function(){ const ex = funcoes.extras; if(!ex || typeof ex !== 'object') return 'todos desbloqueados (restaurante antigo)'; const n = Object.keys(ex).filter(function(k){ return ex[k] === true; }).length; return n + ' desbloqueado(s)'; })() + ' — ligam-se e desligam-se na <b>Gestão</b> deste restaurante (botão 📅 abaixo → Extras).</div>' +
         '<div style="margin-top:12px; font-size:.78rem; color:#9a8b6f; background:#fbf8f2; border:1px solid var(--linha); border-radius:8px; padding:8px 10px;">🗂 Pasta das imagens no Storage: <code style="color:var(--castanho); font-weight:700;">imagens/' + n.slug + '/</code><br><span style="color:#b3a68a;">O slug (<code>/' + n.slug + '</code>) é fixo e não muda quando alteras o nome — por isso a pasta mantém sempre este nome.</span></div>' +
         '<div style="margin-top:12px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">' +
           '<button class="acao" data-act="guardar">Guardar</button>' +
@@ -528,33 +527,13 @@
           '<button class="mini perigo" data-act="reporRating">⭐ Repor avaliações</button>' +
           '<button class="mini" data-act="reporBackup">🛟 Repor cópia de segurança</button>' +
           '<a class="link" href="' + SITE + '/editar.html?n=' + n.slug + '" target="_blank">Abrir editor ↗</a>' +
-          '<a class="link" href="' + SITE + '/calendario.html?n=' + n.slug + '" target="_blank">📅 Calendário / Reservas ↗</a>' +
+          '<a class="link" href="' + SITE + '/calendario.html?n=' + n.slug + '" target="_blank">📅 Gestão (reservas, extras…) ↗</a>' +
           '<a class="link" href="' + SITE + '/' + n.slug + '" target="_blank">Ver menu ↗</a>' +
         '</div>' +
         '<div data-msg></div>' +
       '</div>';
 
     // preencher plano + funções
-    // preencher secções do editor (checked = o dono vê; por defeito tudo ligado)
-    { const sbox = div.querySelector('[data-secs]');
-      const off = (n.config && Array.isArray(n.config.editorOff)) ? n.config.editorOff : [];
-      EDITOR_SECS_GRUPOS.forEach(function(grp){
-        const h = document.createElement('div'); h.textContent = grp[0];
-        h.style.cssText = 'grid-column:1/-1; font-weight:800; color:var(--dourado-escuro); margin:8px 0 2px; font-size:.82rem;';
-        sbox.appendChild(h);
-        grp[1].forEach(function(s){
-          const lab = document.createElement('label');
-          const antiga = (s[0] === 'secAgenda');   // secção antiga de reservas — substituída pelo Calendário
-          const txt = antiga
-            ? '<span style="text-decoration:line-through; opacity:.55;">' + s[1] + '</span> <span style="font-size:.72rem; color:#b0532e;">(antiga — usa o Calendário)</span>'
-            : s[1];
-          lab.innerHTML = '<input type="checkbox" data-sec="' + s[0] + '"' + (off.indexOf(s[0]) < 0 ? ' checked' : '') + '> ' + txt;
-          if(antiga){ lab.title = 'Secção antiga de reservas. Já não é usada — foi substituída pelo Calendário.'; lab.style.opacity = '.85'; }
-          sbox.appendChild(lab);
-        });
-      });
-    }
-
     // marcar como exemplo → sugere esconder da montra (é um restaurante de demonstração)
     { const _ex = div.querySelector('[data-exemplo]'), _oc = div.querySelector('[data-oculto]');
       if(_ex && _oc) _ex.addEventListener('change', function(){ if(_ex.checked) _oc.checked = true; }); }
@@ -603,7 +582,7 @@
     const { data:neg, error } = await sb.from('negocios').insert({ nome:nome, slug:slug, dono_email:emailDono || null, config:config, menu:menu }).select().single();
     if(error){ $('btnCriar').disabled = false; msg($('criarMsg'), 'Erro: ' + error.message, 'erro'); return; }
     // Novos negócios começam com tudo ligado (independente do plano escolhido); ajustas depois em "Gerir".
-    const funcoes = Object.assign({}, FUNCOES_TODAS);
+    const funcoes = Object.assign({}, FUNCOES_TODAS, { extras:{} });   // extras bloqueados até os desbloqueares na Gestão
     const publicidade = { ativo: true };
     const { error:e2 } = await sb.from('entitlements').insert({ negocio_id:neg.id, plano:plano, funcoes:funcoes, publicidade:publicidade });
     $('btnCriar').disabled = false;
@@ -722,7 +701,7 @@
       if(error) throw error;
       // permissões: como o exemplo (ou tudo ligado)
       const { data:entO } = await sb.from('entitlements').select('plano,funcoes,publicidade').eq('negocio_id', orig.id).maybeSingle();
-      await sb.from('entitlements').insert({ negocio_id:neg.id, plano:(entO && entO.plano) || 'pro', funcoes:(entO && entO.funcoes) ? entO.funcoes : Object.assign({}, FUNCOES_TODAS), publicidade:(entO && entO.publicidade) ? entO.publicidade : { ativo:true } });
+      await sb.from('entitlements').insert({ negocio_id:neg.id, plano:(entO && entO.plano) || 'pro', funcoes:Object.assign({}, (entO && entO.funcoes) ? entO.funcoes : FUNCOES_TODAS, { extras:{} }), publicidade:(entO && entO.publicidade) ? entO.publicidade : { ativo:true } });
       diz('✓ "' + nome + '" criado (escondido da montra). Fotos do menu do cliente: ' + ((d.fotos || []).length) + ' — importa o menu no editor e depois marca este registo como tratado.');
       await carregar();
       try{ if(window.__abrirNeg) window.__abrirNeg(slug); }catch(e){}
@@ -810,7 +789,7 @@
       }catch(eMig){ msg(box, '⚠ Não consegui copiar todas as fotos (' + (eMig.message || eMig) + '). Vou criar na mesma, mas confirma as imagens depois.', 'erro'); }
       const { data:neg, error } = await sb.from('negocios').insert({ nome:nome, slug:slug, dono_email:(o.dono_email||'').toLowerCase()||null, config:config, menu:menu }).select().single();
       if(error){ msg(box, 'Erro: ' + error.message, 'erro'); return; }
-      await sb.from('entitlements').insert({ negocio_id:neg.id, plano:'pro', funcoes:Object.assign({},FUNCOES_TODAS), publicidade:{ ativo:true } });
+      await sb.from('entitlements').insert({ negocio_id:neg.id, plano:'pro', funcoes:Object.assign({},FUNCOES_TODAS,{ extras:{} }), publicidade:{ ativo:true } });
       msg(box, 'Negócio "' + nome + '" criado a partir do ficheiro ✓', 'ok');
       await carregar();
       try{ if(window.__abrirNeg) window.__abrirNeg(slug); }catch(e){}
@@ -832,6 +811,8 @@
   async function guardarEnt(n, div){
     const plano = 'pro';
     const funcoes = Object.assign({}, FUNCOES_TODAS);   // tudo ligado (o gating do site foi retirado)
+    // os EXTRAS (desbloqueados na Gestão) não se perdem ao guardar aqui
+    try{ const { data:entCur } = await sb.from('entitlements').select('funcoes').eq('negocio_id', n.id).maybeSingle(); if(entCur && entCur.funcoes && entCur.funcoes.extras) funcoes.extras = entCur.funcoes.extras; }catch(e){}
     const publicidade = { ativo: div.querySelector('[data-pub]').checked };
     const emailDono = (div.querySelector('[data-email]').value || '').trim().toLowerCase();
     const nomeNovo = (div.querySelector('[data-nome]').value || '').trim();
@@ -849,8 +830,6 @@
       { const _exEl = div.querySelector('[data-exemplo]'), _exD = div.querySelector('[data-exdesc]');
         if(_exEl && _exEl.checked){ _cfg.exemplo = true; } else { delete _cfg.exemplo; }
         const _dsc = (_exD ? _exD.value : '').trim(); if(_dsc) _cfg.exemploDesc = _dsc.slice(0, 140); else delete _cfg.exemploDesc; }
-      // Secções do editor desligadas para o dono (guarda as NÃO marcadas)
-      { const off = []; div.querySelectorAll('[data-sec]').forEach(function(c){ if(!c.checked) off.push(c.getAttribute('data-sec')); }); _cfg.editorOff = off; }
       _upNeg.config = _cfg;
     }
     const { error:eN } = await sb.from('negocios').update(_upNeg).eq('id', n.id);
