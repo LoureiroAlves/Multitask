@@ -208,6 +208,8 @@
     }catch(e){ return ''; }
   }
   try{ window.__PREVIEW = (new URLSearchParams(location.search)).get('preview') === '1'; }catch(e){ window.__PREVIEW = false; }
+  // Pré-visualização de um EXTRA para o dono explorar (?demo=decoracao): só esse extra fica visível, nada é gravado nem contado
+  try{ window.__DEMO = ((new URLSearchParams(location.search)).get('demo') || '').replace(/[^a-z]/g, '') || ''; }catch(e){ window.__DEMO = ''; }
   // Pré-visualização no editor: simular as margens seguras do iPhone (notch / barra inferior), que num iframe são 0
   try{ if(window.__PREVIEW){ var _sp = new URLSearchParams(location.search); ['top','bottom','left','right'].forEach(function(k){ var v = parseInt(_sp.get('safe' + k.charAt(0).toUpperCase() + k.slice(1)), 10); if(v >= 0 && !isNaN(v)) document.documentElement.style.setProperty('--sa-' + k, v + 'px'); }); } }catch(e){}
   // Pintar o ecrã de carregamento com a cor do tema deste restaurante (guardada da última visita),
@@ -4244,7 +4246,7 @@
   // Sem "extras" (restaurantes antigos) = tudo desbloqueado. Encomendas bloqueadas também desligam o carrinho.
   function _trancarExtras(config, ex){
     if(!config || !ex || typeof ex !== 'object') return;
-    var off = function(k){ return ex[k] !== true; };
+    var off = function(k){ return ex[k] !== true && window.__DEMO !== k; };
     if(off('reservas')) config.agenda = Object.assign({}, config.agenda || {}, { ativo:false });
     if(off('encomendas')){ config.modos = Object.assign({}, config.modos || {}); config.modos.__tinha = Object.assign({}, config.modos.__tinha || {}, { takeaway: !!config.modos.takeaway }); config.modos.takeaway = false; config.carrinho = Object.assign({}, config.carrinho || {}, { ativo:false }); }
     if(off('promocoes')){ config.promocoes = []; config.promoDatas = {}; }
@@ -5968,7 +5970,7 @@
 
   // ---- Métricas: visitas ao menu e vistas à publicidade (1 por dispositivo/dia) ----
   (function registarMetricas(){
-    if(window.__PREVIEW || !sbC || !SLUG) return;
+    if(window.__PREVIEW || window.__DEMO || !sbC || !SLUG) return;
     var hoje; try{ hoje = new Date().toISOString().slice(0,10); }catch(e){ hoje = '0'; }
     function jaContou(k){ try{ return localStorage.getItem(k) === '1'; }catch(e){ return false; } }
     function marcar(k){ try{ localStorage.setItem(k, '1'); }catch(e){} }
@@ -6883,6 +6885,7 @@
       let _jaGravou = false;
       async function _gravarReserva(){
         if(_jaGravou) return true;
+        if(window.__DEMO){ alert('Pré-visualização: aqui o cliente enviava o pedido de reserva.'); return false; }
         if(!(typeof sbC !== 'undefined' && sbC && window.__negocioId)) return true;   // sem base de dados: nada a gravar
         const { data, error } = await sbC.rpc('criar_reserva', {
           p_negocio: window.__negocioId, p_data: estado.diaSel, p_hora: estado.slotSel,
@@ -8712,7 +8715,7 @@
             _erro('Não consegui enviar a encomenda. Verifica a ligação e tenta de novo.');
           }
         };
-        if(window.__PREVIEW){ alert('Pré-visualização: aqui seria enviada a encomenda.'); return; }
+        if(window.__PREVIEW || window.__DEMO){ alert('Pré-visualização: aqui seria enviada a encomenda.'); return; }
         enviar.disabled = true;
         if(typeof sbC !== 'undefined' && sbC && window.__negocioId){
           const _args = { p_negocio: window.__negocioId, p_nome: nome, p_tel: telC, p_levant: horaLev, p_itens: itensJson, p_total: t, p_obs: obsC };

@@ -488,6 +488,68 @@
     ['jogos',      '🎮', 'Jogos',                      'Jogos para os clientes passarem o tempo à mesa.']
   ];
   const AREA_EXTRA = { cal:'reservas', enc:'encomendas', notif:'promocoes', prato:'prato' };
+  const EXTRA_DICA = {
+    reservas:'Toca em "Reservas" para veres como o cliente pede mesa.',
+    encomendas:'Escolhe "Take away", junta pratos ao carrinho e vê o pedido.',
+    promocoes:'A promoção aparece em destaque no topo do menu.',
+    prato:'O prato do dia aparece por baixo do nome do restaurante.',
+    favoritos:'Toca no ♥ de um prato e depois em "Os meus favoritos".',
+    decoracao:'Repara nas ilustrações e adornos à volta do menu.',
+    fidelidade:'Abre o cartão de fidelidade no botão ⭐.',
+    redes:'Os ícones do Instagram e do Facebook aparecem no menu.',
+    mapa:'Desce até ao fim do menu para veres o mapa e "Como chegar".',
+    jogos:'Abre o separador dos jogos.'
+  };
+  // o teu menu já tem este extra preparado? (senão, a pré-visualização usa um restaurante de exemplo)
+  function _extraTemConteudo(k){
+    const c = (negocio && negocio.config) || {};
+    try{
+      if(k === 'reservas') return !!(c.agenda && c.agenda.ativo);
+      if(k === 'encomendas') return !!(c.modos && c.modos.takeaway);
+      if(k === 'promocoes') return Array.isArray(c.promocoes) && c.promocoes.length > 0;
+      if(k === 'prato') return !!((c.pratoFixo && Array.isArray(c.pratoFixo.caixas) && c.pratoFixo.caixas.length) || (c.pratoDatas && Object.keys(c.pratoDatas).length));
+      if(k === 'favoritos') return c.favoritosPratos === true;
+      if(k === 'decoracao') return !!(c.decor && c.decor.tema && c.decor.tema !== 'nenhum');
+      if(k === 'fidelidade') return !!(c.fidelidade && c.fidelidade.ativo);
+      if(k === 'redes') return c.mostrarRedes !== false && !!(c.redes && (c.redes.instagram || c.redes.facebook));
+      if(k === 'mapa') return !!(c.local && (c.local.morada || c.local.link));
+      if(k === 'jogos') return c.jogos !== false;
+    }catch(e){}
+    return false;
+  }
+  let _slugExemplo = null;
+  async function _slugDemo(k){
+    if(_extraTemConteudo(k)) return SLUG;
+    if(_slugExemplo) return _slugExemplo;
+    try{   // um restaurante marcado como exemplo (leitura pública)
+      const r = await fetch(SUPA_URL + '/rest/v1/negocios?select=slug&config->>exemplo=eq.true&apagado_em=is.null&ativo=eq.true&order=nome&limit=1', { headers:{ apikey:SUPA_KEY, Authorization:'Bearer ' + SUPA_KEY } });
+      const a = r.ok ? await r.json() : []; _slugExemplo = (a && a[0] && a[0].slug) || 'exemplo1';
+    }catch(e){ _slugExemplo = 'exemplo1'; }
+    return _slugExemplo;
+  }
+  async function _extraVer(k){
+    const x = _extraInfo(k); const slug = await _slugDemo(k); const proprio = (slug === SLUG);
+    const old = document.getElementById('exDemoOv'); if(old) old.remove();
+    const ov = document.createElement('div'); ov.id = 'exDemoOv';
+    ov.style.cssText = 'position:fixed;inset:0;z-index:9600;background:rgba(30,20,10,.72);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px;gap:10px;';
+    ov.innerHTML = '<div style="max-width:380px;width:100%;background:#fff;border-radius:14px;padding:10px 14px;text-align:center;">'
+      + '<div style="font-weight:900;color:var(--castanho);">' + x[1] + ' ' + esc(x[2]) + ' — pré-visualização</div>'
+      + '<div style="font-size:.84rem;color:#5a4a2c;margin-top:3px;">' + esc(EXTRA_DICA[k] || '') + '</div>'
+      + (proprio ? '' : '<div style="font-size:.76rem;color:#8a7a5c;margin-top:3px;">Mostramos um restaurante de exemplo — no teu menu fica com as tuas cores e pratos.</div>') + '</div>'
+      + '<div style="background:linear-gradient(160deg,#2a2018,#15100b);border-radius:34px;padding:9px;box-shadow:0 16px 40px rgba(0,0,0,.45);">'
+      + '<iframe src="cardapio.html?n=' + encodeURIComponent(slug) + '&demo=' + k + '" style="width:min(330px,86vw);height:min(600px,calc(100vh - 230px));border:0;border-radius:26px;background:#fff;display:block;"></iframe></div>'
+      + '<div style="display:flex;gap:8px;width:min(350px,90vw);">'
+      + (SOU_ADMIN || extraOn(k) ? '' : '<button type="button" id="exDemoQuero" class="acao" style="margin:0;flex:1;">✉️ Quero ativar</button>')
+      + '<button type="button" id="exDemoFechar" style="flex:0 0 34%;border:1px solid #e0d3b5;background:#fff;border-radius:10px;font-weight:800;cursor:pointer;font-family:inherit;padding:10px;">Fechar</button></div>';
+    document.body.appendChild(ov);
+    ov.addEventListener('click', function(e){ if(e.target === ov) ov.remove(); });
+    document.getElementById('exDemoFechar').onclick = function(){ ov.remove(); };
+    const q = document.getElementById('exDemoQuero'); if(q) q.onclick = function(){ ov.remove(); _extraPedir(k); };
+  }
+  function _extraPedir(k){
+    const x = _extraInfo(k);
+    location.href = 'mailto:' + AMESA_CONTACTO + '?subject=' + encodeURIComponent('Ativar "' + x[2] + '" — ' + ((negocio && negocio.nome) || ''));
+  }
   const AMESA_CONTACTO = 'info@amesadigital.pt';
   let EXTRAS = null;   // null = restaurante antigo (tudo desbloqueado)
   function extraOn(k){ return !EXTRAS || EXTRAS[k] === true; }
@@ -498,7 +560,7 @@
     window.__amConfirm('🔒 ' + x[2], { html:'<div style="font-size:2.4rem;text-align:center;line-height:1;margin-bottom:6px;">' + x[1] + '</div>'
       + '<div style="text-align:center;font-weight:700;color:var(--castanho);">' + esc(x[3]) + '</div>'
       + '<div style="text-align:center;margin-top:10px;color:#8a7a5c;font-size:.9rem;">Esta funcionalidade ainda não está ativa no teu restaurante. Fala com a ÀMesa para a ativar.</div>',
-      ok:'✉️ Pedir à ÀMesa', cancelar:'Agora não' }).then(function(sim){ if(sim === true){ location.href = 'mailto:' + AMESA_CONTACTO + '?subject=' + assunto; } });
+      ok:'👀 Ver como fica', cancelar:'Agora não' }).then(function(sim){ if(sim === true){ _extraVer(k); } });
   }
   function __amSeloAdmin(email){ try{ if(document.getElementById('amSeloAdmin')) return; var d = document.createElement('div'); d.id = 'amSeloAdmin'; d.title = 'Sessão de administrador: tens acesso a todos os negócios. Os donos não vêem este selo.'; d.textContent = '👑 A ver como administrador' + (email ? (' · ' + email) : ''); d.style.cssText = 'position:fixed; left:10px; bottom:calc(10px + env(safe-area-inset-bottom)); z-index:99999; background:rgba(122,83,32,.92); color:#fff; font:700 12px/1.2 system-ui,-apple-system,sans-serif; padding:6px 11px; border-radius:999px; box-shadow:0 3px 10px rgba(0,0,0,.25); pointer-events:none; max-width:calc(100vw - 20px); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;'; document.body.appendChild(d); }catch(e){} }   // administrador ÀMesa (o jogo No Cu da Galinha é gerido só por ele)
   let _primeiraCarga = true, _apId = null;
@@ -899,13 +961,15 @@
       html += '<div class="ex-linha' + (on ? '' : ' off') + '"><span class="ex-ico">' + x[1] + '</span><div class="ex-txt"><div class="ex-nome">' + esc(x[2]) + '</div><div class="ex-desc">' + esc(x[3]) + '</div></div>'
         + (SOU_ADMIN ? ('<label class="ex-sw"><input type="checkbox" data-ex="' + x[0] + '"' + (on ? ' checked' : '') + '><span></span></label>')
                      : (on ? '<span class="ex-est" style="background:#e6f7ec;color:#1e6b3c;">✓ Ativo</span>'
-                           : '<button type="button" class="ex-est" data-pedir="' + x[0] + '" style="background:#fff3d6;color:#7a5320;border:1px solid #ecd59f;cursor:pointer;font-family:inherit;">🔒 Ativar</button>'))
+                           : ('<button type="button" class="ex-est" data-ver="' + x[0] + '" style="background:#fff;color:#1f4e9c;border:1px solid #c9d8f0;cursor:pointer;font-family:inherit;">👀 Ver</button>'
+                            + '<button type="button" class="ex-est" data-pedir="' + x[0] + '" style="background:#fff3d6;color:#7a5320;border:1px solid #ecd59f;cursor:pointer;font-family:inherit;">🔒 Ativar</button>')))
         + '</div>';
     });
     if(SOU_ADMIN) html += '<button type="button" class="acao" id="exGuardar" style="margin-top:6px;">💾 Guardar extras</button><div class="msg" id="exMsg"></div>'
       + '<div class="subt2" style="margin-top:8px;">Encomendas desligadas também desligam o carrinho no menu. O que ligares aqui só aparece no menu se estiver configurado no editor.</div>';
     v.innerHTML = html;
-    v.querySelectorAll('[data-pedir]').forEach(function(b){ b.onclick = function(){ _extraBloqueado(b.dataset.pedir); }; });
+    v.querySelectorAll('[data-pedir]').forEach(function(b){ b.onclick = function(){ _extraPedir(b.dataset.pedir); }; });
+    v.querySelectorAll('[data-ver]').forEach(function(b){ b.onclick = function(){ _extraVer(b.dataset.ver); }; });
     const g = $('exGuardar'); if(g) g.onclick = _guardarExtras;
   }
   async function _guardarExtras(){
