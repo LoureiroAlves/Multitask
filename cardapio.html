@@ -9224,6 +9224,26 @@
         }).catch(function(){});
       }catch(e){}
     };
+    // Jogo do ovo: ao inscrever-se, liga as notificações (pede licença se for preciso) e devolve o endpoint deste telemóvel.
+    // Devolve '' se não der (iPhone sem o menu no ecrã principal, permissão recusada, sem suporte).
+    window.__ovoObterPush = function(){
+      try{
+        if(!pushSuportado()) return Promise.resolve('');
+        if(isIOS && !standalone()) return Promise.resolve('');
+        var feito = function(sub){ if(!sub) return ''; var k = (sub.toJSON() || {}).keys || {};
+          var g = (typeof sbC !== 'undefined' && sbC && window.__negocioId) ? sbC.rpc('guardar_push_sub', { p_negocio: window.__negocioId, p_endpoint: sub.endpoint, p_p256dh: k.p256dh || '', p_auth: k.auth || '' }) : Promise.resolve();
+          return Promise.resolve(g).then(function(){ return sub.endpoint; }, function(){ return sub.endpoint; }); };
+        var p = __swReg ? Promise.resolve(__swReg) : registarSW();
+        return p.then(function(r){ if(!r) return '';
+          return r.pushManager.getSubscription().then(function(s){
+            if(s) return feito(s);
+            var pedir = (Notification.permission === 'granted') ? Promise.resolve('granted') : Notification.requestPermission();
+            return pedir.then(function(perm){ if(perm !== 'granted') return '';
+              return r.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: _b64ToU8(__VAPID_PUB) }).then(feito); });
+          });
+        }).catch(function(){ return ''; });
+      }catch(e){ return Promise.resolve(''); }
+    };
     function desativarPush(){
       var p = __swReg ? Promise.resolve(__swReg) : registarSW();
       return p.then(function(r){ if(!r) return; return r.pushManager.getSubscription().then(function(s){ if(!s) return; var ep = s.endpoint; return s.unsubscribe().then(function(){ if(typeof sbC !== 'undefined' && sbC && window.__negocioId){ return sbC.rpc('remover_push_sub', { p_negocio: window.__negocioId, p_endpoint: ep }); } }); }); }).catch(function(){});
@@ -9968,9 +9988,14 @@
     if(cdT){ clearInterval(cdT); cdT = null; }
     if(J.estado === 'agendado'){
       selo.className = 'agend'; selo.style.display = 'block';
-      selo.innerHTML = '<button type="button"><span class="ov">🥚</span><span>' + esc(J.nome) + ' — a caça ao ovo vai começar<small>🎁 ' + esc(J.premio_nome) + ' · começa ' + quandoTxt(J.inicio) + ' · <b class="ovo-cd"></b></small></span></button>';
+      selo.innerHTML = '<button type="button"><span class="ov">🥚</span><span>' + esc(J.nome) + ' — a caça ao ovo vai começar<small>🎁 ' + esc(J.premio_nome) + ' · começa ' + quandoTxt(J.inicio) + ' · <b class="ovo-cd"></b><br><b class="ovo-insc"></b></small></span></button>';
       selo.querySelector('button').onclick = function(){ abrirFolha('agendado'); };
-      var pinta = function(){ document.querySelectorAll('.ovo-cd').forEach(function(el){ el.textContent = contagem(J.inicio); }); };
+      var pinta = function(){
+        document.querySelectorAll('.ovo-cd').forEach(function(el){ el.textContent = contagem(J.inicio); });
+        var insc = !!ls('amesaOvoPart:' + J.id), aberto = Date.now() < fechoInsc();
+        document.querySelectorAll('.ovo-insc').forEach(function(el){ el.textContent = insc ? '✓ Estás inscrito' : (aberto ? ('✋ Inscreve-te até às ' + hhmm(fechoInsc())) : 'Inscrições fechadas'); });
+        var bi = $('ovoInscrever'); if(bi && !insc && !aberto){ abrirFolha('agendado'); }   // fechou com a folha aberta → atualiza
+      };
       pinta(); cdT = setInterval(pinta, 1000);
       // aviso 5 minutos antes (uma vez por dispositivo)
       var ms5 = new Date(J.inicio).getTime() - Date.now() - 5*60000;
@@ -10033,7 +10058,7 @@
         + '<div class="premio"><span style="font-size:.78rem;font-weight:800;color:#8a5a10;">PRÉMIO</span><b>🎁 ' + esc(J.premio_nome) + '</b>' + (J.premio_descricao ? ('<span style="font-size:.85rem;">' + esc(J.premio_descricao) + '</span>') : '') + '</div>'
         + dicas.map(function(d){ return '<div class="dica">💡 ' + esc(d) + '</div>'; }).join('')
         + '<p class="meta">Válido até às ' + hhmm(J.fim) + ' · ' + (J.participantes || 0) + ' a procurar · ' + (J.limite_vencedores > 1 ? (J.limite_vencedores + ' prémios') : '1 prémio') + '</p>'
-        + (tipo === 'abertura' ? '<button type="button" class="btn" id="ovoComecar">🔍 Começar a Procurar</button><button type="button" class="btn sec" id="ovoDepois">Agora não</button>'
+        + (tipo === 'abertura' ? '<div class="dica" style="background:#fbe7e4;color:#b23;">🔒 Só jogam os inscritos — as inscrições fecharam 1 minuto antes do início.</div><button type="button" class="btn sec" id="ovoComecar">Inscrevi-me neste telemóvel — entrar</button><button type="button" class="btn sec" id="ovoDepois">Fechar</button>'
                               : '<p style="font-weight:800;">Estás a procurar · ' + tentativas + ' tentativa(s)</p><button type="button" class="btn" id="ovoDepois">Continuar a procurar</button>'));
       var c = $('ovoComecar'); if(c) c.onclick = comecar;
       $('ovoDepois').onclick = fecharFolha;
@@ -10041,15 +10066,26 @@
       folha('<div class="big">🥚⏳</div><h2>' + esc(J.nome) + '</h2><p>' + esc(J.descricao || 'Vamos esconder um ovo neste menu. O primeiro a encontrá-lo ganha!') + '</p>'
         + '<div class="premio"><span style="font-size:.78rem;font-weight:800;color:#8a5a10;">PRÉMIO</span><b>🎁 ' + esc(J.premio_nome) + '</b>' + (J.premio_descricao ? ('<span style="font-size:.85rem;">' + esc(J.premio_descricao) + '</span>') : '') + '</div>'
         + '<p style="font-weight:900;font-size:1.1rem;">Começa ' + quandoTxt(J.inicio) + '</p><p class="ovo-cd" style="font-size:2rem;font-weight:900;font-variant-numeric:tabular-nums;margin:4px 0;">' + contagem(J.inicio) + '</p>'
-        + '<p class="meta">Deixa o menu aberto: quando começar, avisamos aqui. Termina às ' + hhmm(J.fim) + '.</p><button type="button" class="btn sec" id="ovoDepois">OK</button>');
+        + (function(){
+            var insc = !!ls('amesaOvoPart:' + J.id), aberto = Date.now() < fechoInsc();
+            if(insc) return '<div class="dica">✓ Estás inscrito! Avisamos-te 1 minuto antes. Quando começar, entras logo na caça — deixa o menu aberto ou toca no aviso.</div><button type="button" class="btn sec" id="ovoDepois">OK</button>';
+            if(aberto) return '<p style="font-weight:800;">Só os inscritos podem jogar. Inscrições até às ' + hhmm(fechoInsc()) + '.</p><button type="button" class="btn" id="ovoInscrever">✋ Quero jogar — inscrever-me</button><button type="button" class="btn sec" id="ovoDepois">Agora não</button>';
+            return '<div class="dica" style="background:#fbe7e4;color:#b23;">As inscrições já fecharam. Fica atento à próxima caça! 🥚</div><button type="button" class="btn sec" id="ovoDepois">OK</button>';
+          })()
+        + '<p class="meta">Termina às ' + hhmm(J.fim) + '.</p>');
+      $('ovoDepois').onclick = fecharFolha;
+      { var bi = $('ovoInscrever'); if(bi) bi.onclick = inscrever; }
+    } else if(tipo === 'comecou' && !ls('amesaOvoPart:' + J.id)){
+      folha('<div class="big">🥚🔒</div><h2>A caça começou!</h2><p><b>' + esc(J.nome) + '</b> — desta vez só jogam os inscritos.</p><p>Fica atento: quando houver nova caça, inscreve-te antes de começar. 🥚</p><button type="button" class="btn sec" id="ovoDepois">OK</button>');
       $('ovoDepois').onclick = fecharFolha;
     } else if(tipo === 'comecou'){
       folha('<div class="big">🥚🔔</div><h2>A caça começou!</h2><p><b>' + esc(J.nome) + '</b> — o ovo já está escondido no menu.</p>'
         + '<div class="premio"><span style="font-size:.78rem;font-weight:800;color:#8a5a10;">PRÉMIO</span><b>🎁 ' + esc(J.premio_nome) + '</b></div>'
         + dicasAtivas().map(function(d){ return '<div class="dica">💡 ' + esc(d) + '</div>'; }).join('')
         + '<p class="meta">Até às ' + hhmm(J.fim) + ' · ' + (J.limite_vencedores > 1 ? (J.limite_vencedores + ' prémios') : '1 prémio') + '</p>'
-        + '<button type="button" class="btn" id="ovoComecar">🔍 Começar a Procurar</button><button type="button" class="btn sec" id="ovoDepois">Agora não</button>');
-      $('ovoComecar').onclick = comecar; $('ovoDepois').onclick = fecharFolha;
+        + (aCacar ? '<p style="font-weight:800;">Já estás a procurar! Toca nos pratos, categorias, fotos… 🔍</p><button type="button" class="btn" id="ovoDepois">Vamos!</button>'
+                  : '<button type="button" class="btn" id="ovoComecar">🔍 Começar a Procurar</button><button type="button" class="btn sec" id="ovoDepois">Agora não</button>'));
+      { var c2 = $('ovoComecar'); if(c2) c2.onclick = comecar; } $('ovoDepois').onclick = fecharFolha;
     } else if(tipo === 'expirado'){
       folha('<div class="big">⏰</div><h2>Tempo esgotado!</h2><p>Desta vez ninguém encontrou o ovo — continua escondido no nosso menu.</p><p>Obrigado por participares. Fica atento à próxima caça! 🥚</p><button type="button" class="btn sec" id="ovoDepois">Fechar</button>');
       $('ovoDepois').onclick = fecharFolha;
@@ -10059,19 +10095,40 @@
       $('ovoDepois').onclick = fecharFolha;
     }
   }
+  function fechoInsc(){ return J ? (new Date(J.inicio).getTime() - 60000) : 0; }   // as inscrições fecham 1 minuto antes
+  async function inscrever(){
+    var b = $('ovoInscrever'); if(b){ b.disabled = true; b.textContent = 'A inscrever…'; }
+    var ep = '';
+    try{ if(window.__ovoObterPush) ep = await window.__ovoObterPush(); }catch(e){ ep = ''; }
+    var erro = null, id = null;
+    for(var k = 0; k < 3; k++){
+      try{ var r = await sbC.rpc('ovo_inscrever', { p_jogo:J.id, p_dispositivo:disp(), p_endpoint:ep || null }); if(r.error) throw r.error; id = r.data; erro = null; break; }
+      catch(e){ erro = e; if(/inscricoes_fechadas|jogo_inativo/.test(String(e && e.message || e))) break; await new Promise(function(ok){ setTimeout(ok, 1200); }); }
+    }
+    if(!id){
+      var m = String(erro && erro.message || erro);
+      if(b){ b.disabled = false; b.textContent = '✋ Quero jogar — inscrever-me'; }
+      toast(m.indexOf('inscricoes_fechadas') >= 0 ? 'As inscrições já fecharam.' : (m.indexOf('jogo_inativo') >= 0 ? 'Este jogo já não está disponível.' : 'Sem ligação. Tenta outra vez.')); return;
+    }
+    P = id; ls('amesaOvoPart:' + J.id, id); vib([60,40,60]);
+    toast(ep ? '✓ Inscrito! Avisamos-te 1 minuto antes.' : '✓ Inscrito! Deixa o menu aberto para entrares quando começar.');
+    abrirFolha('agendado');
+    document.querySelectorAll('.ovo-insc').forEach(function(el){ el.textContent = '✓ Estás inscrito'; });
+  }
   async function comecar(){
     var b = $('ovoComecar'); if(b){ b.disabled = true; b.textContent = 'A entrar…'; }
     // ao acordar o telemóvel a rede pode demorar uns segundos: tenta até 4 vezes antes de desistir
     var erroFinal = null;
     for(var k = 0; k < 4; k++){
       try{ var r = await sbC.rpc('ovo_entrar', { p_jogo:J.id, p_dispositivo:disp() }); if(r.error) throw r.error; P = r.data; ls('amesaOvoPart:' + J.id, P); erroFinal = null; break; }
-      catch(e){ erroFinal = e; if(String(e && e.message || e).indexOf('jogo_inativo') >= 0) break; await new Promise(function(ok){ setTimeout(ok, 1500); }); }
+      catch(e){ erroFinal = e; if(/jogo_inativo|nao_inscrito/.test(String(e && e.message || e))) break; await new Promise(function(ok){ setTimeout(ok, 1500); }); }
     }
     if(erroFinal){
       var inat = String(erroFinal && erroFinal.message || erroFinal).indexOf('jogo_inativo') >= 0;
       if(inat){ try{ var q = await sbC.from('ovo_jogos_publico').select('*').eq('id', J.id).maybeSingle(); if(q && q.data && q.data.estado === 'ativo'){ J = q.data; return comecar(); } }catch(_e){} }
-      if(b){ b.disabled = false; b.textContent = '🔍 Começar a Procurar'; }
-      toast(inat ? 'O jogo já terminou.' : 'Sem ligação à internet. Tenta outra vez.'); return;
+      var naoInsc = String(erroFinal && erroFinal.message || erroFinal).indexOf('nao_inscrito') >= 0;
+      if(b){ b.disabled = false; b.textContent = naoInsc ? 'Inscrevi-me neste telemóvel — entrar' : '🔍 Começar a Procurar'; }
+      toast(naoInsc ? 'Este telemóvel não está inscrito neste jogo.' : (inat ? 'O jogo já terminou.' : 'Sem ligação à internet. Tenta outra vez.')); return;
     }
     fecharFolha(); iniciarCaca(); toast('Boa caça! Toca nos pratos, categorias, promoções… 🥚');
   }
