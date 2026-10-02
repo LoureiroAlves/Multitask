@@ -2,57 +2,120 @@
 <html lang="pt">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Registo — ÀMesa</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Nunito:wght@400;600;700;800&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
 <style>
-  :root{ --terra:#a8712f; --terra-esc:#7a5320; --bege:#fbf7f0; --bege2:#f3e8d8; --linha:#e7d9c4; --ink:#3a2c18; --muted:#8a7a63; --branco:#fff; --ok:#2f8a4f; }
+  :root{ --terra:#a8712f; --terra-esc:#7a5320; --bege:#fbf7f0; --bege2:#f3e8d8; --linha:#e7d9c4; --ink:#3a2c18; --muted:#8a7a63; --ok:#2f8a4f; --erro:#b3402f; }
   *{ box-sizing:border-box; }
   body{ margin:0; font-family:'Nunito',sans-serif; background:linear-gradient(180deg,#fdfaf4 0%,#f4ead9 100%); background-attachment:fixed; color:var(--ink); -webkit-font-smoothing:antialiased; }
-  .wrap{ max-width:640px; margin:0 auto; padding:22px 16px calc(96px + env(safe-area-inset-bottom)); }
-  /* Cabeçalho */
-  .topo{ text-align:center; margin:10px 0 20px; }
-  .topo .selo{ display:inline-flex; align-items:center; gap:7px; background:#fff; border:1px solid var(--linha); border-radius:999px; padding:6px 14px; box-shadow:0 4px 14px rgba(120,90,50,.10); }
-  .logo{ font-family:'Playfair Display',serif; font-size:1.55rem; color:var(--terra-esc); font-weight:700; line-height:1; }
-  .topo h1{ font-family:'Poppins',sans-serif; font-size:1.28rem; color:var(--ink); margin:14px 0 0; font-weight:700; }
-  .topo p{ color:var(--muted); margin:6px 0 0; font-size:.95rem; }
-  /* Cartões com cabeçalho e ícone */
-  .card{ background:var(--branco); border:1px solid var(--linha); border-radius:18px; padding:0 16px 18px; box-shadow:0 8px 22px rgba(120,90,50,.09); margin-bottom:16px; overflow:hidden; }
-  .card h2{ display:flex; align-items:center; gap:10px; font-family:'Poppins',sans-serif; font-size:1.02rem; margin:0 -16px 14px; padding:14px 16px; color:var(--terra-esc); background:linear-gradient(180deg,#fdf7ec,#f8efdf); border-bottom:1px solid var(--linha); }
-  .card h2 .ic{ flex:none; width:34px; height:34px; border-radius:10px; display:inline-flex; align-items:center; justify-content:center; font-size:1.05rem; background:linear-gradient(180deg,#fff,#f3e6cf); border:1px solid #e6d3ad; box-shadow:0 1px 2px rgba(120,90,50,.14); }
-  .card h2 .op{ font-weight:600; color:var(--muted); font-size:.78rem; }
-  label{ display:block; font-weight:700; font-size:.9rem; margin:14px 0 5px; color:var(--ink); }
-  label .op{ font-weight:600; color:var(--muted); font-size:.8rem; }
-  input, textarea, select{ width:100%; padding:12px 13px; border:1.5px solid var(--linha); border-radius:12px; background:linear-gradient(180deg,#fff,#fdfaf4); font-family:inherit; font-size:1rem; color:var(--ink); transition:border-color .15s, box-shadow .15s; }
-  input:focus, textarea:focus, select:focus{ outline:none; border-color:var(--terra); box-shadow:0 0 0 3px rgba(168,113,47,.16); background:#fff; }
-  textarea{ min-height:78px; resize:vertical; }
+  .wrap{ max-width:680px; margin:0 auto; padding:18px 16px calc(110px + env(safe-area-inset-bottom)); }
+  .topo{ text-align:center; margin:6px 0 14px; }
+  .selo{ display:inline-flex; align-items:center; background:#fff; border:1px solid var(--linha); border-radius:999px; padding:6px 14px; box-shadow:0 4px 14px rgba(120,90,50,.10); }
+  .logo{ font-family:'Playfair Display',serif; font-size:1.5rem; color:var(--terra-esc); font-weight:700; line-height:1; }
+  .topo h1{ font-family:'Poppins',sans-serif; font-size:1.22rem; margin:12px 0 0; }
+  .topo p{ color:var(--muted); margin:5px 0 0; font-size:.93rem; }
+
+  /* Progresso */
+  .prog{ display:flex; gap:5px; margin:4px 0 6px; }
+  .prog i{ flex:1; height:6px; border-radius:6px; background:#eadcc4; transition:background .25s; }
+  .prog i.on{ background:linear-gradient(90deg,var(--terra),var(--terra-esc)); }
+  .prog-txt{ font-size:.8rem; color:var(--muted); text-align:center; margin-bottom:12px; }
+
+  .passo{ display:none; animation:entra .25s ease; }
+  .passo.ativo{ display:block; }
+  @keyframes entra{ from{ opacity:0; transform:translateY(6px); } to{ opacity:1; transform:none; } }
+
+  .card{ background:#fff; border:1px solid var(--linha); border-radius:18px; padding:0 16px 18px; box-shadow:0 8px 22px rgba(120,90,50,.09); margin-bottom:14px; overflow:hidden; }
+  .card h2{ display:flex; align-items:center; gap:10px; font-family:'Poppins',sans-serif; font-size:1.02rem; margin:0 -16px 12px; padding:14px 16px; color:var(--terra-esc); background:linear-gradient(180deg,#fdf7ec,#f8efdf); border-bottom:1px solid var(--linha); }
+  .card h2 .ic{ flex:none; width:34px; height:34px; border-radius:10px; display:inline-flex; align-items:center; justify-content:center; font-size:1.05rem; background:linear-gradient(180deg,#fff,#f3e6cf); border:1px solid #e6d3ad; }
+  .intro-passo{ font-size:.9rem; color:var(--muted); margin:0 0 6px; }
+  label{ display:block; font-weight:700; font-size:.9rem; margin:13px 0 5px; }
+  label .op, .op{ font-weight:600; color:var(--muted); font-size:.8rem; }
+  input, textarea, select{ width:100%; padding:12px 13px; border:1.5px solid var(--linha); border-radius:12px; background:linear-gradient(180deg,#fff,#fdfaf4); font-family:inherit; font-size:1rem; color:var(--ink); }
+  input:focus, textarea:focus{ outline:none; border-color:var(--terra); box-shadow:0 0 0 3px rgba(168,113,47,.16); background:#fff; }
+  input.mal{ border-color:var(--erro); box-shadow:0 0 0 3px rgba(179,64,47,.12); }
+  textarea{ min-height:80px; resize:vertical; }
   .dica{ font-size:.8rem; color:var(--muted); margin-top:4px; }
-  .btn{ display:block; width:100%; border:none; border-radius:14px; padding:15px; font-family:'Poppins',sans-serif; font-weight:700; font-size:1.02rem; cursor:pointer; background:linear-gradient(180deg,var(--terra),var(--terra-esc)); color:#fff; box-shadow:0 8px 18px rgba(168,113,47,.32); transition:transform .1s, box-shadow .15s; }
-  .btn:active{ transform:translateY(1px); box-shadow:0 4px 10px rgba(168,113,47,.28); }
-  .btn.sec{ background:#fff; color:var(--terra-esc); border:1.5px solid var(--terra); box-shadow:none; margin-top:10px; }
-  /* Barra fixa com o botão Concluir */
-  .barra-envio{ position:fixed; left:0; right:0; bottom:0; z-index:20; padding:12px 16px calc(12px + env(safe-area-inset-bottom)); background:linear-gradient(180deg,rgba(244,234,217,0),#f4ead9 34%); }
-  .barra-envio .btn{ max-width:640px; margin:0 auto; }
-  .aviso{ background:linear-gradient(180deg,#fff8ee,#fdf1df); border:1.5px solid #eecfa0; border-left:4px solid var(--terra); border-radius:14px; padding:13px 15px; font-size:.9rem; color:var(--terra-esc); margin-bottom:16px; box-shadow:0 4px 14px rgba(120,90,50,.07); }
-  .aviso b{ color:var(--terra-esc); }
-  #resultado{ display:none; }
-  .okbox{ background:#eef8f0; border:1.5px solid #b9e0c4; border-radius:16px; padding:14px; color:#245b39; box-shadow:0 8px 22px rgba(47,138,79,.10); }
-  .linkbox{ width:100%; padding:11px 12px; border:1.5px solid var(--linha); border-radius:10px; background:#fbf8f2; font-family:monospace; font-size:.8rem; word-break:break-all; color:#555; margin-top:8px; }
-  .resumo{ font-size:.9rem; line-height:1.6; }
-  .resumo b{ color:var(--terra-esc); }
+  .erro-txt{ font-size:.82rem; color:var(--erro); font-weight:700; margin-top:8px; min-height:1em; }
+  .btn{ display:block; width:100%; border:none; border-radius:14px; padding:14px; font-family:'Poppins',sans-serif; font-weight:700; font-size:1rem; cursor:pointer; background:linear-gradient(180deg,var(--terra),var(--terra-esc)); color:#fff; box-shadow:0 8px 18px rgba(168,113,47,.30); }
+  .btn:disabled{ opacity:.55; cursor:default; }
+  .btn.sec{ background:#fff; color:var(--terra-esc); border:1.5px solid var(--terra); box-shadow:none; }
+  .btn.peq{ width:auto; display:inline-block; padding:8px 13px; font-size:.86rem; border-radius:11px; }
+
+  /* Barra de navegação */
+  .nav{ position:fixed; left:0; right:0; bottom:0; z-index:20; padding:12px 16px calc(12px + env(safe-area-inset-bottom)); background:linear-gradient(180deg,rgba(244,234,217,0),#f4ead9 30%); }
+  .nav-in{ max-width:680px; margin:0 auto; display:flex; gap:10px; }
+  .nav-in .btn.sec{ flex:0 0 34%; }
+
+  /* Passo 1 — exemplos */
+  .exs{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  @media (max-width:430px){ .exs{ grid-template-columns:1fr; } }
+  .ex{ border:2px solid var(--linha); border-radius:16px; overflow:hidden; background:#fff; display:flex; flex-direction:column; transition:border-color .15s, box-shadow .15s; }
+  .ex.sel{ border-color:var(--terra); box-shadow:0 0 0 4px rgba(168,113,47,.18); }
+  .ex-foto{ height:120px; background:#efe3cf center/cover no-repeat; position:relative; }
+  .ex-foto .tick{ position:absolute; top:8px; right:8px; width:30px; height:30px; border-radius:50%; background:var(--terra); color:#fff; font-weight:800; display:none; align-items:center; justify-content:center; box-shadow:0 2px 6px rgba(0,0,0,.25); }
+  .ex.sel .tick{ display:flex; }
+  .ex-corpo{ padding:10px 12px 12px; flex:1; display:flex; flex-direction:column; }
+  .ex-nome{ font-family:'Poppins',sans-serif; font-weight:700; font-size:.98rem; }
+  .ex-desc{ font-size:.8rem; color:var(--muted); margin:3px 0 10px; flex:1; }
+  .ex-bts{ display:flex; gap:6px; }
+  .ex-bts .btn{ padding:9px 6px; font-size:.84rem; border-radius:10px; box-shadow:none; }
+  .nao-sei{ display:flex; align-items:center; gap:8px; margin-top:12px; padding:11px 13px; border:1.5px dashed var(--linha); border-radius:13px; background:#fdfaf4; cursor:pointer; font-weight:700; font-size:.9rem; }
+  .nao-sei input{ width:auto; margin:0; accent-color:var(--terra); }
+
+  /* Telemóvel (pré-visualização do exemplo) */
+  .modal{ position:fixed; inset:0; z-index:50; background:rgba(30,20,10,.62); display:none; align-items:center; justify-content:center; padding:14px; }
+  .modal.on{ display:flex; }
+  .modal-in{ display:flex; flex-direction:column; align-items:center; gap:10px; max-height:100%; }
+  .fone{ background:linear-gradient(160deg,#2a2018,#15100b); border-radius:38px; padding:10px; box-shadow:0 16px 40px rgba(0,0,0,.45); }
+  .fone-ecra{ width:min(330px, 86vw); height:min(640px, calc(100vh - 150px)); border-radius:29px; overflow:hidden; background:#fff; position:relative; }
+  .fone-ecra iframe{ position:relative; z-index:1; width:100%; height:100%; border:0; display:block; background:transparent; }
+  .fone-load{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:var(--muted); font-size:.9rem; }
+  .modal-bts{ display:flex; gap:8px; width:min(350px, 90vw); }
+
+  /* Fotos da marca */
+  .brand-row{ display:flex; align-items:center; gap:10px; padding:9px 0; border-top:1px solid #f0e6d6; }
+  .brand-row:first-child{ border-top:none; }
+  .brand-row .t{ flex:1; font-weight:700; font-size:.88rem; }
+  .brand-row .t span{ display:block; font-weight:600; color:var(--muted); font-size:.78rem; }
+  .thumb{ width:52px; height:52px; object-fit:cover; border-radius:9px; border:1px solid var(--linha); display:none; }
+
+  /* Horário */
+  .dia{ border:1.5px solid var(--linha); border-radius:13px; padding:10px 12px; margin-top:9px; background:#fffdf9; }
+  .dia.folga{ background:#fbeeeb; border-color:#f0cdc6; }
+  .dia-top{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .dia-nome{ font-weight:800; font-family:'Poppins',sans-serif; font-size:.92rem; }
+  .chk{ display:inline-flex; align-items:center; gap:6px; font-weight:700; font-size:.85rem; margin:0; cursor:pointer; }
+  .chk input{ width:auto; margin:0; accent-color:var(--terra); }
+  .turno{ display:flex; align-items:center; gap:7px; margin-top:8px; flex-wrap:wrap; }
+  .turno .chk{ min-width:96px; }
+  .turno input[type=time]{ width:auto; flex:1; min-width:92px; padding:8px 9px; font-size:.95rem; }
+  .turno.off input[type=time]{ opacity:.4; }
+
+  /* Serviços */
+  .serv{ display:flex; gap:12px; align-items:flex-start; border:2px solid var(--linha); border-radius:15px; padding:13px; margin-top:10px; cursor:pointer; background:#fff; }
+  .serv.on{ border-color:var(--terra); background:#fffaf1; }
+  .serv input{ width:22px; height:22px; margin:2px 0 0; accent-color:var(--terra); flex:none; }
+  .serv b{ font-family:'Poppins',sans-serif; font-size:.96rem; }
+  .serv .d{ font-size:.82rem; color:var(--muted); margin-top:2px; }
+  .serv-extra{ margin:8px 0 0 34px; display:none; }
+  .serv.on + .serv-extra{ display:block; }
+
+  /* Menu */
+  .ficheiros{ display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+  .fic{ position:relative; width:70px; height:70px; border-radius:10px; overflow:hidden; border:1px solid var(--linha); background:#f3e8d8; display:flex; align-items:center; justify-content:center; }
+  .fic img{ width:100%; height:100%; object-fit:cover; }
+  .fic .x{ position:absolute; top:3px; right:3px; width:20px; height:20px; border:none; border-radius:50%; background:rgba(0,0,0,.6); color:#fff; font-size:.72rem; cursor:pointer; }
+
+  .resumo{ font-size:.9rem; line-height:1.55; }
+  .resumo .l{ display:flex; gap:8px; padding:6px 0; border-top:1px solid #f1e8da; }
+  .resumo .l:first-child{ border-top:none; }
+  .resumo .k{ flex:0 0 38%; color:var(--muted); font-weight:700; }
+  .resumo .v{ flex:1; word-break:break-word; }
+  .okbox{ background:#eef8f0; border:1.5px solid #b9e0c4; border-radius:18px; padding:26px 18px; color:#245b39; text-align:center; }
   .hide{ display:none !important; }
-  .fs-chip{ display:inline-flex; align-items:center; gap:6px; background:linear-gradient(180deg,#fff,#fdf7ec); border:1.5px solid var(--linha); border-radius:11px; padding:8px 12px; font-size:.85rem; cursor:pointer; box-shadow:0 1px 2px rgba(120,90,50,.08); transition:border-color .15s; }
-  .fs-chip:hover{ border-color:var(--terra); }
-  .fs-chip input{ width:auto; margin:0; accent-color:var(--terra); }
-  /* Telemóvel de pré-visualização */
-  .fone{ width:300px; max-width:100%; margin:14px auto 6px; background:linear-gradient(160deg,#2a2018,#15100b); border-radius:40px; padding:12px; box-shadow:0 16px 40px rgba(60,40,20,.34); }
-  .fone-ecra{ position:relative; border-radius:30px; overflow:hidden; height:540px; overflow-y:auto; -webkit-overflow-scrolling:touch; background:#fff; transition:background .2s; }
-  .fone-notch{ position:absolute; top:0; left:50%; transform:translateX(-50%); width:118px; height:20px; background:#15100b; border-radius:0 0 14px 14px; z-index:5; }
-  .cor-row{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin:7px 0; cursor:pointer; }
-  .cor-row span{ display:flex; align-items:center; gap:8px; font-size:.9rem; color:var(--ink); }
-  .cor-row input[type=color]{ width:50px; height:32px; padding:0; border:none; background:none; cursor:pointer; flex-shrink:0; }
-  .cor-row input[type=checkbox]{ width:auto; margin:0; accent-color:var(--terra); }
 </style>
 </head>
 <body>
@@ -60,402 +123,454 @@
   <div class="topo">
     <div class="selo"><span class="logo">ÀMesa</span></div>
     <h1>Pôr o teu restaurante online</h1>
-    <p>Preenche o que souberes — leva poucos minutos.</p>
+    <p>7 passos curtos. Podes voltar atrás quando quiseres.</p>
   </div>
 
-  <!-- FORMULÁRIO -->
   <div id="form">
-    <div class="aviso">Preenche o que souberes — <b>quase tudo é opcional</b>. Podes <b>anexar aqui as fotos do menu ou um PDF</b>. No fim, carrega em <b>“Concluir”</b>, copia o link que aparece e <b>envia-o de volta</b> a quem te enviou este formulário.</div>
+    <div class="prog" id="prog"></div>
+    <div class="prog-txt" id="progTxt"></div>
 
-    <div class="card">
-      <h2><span class="ic">🪪</span> Identidade</h2>
-      <label>Nome do restaurante <span class="op">(aparece na app e na montra ÀMesa)</span></label>
-      <input id="nome" type="text" placeholder="Ex.: Restaurante Singular">
-      <label>Frase/subtítulo curto <span class="op">(opcional)</span></label>
-      <input id="subtitulo" type="text" placeholder="Ex.: Cozinha tradicional • Grelhados">
-      <label>Nome para o QR code <span class="op">(opcional — se vazio, usa o nome acima)</span></label>
-      <input id="nomeQR" type="text" placeholder="Ex.: Singular">
-      <label>Endereço curto desejado <span class="op">(opcional — amesadigital.pt/oquê)</span></label>
-      <input id="slug" type="text" placeholder="Ex.: singular" autocapitalize="off" autocorrect="off">
-
-      <label style="margin-top:16px;">Fotos da marca <span class="op">(opcional)</span></label>
-      <div class="dica" style="margin-bottom:6px;">Uma foto para cada sítio — todas opcionais.</div>
-      <div id="brandBox" style="display:flex; flex-direction:column; gap:10px;">
-        <div class="brand-row" style="display:flex; align-items:center; gap:10px;">
-          <div style="flex:1; font-weight:700; font-size:.86rem;">Cabeçalho <span class="op" style="display:block; font-weight:600;">(topo do menu)</span></div>
-          <img class="brand-thumb" data-th="cabecalho" style="display:none; width:52px; height:52px; object-fit:cover; border-radius:8px; border:1px solid var(--linha);">
-          <label class="btn sec" style="width:auto; padding:8px 12px; margin:0; cursor:pointer;">＋ foto<input type="file" accept="image/*" data-brand="cabecalho" style="display:none;"></label>
-        </div>
-        <div class="brand-row" style="display:flex; align-items:center; gap:10px;">
-          <div style="flex:1; font-weight:700; font-size:.86rem;">Ecrã de abertura <span class="op" style="display:block; font-weight:600;">(antes do menu)</span></div>
-          <img class="brand-thumb" data-th="abertura" style="display:none; width:52px; height:52px; object-fit:cover; border-radius:8px; border:1px solid var(--linha);">
-          <label class="btn sec" style="width:auto; padding:8px 12px; margin:0; cursor:pointer;">＋ foto<input type="file" accept="image/*" data-brand="abertura" style="display:none;"></label>
-        </div>
-        <div class="brand-row" style="display:flex; align-items:center; gap:10px;">
-          <div style="flex:1; font-weight:700; font-size:.86rem;">Montra ÀMesa <span class="op" style="display:block; font-weight:600;">(cartão na página amesadigital)</span></div>
-          <img class="brand-thumb" data-th="montra" style="display:none; width:52px; height:52px; object-fit:cover; border-radius:8px; border:1px solid var(--linha);">
-          <label class="btn sec" style="width:auto; padding:8px 12px; margin:0; cursor:pointer;">＋ foto<input type="file" accept="image/*" data-brand="montra" style="display:none;"></label>
-        </div>
+    <!-- 1. ESTILO -->
+    <section class="passo" data-p="1">
+      <div class="card">
+        <h2><span class="ic">🎨</span> Escolhe o estilo do teu menu</h2>
+        <p class="intro-passo">Estes são menus de exemplo. Carrega em <b>👀 Ver</b> para o abrir num telemóvel e mexer à vontade. Depois escolhe o que mais gostas — nós pomos o teu restaurante com esse aspeto (cores e fotos ajustam-se depois).</p>
+        <div id="exs" class="exs"><div class="dica" style="grid-column:1/-1;">A carregar os exemplos…</div></div>
+        <label class="nao-sei"><input type="checkbox" id="naoSei"> Ainda não sei — escolham por mim</label>
+        <div class="erro-txt" data-erro="1"></div>
       </div>
-      <div id="brandEstado" class="dica" style="margin-top:4px;"></div>
-    </div>
+    </section>
 
-    <div class="card">
-      <h2><span class="ic">📞</span> Contactos</h2>
-      <label>Email <span class="op">(será o acesso do dono ao editor)</span></label>
-      <input id="email" type="email" placeholder="dono@exemplo.com" autocapitalize="off">
-      <label>Telemóvel / WhatsApp <span class="op">(contacto e encomendas)</span></label>
-      <input id="whatsapp" type="tel" placeholder="Ex.: 351 912 345 678 (com indicativo)">
-      <label>WhatsApp para reservas <span class="op">(recebe os pedidos de reserva — pode ser o mesmo)</span></label>
-      <input id="whatsappReservas" type="tel" placeholder="Ex.: 351 912 345 678 (com indicativo)">
-      <label>Morada <span class="op">(opcional)</span></label>
-      <input id="morada" type="text" placeholder="Rua, número, localidade">
-      <label>Link do Google Maps <span class="op">(opcional — dá o pino exato no mapa do cardápio)</span></label>
-      <input id="mapLink" type="text" placeholder="Cola aqui o link do teu restaurante no Google Maps">
-    </div>
+    <!-- 2. RESTAURANTE -->
+    <section class="passo" data-p="2">
+      <div class="card">
+        <h2><span class="ic">🪪</span> O teu restaurante</h2>
+        <label>Nome do restaurante *</label>
+        <input id="nome" type="text" placeholder="Ex.: Restaurante Singular" maxlength="60">
+        <label>Frase curta <span class="op">(opcional — aparece por baixo do nome)</span></label>
+        <input id="subtitulo" type="text" placeholder="Ex.: Cozinha tradicional · Grelhados" maxlength="80">
+        <label>Tipo de cozinha <span class="op">(para o filtro da montra ÀMesa)</span></label>
+        <input id="tipo" type="text" placeholder="Ex.: Português, Marisqueira, Pizzaria…" maxlength="40">
+        <label>Endereço do menu <span class="op">(opcional)</span></label>
+        <div style="display:flex; align-items:center; gap:6px;"><span class="op" style="white-space:nowrap;">amesadigital.pt/</span><input id="slug" type="text" placeholder="singular" autocapitalize="off" autocorrect="off" maxlength="30"></div>
+        <div class="dica" id="slugEstado"></div>
+      </div>
+      <div class="card">
+        <h2><span class="ic">📸</span> Fotos do restaurante <span class="op">(opcional)</span></h2>
+        <p class="intro-passo">Uma foto para cada sítio. Fotos na horizontal ficam melhor.</p>
+        <div id="brandBox">
+          <div class="brand-row"><div class="t">Topo do menu<span>a foto grande no cabeçalho</span></div><img class="thumb" data-th="cabecalho" alt=""><label class="btn sec peq" style="margin:0;">＋ foto<input type="file" accept="image/*" data-brand="cabecalho" hidden></label></div>
+          <div class="brand-row"><div class="t">Ecrã de abertura<span>aparece ao abrir o menu</span></div><img class="thumb" data-th="abertura" alt=""><label class="btn sec peq" style="margin:0;">＋ foto<input type="file" accept="image/*" data-brand="abertura" hidden></label></div>
+          <div class="brand-row"><div class="t">Montra ÀMesa<span>o cartão em amesadigital.pt</span></div><img class="thumb" data-th="montra" alt=""><label class="btn sec peq" style="margin:0;">＋ foto<input type="file" accept="image/*" data-brand="montra" hidden></label></div>
+        </div>
+        <div class="dica" id="brandEstado"></div>
+      </div>
+      <div class="erro-txt" data-erro="2"></div>
+    </section>
 
-    <div class="card">
-      <h2><span class="ic">🍽️</span> Reservas e take away</h2>
-      <label>Capacidade para reservas <span class="op">(nº de lugares — opcional)</span></label>
-      <input id="capacidade" type="number" min="0" placeholder="Ex.: 40">
+    <!-- 3. CONTACTOS -->
+    <section class="passo" data-p="3">
+      <div class="card">
+        <h2><span class="ic">📞</span> Contactos</h2>
+        <label>Email do dono * <span class="op">(é com ele que entras na tua área de gestão)</span></label>
+        <input id="email" type="email" placeholder="dono@exemplo.com" autocapitalize="off" autocomplete="email">
+        <label>Telemóvel / WhatsApp * <span class="op">(com indicativo)</span></label>
+        <input id="whatsapp" type="tel" placeholder="Ex.: 351 912 345 678" autocomplete="tel">
+        <label>Morada <span class="op">(opcional)</span></label>
+        <input id="morada" type="text" placeholder="Rua, número, localidade">
+        <label>Link do Google Maps <span class="op">(opcional — põe o pino certo no mapa)</span></label>
+        <input id="mapLink" type="url" placeholder="Cola aqui o link do restaurante no Google Maps">
+        <label>Instagram <span class="op">(opcional)</span></label>
+        <input id="instagram" type="text" placeholder="@oteurestaurante" autocapitalize="off">
+        <label>Facebook <span class="op">(opcional)</span></label>
+        <input id="facebook" type="text" placeholder="Link ou nome da página" autocapitalize="off">
+      </div>
+      <div class="erro-txt" data-erro="3"></div>
+    </section>
 
-      <label class="fs-chip" style="display:inline-flex; margin-top:14px; cursor:pointer;"><input type="checkbox" id="fazTakeaway"> 🛍️ Faz take away (encomendas por WhatsApp)</label>
-      <div id="takeawayBox" style="display:none; margin-top:10px; border-top:1px solid #ece3d0; padding-top:10px;">
-        <label>Horário da cozinha — 1º período <span class="op">(ex.: almoço)</span></label>
+    <!-- 4. HORÁRIO -->
+    <section class="passo" data-p="4">
+      <div class="card">
+        <h2><span class="ic">🕒</span> Horário</h2>
+        <p class="intro-passo">Diz-nos quando estás aberto. É daqui que saem as horas das reservas e das encomendas. Desliga o turno que não houver, ou marca <b>Folga</b>.</p>
+        <button type="button" class="btn sec peq" id="copiarSeg">↧ Copiar o horário de segunda para os outros dias</button>
+        <div id="horario"></div>
+        <label style="margin-top:16px;">Férias <span class="op">(opcional — se já souberes)</span></label>
         <div style="display:flex; gap:8px; align-items:center;">
-          <input id="cozAbre1" type="time" value="12:00" style="flex:1;">
-          <span style="color:#9a8b6f; font-size:.9rem;">às</span>
-          <input id="cozFecha1" type="time" value="15:00" style="flex:1;">
+          <input id="feriasDe" type="date" style="flex:1;"><span class="op">a</span><input id="feriasA" type="date" style="flex:1;">
         </div>
-        <label>2º período <span class="op">(ex.: jantar — deixa vazio se não houver)</span></label>
-        <div style="display:flex; gap:8px; align-items:center;">
-          <input id="cozAbre2" type="time" value="19:00" style="flex:1;">
-          <span style="color:#9a8b6f; font-size:.9rem;">às</span>
-          <input id="cozFecha2" type="time" value="21:00" style="flex:1;">
+      </div>
+      <div class="erro-txt" data-erro="4"></div>
+    </section>
+
+    <!-- 5. SERVIÇOS -->
+    <section class="passo" data-p="5">
+      <div class="card">
+        <h2><span class="ic">🧩</span> O que queres no teu menu?</h2>
+        <p class="intro-passo">O menu digital está sempre incluído. Escolhe os extras — podes mudar mais tarde.</p>
+        <label class="serv" id="svReservasBox"><input type="checkbox" id="svReservas"><div><b>📅 Reservas de mesa</b><div class="d">Os clientes pedem mesa pelo menu; tu aceitas ou recusas na tua área de gestão.</div></div></label>
+        <div class="serv-extra">
+          <label style="margin-top:4px;">Quantos lugares tens? <span class="op">(opcional)</span></label>
+          <input id="capacidade" type="number" min="0" inputmode="numeric" placeholder="Ex.: 40">
+          <label>WhatsApp para reservas <span class="op">(se for diferente do principal)</span></label>
+          <input id="whatsappReservas" type="tel" placeholder="Ex.: 351 912 345 678">
         </div>
-        <label>Última encomenda <span class="op">(minutos antes do fecho)</span></label>
-        <input id="cozAntes" type="number" min="0" step="5" value="60" placeholder="60">
-      </div>
-    </div>
-
-    <div class="card">
-      <h2><span class="ic">ℹ️</span> Sobre o restaurante</h2>
-      <label>Tipo de cozinha <span class="op">(alimenta o filtro da montra)</span></label>
-      <input id="tipo" type="text" placeholder="Ex.: Português, Pizzaria, Marisqueira…">
-      <label>Horário de funcionamento <span class="op">(opcional)</span></label>
-      <textarea id="horario" placeholder="Ex.: Ter–Dom 12h–15h e 19h–23h • Segunda encerra"></textarea>
-      <label>Dia(s) de encerramento semanal <span class="op">(folga fixa)</span></label>
-      <div id="fechoSemBox" style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:4px;">
-        <label class="fs-chip"><input type="checkbox" id="fs1"> Seg</label>
-        <label class="fs-chip"><input type="checkbox" id="fs2"> Ter</label>
-        <label class="fs-chip"><input type="checkbox" id="fs3"> Qua</label>
-        <label class="fs-chip"><input type="checkbox" id="fs4"> Qui</label>
-        <label class="fs-chip"><input type="checkbox" id="fs5"> Sex</label>
-        <label class="fs-chip"><input type="checkbox" id="fs6"> Sáb</label>
-        <label class="fs-chip"><input type="checkbox" id="fs0"> Dom</label>
-      </div>
-      <label>Período de férias <span class="op">(opcional — se já souberes)</span></label>
-      <div style="display:flex; gap:8px; align-items:center;">
-        <input id="feriasDe" type="date" style="flex:1;">
-        <span style="color:#9a8b6f; font-size:.9rem;">a</span>
-        <input id="feriasA" type="date" style="flex:1;">
-      </div>
-      <label>Instagram <span class="op">(opcional)</span></label>
-      <input id="instagram" type="text" placeholder="@oteurestaurante ou link">
-      <label>Facebook <span class="op">(opcional)</span></label>
-      <input id="facebook" type="text" placeholder="Link ou nome da página">
-    </div>
-
-    <div class="card">
-      <h2><span class="ic">🎨</span> Visual <span class="op">(opcional)</span></h2>
-      <label>Cores / estilo que gostavas</label>
-      <input id="estilo" type="text" placeholder="Ex.: tons de vinho e dourado, ar elegante">
-      <label style="margin-top:12px;">Algo que queiras destacar / notas</label>
-      <textarea id="notas" placeholder="Ex.: temos menus de grupo, esplanada, pratos do dia…"></textarea>
-    </div>
-
-    <div class="card">
-      <h2><span class="ic">🎛️</span> Estilo e cores do cardápio</h2>
-      <div class="dica" style="margin-bottom:8px;">Escolhe o visual e afina as cores. Em baixo, num telemóvel, vês como fica o teu menu — o exemplo constrói-se com as tuas escolhas.</div>
-      <button type="button" class="btn sec" id="verEstilos" style="cursor:pointer; text-align:center;">👀 Ver e escolher o estilo</button>
-      <div id="estilosBox" style="display:none; margin-top:12px;">
-        <label style="margin-top:0;">Estilo base</label>
-        <div id="estilosBtns" style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:4px;"></div>
-
-        <div class="fone"><div class="fone-ecra" id="mockPrev">
-          <div class="fone-notch"></div>
-          <div id="mockHead" style="padding:30px 16px 16px; text-align:center;">
-            <div id="mockTitle" style="font-weight:800; font-size:1.25rem; line-height:1.15;">O teu restaurante</div>
-            <div id="mockSub" style="font-size:.82rem; opacity:.9; margin-top:3px;">o teu subtítulo</div>
-          </div>
-          <div id="mockTiles" style="display:grid; grid-template-columns:1fr 1fr; gap:8px; padding:0 12px 12px;"></div>
-          <div id="mockSecao" style="padding:0 12px 14px;"></div>
-          <div id="mockFoot" style="padding:12px 14px; text-align:center; font-size:.75rem;">a tua morada · contacto</div>
-        </div></div>
-
-        <div style="margin-top:12px; padding:12px 12px 8px; border:1.5px solid var(--linha); border-radius:14px; background:#fdfaf4;">
-          <div style="font-weight:800; color:var(--terra-esc); margin-bottom:2px;">🎨 Cores e Fundos</div>
-          <div class="dica" style="margin-bottom:8px;">Liga só o que quiseres mudar; o resto segue o estilo base.</div>
-          <label class="cor-row"><span><input type="checkbox" id="apBgMainOn"> Fundo principal</span><input type="color" id="apBgMain" value="#faf7f1"></label>
-          <label class="cor-row"><span><input type="checkbox" id="apTilesOn"> Fundo dos separadores</span><input type="color" id="apTiles" value="#ffffff"></label>
-          <label class="cor-row"><span><input type="checkbox" id="apTitOn"> Títulos</span><input type="color" id="apTit" value="#3a2c18"></label>
-          <label class="cor-row"><span><input type="checkbox" id="apSubOn"> Subtítulos</span><input type="color" id="apSub" value="#a8712f"></label>
-          <label class="cor-row"><span><input type="checkbox" id="apPratosOn"> Nome dos pratos</span><input type="color" id="apPratos" value="#3a2c18"></label>
-          <label class="cor-row"><span><input type="checkbox" id="apPrecoOn"> Preços</span><input type="color" id="apPreco" value="#a8712f"></label>
-          <label class="cor-row"><span><input type="checkbox" id="apMaisOn"> Cor do +</span><input type="color" id="apMais" value="#a8712f"></label>
-          <label class="cor-row"><span><input type="checkbox" id="apRodapeOn"> Rodapé</span><input type="color" id="apRodape" value="#f1e9db"></label>
+        <label class="serv" id="svTakeawayBox"><input type="checkbox" id="svTakeaway"><div><b>🛍️ Take-away</b><div class="d">O cliente monta a encomenda no menu e escolhe a hora de levantar. Usa o horário do passo anterior.</div></div></label>
+        <div class="serv-extra">
+          <label style="margin-top:4px;">Última encomenda <span class="op">(minutos antes de fechar)</span></label>
+          <input id="cozAntes" type="number" min="0" step="5" inputmode="numeric" value="30">
         </div>
-
-        <label style="margin-top:12px;">Estilo que mais gostaste <span class="op">(opcional)</span></label>
-        <input id="modeloPreferido" type="text" placeholder="Ex.: Revista">
-        <input id="modeloId" type="hidden">
+        <label class="serv" id="svOvoBox"><input type="checkbox" id="svOvo"><div><b>🥚 Jogo “No cu da galinha”</b><div class="d">Escondes um ovo no menu, os clientes procuram e o primeiro ganha um prémio teu. Ótimo para animar dias calmos.</div></div></label>
+        <div class="serv-extra"></div>
       </div>
-    </div>
+    </section>
 
-    <div class="card">
-      <h2><span class="ic">📸</span> Menu — fotos ou PDF</h2>
-      <div class="dica" style="margin-bottom:8px;">Fotografa <b>todas as secções do cardápio</b> (entradas, pratos, bebidas, sobremesas…) ou envia o <b>PDF</b>. Podes escolher vários de uma vez.</div>
-      <label class="btn sec" style="cursor:pointer; text-align:center;" for="fotosInput">＋ Adicionar fotos / PDF</label>
-      <input id="fotosInput" type="file" accept="image/*,application/pdf" multiple style="display:none;">
-      <div id="fotosEstado" class="dica" style="margin-top:8px;"></div>
-      <div id="fotosLista" style="display:flex; flex-wrap:wrap; gap:8px; margin-top:8px;"></div>
-    </div>
+    <!-- 6. MENU -->
+    <section class="passo" data-p="6">
+      <div class="card">
+        <h2><span class="ic">📋</span> O teu menu</h2>
+        <p class="intro-passo">Envia o <b>PDF</b> do menu ou <b>fotografa todas as páginas</b> (entradas, pratos, sobremesas, bebidas…). Nós passamos tudo para o menu digital.</p>
+        <label class="btn sec" style="text-align:center; cursor:pointer; margin:0;">＋ Adicionar fotos ou PDF<input id="fotosInput" type="file" accept="image/*,application/pdf" multiple hidden></label>
+        <div class="dica" style="margin-top:6px;">Até 20 ficheiros · fotos são reduzidas automaticamente · PDF até 10 MB.</div>
+        <div class="dica" id="fotosEstado"></div>
+        <div class="ficheiros" id="fotosLista"></div>
+        <label style="margin-top:16px;">Alguma coisa que queiras dizer-nos? <span class="op">(opcional)</span></label>
+        <textarea id="notas" placeholder="Ex.: temos menus de grupo, prato do dia todos os dias, esplanada…" maxlength="1500"></textarea>
+      </div>
+    </section>
 
+    <!-- 7. ENVIAR -->
+    <section class="passo" data-p="7">
+      <div class="card">
+        <h2><span class="ic">✅</span> Confirma e envia</h2>
+        <div class="resumo" id="resumo"></div>
+        <label class="chk" style="margin-top:14px; align-items:flex-start; font-weight:600; font-size:.86rem;"><input type="checkbox" id="aceito" style="margin-top:3px;"> Autorizo a ÀMesa a usar estes dados e fotos para criar o meu menu digital.</label>
+        <div class="erro-txt" data-erro="7"></div>
+      </div>
+    </section>
   </div>
-  <div class="barra-envio" id="barraEnvio"><button class="btn" id="btnConcluir">Concluir ✓</button></div>
 
-  <!-- RESULTADO -->
-  <div id="resultado">
-    <div class="okbox" style="text-align:center; padding:26px 18px;">
-      <div style="font-size:2.4rem; line-height:1;">✅</div>
+  <div id="resultado" class="hide">
+    <div class="okbox">
+      <div style="font-size:2.4rem; line-height:1;">🎉</div>
       <div style="font-family:'Poppins',sans-serif; font-weight:700; font-size:1.15rem; margin:8px 0 6px;">Registo enviado!</div>
-      Obrigado — o <b>ÀMesa</b> recebeu os teus dados e as fotos. Vamos preparar o teu restaurante e entramos em contacto. Já podes fechar esta página.
+      Obrigado — a <b>ÀMesa</b> recebeu os teus dados. Vamos preparar o teu menu com o estilo que escolheste e enviamos-te o acesso por email. Já podes fechar esta página.
+    </div>
+  </div>
+</div>
+
+<div class="nav" id="nav"><div class="nav-in">
+  <button class="btn sec" id="btnVoltar" type="button">← Voltar</button>
+  <button class="btn" id="btnSeguinte" type="button">Seguinte →</button>
+</div></div>
+
+<!-- Pré-visualização do exemplo -->
+<div class="modal" id="modal">
+  <div class="modal-in">
+    <div class="fone"><div class="fone-ecra"><div class="fone-load">A abrir o menu…</div><iframe id="foneFrame" title="Menu de exemplo"></iframe></div></div>
+    <div class="modal-bts">
+      <button class="btn sec" id="mFechar" type="button" style="flex:0 0 38%;">Fechar</button>
+      <button class="btn" id="mQuero" type="button">Quero este ✓</button>
     </div>
   </div>
 </div>
 
 <script>
+(function(){
   var SUPA_URL = 'https://zewiijcrkyxjkhudlplk.supabase.co';
   var SUPA_KEY = 'sb_publishable_6LP7x2v5c-c9DQkQslnUmA_g13SEjp3';
-  var fotosURLs = [];   // URLs das fotos/PDF do menu
-  var brand = {};       // { cabecalho, abertura, montra } — fotos da marca
+  var TOTAL = 7;
+  var NOMES = ['Estilo','Restaurante','Contactos','Horário','Serviços','Menu','Enviar'];
+  var MAX_FICHEIROS = 20, MAX_PDF = 10 * 1024 * 1024, MAX_ORIGINAL = 30 * 1024 * 1024;
+  var RASCUNHO = 'amesa_registo_v2';
+  var passo = 1;
+  var st = { exemplo:'', exemploNome:'', brand:{}, fotos:[], horario:null };
+  var exemplos = [];
 
-  var CAMPOS = [
-    ['nome','Nome do restaurante'], ['subtitulo','Subtítulo'], ['nomeQR','Nome no QR'], ['slug','Endereço curto'],
-    ['email','Email'], ['whatsapp','WhatsApp'], ['whatsappReservas','WhatsApp reservas'], ['morada','Morada'], ['mapLink','Link do mapa'], ['capacidade','Capacidade'],
-    ['tipo','Tipo de cozinha'], ['horario','Horário'], ['feriasDe','Férias de'], ['feriasA','Férias até'], ['instagram','Instagram'], ['facebook','Facebook'],
-    ['estilo','Cores/estilo'], ['notas','Notas'], ['modeloPreferido','Estilo preferido'], ['modeloId','Modelo (id interno)']
-  ];
-  function _b64e(str){ return btoa(unescape(encodeURIComponent(str))); }
-  function _b64d(b64){ return decodeURIComponent(escape(atob(b64))); }
-  function _get(id){ var e=document.getElementById(id); return e ? e.value.trim() : ''; }
-  function _esc(s){ return String(s||'').replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c];}); }
+  function $(id){ return document.getElementById(id); }
+  function val(id){ var e = $(id); return e ? String(e.value || '').trim() : ''; }
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]; }); }
+  function erro(p, t){ var e = document.querySelector('[data-erro="' + p + '"]'); if(e) e.textContent = t || ''; }
+  function limpaSlug(s){ return String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, ''); }
+  function api(path, opts){ opts = opts || {}; opts.headers = Object.assign({ apikey:SUPA_KEY, Authorization:'Bearer ' + SUPA_KEY }, opts.headers || {}); return fetch(SUPA_URL + path, opts); }
 
-  function recolher(){ var o={}; CAMPOS.forEach(function(c){ var v=_get(c[0]); if(v) o[c[0]]=v; }); var _fs=[]; [1,2,3,4,5,6,0].forEach(function(w){ var c=document.getElementById('fs'+w); if(c&&c.checked) _fs.push(w); }); if(_fs.length) o.fechoSemanal=_fs.join(','); var _ft=document.getElementById('fazTakeaway'); if(_ft&&_ft.checked){ o.fazTakeaway=true; o.cozAbre1=_get('cozAbre1'); o.cozFecha1=_get('cozFecha1'); o.cozAbre2=_get('cozAbre2'); o.cozFecha2=_get('cozFecha2'); o.cozAntes=_get('cozAntes'); } if(fotosURLs.length) o.fotos = fotosURLs.slice(); var b={}; ['cabecalho','abertura','montra'].forEach(function(k){ if(brand[k]) b[k]=brand[k]; }); if(Object.keys(b).length) o.brand = b;
-    // Cores e Fundos escolhidas (mapa igual ao config.aparencia do editor) — só as que o dono ligou
-    var ap={}; [['BgMain','bgMain'],['Tiles','subFundo'],['Tit','titulos'],['Sub','subtitulos'],['Pratos','pratos'],['Preco','precos'],['Mais','destaque'],['Rodape','rodape']].forEach(function(pr){ var on=document.getElementById('ap'+pr[0]+'On'), col=document.getElementById('ap'+pr[0]); if(on&&on.checked&&col) ap[pr[1]]=col.value; }); if(Object.keys(ap).length) o.aparencia=ap;
-    return o; }
-  (function(){ var ft=document.getElementById('fazTakeaway'); if(ft){ ft.addEventListener('change', function(){ var bx=document.getElementById('takeawayBox'); if(bx) bx.style.display = ft.checked ? 'block' : 'none'; }); } })();
-
-  // Pré-visualização em telemóvel — estilo base + Cores e Fundos; o menu-exemplo constrói-se com as escolhas.
-  (function(){
-    var g = function(id){ return document.getElementById(id); };
-    var MODELOS = [
-      {id:'elegante', nome:'Elegante', p:{ pageBg:'#faf7f1', headBg:'#faf7f1', headColor:'#3a2c18', subColor:'#a8712f', tileBg:'#ffffff', tileColor:'#3a2c18', tileBorder:'1px solid #e7dcc6', footBg:'#f1e9db', footColor:'#6b4a1f', preco:'#a8712f', radius:'12px', font:"Georgia,'Times New Roman',serif" }},
-      {id:'revista', nome:'Revista', p:{ pageBg:'#ffffff', headBg:'#151515', headColor:'#ffffff', subColor:'#c9a24a', tileBg:'#f3f3f3', tileColor:'#151515', tileBorder:'none', footBg:'#151515', footColor:'#f3f3f3', preco:'#c9a24a', radius:'6px', font:"'Poppins',sans-serif" }},
-      {id:'foodtruck', nome:'Food Truck', p:{ pageBg:'#fff8ea', headBg:'#e0662a', headColor:'#ffffff', subColor:'#a3451d', tileBg:'#fff3d9', tileColor:'#a3451d', tileBorder:'2px dashed #e0a04a', footBg:'#2e2a24', footColor:'#ffe8cf', preco:'#e0662a', radius:'14px', font:"'Poppins',sans-serif" }},
-      {id:'azulejo', nome:'Azulejo', p:{ pageBg:'#eef3fa', headBg:'#2a5aa8', headColor:'#ffffff', subColor:'#2a5aa8', tileBg:'#ffffff', tileColor:'#22417f', tileBorder:'1.5px solid #2a5aa8', footBg:'#dbe6f5', footColor:'#22417f', preco:'#2a5aa8', radius:'10px', font:"'Poppins',sans-serif" }},
-      {id:'caderno', nome:'Caderno', p:{ pageBg:'#fbf8f2', headBg:'#fbf8f2', headColor:'#3a2c18', subColor:'#8a6a2f', tileBg:'#fffdf7', tileColor:'#3a2c18', tileBorder:'1px dashed #cbb98f', footBg:'#f4ead2', footColor:'#6b4a1f', preco:'#8a6a2f', radius:'8px', font:"'Poppins',cursive" }},
-      {id:'ardosia', nome:'Ardósia', p:{ pageBg:'#2b322c', headBg:'#222a24', headColor:'#f2efe6', subColor:'#9ec3a8', tileBg:'#39423a', tileColor:'#f2efe6', tileBorder:'1px solid #55605a', footBg:'#222a24', footColor:'#cfe6d6', preco:'#9ec3a8', radius:'10px', font:"'Poppins',sans-serif" }},
-      {id:'neon', nome:'Néon', p:{ pageBg:'#05050c', headBg:'#05050c', headColor:'#ff4fd8', subColor:'#4fe0ff', tileBg:'#0e0e1c', tileColor:'#7cf7ff', tileBorder:'1.5px solid #a64bff', footBg:'#0e0e1c', footColor:'#ff4fd8', preco:'#4fe0ff', radius:'12px', font:"'Poppins',sans-serif" }},
-      {id:'praia', nome:'Praia', p:{ pageBg:'#f4efe1', headBg:'#23417f', headColor:'#ffffff', subColor:'#23417f', tileBg:'#ffffff', tileColor:'#23417f', tileBorder:'1.5px solid #90835f', footBg:'#e9dfc4', footColor:'#23417f', preco:'#23417f', radius:'14px', font:"'Poppins',sans-serif" }}
-    ];
-    var CATS = [ {e:'🥗',t:'Entradas'}, {e:'🍲',t:'Sopas & Saladas'}, {e:'🐟',t:'Peixe'}, {e:'🥩',t:'Carne'}, {e:'🍰',t:'Sobremesas'}, {e:'🍷',t:'Vinhos'} ];
-    var PRATOS = [ ['Posta à Mirandesa','Vazia grelhada, batata a murro','16,50'], ['Bife da vazia','Molho de pimenta, arroz de feijão','14,00'] ];
-    var ver = g('verEstilos'), box = g('estilosBox'), btns = g('estilosBtns'), pref = g('modeloPreferido');
-    var mock = g('mockPrev'), head = g('mockHead'), title = g('mockTitle'), sub = g('mockSub'), tiles = g('mockTiles'), secao = g('mockSecao'), foot = g('mockFoot');
-    if(!ver || !box || !btns || !mock) return;
-    var carregado = false, atual = MODELOS[0];
-    // cor efetiva: se o "Cores e Fundos" tiver o interruptor ligado, usa a cor escolhida; senão, a do estilo base
-    function eff(key, base){ var on = g('ap'+key+'On'), col = g('ap'+key); return (on && on.checked && col) ? col.value : base; }
-    function pinta(id){
-      Array.prototype.forEach.call(btns.children, function(b){
-        var on = b.dataset.id === id;
-        b.style.background = on ? 'var(--terra-esc,#7a5320)' : '#fff';
-        b.style.color = on ? '#fff' : 'var(--terra-esc,#7a5320)';
-        b.style.borderColor = on ? 'var(--terra-esc,#7a5320)' : 'var(--linha,#e5ddcf)';
-      });
+  // ---------- Progresso / navegação ----------
+  (function(){ var p = $('prog'); for(var i = 0; i < TOTAL; i++){ p.appendChild(document.createElement('i')); } })();
+  function mostra(n){
+    passo = Math.max(1, Math.min(TOTAL, n));
+    document.querySelectorAll('.passo').forEach(function(s){ s.classList.toggle('ativo', +s.dataset.p === passo); });
+    Array.prototype.forEach.call($('prog').children, function(b, i){ b.classList.toggle('on', i < passo); });
+    $('progTxt').textContent = 'Passo ' + passo + ' de ' + TOTAL + ' · ' + NOMES[passo - 1];
+    $('btnVoltar').style.display = passo === 1 ? 'none' : '';
+    $('btnSeguinte').textContent = passo === TOTAL ? 'Enviar registo ✓' : 'Seguinte →';
+    if(passo === TOTAL) resumo();
+    window.scrollTo({ top:0, behavior:'smooth' });
+    guardaRascunho();
+  }
+  function valida(p){
+    erro(p, '');
+    document.querySelectorAll('input.mal').forEach(function(e){ e.classList.remove('mal'); });
+    if(p === 1){ if(!st.exemplo && !$('naoSei').checked){ erro(1, 'Escolhe um estilo (carrega em "Quero este") ou marca "Ainda não sei".'); return false; } }
+    if(p === 2){ if(!val('nome')){ $('nome').classList.add('mal'); $('nome').focus(); erro(2, 'Falta o nome do restaurante.'); return false; } }
+    if(p === 3){
+      if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(val('email'))){ $('email').classList.add('mal'); $('email').focus(); erro(3, 'Escreve um email válido — é o teu acesso.'); return false; }
+      if(val('whatsapp').replace(/\D/g, '').length < 9){ $('whatsapp').classList.add('mal'); $('whatsapp').focus(); erro(3, 'Escreve o telemóvel/WhatsApp (pelo menos 9 algarismos).'); return false; }
     }
-    function render(){
-      var p = atual.p;
-      var pageBg = eff('BgMain', p.pageBg);
-      var tileBg = eff('Tiles', p.tileBg);
-      var titCor = eff('Tit', p.headColor);
-      var subCor = eff('Sub', p.subColor);
-      var pratoCor = eff('Pratos', p.tileColor);
-      var precoCor = eff('Preco', p.preco);
-      var maisCor = eff('Mais', p.preco);
-      var footBg = eff('Rodape', p.footBg);
-      mock.style.background = pageBg;
-      head.style.background = p.headBg;
-      title.style.color = p.headColor; title.style.fontFamily = p.font;
-      sub.style.color = p.subColor;
-      foot.style.background = footBg; foot.style.color = p.footColor;
-      // separadores (tiles)
-      tiles.innerHTML = CATS.map(function(c){
-        return '<div style="background:'+tileBg+'; color:'+pratoCor+'; border:'+p.tileBorder+'; border-radius:'+p.radius+'; padding:13px 6px; text-align:center; font-weight:700; font-size:.8rem; line-height:1.2;">'
-          + '<div style="font-size:1.35rem; margin-bottom:3px;">'+c.e+'</div>'+c.t+'</div>';
-      }).join('');
-      // secção aberta (exemplo) com pratos + preços + botão +
-      var linhas = PRATOS.map(function(d){
-        return '<div style="display:flex; align-items:center; gap:8px; padding:9px 0; border-top:1px solid rgba(0,0,0,.07);">'
-          + '<div style="flex:1;"><div style="font-weight:700; color:'+pratoCor+'; font-size:.9rem;">'+d[0]+'</div><div style="color:'+subCor+'; font-size:.75rem;">'+d[1]+'</div></div>'
-          + '<div style="font-weight:800; color:'+precoCor+'; font-size:.9rem; white-space:nowrap;">'+d[2]+' €</div>'
-          + '<div style="width:26px; height:26px; border-radius:50%; background:'+maisCor+'; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:1rem; flex:none;">+</div>'
-          + '</div>';
-      }).join('');
-      secao.innerHTML = '<div style="background:'+tileBg+'; border:'+p.tileBorder+'; border-radius:'+p.radius+'; padding:11px 12px 5px;">'
-        + '<div style="font-weight:800; color:'+titCor+'; font-family:'+p.font+'; font-size:1rem; margin-bottom:2px;">🥩 Carne</div>'
-        + '<div style="color:'+subCor+'; font-size:.74rem; margin-bottom:2px;">os nossos grelhados</div>'
-        + linhas + '</div>';
-      var hid = g('modeloId'); if(hid) hid.value = atual.id;
-      pinta(atual.id);
-    }
-    function aplica(m){
-      atual = m;
-      // atualiza os seletores de cor (só os que NÃO estão ligados) para partirem do estilo base
-      var map = [['BgMain','pageBg'],['Tiles','tileBg'],['Tit','headColor'],['Sub','subColor'],['Pratos','tileColor'],['Preco','preco'],['Mais','preco'],['Rodape','footBg']];
-      map.forEach(function(pair){ var on=g('ap'+pair[0]+'On'), col=g('ap'+pair[0]); if(col && (!on || !on.checked)) col.value = m.p[pair[1]]; });
-      if(pref && (!pref.value || pref.dataset.auto === '1')){ pref.value = m.nome; pref.dataset.auto = '1'; }
-      render();
-    }
-    function live(){
-      if(title) title.textContent = _get('nome') || 'O teu restaurante';
-      if(sub) sub.textContent = _get('subtitulo') || 'o teu subtítulo';
-      var mor = _get('morada'), wa = _get('whatsapp');
-      var f = (mor ? ('📍 ' + mor) : '') + ((mor && wa) ? '   ·   ' : '') + (wa ? ('☎ ' + wa) : '');
-      if(foot) foot.textContent = f || 'a tua morada · contacto';
-    }
-    ['nome','subtitulo','morada','whatsapp'].forEach(function(id){ var e = g(id); if(e) e.addEventListener('input', live); });
-    if(pref) pref.addEventListener('input', function(){ pref.dataset.auto = ''; });
-    // ligar os controlos de Cores e Fundos → re-desenha o telemóvel
-    ['BgMain','Tiles','Tit','Sub','Pratos','Preco','Mais','Rodape'].forEach(function(k){
-      var on=g('ap'+k+'On'), col=g('ap'+k);
-      if(on) on.addEventListener('change', render);
-      if(col) col.addEventListener('input', function(){ var o=g('ap'+k+'On'); if(o && !o.checked) o.checked=true; render(); });
-    });
-    ver.onclick = function(){
-      box.style.display = 'block'; ver.style.display = 'none';
-      if(!carregado){
-        carregado = true;
-        MODELOS.forEach(function(m){
-          var b = document.createElement('button');
-          b.type = 'button'; b.textContent = m.nome; b.dataset.id = m.id;
-          b.style.cssText = 'border:1.5px solid var(--linha,#e5ddcf); background:#fff; color:var(--terra-esc,#7a5320); border-radius:20px; padding:6px 12px; font-size:.85rem; cursor:pointer;';
-          b.onclick = function(){ aplica(m); };
-          btns.appendChild(b);
-        });
-        aplica(MODELOS[0]); live();
+    if(p === 4){
+      var h = lerHorario(), dias = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+      for(var wd = 0; wd < 7; wd++){ var d = h[wd]; if(d.folga) continue;
+        var ks = ['almoco','jantar'];
+        for(var k = 0; k < 2; k++){ var t = d[ks[k]]; if(t.on && (!t.de || !t.ate || t.ate <= t.de)){ erro(4, dias[wd] + ' (' + (ks[k] === 'almoco' ? 'almoço' : 'jantar') + '): a hora de fecho tem de ser depois da abertura.'); return false; } }
       }
-    };
+      if(val('feriasDe') && val('feriasA') && val('feriasA') < val('feriasDe')){ erro(4, 'As férias terminam antes de começar — confirma as datas.'); return false; }
+    }
+    if(p === 7){ if(!$('aceito').checked){ erro(7, 'Falta marcar a autorização.'); return false; } }
+    return true;
+  }
+  $('btnVoltar').onclick = function(){ mostra(passo - 1); };
+  $('btnSeguinte').onclick = function(){
+    if(!valida(passo)) return;
+    if(passo === TOTAL){ enviar(); return; }
+    mostra(passo + 1);
+  };
+
+  // ---------- 1. Exemplos (negócios marcados no painel como "exemplo") ----------
+  function pintaExemplos(){
+    document.querySelectorAll('.ex').forEach(function(c){ c.classList.toggle('sel', c.dataset.slug === st.exemplo); });
+  }
+  function escolhe(slug){
+    var e = exemplos.filter(function(x){ return x.slug === slug; })[0];
+    st.exemplo = slug; st.exemploNome = e ? (e.nome || slug) : slug;
+    $('naoSei').checked = false; erro(1, ''); pintaExemplos(); guardaRascunho();
+  }
+  var modalSlug = '';
+  function abreModal(slug){
+    modalSlug = slug;
+    var fr = $('foneFrame'); fr.src = 'cardapio.html?n=' + encodeURIComponent(slug);
+    $('modal').classList.add('on'); document.body.style.overflow = 'hidden';
+  }
+  function fechaModal(){ $('modal').classList.remove('on'); document.body.style.overflow = ''; $('foneFrame').src = 'about:blank'; }
+  $('mFechar').onclick = fechaModal;
+  $('modal').addEventListener('click', function(e){ if(e.target === this) fechaModal(); });
+  $('mQuero').onclick = function(){ escolhe(modalSlug); fechaModal(); };
+  $('naoSei').addEventListener('change', function(){ if(this.checked){ st.exemplo = ''; st.exemploNome = ''; pintaExemplos(); } guardaRascunho(); });
+
+  (async function carregaExemplos(){
+    var box = $('exs');
+    try{
+      var r = await api('/rest/v1/negocios?select=slug,nome,desc:config->>exemploDesc,tipo:config->>tipo,montra:config->>montraFoto,fotos:config->header->fotos&config->>exemplo=eq.true&ativo=eq.true&apagado_em=is.null&order=nome');
+      if(!r.ok) throw new Error(r.status);
+      exemplos = await r.json();
+    }catch(e){ exemplos = []; }
+    if(!exemplos.length){ box.innerHTML = '<div class="dica" style="grid-column:1/-1;">Os exemplos ainda não estão disponíveis. Marca “Ainda não sei” e segue — escolhemos contigo depois.</div>'; return; }
+    box.innerHTML = '';
+    exemplos.forEach(function(x){
+      var foto = x.montra || (Array.isArray(x.fotos) && x.fotos[0]) || '';
+      var c = document.createElement('div'); c.className = 'ex'; c.dataset.slug = x.slug;
+      c.innerHTML = '<div class="ex-foto"' + (foto ? (' style="background-image:url(\'' + esc(foto) + '\')"') : '') + '><span class="tick">✓</span></div>'
+        + '<div class="ex-corpo"><div class="ex-nome">' + esc(x.nome || x.slug) + '</div>'
+        + '<div class="ex-desc">' + esc(x.desc || x.tipo || '') + '</div>'
+        + '<div class="ex-bts"><button type="button" class="btn sec" data-ver>👀 Ver</button><button type="button" class="btn" data-quero>Quero este</button></div></div>';
+      c.querySelector('[data-ver]').onclick = function(){ abreModal(x.slug); };
+      c.querySelector('[data-quero]').onclick = function(){ escolhe(x.slug); };
+      box.appendChild(c);
+    });
+    if(st.exemplo && !exemplos.some(function(x){ return x.slug === st.exemplo; })){ st.exemplo = ''; st.exemploNome = ''; }
+    pintaExemplos();
   })();
 
-  // ---- Fotos da marca (cabeçalho / abertura / montra) ----
-  { var bb = document.getElementById('brandBox'), best = document.getElementById('brandEstado');
-    if(bb) bb.addEventListener('change', async function(e){
-      var inp = e.target; if(!inp || inp.tagName !== 'INPUT' || !inp.getAttribute('data-brand')) return;
-      var k = inp.getAttribute('data-brand'); var f = inp.files && inp.files[0]; inp.value = '';
-      if(!f) return;
-      var btn = document.getElementById('btnConcluir'); if(btn) btn.disabled = true;
-      if(best) best.textContent = 'A enviar foto (' + k + ')…';
-      try{ var u = await _uploadFicheiro(f); brand[k] = u; var th = bb.querySelector('.brand-thumb[data-th="' + k + '"]'); if(th){ th.src = u; th.style.display = ''; } if(best) best.textContent = ''; }
-      catch(err){ if(best) best.textContent = 'Erro ao enviar: ' + (err && err.message ? err.message : err); }
-      if(btn) btn.disabled = false;
-    });
+  // ---------- 2. Endereço disponível? ----------
+  var slugTimer = null;
+  function verSlug(){
+    var s = limpaSlug(val('slug') || val('nome')), est = $('slugEstado');
+    if(!s){ est.textContent = ''; return; }
+    if(!val('slug')){ est.textContent = 'Sugestão: amesadigital.pt/' + s; est.style.color = ''; }
+    api('/rest/v1/negocios?select=slug&slug=eq.' + encodeURIComponent(s)).then(function(r){ return r.ok ? r.json() : []; }).then(function(a){
+      if(a && a.length){ est.textContent = '“' + s + '” já está ocupado — escolhe outro (ou deixa e nós tratamos).'; est.style.color = 'var(--erro)'; }
+      else if(val('slug')){ est.textContent = '✓ amesadigital.pt/' + s + ' está livre'; est.style.color = 'var(--ok)'; }
+    }).catch(function(){});
   }
+  ['slug','nome'].forEach(function(id){ $(id).addEventListener('input', function(){ clearTimeout(slugTimer); slugTimer = setTimeout(verSlug, 500); }); });
 
-  // ---- Upload de fotos/PDF para o Supabase Storage (cofre 'registos', público) ----
-  function _comprimir(file){
+  // ---------- Uploads (cofre público 'registos') ----------
+  function comprimir(file){
     return new Promise(function(res){
-      if(!/^image\//.test(file.type)){ res({ blob:file, ext:(file.name.split('.').pop()||'bin').toLowerCase(), ctype:file.type||'application/octet-stream' }); return; }
-      var img = new Image(); var url = URL.createObjectURL(file);
+      if(!/^image\//.test(file.type)){ res({ blob:file, ext:(file.name.split('.').pop() || 'bin').toLowerCase(), ctype:file.type || 'application/octet-stream' }); return; }
+      var img = new Image(), url = URL.createObjectURL(file);
       img.onload = function(){
         var max = 1600, w = img.width, h = img.height;
-        if(w > max || h > max){ if(w >= h){ h = Math.round(h*max/w); w = max; } else { w = Math.round(w*max/h); h = max; } }
+        if(w > max || h > max){ if(w >= h){ h = Math.round(h * max / w); w = max; } else { w = Math.round(w * max / h); h = max; } }
         var cv = document.createElement('canvas'); cv.width = w; cv.height = h;
-        cv.getContext('2d').drawImage(img, 0, 0, w, h);
-        URL.revokeObjectURL(url);
-        cv.toBlob(function(b){ res({ blob:b || file, ext:'jpg', ctype:'image/jpeg' }); }, 'image/jpeg', 0.85);
+        cv.getContext('2d').drawImage(img, 0, 0, w, h); URL.revokeObjectURL(url);
+        cv.toBlob(function(b){ res({ blob:b || file, ext:'jpg', ctype:'image/jpeg' }); }, 'image/jpeg', 0.82);
       };
-      img.onerror = function(){ URL.revokeObjectURL(url); res({ blob:file, ext:(file.name.split('.').pop()||'jpg').toLowerCase(), ctype:file.type||'image/jpeg' }); };
+      img.onerror = function(){ URL.revokeObjectURL(url); res({ blob:file, ext:(file.name.split('.').pop() || 'jpg').toLowerCase(), ctype:file.type || 'image/jpeg' }); };
       img.src = url;
     });
   }
-  async function _uploadFicheiro(file){
-    var c = await _comprimir(file);
-    var ultimo = 0;
-    for(var tent = 0; tent < 3; tent++){
-      var path = 'registos/' + Date.now() + '-' + Math.random().toString(36).slice(2,7) + '.' + c.ext;
-      try{
-        var resp = await fetch(SUPA_URL + '/storage/v1/object/' + path, {
-          method:'POST',
-          headers:{ apikey:SUPA_KEY, Authorization:'Bearer ' + SUPA_KEY, 'Content-Type':c.ctype },
-          body: c.blob
-        });
-        if(resp.ok){ return SUPA_URL + '/storage/v1/object/public/' + path; }
-        ultimo = resp.status;
-      }catch(e){ ultimo = 'rede'; }
-      await new Promise(function(r){ setTimeout(r, 900); });   // espera e tenta de novo (propagação/rede)
-    }
-    throw new Error('Upload falhou (' + ultimo + ')');
+  function aceitavel(f){
+    var pdf = f.type === 'application/pdf' || /\.pdf$/i.test(f.name);
+    if(!pdf && !/^image\//.test(f.type)) return 'só fotos ou PDF';
+    if(pdf && f.size > MAX_PDF) return 'PDF maior que 10 MB';
+    if(!pdf && f.size > MAX_ORIGINAL) return 'foto demasiado grande';
+    return '';
   }
-  function _renderFotos(){
-    var box = document.getElementById('fotosLista'); if(!box) return; box.innerHTML = '';
-    fotosURLs.forEach(function(u, i){
-      var ehPdf = /\.pdf(\?|$)/i.test(u);
-      var el = document.createElement('div');
-      el.style.cssText = 'position:relative; width:64px; height:64px; border-radius:8px; overflow:hidden; border:1px solid var(--linha); background:#f3e8d8; display:flex; align-items:center; justify-content:center;';
-      el.innerHTML = ehPdf ? '<span style="font-size:.7rem; font-weight:800; color:#7a5320;">PDF</span>' : ('<img src="' + u + '" style="width:100%;height:100%;object-fit:cover;">');
-      var x = document.createElement('button'); x.type='button'; x.textContent='✕';
-      x.style.cssText = 'position:absolute; top:2px; right:2px; width:18px; height:18px; border:none; border-radius:50%; background:rgba(0,0,0,.55); color:#fff; font-size:.7rem; line-height:1; cursor:pointer;';
-      x.onclick = function(){ fotosURLs.splice(i,1); _renderFotos(); };
+  async function upload(file){
+    var c = await comprimir(file), ultimo = 0;
+    if(c.blob.size > MAX_PDF) throw new Error('ficheiro maior que 10 MB');
+    for(var t = 0; t < 3; t++){
+      var path = 'registos/' + Date.now() + '-' + Math.random().toString(36).slice(2, 7) + '.' + c.ext;
+      try{
+        var r = await api('/storage/v1/object/' + path, { method:'POST', headers:{ 'Content-Type':c.ctype, 'cache-control':'max-age=31536000' }, body:c.blob });
+        if(r.ok) return SUPA_URL + '/storage/v1/object/public/' + path;
+        ultimo = r.status; if(r.status === 413 || r.status === 415 || r.status === 400) break;
+      }catch(e){ ultimo = 'rede'; }
+      await new Promise(function(ok){ setTimeout(ok, 900); });
+    }
+    throw new Error('não foi possível enviar (' + ultimo + ')');
+  }
+  var aEnviar = 0;
+  function ocupado(d){ aEnviar += d; $('btnSeguinte').disabled = aEnviar > 0; }
+
+  // fotos da marca
+  $('brandBox').addEventListener('change', async function(e){
+    var inp = e.target; if(!inp || !inp.dataset.brand) return;
+    var k = inp.dataset.brand, f = inp.files && inp.files[0]; inp.value = ''; if(!f) return;
+    var est = $('brandEstado'), prob = aceitavel(f);
+    if(prob || !/^image\//.test(f.type)){ est.textContent = 'Essa não dá: ' + (prob || 'tem de ser uma foto'); return; }
+    ocupado(1); est.textContent = 'A enviar a foto…';
+    try{ st.brand[k] = await upload(f); pintaBrand(); est.textContent = ''; guardaRascunho(); }
+    catch(err){ est.textContent = 'Erro: ' + err.message + '. Tenta outra vez.'; }
+    ocupado(-1);
+  });
+  function pintaBrand(){ document.querySelectorAll('.thumb').forEach(function(t){ var u = st.brand[t.dataset.th]; if(u){ t.src = u; t.style.display = 'block'; } else { t.style.display = 'none'; } }); }
+
+  // fotos / PDF do menu
+  function pintaFotos(){
+    var box = $('fotosLista'); box.innerHTML = '';
+    st.fotos.forEach(function(u, i){
+      var el = document.createElement('div'); el.className = 'fic';
+      el.innerHTML = /\.pdf(\?|$)/i.test(u) ? '<b style="color:#7a5320; font-size:.8rem;">PDF</b>' : '<img src="' + esc(u) + '" alt="">';
+      var x = document.createElement('button'); x.type = 'button'; x.className = 'x'; x.textContent = '✕';
+      x.onclick = function(){ st.fotos.splice(i, 1); pintaFotos(); guardaRascunho(); };
       el.appendChild(x); box.appendChild(el);
     });
   }
-  { var fi = document.getElementById('fotosInput'), est = document.getElementById('fotosEstado');
-    if(fi) fi.addEventListener('change', async function(){
-      var files = Array.prototype.slice.call(fi.files || []); fi.value = '';
-      if(!files.length) return;
-      var btn = document.getElementById('btnConcluir'); if(btn) btn.disabled = true;
-      for(var i=0;i<files.length;i++){
-        est.textContent = 'A enviar ' + (i+1) + '/' + files.length + '…';
-        try{ var u = await _uploadFicheiro(files[i]); fotosURLs.push(u); _renderFotos(); }
-        catch(e){ est.textContent = 'Erro a enviar uma imagem: ' + (e && e.message ? e.message : e); }
-      }
-      est.textContent = fotosURLs.length + ' ficheiro(s) carregado(s) ✓';
-      if(btn) btn.disabled = false;
+  $('fotosInput').addEventListener('change', async function(){
+    var files = Array.prototype.slice.call(this.files || []); this.value = '';
+    var est = $('fotosEstado'); if(!files.length) return;
+    var livres = MAX_FICHEIROS - st.fotos.length;
+    if(livres <= 0){ est.textContent = 'Já tens ' + MAX_FICHEIROS + ' ficheiros — é o máximo.'; return; }
+    if(files.length > livres){ files = files.slice(0, livres); }
+    var falhas = [];
+    ocupado(1);
+    for(var i = 0; i < files.length; i++){
+      var prob = aceitavel(files[i]); if(prob){ falhas.push(files[i].name + ' (' + prob + ')'); continue; }
+      est.textContent = 'A enviar ' + (i + 1) + ' de ' + files.length + '…';
+      try{ st.fotos.push(await upload(files[i])); pintaFotos(); }
+      catch(e){ falhas.push(files[i].name + ' (' + e.message + ')'); }
+    }
+    ocupado(-1);
+    est.textContent = st.fotos.length + ' ficheiro(s) prontos ✓' + (falhas.length ? (' · não enviados: ' + falhas.join(', ')) : '');
+    guardaRascunho();
+  });
+
+  // ---------- 4. Horário semanal (o mesmo formato do Gestor: agenda.horario) ----------
+  var ORDEM = [1,2,3,4,5,6,0], NOME_DIA = { 0:'Domingo', 1:'Segunda', 2:'Terça', 3:'Quarta', 4:'Quinta', 5:'Sexta', 6:'Sábado' };
+  function horarioDef(){ var h = {}; for(var wd = 0; wd < 7; wd++){ h[wd] = { folga:false, almoco:{ on:true, de:'12:00', ate:'15:00' }, jantar:{ on:true, de:'19:00', ate:'22:00' } }; } return h; }
+  function pintaHorario(){
+    var h = st.horario || (st.horario = horarioDef()), box = $('horario'); box.innerHTML = '';
+    ORDEM.forEach(function(wd){
+      var d = h[wd], el = document.createElement('div'); el.className = 'dia' + (d.folga ? ' folga' : '');
+      function turno(k, rot){ var t = d[k]; return '<div class="turno' + (t.on ? '' : ' off') + '"><label class="chk"><input type="checkbox" data-k="' + k + '" data-f="on"' + (t.on ? ' checked' : '') + '> ' + rot + '</label>'
+        + '<input type="time" data-k="' + k + '" data-f="de" value="' + esc(t.de) + '"' + (t.on ? '' : ' disabled') + '><span class="op">às</span><input type="time" data-k="' + k + '" data-f="ate" value="' + esc(t.ate) + '"' + (t.on ? '' : ' disabled') + '></div>'; }
+      el.innerHTML = '<div class="dia-top"><span class="dia-nome">' + NOME_DIA[wd] + '</span><label class="chk"><input type="checkbox" data-f="folga"' + (d.folga ? ' checked' : '') + '> Folga</label></div>'
+        + (d.folga ? '<div class="dica" style="margin-top:4px;">Fechado todo o dia.</div>' : (turno('almoco', '🌤️ Almoço') + turno('jantar', '🌙 Jantar')));
+      el.addEventListener('change', function(e){
+        var i = e.target, f = i.dataset.f, k = i.dataset.k;
+        if(f === 'folga'){ d.folga = i.checked; pintaHorario(); }
+        else if(f === 'on'){ d[k].on = i.checked; pintaHorario(); }
+        else { d[k][f] = i.value; }
+        guardaRascunho();
+      });
+      box.appendChild(el);
     });
   }
-  document.getElementById('btnConcluir').onclick = async function(){
-    var o = recolher();
-    if(!o.nome){ alert('Escreve pelo menos o nome do restaurante.'); document.getElementById('nome').focus(); return; }
-    var btn = this; btn.disabled = true; var txt = btn.textContent; btn.textContent = 'A enviar…';
+  function lerHorario(){ return st.horario || horarioDef(); }
+  $('copiarSeg').onclick = function(){ var h = lerHorario(), s = JSON.stringify(h[1]); [2,3,4,5,6,0].forEach(function(wd){ h[wd] = JSON.parse(s); }); pintaHorario(); guardaRascunho(); };
+
+  // ---------- 5. Serviços ----------
+  ['svReservas','svTakeaway','svOvo'].forEach(function(id){ var c = $(id); c.addEventListener('change', function(){ $(id + 'Box').classList.toggle('on', c.checked); guardaRascunho(); }); });
+
+  // ---------- Recolher / rascunho ----------
+  var CAMPOS = ['nome','subtitulo','tipo','slug','email','whatsapp','morada','mapLink','instagram','facebook','feriasDe','feriasA','capacidade','whatsappReservas','cozAntes','notas'];
+  function recolher(){
+    var o = {};
+    CAMPOS.forEach(function(id){ var v = val(id); if(v) o[id] = v; });
+    if(o.slug) o.slug = limpaSlug(o.slug);
+    if(o.email) o.email = o.email.toLowerCase();
+    if(st.exemplo){ o.exemplo = st.exemplo; o.exemploNome = st.exemploNome; } else if($('naoSei').checked){ o.exemploNaoSei = true; }
+    if(Object.keys(st.brand).length) o.brand = Object.assign({}, st.brand);
+    if(st.fotos.length) o.fotos = st.fotos.slice();
+    o.horario = JSON.parse(JSON.stringify(lerHorario()));
+    o.servicos = { reservas:$('svReservas').checked, takeaway:$('svTakeaway').checked, ovo:$('svOvo').checked };
+    if(!o.servicos.takeaway) delete o.cozAntes;
+    if(!o.servicos.reservas){ delete o.capacidade; }
+    o.versao = 2;
+    return o;
+  }
+  function guardaRascunho(){ try{ localStorage.setItem(RASCUNHO, JSON.stringify({ p:passo, d:recolher(), st:st, naoSei:$('naoSei').checked })); }catch(e){} }
+  function repoeRascunho(){
     try{
-      var r = await fetch(SUPA_URL + '/rest/v1/registos', {
-        method:'POST',
-        headers:{ apikey:SUPA_KEY, Authorization:'Bearer ' + SUPA_KEY, 'Content-Type':'application/json', Prefer:'return=minimal' },
-        body: JSON.stringify({ dados: o })
-      });
+      var r = JSON.parse(localStorage.getItem(RASCUNHO) || 'null'); if(!r || !r.d) return 1;
+      CAMPOS.forEach(function(id){ if(r.d[id] != null && $(id)) $(id).value = r.d[id]; });
+      if(r.st){ st.exemplo = r.st.exemplo || ''; st.exemploNome = r.st.exemploNome || ''; st.brand = r.st.brand || {}; st.fotos = Array.isArray(r.st.fotos) ? r.st.fotos : []; st.horario = r.st.horario || null; }
+      $('naoSei').checked = !!r.naoSei;
+      var sv = r.d.servicos || {}; [['svReservas','reservas'],['svTakeaway','takeaway'],['svOvo','ovo']].forEach(function(p){ $(p[0]).checked = !!sv[p[1]]; $(p[0] + 'Box').classList.toggle('on', !!sv[p[1]]); });
+      pintaBrand(); pintaFotos();
+      return Math.max(1, Math.min(TOTAL, r.p || 1));
+    }catch(e){ return 1; }
+  }
+  document.querySelectorAll('#form input, #form textarea').forEach(function(i){ if(i.type !== 'file') i.addEventListener('change', guardaRascunho); });
+
+  // ---------- 7. Resumo e envio ----------
+  function resumo(){
+    var d = recolher(), L = [];
+    function l(k, v){ if(v) L.push('<div class="l"><div class="k">' + k + '</div><div class="v">' + v + '</div></div>'); }
+    l('Estilo', d.exemplo ? esc(d.exemploNome) : (d.exemploNaoSei ? 'Escolhemos contigo' : ''));
+    l('Restaurante', esc(d.nome) + (d.subtitulo ? ('<br><span class="op">' + esc(d.subtitulo) + '</span>') : ''));
+    l('Tipo', esc(d.tipo));
+    l('Endereço', d.slug ? ('amesadigital.pt/' + esc(d.slug)) : '');
+    l('Email', esc(d.email)); l('WhatsApp', esc(d.whatsapp)); l('Morada', esc(d.morada));
+    var dias = ORDEM.map(function(wd){ var x = d.horario[wd]; if(x.folga || (!x.almoco.on && !x.jantar.on)) return '<b>' + NOME_DIA[wd].slice(0,3) + '</b> folga';
+      var t = []; if(x.almoco.on) t.push(x.almoco.de + '–' + x.almoco.ate); if(x.jantar.on) t.push(x.jantar.de + '–' + x.jantar.ate); return '<b>' + NOME_DIA[wd].slice(0,3) + '</b> ' + t.join(' · '); });
+    l('Horário', dias.join('<br>'));
+    l('Férias', d.feriasDe ? (esc(d.feriasDe) + ' a ' + esc(d.feriasA || d.feriasDe)) : '');
+    var sv = []; if(d.servicos.reservas) sv.push('📅 Reservas'); if(d.servicos.takeaway) sv.push('🛍️ Take-away'); if(d.servicos.ovo) sv.push('🥚 Jogo do ovo');
+    l('Extras', sv.join(' · ') || 'Só o menu');
+    l('Fotos', (Object.keys(d.brand || {}).length) + ' do restaurante · ' + ((d.fotos || []).length) + ' do menu');
+    $('resumo').innerHTML = L.join('') + '<div class="dica" style="margin-top:8px;">Algo errado? Usa “← Voltar”.</div>';
+  }
+  async function enviar(){
+    var b = $('btnSeguinte'); b.disabled = true; var t = b.textContent; b.textContent = 'A enviar…';
+    try{
+      var r = await api('/rest/v1/registos', { method:'POST', headers:{ 'Content-Type':'application/json', Prefer:'return=minimal' }, body:JSON.stringify({ dados:recolher() }) });
       if(!r.ok) throw new Error(r.status);
-      document.getElementById('form').style.display = 'none';
-      { var _be = document.getElementById('barraEnvio'); if(_be) _be.style.display = 'none'; }
-      document.getElementById('resultado').style.display = 'block';
-      window.scrollTo(0,0);
+      try{ localStorage.removeItem(RASCUNHO); }catch(e){}
+      $('form').classList.add('hide'); $('nav').classList.add('hide'); $('resultado').classList.remove('hide');
+      document.querySelector('.topo p').textContent = '';
+      window.scrollTo(0, 0);
     }catch(e){
-      btn.disabled = false; btn.textContent = txt;
-      alert('Não foi possível enviar agora. Verifica a ligação à internet e tenta outra vez.');
+      b.disabled = false; b.textContent = t;
+      erro(7, 'Não foi possível enviar agora. Verifica a internet e tenta outra vez.');
     }
-  };
+  }
+
+  // arranque
+  var inicio = repoeRascunho();
+  pintaHorario();
+  mostra(inicio);
+})();
 </script>
 </body>
 </html>

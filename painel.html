@@ -513,6 +513,8 @@
         '<label style="margin-top:12px;">Email do dono</label><input type="email" data-email value="' + (n.dono_email || '') + '" placeholder="dono@exemplo.com">' +
         '<div class="linha-pub"><input type="checkbox" data-pub' + (pub.ativo ? ' checked' : '') + '> <label style="margin:0; color:var(--castanho); font-weight:600;">Mostrar publicidade neste negócio</label></div>' +
         '<div class="linha-pub" style="background:#fff6f0; border:1.5px solid #c05a3a; border-radius:9px; padding:9px 11px;"><input type="checkbox" data-oculto' + ((n.config && n.config.oculto === true) ? ' checked' : '') + '> <label style="margin:0; color:#a3452b; font-weight:700;">🙈 Esconder da ÀMesa (montra pública)</label></div>' +
+        '<div class="linha-pub" style="background:#fbf6e6; border:1.5px solid #c9a24a; border-radius:9px; padding:9px 11px; flex-wrap:wrap;"><input type="checkbox" data-exemplo' + ((n.config && n.config.exemplo === true) ? ' checked' : '') + '> <label style="margin:0; color:#7a5320; font-weight:700;">⭐ Usar como exemplo no formulário de registo</label>' +
+          '<input type="text" data-exdesc value="' + ((n.config && n.config.exemploDesc) || '').replace(/"/g, '&quot;') + '" placeholder="Frase curta que o cliente vê (ex.: Clássico e elegante, ideal para marisqueiras)" style="flex-basis:100%; margin-top:7px;"></div>' +
         '<label style="margin-top:12px;">Tipo de cozinha (filtro da ÀMesa)</label><input type="text" data-tipo value="' + ((n.config && n.config.tipo) || '').replace(/"/g, '&quot;') + '" placeholder="Ex.: Português, Pizzaria, Sushi, Pastelaria…">' +
         '<label style="margin-top:14px;">🔑 Secções do editor a que o dono tem acesso</label>' +
         '<div style="font-size:.76rem; color:#9a8b6f; margin:-2px 0 6px;">Desliga as que não queres que o dono mexa. Os anúncios (Publicidade no menu/nos jogos) e a Limpeza de fotos são sempre só teus.</div>' +
@@ -553,6 +555,9 @@
       });
     }
 
+    // marcar como exemplo → sugere esconder da montra (é um restaurante de demonstração)
+    { const _ex = div.querySelector('[data-exemplo]'), _oc = div.querySelector('[data-oculto]');
+      if(_ex && _oc) _ex.addEventListener('change', function(){ if(_ex.checked) _oc.checked = true; }); }
     div.querySelector('[data-act="editar"]').onclick = function(){ div.querySelector('[data-corpo]').classList.toggle('hide'); };
     div.querySelector('[data-act="qr"]').onclick = function(){ abrirQR(n); };
     div.querySelector('[data-act="ativo"]').onclick = function(){ toggleAtivo(n); };
@@ -629,8 +634,12 @@
       card.innerHTML =
         '<div style="display:flex; justify-content:space-between; align-items:baseline; gap:8px; flex-wrap:wrap;"><div style="font-weight:800; color:var(--castanho);">' + (d.nome ? _escP(d.nome) : '(sem nome)') + '</div><div style="font-size:.75rem; color:#9a8b6f;">' + quando + '</div></div>' +
         '<div style="font-size:.8rem; color:#8a7a63; margin-top:3px;">' + (d.email ? ('✉ ' + _escP(d.email) + '  ') : '') + (d.whatsapp ? ('📞 ' + _escP(d.whatsapp) + '  ') : '') + (d.tipo ? ('🍽 ' + _escP(d.tipo) + '  ') : '') + '📷 ' + nFotos + ' menu · ' + nBrand + ' marca</div>' +
-        '<div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:8px;"><button class="mini" data-a="copiar">📋 Copiar para o Claude</button><button class="mini" data-a="tratado">✓ Marcar tratado</button><button class="mini perigo" data-a="apagar">🗑</button></div>' +
+        '<div style="font-size:.8rem; color:#7a5320; margin-top:3px;">' + (d.exemplo ? ('⭐ Estilo escolhido: <b>' + _escP(d.exemploNome || d.exemplo) + '</b>') : '⭐ Sem estilo escolhido') +
+          (d.servicos ? (' · ' + [d.servicos.reservas ? '📅 reservas' : '', d.servicos.takeaway ? '🛍️ take-away' : '', d.servicos.ovo ? '🥚 jogo do ovo' : ''].filter(Boolean).join(' · ')) : '') + '</div>' +
+        (d.notas ? ('<div style="font-size:.78rem; color:#8a7a63; margin-top:3px; white-space:pre-wrap;">📝 ' + _escP(d.notas) + '</div>') : '') +
+        '<div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:8px;"><button class="mini" data-a="criar" style="background:#7a5320; color:#fff; border-color:#7a5320;">✨ Criar negócio a partir do exemplo</button><button class="mini" data-a="copiar">📋 Copiar para o Claude</button><button class="mini" data-a="tratado">✓ Marcar tratado</button><button class="mini perigo" data-a="apagar">🗑</button></div>' +
         '<div data-rmsg style="font-size:.78rem; color:#3a7d44; margin-top:6px;"></div>';
+      card.querySelector('[data-a="criar"]').onclick = function(e){ criarDeRegisto(r, card, e.currentTarget); };
       card.querySelector('[data-a="copiar"]').onclick = async function(){
         const payload = 'REGISTO ÀMesa — prepara o ficheiro do negócio a partir destes dados:\n' + JSON.stringify(d, null, 2);
         try{ await navigator.clipboard.writeText(payload); const m=card.querySelector('[data-rmsg]'); if(m) m.textContent='Copiado ✓ — cola no chat do Claude.'; }
@@ -641,6 +650,86 @@
       box.appendChild(card);
     });
   }
+  // ===== Criar um negócio a partir de um registo: copia o ASPETO do exemplo escolhido + os dados do cliente =====
+  async function criarDeRegisto(r, card, btn){
+    const d = r.dados || {};
+    const out = card.querySelector('[data-rmsg]');
+    const diz = function(t, erro){ if(out){ out.textContent = t; out.style.color = erro ? '#b3402f' : '#3a7d44'; } };
+    // 1) exemplo escolhido (registos antigos não têm → pergunta)
+    let origem = (d.exemplo || '').trim();
+    if(!origem){
+      const { data:exs } = await sb.from('negocios').select('slug,nome,config').is('apagado_em', null);
+      const lista = (exs || []).filter(function(n){ return n.config && n.config.exemplo === true; }).map(function(n){ return n.slug; });
+      origem = await window.__amPrompt('Que exemplo usar?', { texto:'Este registo não tem estilo escolhido. Escreve o slug do negócio a copiar' + (lista.length ? (' (exemplos: ' + lista.join(', ') + ')') : '') + '.', valor: lista[0] || '' });
+      origem = (origem || '').trim().toLowerCase(); if(!origem) return;
+    }
+    const { data:orig, error:eO } = await sb.from('negocios').select('id,nome,config,menu').eq('slug', origem).maybeSingle();
+    if(eO || !orig){ diz('Não encontrei o exemplo "' + origem + '".', true); return; }
+    // 2) slug do novo negócio
+    const limpa = function(s){ return String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, ''); };
+    let slug = limpa(d.slug) || limpa(d.nome);
+    slug = limpa(await window.__amPrompt('Endereço do novo menu', { texto:'amesadigital.pt/… (só letras e números)', valor: slug }));
+    if(!slug) return;
+    const { data:existe } = await sb.from('negocios').select('id').eq('slug', slug).maybeSingle();
+    if(existe){ diz('Já existe um negócio com o endereço "' + slug + '" — escolhe outro.', true); return; }
+    const copiarMenu = await window.__amConfirm('Menu', { texto:'Copiar também os pratos do exemplo "' + (orig.nome || origem) + '"?\n\n• "Copiar" — fica com as secções e pratos de demonstração para substituíres.\n• "Vazio" — começa sem pratos (importas depois o menu do cliente).', ok:'Copiar', cancelar:'Vazio' });
+    const nome = (d.nome || '').trim() || slug;
+    btn.disabled = true; diz('A criar…');
+    try{
+      // 3) aspeto do exemplo, sem o que é "do exemplo" (promoções, prato do dia, cópias, marca de exemplo)
+      let config = JSON.parse(JSON.stringify(orig.config || {}));
+      ['exemplo','exemploDesc','promocoes','promocoesV','promo','promoDias','promoDatas','pratoDatas','pratoFixo','pratoDia','__undo','__bkp','montraFoto'].forEach(function(k){ delete config[k]; });
+      let menu = copiarMenu ? JSON.parse(JSON.stringify(orig.menu || {})) : { restaurante:'', categorias:[] };
+      if(menu && typeof menu === 'object') menu.restaurante = nome;
+      // 4) dados do cliente
+      config.oculto = true;   // nasce escondido; publicas depois de rever
+      config.header = Object.assign({}, config.header || {}, { titulo: nome });
+      if(d.subtitulo) config.header.subtitulo = d.subtitulo;
+      const b = d.brand || {};
+      if(b.cabecalho){ config.header.fotos = [b.cabecalho]; config.header.fotosAtivas = true; }
+      config.intro = Object.assign({}, config.intro || {});
+      if(config.intro.titulo) config.intro.titulo = nome;
+      if(config.intro.subtitulo && d.subtitulo) config.intro.subtitulo = d.subtitulo;
+      if(b.abertura) config.intro.foto = b.abertura;
+      if(b.montra) config.montraFoto = b.montra;
+      if(d.tipo) config.tipo = d.tipo;
+      config.footer = Object.assign({}, config.footer || {}, { nome: nome, morada: d.morada || '', telefone: d.whatsapp || '' });
+      config.local = Object.assign({}, config.local || {}); delete config.local.lat; delete config.local.lng;
+      config.local.morada = d.morada || ''; config.local.link = d.mapLink || '';
+      { const ig = (d.instagram || '').trim(), fb = (d.facebook || '').trim();
+        config.redes = Object.assign({}, config.redes || {}, {
+          instagram: !ig ? '' : (/^https?:/i.test(ig) ? ig : ('https://instagram.com/' + ig.replace(/^@/, ''))),
+          facebook:  !fb ? '' : (/^https?:/i.test(fb) ? fb : ('https://facebook.com/' + fb.replace(/^@/, ''))),
+          whatsapp:  d.whatsapp || '' }); }
+      const sv = d.servicos || {};
+      const ag = Object.assign({}, config.agenda || {});
+      if(d.horario && typeof d.horario === 'object'){
+        ag.horario = d.horario;
+        // os campos antigos (do exemplo) contradiziam o horário novo: saem; o Gestor volta a gerá-los quando o dono guardar
+        ['dias','diasFecho','horarios','horariosDia','turnos','turnosHoras'].forEach(function(k){ delete ag[k]; });
+      }
+      ag.ativo = !!sv.reservas;
+      ag.whatsapp = (d.whatsappReservas || d.whatsapp || '').trim();
+      if(d.capacidade) ag.capacidade = parseInt(d.capacidade, 10) || 0;
+      if(d.cozAntes != null && d.cozAntes !== '') ag.encAntes = parseInt(d.cozAntes, 10) || 0;
+      ag.fechos = (d.feriasDe ? [{ de:d.feriasDe, a:(d.feriasA || d.feriasDe) }] : []);
+      config.agenda = ag;
+      config.modos = Object.assign({}, config.modos || {}); config.modos.takeaway = !!sv.takeaway;
+      // 5) fotos do cofre 'registos' → imagens/<slug>/
+      try{ diz('A copiar as fotos…'); const mig = await _migrarFotosRegistos(slug, { config:config, menu:menu }); config = mig.config; menu = mig.menu; }
+      catch(eMig){ diz('⚠ Fotos não copiadas (' + (eMig.message || eMig) + ') — usa "📦 Migrar fotos" no negócio depois.', true); }
+      const { data:neg, error } = await sb.from('negocios').insert({ nome:nome, slug:slug, dono_email:(d.email || '').trim().toLowerCase() || null, config:config, menu:menu }).select().single();
+      if(error) throw error;
+      // permissões: como o exemplo (ou tudo ligado)
+      const { data:entO } = await sb.from('entitlements').select('plano,funcoes,publicidade').eq('negocio_id', orig.id).maybeSingle();
+      await sb.from('entitlements').insert({ negocio_id:neg.id, plano:(entO && entO.plano) || 'pro', funcoes:(entO && entO.funcoes) ? entO.funcoes : Object.assign({}, FUNCOES_TODAS), publicidade:(entO && entO.publicidade) ? entO.publicidade : { ativo:true } });
+      diz('✓ "' + nome + '" criado (escondido da montra). Fotos do menu do cliente: ' + ((d.fotos || []).length) + ' — importa o menu no editor e depois marca este registo como tratado.');
+      await carregar();
+      try{ if(window.__abrirNeg) window.__abrirNeg(slug); }catch(e){}
+    }catch(e){ diz('Erro: ' + (e && e.message ? e.message : e), true); }
+    btn.disabled = false;
+  }
+
   // Copia as fotos do cofre temporário 'registos' para o bucket definitivo 'imagens/<slug>/'
   // e reescreve os URLs no objeto. Assim o negócio fica auto-contido e limpar o cofre não parte nada.
   async function _migrarFotosRegistos(slug, obj){
@@ -666,7 +755,7 @@
       const nome = slug + '/reg-' + Date.now() + '-' + i + '.' + ext;
       const up = await fetch(SUPABASE_URL + '/storage/v1/object/imagens/' + nome, {
         method:'POST',
-        headers:{ 'Authorization':'Bearer ' + session.access_token, 'apikey': SUPABASE_KEY, 'Content-Type': ct, 'x-upsert':'true' },
+        headers:{ 'Authorization':'Bearer ' + session.access_token, 'apikey': SUPABASE_KEY, 'Content-Type': ct, 'x-upsert':'true', 'cache-control':'max-age=31536000' },
         body: blob
       });
       if(!up.ok){ let t=''; try{ t = await up.text(); }catch(e){} throw new Error('upload ' + up.status + ' ' + t.slice(0,80)); }
@@ -756,6 +845,10 @@
       _cfg = Object.assign({}, _cfg);
       _cfg.oculto = !!(_ocEl && _ocEl.checked);
       _cfg.tipo = (_tpEl ? _tpEl.value : '').trim();
+      // Exemplo do formulário de registo
+      { const _exEl = div.querySelector('[data-exemplo]'), _exD = div.querySelector('[data-exdesc]');
+        if(_exEl && _exEl.checked){ _cfg.exemplo = true; } else { delete _cfg.exemplo; }
+        const _dsc = (_exD ? _exD.value : '').trim(); if(_dsc) _cfg.exemploDesc = _dsc.slice(0, 140); else delete _cfg.exemploDesc; }
       // Secções do editor desligadas para o dono (guarda as NÃO marcadas)
       { const off = []; div.querySelectorAll('[data-sec]').forEach(function(c){ if(!c.checked) off.push(c.getAttribute('data-sec')); }); _cfg.editorOff = off; }
       _upNeg.config = _cfg;
@@ -770,11 +863,11 @@
     const box = div.querySelector('[data-msg]');
     const email = ((div.querySelector('[data-email]') || {}).value || n.dono_email || '').trim().toLowerCase();
     if(!email){ msg(box, 'Este negócio ainda não tem email de dono. Preenche o email e carrega em Guardar primeiro.', 'erro'); return; }
-    const redir = QR_BASE + 'editar.html?n=' + n.slug;
+    const redir = QR_BASE + 'calendario.html?n=' + n.slug;   // os donos só usam o Gestor
     msg(box, 'A enviar link de acesso…', 'ok');
     const { error } = await sb.auth.signInWithOtp({ email: email, options: { emailRedirectTo: redir, shouldCreateUser: true, data: { negocio: n.slug, negocio_nome: n.nome } } });
     if(error){ msg(box, 'Erro: ' + error.message, 'erro'); }
-    else { msg(box, 'Link de acesso enviado para ' + email + ' ✓ — ele clica no email e entra direto no editor.', 'ok'); }
+    else { msg(box, 'Link de acesso enviado para ' + email + ' ✓ — ele clica no email e entra direto na Gestão do negócio.', 'ok'); }
   }
 
   async function toggleAtivo(n){
@@ -933,7 +1026,7 @@
     if(!session || !session.access_token){ throw new Error('A tua sessão expirou. Sai e volta a entrar.'); }
     const resp = await fetch(SUPABASE_URL + '/storage/v1/object/imagens/' + nome, {
       method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + session.access_token, 'apikey': SUPABASE_KEY, 'Content-Type': 'image/' + (dados.ext === 'jpg' ? 'jpeg' : dados.ext), 'x-upsert': 'true' },
+      headers: { 'Authorization': 'Bearer ' + session.access_token, 'apikey': SUPABASE_KEY, 'Content-Type': 'image/' + (dados.ext === 'jpg' ? 'jpeg' : dados.ext), 'x-upsert': 'true', 'cache-control': 'max-age=31536000' },
       body: arr
     });
     if(!resp.ok){
