@@ -1719,7 +1719,7 @@ window.__carregarErros = async function(){
       +   '<div id="ovPatBox" style="' + (p.pat_on ? '' : 'display:none;') + '">'
       +     lbl('Marca') + '<select id="ovPatSel" style="width:100%;padding:10px;border:1.5px solid var(--linha);border-radius:9px;font-family:inherit;"><option value="">＋ Nova marca</option>' + (PATS || []).map(function(m){ return '<option value="' + m.id + '"' + (m.id === p.patrocinador_id ? ' selected' : '') + '>' + esc(m.nome) + (m.ativo ? '' : ' (desativada)') + '</option>'; }).join('') + '</select>'
       +     lbl('Nome da marca') + '<input id="ovPatNome" value="' + esc(p.pat_nome) + '" placeholder="Ex.: Marca X">'
-      +     lbl('Logótipo') + '<div style="display:flex;gap:10px;align-items:center;">' + (p.pat_logo ? '<img src="' + esc(p.pat_logo) + '" style="width:56px;height:56px;object-fit:contain;border:1px solid var(--linha);border-radius:8px;background:#fff;">' : '') + '<label class="mini" style="cursor:pointer;">📷 ' + (p.pat_logo ? 'Trocar logótipo' : 'Escolher logótipo') + '<input type="file" id="ovPatLogo" accept="image/*" style="display:none;"></label><span id="ovPatLogoEst" style="font-size:.8rem;color:#8a7a5c;"></span></div>'
+      +     lbl('Imagem do patrocinador <span style="font-weight:400;color:#8a7a5c;">(foto ou PDF — ocupa a caixa toda no aviso do jogo e aparece 3 s no fim)</span>') + '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">' + (p.pat_logo ? '<img src="' + esc(p.pat_logo) + '" style="width:120px;max-height:90px;object-fit:contain;border:1px solid var(--linha);border-radius:8px;background:#fff;">' : '') + '<label class="mini" style="cursor:pointer;">📷 ' + (p.pat_logo ? 'Trocar imagem' : 'Escolher foto ou PDF') + '<input type="file" id="ovPatLogo" accept="image/*,application/pdf" style="display:none;"></label><span id="ovPatLogoEst" style="font-size:.8rem;color:#8a7a5c;"></span></div>'
       +     lbl('Link <span style="font-weight:400;color:#8a7a5c;">(opcional — ao tocar no patrocinador)</span>') + '<input id="ovPatLink" value="' + esc(p.pat_link) + '" placeholder="https://…">'
       +     lbl('Mensagem desta sessão') + '<input id="ovPatMsg" value="' + esc(p.patrocinio_msg) + '" placeholder="Ex.: Boa sorte a todos!" maxlength="120">'
       +   '</div>'
@@ -1748,11 +1748,37 @@ window.__carregarErros = async function(){
     p.pat_on = $('ovPatOn').checked; p.patrocinador_id = $('ovPatSel').value; p.pat_nome = $('ovPatNome').value.trim(); p.pat_link = $('ovPatLink').value.trim(); p.patrocinio_msg = $('ovPatMsg').value.trim();
   }
   // logótipo → imagens/amesa/patrocinadores/ (o mesmo armazenamento e as mesmas regras dos anúncios da ÀMesa)
+  // PDF → imagem da 1.ª página (pdf.js, carregado só quando é preciso)
+  function _carregarPdfJs(){
+    return new Promise(function(res, rej){
+      if(window.pdfjsLib) return res(window.pdfjsLib);
+      var sc = document.createElement('script'); sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+      sc.onload = function(){ try{ window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'; res(window.pdfjsLib); }catch(e){ rej(e); } };
+      sc.onerror = function(){ rej(new Error('não consegui abrir o leitor de PDF')); };
+      document.head.appendChild(sc);
+    });
+  }
+  async function _pdfParaPng(file){
+    var lib = await _carregarPdfJs();
+    var pdf = await lib.getDocument({ data: await file.arrayBuffer() }).promise;
+    var pg = await pdf.getPage(1), vp0 = pg.getViewport({ scale:1 }), esc_ = Math.min(3, 1400 / Math.max(vp0.width, vp0.height)), vp = pg.getViewport({ scale:esc_ });
+    var cv = document.createElement('canvas'); cv.width = Math.round(vp.width); cv.height = Math.round(vp.height);
+    var ctx = cv.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cv.width, cv.height);
+    await pg.render({ canvasContext:ctx, viewport:vp }).promise;
+    return await new Promise(function(r){ cv.toBlob(function(b){ r(b); }, 'image/jpeg', 0.88); });
+  }
+  // imagem do patrocinador → imagens/amesa/patrocinadores/ (o mesmo armazenamento e as mesmas regras dos anúncios da ÀMesa)
   async function enviarLogo(file){
-    if(!/^image\//.test(file.type)) throw new Error('escolhe uma imagem');
-    var blob = await new Promise(function(res){ var img = new Image(), u = URL.createObjectURL(file); img.onload = function(){ var max = 600, w = img.width, h = img.height; if(w > max || h > max){ if(w >= h){ h = Math.round(h * max / w); w = max; } else { w = Math.round(w * max / h); h = max; } } var cv = document.createElement('canvas'); cv.width = w; cv.height = h; cv.getContext('2d').drawImage(img, 0, 0, w, h); URL.revokeObjectURL(u); cv.toBlob(function(b){ res(b || file); }, 'image/png'); }; img.onerror = function(){ URL.revokeObjectURL(u); res(file); }; img.src = u; });
-    var nome = 'amesa/patrocinadores/' + Date.now() + '-' + Math.random().toString(36).slice(2, 7) + '.png';
-    var up = await sb.storage.from('imagens').upload(nome, blob, { upsert:true, contentType:'image/png', cacheControl:'31536000' });
+    var pdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name), blob, tipo, ext;
+    if(pdf){ blob = await _pdfParaPng(file); tipo = 'image/jpeg'; ext = 'jpg'; }
+    else {
+      if(!/^image\//.test(file.type)) throw new Error('escolhe uma foto ou um PDF');
+      var png = /png|gif|webp/i.test(file.type);   // mantém transparência
+      blob = await new Promise(function(res){ var img = new Image(), u = URL.createObjectURL(file); img.onload = function(){ var max = 1400, w = img.width, h = img.height; if(w > max || h > max){ if(w >= h){ h = Math.round(h * max / w); w = max; } else { w = Math.round(w * max / h); h = max; } } var cv = document.createElement('canvas'); cv.width = w; cv.height = h; var c2 = cv.getContext('2d'); if(!png){ c2.fillStyle = '#fff'; c2.fillRect(0, 0, w, h); } c2.drawImage(img, 0, 0, w, h); URL.revokeObjectURL(u); cv.toBlob(function(b){ res(b || file); }, png ? 'image/png' : 'image/jpeg', 0.88); }; img.onerror = function(){ URL.revokeObjectURL(u); res(file); }; img.src = u; });
+      tipo = png ? 'image/png' : 'image/jpeg'; ext = png ? 'png' : 'jpg';
+    }
+    var nome = 'amesa/patrocinadores/' + Date.now() + '-' + Math.random().toString(36).slice(2, 7) + '.' + ext;
+    var up = await sb.storage.from('imagens').upload(nome, blob, { upsert:true, contentType:tipo, cacheControl:'31536000' });
     if(up.error) throw up.error;
     return SUPABASE_URL + '/storage/v1/object/public/imagens/' + nome;
   }
