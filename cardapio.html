@@ -9810,7 +9810,7 @@
 })();
 </script>
 
-<!-- ===== NO CU DA GALINHA · alvos escondíveis + MODO ESCONDERIJO (?modo=esconderijo, usado pela Gestão) ===== -->
+<!-- ===== NO CU DA GALINHA · alvos escondíveis + MODO ESCONDERIJO (?modo=esconderijo, usado pelo Painel ÀMesa) ===== -->
 <style>
   [data-alvo].ovo-escolhido{ outline:3px solid #f2b705 !important; outline-offset:3px; box-shadow:0 0 0 6px rgba(242,183,5,.25), 0 0 22px rgba(242,183,5,.6) !important; animation:ovoPulse 1s ease-in-out infinite; position:relative; z-index:5; }
   @keyframes ovoPulse{ 0%,100%{ box-shadow:0 0 0 6px rgba(242,183,5,.25), 0 0 22px rgba(242,183,5,.6); } 50%{ box-shadow:0 0 0 10px rgba(242,183,5,.05), 0 0 34px rgba(242,183,5,.9); } }
@@ -9996,6 +9996,13 @@
   #ovoFlut small{ font-weight:700; color:#8a7a5c; font-size:.72rem; }
   #ovoToast{ position:fixed; left:50%; bottom:calc(150px + var(--sa-bottom, env(safe-area-inset-bottom))); transform:translateX(-50%); z-index:9100; background:rgba(58,44,24,.92); color:#fff; padding:10px 16px; border-radius:999px; font-weight:800; font-size:.9rem; opacity:0; transition:opacity .25s; pointer-events:none; white-space:nowrap; max-width:92vw; text-overflow:ellipsis; overflow:hidden; }
   #ovoToast.on{ opacity:1; }
+  .ovo-pat{ display:block; margin:12px 0 4px; padding:12px 12px 10px; border-radius:16px; background:linear-gradient(180deg,#fffaf0,#fff3d6); border:1.5px dashed #f2b705; text-align:center; text-decoration:none; color:inherit; }
+  .ovo-pat .ovo-pat-t{ font-size:.66rem; font-weight:900; letter-spacing:2px; color:#a0790a; }
+  .ovo-pat img{ display:block; max-width:150px; max-height:64px; object-fit:contain; margin:8px auto 4px; }
+  .ovo-pat .ovo-pat-n{ font-weight:900; font-size:1rem; color:#3a2c18; }
+  .ovo-pat .ovo-pat-m{ font-style:italic; font-size:.88rem; color:#5a4a2c; margin-top:3px; }
+  .ovo-pat-d{ display:flex; align-items:center; justify-content:center; gap:8px; margin:12px 0 0; font-size:.74rem; color:#8a7a5c; text-decoration:none; }
+  .ovo-pat-d img{ max-height:22px; max-width:70px; object-fit:contain; }
   .ovo-shake{ animation:ovoShake .35s ease-in-out; }
   @keyframes ovoShake{ 0%,100%{ transform:translateX(0); } 25%{ transform:translateX(-5px); } 75%{ transform:translateX(5px); } }
   .ovo-conf{ position:fixed; top:-10px; width:10px; height:14px; z-index:9300; pointer-events:none; animation:ovoConf linear forwards; }
@@ -10037,7 +10044,7 @@
     if(cdT){ clearInterval(cdT); cdT = null; }
     if(J.estado === 'agendado'){
       selo.className = 'agend'; selo.style.display = 'block';
-      selo.innerHTML = '<button type="button"><span class="ov">🥚</span><span>' + esc(J.nome) + ' — a caça ao ovo vai começar<small>🎁 ' + esc(J.premio_nome) + ' · começa ' + quandoTxt(J.inicio) + ' · <b class="ovo-cd"></b><br><b class="ovo-insc"></b></small></span></button>';
+      selo.innerHTML = '<button type="button"><span class="ov">🥚</span><span>' + esc(J.nome) + ' — a caça ao ovo vai começar<small>🎁 ' + esc(J.premio_nome) + ' · começa ' + quandoTxt(J.inicio) + ' · <b class="ovo-cd"></b><br><b class="ovo-insc"></b>' + (J.patrocinador_nome ? (' · com o apoio de ' + esc(J.patrocinador_nome)) : '') + '</small></span></button>';
       selo.querySelector('button').onclick = function(){ abrirFolha('agendado'); };
       var pinta = function(){
         document.querySelectorAll('.ovo-cd').forEach(function(el){ el.textContent = contagem(J.inicio); });
@@ -10115,6 +10122,7 @@
       folha('<div class="big">🥚⏳</div><h2>' + esc(J.nome) + '</h2><p>' + esc(J.descricao || 'Vamos esconder um ovo neste menu. O primeiro a encontrá-lo ganha!') + '</p>'
         + '<div class="premio"><span style="font-size:.78rem;font-weight:800;color:#8a5a10;">PRÉMIO</span><b>🎁 ' + esc(J.premio_nome) + '</b>' + (J.premio_descricao ? ('<span style="font-size:.85rem;">' + esc(J.premio_descricao) + '</span>') : '') + '</div>'
         + '<p style="font-weight:900;font-size:1.1rem;">Começa ' + quandoTxt(J.inicio) + '</p><p class="ovo-cd" style="font-size:2rem;font-weight:900;font-variant-numeric:tabular-nums;margin:4px 0;">' + contagem(J.inicio) + '</p>'
+        + patHTML('grande')
         + (function(){
             var insc = !!ls('amesaOvoPart:' + J.id), aberto = Date.now() < fechoInsc();
             if(insc) return '<div class="dica">✓ Estás inscrito! Avisamos-te 1 minuto antes. Quando começar, entras logo na caça — deixa o menu aberto ou toca no aviso.</div><button type="button" class="btn sec" id="ovoDepois">OK</button>';
@@ -10140,9 +10148,19 @@
       $('ovoDepois').onclick = fecharFolha;
     } else if(tipo === 'fim'){
       var venc = Array.isArray(J.vencedores_lista) ? J.vencedores_lista : [];
-      folha('<div class="big">🎉</div><h2>Já temos vencedor!</h2><p>' + (venc.length ? ('O ovo foi encontrado por <b>' + esc(venc.map(function(v){ return v.nome; }).join(', ')) + '</b> às ' + hhmm(venc[0].quando) + '.') : 'O jogo terminou.') + '</p><p>Obrigado por participares — fica atento à próxima caça.</p><button type="button" class="btn sec" id="ovoDepois">Fechar</button>');
+      folha('<div class="big">🎉</div><h2>Já temos vencedor!</h2><p>' + (venc.length ? ('O ovo foi encontrado por <b>' + esc(venc.map(function(v){ return v.nome; }).join(', ')) + '</b> às ' + hhmm(venc[0].quando) + '.') : 'O jogo terminou.') + '</p><p>Obrigado por participares — fica atento à próxima caça.</p><button type="button" class="btn sec" id="ovoDepois">Fechar</button>' + patHTML('discreto'));
       $('ovoDepois').onclick = fecharFolha;
     }
+  }
+  // Patrocinador da sessão (opcional). Sem patrocinador → não aparece nada.
+  function patHTML(modo){
+    if(!J || !J.patrocinador_nome) return '';
+    var lk = (J.patrocinador_link && /^https?:\/\//i.test(J.patrocinador_link)) ? J.patrocinador_link : '';
+    var abre = lk ? ('<a href="' + esc(lk) + '" target="_blank" rel="noopener sponsored" ') : '<div ', fecha = lk ? '</a>' : '</div>';
+    var logo = J.patrocinador_logo ? ('<img src="' + esc(J.patrocinador_logo) + '" alt="' + esc(J.patrocinador_nome) + '">') : '';
+    if(modo === 'discreto') return abre + 'class="ovo-pat-d"><span>Esta caça ao ovo teve o apoio de</span>' + logo + '<b>' + esc(J.patrocinador_nome) + '</b>' + fecha;
+    return abre + 'class="ovo-pat"><div class="ovo-pat-t">PATROCINADO POR</div>' + logo + '<div class="ovo-pat-n">' + esc(J.patrocinador_nome) + '</div>'
+      + (J.patrocinio_msg ? ('<div class="ovo-pat-m">“' + esc(J.patrocinio_msg) + '”</div>') : '') + fecha;
   }
   function fechoInsc(){ return J ? (new Date(J.inicio).getTime() - 60000) : 0; }   // as inscrições fecham 1 minuto antes
   async function inscrever(){
@@ -10237,7 +10255,7 @@
       + '<p>Guarda este código. A ÀMesa confirma-o e contacta-te para combinar a entrega do prémio:</p><div class="codigo">' + esc(w.codigo) + '</div>'
       + '<p style="font-size:.85rem;">Deixa o teu nome e telemóvel para te contactarmos:</p>'
       + '<input id="ovoNome" placeholder="O teu nome" value="' + esc(nomeG) + '"><input id="ovoTel" type="tel" inputmode="tel" placeholder="Telemóvel" value="' + esc(telG) + '">'
-      + '<button type="button" class="btn" id="ovoIdent">Guardar</button><p class="meta" style="margin-top:10px;">O código fica guardado neste telemóvel — toca no ovo para o veres outra vez.</p>');
+      + '<button type="button" class="btn" id="ovoIdent">Guardar</button><p class="meta" style="margin-top:10px;">O código fica guardado neste telemóvel — toca no ovo para o veres outra vez.</p>' + patHTML('discreto'));
     $('ovoIdent').onclick = async function(){ var n = ($('ovoNome').value || '').trim(), t = ($('ovoTel').value || '').trim(); if(!n){ $('ovoNome').focus(); return; } if(t.replace(/\D/g,'').length < 9){ $('ovoTel').focus(); return; } this.disabled = true; try{ await sbC.rpc('ovo_identificar', { p_codigo:w.codigo, p_nome:n, p_telefone:t }); ls('amesaEncNome', n); if(t) ls('amesaEncTel', t); }catch(e){} this.textContent = '✓ Guardado'; setTimeout(fecharFolha, 900); };
     var f = $('ovoFlut'); if(f){ f.innerHTML = '<span class="ov">🏆</span><span>Ganhaste!<small style="display:block;">' + esc(w.codigo) + '</small></span>'; f.onclick = function(){ folhaVitoria(w); }; }
     document.removeEventListener('click', onToque, true);
