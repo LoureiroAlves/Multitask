@@ -10082,6 +10082,7 @@
       selo.className = 'fim'; selo.style.display = 'block';
       selo.innerHTML = '<button type="button"><span class="ov">🥚</span><span>Jogo terminado<small>' + (venc.length ? ('O ovo foi encontrado por ' + esc(venc.map(function(v){ return v.nome; }).join(', ')) + ' às ' + hhmm(venc[0].quando)) : 'O ovo ficou por encontrar') + '</small></span></button>';
       selo.querySelector('button').onclick = function(){ abrirFolha('fim'); };
+      try{ var vv = JSON.parse(ls('amesaOvoVenci:' + J.id) || 'null'); if(vv && vv.codigo){ selo.innerHTML = '<button type="button"><span class="ov">🏆</span><span>Ganhaste a caça ao ovo!<small>Código ' + esc(vv.codigo) + ' · toca para veres e reclamares o prémio</small></span></button>'; selo.querySelector('button').onclick = function(){ folhaVitoria(vv); }; } }catch(e){}
       pararCaca(); return;
     }
     // relógio até ao fim: quando o tempo acaba, todos (a procurar ou não) recebem o aviso — o fim não muda a base de dados, por isso não chega pelo Realtime
@@ -10116,7 +10117,7 @@
   }
   // ---------- folhas ----------
   function fecharFolha(){ var ov = $('ovoOv'); if(!ov) return; ov.classList.remove('on'); setTimeout(function(){ ov.remove(); }, 320); }
-  function folha(html){ var ov = $('ovoOv'); if(ov) ov.remove(); ov = document.createElement('div'); ov.id = 'ovoOv'; ov.innerHTML = '<div id="ovoCard">' + html + '</div>'; document.body.appendChild(ov); ov.addEventListener('click', function(e){ if(e.target === ov) fecharFolha(); }); requestAnimationFrame(function(){ ov.classList.add('on'); }); return ov; }
+  function folha(html, fixa){ var ov = $('ovoOv'); if(ov) ov.remove(); ov = document.createElement('div'); ov.id = 'ovoOv'; ov.innerHTML = '<div id="ovoCard">' + html + '</div>'; document.body.appendChild(ov); var aberta = Date.now(); ov.addEventListener('click', function(e){ if(e.target === ov && !fixa && Date.now() - aberta > 1200) fecharFolha(); }); requestAnimationFrame(function(){ ov.classList.add('on'); }); return ov; }
   function dicasAtivas(){ if(!J) return []; var out = []; if(J.dica_auto) out.push(J.dica_auto); if(J.charada) out.push(J.charada); var min = (Date.now() - new Date(J.inicio).getTime()) / 60000; (Array.isArray(J.dicas) ? J.dicas : []).forEach(function(d){ if(d && d.texto && min >= (parseFloat(d.minutos) || 0)) out.push(d.texto); }); return out; }
   function abrirFolha(tipo){
     if(!J) return;
@@ -10238,7 +10239,7 @@
     var tipo = a.slice(0, i), ref = a.slice(i + 1);
     // candidatos: a letra e a palavra debaixo do dedo (se for texto de um prato) e depois o elemento inteiro
     var cands = [];
-    if(tipo === 'item' && window.__ovoNoPonto){ var w = window.__ovoNoPonto(e.clientX, e.clientY, el); if(w){ var base = ref + '/' + w.campo + '/' + w.tok + '#' + w.occ; cands.push(['letra', base + '/' + w.idx]); cands.push(['palavra', base]); } }
+    if(tipo === 'item' && window.__ovoNoPonto){ var w = window.__ovoNoPonto(e.clientX, e.clientY, el); if(w){ var base = ref + '/' + w.campo + '/' + w.tok + '#' + w.occ; cands.push(['letra', base + '/' + w.idx]); [1,-1,2,-2].forEach(function(d){ if(w.idx + d >= 0) cands.push(['letra', base + '/' + (w.idx + d)]); }); cands.push(['palavra', base]); } }   // o dedo cobre 2-3 letras: as vizinhas também contam
     cands.push([tipo, ref]);
     for(var k = 0; k < cands.length; k++){ var h = await sha((J.sal || '') + cands[k][0] + ':' + cands[k][1]); if(h && J.alvo_hash && h === J.alvo_hash){ reclamar(cands[k][0], cands[k][1], el); return; } }
     tentativas++; tentPend++; ls('amesaOvoTent:' + J.id, String(tentativas)); pintaFlut();
@@ -10264,15 +10265,30 @@
       else toast('Não foi possível confirmar. Tenta outra vez.');
     }
   }
+  var AMESA_WA = '351916254923';   // WhatsApp da ÀMesa (o vencedor envia o código + contacto)
   function folhaVitoria(w){
     var nomeG = ls('amesaEncNome') || '', telG = ls('amesaEncTel') || '';
-    folha('<div class="big">🥚🎉</div><h2>Ovo encontrado!</h2><p><b>Parabéns, ' + (w.posicao > 1 ? ('foste o ' + w.posicao + '.º a encontrar') : 'foste o vencedor') + '!</b></p>'
-      + '<div class="premio"><span style="font-size:.78rem;font-weight:800;color:#8a5a10;">GANHASTE</span><b>🎁 ' + esc(w.premio || J.premio_nome) + '</b></div>'
-      + '<p>Guarda este código. A ÀMesa confirma-o e contacta-te para combinar a entrega do prémio:</p><div class="codigo">' + esc(w.codigo) + '</div>'
-      + '<p style="font-size:.85rem;">Deixa o teu nome e telemóvel para te contactarmos:</p>'
+    var premio = w.premio || (J && J.premio_nome) || '', rest = window.__negNome || '';
+    var quando = new Date().toLocaleString('pt-PT', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+    folha('<div class="big">🏆🥚</div><h2 style="font-size:1.7rem;">GANHASTE!</h2><p><b>Foste ' + (w.posicao > 1 ? ('o ' + w.posicao + '.º a encontrar o ovo') : 'o primeiro a encontrar o ovo') + (rest ? (' no ' + esc(rest)) : '') + '!</b></p>'
+      + '<div class="premio"><span style="font-size:.78rem;font-weight:800;color:#8a5a10;">O TEU PRÉMIO</span><b>🎁 ' + esc(premio) + '</b></div>'
+      + '<p style="margin-bottom:2px;"><b>O teu código de vencedor</b> (é a tua prova):</p><div class="codigo">' + esc(w.codigo) + '</div>'
+      + '<p class="meta" style="margin-top:-4px;">Ganho em ' + esc(quando) + ' · tira um print a este ecrã</p>'
+      + '<p style="font-size:.9rem;margin-top:12px;"><b>Para receberes o prémio</b>, deixa o teu nome e telemóvel — a ÀMesa contacta-te:</p>'
       + '<input id="ovoNome" placeholder="O teu nome" value="' + esc(nomeG) + '"><input id="ovoTel" type="tel" inputmode="tel" placeholder="Telemóvel" value="' + esc(telG) + '">'
-      + '<button type="button" class="btn" id="ovoIdent">Guardar</button><p class="meta" style="margin-top:10px;">O código fica guardado neste telemóvel — toca no ovo para o veres outra vez.</p>' + patHTML('discreto'));
-    $('ovoIdent').onclick = async function(){ var n = ($('ovoNome').value || '').trim(), t = ($('ovoTel').value || '').trim(); if(!n){ $('ovoNome').focus(); return; } if(t.replace(/\D/g,'').length < 9){ $('ovoTel').focus(); return; } this.disabled = true; try{ await sbC.rpc('ovo_identificar', { p_codigo:w.codigo, p_nome:n, p_telefone:t }); ls('amesaEncNome', n); if(t) ls('amesaEncTel', t); }catch(e){} this.textContent = '✓ Guardado'; setTimeout(fecharFolha, 900); };
+      + '<button type="button" class="btn" id="ovoIdent">✓ Guardar o meu contacto</button>'
+      + '<a class="btn" id="ovoWa" target="_blank" rel="noopener" style="display:block;text-align:center;text-decoration:none;background:#25d366;box-shadow:none;margin-top:8px;">💬 Enviar o código à ÀMesa por WhatsApp</a>'
+      + '<p class="meta" style="margin-top:10px;">O código fica guardado neste telemóvel — toca no 🏆 para o veres outra vez.</p>'
+      + patHTML('discreto')
+      + '<button type="button" class="btn sec" id="ovoFecharV">Fechar</button>', true);
+    var waLink = function(){ var n = ($('ovoNome').value || '').trim(), t = ($('ovoTel').value || '').trim();
+      var txt = '🏆 Ganhei a caça ao ovo' + (rest ? (' no ' + rest) : '') + '!\nCódigo: ' + w.codigo + '\nPrémio: ' + premio + '\nGanho em: ' + quando + (n ? ('\nNome: ' + n) : '') + (t ? ('\nTelemóvel: ' + t) : '');
+      $('ovoWa').href = 'https://wa.me/' + AMESA_WA + '?text=' + encodeURIComponent(txt); };
+    waLink(); $('ovoNome').addEventListener('input', waLink); $('ovoTel').addEventListener('input', waLink);
+    $('ovoFecharV').onclick = fecharFolha;
+    $('ovoIdent').onclick = async function(){ var n = ($('ovoNome').value || '').trim(), t = ($('ovoTel').value || '').trim(); if(!n){ $('ovoNome').focus(); return; } if(t.replace(/\D/g,'').length < 9){ $('ovoTel').focus(); return; } var b = this; b.disabled = true; b.textContent = 'A guardar…';
+      try{ var r = await sbC.rpc('ovo_identificar', { p_codigo:w.codigo, p_nome:n, p_telefone:t }); if(r && r.error) throw r.error; ls('amesaEncNome', n); ls('amesaEncTel', t); b.textContent = '✓ Contacto guardado — a ÀMesa vai contactar-te'; }
+      catch(e){ b.disabled = false; b.textContent = '✓ Guardar o meu contacto'; toast('Não foi possível guardar. Envia por WhatsApp.'); } };
     var f = $('ovoFlut'); if(f){ f.innerHTML = '<span class="ov">🏆</span><span>Ganhaste!<small style="display:block;">' + esc(w.codigo) + '</small></span>'; f.onclick = function(){ folhaVitoria(w); }; }
     document.removeEventListener('click', onToque, true);
   }
