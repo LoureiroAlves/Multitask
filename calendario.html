@@ -537,11 +537,30 @@
     document.getElementById('exDemoFechar').onclick = _fechar;
     const q = document.getElementById('exDemoQuero'); if(q) q.onclick = function(){ _fechar(); _extraPedir(k); };
   }
+  // Pedido de ativação de um extra: o dono escolhe WhatsApp ou email (mensagem já escrita)
   function _extraPedir(k){
-    const x = _extraInfo(k);
-    location.href = 'mailto:' + AMESA_CONTACTO + '?subject=' + encodeURIComponent('Ativar "' + x[2] + '" — ' + ((negocio && negocio.nome) || ''));
+    const x = _extraInfo(k), rest = (negocio && negocio.nome) || '';
+    const texto = 'Olá! Sou o ' + rest + ' (amesadigital.pt/' + SLUG + ') e gostava de ativar o extra "' + x[2] + '" na minha app ÀMesa.';
+    const linkMail = 'mailto:' + AMESA_CONTACTO + '?subject=' + encodeURIComponent('Ativar "' + x[2] + '" — ' + rest) + '&body=' + encodeURIComponent(texto);
+    const wa = String(AMESA_WHATSAPP || '').replace(/\D/g, '');
+    const linkWa = wa ? ('https://wa.me/' + wa + '?text=' + encodeURIComponent(texto)) : '';
+    const old = document.getElementById('exPedirOv'); if(old) old.remove();
+    const ov = document.createElement('div'); ov.id = 'exPedirOv';
+    ov.style.cssText = 'position:fixed;inset:0;z-index:9700;background:rgba(30,20,10,.55);display:flex;align-items:center;justify-content:center;padding:16px;';
+    ov.innerHTML = '<div style="background:#fff;border-radius:16px;padding:18px;max-width:360px;width:100%;text-align:center;">'
+      + '<div style="font-size:2rem;line-height:1;">' + x[1] + '</div>'
+      + '<div style="font-weight:900;color:var(--castanho);margin-top:6px;">Ativar ' + esc(x[2]) + '</div>'
+      + '<div style="font-size:.88rem;color:#8a7a5c;margin:4px 0 14px;">Como preferes falar com a ÀMesa? A mensagem já vai escrita.</div>'
+      + (linkWa ? '<a href="' + linkWa + '" target="_blank" rel="noopener" style="display:block;background:#25d366;color:#fff;text-decoration:none;font-weight:800;border-radius:12px;padding:13px;margin-bottom:8px;">💬 Pedir por WhatsApp</a>' : '')
+      + '<a href="' + linkMail + '" style="display:block;background:#7a5320;color:#fff;text-decoration:none;font-weight:800;border-radius:12px;padding:13px;margin-bottom:8px;">✉️ Pedir por email</a>'
+      + '<div style="font-size:.78rem;color:#8a7a5c;margin-bottom:10px;">' + esc(AMESA_CONTACTO) + '</div>'
+      + '<button type="button" id="exPedirFechar" style="width:100%;border:1px solid #e0d3b5;background:#fff;border-radius:10px;padding:10px;font-weight:800;cursor:pointer;font-family:inherit;">Agora não</button></div>';
+    document.body.appendChild(ov);
+    ov.addEventListener('click', function(e){ if(e.target === ov || e.target.tagName === 'A') setTimeout(function(){ ov.remove(); }, 50); });
+    document.getElementById('exPedirFechar').onclick = function(){ ov.remove(); };
   }
   const AMESA_CONTACTO = 'info@amesadigital.pt';
+  const AMESA_WHATSAPP = '351916254923';   // número da ÀMesa com indicativo, ex.: '351912345678' — vazio = só aparece o email
   let EXTRAS = null;   // null = restaurante antigo (tudo desbloqueado)
   function extraOn(k){ return !EXTRAS || EXTRAS[k] === true; }
   function _extraInfo(k){ return EXTRAS_LISTA.filter(function(x){ return x[0] === k; })[0] || [k, '✨', k, '']; }
