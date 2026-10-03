@@ -10002,7 +10002,19 @@
   .ovo-pat .ovo-pat-n{ font-weight:900; font-size:1rem; color:#3a2c18; }
   .ovo-pat .ovo-pat-m{ font-style:italic; font-size:.88rem; color:#5a4a2c; margin-top:3px; }
   .ovo-pat-d{ display:flex; align-items:center; justify-content:center; gap:8px; margin:12px 0 0; font-size:.74rem; color:#8a7a5c; text-decoration:none; }
-  .ovo-pat-d img{ max-height:22px; max-width:70px; object-fit:contain; }
+  .ovo-pat-d img{ max-height:30px; max-width:90px; object-fit:contain; }
+  .ovo-pat-d{ font-size:.82rem; }
+  /* patrocinador em destaque (topo do ecrã antes do jogo) */
+  .ovo-pat-hero{ display:block; position:relative; margin:-4px -4px 14px; padding:16px 14px 14px; border-radius:20px; text-align:center; text-decoration:none; color:#fff; overflow:hidden;
+    background:radial-gradient(120% 90% at 50% 0%, #4a3418 0%, #24180b 70%); box-shadow:0 10px 28px rgba(60,40,10,.35), inset 0 0 0 2px rgba(242,183,5,.55); }
+  .ovo-pat-hero::before{ content:''; position:absolute; top:0; left:-60%; width:40%; height:100%; background:linear-gradient(100deg, transparent, rgba(255,255,255,.18), transparent); transform:skewX(-18deg); animation:ovoPatBrilho 3.2s ease-in-out infinite; }
+  @keyframes ovoPatBrilho{ 0%{ left:-60%; } 60%,100%{ left:130%; } }
+  .ovo-pat-hero .h-t{ font-size:.7rem; font-weight:900; letter-spacing:3px; color:#f2b705; }
+  .ovo-pat-hero .h-logo{ margin:10px auto 8px; background:#fff; border-radius:14px; padding:10px 14px; display:inline-flex; align-items:center; justify-content:center; box-shadow:0 6px 18px rgba(0,0,0,.35); max-width:92%; }
+  .ovo-pat-hero .h-logo img{ display:block; max-width:240px; width:100%; max-height:110px; object-fit:contain; }
+  .ovo-pat-hero .h-n{ font-weight:900; font-size:1.35rem; letter-spacing:.5px; line-height:1.15; }
+  .ovo-pat-hero .h-m{ font-style:italic; font-size:1rem; color:#ffe6a3; margin-top:4px; }
+  .ovo-pat-hero .h-lk{ display:inline-block; margin-top:9px; font-size:.78rem; font-weight:800; color:#24180b; background:#f2b705; border-radius:999px; padding:5px 12px; }
   .ovo-shake{ animation:ovoShake .35s ease-in-out; }
   @keyframes ovoShake{ 0%,100%{ transform:translateX(0); } 25%{ transform:translateX(-5px); } 75%{ transform:translateX(5px); } }
   .ovo-conf{ position:fixed; top:-10px; width:10px; height:14px; z-index:9300; pointer-events:none; animation:ovoConf linear forwards; }
@@ -10044,7 +10056,7 @@
     if(cdT){ clearInterval(cdT); cdT = null; }
     if(J.estado === 'agendado'){
       selo.className = 'agend'; selo.style.display = 'block';
-      selo.innerHTML = '<button type="button"><span class="ov">🥚</span><span>' + esc(J.nome) + ' — a caça ao ovo vai começar<small>🎁 ' + esc(J.premio_nome) + ' · começa ' + quandoTxt(J.inicio) + ' · <b class="ovo-cd"></b><br><b class="ovo-insc"></b>' + (J.patrocinador_nome ? (' · com o apoio de ' + esc(J.patrocinador_nome)) : '') + '</small></span></button>';
+      selo.innerHTML = '<button type="button"><span class="ov">🥚</span><span>' + esc(J.nome) + ' — a caça ao ovo vai começar<small>🎁 ' + esc(J.premio_nome) + ' · começa ' + quandoTxt(J.inicio) + ' · <b class="ovo-cd"></b><br><b class="ovo-insc"></b>' + (J.patrocinador_nome ? (' · com o apoio de ' + esc(J.patrocinador_nome)) : '') + '</small></span>' + (J.patrocinador_logo ? ('<img src="' + esc(J.patrocinador_logo) + '" alt="" style="margin-left:auto;flex:none;height:40px;max-width:84px;object-fit:contain;background:#fff;border-radius:8px;padding:3px 5px;box-shadow:0 2px 6px rgba(0,0,0,.2);">') : '') + '</button>';
       selo.querySelector('button').onclick = function(){ abrirFolha('agendado'); };
       var pinta = function(){
         document.querySelectorAll('.ovo-cd').forEach(function(el){ el.textContent = contagem(J.inicio); });
@@ -10119,10 +10131,9 @@
       var c = $('ovoComecar'); if(c) c.onclick = comecar;
       $('ovoDepois').onclick = fecharFolha;
     } else if(tipo === 'agendado'){
-      folha('<div class="big">🥚⏳</div><h2>' + esc(J.nome) + '</h2><p>' + esc(J.descricao || 'Vamos esconder um ovo neste menu. O primeiro a encontrá-lo ganha!') + '</p>'
+      folha(patHTML('hero') + '<div class="big">🥚⏳</div><h2>' + esc(J.nome) + '</h2><p>' + esc(J.descricao || 'Vamos esconder um ovo neste menu. O primeiro a encontrá-lo ganha!') + '</p>'
         + '<div class="premio"><span style="font-size:.78rem;font-weight:800;color:#8a5a10;">PRÉMIO</span><b>🎁 ' + esc(J.premio_nome) + '</b>' + (J.premio_descricao ? ('<span style="font-size:.85rem;">' + esc(J.premio_descricao) + '</span>') : '') + '</div>'
         + '<p style="font-weight:900;font-size:1.1rem;">Começa ' + quandoTxt(J.inicio) + '</p><p class="ovo-cd" style="font-size:2rem;font-weight:900;font-variant-numeric:tabular-nums;margin:4px 0;">' + contagem(J.inicio) + '</p>'
-        + patHTML('grande')
         + (function(){
             var insc = !!ls('amesaOvoPart:' + J.id), aberto = Date.now() < fechoInsc();
             if(insc) return '<div class="dica">✓ Estás inscrito! Avisamos-te 1 minuto antes. Quando começar, entras logo na caça — deixa o menu aberto ou toca no aviso.</div><button type="button" class="btn sec" id="ovoDepois">OK</button>';
@@ -10136,7 +10147,7 @@
       folha('<div class="big">🥚🔒</div><h2>A caça começou!</h2><p><b>' + esc(J.nome) + '</b> — desta vez só jogam os inscritos.</p><p>Fica atento: quando houver nova caça, inscreve-te antes de começar. 🥚</p><button type="button" class="btn sec" id="ovoDepois">OK</button>');
       $('ovoDepois').onclick = fecharFolha;
     } else if(tipo === 'comecou'){
-      folha('<div class="big">🥚🔔</div><h2>A caça começou!</h2><p><b>' + esc(J.nome) + '</b> — o ovo já está escondido no menu.</p>'
+      folha((J.patrocinador_nome ? patHTML('grande') : '') + '<div class="big">🥚🔔</div><h2>A caça começou!</h2><p><b>' + esc(J.nome) + '</b> — o ovo já está escondido no menu.</p>'
         + '<div class="premio"><span style="font-size:.78rem;font-weight:800;color:#8a5a10;">PRÉMIO</span><b>🎁 ' + esc(J.premio_nome) + '</b></div>'
         + dicasAtivas().map(function(d){ return '<div class="dica">💡 ' + esc(d) + '</div>'; }).join('')
         + '<p class="meta">Até às ' + hhmm(J.fim) + ' · ' + (J.limite_vencedores > 1 ? (J.limite_vencedores + ' prémios') : '1 prémio') + '</p>'
@@ -10159,6 +10170,11 @@
     var abre = lk ? ('<a href="' + esc(lk) + '" target="_blank" rel="noopener sponsored" ') : '<div ', fecha = lk ? '</a>' : '</div>';
     var logo = J.patrocinador_logo ? ('<img src="' + esc(J.patrocinador_logo) + '" alt="' + esc(J.patrocinador_nome) + '">') : '';
     if(modo === 'discreto') return abre + 'class="ovo-pat-d"><span>Esta caça ao ovo teve o apoio de</span>' + logo + '<b>' + esc(J.patrocinador_nome) + '</b>' + fecha;
+    if(modo === 'hero') return abre + 'class="ovo-pat-hero"><div class="h-t">🥚 APRESENTADO POR 🥚</div>'
+      + (J.patrocinador_logo ? ('<div class="h-logo"><img src="' + esc(J.patrocinador_logo) + '" alt="' + esc(J.patrocinador_nome) + '"></div>') : '<div style="height:8px;"></div>')
+      + '<div class="h-n">' + esc(J.patrocinador_nome) + '</div>'
+      + (J.patrocinio_msg ? ('<div class="h-m">“' + esc(J.patrocinio_msg) + '”</div>') : '')
+      + (lk ? '<div class="h-lk">Conhecer ›</div>' : '') + fecha;
     return abre + 'class="ovo-pat"><div class="ovo-pat-t">PATROCINADO POR</div>' + logo + '<div class="ovo-pat-n">' + esc(J.patrocinador_nome) + '</div>'
       + (J.patrocinio_msg ? ('<div class="ovo-pat-m">“' + esc(J.patrocinio_msg) + '”</div>') : '') + fecha;
   }
