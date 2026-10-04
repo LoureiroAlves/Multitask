@@ -10009,12 +10009,13 @@
     background:radial-gradient(120% 90% at 50% 0%, #4a3418 0%, #24180b 70%); box-shadow:0 10px 28px rgba(60,40,10,.35), inset 0 0 0 2px rgba(242,183,5,.55); }
   .ovo-pat-hero::before{ content:''; position:absolute; top:0; left:-60%; width:40%; height:100%; background:linear-gradient(100deg, transparent, rgba(255,255,255,.18), transparent); transform:skewX(-18deg); animation:ovoPatBrilho 3.2s ease-in-out infinite; }
   @keyframes ovoPatBrilho{ 0%{ left:-60%; } 60%,100%{ left:130%; } }
-  .ovo-pat-hero.so-img{ padding:0; aspect-ratio:4/3; background:#fff; box-shadow:0 10px 28px rgba(60,40,10,.3); border:2px solid #f2b705; }
-  .ovo-pat-hero.so-img img{ display:block; width:100%; height:100%; object-fit:cover; border-radius:18px; }
+  .ovo-pat-hero.so-img{ padding:0; background:none; box-shadow:none; border-radius:0; display:flex; justify-content:center; overflow:visible; }
+  .ovo-pat-hero.so-img::before{ display:none; }
+  .ovo-pat-hero.so-img img{ display:block; width:auto; height:auto; max-width:100%; max-height:58vh; border-radius:18px; border:2px solid #f2b705; box-shadow:0 10px 28px rgba(60,40,10,.3); background:#fff; }
   #ovoPatFim{ position:fixed; inset:0; z-index:9500; background:rgba(15,10,4,.92); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; padding:20px; opacity:0; transition:opacity .25s; }
   #ovoPatFim.on{ opacity:1; }
   #ovoPatFim .t{ color:#fff; font-weight:900; font-size:1.35rem; text-align:center; letter-spacing:.5px; }
-  #ovoPatFim img{ width:min(92vw, 560px, calc(62vh * 4 / 3)); aspect-ratio:4/3; object-fit:cover; border-radius:18px; background:#fff; box-shadow:0 14px 40px rgba(0,0,0,.5); border:2px solid #f2b705; }
+  #ovoPatFim img{ width:auto; height:auto; max-width:92vw; max-height:66vh; border-radius:18px; background:#fff; box-shadow:0 14px 40px rgba(0,0,0,.5); border:2px solid #f2b705; }
   #ovoPatFim .barra{ width:min(320px,80vw); height:5px; border-radius:5px; background:rgba(255,255,255,.2); overflow:hidden; }
   #ovoPatFim .barra i{ display:block; height:100%; width:100%; background:#f2b705; transform-origin:left; animation:ovoPatBarra 3s linear forwards; }
   @keyframes ovoPatBarra{ from{ transform:scaleX(1); } to{ transform:scaleX(0); } }
