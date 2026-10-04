@@ -10339,9 +10339,16 @@
   function verificarDicas(){ if(!aCacar) return; dicasAtivas().forEach(function(d){ if(!dicasMostradas[d]){ dicasMostradas[d] = 1; toast('💡 Dica: ' + d); vib([40,40,40]); pintaFlut(); } }); }
   function enviarTentativas(){ if(!P || tentPend <= 0) return; var n = tentPend; tentPend = 0; try{ sbC.rpc('ovo_tentativas', { p_participacao:P, p_n:n }); }catch(e){} }
   // ---------- voltar à app: com o ecrã desligado os relógios param — confirma tudo com o servidor ----------
-  var retT = null, retUlt = 0;
+  var retT = null, retUlt = 0, escondidoEm = 0;
   function retomar(){
-    if(document.hidden) return;
+    if(document.hidden){ if(!escondidoEm) escondidoEm = Date.now(); return; }
+    // O telemóvel adormeceu mais de 45 s com um jogo marcado ou a decorrer → recarrega a página.
+    // (É o mesmo que fechar e voltar a abrir o menu: tudo é lido de novo e a inscrição fica guardada no telemóvel.)
+    var dormiu = escondidoEm ? (Date.now() - escondidoEm) : 0; escondidoEm = 0;
+    if(dormiu > 45000 && J && (J.estado === 'agendado' || J.estado === 'ativo') && Date.now() < new Date(J.fim).getTime() && !venci){
+      try{ enviarTentativas(); }catch(e){}
+      location.reload(); return;
+    }
     if(Date.now() - retUlt < 1500) return; retUlt = Date.now();
     clearTimeout(retT);
     retT = setTimeout(async function(){
@@ -10354,7 +10361,24 @@
     }, 300);
   }
   document.addEventListener('visibilitychange', retomar);
+  window.addEventListener('pagehide', function(){ if(!escondidoEm) escondidoEm = Date.now(); });
   window.addEventListener('pageshow', retomar);
+  // Vigia de segurança (de 4 em 4 s, só com o ecrã ligado): se a hora de começar já passou e o jogo não arrancou,
+  // ou se estou inscrito, o jogo está a decorrer e a caça não está ligada — corrige sozinho.
+  var arrancando = false;
+  setInterval(function(){
+    try{
+      if(document.hidden || !J || venci) return;
+      var agora = Date.now();
+      if(J.estado === 'agendado' && agora >= new Date(J.inicio).getTime() + 3000 && !arrancando){
+        arrancando = true; if(iniT){ clearTimeout(iniT); iniT = null; }
+        Promise.resolve(arranque()).then(function(){ arrancando = false; }, function(){ arrancando = false; });
+        setTimeout(function(){ arrancando = false; }, 20000);
+        return;
+      }
+      if(J.estado === 'ativo' && agora < new Date(J.fim).getTime() && !aCacar && ls('amesaOvoPart:' + J.id)){ P = ls('amesaOvoPart:' + J.id); iniciarCaca(); }
+    }catch(e){}
+  }, 4000);
   window.addEventListener('focus', retomar);
   window.addEventListener('online', function(){ retUlt = 0; retomar(); });
 
