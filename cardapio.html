@@ -10017,7 +10017,7 @@
   #ovoPatFim .t{ color:#fff; font-weight:900; font-size:1.35rem; text-align:center; letter-spacing:.5px; }
   #ovoPatFim img{ width:auto; height:auto; max-width:92vw; max-height:66vh; border-radius:18px; background:#fff; box-shadow:0 14px 40px rgba(0,0,0,.5); border:2px solid #f2b705; }
   #ovoPatFim .barra{ width:min(320px,80vw); height:5px; border-radius:5px; background:rgba(255,255,255,.2); overflow:hidden; }
-  #ovoPatFim .barra i{ display:block; height:100%; width:100%; background:#f2b705; transform-origin:left; animation:ovoPatBarra 3s linear forwards; }
+  #ovoPatFim .barra i{ display:block; height:100%; width:100%; background:#f2b705; transform-origin:left; animation:ovoPatBarra 4s linear forwards; }
   @keyframes ovoPatBarra{ from{ transform:scaleX(1); } to{ transform:scaleX(0); } }
   .ovo-pat-hero .h-t{ font-size:.7rem; font-weight:900; letter-spacing:3px; color:#f2b705; }
   .ovo-pat-hero .h-logo{ margin:10px auto 8px; background:#fff; border-radius:14px; padding:10px 14px; display:inline-flex; align-items:center; justify-content:center; box-shadow:0 6px 18px rgba(0,0,0,.35); max-width:92%; }
@@ -10066,7 +10066,7 @@
     if(cdT){ clearInterval(cdT); cdT = null; }
     if(J.estado === 'agendado'){
       selo.className = 'agend'; selo.style.display = 'block';
-      selo.innerHTML = '<button type="button"><span class="ov">🥚</span><span>' + esc(J.nome) + ' — a caça ao ovo vai começar<small>🎁 ' + esc(J.premio_nome) + ' · começa ' + quandoTxt(J.inicio) + ' · <b class="ovo-cd"></b><br><b class="ovo-insc"></b>' + (J.patrocinador_nome ? (' · com o apoio de ' + esc(J.patrocinador_nome)) : '') + '</small></span>' + (J.patrocinador_logo ? ('<img src="' + esc(J.patrocinador_logo) + '" alt="" style="margin-left:auto;flex:none;height:40px;max-width:84px;object-fit:contain;background:#fff;border-radius:8px;padding:3px 5px;box-shadow:0 2px 6px rgba(0,0,0,.2);">') : '') + '</button>';
+      selo.innerHTML = '<button type="button"><span class="ov">🥚</span><span>' + esc(J.nome) + ' — a caça ao ovo vai começar<small>🎁 ' + esc(J.premio_nome) + ' · começa ' + quandoTxt(J.inicio) + ' · <b class="ovo-cd"></b><br><b class="ovo-insc"></b>' + (J.patrocinador_nome ? (' · com o apoio de ' + esc(J.patrocinador_nome)) : '') + '</small></span></button>';
       selo.querySelector('button').onclick = function(){ abrirFolha('agendado'); };
       var pinta = function(){
         document.querySelectorAll('.ovo-cd').forEach(function(el){ el.textContent = contagem(J.inicio); });
@@ -10180,7 +10180,7 @@
     var lk = (J.patrocinador_link && /^https?:\/\//i.test(J.patrocinador_link)) ? J.patrocinador_link : '';
     var abre = lk ? ('<a href="' + esc(lk) + '" target="_blank" rel="noopener sponsored" ') : '<div ', fecha = lk ? '</a>' : '</div>';
     var logo = J.patrocinador_logo ? ('<img src="' + esc(J.patrocinador_logo) + '" alt="' + esc(J.patrocinador_nome) + '">') : '';
-    if(modo === 'discreto') return abre + 'class="ovo-pat-d"><span>Esta caça ao ovo teve o apoio de</span>' + logo + '<b>' + esc(J.patrocinador_nome) + '</b>' + fecha;
+    if(modo === 'discreto') return abre + 'class="ovo-pat-d"><span>Esta caça ao ovo teve o apoio de</span><b>' + esc(J.patrocinador_nome) + '</b>' + fecha;
     if(modo === 'hero' && J.patrocinador_logo) return abre + 'class="ovo-pat-hero so-img"><img src="' + esc(J.patrocinador_logo) + '" alt="' + esc(J.patrocinador_nome) + '">' + fecha;
     if(modo === 'hero') return abre + 'class="ovo-pat-hero"><div class="h-t">🥚 APRESENTADO POR 🥚</div>'
       + (J.patrocinador_logo ? ('<div class="h-logo"><img src="' + esc(J.patrocinador_logo) + '" alt="' + esc(J.patrocinador_nome) + '"></div>') : '<div style="height:8px;"></div>')
@@ -10197,7 +10197,7 @@
       var ov = document.createElement('div'); ov.id = 'ovoPatFim';
       ov.innerHTML = '<div class="t">🏁 O jogo terminou!</div><img src="' + esc(J.patrocinador_logo) + '" alt="' + esc(J.patrocinador_nome || '') + '"><div class="barra"><i></i></div>';
       document.body.appendChild(ov); requestAnimationFrame(function(){ ov.classList.add('on'); });
-      setTimeout(function(){ ov.classList.remove('on'); setTimeout(function(){ ov.remove(); depois(); }, 260); }, 3000);
+      setTimeout(function(){ ov.classList.remove('on'); setTimeout(function(){ ov.remove(); depois(); }, 260); }, 4000);
     }catch(e){ depois(); }
   }
   function fechoInsc(){ return J ? (new Date(J.inicio).getTime() - 60000) : 0; }   // as inscrições fecham 1 minuto antes
