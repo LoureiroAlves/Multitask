@@ -10275,6 +10275,7 @@
       var r = await sbC.rpc('ovo_reclamar', { p_jogo:J.id, p_participacao:P, p_alvo:{ tipo:tipo, ref:ref }, p_nome:'', p_telefone:'' });
       if(r.error) throw r.error;
       var w = (r.data || [])[0]; if(!w) throw new Error('sem_resposta');
+      if(!w.quando) w.quando = w.ganhou_em || new Date().toISOString();   // hora da vitória fica fixa
       venci = w; ls('amesaOvoVenci:' + J.id, JSON.stringify(w));
       confetti(); vib([80,40,80,40,200]);
       popupFimPat(function(){ folhaVitoria(w); });
@@ -10290,7 +10291,14 @@
   function folhaVitoria(w){
     var nomeG = ls('amesaEncNome') || '', telG = ls('amesaEncTel') || '';
     var premio = w.premio || (J && J.premio_nome) || '', rest = window.__negNome || '';
-    var quando = new Date().toLocaleString('pt-PT', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+    // Hora em que ganhou (fixa): a guardada no telemóvel; senão a da lista de vencedores do jogo
+    if(!w.quando){
+      var lv = (J && Array.isArray(J.vencedores_lista)) ? J.vencedores_lista : [];
+      var mv = lv.filter(function(v){ return v.posicao === w.posicao; })[0] || (lv.length === 1 ? lv[0] : null);
+      w.quando = w.ganhou_em || (mv && mv.quando) || (J && J.terminado_em) || null;
+      if(w.quando && J){ try{ ls('amesaOvoVenci:' + J.id, JSON.stringify(w)); }catch(e){} }
+    }
+    var quando = new Date(w.quando || Date.now()).toLocaleString('pt-PT', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
     folha('<div class="big">🏆🥚</div><h2 style="font-size:1.7rem;">GANHASTE!</h2><p><b>Foste ' + (w.posicao > 1 ? ('o ' + w.posicao + '.º a encontrar o ovo') : 'o primeiro a encontrar o ovo') + (rest ? (' no ' + esc(rest)) : '') + '!</b></p>'
       + '<div class="premio"><span style="font-size:.78rem;font-weight:800;color:#8a5a10;">O TEU PRÉMIO</span><b>🎁 ' + esc(premio) + '</b></div>'
       + '<p style="margin-bottom:2px;"><b>O teu código de vencedor</b> (é a tua prova):</p><div class="codigo">' + esc(w.codigo) + '</div>'
