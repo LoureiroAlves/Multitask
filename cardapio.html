@@ -10277,8 +10277,8 @@
       var w = (r.data || [])[0]; if(!w) throw new Error('sem_resposta');
       if(!w.quando) w.quando = w.ganhou_em || new Date().toISOString();   // hora da vitória fica fixa
       venci = w; ls('amesaOvoVenci:' + J.id, JSON.stringify(w));
-      confetti(); vib([80,40,80,40,200]);
-      popupFimPat(function(){ folhaVitoria(w); });
+      vib([80,40,80,40,200]);
+      popupFimPat(function(){ confetti(); folhaVitoria(w); });   // confetis só depois de sair a publicidade
     }catch(e){
       venci = null;
       var m = String(e && e.message || e);
