@@ -10056,7 +10056,15 @@
     // campanha publicada depois de o menu estar aberto: volta a ver de 2 em 2 min (consulta pequena)
     if(!vigiaT) vigiaT = setInterval(function(){ if(document.hidden) return; if(!J || J.estado === 'terminado' || J.estado === 'expirado') carregar(); }, 120000);
   }
+  var jogoId = null;
   function aplicar(j){
+    // Mudou de sessão (ex.: a anterior terminou e começou outra sem fechar a app) → limpa tudo o que era da sessão antiga
+    var novoId = j ? j.id : null;
+    if(novoId !== jogoId){
+      if(jogoId !== null){ pararCaca(); fecharFolha(); }
+      jogoId = novoId; venci = null; P = null; tentativas = 0; tentPend = 0; dicasMostradas = {}; terminouVisto = false;
+      var fv = $('ovoFlut'); if(fv) fv.onclick = function(){ abrirFolha('caca'); };
+    }
     J = j; var selo = $('ovoSelo');
     if(!selo){ selo = document.createElement('div'); selo.id = 'ovoSelo'; var ref = $('promoDia'); if(ref && ref.parentNode) ref.parentNode.insertBefore(selo, ref); else document.body.appendChild(selo); }
     if(!J){ selo.style.display = 'none'; pararCaca(); return; }
@@ -10242,14 +10250,19 @@
     if(aCacar) return; aCacar = true;
     tentativas = parseInt(ls('amesaOvoTent:' + J.id) || '0', 10) || 0;
     var f = $('ovoFlut'); if(!f){ f = document.createElement('button'); f.id = 'ovoFlut'; f.type = 'button'; document.body.appendChild(f); f.onclick = function(){ abrirFolha('caca'); }; }
+    f.onclick = function(){ abrirFolha('caca'); };
     pintaFlut(); f.style.display = 'flex';
     dicasAtivas().forEach(function(d){ dicasMostradas[d] = 1; });   // as que já estão na abertura não voltam a avisar
+    venci = null;
     try{ var vj = ls('amesaOvoVenci:' + J.id); if(vj){ venci = JSON.parse(vj); f.innerHTML = '<span class="ov">🏆</span><span>Ganhaste!<small style="display:block;">' + esc(venci.codigo) + '</small></span>'; f.onclick = function(){ folhaVitoria(venci); }; } }catch(e){}
     if(!venci) document.addEventListener('click', onToque, true);
     ligarRealtime(); if(!pollT) pollT = setInterval(function(){ if(!rtOk && !document.hidden) sincronizar(); }, 30000);   // reserva: só quando o tempo real não está ligado
-    document.addEventListener('visibilitychange', function(){ if(!document.hidden) sincronizar(); });
-    window.addEventListener('pagehide', enviarTentativas);
-    setInterval(function(){ enviarTentativas(); verificarDicas(); }, 30000);
+    if(!iniciarCaca._uma){   // estes só se ligam uma vez (antes acumulavam a cada sessão nova)
+      iniciarCaca._uma = true;
+      document.addEventListener('visibilitychange', function(){ if(!document.hidden && aCacar) sincronizar(); });
+      window.addEventListener('pagehide', enviarTentativas);
+      setInterval(function(){ if(aCacar){ enviarTentativas(); verificarDicas(); } }, 30000);
+    }
   }
   function pararCaca(){ aCacar = false; var f = $('ovoFlut'); if(f) f.style.display = 'none'; document.removeEventListener('click', onToque, true); if(canal){ try{ sbC.removeChannel(canal); }catch(e){} canal = null; } if(pollT){ clearInterval(pollT); pollT = null; } }
   function pintaFlut(){ var f = $('ovoFlut'); if(f) f.innerHTML = '<span class="ov">🥚</span><span>À caça<small style="display:block;">' + tentativas + ' tentativa(s)' + (dicasAtivas().length ? ' · 💡 dica' : '') + '</small></span>'; }
