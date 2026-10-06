@@ -5580,6 +5580,7 @@
           // ---- Respostas rápidas: a reserva fala com o restaurante dentro da ÀMesa (WhatsApp só como último recurso) ----
           function abrirNovo(r){
             if(document.getElementById('gerirOverlay')) return;
+            if(r.ph || r.pp){ try{ localStorage.setItem(_chaveProp(r), '1'); }catch(e){} }
             const rd = r.rd||'', rh = r.rh||'', rp = String(r.rp||'1');
             const dd = rd ? new Date(rd+'T00:00:00') : null;
             const dataFmt = dd ? (dd.getDate()+' de '+_MESES[dd.getMonth()]) : rd;
@@ -5601,7 +5602,7 @@
             const notifOk = (typeof Notification !== 'undefined' && Notification.permission === 'granted');
             const ov = document.createElement('div');
             ov.id = 'gerirOverlay';
-            ov.style.cssText = 'position:fixed; inset:0; z-index:9000; background:rgba(0,0,0,.55); display:flex; align-items:flex-end; justify-content:center; padding:0;';
+            ov.style.cssText = 'position:fixed; inset:0; z-index:9700; background:rgba(0,0,0,.55); display:flex; align-items:flex-end; justify-content:center; padding:0;';
             ov.innerHTML = '<div style="background:linear-gradient(180deg,#fffdf9,var(--branco,#fff)); border-radius:22px 22px 0 0; border-top:3px solid var(--dourado,#a8712f); max-width:440px; width:100%; max-height:92vh; overflow:auto; padding:20px 18px calc(20px + var(--sa-bottom, env(safe-area-inset-bottom))); margin-bottom:calc(-1 * var(--sa-bottom, env(safe-area-inset-bottom))); box-shadow:0 -12px 40px rgba(0,0,0,.30); transform:translateY(100%); transition:transform .36s cubic-bezier(.2,.9,.3,1);">'
               + '<h3 style="margin:0 0 4px; text-align:center; font-family:var(--fonte-titulo); color:var(--castanho);">A tua reserva</h3>'
               + '<div style="text-align:center; color:var(--castanho-suave); font-size:.9rem; margin-bottom:12px;">' + resumo + '</div>'
@@ -5760,7 +5761,7 @@
           function _notaHtml(r){ return (r && r.nota) ? ('<br><br>📝 <b>Nota do restaurante:</b> ' + _escN(r.nota)) : ''; }
           function _mostrarAvisoRes(av){
             if(!av) return;
-            if(av.tipo==='proposta'){ setTimeout(function(){ abrir(av.r); }, 400); return; }   // proposta: abre logo a reserva com Aceito / Não dá
+            if(av.tipo==='proposta'){ _mostrarPropostas(); return; }   // proposta: abre a reserva com Aceito / Não dá (quando o ecrã estiver livre)
             if(av.tipo==='altok') _resPopup('#1e6b3c','✅ Alteração aceite','A tua reserva passou para '+_dataResumo(av.r)+' · '+_escN(av.r.rp)+' pessoa(s). Até já! 🍽️'+_notaHtml(av.r));
             else if(av.tipo==='altnao') _resPopup('#8a5a10','Alteração não foi possível','O restaurante não conseguiu alterar. A tua reserva mantém-se: '+_dataResumo(av.r)+' · '+_escN(av.r.rp)+' pessoa(s).');
             else if(av.tipo==='confirmada') _resPopup('#1e6b3c','✅ Reserva confirmada','A tua reserva de '+_dataResumo(av.r)+' foi confirmada pelo restaurante. Até já! 🍽️'+_notaHtml(av.r));
@@ -5809,7 +5810,7 @@
                   antes.forEach(function(x){ if(x.rid && prevMap[String(x.rid)] && !res.data.find(function(s){ return String(s.id)===String(x.rid); })){ if(!_aviso){ if(_cancTem(x.rid)){ _aviso = { tipo:'cancelado', r:x }; _cancDel(x.rid); } else { _aviso = { tipo:'recusada', r:x }; } } } });
                   const nova2 = nova.filter(valida);
                   if(JSON.stringify(nova2) !== JSON.stringify(antes)){ _escrever(nova2); atualizarBotao(); if(window.__reservaRerender) window.__reservaRerender(); }
-                  _mostrarAvisoRes(_aviso);
+                  _mostrarAvisoRes(_aviso); _mostrarPropostas();
                 });
                 return;
               }
@@ -5835,12 +5836,34 @@
                   nova.push(_nr);
                 });
                 if(JSON.stringify(nova) !== JSON.stringify(antes)){ _escrever(nova); atualizarBotao(); if(window.__reservaRerender) window.__reservaRerender(); }
-                _mostrarAvisoRes(_aviso);
+                _mostrarAvisoRes(_aviso); _mostrarPropostas();
               });
             }catch(e){}
           }
+          // ---- Propostas do restaurante: abrem sozinhas (uma vez cada), por cima de tudo, assim que o ecrã estiver livre ----
+          function _visivel(id){ var el = document.getElementById(id); if(!el) return false; try{ var cs = getComputedStyle(el); return cs.display !== 'none' && cs.visibility !== 'hidden' && el.offsetParent !== null || cs.position === 'fixed' && cs.display !== 'none'; }catch(e){ return false; } }
+          function _ecraLivre(){ return !document.hidden && !document.getElementById('gerirOverlay') && !_visivel('preAbertura') && !_visivel('modoGate'); }
+          function _quandoLivre(fn, t){ t = t || 0; if(_ecraLivre()){ fn(); return; } if(t < 180) setTimeout(function(){ _quandoLivre(fn, t + 1); }, 1000); }
+          function _chaveProp(r){ return 'resPropVista:' + r.rid + ':' + (r.ph || '') + '|' + (r.pp || ''); }
+          var _propAgendada = 0;
+          function _mostrarPropostas(){
+            if(_propAgendada && Date.now() - _propAgendada < 185000) return;   // já há uma à espera de ecrã livre
+            var r = lerLista().filter(function(x){ return x.rid && !x.g && (x.ph || x.pp); }).filter(function(x){ try{ return !localStorage.getItem(_chaveProp(x)); }catch(e){ return true; } })[0];
+            if(!r) return;
+            _propAgendada = Date.now();
+            _quandoLivre(function(){
+              _propAgendada = 0;
+              var atual = lerLista().filter(function(x){ return String(x.rid) === String(r.rid); })[0];
+              if(!atual || !(atual.ph || atual.pp)) return;   // entretanto já foi respondida
+              try{ localStorage.setItem(_chaveProp(atual), '1'); }catch(e){}
+              abrir(atual);
+            });
+          }
           window._sincronizarReservas = sincronizar;
           sincronizar();
+          setTimeout(_mostrarPropostas, 1500);
+          // com o menu aberto, confirma de 20 em 20 s se o restaurante respondeu (a notificação pode não ter sido tocada)
+          setInterval(function(){ if(!document.hidden) sincronizar(); }, 20000);
           // Veio de uma notificação (?rver=código) → abre essa reserva já atualizada
           (function(){
             const RV = P.get('rver'); if(!RV) return;
