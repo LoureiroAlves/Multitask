@@ -11,6 +11,61 @@
   async function sha(txt){ if(cache[txt]) return cache[txt]; try{ encoder = encoder || new TextEncoder(); var b = await crypto.subtle.digest('SHA-256', encoder.encode(txt)); var h = Array.prototype.map.call(new Uint8Array(b), function(x){ return ('0' + x.toString(16)).slice(-2); }).join(''); cache[txt] = h; return h; }catch(e){ return ''; } }
   function toast(t){ var el = $('ovoToast'); if(!el){ el = document.createElement('div'); el.id = 'ovoToast'; document.body.appendChild(el); } el.textContent = t; el.classList.add('on'); clearTimeout(el._t); el._t = setTimeout(function(){ el.classList.remove('on'); }, 1400); }
   function vib(p){ try{ if(navigator.vibrate) navigator.vibrate(p); }catch(e){} }
+  // ---------- convites: quem chega por um link de amigo (?convite=CÓDIGO) ----------
+  try{ var _cv = new URLSearchParams(location.search).get('convite'); if(_cv && /^[A-Za-z0-9]{4,12}$/.test(_cv)) ls('amesaOvoConvite', _cv.toUpperCase()); }catch(e){}
+  var CONV = null;   // { codigo, amigos, meta, tem_dica, dica } da inscrição deste telemóvel
+  async function lerConvite(){
+    var part = P || (J && ls('amesaOvoPart:' + J.id)); if(!part) return null;   // antes de começar, P ainda não está em memória
+    try{ var r = await sbC.rpc('ovo_meu_convite', { p_participacao:part }); if(r.error || !r.data) return null; CONV = r.data; return CONV; }catch(e){ return null; }
+  }
+  function linkConvite(cod){
+    var base = window.__linkCardapio ? window.__linkCardapio() : (location.origin + location.pathname);
+    return base + (base.indexOf('?') >= 0 ? '&' : '?') + 'convite=' + encodeURIComponent(cod);
+  }
+  function textoConvite(){
+    var rest = window.__negNome || 'restaurante';
+    return '🥚 Caça ao ovo no ' + rest + ' — começa ' + quandoTxt(J.inicio) + '! Prémio: ' + (J.premio_nome || '') + '. Só jogam os inscritos — inscreve-te aqui:';
+  }
+  async function partilharConvite(){
+    if(!CONV || !CONV.codigo) await lerConvite();
+    if(!CONV || !CONV.codigo){ toast('Sem ligação. Tenta outra vez.'); return; }
+    var url = linkConvite(CONV.codigo), txt = textoConvite();
+    try{ if(navigator.share){ await navigator.share({ title:'Caça ao ovo', text:txt, url:url }); return; } }catch(e){ if(e && e.name === 'AbortError') return; }
+    window.open('https://wa.me/?text=' + encodeURIComponent(txt + ' ' + url), '_blank');
+  }
+  // Bloco "Convida amigos" (folha do jogo agendado, para quem já está inscrito)
+  async function pintarConvite(){
+    var box = $('ovoConvBox'); if(!box || !J) return;
+    var c = await lerConvite(); box = $('ovoConvBox'); if(!box) return;
+    if(!c){ box.innerHTML = ''; return; }
+    var meta = c.meta || 2, n = Math.min(c.amigos || 0, meta), fechado = Date.now() >= fechoInsc();
+    var h = '';
+    if(c.tem_dica){
+      h += '<div class="ovo-conv"><div class="ovo-conv-t">🎁 Convida ' + meta + ' amigos e ganha uma <b>dica secreta</b></div>'
+        + '<div class="ovo-conv-barra"><i style="width:' + Math.round(n / meta * 100) + '%"></i></div>'
+        + '<div class="ovo-conv-n">' + (n >= meta ? '🔓 Conseguiste! A dica secreta aparece quando a caça começar.' : (n + ' de ' + meta + ' amigos inscritos')) + '</div>'
+        + (n < meta ? '<div class="ovo-conv-s">Conta quando o amigo se inscreve pelo teu link, com as notificações ligadas.</div>' : '')
+        + '</div>';
+    }
+    if(!fechado) h += '<button type="button" class="btn" id="ovoConvidar" style="background:#25d366;box-shadow:none;">📲 Convidar amigos</button>';
+    // sugerir instalar a app (para receber os avisos e não perder a próxima caça)
+    var I = window.__amInstalar;
+    if(I && !I.instalada()){
+      if(I.pode()) h += '<button type="button" class="btn sec" id="ovoInstalar">➕ Pôr a ÀMesa no ecrã principal</button>';
+      else if(I.ios()) h += '<div class="ovo-conv-s" style="margin-top:8px;">📲 Dica: no Safari toca em <b>Partilhar</b> ⬆️ → <b>“Adicionar ao Ecrã Principal”</b> para não perderes a próxima caça.</div>';
+    }
+    box.innerHTML = h;
+    var bc = $('ovoConvidar'); if(bc) bc.onclick = partilharConvite;
+    var bi = $('ovoInstalar'); if(bi) bi.onclick = function(){ I.pedir().then(function(ok){ if(ok) toast('✓ ÀMesa no ecrã principal'); pintarConvite(); }); };
+  }
+  // Dica secreta durante a caça (só para quem convidou os amigos)
+  async function pintarDicaSecreta(){
+    var box = $('ovoDicaSec'); if(!box) return;
+    var c = (CONV && CONV.dica) ? CONV : await lerConvite(); box = $('ovoDicaSec'); if(!box || !c || !c.tem_dica) return;
+    if(c.dica){ box.innerHTML = '<div class="dica ovo-dica-sec">🔐 <b>Dica secreta:</b> ' + esc(c.dica) + '</div>'; return; }
+    box.innerHTML = '<div class="ovo-conv-s" style="margin:6px 0;">🔒 Dica secreta bloqueada — convidaste ' + Math.min(c.amigos || 0, c.meta || 2) + ' de ' + (c.meta || 2) + ' amigos.</div>';
+  }
+
   // ---------- carregar o jogo ----------
   async function carregar(){
     if(typeof sbC === 'undefined' || !sbC || !window.__negocioId) return;
@@ -31,7 +86,7 @@
     var novoId = j ? j.id : null;
     if(novoId !== jogoId){
       if(jogoId !== null){ pararCaca(); fecharFolha(); }
-      jogoId = novoId; venci = null; P = null; tentativas = 0; tentPend = 0; dicasMostradas = {}; terminouVisto = false;
+      jogoId = novoId; venci = null; P = null; CONV = null; tentativas = 0; tentPend = 0; dicasMostradas = {}; terminouVisto = false;
       var fv = $('ovoFlut'); if(fv) fv.onclick = function(){ abrirFolha('caca'); };
     }
     J = j; var selo = $('ovoSelo');
@@ -55,6 +110,8 @@
       // aviso 5 minutos antes (uma vez por dispositivo)
       var ms5 = new Date(J.inicio).getTime() - Date.now() - 5*60000;
       if(ms5 > 0 && ms5 < 2147483000) setTimeout(function(){ if(J && J.estado === 'agendado' && !ls('amesaOvoAviso5:' + J.id)){ ls('amesaOvoAviso5:' + J.id, '1'); abrirFolha('agendado'); vib([60,40,60]); } }, ms5);
+      // chegou por um convite e ainda não está inscrito → mostra logo a folha para se inscrever (uma vez por sessão)
+      if(ls('amesaOvoConvite') && !ls('amesaOvoPart:' + J.id) && !ls('amesaOvoConvVisto:' + J.id) && Date.now() < fechoInsc()){ ls('amesaOvoConvVisto:' + J.id, '1'); setTimeout(function(){ abrirFolha('agendado'); }, 1200); }
       var msI = new Date(J.inicio).getTime() - Date.now() + 800;
       if(msI < 2147483000) iniT = setTimeout(arranque, Math.max(0, msI));
       return;
@@ -113,24 +170,27 @@
       folha('<div class="big">🥚</div><h2>' + esc(J.nome) + '</h2><p>' + esc(J.descricao || 'Há um ovo escondido algures neste menu. Encontra-o antes de toda a gente!') + '</p>'
         + '<div class="premio"><span style="font-size:.78rem;font-weight:800;color:#8a5a10;">PRÉMIO</span><b>🎁 ' + esc(J.premio_nome) + '</b>' + (J.premio_descricao ? ('<span style="font-size:.85rem;">' + esc(J.premio_descricao) + '</span>') : '') + '</div>'
         + dicas.map(function(d){ return '<div class="dica">💡 ' + esc(d) + '</div>'; }).join('')
+        + (tipo === 'caca' ? '<div id="ovoDicaSec"></div>' : '')
         + '<p class="meta">Válido até às ' + hhmm(J.fim) + ' · ' + (J.participantes || 0) + ' a procurar · ' + (J.limite_vencedores > 1 ? (J.limite_vencedores + ' prémios') : '1 prémio') + '</p>'
         + (tipo === 'abertura' ? '<div class="dica" style="background:#fbe7e4;color:#b23;">🔒 Só jogam os inscritos — as inscrições fecharam 1 minuto antes do início.</div><button type="button" class="btn sec" id="ovoComecar">Inscrevi-me neste telemóvel — entrar</button><button type="button" class="btn sec" id="ovoDepois">Fechar</button>'
                               : '<p style="font-weight:800;">Estás a procurar · ' + tentativas + ' tentativa(s)</p><button type="button" class="btn" id="ovoDepois">Continuar a procurar</button>'));
       var c = $('ovoComecar'); if(c) c.onclick = comecar;
       $('ovoDepois').onclick = fecharFolha;
+      if($('ovoDicaSec')) pintarDicaSecreta();
     } else if(tipo === 'agendado'){
       folha(patHTML('hero') + '<div class="big">🥚⏳</div><h2>' + esc(J.nome) + '</h2><p>' + esc(J.descricao || 'Vamos esconder um ovo neste menu. O primeiro a encontrá-lo ganha!') + '</p>'
         + '<div class="premio"><span style="font-size:.78rem;font-weight:800;color:#8a5a10;">PRÉMIO</span><b>🎁 ' + esc(J.premio_nome) + '</b>' + (J.premio_descricao ? ('<span style="font-size:.85rem;">' + esc(J.premio_descricao) + '</span>') : '') + '</div>'
         + '<p style="font-weight:900;font-size:1.1rem;">Começa ' + quandoTxt(J.inicio) + '</p><p class="ovo-cd" style="font-size:2rem;font-weight:900;font-variant-numeric:tabular-nums;margin:4px 0;">' + contagem(J.inicio) + '</p>'
         + (function(){
             var insc = !!ls('amesaOvoPart:' + J.id), aberto = Date.now() < fechoInsc();
-            if(insc) return '<div class="dica">✓ Estás inscrito! Avisamos-te 1 minuto antes. Quando começar, entras logo na caça — deixa o menu aberto ou toca no aviso.</div><button type="button" class="btn sec" id="ovoDepois">OK</button>';
-            if(aberto) return '<p style="font-weight:800;">Só os inscritos podem jogar. Inscrições até às ' + hhmm(fechoInsc()) + '.</p><button type="button" class="btn" id="ovoInscrever">✋ Quero jogar — inscrever-me</button><button type="button" class="btn sec" id="ovoDepois">Agora não</button>';
+            if(insc) return '<div class="dica">✓ Estás inscrito! Avisamos-te 1 minuto antes. Quando começar, entras logo na caça — deixa o menu aberto ou toca no aviso.</div><div id="ovoConvBox"></div><button type="button" class="btn sec" id="ovoDepois">OK</button>';
+            if(aberto) return (ls('amesaOvoConvite') ? '<div class="ovo-convidado">🎉 Foste convidado para esta caça ao ovo!</div>' : '') + '<p style="font-weight:800;">Só os inscritos podem jogar. Inscrições até às ' + hhmm(fechoInsc()) + '.</p><button type="button" class="btn" id="ovoInscrever">✋ Quero jogar — inscrever-me</button><button type="button" class="btn sec" id="ovoDepois">Agora não</button>';
             return '<div class="dica" style="background:#fbe7e4;color:#b23;">As inscrições já fecharam. Fica atento à próxima caça! 🥚</div><button type="button" class="btn sec" id="ovoDepois">OK</button>';
           })()
         + '<p class="meta">Termina às ' + hhmm(J.fim) + '.</p>');
       $('ovoDepois').onclick = fecharFolha;
       { var bi = $('ovoInscrever'); if(bi) bi.onclick = inscrever; }
+      if($('ovoConvBox')) pintarConvite();
     } else if(tipo === 'comecou' && !ls('amesaOvoPart:' + J.id)){
       folha('<div class="big">🥚🔒</div><h2>A caça começou!</h2><p><b>' + esc(J.nome) + '</b> — desta vez só jogam os inscritos.</p><p>Fica atento: quando houver nova caça, inscreve-te antes de começar. 🥚</p><button type="button" class="btn sec" id="ovoDepois">OK</button>');
       $('ovoDepois').onclick = fecharFolha;
@@ -138,10 +198,12 @@
       folha((J.patrocinador_nome ? patHTML('grande') : '') + '<div class="big">🥚🔔</div><h2>A caça começou!</h2><p><b>' + esc(J.nome) + '</b> — o ovo já está escondido no menu.</p>'
         + '<div class="premio"><span style="font-size:.78rem;font-weight:800;color:#8a5a10;">PRÉMIO</span><b>🎁 ' + esc(J.premio_nome) + '</b></div>'
         + dicasAtivas().map(function(d){ return '<div class="dica">💡 ' + esc(d) + '</div>'; }).join('')
+        + '<div id="ovoDicaSec"></div>'
         + '<p class="meta">Até às ' + hhmm(J.fim) + ' · ' + (J.limite_vencedores > 1 ? (J.limite_vencedores + ' prémios') : '1 prémio') + '</p>'
         + (aCacar ? '<p style="font-weight:800;">Já estás a procurar! Toca nos pratos, categorias, fotos… 🔍</p><button type="button" class="btn" id="ovoDepois">Vamos!</button>'
                   : '<button type="button" class="btn" id="ovoComecar">🔍 Começar a Procurar</button><button type="button" class="btn sec" id="ovoDepois">Agora não</button>'));
       { var c2 = $('ovoComecar'); if(c2) c2.onclick = comecar; } $('ovoDepois').onclick = fecharFolha;
+      pintarDicaSecreta();
     } else if(tipo === 'expirado'){
       folha('<div class="big">⏰</div><h2>Tempo esgotado!</h2><p>Desta vez ninguém encontrou o ovo — continua escondido no nosso menu.</p><p>Obrigado por participares. Fica atento à próxima caça! 🥚</p><button type="button" class="btn sec" id="ovoDepois">Fechar</button>');
       $('ovoDepois').onclick = fecharFolha;
@@ -184,7 +246,12 @@
     try{ if(window.__ovoObterPush) ep = await window.__ovoObterPush(); }catch(e){ ep = ''; }
     var erro = null, id = null;
     for(var k = 0; k < 3; k++){
-      try{ var r = await sbC.rpc('ovo_inscrever', { p_jogo:J.id, p_dispositivo:disp(), p_endpoint:ep || null }); if(r.error) throw r.error; id = r.data; erro = null; break; }
+      try{
+        var args = { p_jogo:J.id, p_dispositivo:disp(), p_endpoint:ep || null }, cv = ls('amesaOvoConvite');
+        if(cv) args.p_convite = cv;
+        var r = await sbC.rpc('ovo_inscrever', args);
+        if(r.error && cv && /ovo_inscrever|PGRST202|function/i.test(String(r.error.message || '') + (r.error.code || ''))){ delete args.p_convite; r = await sbC.rpc('ovo_inscrever', args); }   // base de dados ainda sem convites
+        if(r.error) throw r.error; id = r.data; erro = null; break; }
       catch(e){ erro = e; if(/inscricoes_fechadas|jogo_inativo/.test(String(e && e.message || e))) break; await new Promise(function(ok){ setTimeout(ok, 1200); }); }
     }
     if(!id){
@@ -192,7 +259,7 @@
       if(b){ b.disabled = false; b.textContent = '✋ Quero jogar — inscrever-me'; }
       toast(m.indexOf('inscricoes_fechadas') >= 0 ? 'As inscrições já fecharam.' : (m.indexOf('jogo_inativo') >= 0 ? 'Este jogo já não está disponível.' : 'Sem ligação. Tenta outra vez.')); return;
     }
-    P = id; ls('amesaOvoPart:' + J.id, id); vib([60,40,60]);
+    P = id; ls('amesaOvoPart:' + J.id, id); ls('amesaOvoConvite', null); CONV = null; vib([60,40,60]);
     toast(ep ? '✓ Inscrito! Avisamos-te 1 minuto antes.' : '✓ Inscrito! Deixa o menu aberto para entrares quando começar.');
     abrirFolha('agendado');
     document.querySelectorAll('.ovo-insc').forEach(function(el){ el.textContent = '✓ Estás inscrito'; });

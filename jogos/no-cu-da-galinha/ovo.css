@@ -90,3 +90,13 @@
   @keyframes ovoShake{ 0%,100%{ transform:translateX(0); } 25%{ transform:translateX(-5px); } 75%{ transform:translateX(5px); } }
   .ovo-conf{ position:fixed; top:-10px; width:10px; height:14px; z-index:9300; pointer-events:none; animation:ovoConf linear forwards; }
   @keyframes ovoConf{ to{ transform:translateY(110vh) rotate(720deg); opacity:.9; } }
+
+/* ---- convidar amigos + dica secreta ---- */
+.ovo-conv{ background:#fff7e0; border:1.5px solid #f2d27a; border-radius:14px; padding:12px; margin:10px 0 8px; text-align:left; }
+.ovo-conv-t{ font-weight:800; font-size:.95rem; color:#5a3d08; }
+.ovo-conv-barra{ height:10px; border-radius:999px; background:#f1e4c2; overflow:hidden; margin:9px 0 6px; }
+.ovo-conv-barra i{ display:block; height:100%; background:linear-gradient(90deg,#f2b705,#e0245e); border-radius:999px; transition:width .5s; }
+.ovo-conv-n{ font-weight:800; font-size:.88rem; color:#3a2c18; }
+.ovo-conv-s{ font-size:.78rem; color:#8a7a5c; margin-top:4px; line-height:1.35; }
+.ovo-convidado{ background:linear-gradient(135deg,#ffe8a3,#ffd1dc); border-radius:12px; padding:10px 12px; font-weight:900; color:#5a3d08; margin:6px 0 10px; }
+.ovo-dica-sec{ background:#efe6ff !important; color:#3d2470 !important; border:1.5px solid #c9b3f5; }
