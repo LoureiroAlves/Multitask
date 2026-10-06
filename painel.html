@@ -1628,7 +1628,8 @@ window.__carregarErros = async function(){
       if(new Date(j.inicio).getTime() - Date.now() < 5 * 60000 && !(await conf('Esta sessão começa daqui a menos de 5 minutos. As inscrições fecham 1 minuto antes do início, por isso quase ninguém se vai conseguir inscrever. Publicar mesmo assim?', 'Publicar'))) return;
       btn.disabled = true; r = await sb.rpc('ovo_publicar', { p_jogo:id });
       if(r.error){ aviso('Erro ao publicar: ' + esc(r.error.message), true); btn.disabled = false; return; }
-      aviso('Publicada ✓ — as inscrições abriram e o aviso sai no próximo minuto.');
+      try{ await sb.rpc('ovo_avisos_agora'); }catch(e){}   // aviso push na hora (se falhar, sai no minuto seguinte)
+      aviso('Publicada ✓ — as inscrições abriram e o aviso foi enviado.');
     }
     if(ac === 'desativar'){ if(!(await conf('Desativar esta sessão? Sai do menu e volta a “Em preparação”. As inscrições feitas mantêm-se.'))) return; r = await sb.from('ovo_jogos').update({ estado:'rascunho' }).eq('id', id); }
     if(ac === 'cancelar'){ if(!(await conf('Cancelar esta sessão? Deixa de aparecer no menu.', 'Cancelar sessão'))) return; r = await sb.from('ovo_jogos').update({ estado:'cancelado' }).eq('id', id); }
@@ -1837,7 +1838,8 @@ window.__carregarErros = async function(){
     if(p.alvo && (publicar || (p.estado && p.estado !== 'rascunho' && p.estado !== 'cancelado'))){
       var pb = await sb.rpc('ovo_publicar', { p_jogo:id }); if(pb.error) return erro('Guardado, mas não publicou: ' + esc(pb.error.message));
     }
-    EDIT = null; VISTA = 'proximas'; await render(); aviso(publicar ? 'Sessão guardada e publicada ✓' : 'Sessão guardada ✓');
+    if(publicar){ try{ await sb.rpc('ovo_avisos_agora'); }catch(e){} }   // aviso push na hora
+    EDIT = null; VISTA = 'proximas'; await render(); aviso(publicar ? 'Sessão guardada e publicada ✓ — aviso enviado' : 'Sessão guardada ✓');
   }
 
   // ---------- aviso de vencedor enquanto o painel está aberto ----------
