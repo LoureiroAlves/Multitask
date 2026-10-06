@@ -971,7 +971,7 @@
     const hojeIso = isoLocal(hoje);
     const ativas = reservas.filter(function(r){ return r.estado !== 'cancelada'; });
     const hojeR = ativas.filter(function(r){ return r.data === hojeIso; });
-    const futPend = ativas.filter(function(r){ return r.data >= hojeIso && r.estado === 'pendente'; });
+    const futPend = ativas.filter(function(r){ return r.data >= hojeIso && _precisaResposta(r); });
     let encPend = 0, encAtivas = 0;
     try{
       const desde = new Date(); desde.setDate(desde.getDate()-30);
@@ -2189,6 +2189,8 @@
 
   function _cmpR(a,b){ return (a.data + (a.hora||'')).localeCompare(b.data + (b.hora||'')); }
   function _kpi(n, l, cls, icon){ return '<div class="kpi '+(cls||'')+'"><div class="ic">'+(icon||'')+'</div><div class="n">'+n+'</div><div class="l">'+l+'</div></div>'; }
+  // Precisa de resposta do restaurante: pedido novo OU o cliente pediu uma alteração
+  function _precisaResposta(r){ return r.estado !== 'cancelada' && (r.estado === 'pendente' || !!r.alt_hora || !!r.alt_pessoas); }
   // Porque é que uma reserva ficou cancelada (histórico das recusadas)
   function _motivo(r){
     if(r.resposta_cliente === 'recusou') return '❌ O cliente não aceitou a proposta';
@@ -2214,7 +2216,7 @@
       + '<div class="datebox db-'+wd+'"><div class="dia-n">'+d.getDate()+'</div><div class="mes-n">'+MESES[d.getMonth()].slice(0,3)+'</div></div>'
       + '<div class="info"><div class="quem">'+esc(r.nome||'')+' · '+(Number(r.pessoas)||1)+' pessoa(s)</div>'
       + '<div class="quando">'+quando+'</div></div>'
-      + '<span class="dot '+(r.estado||'')+'">'+(r.estado||'')+'</span></div>';
+      + ((r.alt_hora || r.alt_pessoas) && r.estado !== 'cancelada' ? '<span class="dot pendente">🔁 alteração</span>' : '<span class="dot '+(r.estado||'')+'">'+(r.estado||'')+'</span>') + '</div>';
   }
   function irParaDia(iso){
     const d = new Date(iso+'T00:00:00');
@@ -2228,7 +2230,7 @@
     const hojeIso = isoLocal(hoje);
     const ativas = reservas.filter(function(r){ return r.estado !== 'cancelada'; });
     const futuras = ativas.filter(function(r){ return r.data >= hojeIso; }).sort(_cmpR);
-    const futPend = futuras.filter(function(r){ return r.estado === 'pendente'; });
+    const futPend = futuras.filter(_precisaResposta);
     const hojeR = ativas.filter(function(r){ return r.data === hojeIso; }).sort(_cmpR);
     const cap = _capacidade();
     const pessoasHoje = _pessoasDia(hojeIso);
@@ -2267,7 +2269,7 @@
     const hojeIso = isoLocal(hoje);
     const ativas = reservas.filter(function(r){ return r.estado !== 'cancelada'; });
     const hojeR = ativas.filter(function(r){ return r.data === hojeIso; }).sort(_cmpR);
-    const futPend = ativas.filter(function(r){ return r.data >= hojeIso && r.estado === 'pendente'; }).sort(_cmpR);
+    const futPend = ativas.filter(function(r){ return r.data >= hojeIso && _precisaResposta(r); }).sort(_cmpR);
     const prox = ativas.filter(function(r){ return r.data > hojeIso; }).sort(_cmpR).slice(0, 20);
     let html = '';
     if(futPend.length){ html += '<div class="dash-sec"><h3>⏳ A precisar de resposta</h3>' + futPend.map(_linhaReserva).join('') + '</div>'; }
@@ -2725,7 +2727,7 @@
     for(let d=1; d<=dias; d++){
       const iso = vAno + '-' + String(vMes+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
       const rs = (porDia[iso] || []).filter(function(r){ return r.estado !== 'cancelada'; });
-      const nPend = rs.filter(function(r){ return r.estado==='pendente'; }).length;
+      const nPend = rs.filter(_precisaResposta).length;
       const nConf = rs.filter(function(r){ return r.estado==='confirmada'; }).length;
       const temPromo = !!_prResolver(_prLista(), iso);
       const fer = _feriado(iso) || _ferMunicipal(iso);
@@ -2738,7 +2740,7 @@
       if(iso < hojeIso) cls += ' passado';
       else if(iso > hojeIso) cls += ' futuro';
       if(rs.length) cls += ' tem';
-      if(nConf) cls += ' tem-conf'; else if(nPend) cls += ' tem-pend';
+      if(nPend) cls += ' tem-pend'; else if(nConf) cls += ' tem-conf';   // por responder (incl. alterações) tem prioridade
       if(iso===hojeIso) cls += ' hoje';
       if(iso===diaSel) cls += ' sel';
       let bar = '';
