@@ -2189,6 +2189,8 @@
 
   function _cmpR(a,b){ return (a.data + (a.hora||'')).localeCompare(b.data + (b.hora||'')); }
   function _kpi(n, l, cls, icon){ return '<div class="kpi '+(cls||'')+'"><div class="ic">'+(icon||'')+'</div><div class="n">'+n+'</div><div class="l">'+l+'</div></div>'; }
+  // Cancelada mas ainda à vista: só vai para a pasta quando o dono carregar em "Enviar para as canceladas"
+  function _porArquivar(r){ return r.estado === 'cancelada' && !r.arquivada; }
   // Precisa de resposta do restaurante: pedido novo OU o cliente pediu uma alteração
   function _precisaResposta(r){ return r.estado !== 'cancelada' && (r.estado === 'pendente' || !!r.alt_hora || !!r.alt_pessoas); }
   // Porque é que uma reserva ficou cancelada (histórico das recusadas)
@@ -2277,10 +2279,12 @@
     html += '<div class="dash-sec"><h3>➡️ Próximas reservas</h3>' + (prox.length ? prox.map(_linhaReserva).join('') : '<div class="vazio-msg">Sem reservas futuras.</div>') + '</div>';
     // histórico: recusadas e canceladas (próximas e dos últimos 30 dias)
     { const lim = new Date(); lim.setDate(lim.getDate() - 30); const limIso = isoLocal(lim);
-      const canc = reservas.filter(function(r){ return r.estado === 'cancelada' && r.data >= limIso; }).sort(function(a,b){ return (b.data + (b.hora||'')).localeCompare(a.data + (a.hora||'')); });
-      html += _histHTML(canc, 'Histórico: recusadas e canceladas (últimos 30 dias)'); }
+      const porArq = reservas.filter(function(r){ return _porArquivar(r) && r.data >= limIso; }).sort(_cmpR);
+      if(porArq.length) html = '<div class="dash-sec"><h3>🚫 Canceladas — envia para a pasta</h3>' + porArq.map(function(r){ return _linhaReserva(r).replace('</div></div><span', '</div><div class="motivo">' + _motivo(r) + '</div></div><span'); }).join('') + '</div>' + html;
+      const canc = reservas.filter(function(r){ return r.estado === 'cancelada' && r.arquivada && r.data >= limIso; }).sort(function(a,b){ return (b.data + (b.hora||'')).localeCompare(a.data + (a.hora||'')); });
+      html += _histHTML(canc, 'Pasta das canceladas (últimos 30 dias)'); }
     c.innerHTML = html;
-    c.querySelectorAll('.linha-r').forEach(function(el){ el.onclick = function(){ if(el.closest('.r-hist')) abrirModalEdicao(el.getAttribute('data-id')); else _abrirReserva(el.getAttribute('data-id')); }; });
+    c.querySelectorAll('.linha-r').forEach(function(el){ el.onclick = function(){ const id = el.getAttribute('data-id'); const r = reservas.find(function(x){ return String(x.id) === String(id); }); if(el.closest('.r-hist') || (r && r.estado === 'cancelada')) abrirModalEdicao(id); else _abrirReserva(id); }; });
     _pintarDonoPush();
   }
   function _capacidade(){ return (negocio && negocio.config && negocio.config.agenda && parseInt(negocio.config.agenda.capacidade,10)) || 0; }
@@ -2684,7 +2688,11 @@
       mr.style.display = grupo ? 'none' : '';
       mr.onclick = function(){ fecharModal(); _responder(r); };
       wa.textContent = grupo ? '📲 Avisar cliente por WhatsApp' : '📲 WhatsApp (último recurso)';
-      wa.style.background = grupo ? '#25d366' : '#fff'; wa.style.color = grupo ? '#fff' : '#1e7a43'; wa.style.border = grupo ? 'none' : '1.5px solid #cdeed9'; }
+      wa.style.background = grupo ? '#25d366' : '#fff'; wa.style.color = grupo ? '#fff' : '#1e7a43'; wa.style.border = grupo ? 'none' : '1.5px solid #cdeed9';
+      let ma = $('mdArquivar');
+      if(!ma){ ma = document.createElement('button'); ma.id = 'mdArquivar'; ma.type = 'button'; ma.style.cssText = 'width:100%; margin-top:6px; background:#fbe7e4; color:#a33; border:1.5px solid #e8c4bf; border-radius:9px; padding:11px; font-weight:800; cursor:pointer;'; ma.textContent = '🗂 Enviar para as canceladas'; wa.after(ma); }
+      ma.style.display = _porArquivar(r) ? '' : 'none';
+      ma.onclick = async function(){ if(await _arquivarReserva(r.id)) fecharModal(); }; }
     $('modalEdit').classList.remove('hide');
     document.body.style.overflow = 'hidden';
   }
@@ -2845,7 +2853,7 @@
 
   function renderDia(iso){
     const d = new Date(iso + 'T00:00:00');
-    const rs = (porDia[iso] || []).filter(function(r){ return r.estado !== 'cancelada'; }).sort(function(a,b){ return (a.hora||'').localeCompare(b.hora||''); });
+    const rs = (porDia[iso] || []).filter(function(r){ return r.estado !== 'cancelada' || _porArquivar(r); }).sort(function(a,b){ return (a.hora||'').localeCompare(b.hora||''); });
     const _wd = d.getDay();
     const _abrev = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'][_wd];
     const _fer = _feriado(iso) || _ferMunicipal(iso);
@@ -2858,6 +2866,19 @@
     rs.forEach(function(r){
       let acoes = '';
       const grupo = _eGrupo(r);
+      if(r.estado === 'cancelada'){
+        // cancelada (pelo cliente ou pelo restaurante): fica à vista até o dono a enviar para a pasta
+        html += '<div class="r cancelada">'
+          + '<div class="r-top"><span class="r-quando">'+esc(r.hora||'')+'</span><span class="pill cancelada">cancelada</span></div>'
+          + '<div class="r-nome">'+esc(r.nome||'')+' · '+(Number(r.pessoas)||1)+' pessoa(s)</div>'
+          + '<div class="r-meta">📱 '+esc(r.telefone||'')+'</div>'
+          + '<div class="r-motivo">' + _motivo(r) + '</div>'
+          + (r.obs ? ('<div class="r-menu">🍽 '+esc(r.obs)+'</div>') : '')
+          + '<div class="r-acoes"><button class="resp" data-a="arquivar" data-id="'+r.id+'">🗂 Enviar para as canceladas</button>'
+          + '<button class="edit" data-a="editar" data-id="'+r.id+'">✏️ Editar</button>'
+          + '<button class="del" data-a="apagar" data-id="'+r.id+'">🗑 Apagar</button></div></div>';
+        return;
+      }
       if(grupo){
         // Menus de grupo: continuam pelo WhatsApp (como sempre)
         if(r.estado!=='confirmada') acoes += '<button class="ok" data-a="confirmar" data-id="'+r.id+'">✔ Confirmar</button>';
@@ -2886,7 +2907,7 @@
         + '<div class="r-acoes">'+acoes+'</div></div>';
     });
     // histórico do dia: recusadas e canceladas (não desaparecem)
-    html += _histHTML((porDia[iso] || []).filter(function(r){ return r.estado === 'cancelada'; }).sort(function(a,b){ return (a.hora||'').localeCompare(b.hora||''); }), 'Recusadas e canceladas neste dia');
+    html += _histHTML((porDia[iso] || []).filter(function(r){ return r.estado === 'cancelada' && r.arquivada; }).sort(function(a,b){ return (a.hora||'').localeCompare(b.hora||''); }), 'Pasta das canceladas neste dia');
     $('detalhe').innerHTML = html;
     _wireNova(iso);
     $('detalhe').querySelectorAll('.r-hist .linha-r').forEach(function(el){ el.onclick = function(){ abrirModalEdicao(el.getAttribute('data-id')); }; });
@@ -3144,10 +3165,17 @@
   setInterval(_resVigiar, 30000); setTimeout(_resVigiar, 6000);
   document.addEventListener('visibilitychange', function(){ if(!document.hidden) _resVigiar(); });
 
+  async function _arquivarReserva(id){
+    const { error } = await sb.from('reservas').update({ arquivada:true }).eq('id', id);
+    if(error){ alert(/arquivada/i.test(error.message || '') ? 'Falta correr no Supabase o ficheiro reservas-canceladas.sql.' : ('Erro: ' + error.message)); return false; }
+    _toastR('🗂 Enviada para a pasta das canceladas');
+    carregar(); return true;
+  }
   async function accao(id, a){
     const r = reservas.find(function(x){ return String(x.id)===String(id); });
     if(a==='avisar'){ _avisarCliente(r); return; }
     if(a==='responder'){ _responder(r); return; }
+    if(a==='arquivar'){ await _arquivarReserva(id); return; }
     if(r && !_eGrupo(r) && (a==='confirmar' || a==='cancelar' || a==='altok' || a==='altnao')){
       if(a==='cancelar' && !(await window.__amConfirm('Sem disponibilidade',{texto:'Recusar esta reserva? O cliente é avisado.', ok:'Sim, recusar', cancelar:'Não'}))) return;
       await _resp(r, a);
