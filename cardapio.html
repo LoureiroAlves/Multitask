@@ -5591,7 +5591,8 @@
               est = '<div style="background:#eef3fb; color:#2a4f86; border-radius:14px; padding:12px; text-align:center; font-weight:800;">🕘 O restaurante propõe:<div style="font-size:1.25rem; margin:4px 0;">' + _escN(oq) + '</div><span style="font-weight:600; font-size:.85rem;">Serve-te?</span>'
                 + '<div style="display:flex; gap:8px; margin-top:10px;"><button id="grAceito" type="button" style="' + B + 'margin:0; background:#1e8c4a; color:#fff;">✅ Aceito</button><button id="grNaoDa" type="button" style="' + B + 'margin:0; background:#fff; color:#b23; border:1.5px solid #e8c4bf;">❌ Não dá</button></div></div>';
             } else if(r.ah || r.ap){
-              est = '<div style="background:#fff3d6; color:#7a5310; border-radius:14px; padding:12px; text-align:center; font-weight:800;">🔁 Pediste: ' + _escN((r.ap || rp) + ' pessoa(s)' + (r.ah ? (' às ' + r.ah) : '')) + '<br><span style="font-weight:600; font-size:.85rem;">À espera da resposta do restaurante</span></div>';
+              const _m = []; if(r.ah) _m.push('hora para as ' + r.ah); if(r.ap) _m.push(r.ap + ' pessoa(s)');
+              est = '<div style="background:#fff3d6; color:#7a5310; border-radius:14px; padding:12px; text-align:center; font-weight:800;">🔁 Pediste para mudar: ' + _escN(_m.join(' e ')) + '<br><span style="font-weight:600; font-size:.85rem;">À espera da resposta do restaurante</span></div>';
             } else if(String(r.estado) === 'confirmada'){
               est = '<div style="background:#e2f4e9; color:#1e6b3c; border-radius:14px; padding:12px; text-align:center; font-weight:800;">✅ Reserva confirmada</div>';
             } else {
@@ -5663,9 +5664,10 @@
               const nh = (($g('grHora')||{}).value||'').trim();
               if(String(np) === rp && (!nh || nh === rh)){ msg('Muda o nº de pessoas ou a hora.', '#8a5a10'); return; }
               const bt = $g('grEnviarAlt'); bt.disabled = true;
-              sbC.rpc('reserva_pedir_alteracao', { p_id:r.rid, p_hora:(nh && nh !== rh) ? nh : null, p_pessoas:np }).then(function(res){
+              const _novaH = (nh && nh !== rh) ? nh : null, _novaP = (String(np) !== rp) ? np : null;   // só o que muda
+              sbC.rpc('reserva_pedir_alteracao', { p_id:r.rid, p_hora:_novaH, p_pessoas:_novaP }).then(function(res){
                 if(res && res.error) throw res.error;
-                upsert(Object.assign({}, r, { ah:(nh && nh !== rh) ? nh : '', ap:String(np), rc:'pediu_alteracao' }));
+                upsert(Object.assign({}, r, { ah:_novaH || '', ap:(_novaP ? String(_novaP) : ''), rc:'pediu_alteracao' }));
                 fechar(); _resPopup('#2a4f86','📨 Pedido enviado','O restaurante vai responder ao teu pedido de alteração. A resposta aparece na tua reserva.');
               }).catch(function(e){ bt.disabled = false; falhou(e); });
             };
