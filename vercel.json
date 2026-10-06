@@ -3,6 +3,11 @@
   "trailingSlash": false,
   "rewrites": [
     { "source": "/", "destination": "/index.html" },
+    {
+      "source": "/((?!(?:editar|painel|reservas|estatisticas|cardapio|index|api)$)(?!.*\\.)[^/]+)",
+      "has": [{ "type": "header", "key": "user-agent", "value": "(?i).*(facebookexternalhit|facebot|whatsapp|telegrambot|twitterbot|slackbot|linkedinbot|discordbot|pinterest|skypeuripreview).*" }],
+      "destination": "/api/og?slug=$1"
+    },
     { "source": "/((?!(?:editar|painel|reservas|estatisticas|cardapio|index)$)(?!.*\\.)[^/]+)", "destination": "/cardapio.html?n=$1" }
   ]
 }
