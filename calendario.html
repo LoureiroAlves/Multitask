@@ -108,6 +108,27 @@
   .pill.pendente{ background:#fbeecb; color:#8a5a10; }
   .pill.confirmada{ background:#e2f4e9; color:#1e6b3c; }
   .pill.cancelada{ background:#fbe7e4; color:var(--vermelho); }
+  /* respostas rápidas às reservas */
+  .r-info{ font-size:.83rem; font-weight:700; margin-top:7px; border-radius:8px; padding:6px 9px; background:#f4f1ea; color:#5a4a2e; }
+  .r-info.prop{ background:#eef3fb; color:#2a4f86; }
+  .r-info.alt{ background:#fff3d6; color:#7a5310; }
+  .r-info.ok{ background:#e2f4e9; color:#1e6b3c; }
+  .r-info.no{ background:#fbe7e4; color:#a33; }
+  .r-acoes button.resp{ color:#2a4f86; border-color:#c9d8ef; background:#f4f8fe; }
+  .r-acoes button.wa2{ color:#1e7a43; border-color:#cdeed9; background:#fff; font-weight:600; }
+  .r-sino{ font-size:.72rem; font-weight:700; color:#8a7a5c; margin-left:6px; }
+  #rsModal .rs-op{ display:block; width:100%; text-align:left; border:1.5px solid var(--linha); background:#fff; border-radius:12px; padding:12px 14px; margin-top:8px; font-weight:800; font-size:.95rem; cursor:pointer; font-family:inherit; color:#3a2c18; }
+  #rsModal .rs-op.ok{ background:var(--verde); border-color:var(--verde); color:#fff; }
+  #rsModal .rs-op.no{ color:var(--vermelho); border-color:#e8c4bf; }
+  #rsModal .rs-sub{ display:none; gap:8px; align-items:center; margin:8px 0 2px; }
+  #rsModal .rs-sub input{ flex:1; padding:10px; border:1.5px solid var(--linha); border-radius:9px; font-family:inherit; font-size:1rem; }
+  #rsModal .rs-sub button{ border:none; background:#2a4f86; color:#fff; border-radius:9px; padding:11px 14px; font-weight:800; cursor:pointer; font-family:inherit; }
+  #rsModal textarea{ width:100%; box-sizing:border-box; padding:10px; border:1.5px solid var(--linha); border-radius:9px; font-family:inherit; margin-top:4px; }
+  #rsModal .rs-wa{ width:100%; margin-top:12px; background:none; border:none; color:#1e7a43; font-weight:700; font-size:.85rem; cursor:pointer; padding:6px; text-decoration:underline; }
+  #rsToast{ position:fixed; left:50%; bottom:22px; transform:translateX(-50%) translateY(30px); opacity:0; background:#2f2416; color:#fff; padding:11px 16px; border-radius:12px; font-weight:700; font-size:.88rem; z-index:13000; transition:all .3s; max-width:90vw; text-align:center; pointer-events:none; }
+  #rsToast.on{ opacity:1; transform:translateX(-50%) translateY(0); }
+  .dono-push{ background:#eef3fb; border:1.5px solid #c9d8ef; border-radius:12px; padding:10px 12px; margin-bottom:12px; font-size:.86rem; color:#2a4f86; display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+  .dono-push button{ border:none; background:#2a4f86; color:#fff; border-radius:9px; padding:8px 12px; font-weight:800; cursor:pointer; font-family:inherit; }
   /* Separadores Calendário / Painel */
   .tabs{ display:grid; grid-template-columns:1fr 1fr; gap:6px; background:#efe4cf; padding:5px; border-radius:14px; margin-bottom:16px; }
   .tab{ white-space:nowrap; padding:12px 10px; border:none; background:transparent; border-radius:10px; font-weight:800; cursor:pointer; color:#9a7f4f; font-size:.9rem; transition:.15s; }
@@ -818,6 +839,8 @@
         mostrarVista('cal'); renderCal(); renderDia(alvoR.data);
         if(CANC_PARAM){
           _pedidoCancelamento(alvoR);   // "Cliente X quer cancelar a reserva Y" → aceitar e responder
+        } else if(!ALT_PARAM && !_eGrupo(alvoR) && alvoR.estado !== 'cancelada'){
+          _abrirAprovacao(alvoR);   // vindo de uma notificação: mostra o pedido com as respostas rápidas
         } else {
           abrirModalEdicao(alvoR.id);
           if(ALT_PARAM){
@@ -861,6 +884,19 @@
     const jaConf = (r.estado === 'confirmada');
     $('apConfirmar').style.display = jaConf ? 'none' : '';
     $('apEstado').textContent = jaConf ? 'Esta reserva já está confirmada.' : 'A aguardar a tua aprovação.';
+    // respostas rápidas (reservas normais; os menus de grupo continuam pelo WhatsApp)
+    let _apx = $('apExtra'); if(!_apx){ _apx = document.createElement('div'); _apx.id = 'apExtra'; $('apEstado').after(_apx); }
+    _apx.innerHTML = '';
+    $('apRecusar').textContent = _eGrupo(r) ? '✕ Recusar' : '✕ Sem disponibilidade';
+    if(!_eGrupo(r)){
+      _apx.innerHTML = _infoResposta(r)
+        + ((r.alt_hora || r.alt_pessoas) ? '<div style="display:flex;gap:8px;margin-top:8px;"><button type="button" class="ap-ok" id="apAltOk" style="flex:1;">✔ Aceitar alteração</button><button type="button" class="ap-no" id="apAltNao" style="flex:1;">✕ Recusar</button></div>' : '')
+        + '<button type="button" class="ap-ver" id="apResponder" style="color:#2a4f86;font-weight:800;">💬 Propor outra hora / nº de pessoas · nota</button>';
+      $('apResponder').onclick = function(){ fecharAprovar(); _responder(r); };
+      const ao = $('apAltOk'), an = $('apAltNao');
+      if(ao) ao.onclick = function(){ fecharAprovar(); _resp(r, 'altok'); };
+      if(an) an.onclick = function(){ fecharAprovar(); _resp(r, 'altnao'); };
+    }
     $('modalAprovar').classList.remove('hide');
     document.body.style.overflow = 'hidden';
   }
@@ -2218,6 +2254,7 @@
     html += '<div class="dash-sec"><h3>➡️ Próximas reservas</h3>' + (prox.length ? prox.map(_linhaReserva).join('') : '<div class="vazio-msg">Sem reservas futuras.</div>') + '</div>';
     c.innerHTML = html;
     c.querySelectorAll('.linha-r').forEach(function(el){ el.onclick = function(){ abrirModalEdicao(el.getAttribute('data-id')); }; });
+    _pintarDonoPush();
   }
   function _capacidade(){ return (negocio && negocio.config && negocio.config.agenda && parseInt(negocio.config.agenda.capacidade,10)) || 0; }
   function _pessoasDia(iso){ return reservas.filter(function(r){ return r.data === iso && r.estado !== 'cancelada'; }).reduce(function(s,r){ return s + (Number(r.pessoas)||0); }, 0); }
@@ -2779,18 +2816,32 @@
     html += '</div>';
     rs.forEach(function(r){
       let acoes = '';
-      if(r.estado!=='confirmada') acoes += '<button class="ok" data-a="confirmar" data-id="'+r.id+'">✔ Confirmar</button>';
-      if(r.estado!=='cancelada') acoes += '<button class="no" data-a="cancelar" data-id="'+r.id+'">✕ Recusar</button>';
-      acoes += '<button class="wa" data-a="avisar" data-id="'+r.id+'">📲 Avisar cliente</button>';
+      const grupo = _eGrupo(r);
+      if(grupo){
+        // Menus de grupo: continuam pelo WhatsApp (como sempre)
+        if(r.estado!=='confirmada') acoes += '<button class="ok" data-a="confirmar" data-id="'+r.id+'">✔ Confirmar</button>';
+        if(r.estado!=='cancelada') acoes += '<button class="no" data-a="cancelar" data-id="'+r.id+'">✕ Recusar</button>';
+        acoes += '<button class="wa" data-a="avisar" data-id="'+r.id+'">📲 Avisar cliente</button>';
+      } else {
+        if(r.alt_hora || r.alt_pessoas){
+          acoes += '<button class="ok" data-a="altok" data-id="'+r.id+'">✔ Aceitar alteração</button>';
+          acoes += '<button class="no" data-a="altnao" data-id="'+r.id+'">✕ Recusar alteração</button>';
+        }
+        if(r.estado!=='confirmada') acoes += '<button class="ok" data-a="confirmar" data-id="'+r.id+'">✔ Confirmar</button>';
+        acoes += '<button class="resp" data-a="responder" data-id="'+r.id+'">💬 Responder</button>';
+        if(r.estado!=='cancelada') acoes += '<button class="no" data-a="cancelar" data-id="'+r.id+'">✕ Sem disponibilidade</button>';
+      }
       acoes += '<a href="tel:'+esc(r.telefone||'')+'"><button>📞 Ligar</button></a>';
       acoes += '<button class="edit" data-a="editar" data-id="'+r.id+'">✏️ Editar</button>';
       acoes += '<button class="del" data-a="apagar" data-id="'+r.id+'">🗑 Apagar</button>';
+      if(!grupo) acoes += '<button class="wa2" data-a="avisar" data-id="'+r.id+'">📲 WhatsApp</button>';
       const menu = r.obs ? ('<div class="r-menu">🍽 '+esc(r.obs)+'</div>') : '';
       html += '<div class="r '+r.estado+'">'
         + '<div class="r-top"><span class="r-quando">'+esc(r.hora||'')+'</span><span class="pill '+r.estado+'">'+r.estado+'</span></div>'
-        + '<div class="r-nome">'+esc(r.nome||'')+' · '+(Number(r.pessoas)||1)+' pessoa(s)</div>'
+        + '<div class="r-nome">'+esc(r.nome||'')+' · '+(Number(r.pessoas)||1)+' pessoa(s)'+(!grupo && r.push_endpoint ? '<span class="r-sino" title="O cliente recebe as respostas por notificação">🔔</span>' : '')+'</div>'
         + '<div class="r-meta">📱 '+esc(r.telefone||'')+'</div>'
         + menu
+        + (grupo ? '' : _infoResposta(r))
         + '<div class="r-acoes">'+acoes+'</div></div>';
     });
     $('detalhe').innerHTML = html;
@@ -2806,7 +2857,7 @@
     return d;
   }
   function _dataPt(iso){ const d = new Date(iso+'T00:00:00'); return d.getDate() + ' de ' + MESES[d.getMonth()]; }
-  function _waUrl(r, tipo){
+  function _waUrl(r, tipo, extra){
     const tel = _telWA(r.telefone);
     if(!tel) return '';
     const nome = (r.nome||'').trim();
@@ -2821,12 +2872,17 @@
       msg = 'Olá' + (nome ? ' '+nome : '') + '! A sua reserva em ' + casa + ' para ' + quando + ' (' + pessoas + ') está confirmada. Até já! 🍽️' + _gerir;
     } else if(tipo==='pendente'){
       msg = 'Olá' + (nome ? ' '+nome : '') + '! Recebemos o seu pedido de reserva em ' + casa + ' para ' + quando + ' (' + pessoas + '). Confirmamos em breve. Obrigado!' + _gerir;
+    } else if(tipo==='proposta'){
+      msg = 'Olá' + (nome ? ' '+nome : '') + '! Para a sua reserva em ' + casa + ' (' + quando + ', ' + pessoas + ') conseguimos: ' + (extra || '') + '. Diga-nos se lhe serve.' + _gerir;
+    } else if(tipo==='altnao'){
+      msg = 'Olá' + (nome ? ' '+nome : '') + '! Infelizmente não conseguimos alterar a sua reserva em ' + casa + '. Mantém-se ' + quando + ' (' + pessoas + ').' + _gerir;
     } else if(tipo==='cancelaceite'){
       // O CLIENTE pediu para cancelar e o restaurante aceitou
       msg = 'Olá' + (nome ? ' '+nome : '') + '! O seu cancelamento da reserva em ' + casa + ' para ' + quando + ' foi aceite. Obrigado por avisar — até uma próxima! 👋';
     } else {
       msg = 'Olá' + (nome ? ' '+nome : '') + '. Lamentamos, mas não conseguimos confirmar a sua reserva em ' + casa + ' para ' + quando + '. Contacte-nos para encontrarmos uma alternativa.';
     }
+    if(r.nota && tipo !== 'cancelaceite') msg += '\nNota: ' + r.nota;
     return 'https://wa.me/' + tel + '?text=' + encodeURIComponent(msg);
   }
   // Avisar o cliente por WhatsApp a QUALQUER momento (mensagem conforme o estado atual da reserva)
@@ -2858,9 +2914,194 @@
     carregar();
   }
 
+  // ============================================================
+  // RESPOSTAS RÁPIDAS (reservas normais): a resposta fica na ÀMesa e o cliente recebe uma notificação.
+  // Menus de grupo: continuam pelo WhatsApp. O WhatsApp fica sempre como último recurso.
+  // ============================================================
+  function _eGrupo(r){ return /^Menu:/i.test(String((r && r.obs) || '').trim()); }
+  function _quandoR(r, hora){ const d = new Date(r.data+'T00:00:00'); const h = hora || r.hora; return ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'][d.getDay()] + ' ' + d.getDate() + '/' + (d.getMonth()+1) + (h ? (' às ' + h) : ''); }
+  function _casa(){ return (negocio && negocio.nome) ? negocio.nome : 'O restaurante'; }
+  function _infoResposta(r){
+    let h = '';
+    if(r.alt_hora || r.alt_pessoas) h += '<div class="r-info alt">🔁 O cliente pede: ' + (r.alt_pessoas || r.pessoas || 1) + ' pessoa(s)' + (r.alt_hora ? (' às ' + esc(r.alt_hora)) : '') + '</div>';
+    if(r.proposta_hora || r.proposta_pessoas) h += '<div class="r-info prop">🕘 Proposta enviada: ' + (r.proposta_pessoas ? (r.proposta_pessoas + ' pessoa(s)') : '') + (r.proposta_hora ? ((r.proposta_pessoas ? ' ' : '') + 'às ' + esc(r.proposta_hora)) : '') + ' — à espera do cliente</div>';
+    if(r.resposta_cliente === 'aceitou') h += '<div class="r-info ok">✅ O cliente aceitou a proposta</div>';
+    else if(r.resposta_cliente === 'recusou') h += '<div class="r-info no">❌ O cliente não aceitou a proposta</div>';
+    else if(r.resposta_cliente === 'cancelou') h += '<div class="r-info no">🚫 O cliente cancelou</div>';
+    if(r.nota) h += '<div class="r-info">📝 Nota para o cliente: ' + esc(r.nota) + '</div>';
+    return h;
+  }
+  function _toastR(t){ let el = $('rsToast'); if(!el){ el = document.createElement('div'); el.id = 'rsToast'; document.body.appendChild(el); } el.textContent = t; el.classList.add('on'); clearTimeout(el._t); el._t = setTimeout(function(){ el.classList.remove('on'); }, 3200); }
+  async function _pushCliente(r, titulo, corpo){
+    if(!r || !r.push_endpoint) return false;
+    try{
+      const res = await sb.functions.invoke('enviar-push', { body:{ negocio:negocio.id, titulo:titulo, corpo:corpo, url: location.origin + '/cardapio.html?n=' + encodeURIComponent(SLUG) + '&rver=' + encodeURIComponent(r.id), endpoints:[r.push_endpoint], tag:'res-' + r.id } });
+      return !!(res && !res.error && res.data && res.data.enviados > 0);
+    }catch(e){ return false; }
+  }
+  // Depois de responder: se o cliente não tem notificações, oferece o WhatsApp (último recurso)
+  async function _depoisResposta(r, enviado, tipoWa, extra){
+    if(enviado){ _toastR('✓ Cliente avisado por notificação'); return; }
+    const url = _waUrl(r, tipoWa, extra);
+    if(!url){ _toastR('Guardado ✓ — o cliente vê a resposta quando abrir o menu'); return; }
+    if(await window.__amConfirm('Guardado ✓', { texto:'Este cliente não tem as notificações da ÀMesa ligadas — vê a resposta quando abrir o menu.\n\nQueres avisá-lo também por WhatsApp?', ok:'📲 Avisar por WhatsApp', cancelar:'Não é preciso' })) window.open(url, '_blank');
+  }
+  function _erroColunas(error){ const m = String((error && error.message) || error || ''); return /column|coluna|proposta|nota|alt_|donos_push|dono_push/i.test(m) ? 'Falta correr no Supabase o ficheiro reservas-respostas.sql.' : ('Erro: ' + m); }
+  // Respostas (confirmar / sem disponibilidade / proposta / alteração)
+  async function _resp(r, tipo, o){
+    o = o || {};
+    const nota = (o.nota || '').trim() || null;
+    let patch, titulo, corpo, tipoWa, extra = '';
+    const casa = _casa();
+    if(tipo === 'confirmar'){
+      patch = { estado:'confirmada', proposta_hora:null, proposta_pessoas:null };
+      titulo = '✅ Reserva confirmada'; corpo = casa + ': ' + _quandoR(r) + ' · ' + (Number(r.pessoas)||1) + ' pessoa(s). Até já!';
+      tipoWa = 'confirmar';
+    } else if(tipo === 'cancelar'){
+      patch = { estado:'cancelada', proposta_hora:null, proposta_pessoas:null };
+      titulo = '❌ Sem disponibilidade'; corpo = casa + ' não tem mesa para ' + _quandoR(r) + '. Pedimos desculpa.';
+      tipoWa = 'recusar';
+    } else if(tipo === 'proposta'){
+      const h = o.hora || null, p = o.pessoas ? Math.max(1, parseInt(o.pessoas, 10) || 1) : null;
+      if(!h && !p) return;
+      patch = { estado:'pendente', proposta_hora:h, proposta_pessoas:p };
+      const oq = (p ? (p + ' pessoa(s)') : '') + (h ? ((p ? ' ' : '') + 'às ' + h) : '');
+      titulo = '🕘 ' + casa + ' propõe outra opção'; corpo = 'Para ' + _quandoR(r) + ' conseguimos: ' + oq + '. Toca para aceitar ou recusar.';
+      tipoWa = 'proposta'; extra = oq;
+    } else if(tipo === 'altok'){
+      const nh = r.alt_hora || r.hora, np = r.alt_pessoas || r.pessoas;
+      patch = { estado:'confirmada', hora:nh, pessoas:np, alt_hora:null, alt_pessoas:null, proposta_hora:null, proposta_pessoas:null };
+      titulo = '✅ Alteração aceite'; corpo = casa + ': ' + _quandoR(r, nh) + ' · ' + (Number(np)||1) + ' pessoa(s). Até já!';
+      tipoWa = 'confirmar';
+    } else if(tipo === 'altnao'){
+      patch = { alt_hora:null, alt_pessoas:null };
+      titulo = '❌ Não foi possível alterar'; corpo = casa + ': mantém-se ' + _quandoR(r) + ' · ' + (Number(r.pessoas)||1) + ' pessoa(s).';
+      tipoWa = 'altnao';
+    } else return;
+    if(o.nota !== undefined) patch.nota = nota;
+    const notaFinal = (o.nota !== undefined) ? nota : r.nota;
+    if(notaFinal && tipo !== 'altnao') corpo += ' Nota: ' + notaFinal;
+    const { error } = await sb.from('reservas').update(patch).eq('id', r.id);
+    if(error){ alert(_erroColunas(error)); return; }
+    const novo = Object.assign({}, r, patch);
+    const enviado = await _pushCliente(novo, titulo, corpo);
+    carregar();
+    await _depoisResposta(novo, enviado, tipoWa, extra);
+  }
+  // Janela "Responder ao cliente"
+  function _responder(r){
+    if(!r) return;
+    let ov = $('rsModal'); if(ov) ov.remove();
+    ov = document.createElement('div'); ov.id = 'rsModal'; ov.className = 'modal-bg';
+    ov.innerHTML = '<div class="modal"><button class="fechar" id="rsFechar" type="button" aria-label="Fechar">✕</button>'
+      + '<h3>Responder ao cliente</h3>'
+      + '<div class="ap-card"><div class="ap-hora">' + esc(_quandoR(r)) + ' · ' + (Number(r.pessoas)||1) + ' pessoa(s)</div><div class="ap-nome">' + esc(r.nome||'') + '</div></div>'
+      + '<div style="font-size:.8rem;color:#8a7a5c;margin:6px 0 2px;">' + (r.push_endpoint ? '🔔 O cliente recebe a resposta por notificação.' : 'O cliente vê a resposta quando abrir o menu (não tem notificações ligadas).') + '</div>'
+      + (r.estado !== 'confirmada' ? '<button type="button" class="rs-op ok" data-rs="confirmar">✅ Confirmar</button>' : '')
+      + '<button type="button" class="rs-op" data-rs="hora">🕘 Propor outra hora</button>'
+      + '<div class="rs-sub" id="rsSubHora"><input type="time" id="rsHora" value="' + esc(r.hora||'') + '"><button type="button" data-rs="envHora">Enviar proposta</button></div>'
+      + '<button type="button" class="rs-op" data-rs="pessoas">👥 Propor nº de pessoas</button>'
+      + '<div class="rs-sub" id="rsSubPes"><input type="number" min="1" id="rsPes" value="' + (Number(r.pessoas)||1) + '"><button type="button" data-rs="envPes">Enviar proposta</button></div>'
+      + (r.estado !== 'cancelada' ? '<button type="button" class="rs-op no" data-rs="cancelar">❌ Sem disponibilidade</button>' : '')
+      + '<label style="display:block;margin-top:12px;font-size:.82rem;font-weight:700;">📝 Nota para o cliente <span style="font-weight:400;color:#8a7a5c;">(opcional — vai com a resposta)</span></label>'
+      + '<textarea id="rsNota" rows="2" maxlength="200" placeholder="Ex.: Ficam na esplanada · Tragam o cartão de fidelidade">' + esc(r.nota||'') + '</textarea>'
+      + '<button type="button" class="rs-wa" data-rs="wa">📲 Último recurso: falar por WhatsApp</button>'
+      + '</div>';
+    document.body.appendChild(ov); document.body.style.overflow = 'hidden';
+    const fechar = function(){ ov.remove(); document.body.style.overflow = ''; };
+    $('rsFechar').onclick = fechar;
+    ov.addEventListener('click', function(e){ if(e.target === ov) fechar(); });
+    ov.querySelectorAll('[data-rs]').forEach(function(b){ b.onclick = async function(){
+      const k = b.getAttribute('data-rs'), nota = $('rsNota').value;
+      if(k === 'hora'){ $('rsSubHora').style.display = 'flex'; $('rsSubPes').style.display = 'none'; $('rsHora').focus(); return; }
+      if(k === 'pessoas'){ $('rsSubPes').style.display = 'flex'; $('rsSubHora').style.display = 'none'; $('rsPes').focus(); return; }
+      if(k === 'wa'){ _avisarCliente(r); return; }
+      if(k === 'cancelar' && !(await window.__amConfirm('Sem disponibilidade', { texto:'Recusar esta reserva? O cliente é avisado.', ok:'Sim, recusar', cancelar:'Não' }))) return;
+      const o = { nota:nota };
+      if(k === 'envHora'){ if(!$('rsHora').value){ $('rsHora').focus(); return; } o.hora = $('rsHora').value; }
+      if(k === 'envPes'){ o.pessoas = $('rsPes').value; }
+      fechar();
+      await _resp(r, (k === 'envHora' || k === 'envPes') ? 'proposta' : k, o);
+    }; });
+  }
+
+  // ---- avisos de reservas para o dono (notificações neste telemóvel) ----
+  const _VAPID_PUB = 'BOXUnQlON7ETx2-D9E9A3nPONd4xdujOUp2UFFpMGe_0V00njcbxAL-4ETDVpHG7s68Jz1tARbDJ83X75-2irg4';
+  function _b64u8(b){ const pad = '='.repeat((4 - b.length % 4) % 4); const raw = atob((b + pad).replace(/-/g,'+').replace(/_/g,'/')); const a = new Uint8Array(raw.length); for(let i = 0; i < raw.length; i++) a[i] = raw.charCodeAt(i); return a; }
+  function _pushOk(){ return ('serviceWorker' in navigator) && ('PushManager' in window) && ('Notification' in window); }
+  function _iosSemApp(){ const u = navigator.userAgent || ''; const ios = /iphone|ipad|ipod/i.test(u) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); let st = false; try{ st = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true; }catch(e){} return ios && !st; }
+  async function _donoPushAtivo(){
+    try{
+      if(!_pushOk() || Notification.permission !== 'granted') return false;
+      const reg = await navigator.serviceWorker.getRegistration('/'); if(!reg) return false;
+      const sub = await reg.pushManager.getSubscription(); if(!sub) return false;
+      const { data } = await sb.from('donos_push').select('endpoint').eq('negocio_id', negocio.id).eq('endpoint', sub.endpoint);
+      return !!(data && data.length);
+    }catch(e){ return false; }
+  }
+  async function _donoPushLigar(){
+    try{
+      if(!_pushOk()){ alert('Este navegador não suporta notificações.'); return false; }
+      if(_iosSemApp()){ alert('No iPhone: primeiro adiciona a Gestão ao ecrã principal (Partilhar ⬆️ → "Adicionar ao Ecrã Principal") e abre-a a partir daí.'); return false; }
+      const perm = await Notification.requestPermission(); if(perm !== 'granted'){ alert('As notificações ficaram bloqueadas. Podes ativá-las nas definições do navegador.'); return false; }
+      const reg = await navigator.serviceWorker.register('/sw.js');
+      let sub = await reg.pushManager.getSubscription();
+      if(!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly:true, applicationServerKey:_b64u8(_VAPID_PUB) });
+      const k = (sub.toJSON() || {}).keys || {};
+      const { error } = await sb.rpc('dono_push_guardar', { p_negocio:negocio.id, p_endpoint:sub.endpoint, p_p256dh:k.p256dh || '', p_auth:k.auth || '' });
+      if(error){ alert(_erroColunas(error)); return false; }
+      _toastR('🔔 Avisos de reservas ligados neste telemóvel');
+      return true;
+    }catch(e){ alert('Não foi possível ligar os avisos: ' + (e && e.message || e)); return false; }
+  }
+  async function _pintarDonoPush(){
+    const c = $('calResumo'); if(!c || !negocio) return;
+    let box = $('donoPushBox');
+    const ativo = await _donoPushAtivo();
+    if(ativo){ if(box) box.remove(); return; }
+    if(!box){ box = document.createElement('div'); box.id = 'donoPushBox'; box.className = 'dono-push'; c.parentNode.insertBefore(box, c); }
+    box.innerHTML = '<span style="flex:1;min-width:180px;">🔔 Recebe um aviso neste telemóvel quando chega um pedido de reserva ou o cliente responde.</span><button type="button" id="donoPushBtn">Ligar avisos</button>';
+    $('donoPushBtn').onclick = async function(){ this.disabled = true; if(await _donoPushLigar()) box.remove(); else this.disabled = false; };
+  }
+
+  // ---- vigia das reservas com a Gestão aberta: som + atualiza quando há novidades ----
+  let _resSig = null;
+  async function _resVigiar(){
+    try{
+      if(!negocio || !negocio.id || document.hidden) return;
+      const hojeIso = isoLocal(new Date());
+      const { data, error } = await sb.from('reservas').select('*').eq('negocio_id', negocio.id).gte('data', hojeIso);
+      if(error || !data) return;
+      const sig = {}; data.forEach(function(r){ sig[r.id] = [r.estado, r.resposta_cliente || '', r.respondido_em || '', r.alt_hora || '', r.alt_pessoas || ''].join('|'); });
+      if(_resSig !== null){
+        let novidade = false;
+        data.forEach(function(r){
+          const antes = _resSig[r.id];
+          if(antes === undefined && r.estado === 'pendente') novidade = true;                  // pedido novo
+          else if(antes !== undefined && antes !== sig[r.id] && r.respondido_em) novidade = true; // o cliente respondeu
+        });
+        if(novidade){
+          try{ _beep(); if(navigator.vibrate) navigator.vibrate([120,80,120]); }catch(e){}
+          _toastR('🔔 Novidades nas reservas');
+          const aberto = !$('modalEdit').classList.contains('hide') || !$('modalAprovar').classList.contains('hide') || $('rsModal') || (document.activeElement && /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName));
+          if(!aberto) carregar();
+        }
+      }
+      _resSig = sig;
+    }catch(e){}
+  }
+  setInterval(_resVigiar, 30000); setTimeout(_resVigiar, 6000);
+  document.addEventListener('visibilitychange', function(){ if(!document.hidden) _resVigiar(); });
+
   async function accao(id, a){
     const r = reservas.find(function(x){ return String(x.id)===String(id); });
     if(a==='avisar'){ _avisarCliente(r); return; }
+    if(a==='responder'){ _responder(r); return; }
+    if(r && !_eGrupo(r) && (a==='confirmar' || a==='cancelar' || a==='altok' || a==='altnao')){
+      if(a==='cancelar' && !(await window.__amConfirm('Sem disponibilidade',{texto:'Recusar esta reserva? O cliente é avisado.', ok:'Sim, recusar', cancelar:'Não'}))) return;
+      await _resp(r, a);
+      return;
+    }
     if(a==='editar'){ abrirEdicao(id); return; }
     if(a==='apagar'){
       if(!(await window.__amConfirm('Confirmar',{texto:'Apagar esta reserva definitivamente? Esta ação não pode ser anulada.', ok:'Sim', cancelar:'Não'}))) return;

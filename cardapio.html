@@ -5529,7 +5529,18 @@
               return new Date() < limite;
             }catch(e){ return true; }
           }
-          function _norm(r){ return r ? { rid:String(r.rid||''), rn:r.rn||'', rd:r.rd||'', rh:r.rh||'', rp:String(r.rp||'1'), estado:(r.estado||'pendente') } : null; }
+          function _norm(r){ return r ? { rid:String(r.rid||''), rn:r.rn||'', rd:r.rd||'', rh:r.rh||'', rp:String(r.rp||'1'), estado:(r.estado||'pendente'),
+            nota:r.nota||'', ph:r.ph||'', pp:(r.pp ? String(r.pp) : ''), ah:r.ah||'', ap:(r.ap ? String(r.ap) : ''), rc:r.rc||'', g:!!r.g } : null; }
+          // linha do servidor → reserva no telemóvel (respostas rápidas: nota, proposta, alteração)
+          function _deSrv(s, ant){ return _norm({ rid:s.id, rn:(ant && ant.rn) || '', rd:(s.data || (ant && ant.rd)), rh:(s.hora || (ant && ant.rh)), rp:(s.pessoas != null ? s.pessoas : (ant && ant.rp)), estado:s.estado,
+            nota:s.nota, ph:s.proposta_hora, pp:s.proposta_pessoas, ah:s.alt_hora, ap:s.alt_pessoas, rc:s.resposta_cliente, g:(ant && ant.g) }); }
+          // o que mudou e merece aviso (proposta nova, alteração respondida)
+          function _avisoNovo(ant, nr){
+            if(!ant) return null;
+            if((nr.ph || nr.pp) && !(ant.ph || ant.pp)) return { tipo:'proposta', r:nr };
+            if((ant.ah || ant.ap) && !(nr.ah || nr.ap)) return (nr.rh !== ant.rh || String(nr.rp) !== String(ant.rp)) ? { tipo:'altok', r:nr } : { tipo:'altnao', r:nr };
+            return null;
+          }
           function _chave(r){ return r.rid || (r.rd + '|' + r.rh); }   // identidade: código único, ou dia+hora se não houver
           function _escrever(arr){ try{ localStorage.setItem(KEY, JSON.stringify(arr)); }catch(e){} }
           // Registo local dos cancelamentos PEDIDOS pelo cliente (para distinguir de uma recusa do restaurante)
@@ -5566,9 +5577,117 @@
           window._minhaReservas = lerLista;
           window._minhaReservaDoDia = function(iso){ const l = lerLista(); for(var i=0;i<l.length;i++){ if(l[i].rd === iso) return l[i]; } return null; };
 
+          // ---- Respostas rápidas: a reserva fala com o restaurante dentro da ÀMesa (WhatsApp só como último recurso) ----
+          function abrirNovo(r){
+            if(document.getElementById('gerirOverlay')) return;
+            const rd = r.rd||'', rh = r.rh||'', rp = String(r.rp||'1');
+            const dd = rd ? new Date(rd+'T00:00:00') : null;
+            const dataFmt = dd ? (dd.getDate()+' de '+_MESES[dd.getMonth()]) : rd;
+            const resumo = dataFmt + (rh?(' às '+rh):'') + ' · ' + rp + ' pessoa(s)' + (r.rn?(' · '+_escN(r.rn)):'');
+            const B = 'width:100%; border:none; border-radius:12px; padding:13px; font-weight:800; cursor:pointer; font-family:inherit; font-size:.95rem; margin-top:8px;';
+            let est = '';
+            if(r.ph || r.pp){
+              const oq = (r.pp ? (r.pp + ' pessoa(s)') : '') + (r.ph ? ((r.pp ? ' ' : '') + 'às ' + r.ph) : '');
+              est = '<div style="background:#eef3fb; color:#2a4f86; border-radius:14px; padding:12px; text-align:center; font-weight:800;">🕘 O restaurante propõe:<div style="font-size:1.25rem; margin:4px 0;">' + _escN(oq) + '</div><span style="font-weight:600; font-size:.85rem;">Serve-te?</span>'
+                + '<div style="display:flex; gap:8px; margin-top:10px;"><button id="grAceito" type="button" style="' + B + 'margin:0; background:#1e8c4a; color:#fff;">✅ Aceito</button><button id="grNaoDa" type="button" style="' + B + 'margin:0; background:#fff; color:#b23; border:1.5px solid #e8c4bf;">❌ Não dá</button></div></div>';
+            } else if(r.ah || r.ap){
+              est = '<div style="background:#fff3d6; color:#7a5310; border-radius:14px; padding:12px; text-align:center; font-weight:800;">🔁 Pediste: ' + _escN((r.ap || rp) + ' pessoa(s)' + (r.ah ? (' às ' + r.ah) : '')) + '<br><span style="font-weight:600; font-size:.85rem;">À espera da resposta do restaurante</span></div>';
+            } else if(String(r.estado) === 'confirmada'){
+              est = '<div style="background:#e2f4e9; color:#1e6b3c; border-radius:14px; padding:12px; text-align:center; font-weight:800;">✅ Reserva confirmada</div>';
+            } else {
+              est = '<div style="background:#fbeecb; color:#8a5a10; border-radius:14px; padding:12px; text-align:center; font-weight:800;">⏳ À espera da resposta do restaurante<br><span style="font-weight:600; font-size:.85rem;">A resposta aparece aqui' + ((typeof Notification !== 'undefined' && Notification.permission === 'granted') ? ' e recebes uma notificação' : '') + '.</span></div>';
+            }
+            const notifOk = (typeof Notification !== 'undefined' && Notification.permission === 'granted');
+            const ov = document.createElement('div');
+            ov.id = 'gerirOverlay';
+            ov.style.cssText = 'position:fixed; inset:0; z-index:9000; background:rgba(0,0,0,.55); display:flex; align-items:flex-end; justify-content:center; padding:0;';
+            ov.innerHTML = '<div style="background:linear-gradient(180deg,#fffdf9,var(--branco,#fff)); border-radius:22px 22px 0 0; border-top:3px solid var(--dourado,#a8712f); max-width:440px; width:100%; max-height:92vh; overflow:auto; padding:20px 18px calc(20px + var(--sa-bottom, env(safe-area-inset-bottom))); margin-bottom:calc(-1 * var(--sa-bottom, env(safe-area-inset-bottom))); box-shadow:0 -12px 40px rgba(0,0,0,.30); transform:translateY(100%); transition:transform .36s cubic-bezier(.2,.9,.3,1);">'
+              + '<h3 style="margin:0 0 4px; text-align:center; font-family:var(--fonte-titulo); color:var(--castanho);">A tua reserva</h3>'
+              + '<div style="text-align:center; color:var(--castanho-suave); font-size:.9rem; margin-bottom:12px;">' + resumo + '</div>'
+              + est
+              + (r.nota ? ('<div style="margin-top:10px; background:#faf4e8; border-radius:12px; padding:10px 12px; font-size:.9rem; color:var(--castanho);">📝 <b>Nota do restaurante:</b> ' + _escN(r.nota) + '</div>') : '')
+              + '<div id="grMsg" style="text-align:center; font-weight:700; font-size:.88rem; margin-top:8px; min-height:1px;"></div>'
+              + (!notifOk ? '<button id="grNotif" type="button" style="' + B + 'background:#eef3fb; color:#2a4f86;">🔔 Avisar-me quando o restaurante responder</button>' : '')
+              + '<button id="grAltBtn" type="button" style="' + B + 'background:var(--dourado); color:#fff;">✏️ Pedir alteração</button>'
+              + '<div id="grAltBox" style="display:none; margin-top:12px; border-top:1px solid var(--linha); padding-top:12px;">'
+                + '<label style="font-size:.82rem; font-weight:700; color:var(--castanho);">Nº de pessoas</label>'
+                + '<input id="grPessoas" type="number" min="1" value="'+(parseInt(rp,10)||1)+'" style="width:100%; padding:10px; border:1.5px solid var(--linha); border-radius:9px; margin:4px 0 10px; font-family:inherit; box-sizing:border-box;">'
+                + '<label style="font-size:.82rem; font-weight:700; color:var(--castanho);">Nova hora (opcional)</label>'
+                + '<input id="grHora" type="time" value="'+(rh||'')+'" style="width:100%; padding:10px; border:1.5px solid var(--linha); border-radius:9px; margin:4px 0 4px; font-family:inherit; box-sizing:border-box;">'
+                + '<button id="grEnviarAlt" type="button" style="' + B + 'background:#2a4f86; color:#fff;">📨 Enviar pedido de alteração</button>'
+              + '</div>'
+              + '<button id="grCancelar" type="button" style="' + B + 'background:#fff; color:#c0392b; border:1.5px solid #e8c4bf;">❌ Já não vou — cancelar reserva</button>'
+              + (tel ? '<button id="grWa" type="button" style="width:100%; margin-top:12px; background:none; border:none; color:#1e7a43; font-weight:700; cursor:pointer; padding:6px; font-size:.85rem; text-decoration:underline;">💬 Último recurso: falar com o restaurante por WhatsApp</button>' : '')
+              + '<button id="grRemover" type="button" style="width:100%; margin-top:8px; background:none; border:1.5px solid var(--linha); border-radius:10px; color:#b23; font-weight:700; cursor:pointer; padding:9px; font-size:.85rem;">🗑 Remover do meu telemóvel</button>'
+              + '<button id="grFechar" type="button" style="width:100%; margin-top:8px; background:none; border:none; color:var(--castanho-suave); font-weight:700; cursor:pointer; padding:8px;">Fechar</button>'
+              + '</div>';
+            document.body.appendChild(ov);
+            document.body.style.overflow = 'hidden';
+            const _sheet = ov.firstElementChild;
+            requestAnimationFrame(function(){ if(_sheet) _sheet.style.transform = 'translateY(0)'; });
+            const fechar = function(){ if(_sheet){ _sheet.style.transform='translateY(100%)'; } ov.style.background='rgba(0,0,0,0)'; ov.style.transition='background .3s'; setTimeout(function(){ try{ ov.remove(); }catch(e){} document.body.style.overflow = ''; }, 320); };
+            const $g = function(id){ return document.getElementById(id); };
+            const msg = function(t, cor){ const m = $g('grMsg'); if(m){ m.textContent = t; m.style.color = cor || 'var(--castanho)'; } };
+            const falhou = function(e){ const t = String((e && e.message) || e || ''); msg(/function|não existe|does not exist|PGRST/i.test(t) ? 'Ainda não disponível neste restaurante — usa o WhatsApp.' : 'Sem ligação. Tenta outra vez.', '#b23'); };
+            $g('grFechar').onclick = fechar;
+            ov.addEventListener('click', function(e){ if(e.target === ov) fechar(); });
+            $g('grRemover').onclick = function(){ if(confirm('Remover esta reserva do teu telemóvel? O restaurante continua com ela — isto só apaga o atalho aqui.')){ remover(r); fechar(); } };
+            const gw = $g('grWa'); if(gw) gw.onclick = function(){ var _u = 'https://wa.me/' + tel + '?text=' + encodeURIComponent('Olá! Sobre a minha reserva em ' + casa + ' (' + dataFmt + (rh?(' às '+rh):'') + ' · ' + rp + ' pessoa(s)' + (r.rn?(' · '+r.rn):'') + '): '); fechar(); var _mv = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0); if(_mv){ window.location.href = _u; } else { window.open(_u, '_blank'); } };
+            const gn = $g('grNotif'); if(gn) gn.onclick = function(){
+              gn.disabled = true; gn.textContent = 'A ligar…';
+              (window.__ovoObterPush ? window.__ovoObterPush() : Promise.resolve('')).then(function(ep){
+                if(!ep){ gn.disabled = false; gn.textContent = '🔔 Avisar-me quando o restaurante responder'; msg('No iPhone, adiciona primeiro a ÀMesa ao ecrã principal (Partilhar ⬆️ → "Adicionar ao Ecrã Principal").', '#8a5a10'); return; }
+                return sbC.rpc('reserva_set_push', { p_id:r.rid, p_endpoint:ep }).then(function(res){ if(res && res.error) throw res.error; gn.remove(); msg('🔔 Pronto! Avisamos-te aqui quando o restaurante responder.', '#1e6b3c'); });
+              }).catch(falhou);
+            };
+            const responder = function(aceita){
+              const a1 = $g('grAceito'), a2 = $g('grNaoDa'); if(a1) a1.disabled = true; if(a2) a2.disabled = true;
+              sbC.rpc('reserva_responder', { p_id:r.rid, p_aceita:aceita }).then(function(res){
+                if(res && res.error) throw res.error;
+                const d = res && res.data || {};
+                if(aceita){
+                  upsert(Object.assign({}, r, { estado:'confirmada', rh:(d.hora || r.ph || r.rh), rp:(d.pessoas || r.pp || r.rp), ph:'', pp:'', rc:'aceitou' }));
+                  fechar(); _resPopup('#1e6b3c','✅ Reserva confirmada','Combinado! A tua reserva ficou para '+_dataResumo({ rd:r.rd, rh:(d.hora || r.ph || r.rh) })+'. Até já! 🍽️');
+                } else {
+                  _cancAdd(r.rid); remover(r); fechar();
+                  _resPopup('#8a5a10','Reserva cancelada','Avisámos o restaurante de que a proposta não te serve. Podes escolher outro dia ou hora quando quiseres.');
+                }
+                if(window.__reservaRerender) window.__reservaRerender();
+              }).catch(function(e){ if(a1) a1.disabled = false; if(a2) a2.disabled = false; falhou(e); });
+            };
+            const ga = $g('grAceito'); if(ga) ga.onclick = function(){ responder(true); };
+            const gnd = $g('grNaoDa'); if(gnd) gnd.onclick = function(){ responder(false); };
+            $g('grAltBtn').onclick = function(){ const b = $g('grAltBox'); if(b) b.style.display = (b.style.display==='none'?'block':'none'); };
+            $g('grEnviarAlt').onclick = function(){
+              const np = Math.max(1, parseInt(($g('grPessoas')||{}).value,10)||1);
+              const nh = (($g('grHora')||{}).value||'').trim();
+              if(String(np) === rp && (!nh || nh === rh)){ msg('Muda o nº de pessoas ou a hora.', '#8a5a10'); return; }
+              const bt = $g('grEnviarAlt'); bt.disabled = true;
+              sbC.rpc('reserva_pedir_alteracao', { p_id:r.rid, p_hora:(nh && nh !== rh) ? nh : null, p_pessoas:np }).then(function(res){
+                if(res && res.error) throw res.error;
+                upsert(Object.assign({}, r, { ah:(nh && nh !== rh) ? nh : '', ap:String(np), rc:'pediu_alteracao' }));
+                fechar(); _resPopup('#2a4f86','📨 Pedido enviado','O restaurante vai responder ao teu pedido de alteração. A resposta aparece na tua reserva.');
+              }).catch(function(e){ bt.disabled = false; falhou(e); });
+            };
+            $g('grCancelar').onclick = function(){
+              const ir = function(){
+                const bt = $g('grCancelar'); if(bt) bt.disabled = true;
+                sbC.rpc('reserva_cancelar_cliente', { p_id:r.rid }).then(function(res){
+                  if(res && res.error) throw res.error;
+                  _cancAdd(r.rid); remover(r); fechar();
+                  _resPopup('#8a5a10','👋 Reserva cancelada','Avisámos o restaurante. Obrigado por avisares — até uma próxima!');
+                  if(window.__reservaRerender) window.__reservaRerender();
+                }).catch(function(e){ if(bt) bt.disabled = false; falhou(e); });
+              };
+              if(window.__amConfirm) window.__amConfirm('Cancelar reserva', { texto:'Cancelar a reserva de ' + dataFmt + (rh?(' às '+rh):'') + '? O restaurante é avisado.', ok:'Sim, cancelar', cancelar:'Não' }).then(function(ok){ if(ok) ir(); });
+              else if(confirm('Cancelar esta reserva? O restaurante é avisado.')) ir();
+            };
+          }
+
           function abrir(r){
             if(!r) return;
             if(document.getElementById('gerirOverlay')) return;
+            if(r.rid && !r.g && typeof sbC !== 'undefined' && sbC){ abrirNovo(r); return; }   // reservas normais: respostas na ÀMesa (os menus de grupo continuam pelo WhatsApp)
             const rn = r.rn||'', rd = r.rd||'', rh = r.rh||'', rp = String(r.rp||'1');
             const dd = rd ? new Date(rd+'T00:00:00') : null;
             const dataFmt = dd ? (dd.getDate()+' de '+_MESES[dd.getMonth()]) : rd;
@@ -5635,11 +5754,16 @@
           // Pop-up na app quando o estado de uma reserva muda (o restaurante confirmou ou não teve disponibilidade)
           function _resPopup(cor, titulo, sub){ try{ if(window.__amAlert) window.__amAlert(titulo, { texto:sub, cor:cor }); }catch(e){} }
           function _dataResumo(r){ try{ var d=new Date((r.rd||'')+'T00:00:00'); return d.getDate()+' de '+_MESES[d.getMonth()]+(r.rh?(' às '+r.rh):''); }catch(e){ return r.rd||''; } }
+          function _escN(t){ return String(t||'').replace(/[&<>"]/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]; }); }
+          function _notaHtml(r){ return (r && r.nota) ? ('<br><br>📝 <b>Nota do restaurante:</b> ' + _escN(r.nota)) : ''; }
           function _mostrarAvisoRes(av){
             if(!av) return;
-            if(av.tipo==='confirmada') _resPopup('#1e6b3c','✅ Reserva confirmada','A tua reserva de '+_dataResumo(av.r)+' foi confirmada pelo restaurante. Até já! 🍽️');
+            if(av.tipo==='proposta'){ setTimeout(function(){ abrir(av.r); }, 400); return; }   // proposta: abre logo a reserva com Aceito / Não dá
+            if(av.tipo==='altok') _resPopup('#1e6b3c','✅ Alteração aceite','A tua reserva passou para '+_dataResumo(av.r)+' · '+_escN(av.r.rp)+' pessoa(s). Até já! 🍽️'+_notaHtml(av.r));
+            else if(av.tipo==='altnao') _resPopup('#8a5a10','Alteração não foi possível','O restaurante não conseguiu alterar. A tua reserva mantém-se: '+_dataResumo(av.r)+' · '+_escN(av.r.rp)+' pessoa(s).');
+            else if(av.tipo==='confirmada') _resPopup('#1e6b3c','✅ Reserva confirmada','A tua reserva de '+_dataResumo(av.r)+' foi confirmada pelo restaurante. Até já! 🍽️'+_notaHtml(av.r));
             else if(av.tipo==='cancelado') _resPopup('#8a5a10','👋 Cancelamento confirmado','O teu cancelamento da reserva de '+_dataResumo(av.r)+' foi aceite. Até uma próxima!');
-            else _resPopup('#b23','❌ Reserva não confirmada','A tua reserva de '+_dataResumo(av.r)+' não teve disponibilidade. Fala com o restaurante para uma alternativa.');
+            else _resPopup('#b23','❌ Reserva não confirmada','A tua reserva de '+_dataResumo(av.r)+' não teve disponibilidade.'+_notaHtml(av.r)+'<br><br>Podes escolher outro dia ou hora.');
           }
 
           // Chegou pelo link do WhatsApp → guardar/atualizar ESSA reserva (por código) e destacar o ícone. NUNCA abre popup.
@@ -5674,8 +5798,9 @@
                   res.data.forEach(function(s){
                     if(!s || !s.id || String(s.estado) === 'cancelada') return;
                     const ant = antes.find(function(x){ return String(x.rid) === String(s.id); });
-                    const nr = _norm({ rid:s.id, rn:(ant && ant.rn) || '', rd:s.data, rh:s.hora, rp:s.pessoas, estado:s.estado });
+                    const nr = _deSrv(s, ant);
                     if(prevMap[String(s.id)] && prevMap[String(s.id)] !== 'confirmada' && String(s.estado) === 'confirmada'){ _aviso = { tipo:'confirmada', r:nr }; }
+                    { const _an = _avisoNovo(ant, nr); if(_an && (!_aviso || _an.tipo === 'proposta' || _an.tipo === 'altok')) _aviso = _an; }
                     nova.push(nr);
                   });
                   // reservas que existiam e deixaram de vir (canceladas): distinguir cancelamento pedido pelo cliente vs recusa do restaurante
@@ -5699,11 +5824,13 @@
                   if(!r.rid) return;                              // legado sem código → largar
                   const s = srv[String(r.rid)];
                   if(!s || String(s.estado) === 'cancelada'){
-                    if(s && String(s.estado)==='cancelada' && String(r.estado)!=='cancelada' && !_aviso){ if(_cancTem(r.rid)){ _aviso={ tipo:'cancelado', r:r }; _cancDel(r.rid); } else { _aviso={ tipo:'recusada', r:r }; } }
+                    if(s && String(s.estado)==='cancelada' && String(r.estado)!=='cancelada' && !_aviso){ if(_cancTem(r.rid)){ _aviso={ tipo:'cancelado', r:r }; _cancDel(r.rid); } else { _aviso={ tipo:'recusada', r:Object.assign({}, r, { nota:s.nota || r.nota }) }; } }
                     return;   // apagada/cancelada → largar
                   }
-                  if(String(r.estado) !== 'confirmada' && String(s.estado) === 'confirmada'){ _aviso = { tipo:'confirmada', r:r }; }
-                  nova.push(_norm({ rid:r.rid, rn:r.rn, rd:(s.data||r.rd), rh:(s.hora||r.rh), rp:(s.pessoas!=null?s.pessoas:r.rp), estado:(s.estado||r.estado) }));
+                  const _nr = _deSrv(s, r);
+                  if(String(r.estado) !== 'confirmada' && String(s.estado) === 'confirmada'){ _aviso = { tipo:'confirmada', r:_nr }; }
+                  { const _an = _avisoNovo(r, _nr); if(_an && (!_aviso || _an.tipo === 'proposta' || _an.tipo === 'altok')) _aviso = _an; }
+                  nova.push(_nr);
                 });
                 if(JSON.stringify(nova) !== JSON.stringify(antes)){ _escrever(nova); atualizarBotao(); if(window.__reservaRerender) window.__reservaRerender(); }
                 _mostrarAvisoRes(_aviso);
@@ -5712,6 +5839,23 @@
           }
           window._sincronizarReservas = sincronizar;
           sincronizar();
+          // Veio de uma notificação (?rver=código) → abre essa reserva já atualizada
+          (function(){
+            const RV = P.get('rver'); if(!RV) return;
+            try{ const u = new URL(location.href); u.searchParams.delete('rver'); history.replaceState(null, '', u.pathname + u.search + u.hash); }catch(e){}
+            let t = 0;
+            const ir = function(){
+              if(typeof sbC === 'undefined' || !sbC){ if(++t < 20) setTimeout(ir, 500); return; }
+              sbC.rpc('reservas_estado', { p_ids:[RV] }).then(function(res){
+                const s = res && !res.error && res.data && res.data[0]; if(!s) return;
+                if(String(s.estado) === 'cancelada'){ _resPopup('#8a5a10','Reserva cancelada','Esta reserva já não está ativa.' + _notaHtml({ nota:s.nota })); return; }
+                const ant = lerLista().find(function(x){ return String(x.rid) === String(RV); });
+                const nr = _deSrv(s, ant); upsert(nr);
+                setTimeout(function(){ abrir(nr); }, 700);
+              });
+            };
+            setTimeout(ir, 300);
+          })();
           // Voltar a sincronizar quando a app/aba volta a primeiro plano (essencial na app do ecrã principal, que não recarrega)
           document.addEventListener('visibilitychange', function(){ if(!document.hidden) sincronizar(); });
           window.addEventListener('focus', function(){ sincronizar(); });
@@ -6952,7 +7096,7 @@
       waMsg += 'Obrigado!';
 
       // A reserva SÓ é gravada aqui — quando o cliente decide enviar/registar (não no "Pedir pré-reserva")
-      let _jaGravou = false;
+      let _jaGravou = false, _ridGravado = '';
       async function _gravarReserva(){
         if(_jaGravou) return true;
         if(window.__DEMO){ alert('Pré-visualização: aqui o cliente enviava o pedido de reserva.'); return false; }
@@ -6969,7 +7113,8 @@
         _jaGravou = true;
         _limparPendente();   // reserva concluída — deixa de estar pendente e apaga o destaque do ícone
         const _rid = (typeof data === 'string') ? data : ((data && data.id) || '');   // criar_reserva devolve o uuid da reserva
-        try{ if(window._guardarMinhaReserva) window._guardarMinhaReserva({ rid: _rid, rn: nome, rd: estado.diaSel, rh: estado.slotSel, rp: pessoas }); }catch(e){}
+        _ridGravado = _rid;
+        try{ if(window._guardarMinhaReserva) window._guardarMinhaReserva({ rid: _rid, rn: nome, rd: estado.diaSel, rh: estado.slotSel, rp: pessoas, g: !!menuTxt }); }catch(e){}
         try{ if(window._guardarMeuTelefone) window._guardarMeuTelefone(tel); }catch(e){}   // lembra o número, para recuperar as reservas em qualquer dispositivo
         return true;
       }
@@ -6980,7 +7125,8 @@
       ok += '<div class="ag-resumo"><strong>' + d.getDate() + ' de ' + MESES[d.getMonth()] + '</strong> às <strong>' + estado.slotSel + '</strong> · ' + pessoas + ' pessoa(s)<br>É uma <strong>pré-reserva</strong> — só fica registada quando enviares o pedido ao restaurante.';
       if(total > 0) ok += '<br>Sinal (' + pct + '%): <strong>' + sinal.toFixed(2) + '€</strong>';
       ok += '</div>';
-      if(telResto){ ok += '<button type="button" class="ag-btn" id="agWa" style="background:#25d366; color:#fff; width:100%; margin-top:4px;">📲 Enviar pedido ao restaurante</button>'; }
+      if(!menuTxt){ ok += '<button type="button" class="ag-btn" id="agApp" style="width:100%; margin-top:4px;">📩 Enviar pedido ao restaurante</button>'; }   // reservas normais: pela ÀMesa
+      else if(telResto){ ok += '<button type="button" class="ag-btn" id="agWa" style="background:#25d366; color:#fff; width:100%; margin-top:4px;">📲 Enviar pedido ao restaurante</button>'; }   // menus de grupo: WhatsApp
       else { ok += '<button type="button" class="ag-btn" id="agReg" style="width:100%; margin-top:4px;">✅ Registar pré-reserva</button>'; }
       if(a.pagamentoLink){ ok += '<div class="ag-passo-tit">Garante a tua reserva</div><button type="button" class="ag-btn pay" id="agPagar">💳 Pagar sinal' + (sinal > 0 ? (' (' + sinal.toFixed(2) + '€)') : '') + '</button>'; }
       if(a.pagamentoNota) ok += '<div class="ag-sub" style="margin-top:8px;">' + a.pagamentoNota + '</div>';
@@ -7008,6 +7154,33 @@
             wab.textContent = '✓ Pedido enviado';
             window.open(url, '_blank');
           }
+        });
+      };
+      // Reservas normais: o pedido fica na ÀMesa e o restaurante responde aqui (com notificação). WhatsApp só como último recurso.
+      const apb = document.getElementById('agApp');
+      if(apb) apb.onclick = function(){
+        apb.disabled = true;
+        const _h = document.getElementById('agTit'); if(_h) _h.textContent = 'A enviar…';
+        // pede já as notificações (ainda dentro do toque — o iPhone/Android exigem-no)
+        const pPush = (window.__ovoObterPush ? window.__ovoObterPush() : Promise.resolve('')).catch(function(){ return ''; });
+        _gravarReserva().then(async function(gravou){
+          if(!gravou){ apb.disabled = false; if(_h) _h.textContent = 'Confirma o teu pedido'; return; }
+          let ep = '';
+          try{ ep = await Promise.race([pPush, new Promise(function(ok){ setTimeout(function(){ ok(''); }, 20000); })]); }catch(e){}
+          if(ep && _ridGravado){ try{ await sbC.rpc('reserva_set_push', { p_id:_ridGravado, p_endpoint:ep }); }catch(e){} }
+          const _ios = /iphone|ipad|ipod/i.test(navigator.userAgent || '') || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+          let fim = '<h3 id="agTit">Pedido enviado ✓</h3>'
+            + '<div class="ag-resumo"><strong>' + d.getDate() + ' de ' + MESES[d.getMonth()] + '</strong> às <strong>' + estado.slotSel + '</strong> · ' + pessoas + ' pessoa(s)<br>O restaurante responde <strong>aqui, na ÀMesa</strong>.</div>'
+            + (ep ? '<div class="ag-sub" style="margin-top:8px;">🔔 Avisamos-te por notificação quando o restaurante responder.</div>'
+                  : '<div class="ag-sub" style="margin-top:8px;">Para veres a resposta, toca no ícone das reservas 📅 no menu.' + (_ios ? ' Para receberes um aviso, adiciona a ÀMesa ao ecrã principal (Partilhar ⬆️ → "Adicionar ao Ecrã Principal").' : '') + '</div>');
+          if(a.pagamentoLink){ fim += '<div class="ag-passo-tit">Garante a tua reserva</div><button type="button" class="ag-btn pay" id="agPagar2">💳 Pagar sinal' + (sinal > 0 ? (' (' + sinal.toFixed(2) + '€)') : '') + '</button>'; }
+          if(telResto) fim += '<button type="button" id="agWaExtra" style="width:100%; margin-top:12px; background:none; border:none; color:#1e7a43; font-weight:700; cursor:pointer; padding:6px; font-size:.85rem; text-decoration:underline;">💬 Preferes falar por WhatsApp? (último recurso)</button>';
+          fim += '<button type="button" class="ag-fechar" id="agFechar2">Fechar</button>';
+          card.innerHTML = fim;
+          try{ if(window._atualizarIconeReserva) window._atualizarIconeReserva(); }catch(e){}
+          const p2 = document.getElementById('agPagar2'); if(p2) p2.onclick = function(){ window.open(a.pagamentoLink, '_blank'); };
+          const we = document.getElementById('agWaExtra'); if(we) we.onclick = function(){ const url = 'https://wa.me/' + telResto + '?text=' + encodeURIComponent(waMsg); const _mv = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0); if(_mv){ window.location.href = url; } else { window.open(url, '_blank'); } };
+          const f2 = document.getElementById('agFechar2'); if(f2) f2.onclick = function(){ ov.classList.remove('aberto'); estado.diaSel = null; estado.slotSel = null; };
         });
       };
       // Sem WhatsApp configurado: botão que só grava
