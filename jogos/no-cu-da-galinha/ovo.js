@@ -19,6 +19,9 @@
     try{ var r = await sbC.rpc('ovo_meu_convite', { p_participacao:part }); if(r.error || !r.data) return null; CONV = r.data; return CONV; }catch(e){ return null; }
   }
   function linkConvite(cod){
+    // link curto amesadigital.pt/<restaurante>?convite=… (é este que mostra a pré-visualização com o nome do restaurante no WhatsApp)
+    var slug = ''; try{ slug = (typeof __slugDoEndereco === 'function') ? __slugDoEndereco() : ''; }catch(e){}
+    if(slug) return 'https://amesadigital.pt/' + slug + '?convite=' + encodeURIComponent(cod);
     var base = window.__linkCardapio ? window.__linkCardapio() : (location.origin + location.pathname);
     return base + (base.indexOf('?') >= 0 ? '&' : '?') + 'convite=' + encodeURIComponent(cod);
   }
