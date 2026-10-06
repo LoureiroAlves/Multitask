@@ -3142,15 +3142,16 @@
     try{
       if(!negocio || !negocio.id || document.hidden) return;
       const hojeIso = isoLocal(new Date());
-      const { data, error } = await sb.from('reservas').select('*').eq('negocio_id', negocio.id).gte('data', hojeIso);
+      const { data, error } = await sb.from('reservas').select('id,estado,resposta_cliente,respondido_em,alt_hora,alt_pessoas').eq('negocio_id', negocio.id).gte('data', hojeIso);
       if(error || !data) return;
+      _resLigarTempoReal();
       const sig = {}; data.forEach(function(r){ sig[r.id] = [r.estado, r.resposta_cliente || '', r.respondido_em || '', r.alt_hora || '', r.alt_pessoas || ''].join('|'); });
       if(_resSig !== null){
         let novidade = false;
         data.forEach(function(r){
           const antes = _resSig[r.id];
           if(antes === undefined && r.estado === 'pendente') novidade = true;                  // pedido novo
-          else if(antes !== undefined && antes !== sig[r.id] && r.respondido_em) novidade = true; // o cliente respondeu
+          else if(antes !== undefined && r.respondido_em && antes.split('|')[2] !== String(r.respondido_em)) novidade = true; // o cliente respondeu (as ações do próprio dono não tocam)
         });
         if(novidade){
           try{ _beep(); if(navigator.vibrate) navigator.vibrate([120,80,120]); }catch(e){}
@@ -3162,7 +3163,17 @@
       _resSig = sig;
     }catch(e){}
   }
-  setInterval(_resVigiar, 30000); setTimeout(_resVigiar, 6000);
+  // tempo real: qualquer mudança nas reservas deste restaurante → verifica logo (reserva de segurança: de 10 em 10 s)
+  let _resCanal = null;
+  function _resLigarTempoReal(){
+    try{
+      if(_resCanal || !sb.channel || !negocio) return;
+      _resCanal = sb.channel('res-' + negocio.id)
+        .on('postgres_changes', { event:'*', schema:'public', table:'reservas', filter:'negocio_id=eq.' + negocio.id }, function(){ setTimeout(_resVigiar, 400); })
+        .subscribe();
+    }catch(e){ _resCanal = null; }
+  }
+  setInterval(_resVigiar, 10000); setTimeout(_resVigiar, 3000);
   document.addEventListener('visibilitychange', function(){ if(!document.hidden) _resVigiar(); });
 
   async function _arquivarReserva(id){
