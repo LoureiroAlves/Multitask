@@ -54,6 +54,15 @@
     .logo.anim .wm span:nth-child(1){ animation-delay:.35s } .logo.anim .wm span:nth-child(2){ animation-delay:.42s }
     .logo.anim .wm span:nth-child(3){ animation-delay:.49s } .logo.anim .wm span:nth-child(4){ animation-delay:.56s } .logo.anim .wm span:nth-child(5){ animation-delay:.63s }
   }
+  .logo.anim-wm .wm span{ animation:amRise .45s cubic-bezier(.2,1.4,.4,1) both; }
+  .logo.anim-wm .wm span:nth-child(2){ animation-delay:.05s } .logo.anim-wm .wm span:nth-child(3){ animation-delay:.1s }
+  .logo.anim-wm .wm span:nth-child(4){ animation-delay:.15s } .logo.anim-wm .wm span:nth-child(5){ animation-delay:.2s }
+  .logo.intro .mark, .logo.intro .wm{ visibility:hidden; }
+  /* Abertura em grande: o "à" gigante no centro, dá a volta, o acento cai, e encolhe até ao lugar no logótipo */
+  #amIntro{ position:fixed; inset:0; z-index:99999; background:var(--bg); display:flex; align-items:center; justify-content:center; cursor:pointer; }
+  #amIntro .big{ --k:6; width:calc(38px * var(--k)); height:calc(38px * var(--k)); border-radius:50%; background:var(--terra); color:#fff; display:flex; align-items:center; justify-content:center; font-family:'Playfair Display', serif; font-weight:700; font-size:calc(1.25rem * var(--k)); position:relative; perspective:calc(120px * var(--k)); box-shadow:0 18px 50px rgba(192,90,58,.35); will-change:transform; }
+  #amIntro .big .mk-a{ display:inline-block; line-height:1; margin-top:calc(2px * var(--k)); transform-origin:50% 60%; }
+  #amIntro .big .mk-ac{ position:absolute; left:50%; top:calc(8px * var(--k)); width:calc(2.6px * var(--k)); height:calc(7.5px * var(--k)); margin-left:calc(-3px * var(--k)); background:#fff; border-radius:calc(2px * var(--k)); transform:rotate(-38deg); }
   @keyframes amPop{ 0%{ transform:scale(0); } 100%{ transform:scale(1); } }
   @keyframes amSpin{ 0%{ transform:rotateY(0); } 100%{ transform:rotateY(360deg); } }
   @keyframes amRise{ 0%{ opacity:0; transform:translateY(14px) scale(.9); } 100%{ opacity:1; transform:none; } }
@@ -166,8 +175,51 @@
 <body>
 <header class="top">
   <div class="wrap top-in">
-    <a class="logo anim" href="./" aria-label="ÀMesa"><span class="mark" aria-hidden="true"><span class="mk-a">a</span><i class="mk-ac"></i></span> <span class="wm" aria-hidden="true"><span>À</span><span>M</span><span>e</span><span>s</span><span>a</span></span></a>
-    <script>(function(){ var l = document.querySelector('.logo'); if(!l) return; var t = 0; l.addEventListener('mouseenter', function(){ if(Date.now() - t < 2200) return; t = Date.now(); l.classList.remove('anim'); void l.offsetWidth; l.classList.add('anim'); }); })();</script>
+    <a class="logo" href="./" aria-label="ÀMesa"><span class="mark" aria-hidden="true"><span class="mk-a">a</span><i class="mk-ac"></i></span> <span class="wm" aria-hidden="true"><span>À</span><span>M</span><span>e</span><span>s</span><span>a</span></span></a>
+    <script>
+    (function(){
+      var l = document.querySelector('.logo'); if(!l) return;
+      function pequena(){ l.classList.remove('anim', 'anim-wm'); void l.offsetWidth; l.classList.add('anim'); }
+      var t = 0; l.addEventListener('mouseenter', function(){ if(Date.now() - t < 2200) return; t = Date.now(); pequena(); });
+      // Abertura em grande: só na 1.ª visita de cada sessão, nunca com "reduzir movimento"
+      var reduz = false; try{ reduz = window.matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){}
+      var visto = false; try{ visto = sessionStorage.getItem('amIntro') === '1'; sessionStorage.setItem('amIntro', '1'); }catch(e){}
+      if(reduz || visto || !document.body.animate){ pequena(); return; }
+      l.classList.add('intro');
+      var ov = document.createElement('div'); ov.id = 'amIntro'; ov.setAttribute('aria-hidden', 'true');
+      var tam = Math.round(Math.min(window.innerWidth, window.innerHeight) * 0.55);
+      ov.innerHTML = '<div class="big" style="--k:' + (tam / 38) + '"><span class="mk-a">a</span><i class="mk-ac"></i></div>';
+      document.body.appendChild(ov);
+      var big = ov.firstChild, letra = big.querySelector('.mk-a'), acento = big.querySelector('.mk-ac');
+      var acabou = false;
+      function fim(){
+        if(acabou) return; acabou = true;
+        try{ ov.remove(); }catch(e){}
+        l.classList.remove('intro'); void l.offsetWidth; l.classList.add('anim-wm');
+      }
+      ov.addEventListener('click', fim);   // tocar salta a abertura
+      var EASE = 'cubic-bezier(.45,0,.25,1)';
+      big.animate([{ transform:'scale(.2)', opacity:0 }, { transform:'scale(1.06)', opacity:1, offset:.75 }, { transform:'scale(1)', opacity:1 }], { duration:450, easing:'ease-out', fill:'both' });
+      letra.animate([{ transform:'rotateY(0)' }, { transform:'rotateY(360deg)' }], { duration:900, delay:250, easing:EASE, fill:'both' });
+      var R = 'rotate(-38deg)';
+      acento.animate([
+        { transform:'translateY(' + (-tam * .9) + 'px) ' + R, opacity:0 }, { opacity:1, offset:.08 },
+        { transform:'translateY(0) ' + R, offset:.55 }, { transform:'translateY(' + (-tam * .14) + 'px) ' + R, offset:.7 },
+        { transform:'translateY(0) ' + R, offset:.85 }, { transform:'translateY(' + (-tam * .04) + 'px) ' + R, offset:.93 },
+        { transform:'translateY(0) ' + R }
+      ], { duration:700, delay:1000, easing:'linear', fill:'both' });
+      // zoom out: encolhe e voa até ao lugar do logótipo no topo
+      setTimeout(function(){
+        if(acabou) return;
+        var alvo = l.querySelector('.mark').getBoundingClientRect(), b = big.getBoundingClientRect();
+        var dx = (alvo.left + alvo.width / 2) - (b.left + b.width / 2), dy = (alvo.top + alvo.height / 2) - (b.top + b.height / 2), sc = alvo.width / b.width;
+        big.animate([{ transform:'translate(0,0) scale(1)' }, { transform:'translate(' + dx + 'px,' + dy + 'px) scale(' + sc + ')' }], { duration:650, easing:'cubic-bezier(.6,0,.2,1)', fill:'forwards' });
+        ov.animate([{ backgroundColor:'rgba(250,245,236,1)' }, { backgroundColor:'rgba(250,245,236,0)' }], { duration:650, easing:'ease-in', fill:'forwards' });
+        setTimeout(fim, 660);
+      }, 1850);
+      setTimeout(fim, 4000);   // segurança: nunca fica preso
+    })();
+    </script>
     <button id="qrScanBtn" class="qr-scan" type="button" title="Ver código QR grande para scan">
       <div id="qrMontra" class="qr-montra" aria-hidden="true"></div>
       <span class="qr-scan-label">SCAN</span>
