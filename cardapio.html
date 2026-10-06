@@ -2524,6 +2524,15 @@
   #amPC .qr img, #amPC .qr canvas{ display:block; margin:0 auto; }
   #amPC .lk{ margin-top:14px; font-size:.82rem; opacity:.6; word-break:break-all; }
   #amPC button{ margin-top:22px; background:none; border:none; color:#fff; opacity:.55; text-decoration:underline; cursor:pointer; font-size:.85rem; }
+
+  /* Computador (rato, ecrã largo): cabeçalho, promoção, publicidade e rodapé com a mesma largura do menu (640 px).
+     Telemóveis e tablets não leem estas regras (o ecrã deles é tátil). */
+  @media (min-width:760px) and (hover:hover) and (pointer:fine){
+    body > header{ max-width:640px; margin-left:auto !important; margin-right:auto !important; border-radius:0 0 18px 18px; overflow:hidden; }
+    #promoDia{ max-width:640px; margin-left:auto !important; margin-right:auto !important; box-sizing:border-box; }
+    #anuncioBox{ max-width:640px; margin-left:auto !important; margin-right:auto !important; }
+    .info-fixa{ left:calc(50% - 320px) !important; right:calc(50% - 320px) !important; width:auto !important; border-radius:16px 16px 0 0; }
+  }
 </style>
 <script>
 (function(){
@@ -2542,12 +2551,11 @@
     if(admin()) window.__amPC = false;
     else {
       try{ if(sessionStorage.getItem('amesaVerPC') === '1') return; }catch(e){}
-      var slug = (typeof __slugDoEndereco === 'function') ? __slugDoEndereco() : '';
-      var link = slug ? (location.origin + '/' + slug) : location.href.split('#')[0];
+      var link = 'https://amesadigital.pt/';   // o QR leva à montra da ÀMesa
       var o = document.createElement('div'); o.id = 'amPC';
       o.innerHTML = '<div class="c"><div class="ic">📱</div><h1>A ÀMesa foi feita para o telemóvel</h1>'
-        + '<p>Aponta a câmara do telemóvel a este código para abrires o menu<span id="amPCnome"></span>.</p>'
-        + '<div class="qr" id="amPCqr"></div><div class="lk">' + link.replace(/^https?:\/\//, '') + '</div>'
+        + '<p>Aponta a câmara do telemóvel a este código, entra na ÀMesa e instala-a no ecrã do teu telemóvel para novas descobertas. 🍽️</p>'
+        + '<div class="qr" id="amPCqr"></div><div class="lk">amesadigital.pt</div>'
         + '<button type="button" id="amPCver">Ver mesmo assim no computador</button></div>';
       document.body.appendChild(o); document.documentElement.style.overflow = 'hidden';
       document.getElementById('amPCver').onclick = function(){ try{ sessionStorage.setItem('amesaVerPC', '1'); }catch(e){} tirar(); };
@@ -2555,8 +2563,7 @@
         t++;
         var q = document.getElementById('amPCqr');
         if(q && window.QRCode && !q.firstChild){ try{ new QRCode(q, { text:link, width:220, height:220, colorDark:'#3a2c18', colorLight:'#ffffff' }); }catch(e){} }
-        var n = document.getElementById('amPCnome'); if(n && window.__negNome && !n.textContent) n.textContent = ' do ' + window.__negNome;
-        if((q && q.firstChild && (!n || n.textContent)) || t > 60) clearInterval(iv);
+        if((q && q.firstChild) || t > 60) clearInterval(iv);
       }, 250);
     }
     // Administrador? (sessão iniciada no Painel/Gestão neste computador) → vê tudo como antes
