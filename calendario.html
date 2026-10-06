@@ -2237,7 +2237,7 @@
       const id = el.getAttribute('data-id');
       const r = reservas.find(function(x){ return String(x.id)===String(id); });
       if(r) _setKpiPessoas(r.data);
-      abrirModalEdicao(id);
+      _abrirReserva(id);
     }; });
   }
   // Resumo dentro do Calendário: A precisar de resposta / Hoje / Próximas reservas (mesmo layout do painel)
@@ -2253,7 +2253,7 @@
     html += '<div class="dash-sec"><h3>📆 Hoje</h3>' + (hojeR.length ? hojeR.map(_linhaReserva).join('') : '<div class="vazio-msg">Sem reservas para hoje.</div>') + '</div>';
     html += '<div class="dash-sec"><h3>➡️ Próximas reservas</h3>' + (prox.length ? prox.map(_linhaReserva).join('') : '<div class="vazio-msg">Sem reservas futuras.</div>') + '</div>';
     c.innerHTML = html;
-    c.querySelectorAll('.linha-r').forEach(function(el){ el.onclick = function(){ abrirModalEdicao(el.getAttribute('data-id')); }; });
+    c.querySelectorAll('.linha-r').forEach(function(el){ el.onclick = function(){ _abrirReserva(el.getAttribute('data-id')); }; });
     _pintarDonoPush();
   }
   function _capacidade(){ return (negocio && negocio.config && negocio.config.agenda && parseInt(negocio.config.agenda.capacidade,10)) || 0; }
@@ -2633,6 +2633,12 @@
   }
 
   let _mdId = null;
+  // Tocar numa reserva das listas: pedido por responder (normal) → janela com as respostas rápidas; resto → editar
+  function _abrirReserva(id){
+    const r = reservas.find(function(x){ return String(x.id)===String(id); });
+    if(r && !_eGrupo(r) && (r.estado === 'pendente' || r.alt_hora || r.alt_pessoas)){ _abrirAprovacao(r); return; }
+    abrirModalEdicao(id);
+  }
   function abrirModalEdicao(id){
     const r = reservas.find(function(x){ return String(x.id)===String(id); });
     if(!r) return;
@@ -2644,6 +2650,14 @@
     $('mdObs').value = r.obs || '';
     $('mdEstado').value = r.estado || 'pendente';
     $('mdMsg').textContent = ''; $('mdMsg').className = 'msg';
+    // reservas normais: responder na ÀMesa; WhatsApp só como último recurso (menus de grupo: WhatsApp como sempre)
+    { let mr = $('mdResponder');
+      if(!mr){ mr = document.createElement('button'); mr.id = 'mdResponder'; mr.type = 'button'; mr.style.cssText = 'width:100%; margin-top:4px; background:#2a4f86; color:#fff; border:none; border-radius:9px; padding:11px; font-weight:800; cursor:pointer;'; mr.textContent = '💬 Responder ao cliente (confirmar, propor, nota)'; $('mdAvisar').before(mr); }
+      const grupo = _eGrupo(r), wa = $('mdAvisar');
+      mr.style.display = grupo ? 'none' : '';
+      mr.onclick = function(){ fecharModal(); _responder(r); };
+      wa.textContent = grupo ? '📲 Avisar cliente por WhatsApp' : '📲 WhatsApp (último recurso)';
+      wa.style.background = grupo ? '#25d366' : '#fff'; wa.style.color = grupo ? '#fff' : '#1e7a43'; wa.style.border = grupo ? 'none' : '1.5px solid #cdeed9'; }
     $('modalEdit').classList.remove('hide');
     document.body.style.overflow = 'hidden';
   }
