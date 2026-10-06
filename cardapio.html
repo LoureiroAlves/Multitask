@@ -9206,6 +9206,13 @@
     // Captura o pedido de instalação do Android/Chrome quando disponível
     var _deferInstall = null;
     window.addEventListener('beforeinstallprompt', function(e){ e.preventDefault(); _deferInstall = e; });
+    // usado pelo jogo (convites): sugerir "Adicionar ao ecrã principal" a quem se inscreve
+    window.__amInstalar = {
+      instalada: function(){ try{ return window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true; }catch(e){ return false; } },
+      ios: function(){ var u = navigator.userAgent || ''; return /iphone|ipad|ipod/i.test(u) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); },
+      pode: function(){ return !!_deferInstall; },
+      pedir: function(){ if(!_deferInstall) return Promise.resolve(false); var d = _deferInstall; d.prompt(); return d.userChoice.then(function(c){ _deferInstall = null; return !!(c && c.outcome === 'accepted'); }, function(){ return false; }); }
+    };
 
     var ua = navigator.userAgent || '';
     var isIOS = /iphone|ipad|ipod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);

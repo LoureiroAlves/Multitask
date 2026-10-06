@@ -1540,6 +1540,7 @@ window.__carregarErros = async function(){
     var r = await sb.from('ovo_jogos').select('*').order('inicio', { ascending:false }).limit(300);
     if(r.error) throw r.error;
     LISTA = r.data || [];
+    if(TEM_CONV === null){ var pc = await sb.from('ovo_jogos').select('dica_convite').limit(1); TEM_CONV = !pc.error; }   // ovo-convites.sql corrido?
     var ids = LISTA.map(function(j){ return j.id; });
     PUB = {}; SEG = {};
     if(ids.length){
@@ -1652,12 +1653,17 @@ window.__carregarErros = async function(){
     box.innerHTML = '<div class="msg ok">✅ Código válido<br>' + info + '<br><button type="button" class="acao" id="ovUsar" style="margin-top:8px;">✓ Prémio entregue — marcar como utilizado</button></div>';
     $('ovUsar').onclick = async function(){ this.disabled = true; var u = await sb.rpc('ovo_usar_codigo', { p_vencedor:w.id }); if(u.error){ alert('Erro: ' + u.error.message); this.disabled = false; return; } box.innerHTML = '<div class="msg ok">✓ Prémio entregue. Código ' + esc(cod) + ' marcado como utilizado.</div>'; $('ovCod').value = ''; };
   }
+  var TEM_CONV = null;
   async function detalhe(j){
     var vr = await sb.from('ovo_vencedores').select('*').eq('jogo_id', j.id).order('posicao');
-    var pr = await sb.from('ovo_participacoes').select('tentativas').eq('jogo_id', j.id);
+    var pr = await sb.from('ovo_participacoes').select(TEM_CONV ? 'id,tentativas,convidado_por' : 'tentativas').eq('jogo_id', j.id);
     var parts = pr.data || [], tent = parts.reduce(function(a, x){ return a + (x.tentativas || 0); }, 0), n = negDe(j.negocio_id);
+    var porConv = parts.filter(function(x){ return x.convidado_por; }), cont = {}, top = 0, comDica = 0;
+    porConv.forEach(function(x){ cont[x.convidado_por] = (cont[x.convidado_por] || 0) + 1; });
+    Object.keys(cont).forEach(function(k){ if(cont[k] > top) top = cont[k]; if(cont[k] >= 2) comDica++; });
     var h = '<div style="font-weight:900;font-size:1.05rem;color:var(--castanho);">' + esc(n ? n.nome : '') + ' · ' + esc(j.premio_nome) + '</div>'
-      + '<div style="color:#8a7a5c;font-size:.86rem;margin:4px 0 10px;">' + diaTxt(j.inicio) + ' · ' + horaTxt(j.inicio) + '–' + horaTxt(j.fim) + ' · ' + parts.length + ' inscrito(s) · ' + tent + ' tentativa(s)</div>';
+      + '<div style="color:#8a7a5c;font-size:.86rem;margin:4px 0 10px;">' + diaTxt(j.inicio) + ' · ' + horaTxt(j.inicio) + '–' + horaTxt(j.fim) + ' · ' + parts.length + ' inscrito(s) · ' + tent + ' tentativa(s)</div>'
+      + (TEM_CONV ? ('<div style="background:#fff7e0;border-radius:10px;padding:8px 10px;font-size:.85rem;margin-bottom:8px;">📲 <b>' + porConv.length + '</b> inscrito(s) por convite de amigos · ' + Object.keys(cont).length + ' jogador(es) convidaram · máx. ' + top + ' por pessoa · ' + comDica + ' desbloquearam a dica secreta</div>') : '');
     if(!(vr.data || []).length) h += '<div style="color:#8a7a5c;">Ainda sem vencedores.</div>';
     (vr.data || []).forEach(function(w){
       h += '<div style="border:1.5px solid ' + (w.estado_codigo === 'utilizado' ? '#cfd8d1' : '#f2b705') + ';border-radius:12px;padding:10px 12px;margin-top:8px;">'
@@ -1678,10 +1684,10 @@ window.__carregarErros = async function(){
 
   // ---------- editor da sessão ----------
   function novo(){ var d = new Date(); d.setDate(d.getDate() + 1); d.setHours(21, 0, 0, 0);
-    return { id:null, negocio_id:'', data:dataIso(d), hora:'21:00', horaFim:'23:00', nome:'No Cu da Galinha', descricao:'Há um ovo escondido no nosso menu. Encontra-o antes de toda a gente!', premio_nome:'', premio_descricao:'', limite_vencedores:1, dificuldade:'medio', charada:'', dicas:[], avisar_push:true, alvo:null, estado:'rascunho',
+    return { id:null, negocio_id:'', data:dataIso(d), hora:'21:00', horaFim:'23:00', nome:'No Cu da Galinha', descricao:'Há um ovo escondido no nosso menu. Encontra-o antes de toda a gente!', premio_nome:'', premio_descricao:'', limite_vencedores:1, dificuldade:'medio', charada:'', dicas:[], dica_convite:'', avisar_push:true, alvo:null, estado:'rascunho',
              pat_on:false, patrocinador_id:'', pat_nome:'', pat_logo:'', pat_link:'', patrocinio_msg:'' }; }
   function deJogo(j){ var i = new Date(j.inicio), f = new Date(j.fim), p = j.patrocinador_id ? patDe(j.patrocinador_id) : null;
-    return { id:j.id, negocio_id:j.negocio_id, data:dataIso(i), hora:horaTxt(j.inicio), horaFim:horaTxt(j.fim), nome:j.nome || 'No Cu da Galinha', descricao:j.descricao || '', premio_nome:j.premio_nome || '', premio_descricao:j.premio_descricao || '', limite_vencedores:j.limite_vencedores || 1, dificuldade:j.dificuldade || 'medio', charada:j.charada || '', dicas:Array.isArray(j.dicas) ? j.dicas : [], avisar_push:j.avisar_push !== false, alvo:SEG[j.id] || null, estado:j.estado,
+    return { id:j.id, negocio_id:j.negocio_id, data:dataIso(i), hora:horaTxt(j.inicio), horaFim:horaTxt(j.fim), nome:j.nome || 'No Cu da Galinha', descricao:j.descricao || '', premio_nome:j.premio_nome || '', premio_descricao:j.premio_descricao || '', limite_vencedores:j.limite_vencedores || 1, dificuldade:j.dificuldade || 'medio', charada:j.charada || '', dicas:Array.isArray(j.dicas) ? j.dicas : [], dica_convite:j.dica_convite || '', avisar_push:j.avisar_push !== false, alvo:SEG[j.id] || null, estado:j.estado,
              pat_on:!!p, patrocinador_id:p ? p.id : '', pat_nome:p ? p.nome : '', pat_logo:p ? (p.logo_url || '') : '', pat_link:p ? (p.link || '') : '', patrocinio_msg:j.patrocinio_msg || '', _negOrig:j.negocio_id, _negAlvo:j.negocio_id }; }
   function renderEditor(){
     var box = BOX(), p = EDIT; if(!box || !p) return;
@@ -1706,6 +1712,7 @@ window.__carregarErros = async function(){
       + '</div>'
       + '<div id="ovCharBox"' + (p.dificuldade === 'dificil' ? '' : ' style="display:none;"') + '>' + lbl('Charada') + '<textarea id="ovChar" rows="2" style="width:100%;">' + esc(p.charada) + '</textarea></div>'
       + lbl('Dicas ao longo do jogo <span style="font-weight:400;color:#8a7a5c;">(opcional — uma por linha: minutos | texto)</span>') + '<textarea id="ovDicas" rows="2" style="width:100%;" placeholder="30 | Começa por F&#10;60 | Está numa secção de carne">' + esc(dicasTxt) + '</textarea>'
+      + (TEM_CONV ? (lbl('🔐 Dica secreta <span style="font-weight:400;color:#8a7a5c;">(opcional — só a vê quem convidar 2 amigos que se inscrevam; aparece quando a caça começa)</span>') + '<textarea id="ovDicaConv" rows="2" style="width:100%;" placeholder="Ex.: Está num prato com mais de 3 ingredientes do mar">' + esc(p.dica_convite || '') + '</textarea>') : '')
       + '<details style="margin-top:10px;"><summary style="cursor:pointer;font-weight:800;color:var(--castanho);font-size:.88rem;">Texto que o cliente lê</summary>'
       +   lbl('Nome da caça') + '<input id="ovNome" value="' + esc(p.nome) + '">'
       +   lbl('Descrição') + '<textarea id="ovDesc" rows="2" style="width:100%;">' + esc(p.descricao) + '</textarea></details>'
@@ -1745,6 +1752,7 @@ window.__carregarErros = async function(){
     p.negocio_id = $('ovNeg').value; p.premio_nome = $('ovPremio').value.trim(); p.premio_descricao = $('ovPremioD').value.trim();
     p.limite_vencedores = Math.max(1, Math.min(100, parseInt($('ovLim').value, 10) || 1)); p.dificuldade = $('ovDif').value; p.charada = $('ovChar').value.trim();
     p.dicas = ($('ovDicas').value || '').split('\n').map(function(l){ var m = /^\s*(\d+)\s*\|\s*(.+)$/.exec(l); return m ? { minutos:parseInt(m[1], 10), texto:m[2].trim() } : null; }).filter(Boolean);
+    if($('ovDicaConv')) p.dica_convite = $('ovDicaConv').value.trim();
     p.nome = $('ovNome').value.trim() || 'No Cu da Galinha'; p.descricao = $('ovDesc').value.trim(); p.avisar_push = $('ovAvisar').checked;
     p.pat_on = $('ovPatOn').checked; p.patrocinador_id = $('ovPatSel').value; p.pat_nome = $('ovPatNome').value.trim(); p.pat_link = $('ovPatLink').value.trim(); p.patrocinio_msg = $('ovPatMsg').value.trim();
   }
@@ -1825,6 +1833,7 @@ window.__carregarErros = async function(){
       else { var ins = await sb.from('patrocinadores').insert(reg).select('id').single(); if(ins.error) return erro('Erro no patrocinador: ' + esc(ins.error.message)); patId = ins.data.id; }
     }
     var row = { negocio_id:p.negocio_id, nome:p.nome, descricao:p.descricao, premio_nome:p.premio_nome, premio_descricao:p.premio_descricao, inicio:ini.toISOString(), fim:fim.toISOString(), limite_vencedores:p.limite_vencedores, dificuldade:p.dificuldade, charada:p.charada, dicas:p.dicas, alvo_rotulo:null, avisar_push:p.avisar_push };
+    if(TEM_CONV) row.dica_convite = p.dica_convite || null;
     if(PATS !== null){ row.patrocinador_id = patId; row.patrocinio_msg = (p.pat_on && p.patrocinio_msg) ? p.patrocinio_msg : null; }
     var id = p.id, r;
     if(id){ r = await sb.from('ovo_jogos').update(row).eq('id', id); }
