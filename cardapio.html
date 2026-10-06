@@ -2511,6 +2511,69 @@
 
 </head>
 <body class="carregando">
+<!-- ===== Só telemóvel: no computador mostra um ecrã com QR code para abrir no telemóvel.
+     Exceções: administrador (com sessão iniciada), previsões dentro de outras páginas (Painel, Gestão, editor, registo),
+     ?preview=1, ?demo=, ?modo=esconderijo, e quem carregar em "Ver mesmo assim" (nesse caso o jogo continua bloqueado). ===== -->
+<style>
+  #amPC{ position:fixed; inset:0; z-index:2147483000; background:linear-gradient(160deg,#3a2c18,#1f1810); color:#fff; display:flex; align-items:center; justify-content:center; padding:24px; font-family:system-ui,-apple-system,"Segoe UI",sans-serif; }
+  #amPC .c{ max-width:420px; text-align:center; }
+  #amPC .ic{ font-size:3rem; }
+  #amPC h1{ font-size:1.6rem; margin:8px 0 6px; }
+  #amPC p{ opacity:.85; line-height:1.45; margin:0 0 18px; }
+  #amPC .qr{ background:#fff; border-radius:18px; padding:16px; display:inline-block; min-width:220px; min-height:220px; }
+  #amPC .qr img, #amPC .qr canvas{ display:block; margin:0 auto; }
+  #amPC .lk{ margin-top:14px; font-size:.82rem; opacity:.6; word-break:break-all; }
+  #amPC button{ margin-top:22px; background:none; border:none; color:#fff; opacity:.55; text-decoration:underline; cursor:pointer; font-size:.85rem; }
+</style>
+<script>
+(function(){
+  try{
+    var Q = new URLSearchParams(location.search);
+    var dentro = false; try{ dentro = window.top !== window.self; }catch(e){ dentro = true; }
+    if(dentro || Q.get('preview') === '1' || Q.get('demo') || Q.get('modo') === 'esconderijo') return;
+    var ua = navigator.userAgent || '';
+    var movel = /Mobi|Android|iPhone|iPad|iPod|Windows Phone|Silk|Kindle/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    var tatil = false; try{ tatil = window.matchMedia('(pointer: coarse)').matches; }catch(e){}
+    if(movel || tatil) return;                                   // telemóvel ou tablet → normal
+    window.__amPC = true;                                        // computador: o jogo fica bloqueado
+    var ADM = 'amesaAdminPC';
+    function admin(){ try{ return localStorage.getItem(ADM) === '1'; }catch(e){ return false; } }
+    function tirar(){ var o = document.getElementById('amPC'); if(o) o.remove(); document.documentElement.style.overflow = ''; }
+    if(admin()) window.__amPC = false;
+    else {
+      try{ if(sessionStorage.getItem('amesaVerPC') === '1') return; }catch(e){}
+      var slug = (typeof __slugDoEndereco === 'function') ? __slugDoEndereco() : '';
+      var link = slug ? (location.origin + '/' + slug) : location.href.split('#')[0];
+      var o = document.createElement('div'); o.id = 'amPC';
+      o.innerHTML = '<div class="c"><div class="ic">📱</div><h1>A ÀMesa foi feita para o telemóvel</h1>'
+        + '<p>Aponta a câmara do telemóvel a este código para abrires o menu<span id="amPCnome"></span>.</p>'
+        + '<div class="qr" id="amPCqr"></div><div class="lk">' + link.replace(/^https?:\/\//, '') + '</div>'
+        + '<button type="button" id="amPCver">Ver mesmo assim no computador</button></div>';
+      document.body.appendChild(o); document.documentElement.style.overflow = 'hidden';
+      document.getElementById('amPCver').onclick = function(){ try{ sessionStorage.setItem('amesaVerPC', '1'); }catch(e){} tirar(); };
+      var t = 0, iv = setInterval(function(){
+        t++;
+        var q = document.getElementById('amPCqr');
+        if(q && window.QRCode && !q.firstChild){ try{ new QRCode(q, { text:link, width:220, height:220, colorDark:'#3a2c18', colorLight:'#ffffff' }); }catch(e){} }
+        var n = document.getElementById('amPCnome'); if(n && window.__negNome && !n.textContent) n.textContent = ' do ' + window.__negNome;
+        if((q && q.firstChild && (!n || n.textContent)) || t > 60) clearInterval(iv);
+      }, 250);
+    }
+    // Administrador? (sessão iniciada no Painel/Gestão neste computador) → vê tudo como antes
+    var k = 0, esp = setInterval(async function(){
+      k++; var c = null; try{ c = (typeof sbC !== 'undefined') ? sbC : null; }catch(e){}
+      if(!c){ if(k > 40) clearInterval(esp); return; }
+      clearInterval(esp);
+      try{
+        var ss = (await c.auth.getSession()).data.session, eh = false;
+        if(ss){ var a = await c.from('admins').select('user_id').eq('user_id', ss.user.id); eh = !!(a.data && a.data.length); }
+        if(eh){ try{ localStorage.setItem(ADM, '1'); }catch(e){} window.__amPC = false; tirar(); }
+        else if(admin()){ try{ localStorage.removeItem(ADM); }catch(e){} location.reload(); }   // deixou de ter sessão de administrador
+      }catch(e){}
+    }, 250);
+  }catch(e){}
+})();
+</script>
 
 <div id="fundoFoto" aria-hidden="true"><img class="ff-img" alt="" decoding="async"><div class="ff-veil"></div></div>
 
