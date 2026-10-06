@@ -66,6 +66,16 @@
     box.innerHTML = '<div class="ovo-conv-s" style="margin:6px 0;">🔒 Dica secreta bloqueada — convidaste ' + Math.min(c.amigos || 0, c.meta || 2) + ' de ' + (c.meta || 2) + ' amigos.</div>';
   }
 
+  // ---------- só telemóvel: no computador o jogo fica bloqueado (o administrador não) ----------
+  function soTelemovel(){
+    if(!window.__amPC) return false;
+    var link = (function(){ try{ var s = (typeof __slugDoEndereco === 'function') ? __slugDoEndereco() : ''; return s ? (location.origin + '/' + s) : location.href.split('#')[0]; }catch(e){ return location.href; } })();
+    folha('<div class="big">📱🥚</div><h2>A caça ao ovo joga-se no telemóvel</h2><p>Aponta a câmara do telemóvel a este código, abre o menu e inscreve-te lá.</p><div id="ovoQrPC" style="background:#fff;border-radius:14px;padding:12px;display:inline-block;margin:6px auto 10px;"></div><button type="button" class="btn sec" id="ovoDepois">OK</button>');
+    $('ovoDepois').onclick = fecharFolha;
+    try{ if(window.QRCode) new QRCode($('ovoQrPC'), { text:link, width:190, height:190, colorDark:'#3a2c18', colorLight:'#ffffff' }); }catch(e){}
+    return true;
+  }
+
   // ---------- carregar o jogo ----------
   async function carregar(){
     if(typeof sbC === 'undefined' || !sbC || !window.__negocioId) return;
@@ -241,6 +251,7 @@
   }
   function fechoInsc(){ return J ? (new Date(J.inicio).getTime() - 60000) : 0; }   // as inscrições fecham 1 minuto antes
   async function inscrever(){
+    if(soTelemovel()) return;
     var b = $('ovoInscrever'); if(b){ b.disabled = true; b.textContent = 'A inscrever…'; }
     var ep = '';
     try{ if(window.__ovoObterPush) ep = await window.__ovoObterPush(); }catch(e){ ep = ''; }
@@ -265,6 +276,7 @@
     document.querySelectorAll('.ovo-insc').forEach(function(el){ el.textContent = '✓ Estás inscrito'; });
   }
   async function comecar(){
+    if(soTelemovel()) return;
     var b = $('ovoComecar'); if(b){ b.disabled = true; b.textContent = 'A entrar…'; }
     // ao acordar o telemóvel a rede pode demorar uns segundos: tenta até 4 vezes antes de desistir
     var erroFinal = null;
@@ -283,7 +295,7 @@
   }
   // ---------- caça ----------
   function iniciarCaca(){
-    if(aCacar) return; aCacar = true;
+    if(aCacar || window.__amPC) return; aCacar = true;
     tentativas = parseInt(ls('amesaOvoTent:' + J.id) || '0', 10) || 0;
     var f = $('ovoFlut'); if(!f){ f = document.createElement('button'); f.id = 'ovoFlut'; f.type = 'button'; document.body.appendChild(f); f.onclick = function(){ abrirFolha('caca'); }; }
     f.onclick = function(){ abrirFolha('caca'); };
