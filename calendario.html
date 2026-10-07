@@ -1130,6 +1130,7 @@
       + '<div style="font-weight:900;font-size:1.05rem;">' + esc(d.nome || 'Cliente') + ' <span style="color:#8a7a5c;font-weight:700;font-size:.85rem;">' + esc(d.tel || '') + '</span></div>'
       + (aviso || '')
       + (d.pendente ? '<div class="msg" style="margin-top:6px;">📱 Este cliente está a usar um <b>telemóvel novo</b>. Confirma que é a pessoa certa e passa-lhe o cartão.</div>' : '')
+      + ((!d.pendente && d.pedido_novo) ? '<div style="margin-top:8px;padding:10px;border-radius:12px;background:#eef3fb;"><div style="font-weight:800;color:#2a4f86;">📱 Pedido para passar este cartão para um telemóvel novo</div><div class="subt2" style="margin:4px 0 8px;">Só se o cliente estiver à tua frente: pede-lhe o <b>código de 4 letras</b> que aparece no telemóvel dele.</div><div style="display:flex;gap:8px;"><input id="fidCodNovo" maxlength="4" placeholder="Código" style="flex:1;text-transform:uppercase;letter-spacing:4px;font-weight:800;"><button type="button" class="pdf-btn" id="fidCodOk" style="width:auto;padding:0 14px;background:#2a4f86;color:#fff;">Passar</button></div></div>' : '')
       + _fidSelos(Math.min(d.carimbos, total), total)
       + '<div class="subt2">' + d.carimbos + ' de ' + total + ' carimbos · ' + (d.premios || 0) + ' prémio(s) já recebido(s)</div>'
       + '<div style="display:grid;gap:8px;margin-top:10px;">'
@@ -1138,6 +1139,12 @@
       + ((!d.pendente && d.carimbos < total && !d.hoje) ? '<button type="button" class="pdf-btn" id="fidCarimbo">⭐ Dar carimbo</button>' : '')
       + '</div></div>';
     const lg = $('fidLigar'); if(lg) lg.onclick = async function(){ const r = await sb.rpc('fid_ligar', { p_negocio:negocio.id, p_cartao:d.id }); if(r.error){ _toastR('Erro: ' + r.error.message); return; } _toastR('✓ Cartão passado para o telemóvel novo'); _fidPinta(Object.assign(d, r.data || {}, { pendente:false }), ''); };
+    const co = $('fidCodOk'); if(co) co.onclick = async function(){
+      const v = String($('fidCodNovo').value || '').trim().toUpperCase();
+      if(!d.codigo_novo || v !== String(d.codigo_novo).toUpperCase()){ _toastR('❌ Código errado. Confirma no telemóvel do cliente.'); return; }
+      const r = await sb.rpc('fid_ligar', { p_negocio:negocio.id, p_cartao:d.id }); if(r.error){ _toastR('Erro: ' + r.error.message); return; }
+      _toastR('✓ Cartão passado para o telemóvel novo'); _fidPinta(Object.assign(d, r.data || {}, { pedido_novo:false, pendente:false }), '<div class="msg ok">✓ O cartão já está no telemóvel novo.</div>');
+    };
     const pr = $('fidPremioB'); if(pr) pr.onclick = async function(){ if(!(await window.__amConfirm('Entregar prémio', { texto:'Entregar "' + (d.premio || 'o prémio') + '" a ' + (d.nome || 'este cliente') + '? O cartão recomeça.', ok:'Sim, entregar', cancelar:'Não' }))) return; const r = await sb.rpc('fid_premio', { p_negocio:negocio.id, p_cartao:d.id }); if(r.error){ _toastR('Erro: ' + r.error.message); return; } _fidPinta(Object.assign(d, r.data || {}), '<div class="msg ok">🎁 Prémio entregue! O cartão recomeçou.</div>'); _fidListas(); };
     const cb = $('fidCarimbo'); if(cb) cb.onclick = async function(){ cb.disabled = true; const r = await sb.rpc('fid_carimbar', { p_negocio:negocio.id, p_cartao:d.id, p_origem:'telefone' }); if(r.error){ _toastR('Erro: ' + r.error.message); cb.disabled = false; return; } const e = r.data || {}; _fidPinta(Object.assign(d, e), e.estado === 'ok' ? '<div class="msg ok">✓ Carimbo dado!</div>' : e.estado === 'hoje' ? '<div class="msg">Já tem o carimbo de hoje.</div>' : ''); _fidListas(); };
   }

@@ -6786,7 +6786,8 @@
       if(d.estado === 'sem' || !tk){ try{ localStorage.removeItem(KEY2); }catch(e){} fidEntrada(); return; }
       if(d.estado === 'pendente'){
         fidPinta('<h3 style="font-family:\'Fredoka\',sans-serif;color:var(--castanho);text-align:center;margin-bottom:6px;">Já tens cartão 👍</h3>'
-          + '<p style="text-align:center;font-size:0.86rem;color:var(--castanho-suave);margin:0 0 10px;">Este número já tem um cartão noutro telemóvel. Mostra este código ao empregado para o passar para este telemóvel.</p>'
+          + '<p style="text-align:center;font-size:0.86rem;color:var(--castanho-suave);margin:0 0 10px;">Este número já tem um cartão noutro telemóvel. Mostra este ecrã ao empregado para o passar para este telemóvel.</p>'
+          + '<div style="text-align:center;margin:0 0 10px;"><span style="font-size:.78rem;color:var(--castanho-suave);">Código de confirmação</span><div style="font-family:ui-monospace,Menlo,monospace;font-weight:900;font-size:2rem;letter-spacing:8px;color:var(--castanho);">' + tk.slice(-4).toUpperCase() + '</div></div>'
           + '<div style="display:flex;justify-content:center;"><div id="fidQR" style="background:#fff;padding:12px;border-radius:16px;box-shadow:0 6px 20px rgba(0,0,0,.12);"></div></div>');
         fidQR(tk); fidVigiar(); return;
       }
