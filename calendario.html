@@ -1151,8 +1151,18 @@
     let fluxo = null, parar = false;
     const fechar = function(){ parar = true; try{ fluxo && fluxo.getTracks().forEach(function(t){ t.stop(); }); }catch(e){} ov.remove(); };
     ov.querySelector('button').onclick = fechar;
-    try{ fluxo = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'environment' }, audio:false }); video.srcObject = fluxo; await video.play(); }
-    catch(e){ msg.textContent = 'Não foi possível abrir a câmara. Usa o número de telemóvel do cliente.'; return; }
+    try{ if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw { name:'SemSuporte' }; fluxo = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'environment' }, audio:false }); video.srcObject = fluxo; await video.play(); }
+    catch(e){
+      const n = (e && e.name) || '';
+      msg.style.cssText = 'color:#fff;font-size:.95rem;font-weight:700;text-align:center;padding:0 24px;line-height:1.4;';
+      msg.innerHTML = (n === 'NotAllowedError' || n === 'SecurityError') ? '📷 A câmara foi recusada.<br>Dá licença à câmara para este site (iPhone: Definições → Safari → Câmara → Permitir · Android: cadeado ao lado do endereço → Permissões → Câmara) e tenta outra vez.'
+        : (n === 'NotFoundError' || n === 'OverconstrainedError') ? '📷 Este aparelho não tem câmara disponível.'
+        : (n === 'NotReadableError') ? '📷 A câmara está a ser usada por outra app. Fecha-a e tenta outra vez.'
+        : (!window.isSecureContext || !navigator.mediaDevices) ? '📷 Este navegador não deixa usar a câmara aqui. Abre a Gestão no Safari/Chrome.'
+        : ('📷 Não foi possível abrir a câmara (' + (n || 'erro') + ').');
+      msg.innerHTML += '<br><span style="font-weight:600;opacity:.85;">Entretanto, podes procurar o cliente pelo número de telemóvel.</span>';
+      return;
+    }
     let detetor = null;
     try{ if('BarcodeDetector' in window){ const f = await BarcodeDetector.getSupportedFormats(); if(f.indexOf('qr_code') >= 0) detetor = new BarcodeDetector({ formats:['qr_code'] }); } }catch(e){}
     if(!detetor && !window.jsQR){ msg.textContent = 'A preparar o leitor…'; await new Promise(function(ok){ const s = document.createElement('script'); s.src = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js'; s.onload = ok; s.onerror = ok; document.head.appendChild(s); }); msg.textContent = ''; }
