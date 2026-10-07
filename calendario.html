@@ -876,7 +876,17 @@
     mostrarVista('cal'); renderCal(); renderDia(alvo.data);
     _abrirAprovacao(alvo);
   }
+  // Põe o calendário no mês e no dia de uma reserva (pedidos novos, respostas dos clientes, abrir um pedido)
+  function _irParaDiaReserva(r){
+    try{
+      if(!r || !/^\d{4}-\d{2}-\d{2}$/.test(String(r.data || ''))) return;
+      const dd = new Date(r.data + 'T00:00:00');
+      vAno = dd.getFullYear(); vMes = dd.getMonth(); diaSel = r.data;
+      renderCal(); renderDia(r.data);
+    }catch(e){}
+  }
   function _abrirAprovacao(r){
+    _irParaDiaReserva(r);
     const d = new Date(r.data+'T00:00:00');
     const wd = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'][d.getDay()];
     const obs = (r.obs||'').toString().trim();
@@ -3149,22 +3159,23 @@
     try{
       if(!negocio || !negocio.id || document.hidden) return;
       const hojeIso = isoLocal(new Date());
-      const { data, error } = await sb.from('reservas').select('id,estado,resposta_cliente,respondido_em,alt_hora,alt_pessoas').eq('negocio_id', negocio.id).gte('data', hojeIso);
+      const { data, error } = await sb.from('reservas').select('id,data,estado,resposta_cliente,respondido_em,alt_hora,alt_pessoas').eq('negocio_id', negocio.id).gte('data', hojeIso);
       if(error || !data) return;
       _resLigarTempoReal();
       const sig = {}; data.forEach(function(r){ sig[r.id] = [r.estado, r.resposta_cliente || '', r.respondido_em || '', r.alt_hora || '', r.alt_pessoas || ''].join('|'); });
       if(_resSig !== null){
-        let novidade = false;
+        let novidade = false, alvoDia = null;
         data.forEach(function(r){
           const antes = _resSig[r.id];
-          if(antes === undefined && r.estado === 'pendente') novidade = true;                  // pedido novo
-          else if(antes !== undefined && r.respondido_em && antes.split('|')[2] !== String(r.respondido_em)) novidade = true; // o cliente respondeu (as ações do próprio dono não tocam)
+          if(antes === undefined && r.estado === 'pendente'){ novidade = true; if(!alvoDia) alvoDia = r; }                  // pedido novo (normal, grupo ou cerimónia)
+          else if(antes !== undefined && r.respondido_em && antes.split('|')[2] !== String(r.respondido_em)){ novidade = true; if(!alvoDia) alvoDia = r; } // o cliente respondeu (as ações do próprio dono não tocam)
         });
         if(novidade){
           try{ _beep(); if(navigator.vibrate) navigator.vibrate([120,80,120]); }catch(e){}
           _toastR('🔔 Novidades nas reservas');
           const aberto = !$('modalEdit').classList.contains('hide') || !$('modalAprovar').classList.contains('hide') || $('rsModal') || (document.activeElement && /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName));
-          if(!aberto) carregar();
+          if(!aberto) carregar().then(function(){ _irParaDiaReserva(alvoDia); });   // calendário salta para o mês e o dia do pedido
+          else _irParaDiaReserva(alvoDia);
         }
       }
       _resSig = sig;
