@@ -1527,6 +1527,7 @@ amesadigital.pt</textarea>
         <input type="number" id="fidTotal" min="4" max="16" step="1" value="8" style="width:100px; padding:9px; border-radius:8px; border:1.5px solid var(--linha); font-family:inherit;">
         <label for="fidPremio">Prémio</label>
         <input type="text" id="fidPremio" placeholder="Ex: Uma sobremesa grátis!">
+        <label style="display:flex; gap:8px; align-items:flex-start; margin-top:12px; padding:10px; background:#fff6dd; border:1.5px dashed #e0b85a; border-radius:10px; cursor:pointer; font-weight:700;"><input type="checkbox" id="fidV2" style="width:auto; margin-top:3px;"> <span>🧪 Fidelização 2.0 (em teste) — cartão guardado no número do cliente; só o restaurante carimba (na Gestão → ⭐ Fidelidade, lendo o QR do cliente). Deixa desligado até decidires usar.</span></label>
       </div>
     </div>
   </details>
@@ -2892,6 +2893,7 @@ amesadigital.pt</textarea>
     document.getElementById('fidCodigo').value = fid.codigo || '';
     document.getElementById('fidTotal').value = fid.total || 8;
     document.getElementById('fidPremio').value = fid.premio || '';
+    if(document.getElementById('fidV2')) document.getElementById('fidV2').checked = !!fid.v2;
     // Agenda
     { const ag = config.agenda || {};
       document.getElementById('agAtivo').checked = !!ag.ativo;
@@ -3855,7 +3857,8 @@ amesadigital.pt</textarea>
         ativo: document.getElementById('fidAtivo').checked,
         codigo: document.getElementById('fidCodigo').value.trim(),
         total: parseInt(document.getElementById('fidTotal').value, 10) || 8,
-        premio: document.getElementById('fidPremio').value.trim()
+        premio: document.getElementById('fidPremio').value.trim(),
+        v2: !!(document.getElementById('fidV2') && document.getElementById('fidV2').checked)
       };
       if(document.getElementById('agAtivo')){
         const _agDias = [];

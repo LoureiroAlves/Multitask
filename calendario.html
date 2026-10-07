@@ -446,6 +446,7 @@
     <div id="vistaPrato" class="hide"></div>
     <div id="vistaExtras" class="hide"></div>
     <div id="vistaQR" class="hide"></div>
+    <div id="vistaFid" class="hide"></div>
   </div>
 </div>
 
@@ -923,7 +924,7 @@
     await accao(id, a);
   }
 
-  const _AREA_TIT = { cal:'📅 Calendário', dash:'📊 Painel', enc:'🛍️ Encomendas', notif:'🏷️ Promoções', prato:'🍽️ Prato do dia', def:'⚙️ Definições', extras:'✨ Extras', qr:'📱 QR code do menu' };
+  const _AREA_TIT = { cal:'📅 Calendário', dash:'📊 Painel', enc:'🛍️ Encomendas', notif:'🏷️ Promoções', prato:'🍽️ Prato do dia', def:'⚙️ Definições', extras:'✨ Extras', qr:'📱 QR code do menu', fid:'⭐ Fidelidade' };
   function mostrarVista(qual){
     if(!SOU_ADMIN && AREA_EXTRA[qual] && !extraOn(AREA_EXTRA[qual])){ _extraBloqueado(AREA_EXTRA[qual]); return; }   // área paga ainda bloqueada
     $('dashHome').classList.add('hide');
@@ -937,6 +938,8 @@
     $('vistaPrato').classList.toggle('hide', qual!=='prato');
     $('vistaExtras').classList.toggle('hide', qual!=='extras');
     $('vistaQR').classList.toggle('hide', qual!=='qr');
+    if($('vistaFid')) $('vistaFid').classList.toggle('hide', qual!=='fid');
+    if(qual==='fid') renderFid();
     if(qual==='qr') renderQR();
     if(qual==='extras') renderExtras();
     if(qual==='cal') renderCalResumo();
@@ -1004,6 +1007,7 @@
       +   _cardExtra('prato','prato','🍽️','Prato do dia','Os destaques por baixo do cabeçalho, dia a dia ou fixo','Gerir', 0)
       +   _cardExtra('notif','promocoes','🏷️','Promoções','No menu e por notificação, nos dias que escolheres','Gerir promoções', 0)
       +   _cardHome('qr','📱','QR code','O código para as mesas, montra e redes — descarregar ou imprimir','Abrir', 0)
+      +   ((_fidV2() && (extraOn('fidelidade') || SOU_ADMIN)) ? _cardHome('fid','⭐','Fidelidade','Ler o cartão do cliente, dar carimbos e entregar prémios','Abrir', 0) : '')
       +   _cardHome('extras','✨','Extras', SOU_ADMIN ? 'Desbloquear funcionalidades deste restaurante' : 'Tudo o que a tua app pode fazer', SOU_ADMIN ? 'Gerir' : 'Ver', 0)
       +   _cardHome('def','⚙️','Definições','Dados, horários, reservas…','Configurar', 0)
       + '</div>';
@@ -1052,6 +1056,120 @@
     $('qrCopiar').onclick = function(){ const b = this; const ok = function(){ const t = b.textContent; b.textContent = '✓ Copiado'; setTimeout(function(){ b.textContent = t; }, 1500); }; if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(_qrLink()).then(ok, function(){ prompt('Copia o link:', _qrLink()); }); } else prompt('Copia o link:', _qrLink()); };
     $('qrImp1').onclick = function(){ _qrImprimir(1); };
     $('qrImp6').onclick = function(){ _qrImprimir(6); };
+  }
+  // ===== ⭐ FIDELIZAÇÃO 2.0 (só aparece com config.fidelidade.v2 ligado pelo administrador) =====
+  function _fidV2(){ const f = (negocio && negocio.config && negocio.config.fidelidade) || {}; return !!(f.v2 && f.ativo); }
+  function _fidCfg(){ return (negocio && negocio.config && negocio.config.fidelidade) || {}; }
+  let _fidAtual = null;
+  function _fidSelos(n, total){ let h = '<div style="display:grid;grid-template-columns:repeat(' + Math.min(total, 6) + ',1fr);gap:6px;margin:10px 0;">'; for(let i = 0; i < total; i++){ const on = i < n; h += '<div style="aspect-ratio:1/1;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;' + (on ? 'background:linear-gradient(180deg,#c79a3b,#a8712f);color:#fff;' : 'border:2px dashed #e6dcc8;color:#c9bba0;') + '">' + (on ? '★' : '') + '</div>'; } return h + '</div>'; }
+  async function renderFid(){
+    const v = $('vistaFid'); if(!v) return;
+    const f = _fidCfg(), total = Math.max(2, parseInt(f.total, 10) || 8);
+    v.innerHTML = '<div class="card" style="text-align:center;">'
+      + '<div style="font-weight:900;font-size:1.05rem;color:var(--castanho);">⭐ Cartão de fidelidade</div>'
+      + '<div class="subt2" style="margin:4px 0 12px;">' + total + ' carimbos = <b>' + esc(f.premio || 'Oferta da casa') + '</b> · 1 carimbo por cliente por dia</div>'
+      + '<button type="button" class="pdf-btn" id="fidLer" style="width:100%;font-size:1.05rem;padding:16px;background:#2e2418;color:#fff;">📷 Ler o cartão do cliente</button>'
+      + '<div style="display:flex;gap:8px;margin-top:10px;"><input id="fidTel" type="tel" inputmode="tel" placeholder="ou o telemóvel do cliente" style="flex:1;"><button type="button" class="pdf-btn" id="fidProc" style="width:auto;padding:0 16px;">Procurar</button></div>'
+      + '<div id="fidRes" style="margin-top:12px;"></div>'
+      + '</div>'
+      + '<div class="card"><div style="font-weight:900;color:var(--castanho);margin-bottom:6px;">Hoje</div><div id="fidHoje"><span class="msg">A carregar…</span></div></div>'
+      + '<div class="card"><div style="font-weight:900;color:var(--castanho);margin-bottom:6px;">Resumo</div><div id="fidResumo"><span class="msg">A carregar…</span></div></div>'
+      + '<div class="card"><div style="font-weight:900;color:var(--castanho);margin-bottom:8px;">Definições</div>'
+      +   '<label style="font-weight:700;">Carimbos para o prémio</label><select id="fidTotal">' + [4,5,6,7,8,9,10,12].map(function(n){ return '<option' + (n === total ? ' selected' : '') + '>' + n + '</option>'; }).join('') + '</select>'
+      +   '<label style="font-weight:700;margin-top:8px;display:block;">Prémio</label><input id="fidPremio" maxlength="60" value="' + esc(f.premio || '') + '" placeholder="Ex.: Sobremesa oferta">'
+      +   '<button type="button" class="pdf-btn" id="fidGuardar" style="margin-top:10px;width:100%;">Guardar</button><div id="fidMsg" class="msg"></div>'
+      + '</div>';
+    $('fidLer').onclick = _fidScanner;
+    $('fidProc').onclick = async function(){ const t = $('fidTel').value.replace(/\D/g, ''); if(t.length < 9){ _toastR('Escreve o número completo (9 dígitos).'); return; } await _fidAbrir({ p_token:null, p_tel:t }, false); };
+    $('fidGuardar').onclick = async function(){
+      const fr = await sb.from('negocios').select('config').eq('id', negocio.id).maybeSingle();   // config mais recente (não apagar o que o editor mudou)
+      const cfg = Object.assign({}, (fr.data && fr.data.config) || negocio.config || {}); cfg.fidelidade = Object.assign({}, cfg.fidelidade || {}, { total:parseInt($('fidTotal').value, 10) || 8, premio:$('fidPremio').value.trim() });
+      const { error } = await sb.from('negocios').update({ config:cfg }).eq('id', negocio.id);
+      if(error){ $('fidMsg').textContent = 'Erro: ' + error.message; $('fidMsg').className = 'msg erro'; return; }
+      negocio.config = cfg; $('fidMsg').textContent = '✓ Guardado'; $('fidMsg').className = 'msg ok'; setTimeout(renderFid, 900);
+    };
+    _fidListas();
+  }
+  async function _fidListas(){
+    try{
+      const ini = new Date(); ini.setHours(0, 0, 0, 0);
+      const { data:mov } = await sb.from('fid_movimentos').select('id,tipo,origem,anulado,criado_em,cartao_id').eq('negocio_id', negocio.id).gte('criado_em', ini.toISOString()).order('criado_em', { ascending:false }).limit(100);
+      const { data:cart } = await sb.from('fid_cartoes').select('id,nome,telefone,carimbos,premios').eq('negocio_id', negocio.id).limit(2000);
+      const porId = {}; (cart || []).forEach(function(c){ porId[c.id] = c; });
+      const h = $('fidHoje'); if(h){
+        h.innerHTML = (mov && mov.length) ? mov.map(function(m){ const c = porId[m.cartao_id] || {}; const hr = new Date(m.criado_em); return '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px dashed #eadfc6;' + (m.anulado ? 'opacity:.45;text-decoration:line-through;' : '') + '"><span><b>' + String(hr.getHours()).padStart(2,'0') + ':' + String(hr.getMinutes()).padStart(2,'0') + '</b> ' + (m.tipo === 'premio' ? '🎁 prémio' : '⭐ carimbo') + ' · ' + esc(c.nome || ('•••' + String(c.telefone || '').slice(-3))) + ' <span style="color:#8a7a5c;font-size:.8rem;">(' + esc(m.origem === 'encomenda' ? 'encomenda' : m.origem === 'telefone' ? 'pelo número' : m.origem === 'gestao' ? 'gestão' : 'QR') + ')</span></span>' + ((m.tipo === 'carimbo' && !m.anulado) ? '<button type="button" class="pdf-btn" data-anular="' + m.id + '" style="width:auto;padding:6px 10px;font-size:.8rem;">Anular</button>' : '') + '</div>'; }).join('') : '<span class="subt2">Ainda não houve carimbos hoje.</span>';
+        h.querySelectorAll('[data-anular]').forEach(function(b){ b.onclick = async function(){ if(!(await window.__amConfirm('Anular carimbo', { texto:'Retirar este carimbo do cartão do cliente?', ok:'Sim, anular', cancelar:'Não' }))) return; const r = await sb.rpc('fid_anular', { p_negocio:negocio.id, p_mov:b.dataset.anular }); if(r.error){ _toastR('Erro: ' + r.error.message); return; } _toastR('Carimbo anulado'); _fidListas(); }; });
+      }
+      const rs = $('fidResumo'); if(rs){
+        const total = Math.max(2, parseInt(_fidCfg().total, 10) || 8), cs = cart || [];
+        const perto = cs.filter(function(c){ return c.carimbos >= total - 1; }).sort(function(a, b){ return b.carimbos - a.carimbos; }).slice(0, 8);
+        rs.innerHTML = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;text-align:center;margin-bottom:8px;"><div style="background:#fbf6ec;border-radius:12px;padding:10px;"><div style="font-size:1.5rem;font-weight:900;">' + cs.length + '</div><div class="subt2">clientes com cartão</div></div><div style="background:#fbf6ec;border-radius:12px;padding:10px;"><div style="font-size:1.5rem;font-weight:900;">' + cs.reduce(function(s, c){ return s + (c.premios || 0); }, 0) + '</div><div class="subt2">prémios entregues</div></div></div>'
+          + (perto.length ? ('<div class="subt2" style="margin-bottom:4px;">Perto do prémio:</div>' + perto.map(function(c){ return '<div style="padding:4px 0;">' + (c.carimbos >= total ? '🎁' : '⭐') + ' ' + esc(c.nome || '—') + ' · •••' + esc(String(c.telefone).slice(-3)) + ' — ' + c.carimbos + '/' + total + '</div>'; }).join('')) : '');
+      }
+    }catch(e){}
+  }
+  // Mostra o cartão encontrado; se veio do QR, dá logo o carimbo
+  async function _fidAbrir(args, carimbarLogo){
+    const box = $('fidRes'); if(!box) return; box.innerHTML = '<span class="msg">A procurar…</span>';
+    const r = await sb.rpc('fid_procurar', Object.assign({ p_negocio:negocio.id }, args));
+    if(r.error){ box.innerHTML = '<div class="msg erro">Erro: ' + esc(r.error.message) + '</div>'; return; }
+    let d = r.data || {};
+    if(d.estado !== 'ok'){ box.innerHTML = '<div class="msg erro">Não encontrámos nenhum cartão' + (args.p_tel ? ' com esse número' : '') + '.</div>'; return; }
+    _fidAtual = d; let aviso = '';
+    if(carimbarLogo && !d.pendente){
+      const c = await sb.rpc('fid_carimbar', { p_negocio:negocio.id, p_cartao:d.id, p_origem:'qr' });
+      if(c.error){ aviso = '<div class="msg erro">Erro: ' + esc(c.error.message) + '</div>'; }
+      else { const e = c.data || {}; d = Object.assign(d, e); aviso = e.estado === 'ok' ? '<div class="msg ok" style="font-size:1.05rem;">✓ Carimbo dado!</div>' : e.estado === 'hoje' ? '<div class="msg">Este cliente já tem o carimbo de hoje.</div>' : e.estado === 'cheio' ? '<div class="msg">Cartão cheio — entrega o prémio.</div>' : ''; if(e.estado === 'ok' && navigator.vibrate) navigator.vibrate(80); }
+    }
+    _fidPinta(d, aviso);
+    _fidListas();
+  }
+  function _fidPinta(d, aviso){
+    const box = $('fidRes'); if(!box) return; const total = d.total || 8;
+    box.innerHTML = '<div style="background:#fbf6ec;border-radius:16px;padding:14px;text-align:left;">'
+      + '<div style="font-weight:900;font-size:1.05rem;">' + esc(d.nome || 'Cliente') + ' <span style="color:#8a7a5c;font-weight:700;font-size:.85rem;">' + esc(d.tel || '') + '</span></div>'
+      + (aviso || '')
+      + (d.pendente ? '<div class="msg" style="margin-top:6px;">📱 Este cliente está a usar um <b>telemóvel novo</b>. Confirma que é a pessoa certa e passa-lhe o cartão.</div>' : '')
+      + _fidSelos(Math.min(d.carimbos, total), total)
+      + '<div class="subt2">' + d.carimbos + ' de ' + total + ' carimbos · ' + (d.premios || 0) + ' prémio(s) já recebido(s)</div>'
+      + '<div style="display:grid;gap:8px;margin-top:10px;">'
+      + (d.pendente ? '<button type="button" class="pdf-btn" id="fidLigar" style="background:#2a4f86;color:#fff;">🔗 Passar o cartão para este telemóvel</button>' : '')
+      + (d.carimbos >= total ? '<button type="button" class="pdf-btn" id="fidPremioB" style="background:#2e9b57;color:#fff;font-size:1.05rem;">🎁 Entregar o prémio: ' + esc(d.premio || '') + '</button>' : '')
+      + ((!d.pendente && d.carimbos < total && !d.hoje) ? '<button type="button" class="pdf-btn" id="fidCarimbo">⭐ Dar carimbo</button>' : '')
+      + '</div></div>';
+    const lg = $('fidLigar'); if(lg) lg.onclick = async function(){ const r = await sb.rpc('fid_ligar', { p_negocio:negocio.id, p_cartao:d.id }); if(r.error){ _toastR('Erro: ' + r.error.message); return; } _toastR('✓ Cartão passado para o telemóvel novo'); _fidPinta(Object.assign(d, r.data || {}, { pendente:false }), ''); };
+    const pr = $('fidPremioB'); if(pr) pr.onclick = async function(){ if(!(await window.__amConfirm('Entregar prémio', { texto:'Entregar "' + (d.premio || 'o prémio') + '" a ' + (d.nome || 'este cliente') + '? O cartão recomeça.', ok:'Sim, entregar', cancelar:'Não' }))) return; const r = await sb.rpc('fid_premio', { p_negocio:negocio.id, p_cartao:d.id }); if(r.error){ _toastR('Erro: ' + r.error.message); return; } _fidPinta(Object.assign(d, r.data || {}), '<div class="msg ok">🎁 Prémio entregue! O cartão recomeçou.</div>'); _fidListas(); };
+    const cb = $('fidCarimbo'); if(cb) cb.onclick = async function(){ cb.disabled = true; const r = await sb.rpc('fid_carimbar', { p_negocio:negocio.id, p_cartao:d.id, p_origem:'telefone' }); if(r.error){ _toastR('Erro: ' + r.error.message); cb.disabled = false; return; } const e = r.data || {}; _fidPinta(Object.assign(d, e), e.estado === 'ok' ? '<div class="msg ok">✓ Carimbo dado!</div>' : e.estado === 'hoje' ? '<div class="msg">Já tem o carimbo de hoje.</div>' : ''); _fidListas(); };
+  }
+  // Leitor de QR com a câmara (BarcodeDetector quando existe; senão jsQR)
+  async function _fidScanner(){
+    const ov = document.createElement('div');
+    ov.style.cssText = 'position:fixed;inset:0;z-index:13000;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;';
+    ov.innerHTML = '<div style="color:#fff;font-weight:800;">Aponta para o código do cliente</div><div style="position:relative;width:min(86vw,420px);aspect-ratio:1/1;border-radius:18px;overflow:hidden;"><video playsinline muted style="width:100%;height:100%;object-fit:cover;"></video><div style="position:absolute;inset:14%;border:4px solid #ffb43b;border-radius:16px;box-shadow:0 0 0 2000px rgba(0,0,0,.35);"></div></div><div id="fidScMsg" style="color:#ddd;font-size:.85rem;min-height:1em;"></div><button type="button" style="background:#fff;border:none;border-radius:12px;padding:12px 22px;font-weight:800;">Cancelar</button>';
+    document.body.appendChild(ov);
+    const video = ov.querySelector('video'), msg = ov.querySelector('#fidScMsg');
+    let fluxo = null, parar = false;
+    const fechar = function(){ parar = true; try{ fluxo && fluxo.getTracks().forEach(function(t){ t.stop(); }); }catch(e){} ov.remove(); };
+    ov.querySelector('button').onclick = fechar;
+    try{ fluxo = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'environment' }, audio:false }); video.srcObject = fluxo; await video.play(); }
+    catch(e){ msg.textContent = 'Não foi possível abrir a câmara. Usa o número de telemóvel do cliente.'; return; }
+    let detetor = null;
+    try{ if('BarcodeDetector' in window){ const f = await BarcodeDetector.getSupportedFormats(); if(f.indexOf('qr_code') >= 0) detetor = new BarcodeDetector({ formats:['qr_code'] }); } }catch(e){}
+    if(!detetor && !window.jsQR){ msg.textContent = 'A preparar o leitor…'; await new Promise(function(ok){ const s = document.createElement('script'); s.src = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js'; s.onload = ok; s.onerror = ok; document.head.appendChild(s); }); msg.textContent = ''; }
+    const cv = document.createElement('canvas'), cx = cv.getContext('2d', { willReadFrequently:true });
+    const ler = async function(){
+      if(parar) return;
+      let txt = '';
+      try{
+        if(detetor){ const r = await detetor.detect(video); if(r && r[0]) txt = r[0].rawValue || ''; }
+        else if(window.jsQR && video.videoWidth){ cv.width = video.videoWidth; cv.height = video.videoHeight; cx.drawImage(video, 0, 0); const img = cx.getImageData(0, 0, cv.width, cv.height); const q = window.jsQR(img.data, img.width, img.height); if(q) txt = q.data || ''; }
+      }catch(e){}
+      const m = /^AMFID:([A-Za-z0-9_-]{20,})$/.exec(String(txt).trim());
+      if(m){ fechar(); if(navigator.vibrate) navigator.vibrate(60); await _fidAbrir({ p_token:m[1], p_tel:null }, true); return; }
+      if(txt) msg.textContent = 'Este código não é um cartão de fidelidade da ÀMesa.';
+      setTimeout(ler, 180);
+    };
+    ler();
   }
   async function _qrImprimir(n){
     const cv = await _qrCanvas(900, $('qrNome') ? $('qrNome').checked : true); if(!cv) return;
