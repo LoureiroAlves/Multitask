@@ -725,7 +725,7 @@
   $('tabEnc').onclick = () => mostrarVista('enc');
   $('tabNotif').onclick = () => mostrarVista('notif');
   $('btnVoltarHome').onclick = voltarHome;
-  $('dashHome').addEventListener('click', function(e){ var c = e.target.closest('[data-ir]'); if(!c) return; var ir = c.getAttribute('data-ir'); if(ir.indexOf('bloq:') === 0){ _extraBloqueado(ir.slice(5)); return; } if(ir === 'video'){ window.open('video.html?n=' + encodeURIComponent(SLUG), '_blank'); return; } mostrarVista(ir); });
+  $('dashHome').addEventListener('click', function(e){ var c = e.target.closest('[data-ir]'); if(!c) return; var ir = c.getAttribute('data-ir'); if(ir.indexOf('bloq:') === 0){ _extraBloqueado(ir.slice(5)); return; } mostrarVista(ir); });
   $('btnPdf').onclick = exportarPdf;
   $('btnPdfDia').onclick = exportarPdfDia;
   $('mdFechar').onclick = fecharModal;
@@ -994,7 +994,6 @@
       +   _cardExtra('prato','prato','🍽️','Prato do dia','Os destaques por baixo do cabeçalho, dia a dia ou fixo','Gerir', 0)
       +   _cardExtra('notif','promocoes','🏷️','Promoções','No menu e por notificação, nos dias que escolheres','Gerir promoções', 0)
       +   _cardHome('qr','📱','QR code','O código para as mesas, montra e redes — descarregar ou imprimir','Abrir', 0)
-      +   _cardHome('video','🎬','O meu vídeo','Um vídeo do teu menu, pronto a publicar nas redes','Criar vídeo', 0)
       +   _cardHome('extras','✨','Extras', SOU_ADMIN ? 'Desbloquear funcionalidades deste restaurante' : 'Tudo o que a tua app pode fazer', SOU_ADMIN ? 'Gerir' : 'Ver', 0)
       +   _cardHome('def','⚙️','Definições','Dados, horários, reservas…','Configurar', 0)
       + '</div>';
