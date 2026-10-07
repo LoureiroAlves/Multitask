@@ -1142,25 +1142,39 @@
     const cb = $('fidCarimbo'); if(cb) cb.onclick = async function(){ cb.disabled = true; const r = await sb.rpc('fid_carimbar', { p_negocio:negocio.id, p_cartao:d.id, p_origem:'telefone' }); if(r.error){ _toastR('Erro: ' + r.error.message); cb.disabled = false; return; } const e = r.data || {}; _fidPinta(Object.assign(d, e), e.estado === 'ok' ? '<div class="msg ok">✓ Carimbo dado!</div>' : e.estado === 'hoje' ? '<div class="msg">Já tem o carimbo de hoje.</div>' : ''); _fidListas(); };
   }
   // Leitor de QR com a câmara (BarcodeDetector quando existe; senão jsQR)
+  let _fidFluxo = null;   // câmara aberta (para nunca ficar presa entre leituras)
+  function _fidLargarCamara(){ try{ _fidFluxo && _fidFluxo.getTracks().forEach(function(t){ t.stop(); }); }catch(e){} _fidFluxo = null; }
   async function _fidScanner(){
+    _fidLargarCamara();
     const ov = document.createElement('div');
     ov.style.cssText = 'position:fixed;inset:0;z-index:13000;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;';
     ov.innerHTML = '<div style="color:#fff;font-weight:800;">Aponta para o código do cliente</div><div style="position:relative;width:min(86vw,420px);aspect-ratio:1/1;border-radius:18px;overflow:hidden;"><video playsinline muted style="width:100%;height:100%;object-fit:cover;"></video><div style="position:absolute;inset:14%;border:4px solid #ffb43b;border-radius:16px;box-shadow:0 0 0 2000px rgba(0,0,0,.35);"></div></div><div id="fidScMsg" style="color:#ddd;font-size:.85rem;min-height:1em;"></div><button type="button" style="background:#fff;border:none;border-radius:12px;padding:12px 22px;font-weight:800;">Cancelar</button>';
     document.body.appendChild(ov);
     const video = ov.querySelector('video'), msg = ov.querySelector('#fidScMsg');
-    let fluxo = null, parar = false;
-    const fechar = function(){ parar = true; try{ fluxo && fluxo.getTracks().forEach(function(t){ t.stop(); }); }catch(e){} ov.remove(); };
+    let fluxo = null, parar = false, desistiu = false;
+    const fechar = function(){ parar = true; try{ fluxo && fluxo.getTracks().forEach(function(t){ t.stop(); }); }catch(e){} try{ video.srcObject = null; }catch(e){} _fidLargarCamara(); ov.remove(); };
     ov.querySelector('button').onclick = fechar;
-    try{ if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw { name:'SemSuporte' }; fluxo = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'environment' }, audio:false }); video.srcObject = fluxo; await video.play(); }
+    try{ if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw { name:'SemSuporte' };
+      const gum = navigator.mediaDevices.getUserMedia({ video:{ facingMode:'environment' }, audio:false });
+      gum.then(function(st){ if(parar || desistiu){ st.getTracks().forEach(function(t){ t.stop(); }); } }, function(){});   // se chegar tarde, larga-a
+      fluxo = await Promise.race([gum, new Promise(function(_, nao){ setTimeout(function(){ nao({ name:'Demorou' }); }, 12000); })]);
+      if(parar){ fluxo.getTracks().forEach(function(t){ t.stop(); }); return; }   // cancelado enquanto pedia licença: larga logo a câmara
+      _fidFluxo = fluxo; video.setAttribute('autoplay', ''); video.srcObject = fluxo; await video.play(); }
     catch(e){
+      desistiu = true;
       const n = (e && e.name) || '';
       msg.style.cssText = 'color:#fff;font-size:.95rem;font-weight:700;text-align:center;padding:0 24px;line-height:1.4;';
       msg.innerHTML = (n === 'NotAllowedError' || n === 'SecurityError') ? '📷 A câmara foi recusada.<br>Dá licença à câmara para este site (iPhone: Definições → Safari → Câmara → Permitir · Android: cadeado ao lado do endereço → Permissões → Câmara) e tenta outra vez.'
         : (n === 'NotFoundError' || n === 'OverconstrainedError') ? '📷 Este aparelho não tem câmara disponível.'
         : (n === 'NotReadableError') ? '📷 A câmara está a ser usada por outra app. Fecha-a e tenta outra vez.'
         : (!window.isSecureContext || !navigator.mediaDevices) ? '📷 Este navegador não deixa usar a câmara aqui. Abre a Gestão no Safari/Chrome.'
+        : (n === 'Demorou') ? '📷 A câmara não respondeu. Fecha e tenta outra vez; se continuar, fecha a app/separador e volta a abrir.'
         : ('📷 Não foi possível abrir a câmara (' + (n || 'erro') + ').');
-      msg.innerHTML += '<br><span style="font-weight:600;opacity:.85;">Entretanto, podes procurar o cliente pelo número de telemóvel.</span>';
+      msg.innerHTML += '<br><span style="font-weight:600;opacity:.85;">Entretanto, podes procurar o cliente pelo número de telemóvel.</span>'
+        + '<br><span style="font-size:.7rem;opacity:.55;">' + (n || '?') + ' · ' + ((window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone ? 'app no ecrã' : 'navegador') + ' · ' + ((/(iPhone OS|Android) [\d_.]+/.exec(navigator.userAgent) || [''])[0]) + '</span>';
+      try{ fluxo && fluxo.getTracks().forEach(function(t){ t.stop(); }); }catch(x){} _fidLargarCamara();
+      const tb = document.createElement('button'); tb.textContent = '🔄 Tentar outra vez'; tb.style.cssText = 'background:#ffb43b;border:none;border-radius:12px;padding:12px 22px;font-weight:800;';
+      tb.onclick = function(){ fechar(); _fidScanner(); }; ov.insertBefore(tb, ov.lastChild);
       return;
     }
     let detetor = null;
