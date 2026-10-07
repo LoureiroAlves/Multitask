@@ -6059,6 +6059,7 @@
       window._fidelidade = (config.fidelidade && config.fidelidade.ativo && config.fidelidade.v2) ? config.fidelidade : null;   // só a Fidelização 2.0 (o cartão antigo, com código, foi retirado)
       const fb = document.getElementById('linkFidelidade');
       if(fb) fb.style.display = window._fidelidade ? 'flex' : 'none';
+      try{ if(window._fidelidade && window.__fidSelo) setTimeout(window.__fidSelo, 600); }catch(e){}
 
       // Agenda / Reservas
       window.__nomeRestaurante = (config.header && config.header.titulo) || '';
@@ -6742,6 +6743,18 @@
     function novoTok(){ const a = new Uint8Array(24); (window.crypto || window.msCrypto).getRandomValues(a); return Array.prototype.map.call(a, function(b){ return ('0' + b.toString(16)).slice(-2); }).join(''); }
     function fidPinta(html){ document.getElementById('fidCard').innerHTML = html + '<button class="fid-fechar" onclick="fidFechar()">Fechar</button>'; }
     function fidQR(tok){ const q = document.getElementById('fidQR'); if(q && window.QRCode){ q.innerHTML = ''; try{ new QRCode(q, { text:'AMFID:' + tok, width:190, height:190, colorDark:'#2e2418', colorLight:'#ffffff', correctLevel:QRCode.CorrectLevel.M }); }catch(e){} } }
+    // número de carimbos no botão ⭐ do menu (o cliente vê sem abrir o cartão)
+    function fidSelo(n, total){
+      var b = document.getElementById('linkFidelidade'); if(!b) return;
+      var e = b.querySelector('.fid-num'); if(!e){ e = document.createElement('span'); e.className = 'fid-num'; e.style.cssText = 'position:absolute;top:-6px;right:-8px;min-width:22px;height:22px;padding:0 6px;border-radius:999px;background:#c05a3a;color:#fff;font:800 11px/22px system-ui,sans-serif;text-align:center;box-shadow:0 2px 6px rgba(0,0,0,.25);pointer-events:none;'; if(getComputedStyle(b).position === 'static') b.style.position = 'relative'; b.appendChild(e); }
+      if(n == null){ e.style.display = 'none'; return; }
+      e.style.display = ''; e.textContent = (n >= total) ? '🎁' : (n + '/' + total); e.style.background = (n >= total) ? '#2e9b57' : '#c05a3a';
+    }
+    window.__fidSelo = function(){   // chamado quando o menu carrega: mostra logo os carimbos no botão
+      try{ var tk = tok2(); if(!window._fidelidade || !tk || typeof sbC === 'undefined' || !sbC || !window.__negocioId) return;
+        sbC.rpc('fid_ver', { p_negocio:window.__negocioId, p_token:tk }).then(function(r){ var d = (r && r.data) || {}; if(d.estado === 'ok') fidSelo(Math.min(d.carimbos || 0, d.total || 8), d.total || 8); });
+      }catch(e){}
+    };
     function fidParar(){ if(_fid2Timer){ clearInterval(_fid2Timer); _fid2Timer = null; } }
     new MutationObserver(function(){ if(!ov.classList.contains('aberto')) fidParar(); }).observe(ov, { attributes:true, attributeFilter:['class'] });
     function fidEntrada(msgErro){
@@ -6779,7 +6792,10 @@
       }
       const total = d.total || 8, n = Math.min(d.carimbos || 0, total), cheio = (d.carimbos || 0) >= total;
       let h = '<h3 style="font-family:\'Fredoka\',sans-serif;color:var(--castanho);text-align:center;margin-bottom:2px;">Cartão de Fidelidade</h3>'
-        + '<p style="text-align:center;font-size:0.84rem;color:var(--castanho-suave);margin:0 0 10px;">' + (d.nome ? ('Olá, ' + String(d.nome).replace(/[<>&]/g, '') + ' · ') : '') + 'Junta ' + total + ' carimbos e ganha: <strong>' + (d.premio || '') + '</strong></p>'
+        + '<p style="text-align:center;font-size:0.84rem;color:var(--castanho-suave);margin:0 0 8px;">' + (d.nome ? ('Olá, ' + String(d.nome).replace(/[<>&]/g, '') + ' · ') : '') + 'Junta ' + total + ' carimbos e ganha: <strong>' + (d.premio || '') + '</strong></p>'
+        + '<div style="text-align:center;font-family:\'Fredoka\',sans-serif;font-weight:700;color:var(--castanho);font-size:2rem;line-height:1;">⭐ ' + n + ' <span style="font-size:1.05rem;color:var(--castanho-suave);">de ' + total + ' carimbos</span></div>'
+        + '<div style="height:10px;border-radius:999px;background:#efe6d4;overflow:hidden;margin:8px 4px 4px;"><div style="height:100%;width:' + Math.round(n / total * 100) + '%;background:linear-gradient(90deg,#c79a3b,var(--dourado));border-radius:999px;transition:width .6s;"></div></div>'
+        + '<p style="text-align:center;font-size:0.82rem;font-weight:700;color:' + (cheio ? '#2e9b57' : 'var(--castanho-suave)') + ';margin:0 0 10px;">' + (cheio ? '🎁 Cartão completo!' : ((total - n) === 1 ? 'Falta só 1 carimbo para o prémio! 🎉' : ('Faltam ' + (total - n) + ' carimbos para o prémio'))) + '</p>'
         + '<div class="fid-stamps">';
       for(let i = 0; i < total; i++){ const on = i < n; h += '<div class="fid-stamp' + (on ? ' on' : '') + '" data-i="' + i + '">' + (on ? '★' : '') + '</div>'; }
       h += '</div>'
@@ -6791,6 +6807,7 @@
       // carimbo novo enquanto o cartão está aberto: anima a estrela
       if(_fid2Ult && n > (_fid2Ult.carimbos || 0)){ const s = document.querySelector('#fidCard .fid-stamp[data-i="' + (n - 1) + '"]'); if(s && s.animate) s.animate([{ transform:'scale(2.2) rotate(-25deg)', opacity:0 }, { transform:'scale(1)', opacity:1 }], { duration:450, easing:'cubic-bezier(.2,1.5,.4,1)' }); try{ if(window.__vibrar) window.__vibrar(); }catch(e){} }
       _fid2Ult = { carimbos:d.carimbos, premios:d.premios };
+      fidSelo(n, total);
       fidVigiar();
     }
     function fidVigiar(){   // enquanto o cartão está aberto, vê se o restaurante carimbou (atualiza sozinho)
