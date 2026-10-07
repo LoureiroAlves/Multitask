@@ -844,7 +844,7 @@
         mostrarVista('cal'); renderCal(); renderDia(alvoR.data);
         if(CANC_PARAM){
           _pedidoCancelamento(alvoR);   // "Cliente X quer cancelar a reserva Y" → aceitar e responder
-        } else if(!ALT_PARAM && !_eGrupo(alvoR) && alvoR.estado !== 'cancelada'){
+        } else if(!ALT_PARAM && alvoR.estado !== 'cancelada'){
           _abrirAprovacao(alvoR);   // vindo de uma notificação: mostra o pedido com as respostas rápidas
         } else {
           abrirModalEdicao(alvoR.id);
@@ -889,12 +889,12 @@
     const jaConf = (r.estado === 'confirmada');
     $('apConfirmar').style.display = jaConf ? 'none' : '';
     $('apEstado').textContent = jaConf ? 'Esta reserva já está confirmada.' : 'A aguardar a tua aprovação.';
-    // respostas rápidas (reservas normais; os menus de grupo continuam pelo WhatsApp)
+    // respostas rápidas (reservas normais, grupos e cerimónias — tudo pela ÀMesa; WhatsApp só como último recurso)
     let _apx = $('apExtra'); if(!_apx){ _apx = document.createElement('div'); _apx.id = 'apExtra'; $('apEstado').after(_apx); }
     _apx.innerHTML = '';
     $('apRecusar').textContent = _eGrupo(r) ? '✕ Recusar' : '✕ Sem disponibilidade';
-    if(!_eGrupo(r)){
-      _apx.innerHTML = _infoResposta(r)
+    {
+      _apx.innerHTML = (_eGrupo(r) ? ('<div class="r-menu" style="margin:6px 0;">🍽 ' + esc(r.obs) + '</div>') : '') + _infoResposta(r)
         + ((r.alt_hora || r.alt_pessoas) ? '<div style="display:flex;gap:8px;margin-top:8px;"><button type="button" class="ap-ok" id="apAltOk" style="flex:1;">✔ Aceitar alteração</button><button type="button" class="ap-no" id="apAltNao" style="flex:1;">✕ Recusar</button></div>' : '')
         + '<button type="button" class="ap-ver" id="apResponder" style="color:#2a4f86;font-weight:800;">💬 Propor outra hora / nº de pessoas · nota</button>';
       $('apResponder').onclick = function(){ fecharAprovar(); _responder(r); };
@@ -1910,6 +1910,13 @@
       const { data, error } = await sb.from('encomendas').select('*').eq('negocio_id', negocio.id).eq('estado', 'pendente').order('criado_em', { ascending:true });
       if(error || !data) return;
       if(_encVigiaVistos === null) _encVigiaVistos = _encVistosLer();
+      // respondida noutro ecrã (outro separador, computador ou telemóvel): fecha a folha e para o som
+      const _pend = {}; data.forEach(function(e){ _pend[String(e.id)] = 1; });
+      _encFila = _encFila.filter(function(x){ return _pend[String(x.id)]; });
+      if(_encAbertaId !== null && !_pend[String(_encAbertaId)]){
+        const ovA = document.getElementById('encNovaOv');
+        if(!ovA || ovA.dataset.ocupado !== '1'){ _encMarcarVisto(_encAbertaId); _encFecharFolha(); try{ _toastR('✓ Esta encomenda já foi respondida noutro ecrã'); }catch(x){} }
+      }
       const novas = data.filter(function(e){ return !_encVigiaVistos[String(e.id)] && !_encAdiadas[String(e.id)]; });
       // encomendas pendentes nunca vistas neste aparelho contam como novas (o dono pode ter estado fora)
       novas.forEach(function(e){ if(!_encFila.some(function(x){ return x.id === e.id; }) && _encAbertaId !== e.id) _encFila.push(e); });
@@ -1918,7 +1925,7 @@
   }
   function _encVigiaIniciar(){ if(_encVigiaTimer) return; _encVigiar(); _encVigiaTimer = setInterval(function(){ if(!document.hidden) _encVigiar(); }, 5000); document.addEventListener('visibilitychange', function(){ if(!document.hidden) _encVigiar(); }); }
   function _encAbrirProxima(){ const e = _encFila.shift(); if(!e) return; _encMostrarFolha(e); }
-  function _encSomLoop(on){ if(_encSomTimer){ clearInterval(_encSomTimer); _encSomTimer = null; } if(on){ try{ _beep(); }catch(e){} _encSomTimer = setInterval(function(){ try{ _beep(); if(navigator.vibrate) navigator.vibrate([120,80,120]); }catch(e){} }, 8000); } }
+  function _encSomLoop(on){ if(_encSomTimer){ clearInterval(_encSomTimer); _encSomTimer = null; } if(on){ try{ _beep(); }catch(e){} _encSomTimer = setInterval(function(){ _encVigiar().then(function(){ if(!_encSomTimer) return; try{ _beep(); if(navigator.vibrate) navigator.vibrate([120,80,120]); }catch(e){} }); }, 8000); } }
   function _encFecharFolha(){ const ov = document.getElementById('encNovaOv'); if(ov) ov.remove(); _encSomLoop(false); _encAbertaId = null; if(_encFila.length) setTimeout(_encAbrirProxima, 300); }
   // Depois de responder (ou adiar), abre a área Encomendas já na lista certa
   function _encIrParaLista(filtro){ try{ _encFiltro = filtro || 'pendente'; if($('vistaEncomendas').classList.contains('hide')) mostrarVista('enc'); else renderEncomendas(); }catch(e){} }
@@ -1953,21 +1960,21 @@
     ov.querySelectorAll('.en-chip').forEach(function(b){ b.onclick = function(){ ajuste = parseInt(b.dataset.min, 10) || 0; ov.querySelectorAll('.en-chip').forEach(function(x){ x.classList.toggle('on', x === b); }); if(d){ const nd = new Date(d.getTime() + ajuste*60000); ov.querySelector('.en-chip[data-min="0"]').textContent = ajuste ? (horaBase + ' → ' + _encHHMM(nd)) : horaBase; } }; });
     const msg = ov.querySelector('#enMsg');
     ov.querySelector('#enAceitar').onclick = async function(){
-      this.disabled = true; msg.textContent = 'A confirmar…';
+      this.disabled = true; ov.dataset.ocupado = '1'; msg.textContent = 'A confirmar…';
       const upd = { estado:'confirmada' };
       let novaHora = null;
       if(d && ajuste){ const nd = new Date(d.getTime() + ajuste*60000); const iso = _encIsoDe(nd); novaHora = (iso === _encHojeIso() && !/^\d{4}-/.test(String(e.levantamento||''))) ? _encHHMM(nd) : (iso + ' ' + _encHHMM(nd)); upd.levantamento = novaHora; }
       const { error } = await sb.from('encomendas').update(upd).eq('id', e.id);
-      if(error){ msg.textContent = 'Erro: ' + error.message; msg.className = 'msg erro'; this.disabled = false; return; }
+      if(error){ msg.textContent = 'Erro: ' + error.message; msg.className = 'msg erro'; this.disabled = false; ov.dataset.ocupado = ''; return; }
       _encMarcarVisto(e.id);
       try{ _encAvisarCliente(e.id, 'confirmada', novaHora ? ('Levantamento às ' + novaHora.replace(/^\d{4}-\d{2}-\d{2}\s+/, '') + '.') : ''); }catch(err){}
       _encFecharFolha(); _encIrParaLista('confirmada');
     };
     ov.querySelector('#enRecusar').onclick = function(){ ov.querySelector('#enMotivos').classList.toggle('hide'); };
     ov.querySelectorAll('#enMotivos button').forEach(function(b){ b.onclick = async function(){
-      msg.textContent = 'A recusar…';
+      msg.textContent = 'A recusar…'; ov.dataset.ocupado = '1';
       const { error } = await sb.from('encomendas').update({ estado:'cancelada' }).eq('id', e.id);
-      if(error){ msg.textContent = 'Erro: ' + error.message; msg.className = 'msg erro'; return; }
+      if(error){ msg.textContent = 'Erro: ' + error.message; msg.className = 'msg erro'; ov.dataset.ocupado = ''; return; }
       _encMarcarVisto(e.id);
       try{ _encAvisarCliente(e.id, 'cancelada', b.dataset.m || ''); }catch(err){}
       _encFecharFolha(); _encIrParaLista('cancelada');
@@ -2667,7 +2674,7 @@
   // Tocar numa reserva das listas: pedido por responder (normal) → janela com as respostas rápidas; resto → editar
   function _abrirReserva(id){
     const r = reservas.find(function(x){ return String(x.id)===String(id); });
-    if(r && !_eGrupo(r) && (r.estado === 'pendente' || r.alt_hora || r.alt_pessoas)){ _abrirAprovacao(r); return; }
+    if(r && (r.estado === 'pendente' || r.alt_hora || r.alt_pessoas)){ _abrirAprovacao(r); return; }
     abrirModalEdicao(id);
   }
   function abrirModalEdicao(id){
@@ -2684,7 +2691,7 @@
     // reservas normais: responder na ÀMesa; WhatsApp só como último recurso (menus de grupo: WhatsApp como sempre)
     { let mr = $('mdResponder');
       if(!mr){ mr = document.createElement('button'); mr.id = 'mdResponder'; mr.type = 'button'; mr.style.cssText = 'width:100%; margin-top:4px; background:#2a4f86; color:#fff; border:none; border-radius:9px; padding:11px; font-weight:800; cursor:pointer;'; mr.textContent = '💬 Responder ao cliente (confirmar, propor, nota)'; $('mdAvisar').before(mr); }
-      const grupo = _eGrupo(r), wa = $('mdAvisar');
+      const grupo = false, wa = $('mdAvisar');   // grupos e cerimónias: iguais às outras reservas
       mr.style.display = grupo ? 'none' : '';
       mr.onclick = function(){ fecharModal(); _responder(r); };
       wa.textContent = grupo ? '📲 Avisar cliente por WhatsApp' : '📲 WhatsApp (último recurso)';
@@ -2865,7 +2872,7 @@
     html += '</div>';
     rs.forEach(function(r){
       let acoes = '';
-      const grupo = _eGrupo(r);
+      const grupo = false;   // grupos e cerimónias: iguais às outras reservas (o menu escolhido aparece em 🍽)
       if(r.estado === 'cancelada'){
         // cancelada (pelo cliente ou pelo restaurante): fica à vista até o dono a enviar para a pasta
         html += '<div class="r cancelada">'
@@ -3187,7 +3194,7 @@
     if(a==='avisar'){ _avisarCliente(r); return; }
     if(a==='responder'){ _responder(r); return; }
     if(a==='arquivar'){ await _arquivarReserva(id); return; }
-    if(r && !_eGrupo(r) && (a==='confirmar' || a==='cancelar' || a==='altok' || a==='altnao')){
+    if(r && (a==='confirmar' || a==='cancelar' || a==='altok' || a==='altnao')){
       if(a==='cancelar' && !(await window.__amConfirm('Sem disponibilidade',{texto:'Recusar esta reserva? O cliente é avisado.', ok:'Sim, recusar', cancelar:'Não'}))) return;
       await _resp(r, a);
       return;

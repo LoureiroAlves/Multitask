@@ -5702,7 +5702,7 @@
           function abrir(r){
             if(!r) return;
             if(document.getElementById('gerirOverlay')) return;
-            if(r.rid && !r.g && typeof sbC !== 'undefined' && sbC){ abrirNovo(r); return; }   // reservas normais: respostas na ÀMesa (os menus de grupo continuam pelo WhatsApp)
+            if(r.rid && typeof sbC !== 'undefined' && sbC){ abrirNovo(r); return; }   // todas as reservas (incl. grupos e cerimónias): respostas na ÀMesa
             const rn = r.rn||'', rd = r.rd||'', rh = r.rh||'', rp = String(r.rp||'1');
             const dd = rd ? new Date(rd+'T00:00:00') : null;
             const dataFmt = dd ? (dd.getDate()+' de '+_MESES[dd.getMonth()]) : rd;
@@ -5860,7 +5860,7 @@
           var _propAgendada = 0;
           function _mostrarPropostas(){
             if(_propAgendada && Date.now() - _propAgendada < 185000) return;   // já há uma à espera de ecrã livre
-            var r = lerLista().filter(function(x){ return x.rid && !x.g && (x.ph || x.pp); }).filter(function(x){ try{ return !localStorage.getItem(_chaveProp(x)); }catch(e){ return true; } })[0];
+            var r = lerLista().filter(function(x){ return x.rid && (x.ph || x.pp); }).filter(function(x){ try{ return !localStorage.getItem(_chaveProp(x)); }catch(e){ return true; } })[0];
             if(!r) return;
             _propAgendada = Date.now();
             _quandoLivre(function(){
@@ -7162,9 +7162,8 @@
       ok += '<div class="ag-resumo"><strong>' + d.getDate() + ' de ' + MESES[d.getMonth()] + '</strong> às <strong>' + estado.slotSel + '</strong> · ' + pessoas + ' pessoa(s)<br>É uma <strong>pré-reserva</strong> — só fica registada quando enviares o pedido ao restaurante.';
       if(total > 0) ok += '<br>Sinal (' + pct + '%): <strong>' + sinal.toFixed(2) + '€</strong>';
       ok += '</div>';
-      if(!menuTxt){ ok += '<button type="button" class="ag-btn" id="agApp" style="width:100%; margin-top:4px;">📩 Enviar pedido ao restaurante</button>'; }   // reservas normais: pela ÀMesa
-      else if(telResto){ ok += '<button type="button" class="ag-btn" id="agWa" style="background:#25d366; color:#fff; width:100%; margin-top:4px;">📲 Enviar pedido ao restaurante</button>'; }   // menus de grupo: WhatsApp
-      else { ok += '<button type="button" class="ag-btn" id="agReg" style="width:100%; margin-top:4px;">✅ Registar pré-reserva</button>'; }
+      if(menuTxt) ok = ok.replace('</div>', '<br>🍽 Menu: <strong>' + menuTxt.replace(/[<>&]/g, '') + '</strong></div>');
+      ok += '<button type="button" class="ag-btn" id="agApp" style="width:100%; margin-top:4px;">📩 Enviar pedido ao restaurante</button>';   // todas as reservas (incl. grupos e cerimónias) pela ÀMesa; WhatsApp só como último recurso
       if(a.pagamentoLink){ ok += '<div class="ag-passo-tit">Garante a tua reserva</div><button type="button" class="ag-btn pay" id="agPagar">💳 Pagar sinal' + (sinal > 0 ? (' (' + sinal.toFixed(2) + '€)') : '') + '</button>'; }
       if(a.pagamentoNota) ok += '<div class="ag-sub" style="margin-top:8px;">' + a.pagamentoNota + '</div>';
       ok += '<button type="button" class="ag-fechar" id="agFechar">Fechar</button>';
