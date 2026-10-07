@@ -6056,7 +6056,7 @@
 
 
       // Cartão de fidelidade
-      window._fidelidade = (config.fidelidade && config.fidelidade.ativo) ? config.fidelidade : null;
+      window._fidelidade = (config.fidelidade && config.fidelidade.ativo && config.fidelidade.v2) ? config.fidelidade : null;   // só a Fidelização 2.0 (o cartão antigo, com código, foi retirado)
       const fb = document.getElementById('linkFidelidade');
       if(fb) fb.style.display = window._fidelidade ? 'flex' : 'none';
 
@@ -6734,8 +6734,7 @@
     ov.addEventListener('click', e => { if(e.target === ov) ov.classList.remove('aberto'); });
     btn.addEventListener('click', abrirFid);
 
-    function carregar(){ try{ return JSON.parse(localStorage.getItem(KEY)) || { carimbos:0, ultimoDia:'' }; }catch(e){ return { carimbos:0, ultimoDia:'' }; } }
-    function guardar(o){ try{ localStorage.setItem(KEY, JSON.stringify(o)); }catch(e){} }
+    try{ localStorage.removeItem(KEY); }catch(e){}   // limpa o cartão antigo (com código) que ficou guardado no telemóvel
     // ---------- FIDELIZAÇÃO 2.0: cartão no servidor, ligado ao telemóvel; só o restaurante carimba ----------
     const KEY2 = 'fid2:' + _fidSlug;
     let _fid2Timer = null, _fid2Ult = null;
@@ -6814,44 +6813,7 @@
       catch(e){ fidPinta('<p style="text-align:center;margin:16px 0;">Não foi possível abrir o cartão. Verifica a ligação.</p>'); }
     }
 
-    function abrirFid(){
-      const f = window._fidelidade;
-      if(!f) return;
-      if(f.v2){ abrirFid2(); return; }   // Fidelização 2.0 (só nos restaurantes onde o administrador a ligou)
-      const total = f.total || 8;
-      const est = carregar();
-      if(est.carimbos > total) est.carimbos = total;
-      let html = '<h3 style="font-family:\'Fredoka\',sans-serif;color:var(--castanho);text-align:center;margin-bottom:4px;">Cartão de Fidelidade</h3>';
-      html += '<p style="text-align:center;font-size:0.84rem;color:var(--castanho-suave);margin:0 0 12px;">Junta ' + total + ' carimbos e ganha: <strong>' + (f.premio || 'um prémio') + '</strong></p>';
-      html += '<div class="fid-stamps">';
-      for(let i = 0; i < total; i++){ const on = i < est.carimbos; html += '<div class="fid-stamp' + (on ? ' on' : '') + '">' + (on ? '★' : '') + '</div>'; }
-      html += '</div>';
-      if(est.carimbos >= total){
-        html += '<p style="text-align:center;color:#3b8a4f;font-weight:bold;margin-top:14px;">🎉 Cartão completo!<br>Mostra este ecrã ao empregado.</p>';
-        html += '<div class="jogo-menu" style="margin-top:8px;"><button class="jogo-btn claro" onclick="fidReset()">Começar novo cartão</button></div>';
-      } else {
-        html += '<div class="jogo-menu" style="margin-top:14px;"><button class="jogo-btn" onclick="fidCarimbar()">✚ Carimbar (pedir código)</button></div>';
-      }
-      html += '<button class="fid-fechar" onclick="fidFechar()">Fechar</button>';
-      document.getElementById('fidCard').innerHTML = html;
-      requestAnimationFrame(function(){ ov.classList.add('aberto'); });
-    }
-
-    window.fidCarimbar = function(){
-      const f = window._fidelidade;
-      const est = carregar();
-      const hoje = new Date().toISOString().slice(0, 10);
-      if(est.ultimoDia === hoje){ alert('Já carimbaste hoje. Volta noutra visita! 😉'); return; }
-      window.__amPrompt('Carimbar visita', { texto:'Pede o código ao empregado:', placeholder:'Código', ok:'Carimbar' }).then(function(cod){
-        if(cod === null) return;
-        if(String(cod).trim().toUpperCase() !== String(f.codigo || '').trim().toUpperCase()){ alert('❌ Código errado.'); return; }
-        est.carimbos = Math.min((f.total || 8), (est.carimbos || 0) + 1);
-        est.ultimoDia = hoje;
-        guardar(est);
-        abrirFid();
-      });
-    };
-    window.fidReset = function(){ guardar({ carimbos:0, ultimoDia:'' }); abrirFid(); };
+    function abrirFid(){ if(window._fidelidade) abrirFid2(); }
     window.fidFechar = function(){ ov.classList.remove('aberto'); };
   })();
 

@@ -1517,17 +1517,14 @@ amesadigital.pt</textarea>
 
       <div class="lembrar" style="margin-top:18px;">
         <input type="checkbox" id="fidAtivo">
-        <label for="fidAtivo" style="margin:0; font-weight:700; color:var(--dourado-escuro); display:inline;">Ativar cartão de fidelidade</label>
+        <label for="fidAtivo" style="margin:0; font-weight:700; color:var(--dourado-escuro); display:inline;">Ativar cartão de fidelidade <span style="font-weight:600;color:#a07a1c;">(🧪 em teste)</span></label>
       </div>
       <div id="blocoFid" style="display:none; margin-top:8px; padding:12px; background:var(--bege); border-radius:10px;">
-        <div style="font-size:0.8rem; color:var(--castanho-suave); margin-bottom:8px;">O cliente junta carimbos. Para carimbar, pede o <strong>código</strong> ao empregado (muda-o de vez em quando por segurança). Só um carimbo por dia por telemóvel.</div>
-        <label for="fidCodigo" style="margin-top:0;">Código do carimbo</label>
-        <input type="text" id="fidCodigo" placeholder="Ex: CAETANO25">
-        <label for="fidTotal">Número de carimbos para o prémio</label>
+        <div style="font-size:0.8rem; color:var(--castanho-suave); margin-bottom:8px;">O cliente cria o cartão no menu (botão ⭐) com o número de telemóvel e mostra o seu QR. <strong>Só o restaurante dá carimbos</strong>, na Gestão → ⭐ Fidelidade (lendo o QR ou pelo número), 1 por dia; encomendas take-away entregues dão carimbo sozinhas. O prémio é entregue na Gestão.</div>
+        <label for="fidTotal" style="margin-top:0;">Número de carimbos para o prémio</label>
         <input type="number" id="fidTotal" min="4" max="16" step="1" value="8" style="width:100px; padding:9px; border-radius:8px; border:1.5px solid var(--linha); font-family:inherit;">
         <label for="fidPremio">Prémio</label>
         <input type="text" id="fidPremio" placeholder="Ex: Uma sobremesa grátis!">
-        <label style="display:flex; gap:8px; align-items:flex-start; margin-top:12px; padding:10px; background:#fff6dd; border:1.5px dashed #e0b85a; border-radius:10px; cursor:pointer; font-weight:700;"><input type="checkbox" id="fidV2" style="width:auto; margin-top:3px;"> <span>🧪 Fidelização 2.0 (em teste) — cartão guardado no número do cliente; só o restaurante carimba (na Gestão → ⭐ Fidelidade, lendo o QR do cliente). Deixa desligado até decidires usar.</span></label>
       </div>
     </div>
   </details>
@@ -2888,12 +2885,10 @@ amesadigital.pt</textarea>
       if(_lm) _lm.value = _lc.morada || '';
       if(_ll) _ll.value = _lc.link || ''; }
     const fid = config.fidelidade || {};
-    document.getElementById('fidAtivo').checked = !!fid.ativo;
-    document.getElementById('blocoFid').style.display = fid.ativo ? 'block' : 'none';
-    document.getElementById('fidCodigo').value = fid.codigo || '';
+    document.getElementById('fidAtivo').checked = !!(fid.ativo && fid.v2);   // o cartão antigo (com código) já não existe
+    document.getElementById('blocoFid').style.display = (fid.ativo && fid.v2) ? 'block' : 'none';
     document.getElementById('fidTotal').value = fid.total || 8;
     document.getElementById('fidPremio').value = fid.premio || '';
-    if(document.getElementById('fidV2')) document.getElementById('fidV2').checked = !!fid.v2;
     // Agenda
     { const ag = config.agenda || {};
       document.getElementById('agAtivo').checked = !!ag.ativo;
@@ -3855,10 +3850,9 @@ amesadigital.pt</textarea>
       };
       config.fidelidade = {
         ativo: document.getElementById('fidAtivo').checked,
-        codigo: document.getElementById('fidCodigo').value.trim(),
         total: parseInt(document.getElementById('fidTotal').value, 10) || 8,
         premio: document.getElementById('fidPremio').value.trim(),
-        v2: !!(document.getElementById('fidV2') && document.getElementById('fidV2').checked)
+        v2: document.getElementById('fidAtivo').checked   // o cartão é sempre o 2.0
       };
       if(document.getElementById('agAtivo')){
         const _agDias = [];
