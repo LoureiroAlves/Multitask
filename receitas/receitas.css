@@ -144,3 +144,7 @@
 .amr-cat .e, .amr-cat::after, .amr-hero .padrao, .amr-hero .grande{ z-index:0; pointer-events:none; }
 .amr-cat b, .amr-cat small, .amr-hero .cat, .amr-hero h1, .amr-hero p, .amr-hero .amr-chips{ z-index:1; }
 .amr-hero h1{ text-shadow:0 2px 10px rgba(0,0,0,.2); }
+
+/* botões − / + das pessoas: ícone desenhado, sempre ao centro */
+.amr-porcoes button{ display:inline-flex; align-items:center; justify-content:center; padding:0; line-height:0; box-sizing:border-box; flex:none; }
+.amr-porcoes button svg{ display:block; }
