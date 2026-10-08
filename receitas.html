@@ -127,6 +127,7 @@
         aoComecar:function(f){ AMR.player.abrir(r, f); },
         aoLista:function(f){ AMR.lista.abrir(r, f); }
       });
+      try{ var pend = AMR.player.pendente && AMR.player.pendente(r); if(pend) AMR.player.abrir(r, pend.fator || 1); }catch(x){}   // temporizador a contar: volta ao passo a passo
     }catch(err){ erro('Não foi possível carregar a receita.'); }
   }
 
