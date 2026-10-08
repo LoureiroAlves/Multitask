@@ -1,4 +1,4 @@
-/* ÀMesa Receitas — LISTA DE COMPRAS de cada receita (uma lista por receita, guardada no telemóvel).
+/* àMesa Receitas — LISTA DE COMPRAS de cada receita (uma lista por receita, guardada no telemóvel).
    As listas nunca se misturam: a chave inclui o id da receita. */
 (function(){
   var AMR = window.AMR = window.AMR || {};

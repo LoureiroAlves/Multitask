@@ -1,4 +1,4 @@
-/* ÀMesa Receitas — estilos partilhados (página pública, pré-visualização do editor, lista e player) */
+/* àMesa Receitas — estilos partilhados (página pública, pré-visualização do editor, lista e player) */
 :root{ --r-bg:#faf5ec; --r-card:#fff; --r-ink:#2e2418; --r-muted:#8a7a63; --r-linha:#eaddc8; --r-terra:#c05a3a; --r-terra-esc:#a3452b; --r-gold:#c79a3e; --r-verde:#2e9b57; --r-cor:#c05a3a; --r-raio:22px; }
 .amr *{ box-sizing:border-box; }
 .amr{ font-family:'Nunito', system-ui, -apple-system, sans-serif; color:var(--r-ink); -webkit-tap-highlight-color:transparent; }

@@ -1,4 +1,4 @@
-/* ÀMesa Receitas — RECIPE PLAYER: a receita passo a passo, com progresso, ingredientes do passo,
+/* àMesa Receitas — RECIPE PLAYER: a receita passo a passo, com progresso, ingredientes do passo,
    temporizadores (continuam a contar se mudares de passo) e um final com festa. */
 (function(){
   var AMR = window.AMR = window.AMR || {};

@@ -1,4 +1,4 @@
-/* ÀMesa Receitas — DADOS (Supabase). Só usa as tabelas receita_categorias e receitas.
+/* àMesa Receitas — DADOS (Supabase). Só usa as tabelas receita_categorias e receitas.
    As listas pedem apenas as colunas leves (nunca o JSON completo) e vêm por páginas. */
 (function(){
   var AMR = window.AMR = window.AMR || {};

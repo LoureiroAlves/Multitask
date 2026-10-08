@@ -1,4 +1,4 @@
-/* ÀMesa Receitas — LAYOUTS (apresentação). O JSON da receita só diz "layout.tipo"; aqui está o desenho.
+/* àMesa Receitas — LAYOUTS (apresentação). O JSON da receita só diz "layout.tipo"; aqui está o desenho.
    Para criar um layout novo: AMR.layouts.registar('moderno', function(el, r, ctx){ … }) — sem mexer nos dados. */
 (function(){
   var AMR = window.AMR = window.AMR || {};

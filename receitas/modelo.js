@@ -1,4 +1,4 @@
-/* ÀMesa Receitas — MODELO da receita (formato do JSON, leitura tolerante, textos de quantidades e tempos).
+/* àMesa Receitas — MODELO da receita (formato do JSON, leitura tolerante, textos de quantidades e tempos).
    Usado pela página pública e pelo editor. Não depende de nada do sistema dos restaurantes. */
 (function(){
   var AMR = window.AMR = window.AMR || {};
