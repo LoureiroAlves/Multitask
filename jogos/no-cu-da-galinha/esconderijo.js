@@ -1,4 +1,4 @@
-/* ÀMesa · "No Cu da Galinha" — marca os sítios onde o ovo se pode esconder + modo esconderijo (?modo=esconderijo, usado pelo Painel)
+/* àMesa · "No Cu da Galinha" — marca os sítios onde o ovo se pode esconder + modo esconderijo (?modo=esconderijo, usado pelo Painel)
    Carregado pelo cardapio.html. Quem ganha, os códigos e a segurança são decididos no Supabase. */
 (function(){
   var Q; try{ Q = new URLSearchParams(location.search); }catch(e){ Q = { get:function(){ return null; } }; }
