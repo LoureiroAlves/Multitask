@@ -136,16 +136,25 @@
   .topo .marca .mk-a{ display:inline-block; line-height:1; margin-top:2px; }
   .topo .marca .mk-ac{ position:absolute; left:50%; top:7.5px; width:2.5px; height:7px; margin-left:-3px; background:#fff; border-radius:2px; transform:rotate(-38deg); }
   .topo .tit{ font-size:19px !important; line-height:1; }
+  /* Carrinho a flutuar (como nos restaurantes) */
+  .fab{ position:fixed; left:16px; bottom:calc(18px + env(safe-area-inset-bottom)); z-index:70; width:62px; height:62px; border-radius:50%; border:none; padding:0; color:#fff; background:linear-gradient(160deg, #3a9a63, var(--verde)); box-shadow:0 10px 24px rgba(46,125,79,.42), 0 2px 6px rgba(0,0,0,.15); display:flex; align-items:center; justify-content:center; transition:transform .15s; -webkit-tap-highlight-color:transparent; }
+  .fab:active{ transform:scale(.92); }
+  .fab .ic{ font-size:1.65rem; line-height:1; }
+  .fab .badge{ position:absolute; top:-4px; right:-4px; min-width:24px; height:24px; padding:0 6px; border-radius:12px; background:var(--terra); color:#fff; font-weight:900; font-size:.8rem; display:flex; align-items:center; justify-content:center; border:2.5px solid var(--bg); box-sizing:border-box; }
+  .fab.pop{ animation:fabPop .45s ease; }
+  @keyframes fabPop{ 0%{ transform:scale(1); } 30%{ transform:scale(1.22) rotate(-8deg); } 60%{ transform:scale(.93) rotate(4deg); } 100%{ transform:scale(1); } }
+  .fab-entra{ animation:fabEntra .4s cubic-bezier(.2,1.5,.4,1) both; }
+  @keyframes fabEntra{ from{ transform:scale(0); } to{ transform:scale(1); } }
+  .voa{ position:fixed; z-index:80; width:16px; height:16px; margin:-8px 0 0 -8px; border-radius:50%; background:var(--verde); box-shadow:0 2px 8px rgba(46,125,79,.5); pointer-events:none; }
 </style>
 </head>
 <body>
 <header class="topo">
   <a class="marca" href="./?inicio=1" aria-label="àMesa — início"><span class="mk-a" aria-hidden="true">a</span><i class="mk-ac" aria-hidden="true"></i></a>
   <a class="tit" href="compras.html">àMesa <em>Compras</em></a>
-  <button type="button" class="minha" id="btMinha">📝 A minha lista <b id="nTopo">0</b></button>
 </header>
 <main id="app"></main>
-<div class="barraf" id="barraf" style="display:none;"><button type="button" id="btVer"></button></div>
+<button type="button" class="fab" id="fab" aria-label="A minha lista" style="display:none;"><span class="ic">🛒</span><span class="badge" id="fabN">0</span></button>
 <div class="toast" id="toast"></div>
 
 <script src="compras/catalogo.js"></script>
@@ -166,14 +175,24 @@
 
   function contagem(){ var it = L.ler().itens; return { total:it.length, feitos:it.filter(function(i){ return i.feito; }).length }; }
   function contaSetor(id){ return L.ler().itens.filter(function(i){ return i.setor === id; }).length; }
+  var fabAntes = -1;
   function atualizaTopo(){
-    var c = contagem(), vista = rotaAtual().v;
-    var bt = document.getElementById('btMinha');
-    bt.classList.toggle('ativa', vista === 'lista');
-    bt.innerHTML = vista === 'lista' ? '🧺 Escolher produtos' : '📝 A minha lista <b id="nTopo">' + c.total + '</b>';
-    var bf = document.getElementById('barraf');
-    bf.style.display = (vista !== 'lista' && c.total) ? '' : 'none';
-    document.getElementById('btVer').textContent = '📝 Ver a minha lista · ' + c.total + (c.total === 1 ? ' produto' : ' produtos') + ' →';
+    var c = contagem(), vista = rotaAtual().v, fab = document.getElementById('fab');
+    var mostra = vista !== 'lista' && c.total > 0;
+    if(mostra && fab.style.display === 'none'){ fab.style.display = ''; fab.classList.remove('fab-entra'); void fab.offsetWidth; fab.classList.add('fab-entra'); }
+    if(!mostra) fab.style.display = 'none';
+    document.getElementById('fabN').textContent = c.total;
+    fab.setAttribute('aria-label', 'A minha lista: ' + c.total + (c.total === 1 ? ' produto' : ' produtos'));
+    if(fabAntes >= 0 && c.total > fabAntes && mostra){ fab.classList.remove('pop'); void fab.offsetWidth; fab.classList.add('pop'); }
+    fabAntes = c.total;
+  }
+  // bolinha que "voa" do produto até ao carrinho
+  function voa(de){
+    var fab = document.getElementById('fab'); if(!de || !fab || !fab.animate) return;
+    var a = de.getBoundingClientRect(), b = fab.getBoundingClientRect(); if(!b.width) return;
+    var d = document.createElement('i'); d.className = 'voa'; d.style.left = (a.left + a.width / 2) + 'px'; d.style.top = (a.top + a.height / 2) + 'px'; document.body.appendChild(d);
+    var dx = (b.left + b.width / 2) - (a.left + a.width / 2), dy = (b.top + b.height / 2) - (a.top + a.height / 2);
+    d.animate([{ transform:'translate(0,0) scale(1)', opacity:1 }, { transform:'translate(' + dx * .5 + 'px,' + (dy * .5 - 90) + 'px) scale(1.15)', opacity:1, offset:.45 }, { transform:'translate(' + dx + 'px,' + dy + 'px) scale(.45)', opacity:.85 }], { duration:520, easing:'cubic-bezier(.4,0,.6,1)' }).onfinish = function(){ d.remove(); };
   }
 
   // ---- rotas: #  (escolher)  ·  #s=<setor>  ·  #lista ----
@@ -192,8 +211,7 @@
         var p = C.PORID[b.dataset.p]; if(!p) return;
         var ficou = L.alternar(p.nome);
         b.classList.toggle('on', ficou); b.querySelector('.b').textContent = ficou ? '✓' : '+';
-        if(ficou){ som(620, 930); vibra(12); } else { som(700, 480); }
-        atualizaTopo();
+        if(ficou){ som(620, 930); vibra(12); atualizaTopo(); voa(b.querySelector('.b')); } else { som(700, 480); atualizaTopo(); }
       };
     });
   }
@@ -258,7 +276,7 @@
       document.getElementById('irEsc').onclick = function(){ ir(''); };
       return;
     }
-    APP.innerHTML = '<h1>A minha <em>lista</em></h1>'
+    APP.innerHTML = '<button type="button" class="voltar" id="voltEsc">← Escolher produtos</button><h1>A minha <em>lista</em></h1>'
       + '<div class="prog"><span id="pTxt"></span><span id="pPct"></span></div><div class="barra"><i id="pBar"></i></div>'
       + '<div class="pesq"><input type="text" id="addR" placeholder="Juntar mais um produto…" autocomplete="off" enterkeyhint="done"></div><div id="sug"></div>'
       + '<div class="acoes"><button type="button" id="aEsc" class="' + (esconderRiscados ? 'on' : '') + '">' + (esconderRiscados ? '👁 Mostrar riscados' : '🙈 Esconder riscados') + '</button>'
@@ -291,6 +309,7 @@
       };
       li.querySelector('.ed').onclick = function(){ editar(li.dataset.i); };
     });
+    document.getElementById('voltEsc').onclick = function(){ ir(''); };
     document.getElementById('aEsc').onclick = function(){ esconderRiscados = !esconderRiscados; try{ localStorage.setItem('amComprasEsconder', esconderRiscados ? '1' : '0'); }catch(x){} render(); };
     var al = document.getElementById('aLimpar'); if(al) al.onclick = function(){ L.limparRiscados(); toast('Riscados tirados da lista'); render(); };
     var ad = document.getElementById('aDesm'); if(ad) ad.onclick = function(){ perguntar('Desmarcar tudo?', 'Todos os produtos riscados voltam a ficar por comprar.', 'Sim, desmarcar tudo', function(){ L.desmarcarTudo(); render(); }); };
@@ -364,8 +383,7 @@
     else { document.title = 'àMesa Compras — lista de compras'; inicio(); }
     atualizaTopo();
   }
-  document.getElementById('btMinha').onclick = function(){ ir(rotaAtual().v === 'lista' ? '' : 'lista'); };
-  document.getElementById('btVer').onclick = function(){ ir('lista'); };
+  document.getElementById('fab').onclick = function(){ ir('lista'); };
   L.aoMudar(function(){ if(rotaAtual().v === 'lista' && !document.querySelector('.ov') && document.activeElement && document.activeElement.id !== 'addR') render(); else atualizaTopo(); });
   window.addEventListener('pageshow', function(ev){ if(ev.persisted) render(); });   // voltar atrás a partir das receitas: lista atualizada
   render();
