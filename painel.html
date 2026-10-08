@@ -58,6 +58,9 @@
   .side-sub-neg{ text-align:left; border:none; background:transparent; color:var(--castanho-suave); font-family:inherit; font-size:.85rem; font-weight:600; padding:7px 9px; border-radius:8px; cursor:pointer; }
   .side-sub-neg:hover{ background:var(--bege); color:var(--castanho); }
   .side-sub-neg.on{ background:var(--castanho); color:#fff; }
+  .side-sub-tit{ font-size:.66rem; font-weight:900; letter-spacing:1.5px; color:var(--dourado-escuro); opacity:.75; padding:6px 9px 3px; text-transform:uppercase; }   /* Negócios → Restaurantes / Receitas */
+  .side-sub-rec{ display:block; text-decoration:none; text-align:left; color:var(--castanho); font-size:.85rem; font-weight:800; padding:7px 9px; border-radius:8px; }
+  .side-sub-rec:hover{ background:var(--bege); }
   .side-sep{ height:1px; background:var(--linha); margin:9px 6px; }
   .conteudo{ flex:1; min-width:0; }
   .conteudo .card{ margin-top:0; box-shadow:0 1px 2px rgba(58,44,24,.04); }
@@ -1283,6 +1286,7 @@
       var ativoBtn = negSub.querySelector('.side-sub-neg.on');
       var ativoSlug = ativoBtn ? ativoBtn.dataset.slug : null;
       negSub.innerHTML = '';
+      var _tR = document.createElement('div'); _tR.className = 'side-sub-tit'; _tR.textContent = 'Restaurantes'; negSub.appendChild(_tR);   // Negócios → Restaurantes
       if(busca){ busca.classList.add('busca-neg'); negSub.appendChild(busca);
         busca.oninput = function(){ var q = (busca.value || '').toLowerCase().trim();
           Array.prototype.slice.call(negSub.querySelectorAll('.side-sub-neg')).forEach(function(b){ b.style.display = (!q || b.textContent.toLowerCase().indexOf(q) >= 0) ? '' : 'none'; }); };
@@ -1296,6 +1300,8 @@
         b.addEventListener('click', function(){ abrirNeg(slug); });
         negSub.appendChild(b);
       });
+      var _tC = document.createElement('div'); _tC.className = 'side-sub-tit'; _tC.style.marginTop = '8px'; _tC.textContent = 'Receitas'; negSub.appendChild(_tC);   // Negócios → Receitas (área à parte: receitas-admin.html)
+      var _aR = document.createElement('a'); _aR.className = 'side-sub-rec'; _aR.href = 'receitas-admin.html'; _aR.textContent = '🍳 Receitas →'; negSub.appendChild(_aR);
       if(ativoSlug && negSub.querySelector('.side-sub-neg[data-slug="' + ativoSlug + '"]')) abrirNeg(ativoSlug);
     };
 
