@@ -62,6 +62,43 @@
   .side-sub-rec{ display:block; text-decoration:none; text-align:left; color:var(--castanho); font-size:.85rem; font-weight:800; padding:7px 9px; border-radius:8px; }
   .side-sub-rec:hover{ background:var(--bege); }
   .side-sep{ height:1px; background:var(--linha); margin:9px 6px; }
+  /* ===== Áreas com cor (cada área tem a sua) ===== */
+  .ar-inicio{ --ac:#3a2c18; --acc:#f1ebe0; }
+  .ar-rest{ --ac:#b06a12; --acc:#fbefdc; }
+  .ar-rec{ --ac:#2e8b57; --acc:#e3f4ea; }
+  .ar-mon{ --ac:#2a5aa8; --acc:#e4edfa; }
+  .ar-jogo{ --ac:#8a3fb8; --acc:#f1e6f8; }
+  .ar-man{ --ac:#5b6b7a; --acc:#e9edf1; }
+  .side-grupo{ font-size:.66rem; font-weight:900; letter-spacing:1.4px; text-transform:uppercase; color:var(--ac); padding:12px 10px 4px; display:flex; align-items:center; gap:7px; }
+  .side-grupo::before{ content:''; width:9px; height:9px; border-radius:3px; background:var(--ac); }
+  .side .side-item[class*="ar-"]{ border-left:3px solid var(--ac); border-radius:4px 11px 11px 4px; }
+  .side .side-item[class*="ar-"]:hover{ background:var(--acc); }
+  .side .side-item[class*="ar-"].on{ background:var(--ac); color:#fff; }
+  .side-sublist[class*="ar-"]{ border-left-color:var(--ac); }
+  .side-sublist[class*="ar-"] .side-sub-neg.on{ background:var(--ac); }
+  .area-cab{ display:flex; gap:12px; align-items:center; background:var(--acc); border:1px solid color-mix(in srgb, var(--ac) 25%, transparent); border-left:6px solid var(--ac); border-radius:14px; padding:12px 16px; margin-bottom:14px; }
+  .area-cab .ic{ font-size:1.6rem; line-height:1; }
+  .area-cab .tag{ font-size:.66rem; font-weight:900; letter-spacing:1.4px; text-transform:uppercase; color:var(--ac); }
+  .area-cab .tit{ font-weight:800; font-size:1.05rem; color:var(--castanho); }
+  .area-cab .txt{ font-size:.84rem; color:#6f6250; margin-top:2px; }
+  /* Início */
+  .ini-ola{ font-size:1.3rem; font-weight:800; margin:0 0 2px; }
+  .ini-sub{ color:#8a7a5c; font-size:.9rem; margin:0 0 16px; }
+  .ini-sec{ font-size:.7rem; font-weight:900; letter-spacing:1.4px; text-transform:uppercase; color:var(--ac); margin:18px 0 8px; display:flex; align-items:center; gap:7px; }
+  .ini-sec::before{ content:''; width:10px; height:10px; border-radius:3px; background:var(--ac); }
+  .ini-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:12px; }
+  .ini-card{ display:block; text-align:left; font-family:inherit; color:var(--castanho); text-decoration:none; cursor:pointer; background:#fff; border:1px solid color-mix(in srgb, var(--ac) 30%, var(--linha)); border-top:5px solid var(--ac); border-radius:14px; padding:14px 15px; transition:transform .12s ease, box-shadow .12s ease; }
+  .ini-card:hover{ transform:translateY(-2px); box-shadow:0 6px 16px color-mix(in srgb, var(--ac) 18%, transparent); }
+  .ini-card .ic{ width:38px; height:38px; border-radius:11px; background:var(--acc); display:flex; align-items:center; justify-content:center; font-size:1.25rem; }
+  .ini-card .t{ font-weight:800; font-size:.98rem; margin-top:9px; }
+  .ini-card .n{ font-size:1.5rem; font-weight:900; color:var(--ac); margin-top:2px; min-height:1.8rem; }
+  .ini-card .n small{ font-size:.78rem; font-weight:700; color:#8a7a5c; }
+  .ini-card .d{ font-size:.8rem; color:#7a6d58; margin-top:4px; line-height:1.35; }
+  .ini-card .ir{ font-size:.8rem; font-weight:800; color:var(--ac); margin-top:9px; }
+  .ini-card.alerta{ box-shadow:0 0 0 2px #c0392b inset; }
+  .ini-passos{ background:#fff; border:1px solid var(--linha); border-radius:14px; padding:14px 16px; margin-top:18px; }
+  .ini-passos h3{ margin:0 0 8px; font-size:.95rem; }
+  .ini-passos ol{ margin:0; padding-left:20px; font-size:.86rem; color:#5f5444; line-height:1.6; }
   .conteudo{ flex:1; min-width:0; }
   .conteudo .card{ margin-top:0; box-shadow:0 1px 2px rgba(58,44,24,.04); }
   .tab-panel{ animation:painelFade .18s ease; }
@@ -72,6 +109,8 @@
     .side{ position:static; flex:none; width:100%; flex-direction:row; overflow-x:auto; gap:4px; }
     .side-item{ white-space:nowrap; }
     .side-sep{ display:none; }
+    .side-grupo{ display:none; }
+    .side .side-item[class*="ar-"]{ border-left:none; border-bottom:3px solid var(--ac); border-radius:11px 11px 4px 4px; }
   }
 </style>
 </head>
@@ -98,21 +137,80 @@
   <div id="painel" class="hide">
     <div class="painel-layout">
       <nav class="side">
-        <button class="side-item grupo-a" data-tab="criar">➕ Criar negócio</button>
-        <button class="side-item grupo-b" data-tab="formulario">📨 Formulário de registo <span id="regBadge" style="display:none; margin-left:auto; background:#fff; color:#7a3fb0; font-size:.72rem; font-weight:800; min-width:20px; height:20px; border-radius:10px; padding:0 6px; align-items:center; justify-content:center;"></span></button>
-        <button class="side-item" data-tab="negocios">🏪 Negócios</button>
-        <div id="negSublist" class="side-sublist"></div>
-        <button class="side-item" data-tab="publicidade">📢 Publicidade</button>
-        <button class="side-item" data-tab="ovo">🥚 No Cu da Galinha</button>
-        <button class="side-item" data-tab="erros">🩺 Erros</button>
-        <button class="side-item" data-tab="fotos">⚡ Otimizar fotos</button>
-        <div id="pubSublist" class="side-sublist"></div>
+        <button class="side-item ar-inicio" data-tab="inicio">🏠 Início</button>
+
+        <div class="side-grupo ar-rest">Restaurantes</div>
+        <button class="side-item ar-rest" data-tab="negocios">🏪 Os meus restaurantes</button>
+        <div id="negSublist" class="side-sublist ar-rest"></div>
+        <button class="side-item ar-rest" data-tab="criar">➕ Criar restaurante</button>
+        <button class="side-item ar-rest" data-tab="formulario">📨 Registos recebidos <span id="regBadge" style="display:none; margin-left:auto; background:#c0392b; color:#fff; font-size:.72rem; font-weight:800; min-width:20px; height:20px; border-radius:10px; padding:0 6px; align-items:center; justify-content:center;"></span></button>
+
+        <div class="side-grupo ar-rec">Receitas</div>
+        <a class="side-item ar-rec" id="linkReceitas" href="receitas-admin.html">🍳 Categorias e receitas</a>
+
+        <div class="side-grupo ar-mon">Montra e promoção</div>
+        <button class="side-item ar-mon" data-tab="publicidade">📢 Publicidade</button>
+        <div id="pubSublist" class="side-sublist ar-mon"></div>
+        <a class="side-item ar-mon hide" id="linkEstat" href="estatisticas.html">📊 Estatísticas</a>
+
+        <div class="side-grupo ar-jogo">Jogo</div>
+        <button class="side-item ar-jogo" data-tab="ovo">🥚 No Cu da Galinha</button>
+
+        <div class="side-grupo ar-man">Manutenção</div>
+        <button class="side-item ar-man" data-tab="fotos">⚡ Otimizar fotos</button>
+        <button class="side-item ar-man hide" id="btnLimparFotos" title="Apaga do Storage as fotos que já não são usadas por nenhum negócio">🧹 Fotos não usadas</button>
+        <button class="side-item ar-man" data-tab="erros">🩺 Erros</button>
+
         <div class="side-sep"></div>
-        <a class="side-item hide" id="linkEstat" href="estatisticas.html" style="text-decoration:none;">📊 Estatísticas</a>
-        <button class="side-item hide" id="btnLimparFotos" title="Apaga do Storage as fotos que já não são usadas por nenhum negócio">🧹 Fotos não usadas</button>
         <button class="side-item hide" id="btnSair">🚪 Sair</button>
       </nav>
       <div class="conteudo">
+
+        <section class="tab-panel hide" data-panel="inicio">
+          <div class="ini-ola">Olá Fernando 👋</div>
+          <div class="ini-sub">Escolhe o que queres fazer. Cada cor é uma área do ÀMesa e repete-se na barra à esquerda.</div>
+
+          <div class="ini-sec ar-rest">Restaurantes</div>
+          <div class="ini-grid">
+            <button type="button" class="ini-card ar-rest" data-ir="negocios"><div class="ic">🏪</div><div class="t">Os meus restaurantes</div><div class="n" id="iniNeg">…</div><div class="d">Ver e gerir cada restaurante: editor do menu, dono, plano, extras, link e QR.</div><div class="ir">Abrir →</div></button>
+            <button type="button" class="ini-card ar-rest" data-ir="criar"><div class="ic">➕</div><div class="t">Criar restaurante</div><div class="n"><small>novo</small></div><div class="d">Do zero, a partir do ficheiro que o Claude prepara, ou a duplicar um existente.</div><div class="ir">Criar →</div></button>
+            <button type="button" class="ini-card ar-rest" data-ir="formulario" id="iniRegCard"><div class="ic">📨</div><div class="t">Registos recebidos</div><div class="n" id="iniReg">…</div><div class="d">Formulários enviados pelos donos. Envia o link a um dono novo a partir daqui.</div><div class="ir">Ver registos →</div></button>
+          </div>
+
+          <div class="ini-sec ar-rec">Receitas</div>
+          <div class="ini-grid">
+            <a class="ini-card ar-rec" href="receitas-admin.html"><div class="ic">🍳</div><div class="t">Categorias e receitas</div><div class="n" id="iniRec">…</div><div class="d">Criar categorias, importar receitas em JSON, editar e publicar no site.</div><div class="ir">Abrir receitas →</div></a>
+            <a class="ini-card ar-rec" href="receitas.html" target="_blank"><div class="ic">👀</div><div class="t">Ver o site das receitas</div><div class="n"><small>público</small></div><div class="d">Como os visitantes veem as receitas publicadas.</div><div class="ir">Abrir site ↗</div></a>
+          </div>
+
+          <div class="ini-sec ar-mon">Montra e promoção</div>
+          <div class="ini-grid">
+            <button type="button" class="ini-card ar-mon" data-ir="publicidade"><div class="ic">📢</div><div class="t">Publicidade</div><div class="n" id="iniPub">…</div><div class="d">Anúncios da montra amesadigital.pt (faixa do topo e entre restaurantes).</div><div class="ir">Gerir anúncios →</div></button>
+            <a class="ini-card ar-mon" href="estatisticas.html"><div class="ic">📊</div><div class="t">Estatísticas</div><div class="n"><small>totais</small></div><div class="d">Visitas aos menus, cliques vindos da ÀMesa e da publicidade.</div><div class="ir">Ver gráficos →</div></a>
+          </div>
+
+          <div class="ini-sec ar-jogo">Jogo</div>
+          <div class="ini-grid">
+            <button type="button" class="ini-card ar-jogo" data-ir="ovo"><div class="ic">🥚</div><div class="t">No Cu da Galinha</div><div class="n"><small>caça ao ovo</small></div><div class="d">Sessões do jogo, patrocinadores, vencedores e avisos.</div><div class="ir">Abrir jogo →</div></button>
+          </div>
+
+          <div class="ini-sec ar-man">Manutenção</div>
+          <div class="ini-grid">
+            <button type="button" class="ini-card ar-man" data-ir="negocios" data-alvo="bkAllCloud"><div class="ic">🛟</div><div class="t">Cópia de segurança</div><div class="n"><small>antes de atualizar</small></div><div class="d">Guarda as definições de todos os restaurantes de uma vez.</div><div class="ir">Fazer cópia →</div></button>
+            <button type="button" class="ini-card ar-man" data-ir="fotos"><div class="ic">⚡</div><div class="t">Otimizar fotos</div><div class="n"><small>menos peso</small></div><div class="d">Reduz as fotos pesadas sem mudar nada nos menus.</div><div class="ir">Analisar →</div></button>
+            <button type="button" class="ini-card ar-man" data-ir="erros" id="iniErrCard"><div class="ic">🩺</div><div class="t">Erros</div><div class="n" id="iniErr">…</div><div class="d">Falhas registadas nas páginas dos clientes e dos donos.</div><div class="ir">Ver erros →</div></button>
+          </div>
+
+          <div class="ini-passos">
+            <h3>🧭 Novo restaurante, passo a passo</h3>
+            <ol>
+              <li><b>Registos recebidos</b> → envia o formulário ao dono (WhatsApp ou email).</li>
+              <li>Quando o registo chegar, carrega em <b>Copiar para o Claude</b> e cola no chat.</li>
+              <li><b>Criar restaurante</b> → <b>Criar a partir de ficheiro</b> com o .json que o Claude te dá.</li>
+              <li>Em <b>Os meus restaurantes</b>, abre o editor, revê o menu e envia o link ao dono.</li>
+            </ol>
+          </div>
+        </section>
 
         <section class="tab-panel hide" data-panel="criar">
     <div class="card">
@@ -346,6 +444,7 @@
     { const _lf = $('btnLimparFotos'); if(_lf) _lf.classList.remove('hide'); }
     carregar();
     try{ carregarRegistos(); }catch(e){}
+    setTimeout(function(){ try{ if(window.__inicioAtualizar) window.__inicioAtualizar(); }catch(e){} }, 0);
   }
 
   // ---- Negócios ----
@@ -1264,7 +1363,8 @@
       if(t === 'erros'){ try{ if(window.__carregarErros) window.__carregarErros(); }catch(e){} }
       if(t === 'fotos'){ try{ if(window.__fotosPrep) window.__fotosPrep(); }catch(e){} }
       if(t === 'ovo'){ try{ if(window.__ovoPainel) window.__ovoPainel(); }catch(e){} }
-      try{ localStorage.setItem('painelAba', t); }catch(e){}
+      if(t === 'inicio'){ try{ if(window.__inicioAtualizar) window.__inicioAtualizar(); }catch(e){} }
+      try{ window.scrollTo(0, 0); }catch(e){}
     }
     navs.forEach(function(n){ n.addEventListener('click', function(){ irPara(n.getAttribute('data-tab')); }); });
 
@@ -1286,7 +1386,6 @@
       var ativoBtn = negSub.querySelector('.side-sub-neg.on');
       var ativoSlug = ativoBtn ? ativoBtn.dataset.slug : null;
       negSub.innerHTML = '';
-      var _tR = document.createElement('div'); _tR.className = 'side-sub-tit'; _tR.textContent = 'Restaurantes'; negSub.appendChild(_tR);   // Negócios → Restaurantes
       if(busca){ busca.classList.add('busca-neg'); negSub.appendChild(busca);
         busca.oninput = function(){ var q = (busca.value || '').toLowerCase().trim();
           Array.prototype.slice.call(negSub.querySelectorAll('.side-sub-neg')).forEach(function(b){ b.style.display = (!q || b.textContent.toLowerCase().indexOf(q) >= 0) ? '' : 'none'; }); };
@@ -1300,9 +1399,8 @@
         b.addEventListener('click', function(){ abrirNeg(slug); });
         negSub.appendChild(b);
       });
-      var _tC = document.createElement('div'); _tC.className = 'side-sub-tit'; _tC.style.marginTop = '8px'; _tC.textContent = 'Receitas'; negSub.appendChild(_tC);   // Negócios → Receitas (área à parte: receitas-admin.html)
-      var _aR = document.createElement('a'); _aR.className = 'side-sub-rec'; _aR.href = 'receitas-admin.html'; _aR.textContent = '🍳 Receitas →'; negSub.appendChild(_aR);
       if(ativoSlug && negSub.querySelector('.side-sub-neg[data-slug="' + ativoSlug + '"]')) abrirNeg(ativoSlug);
+      try{ if(window.__inicioAtualizar) window.__inicioAtualizar(); }catch(e){}
     };
 
     // ===== Cascata da Publicidade (cada anúncio um item; arrastar para reordenar) =====
@@ -1341,10 +1439,64 @@
       _pubAplicar();
     };
 
-    var inicial = 'criar';
-    try{ var s = localStorage.getItem('painelAba'); if(s) inicial = s; }catch(e){}
-    irPara(inicial);
+    window.__irPara = irPara;
+    irPara('inicio');   // entra sempre no Início
     try{ if(window.__buildPubNav) window.__buildPubNav(); }catch(e){}
+  })();
+</script>
+<script>
+  // ===== Início + cabeçalho colorido de cada área =====
+  (function(){
+    var CAB = {
+      negocios:   ['ar-rest','🏪','Restaurantes','Os meus restaurantes','Escolhe um restaurante na lista à esquerda para abrir o editor, mudar o plano, os extras ou o dono.'],
+      criar:      ['ar-rest','➕','Restaurantes','Criar restaurante','Três maneiras: do zero, a partir do ficheiro .json do Claude, ou a duplicar um restaurante que já existe.'],
+      formulario: ['ar-rest','📨','Restaurantes','Registos recebidos','Envia o formulário a um dono novo. Quando ele o preencher, aparece aqui em baixo.'],
+      publicidade:['ar-mon','📢','Montra e promoção','Publicidade','Anúncios que aparecem na montra amesadigital.pt. Arrasta-os à esquerda para mudar a ordem.'],
+      ovo:        ['ar-jogo','🥚','Jogo','No Cu da Galinha','Caça ao ovo: sessões, esconderijos, patrocinadores e vencedores.'],
+      fotos:      ['ar-man','⚡','Manutenção','Otimizar fotos','Deixa as fotos mais leves para os menus abrirem mais depressa.'],
+      erros:      ['ar-man','🩺','Manutenção','Erros','Erros registados automaticamente nas páginas. Serve para saber o que falha sem ninguém te dizer.']
+    };
+    Object.keys(CAB).forEach(function(k){
+      var sec = document.querySelector('.tab-panel[data-panel="' + k + '"]'); if(!sec) return;
+      var c = CAB[k], d = document.createElement('div');
+      d.className = 'area-cab ' + c[0];
+      d.innerHTML = '<div class="ic">' + c[1] + '</div><div><div class="tag">' + c[2] + '</div><div class="tit">' + c[3] + '</div><div class="txt">' + c[4] + '</div></div>';
+      sec.insertBefore(d, sec.firstChild);
+    });
+
+    Array.prototype.slice.call(document.querySelectorAll('.ini-card[data-ir]')).forEach(function(b){
+      b.addEventListener('click', function(){
+        if(window.__irPara) window.__irPara(b.getAttribute('data-ir'));
+        var alvo = b.getAttribute('data-alvo');
+        if(alvo){ var el = document.getElementById(alvo); if(el) setTimeout(function(){ el.scrollIntoView({ behavior:'smooth', block:'center' }); }, 60); }
+      });
+    });
+
+    function pl(n, um, varios){ return n + ' <small>' + (n === 1 ? um : varios) + '</small>'; }
+    function por(id, html){ var e = document.getElementById(id); if(e) e.innerHTML = html; }
+    var aCorrer = false;
+    window.__inicioAtualizar = async function(){
+      if(aCorrer) return; aCorrer = true;
+      try{
+        por('iniNeg', pl(document.querySelectorAll('#lista .neg').length, 'restaurante', 'restaurantes'));
+        try{ var ads = (window.__pubAds && window.__pubAds()) || []; por('iniPub', pl(ads.length, 'anúncio', 'anúncios')); }catch(e){}
+        try{
+          var r = await sb.from('registos').select('id', { count:'exact', head:true }).eq('tratado', false);
+          var nr = r.count || 0; por('iniReg', pl(nr, 'por tratar', 'por tratar'));
+          var rc = document.getElementById('iniRegCard'); if(rc) rc.classList.toggle('alerta', nr > 0);
+        }catch(e){}
+        try{
+          var t = await sb.from('receitas').select('id', { count:'exact', head:true });
+          var p = await sb.from('receitas').select('id', { count:'exact', head:true }).eq('publicado', true);
+          por('iniRec', pl(t.count || 0, 'receita', 'receitas') + ' <small>· ' + (p.count || 0) + ' publicada' + ((p.count || 0) === 1 ? '' : 's') + '</small>');
+        }catch(e){}
+        try{
+          var er = await sb.from('erros').select('id', { count:'exact', head:true });
+          var ne = er.count || 0; por('iniErr', ne ? pl(ne, 'erro', 'erros') : '0 <small>tudo bem</small>');
+          var ec = document.getElementById('iniErrCard'); if(ec) ec.classList.toggle('alerta', ne > 0);
+        }catch(e){}
+      } finally { aCorrer = false; }
+    };
   })();
 </script>
 <script>
