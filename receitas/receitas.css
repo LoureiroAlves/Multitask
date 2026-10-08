@@ -139,3 +139,8 @@
 .amr-fim p{ color:var(--r-muted); font-weight:800; font-size:1.05rem; }
 .amr-conf{ position:fixed; top:-20px; width:10px; height:16px; border-radius:3px; z-index:9600; animation:amrCai 2.2s linear forwards; pointer-events:none; }
 @keyframes amrCai{ to{ transform:translateY(110vh) rotate(720deg); } }
+
+/* decorações (emojis grandes e padrão) ficam SEMPRE por trás do texto */
+.amr-cat .e, .amr-cat::after, .amr-hero .padrao, .amr-hero .grande{ z-index:0; pointer-events:none; }
+.amr-cat b, .amr-cat small, .amr-hero .cat, .amr-hero h1, .amr-hero p, .amr-hero .amr-chips{ z-index:1; }
+.amr-hero h1{ text-shadow:0 2px 10px rgba(0,0,0,.2); }
