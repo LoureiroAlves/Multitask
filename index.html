@@ -170,6 +170,28 @@
   .ad-ph .t{ font-family:'Playfair Display', serif; font-weight:700; font-size:1.05rem; }
   .ad-ph .s{ font-size:.82rem; font-weight:700; opacity:.8; }
   .ad-topo{ margin-top:20px; }
+
+  /* ===== Página inicial: escolher Restaurantes ou Receitas ===== */
+  body.na-porta main > :not(#porta){ display:none !important; }
+  #porta{ display:none; padding:34px 0 20px; text-align:center; }
+  body.na-porta #porta{ display:block; }
+  #porta h1{ font-family:'Playfair Display', serif; font-size:2.3rem; line-height:1.05; margin:6px 0 8px; }
+  #porta h1 em{ color:var(--terra); font-style:italic; }
+  #porta > p{ color:var(--muted); font-weight:700; margin:0 0 22px; }
+  .porta-op{ display:grid; grid-template-columns:1fr; gap:14px; max-width:720px; margin:0 auto; }
+  @media (min-width:640px){ .porta-op{ grid-template-columns:1fr 1fr; } }
+  .porta-c{ position:relative; overflow:hidden; display:flex; flex-direction:column; align-items:flex-start; text-align:left; gap:6px; border:none; border-radius:26px; padding:26px 22px 22px; min-height:200px; color:#fff; text-decoration:none; cursor:pointer; font-family:inherit; background:linear-gradient(150deg, var(--c), color-mix(in srgb, var(--c) 55%, #2e2418)); box-shadow:0 16px 34px rgba(46,36,24,.2); transition:transform .18s; animation:portaEntra .5s cubic-bezier(.2,.9,.3,1) both; }
+  .porta-c:nth-child(2){ animation-delay:.08s; }
+  .porta-c:active{ transform:scale(.97); }
+  .porta-c .e{ position:absolute; right:-6px; bottom:-14px; font-size:6.5rem; transform:rotate(-10deg); filter:drop-shadow(0 10px 18px rgba(0,0,0,.25)); }
+  .porta-c b{ font-family:'Playfair Display', serif; font-size:1.9rem; margin-top:auto; position:relative; }
+  .porta-c small{ position:relative; font-weight:700; font-size:.92rem; opacity:.92; max-width:70%; line-height:1.35; }
+  .porta-c .ir{ position:relative; margin-top:10px; background:rgba(255,255,255,.2); border-radius:999px; padding:7px 14px; font-weight:900; font-size:.85rem; }
+  .porta-c .novo{ position:absolute; left:18px; top:16px; background:#ffd27a; color:#5a3d08; font-weight:900; font-size:.7rem; letter-spacing:1px; border-radius:999px; padding:4px 10px; }
+  @keyframes portaEntra{ from{ opacity:0; transform:translateY(18px); } to{ opacity:1; transform:none; } }
+  .troca{ display:flex; justify-content:center; gap:6px; margin:16px auto 0; background:#fff; border:1.5px solid var(--linha); border-radius:999px; padding:5px; width:max-content; max-width:100%; }
+  .troca a, .troca span{ padding:8px 16px; border-radius:999px; font-weight:900; font-size:.88rem; text-decoration:none; color:var(--ink); }
+  .troca .on{ background:var(--ink); color:#fff; }
 </style>
 </head>
 <body>
@@ -228,6 +250,26 @@
 </header>
 
 <main class="wrap">
+  <section id="porta" aria-label="Escolhe por onde começar">
+    <h1>O que te apetece <em>hoje?</em></h1>
+    <p>Escolhe por onde queres começar.</p>
+    <div class="porta-op">
+      <a class="porta-c" id="optRest" href="./?ver=restaurantes" style="--c:#c05a3a"><span class="e">🍽️</span><b>Restaurantes</b><small>Menus digitais, reservas, take-away e promoções.</small><span class="ir">Entrar →</span></a>
+      <a class="porta-c" href="receitas.html" style="--c:#1f6f8b"><span class="novo">NOVO</span><span class="e">🍳</span><b>Receitas</b><small>Receitas portuguesas passo a passo, com lista de compras.</small><span class="ir">Entrar →</span></a>
+    </div>
+  </section>
+  <script>
+  /* Página inicial: escolher Restaurantes ou Receitas. Quem já escolheu Restaurantes nesta visita vai direto à montra. */
+  (function(){
+    var p = new URLSearchParams(location.search), esc = '';
+    try{ esc = p.get('ver') || (p.get('inicio') ? '' : sessionStorage.getItem('amEscolha')) || ''; }catch(e){}
+    function restaurantes(){ document.body.classList.remove('na-porta'); try{ sessionStorage.setItem('amEscolha', 'restaurantes'); }catch(e){} }
+    if(esc === 'restaurantes') restaurantes(); else document.body.classList.add('na-porta');
+    var b = document.getElementById('optRest');
+    if(b) b.addEventListener('click', function(ev){ ev.preventDefault(); restaurantes(); try{ history.replaceState(null, '', './?ver=restaurantes'); }catch(e){} window.scrollTo(0, 0); });
+  })();
+  </script>
+  <div class="troca" aria-label="Mudar de área"><span class="on">🍽️ Restaurantes</span><a href="receitas.html">🍳 Receitas</a></div>
   <section class="hero">
     <h1>A tua mesa está <em>à espera</em>.</h1>
     <p>Descobre restaurantes e abre o menu digital de cada um.</p>

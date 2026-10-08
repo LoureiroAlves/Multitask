@@ -32,11 +32,14 @@
   .carregar{ text-align:center; padding:40px; color:var(--r-muted); font-weight:800; }
   .carregar::before{ content:''; display:block; width:34px; height:34px; margin:0 auto 10px; border-radius:50%; border:4px solid var(--r-linha); border-top-color:#c05a3a; animation:gira 0.9s linear infinite; }
   @keyframes gira{ to{ transform:rotate(360deg); } }
+  .troca{ display:flex; justify-content:center; gap:6px; margin:6px auto 4px; background:#fff; border:1.5px solid var(--r-linha); border-radius:999px; padding:5px; width:max-content; max-width:100%; }
+  .troca a, .troca span{ padding:8px 16px; border-radius:999px; font-weight:900; font-size:.88rem; text-decoration:none; color:var(--r-ink); }
+  .troca .on{ background:var(--r-ink); color:#fff; }
   .aviso-rasc{ background:#fff1d6; color:#8a5b00; font-weight:800; border-radius:14px; padding:10px 14px; margin-bottom:12px; font-size:.85rem; }
 </style>
 </head>
 <body class="amr">
-<header class="topo"><a class="marca" href="./" aria-label="àMesa">à</a><a class="tit" href="receitas.html">àMesa <em>Receitas</em></a><button type="button" class="volta" id="volta" style="display:none;">← Voltar</button></header>
+<header class="topo"><a class="marca" href="./?inicio=1" aria-label="àMesa — início">à</a><a class="tit" href="receitas.html">àMesa <em>Receitas</em></a><button type="button" class="volta" id="volta" style="display:none;">← Voltar</button></header>
 <main id="app"><div class="carregar">A carregar…</div></main>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -85,7 +88,7 @@
 
   async function inicio(){
     VOLTA.style.display = 'none'; document.title = 'àMesa Receitas';
-    APP.innerHTML = '<div class="ola amr-entra"><h1>Receitas <em>portuguesas</em></h1><p>Passo a passo, com lista de compras e modo de cozinhar guiado.</p></div>'
+    APP.innerHTML = '<div class="troca"><a href="./?ver=restaurantes">🍽️ Restaurantes</a><span class="on">🍳 Receitas</span></div><div class="ola amr-entra"><h1>Receitas <em>portuguesas</em></h1><p>Passo a passo, com lista de compras e modo de cozinhar guiado.</p></div>'
       + '<div class="amr-pesq amr-entra"><input id="q" type="search" placeholder="Procurar receitas ou ingredientes…" autocomplete="off"></div>'
       + '<div id="res"></div><div id="blocoCats"><div class="sec">Categorias</div><div class="amr-cats" id="cats"><div class="carregar" style="grid-column:1/-1">A carregar…</div></div></div>';
     try{
