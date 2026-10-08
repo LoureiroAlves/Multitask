@@ -90,7 +90,9 @@
   .item .tx{ flex:1; min-width:0; }
   .item .nm{ font-weight:800; font-size:1rem; }
   .item .dt{ font-size:.78rem; color:var(--muted); font-weight:700; margin-top:1px; overflow-wrap:anywhere; }
-  .item .ed{ flex:none; border:none; background:#f5efe2; width:34px; height:34px; border-radius:50%; font-size:1rem; color:var(--muted); font-weight:900; }
+  .item .ed{ flex:none; border:none; background:#f5efe2; width:34px; height:34px; border-radius:50%; color:var(--muted); padding:0; display:flex; align-items:center; justify-content:center; line-height:0; }
+  .item .ed svg{ display:block; }
+  .pergunta p{ margin:0 0 4px; color:var(--muted); font-weight:700; }
   .item.ok{ background:#fbfaf6; }
   .item.ok .cx{ background:var(--ok); border-color:var(--ok); animation:pop .3s; }
   .item.ok .nm{ text-decoration:line-through; text-decoration-thickness:2px; color:var(--muted); }
@@ -257,32 +259,41 @@
       return;
     }
     APP.innerHTML = '<h1>A minha <em>lista</em></h1>'
-      + '<div class="prog"><span>' + c.feitos + ' de ' + c.total + ' no cesto</span><span>' + Math.round(c.feitos / c.total * 100) + '%</span></div><div class="barra"><i style="width:' + (c.feitos / c.total * 100) + '%"></i></div>'
+      + '<div class="prog"><span id="pTxt"></span><span id="pPct"></span></div><div class="barra"><i id="pBar"></i></div>'
       + '<div class="pesq"><input type="text" id="addR" placeholder="Juntar mais um produto…" autocomplete="off" enterkeyhint="done"></div><div id="sug"></div>'
       + '<div class="acoes"><button type="button" id="aEsc" class="' + (esconderRiscados ? 'on' : '') + '">' + (esconderRiscados ? '👁 Mostrar riscados' : '🙈 Esconder riscados') + '</button>'
-      + (c.feitos ? '<button type="button" id="aLimpar">🧹 Tirar riscados</button><button type="button" id="aDesm">↺ Desmarcar</button>' : '')
+      + '<button type="button" id="aLimpar">🧹 Tirar riscados</button><button type="button" id="aDesm">↺ Desmarcar tudo</button>'
       + '<button type="button" id="aPart">📤 Partilhar</button><button type="button" id="aApagar" class="perigo">🗑 Apagar lista</button></div>'
       + grupos.map(function(g){
           var its = g.itens.filter(function(i){ return !(esconderRiscados && i.feito); });
           var feitos = g.itens.filter(function(i){ return i.feito; }).length;
           if(!its.length) return '';
-          return '<div class="lsetor" style="--c:' + g.setor.cor + '">' + g.setor.emoji + ' ' + e(g.setor.nome) + '<span class="n">' + feitos + '/' + g.itens.length + '</span></div><ul class="itens" style="--c:' + g.setor.cor + '">'
-            + its.map(function(i){ var dt = [i.qtd, i.nota].filter(Boolean).join(' · '); return '<li class="item' + (i.feito ? ' ok' : '') + '" data-i="' + e(i.id) + '"><span class="cx">✓</span><span class="tx"><div class="nm">' + e(i.nome) + '</div>' + (dt ? '<div class="dt">' + e(dt) + '</div>' : '') + '</span><button type="button" class="ed" aria-label="Editar">⋯</button></li>'; }).join('')
+          return '<div class="lsetor" style="--c:' + g.setor.cor + '">' + g.setor.emoji + ' ' + e(g.setor.nome) + '<span class="n" data-s="' + g.setor.id + '"></span></div><ul class="itens" style="--c:' + g.setor.cor + '">'
+            + its.map(function(i){ var dt = [i.qtd, i.nota].filter(Boolean).join(' · '); return '<li class="item' + (i.feito ? ' ok' : '') + '" data-i="' + e(i.id) + '"><span class="cx">✓</span><span class="tx"><div class="nm">' + e(i.nome) + '</div>' + (dt ? '<div class="dt">' + e(dt) + '</div>' : '') + '</span><button type="button" class="ed" aria-label="Editar"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><circle cx="3.5" cy="9" r="1.9" fill="currentColor"/><circle cx="9" cy="9" r="1.9" fill="currentColor"/><circle cx="14.5" cy="9" r="1.9" fill="currentColor"/></svg></button></li>'; }).join('')
             + '</ul>';
         }).join('')
-      + (c.feitos === c.total ? '<div class="feito">🎉 Tudo no cesto! Boas compras.</div>' : '');
+      + '<div class="feito" id="tudo" style="display:none">🎉 Tudo no cesto! Boas compras.</div>';
+    contadores();
     APP.querySelectorAll('.item').forEach(function(li){
       li.onclick = function(ev){
         if(ev.target.closest('.ed')) return;
-        var ok = !li.classList.contains('ok');
-        L.riscar(li.dataset.i, ok); if(ok){ som(700, 1050); vibra(15); } else som(700, 480);
-        var y = window.scrollY; render(); window.scrollTo(0, y);
+        var id = li.dataset.i, nome = li.querySelector('.nm').textContent;
+        if(!li.classList.contains('ok')){
+          L.riscar(id, true); som(700, 1050); vibra(15);
+          li.classList.add('ok');                                    // risca e fica no mesmo sítio
+          if(esconderRiscados){ var y = window.scrollY; setTimeout(function(){ render(); window.scrollTo(0, y); }, 450); } else contadores();
+          return;
+        }
+        // já estava riscado: perguntar sempre (pode ter sido um toque por engano)
+        perguntar('Desmarcar «' + nome + '»?', 'Este produto já está no cesto. Queres voltar a pô-lo por comprar?', 'Sim, desmarcar', function(){
+          L.riscar(id, false); som(700, 480); li.classList.remove('ok'); contadores();
+        });
       };
       li.querySelector('.ed').onclick = function(){ editar(li.dataset.i); };
     });
     document.getElementById('aEsc').onclick = function(){ esconderRiscados = !esconderRiscados; try{ localStorage.setItem('amComprasEsconder', esconderRiscados ? '1' : '0'); }catch(x){} render(); };
     var al = document.getElementById('aLimpar'); if(al) al.onclick = function(){ L.limparRiscados(); toast('Riscados tirados da lista'); render(); };
-    var ad = document.getElementById('aDesm'); if(ad) ad.onclick = function(){ L.desmarcarTudo(); render(); };
+    var ad = document.getElementById('aDesm'); if(ad) ad.onclick = function(){ perguntar('Desmarcar tudo?', 'Todos os produtos riscados voltam a ficar por comprar.', 'Sim, desmarcar tudo', function(){ L.desmarcarTudo(); render(); }); };
     document.getElementById('aApagar').onclick = function(){ if(confirm('Apagar a lista toda?')){ L.apagarTudo(); render(); } };
     document.getElementById('aPart').onclick = function(){
       var t = L.texto();
@@ -300,6 +311,31 @@
       sug.querySelectorAll('button').forEach(function(b){ b.onclick = function(){ juntarNome(b.dataset.n); }; });
     };
     add.onkeydown = function(ev){ if(ev.key === 'Enter' && add.value.trim()) juntarNome(add.value.trim()); };
+  }
+
+  // atualiza números, barra e botões sem redesenhar a lista (assim nada salta)
+  function contadores(){
+    var c = contagem(), el = function(i){ return document.getElementById(i); };
+    if(!el('pTxt')) return;
+    el('pTxt').textContent = c.feitos + ' de ' + c.total + ' no cesto';
+    el('pPct').textContent = Math.round(c.feitos / Math.max(1, c.total) * 100) + '%';
+    el('pBar').style.width = (c.feitos / Math.max(1, c.total) * 100) + '%';
+    el('aLimpar').style.display = el('aDesm').style.display = c.feitos ? '' : 'none';
+    el('tudo').style.display = (c.total && c.feitos === c.total) ? '' : 'none';
+    var porS = {}; L.ler().itens.forEach(function(i){ var s = porS[i.setor] = porS[i.setor] || [0, 0]; s[1]++; if(i.feito) s[0]++; });
+    APP.querySelectorAll('.lsetor .n[data-s]').forEach(function(n){ var s = porS[n.dataset.s] || [0, 0]; n.textContent = s[0] + '/' + s[1]; });
+    atualizaTopo();
+  }
+  // pergunta com dois botões (em vez da janela do sistema)
+  function perguntar(titulo, texto, sim, aoSim){
+    var ov = document.createElement('div'); ov.className = 'ov';
+    ov.innerHTML = '<div class="folha pergunta"><h3>' + e(titulo) + '</h3><p>' + e(texto) + '</p><div class="bts"><button type="button" class="t" style="color:var(--ink);border-color:var(--linha)!important">Cancelar</button><button type="button" class="g">' + e(sim) + '</button></div></div>';
+    document.body.appendChild(ov); vibra(10);
+    requestAnimationFrame(function(){ requestAnimationFrame(function(){ ov.classList.add('on'); }); });
+    function fechar(){ ov.classList.remove('on'); setTimeout(function(){ ov.remove(); }, 250); }
+    ov.addEventListener('click', function(ev){ if(ev.target === ov) fechar(); });
+    ov.querySelector('.t').onclick = fechar;
+    ov.querySelector('.g').onclick = function(){ fechar(); aoSim(); };
   }
 
   function editar(id){
