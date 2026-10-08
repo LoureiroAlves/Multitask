@@ -200,12 +200,17 @@
   .am-troca a:active{ background:#f3ece0; }
   .am-troca i{ font-style:normal; font-size:18px; line-height:1; }
   .am-troca .on{ background:#2e2418; color:#fff; }
+  /* Cabeçalho IGUAL ao das Receitas e Compras: símbolo 36px + "àMesa Restaurantes" (px fixos) */
+  .logo{ font-size:19px !important; gap:10px !important; white-space:nowrap; line-height:1; }
+  .logo .mark{ width:36px !important; height:36px !important; font-size:20px !important; flex:none; }
+  .logo .mark .mk-ac{ top:7.5px !important; width:2.5px !important; height:7px !important; }
+  .logo .area{ font-style:italic; color:var(--terra); margin-left:-5px; }   /* o gap do .logo é 10px → fica ~5px, como "àMesa Receitas" */
 </style>
 </head>
 <body>
 <header class="top">
   <div class="wrap top-in">
-    <a class="logo" href="./" aria-label="àMesa"><span class="mark" aria-hidden="true"><span class="mk-a">a</span><i class="mk-ac"></i></span> <span class="wm" aria-hidden="true"><span>à</span><span>M</span><span>e</span><span>s</span><span>a</span></span></a>
+    <a class="logo" href="./" aria-label="àMesa Restaurantes"><span class="mark" aria-hidden="true"><span class="mk-a">a</span><i class="mk-ac"></i></span> <span class="wm" aria-hidden="true"><span>à</span><span>M</span><span>e</span><span>s</span><span>a</span></span><em class="area" aria-hidden="true">Restaurantes</em></a>
     <script>
     (function(){
       var l = document.querySelector('.logo'); if(!l) return;

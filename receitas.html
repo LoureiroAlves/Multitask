@@ -43,10 +43,16 @@
   /* decoração por trás do texto */
   .cab-cat .e{ z-index:0; pointer-events:none; }
   .cab-cat h1, .cab-cat small{ position:relative; z-index:1; text-shadow:0 2px 8px rgba(0,0,0,.2); }
+  /* Cabeçalho IGUAL nas 3 áreas: símbolo "à" 36px + "àMesa <área>" (tamanhos fixos em px) */
+  .topo{ padding:calc(14px + env(safe-area-inset-top)) max(20px, calc((100% - 1080px) / 2 + 20px)) 14px !important; gap:10px !important; }
+  .topo .marca{ position:relative; width:36px !important; height:36px !important; font-family:'Playfair Display', Georgia, serif !important; font-size:20px !important; font-weight:700; box-shadow:0 4px 12px rgba(192,90,58,.35); flex:none; }
+  .topo .marca .mk-a{ display:inline-block; line-height:1; margin-top:2px; }
+  .topo .marca .mk-ac{ position:absolute; left:50%; top:7.5px; width:2.5px; height:7px; margin-left:-3px; background:#fff; border-radius:2px; transform:rotate(-38deg); }
+  .topo .tit{ font-size:19px !important; line-height:1; }
 </style>
 </head>
 <body class="amr">
-<header class="topo"><a class="marca" href="./?inicio=1" aria-label="àMesa — início">à</a><a class="tit" href="receitas.html">àMesa <em>Receitas</em></a><button type="button" class="volta" id="volta" style="display:none;">← Voltar</button></header>
+<header class="topo"><a class="marca" href="./?inicio=1" aria-label="àMesa — início"><span class="mk-a" aria-hidden="true">a</span><i class="mk-ac" aria-hidden="true"></i></a><a class="tit" href="receitas.html">àMesa <em>Receitas</em></a><button type="button" class="volta" id="volta" style="display:none;">← Voltar</button></header>
 <main id="app"><div class="carregar">A carregar…</div></main>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
