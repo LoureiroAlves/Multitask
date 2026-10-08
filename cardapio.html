@@ -245,9 +245,9 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>Cardápio</title>
 <!-- Pré-visualização dos links partilhados (WhatsApp, Facebook, Instagram, Telegram…) -->
-<meta property="og:site_name" content="ÀMesa">
+<meta property="og:site_name" content="àMesa">
 <meta property="og:type" content="website">
-<meta property="og:title" content="Menu digital · ÀMesa">
+<meta property="og:title" content="Menu digital · àMesa">
 <meta property="og:description" content="Vê o menu, reserva mesa e encomenda pelo telemóvel — sem esperas.">
 <meta property="og:url" content="https://amesadigital.pt/">
 <meta property="og:image" content="https://amesadigital.pt/og-amesa.png">
@@ -2563,10 +2563,10 @@
     if(admin()) window.__amPC = false;
     else {
       try{ if(sessionStorage.getItem('amesaVerPC') === '1') return; }catch(e){}
-      var link = 'https://amesadigital.pt/';   // o QR leva à montra da ÀMesa
+      var link = 'https://amesadigital.pt/';   // o QR leva à montra da àMesa
       var o = document.createElement('div'); o.id = 'amPC';
-      o.innerHTML = '<div class="c"><div class="ic">📱</div><h1>A ÀMesa foi feita para o telemóvel</h1>'
-        + '<p>Aponta a câmara do telemóvel a este código, entra na ÀMesa e instala-a no ecrã do teu telemóvel para novas descobertas. 🍽️</p>'
+      o.innerHTML = '<div class="c"><div class="ic">📱</div><h1>A àMesa foi feita para o telemóvel</h1>'
+        + '<p>Aponta a câmara do telemóvel a este código, entra na àMesa e instala-a no ecrã do teu telemóvel para novas descobertas. 🍽️</p>'
         + '<div class="qr" id="amPCqr"></div><div class="lk">amesadigital.pt</div>'
         + '<button type="button" id="amPCver">Ver mesmo assim no computador</button></div>';
       document.body.appendChild(o); document.documentElement.style.overflow = 'hidden';
@@ -5589,7 +5589,7 @@
           window._minhaReservas = lerLista;
           window._minhaReservaDoDia = function(iso){ const l = lerLista(); for(var i=0;i<l.length;i++){ if(l[i].rd === iso) return l[i]; } return null; };
 
-          // ---- Respostas rápidas: a reserva fala com o restaurante dentro da ÀMesa (WhatsApp só como último recurso) ----
+          // ---- Respostas rápidas: a reserva fala com o restaurante dentro da àMesa (WhatsApp só como último recurso) ----
           function abrirNovo(r){
             if(document.getElementById('gerirOverlay')) return;
             if(r.ph || r.pp){ try{ localStorage.setItem(_chaveProp(r), '1'); }catch(e){} }
@@ -5650,7 +5650,7 @@
             const gn = $g('grNotif'); if(gn) gn.onclick = function(){
               gn.disabled = true; gn.textContent = 'A ligar…';
               (window.__ovoObterPush ? window.__ovoObterPush() : Promise.resolve('')).then(function(ep){
-                if(!ep){ gn.disabled = false; gn.textContent = '🔔 Avisar-me quando o restaurante responder'; msg('No iPhone, adiciona primeiro a ÀMesa ao ecrã principal (Partilhar ⬆️ → "Adicionar ao Ecrã Principal").', '#8a5a10'); return; }
+                if(!ep){ gn.disabled = false; gn.textContent = '🔔 Avisar-me quando o restaurante responder'; msg('No iPhone, adiciona primeiro a àMesa ao ecrã principal (Partilhar ⬆️ → "Adicionar ao Ecrã Principal").', '#8a5a10'); return; }
                 return sbC.rpc('reserva_set_push', { p_id:r.rid, p_endpoint:ep }).then(function(res){ if(res && res.error) throw res.error; gn.remove(); msg('🔔 Pronto! Avisamos-te aqui quando o restaurante responder.', '#1e6b3c'); });
               }).catch(falhou);
             };
@@ -5702,7 +5702,7 @@
           function abrir(r){
             if(!r) return;
             if(document.getElementById('gerirOverlay')) return;
-            if(r.rid && typeof sbC !== 'undefined' && sbC){ abrirNovo(r); return; }   // todas as reservas (incl. grupos e cerimónias): respostas na ÀMesa
+            if(r.rid && typeof sbC !== 'undefined' && sbC){ abrirNovo(r); return; }   // todas as reservas (incl. grupos e cerimónias): respostas na àMesa
             const rn = r.rn||'', rd = r.rd||'', rh = r.rh||'', rp = String(r.rp||'1');
             const dd = rd ? new Date(rd+'T00:00:00') : null;
             const dataFmt = dd ? (dd.getDate()+' de '+_MESES[dd.getMonth()]) : rd;
@@ -7221,7 +7221,7 @@
       if(total > 0) ok += '<br>Sinal (' + pct + '%): <strong>' + sinal.toFixed(2) + '€</strong>';
       ok += '</div>';
       if(menuTxt) ok = ok.replace('</div>', '<br>🍽 Menu: <strong>' + menuTxt.replace(/[<>&]/g, '') + '</strong></div>');
-      ok += '<button type="button" class="ag-btn" id="agApp" style="width:100%; margin-top:4px;">📩 Enviar pedido ao restaurante</button>';   // todas as reservas (incl. grupos e cerimónias) pela ÀMesa; WhatsApp só como último recurso
+      ok += '<button type="button" class="ag-btn" id="agApp" style="width:100%; margin-top:4px;">📩 Enviar pedido ao restaurante</button>';   // todas as reservas (incl. grupos e cerimónias) pela àMesa; WhatsApp só como último recurso
       if(a.pagamentoLink){ ok += '<div class="ag-passo-tit">Garante a tua reserva</div><button type="button" class="ag-btn pay" id="agPagar">💳 Pagar sinal' + (sinal > 0 ? (' (' + sinal.toFixed(2) + '€)') : '') + '</button>'; }
       if(a.pagamentoNota) ok += '<div class="ag-sub" style="margin-top:8px;">' + a.pagamentoNota + '</div>';
       ok += '<button type="button" class="ag-fechar" id="agFechar">Fechar</button>';
@@ -7250,7 +7250,7 @@
           }
         });
       };
-      // Reservas normais: o pedido fica na ÀMesa e o restaurante responde aqui (com notificação). WhatsApp só como último recurso.
+      // Reservas normais: o pedido fica na àMesa e o restaurante responde aqui (com notificação). WhatsApp só como último recurso.
       const apb = document.getElementById('agApp');
       if(apb) apb.onclick = function(){
         apb.disabled = true;
@@ -7264,9 +7264,9 @@
           if(ep && _ridGravado){ try{ await sbC.rpc('reserva_set_push', { p_id:_ridGravado, p_endpoint:ep }); }catch(e){} }
           const _ios = /iphone|ipad|ipod/i.test(navigator.userAgent || '') || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
           let fim = '<h3 id="agTit">Pedido enviado ✓</h3>'
-            + '<div class="ag-resumo"><strong>' + d.getDate() + ' de ' + MESES[d.getMonth()] + '</strong> às <strong>' + estado.slotSel + '</strong> · ' + pessoas + ' pessoa(s)<br>O restaurante responde <strong>aqui, na ÀMesa</strong>.</div>'
+            + '<div class="ag-resumo"><strong>' + d.getDate() + ' de ' + MESES[d.getMonth()] + '</strong> às <strong>' + estado.slotSel + '</strong> · ' + pessoas + ' pessoa(s)<br>O restaurante responde <strong>aqui, na àMesa</strong>.</div>'
             + (ep ? '<div class="ag-sub" style="margin-top:8px;">🔔 Avisamos-te por notificação quando o restaurante responder.</div>'
-                  : '<div class="ag-sub" style="margin-top:8px;">Para veres a resposta, toca no ícone das reservas 📅 no menu.' + (_ios ? ' Para receberes um aviso, adiciona a ÀMesa ao ecrã principal (Partilhar ⬆️ → "Adicionar ao Ecrã Principal").' : '') + '</div>');
+                  : '<div class="ag-sub" style="margin-top:8px;">Para veres a resposta, toca no ícone das reservas 📅 no menu.' + (_ios ? ' Para receberes um aviso, adiciona a àMesa ao ecrã principal (Partilhar ⬆️ → "Adicionar ao Ecrã Principal").' : '') + '</div>');
           if(a.pagamentoLink){ fim += '<div class="ag-passo-tit">Garante a tua reserva</div><button type="button" class="ag-btn pay" id="agPagar2">💳 Pagar sinal' + (sinal > 0 ? (' (' + sinal.toFixed(2) + '€)') : '') + '</button>'; }
           if(telResto) fim += '<button type="button" id="agWaExtra" style="width:100%; margin-top:12px; background:none; border:none; color:#1e7a43; font-weight:700; cursor:pointer; padding:6px; font-size:.85rem; text-decoration:underline;">💬 Preferes falar por WhatsApp? (último recurso)</button>';
           fim += '<button type="button" class="ag-fechar" id="agFechar2">Fechar</button>';
@@ -9500,7 +9500,7 @@
 
 <script>
   /* Modo app (ecrã principal): a app de um restaurante FICA no restaurante.
-     Não mostramos seta para a montra da ÀMesa — o cliente guardou o menu deste restaurante,
+     Não mostramos seta para a montra da àMesa — o cliente guardou o menu deste restaurante,
      não deve ir parar à plataforma nem ver outros restaurantes. */
   (function(){
     try{

@@ -566,7 +566,7 @@
   // Pedido de ativação de um extra: o dono escolhe WhatsApp ou email (mensagem já escrita)
   function _extraPedir(k){
     const x = _extraInfo(k), rest = (negocio && negocio.nome) || '';
-    const texto = 'Olá! Sou o ' + rest + ' (amesadigital.pt/' + SLUG + ') e gostava de ativar o extra "' + x[2] + '" na minha app ÀMesa.';
+    const texto = 'Olá! Sou o ' + rest + ' (amesadigital.pt/' + SLUG + ') e gostava de ativar o extra "' + x[2] + '" na minha app àMesa.';
     const linkMail = 'mailto:' + AMESA_CONTACTO + '?subject=' + encodeURIComponent('Ativar "' + x[2] + '" — ' + rest) + '&body=' + encodeURIComponent(texto);
     const wa = String(AMESA_WHATSAPP || '').replace(/\D/g, '');
     const linkWa = wa ? ('https://wa.me/' + wa + '?text=' + encodeURIComponent(texto)) : '';
@@ -576,7 +576,7 @@
     ov.innerHTML = '<div style="background:#fff;border-radius:16px;padding:18px;max-width:360px;width:100%;text-align:center;">'
       + '<div style="font-size:2rem;line-height:1;">' + x[1] + '</div>'
       + '<div style="font-weight:900;color:var(--castanho);margin-top:6px;">Ativar ' + esc(x[2]) + '</div>'
-      + '<div style="font-size:.88rem;color:#8a7a5c;margin:4px 0 14px;">Como preferes falar com a ÀMesa? A mensagem já vai escrita.</div>'
+      + '<div style="font-size:.88rem;color:#8a7a5c;margin:4px 0 14px;">Como preferes falar com a àMesa? A mensagem já vai escrita.</div>'
       + (linkWa ? '<a href="' + linkWa + '" target="_blank" rel="noopener" style="display:block;background:#25d366;color:#fff;text-decoration:none;font-weight:800;border-radius:12px;padding:13px;margin-bottom:8px;">💬 Pedir por WhatsApp</a>' : '')
       + '<a href="' + linkMail + '" style="display:block;background:#7a5320;color:#fff;text-decoration:none;font-weight:800;border-radius:12px;padding:13px;margin-bottom:8px;">✉️ Pedir por email</a>'
       + '<div style="font-size:.78rem;color:#8a7a5c;margin-bottom:10px;">' + esc(AMESA_CONTACTO) + '</div>'
@@ -586,7 +586,7 @@
     document.getElementById('exPedirFechar').onclick = function(){ ov.remove(); };
   }
   const AMESA_CONTACTO = 'info@amesadigital.pt';
-  const AMESA_WHATSAPP = '351916254923';   // número da ÀMesa com indicativo, ex.: '351912345678' — vazio = só aparece o email
+  const AMESA_WHATSAPP = '351916254923';   // número da àMesa com indicativo, ex.: '351912345678' — vazio = só aparece o email
   let EXTRAS = null;   // null = restaurante antigo (tudo desbloqueado)
   function extraOn(k){ return !EXTRAS || EXTRAS[k] === true; }
   function _extraInfo(k){ return EXTRAS_LISTA.filter(function(x){ return x[0] === k; })[0] || [k, '✨', k, '']; }
@@ -595,10 +595,10 @@
     const assunto = encodeURIComponent('Ativar "' + x[2] + '" — ' + ((negocio && negocio.nome) || ''));
     window.__amConfirm('🔒 ' + x[2], { html:'<div style="font-size:2.4rem;text-align:center;line-height:1;margin-bottom:6px;">' + x[1] + '</div>'
       + '<div style="text-align:center;font-weight:700;color:var(--castanho);">' + esc(x[3]) + '</div>'
-      + '<div style="text-align:center;margin-top:10px;color:#8a7a5c;font-size:.9rem;">Esta funcionalidade ainda não está ativa no teu restaurante. Fala com a ÀMesa para a ativar.</div>',
+      + '<div style="text-align:center;margin-top:10px;color:#8a7a5c;font-size:.9rem;">Esta funcionalidade ainda não está ativa no teu restaurante. Fala com a àMesa para a ativar.</div>',
       ok:'👀 Ver como fica', cancelar:'Agora não' }).then(function(sim){ if(sim === true){ _extraVer(k); } });
   }
-  function __amSeloAdmin(email){ try{ if(document.getElementById('amSeloAdmin')) return; var d = document.createElement('div'); d.id = 'amSeloAdmin'; d.title = 'Sessão de administrador: tens acesso a todos os negócios. Os donos não vêem este selo.'; d.textContent = '👑 A ver como administrador' + (email ? (' · ' + email) : ''); d.style.cssText = 'position:fixed; left:10px; bottom:calc(10px + env(safe-area-inset-bottom)); z-index:99999; background:rgba(122,83,32,.92); color:#fff; font:700 12px/1.2 system-ui,-apple-system,sans-serif; padding:6px 11px; border-radius:999px; box-shadow:0 3px 10px rgba(0,0,0,.25); pointer-events:none; max-width:calc(100vw - 20px); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;'; document.body.appendChild(d); }catch(e){} }   // administrador ÀMesa (o jogo No Cu da Galinha é gerido só por ele)
+  function __amSeloAdmin(email){ try{ if(document.getElementById('amSeloAdmin')) return; var d = document.createElement('div'); d.id = 'amSeloAdmin'; d.title = 'Sessão de administrador: tens acesso a todos os negócios. Os donos não vêem este selo.'; d.textContent = '👑 A ver como administrador' + (email ? (' · ' + email) : ''); d.style.cssText = 'position:fixed; left:10px; bottom:calc(10px + env(safe-area-inset-bottom)); z-index:99999; background:rgba(122,83,32,.92); color:#fff; font:700 12px/1.2 system-ui,-apple-system,sans-serif; padding:6px 11px; border-radius:999px; box-shadow:0 3px 10px rgba(0,0,0,.25); pointer-events:none; max-width:calc(100vw - 20px); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;'; document.body.appendChild(d); }catch(e){} }   // administrador àMesa (o jogo No Cu da Galinha é gerido só por ele)
   let _primeiraCarga = true, _apId = null;
   const hoje = new Date(); let vAno = hoje.getFullYear(), vMes = hoje.getMonth(), diaSel = null;
 
@@ -900,7 +900,7 @@
     const jaConf = (r.estado === 'confirmada');
     $('apConfirmar').style.display = jaConf ? 'none' : '';
     $('apEstado').textContent = jaConf ? 'Esta reserva já está confirmada.' : 'A aguardar a tua aprovação.';
-    // respostas rápidas (reservas normais, grupos e cerimónias — tudo pela ÀMesa; WhatsApp só como último recurso)
+    // respostas rápidas (reservas normais, grupos e cerimónias — tudo pela àMesa; WhatsApp só como último recurso)
     let _apx = $('apExtra'); if(!_apx){ _apx = document.createElement('div'); _apx.id = 'apExtra'; $('apEstado').after(_apx); }
     _apx.innerHTML = '';
     $('apRecusar').textContent = _eGrupo(r) ? '✕ Recusar' : '✕ Sem disponibilidade';
@@ -1197,7 +1197,7 @@
       }catch(e){}
       const m = /^AMFID:([A-Za-z0-9_-]{20,})$/.exec(String(txt).trim());
       if(m){ fechar(); if(navigator.vibrate) navigator.vibrate(60); await _fidAbrir({ p_token:m[1], p_tel:null }, true); return; }
-      if(txt) msg.textContent = 'Este código não é um cartão de fidelidade da ÀMesa.';
+      if(txt) msg.textContent = 'Este código não é um cartão de fidelidade da àMesa.';
       setTimeout(ler, 180);
     };
     ler();
@@ -1223,7 +1223,7 @@
     const v = $('vistaExtras'); if(!v) return;
     let html = '<div style="background:linear-gradient(135deg,#7a5320,#c79a3e);border-radius:16px;padding:18px;margin-bottom:14px;color:#fff;">'
       + '<div style="font-size:1.2rem;font-weight:900;">✨ Extras</div>'
-      + '<div style="font-size:.88rem;opacity:.95;margin-top:4px;">' + (SOU_ADMIN ? 'Liga o que este restaurante pode usar. O dono vê o que está desligado com um cadeado.' : 'Funcionalidades da tua app. As que têm cadeado podem ser ativadas — fala com a ÀMesa.') + '</div></div>';
+      + '<div style="font-size:.88rem;opacity:.95;margin-top:4px;">' + (SOU_ADMIN ? 'Liga o que este restaurante pode usar. O dono vê o que está desligado com um cadeado.' : 'Funcionalidades da tua app. As que têm cadeado podem ser ativadas — fala com a àMesa.') + '</div></div>';
     EXTRAS_LISTA.forEach(function(x){
       const on = extraOn(x[0]);
       html += '<div class="ex-linha' + (on ? '' : ' off') + '"><span class="ex-ico">' + x[1] + '</span><div class="ex-txt"><div class="ex-nome">' + esc(x[2]) + '</div><div class="ex-desc">' + esc(x[3]) + '</div></div>'
@@ -1966,7 +1966,7 @@
       enc = data; ep = data && data.push_sub && data.push_sub.endpoint; n = (data && data.numero) ? _encNum(data.numero) : '';
     }catch(e){ return; }
     if(!ep) return;   // o cliente não ativou notificações
-    // O telemóvel mostra sempre o nome da app que recebeu o aviso (ex.: "ÀMesa") — por isso o RESTAURANTE vai no título
+    // O telemóvel mostra sempre o nome da app que recebeu o aviso (ex.: "àMesa") — por isso o RESTAURANTE vai no título
     const rest = (negocio && negocio.nome) || 'O restaurante';
     const qtd = (enc && Array.isArray(enc.itens)) ? enc.itens.reduce(function(t, it){ return t + (Number(it.qtd) || 1); }, 0) : 0;
     const tot = (enc && Number(enc.total) > 0) ? (Number(enc.total).toFixed(2).replace('.', ',') + ' €') : '';
@@ -2142,7 +2142,7 @@
     ov.querySelector('#enDepois').onclick = adiar;
     ov.addEventListener('click', function(ev){ if(ev.target === ov) adiar(); });   // tocar fora = ver depois (a encomenda fica em Pendentes)
   }
-  // (O jogo "No Cu da Galinha" é gerido no Painel ÀMesa — painel.html → 🥚 No Cu da Galinha)
+  // (O jogo "No Cu da Galinha" é gerido no Painel àMesa — painel.html → 🥚 No Cu da Galinha)
   let _encFiltro = 'pendente', _encCache = [];
   const _ENC_GRP = {
     pendente:   { cor:'#e0453a', glow:'rgba(224,69,58,.55)',  nome:'Pendentes',  cls:'f-pendente' },
@@ -2847,7 +2847,7 @@
     $('mdObs').value = r.obs || '';
     $('mdEstado').value = r.estado || 'pendente';
     $('mdMsg').textContent = ''; $('mdMsg').className = 'msg';
-    // reservas normais: responder na ÀMesa; WhatsApp só como último recurso (menus de grupo: WhatsApp como sempre)
+    // reservas normais: responder na àMesa; WhatsApp só como último recurso (menus de grupo: WhatsApp como sempre)
     { let mr = $('mdResponder');
       if(!mr){ mr = document.createElement('button'); mr.id = 'mdResponder'; mr.type = 'button'; mr.style.cssText = 'width:100%; margin-top:4px; background:#2a4f86; color:#fff; border:none; border-radius:9px; padding:11px; font-weight:800; cursor:pointer;'; mr.textContent = '💬 Responder ao cliente (confirmar, propor, nota)'; $('mdAvisar').before(mr); }
       const grupo = false, wa = $('mdAvisar');   // grupos e cerimónias: iguais às outras reservas
@@ -3146,7 +3146,7 @@
   }
 
   // ============================================================
-  // RESPOSTAS RÁPIDAS (reservas normais): a resposta fica na ÀMesa e o cliente recebe uma notificação.
+  // RESPOSTAS RÁPIDAS (reservas normais): a resposta fica na àMesa e o cliente recebe uma notificação.
   // Menus de grupo: continuam pelo WhatsApp. O WhatsApp fica sempre como último recurso.
   // ============================================================
   function _eGrupo(r){ return /^Menu:/i.test(String((r && r.obs) || '').trim()); }
@@ -3180,7 +3180,7 @@
     if(enviado){ _toastR('✓ Cliente avisado por notificação'); return; }
     const url = _waUrl(r, tipoWa, extra);
     if(!url){ _toastR('Guardado ✓ — o cliente vê a resposta quando abrir o menu'); return; }
-    if(await window.__amConfirm('Guardado ✓', { texto:'Este cliente não tem as notificações da ÀMesa ligadas — vê a resposta quando abrir o menu.\n\nQueres avisá-lo também por WhatsApp?', ok:'📲 Avisar por WhatsApp', cancelar:'Não é preciso' })) window.open(url, '_blank');
+    if(await window.__amConfirm('Guardado ✓', { texto:'Este cliente não tem as notificações da àMesa ligadas — vê a resposta quando abrir o menu.\n\nQueres avisá-lo também por WhatsApp?', ok:'📲 Avisar por WhatsApp', cancelar:'Não é preciso' })) window.open(url, '_blank');
   }
   function _erroColunas(error){ const m = String((error && error.message) || error || ''); return /column|coluna|proposta|nota|alt_|donos_push|dono_push/i.test(m) ? 'Falta correr no Supabase o ficheiro reservas-respostas.sql.' : ('Erro: ' + m); }
   // Respostas (confirmar / sem disponibilidade / proposta / alteração)
@@ -3384,7 +3384,7 @@
   iniciar();
 </script>
 <script>
-/* Janela própria (substitui prompt()/confirm() do sistema) — estilo ÀMesa */
+/* Janela própria (substitui prompt()/confirm() do sistema) — estilo àMesa */
 (function(){
   if(window.__amConfirm) return;
   var D='#4a3820', S='#8a7350', L='#e6dcc8', G='#a8712f', GE='#7a5320';

@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <script>/* Domínio oficial: se abrir pelo GitHub Pages, salta para o amesadigital.pt */(function(){try{if(/github\.io$/i.test(location.hostname)){location.replace('https://amesadigital.pt'+location.pathname.replace(/^\/Multitask/i,'')+location.search+location.hash);}}catch(e){}})();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>ÀMesa — a tua mesa está à espera</title>
+<title>àMesa — a tua mesa está à espera</title>
 <!-- Pré-visualização dos links partilhados (WhatsApp, Facebook, Instagram, Telegram…) -->
-<meta property="og:site_name" content="ÀMesa">
+<meta property="og:site_name" content="àMesa">
 <meta property="og:type" content="website">
-<meta property="og:title" content="ÀMesa — a tua mesa está à espera">
+<meta property="og:title" content="àMesa — a tua mesa está à espera">
 <meta property="og:description" content="Descobre restaurantes e abre o menu digital de cada um. Reserva mesa, encomenda take-away e diverte-te com os jogos.">
 <meta property="og:url" content="https://amesadigital.pt/">
 <meta property="og:image" content="https://amesadigital.pt/og-amesa.png">
@@ -21,11 +21,11 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="ÀMesa">
+<meta name="apple-mobile-web-app-title" content="àMesa">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="icon" type="image/png" href="icon-192.png">
-<meta name="description" content="ÀMesa — descobre restaurantes e abre o menu digital de cada um. Reserva, escolhe, saboreia.">
+<meta name="description" content="àMesa — descobre restaurantes e abre o menu digital de cada um. Reserva, escolhe, saboreia.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Fredoka:wght@600;700&family=Pacifico&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
@@ -40,7 +40,7 @@
   .top-in{ display:flex; align-items:center; justify-content:space-between; height:64px; }
   .logo{ display:flex; align-items:center; gap:10px; font-family:'Playfair Display', serif; font-weight:700; font-size:1.5rem; color:var(--ink); }
   .logo .mark{ width:38px; height:38px; border-radius:50%; background:var(--terra); color:#fff; display:flex; align-items:center; justify-content:center; font-size:1.25rem; box-shadow:0 4px 12px rgba(192,90,58,.35); }
-  /* Logótipo animado: o "à" dá uma volta, o acento cai e "ÀMesa" sobe letra a letra (ao abrir e ao passar o rato) */
+  /* Logótipo animado: o "à" dá uma volta, o acento cai e "àMesa" sobe letra a letra (ao abrir e ao passar o rato) */
   .logo .mark{ position:relative; overflow:visible; perspective:120px; }
   .logo .mark .mk-a{ display:inline-block; line-height:1; transform-origin:50% 60%; margin-top:2px; }
   .logo .mark .mk-ac{ position:absolute; left:50%; top:8px; width:2.6px; height:7.5px; margin-left:-3px; background:#fff; border-radius:2px; transform:rotate(-38deg); }
@@ -197,7 +197,7 @@
 <body>
 <header class="top">
   <div class="wrap top-in">
-    <a class="logo" href="./" aria-label="ÀMesa"><span class="mark" aria-hidden="true"><span class="mk-a">a</span><i class="mk-ac"></i></span> <span class="wm" aria-hidden="true"><span>À</span><span>M</span><span>e</span><span>s</span><span>a</span></span></a>
+    <a class="logo" href="./" aria-label="àMesa"><span class="mark" aria-hidden="true"><span class="mk-a">a</span><i class="mk-ac"></i></span> <span class="wm" aria-hidden="true"><span>à</span><span>M</span><span>e</span><span>s</span><span>a</span></span></a>
     <script>
     (function(){
       var l = document.querySelector('.logo'); if(!l) return;
@@ -293,14 +293,14 @@
 
 <footer>
   <div class="wrap foot-in">
-    <div><span class="marca">ÀMesa</span> · reserva, escolhe, saboreia.</div>
+    <div><span class="marca">àMesa</span> · reserva, escolhe, saboreia.</div>
   </div>
 </footer>
 
-<div id="qrOverlay" class="qr-overlay" role="dialog" aria-modal="true" aria-label="Código QR do ÀMesa">
+<div id="qrOverlay" class="qr-overlay" role="dialog" aria-modal="true" aria-label="Código QR do àMesa">
   <div class="qr-modal">
     <button id="qrClose" class="qr-close" type="button" aria-label="Fechar">✕</button>
-    <div class="qr-modal-tit">Aponta a câmara para abrir o ÀMesa</div>
+    <div class="qr-modal-tit">Aponta a câmara para abrir o àMesa</div>
     <div id="qrBig" class="qr-big"></div>
     <div class="qr-url">amesadigital.pt</div>
     <button id="qrShare" class="qr-share" type="button">Partilhar</button>
@@ -329,7 +329,7 @@
       if(ov) ov.addEventListener('click', function(e){ if(e.target === ov) fechar(); });
       document.addEventListener('keydown', function(e){ if(e.key === 'Escape') fechar(); });
       if(shareBtn) shareBtn.addEventListener('click', async function(){
-        var dados = { title: 'ÀMesa', text: 'Descobre restaurantes e menus no ÀMesa', url: url };
+        var dados = { title: 'àMesa', text: 'Descobre restaurantes e menus no àMesa', url: url };
         if(navigator.share){ try{ await navigator.share(dados); }catch(e){} }
         else if(navigator.clipboard && navigator.clipboard.writeText){ try{ await navigator.clipboard.writeText(url); shareBtn.textContent = 'Link copiado!'; setTimeout(function(){ shareBtn.textContent = 'Partilhar'; }, 1600); }catch(e){} }
       });
@@ -475,8 +475,8 @@
   var TODOS = [];
   var filtroTipo = '';
 
-  // === Publicidade da ÀMesa — gerida no painel (guardada na linha '__amesa__') ===
-  // Cada anúncio: { img, titulo, sub, slug (restaurante da ÀMesa) | link (externo) }
+  // === Publicidade da àMesa — gerida no painel (guardada na linha '__amesa__') ===
+  // Cada anúncio: { img, titulo, sub, slug (restaurante da àMesa) | link (externo) }
   var AMESA_SLUG = '__amesa__';
   var ADS = [];
   var ADS_INT = 5;   // segundos entre trocas (definido no painel)

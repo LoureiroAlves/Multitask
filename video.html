@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ÀMesa — o vídeo do teu restaurante</title>
+<title>àMesa — o vídeo do teu restaurante</title>
 <meta name="robots" content="noindex">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,600&family=Nunito:wght@500;700;800;900&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
-  /* ÀMesa — vídeo do teu restaurante (amesadigital.pt/video.html?n=slug). Lê o menu verdadeiro e monta um vídeo para as redes. */
+  /* àMesa — vídeo do teu restaurante (amesadigital.pt/video.html?n=slug). Lê o menu verdadeiro e monta um vídeo para as redes. */
   :root{ --bg:#faf5ec; --ink:#2e2418; --muted:#8a7a63; --terra:#c05a3a; --terra-esc:#a3452b; --gold:#c79a3e; --linha:#eaddc8; --verde:#2e9b57; }
   *{ box-sizing:border-box; margin:0; padding:0; }
   html,body{ height:100%; background:#1b140c; overflow:hidden; }
@@ -242,7 +242,7 @@
 </head>
 <body>
 <div id="palco">
-  <div id="topo"><div class="mk"></div><div class="wm"><span>À</span><span>M</span><span>e</span><span>s</span><span>a</span></div></div>
+  <div id="topo"><div class="mk"></div><div class="wm"><span>à</span><span>M</span><span>e</span><span>s</span><span>a</span></div></div>
   <div id="legenda"></div>
   <div id="sub"></div>
   <div id="fone"><div class="ilha"></div><div id="ecra"></div></div>
@@ -251,7 +251,7 @@
 </div>
 <!--AMG-->
 <script>
-/* ÀMesa — gravador de vídeo (MP4) e sons. Igual em todos os vídeos.
+/* àMesa — gravador de vídeo (MP4) e sons. Igual em todos os vídeos.
    • ⏺ Gravar: o Chrome pede para partilhar ESTE separador → grava só o vídeo (#palco), com som, do início ao fim → descarrega o ficheiro.
    • 🔊 liga/desliga o som. Sons e música são gerados no próprio vídeo (sem ficheiros nem direitos de autor). */
 (function(){
@@ -474,7 +474,7 @@
       rodape:[rod.linha1, rod.linha2].filter(Boolean).map(String)
     };
     R.cor1 = (R.cats[0] || {}).c1 || '#c05a3a'; R.cor2 = (R.cats[0] || {}).c2 || '#7a3a20';
-    document.title = R.nome + ' — vídeo ÀMesa';
+    document.title = R.nome + ' — vídeo àMesa';
   }
 
   // ---------- o filme ----------
@@ -490,7 +490,7 @@
 
     // 1) novidade
     await grande(id, 'Novidade!', 1100);
-    legenda(curto ? (esc(R.nome) + ' está na <em>ÀMesa</em>') : 'Já estamos na <em>ÀMesa</em>', curto ? 'O nosso menu, no teu telemóvel' : R.nome);
+    legenda(curto ? (esc(R.nome) + ' está na <em>àMesa</em>') : 'Já estamos na <em>àMesa</em>', curto ? 'O nosso menu, no teu telemóvel' : R.nome);
     som('swoosh'); F.animate([{ transform:'translateY(1600px)' }, { transform:'translateY(-30px)', offset:.8 }, { transform:'translateY(0)' }], { duration:750, easing:'cubic-bezier(.2,.9,.3,1)', fill:'forwards' });
     var fundoCab = 'linear-gradient(160deg,' + R.cor1 + ',' + R.cor2 + ' 70%,#2e2418)', fotoCab = R.foto ? ('<img src="' + esc(R.foto) + '" alt="">') : '';
     var obra = el('<div class="obra"><div class="cabV" style="background:' + fundoCab + '">' + fotoCab + '<div class="nm"></div><div class="fr"></div></div><div id="vCats" style="padding:24px 26px 0"></div></div>');
@@ -529,7 +529,7 @@
 
     // 4) reservas / take-away / promoção
     if(R.reservas || R.takeaway || R.promo){
-      legenda(R.reservas ? 'Reserva a tua <em>mesa</em>' : (R.takeaway ? 'Encomenda <em>take-away</em>' : 'Promoções <em>para ti</em>'), 'Tudo pela ÀMesa');
+      legenda(R.reservas ? 'Reserva a tua <em>mesa</em>' : (R.takeaway ? 'Encomenda <em>take-away</em>' : 'Promoções <em>para ti</em>'), 'Tudo pela àMesa');
       var bts = [['📖', 'Menu']]; if(R.reservas) bts.push(['📅', 'Reservas']); if(R.takeaway) bts.push(['🛍️', 'Take-away']);
       var t2 = tela('<div class="cabV" style="background:' + fundoCab + '">' + fotoCab + '<div class="nm">' + esc(R.nome) + '</div>' + (R.frase ? ('<div class="fr">' + esc(R.frase) + '</div>') : '') + '</div><div style="padding:26px"><div class="modos surge">' + bts.map(function(b){ return '<div><span>' + b[0] + '</span>' + b[1] + '</div>'; }).join('') + '</div>'
         + (R.promo ? ('<div class="promo" style="margin:26px 0 0"><div class="emo">🏷️</div><div class="k">PROMOÇÃO</div><div class="n" style="font-size:40px">' + esc(R.promo.slice(0, 60)) + '</div></div>') : '') + '</div>');

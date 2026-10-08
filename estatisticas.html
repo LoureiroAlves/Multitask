@@ -54,7 +54,7 @@
   <div id="painel" class="hide">
     <div class="kpis" id="kpis"></div>
     <div class="card"><h2>👁 Visitas ao menu (por restaurante)</h2><div class="grafico-wrap"><canvas id="gVisitas"></canvas></div></div>
-    <div class="card"><h2>🔗 Cliques a partir da ÀMesa (por restaurante)</h2><div class="grafico-wrap"><canvas id="gAmesa"></canvas></div></div>
+    <div class="card"><h2>🔗 Cliques a partir da àMesa (por restaurante)</h2><div class="grafico-wrap"><canvas id="gAmesa"></canvas></div></div>
     <div class="card"><h2>📢 Publicidade — visualizações e cliques (por anúncio)</h2><div class="grafico-wrap"><canvas id="gAds"></canvas></div><div id="adsVazio" class="vazio hide" style="margin-top:8px;">Ainda não há dados de publicidade.</div></div>
   </div>
 </div>
@@ -132,14 +132,14 @@
     // KPIs
     const ctr = totView ? Math.round((totClick / totView) * 1000) / 10 : 0;
     $('kpis').innerHTML =
-      kpi(totMenu, 'Visitas ao menu') + kpi(totAmesa, 'Cliques ÀMesa') +
-      kpi(totView, 'Publicidade vista (ÀMesa)') + kpi(totClick, 'Cliques publicidade (ÀMesa)') +
-      kpi(ctr + '%', 'CTR ÀMesa') +
+      kpi(totMenu, 'Visitas ao menu') + kpi(totAmesa, 'Cliques àMesa') +
+      kpi(totView, 'Publicidade vista (àMesa)') + kpi(totClick, 'Cliques publicidade (àMesa)') +
+      kpi(ctr + '%', 'CTR àMesa') +
       kpi(totAnV, 'Anúncio nos menus (vistas)') + kpi(totAnC, 'Anúncio nos menus (cliques)');
 
     // Gráfico: visitas ao menu
     barra('gVisitas', ordenar(menu, nomePorSlug), 'Visitas', COR1);
-    // Gráfico: cliques ÀMesa
+    // Gráfico: cliques àMesa
     barra('gAmesa', ordenar(amesa, nomePorSlug), 'Cliques', COR2);
 
     // Gráfico: anúncios (views vs cliques)
