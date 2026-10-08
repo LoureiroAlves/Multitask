@@ -115,8 +115,10 @@
 .amr-pl-ings b{ color:var(--r-cor); }
 .amr-pl-dica{ margin-top:16px; background:#fff6dd; border-left:5px solid var(--r-gold); border-radius:14px; padding:12px 14px; font-weight:700; color:#5a4a1c; }
 .amr-timer{ margin-top:18px; background:#fff; border-radius:24px; padding:16px; display:flex; align-items:center; gap:14px; box-shadow:0 8px 22px rgba(46,36,24,.1); }
-.amr-timer .rel{ font-family:ui-monospace, 'SF Mono', Menlo, monospace; font-weight:900; font-size:2.4rem; letter-spacing:1px; color:var(--r-ink); min-width:4.4ch; }
-.amr-timer .rot{ flex:1; font-weight:800; color:var(--r-muted); font-size:.85rem; }
+.amr-timer .info{ flex:1; min-width:0; }   /* relógio em cima, nome do temporizador por baixo (não se sobrepõem) */
+.amr-timer .rel{ font-family:ui-monospace, 'SF Mono', Menlo, monospace; font-weight:900; font-size:clamp(1.9rem, 9vw, 2.4rem); line-height:1.05; letter-spacing:1px; color:var(--r-ink); white-space:nowrap; }
+.amr-timer .rot{ font-weight:800; color:var(--r-muted); font-size:.85rem; line-height:1.25; margin-top:3px; overflow-wrap:anywhere; }
+.amr-timer button{ flex:none; }
 .amr-timer button{ border:none; border-radius:14px; padding:12px 16px; font-weight:900; background:var(--r-cor); color:#fff; }
 .amr-timer button.sec{ background:#f3ece0; color:var(--r-ink); }
 .amr-timer.corre .rel{ color:var(--r-cor); }

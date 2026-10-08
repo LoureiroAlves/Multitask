@@ -60,7 +60,7 @@
       corpo.innerHTML = '<div class="amr-pl-passo' + (dir < 0 ? ' tras' : '') + '"><div class="amr-pl-num">' + (idx + 1) + '</div><h2 class="amr-pl-tit">' + e(p.titulo) + '</h2><div class="amr-pl-desc">' + e(p.descricao) + '</div>'
         + (ings.length ? '<div class="amr-pl-ings">' + ings.map(function(i){ return '<span>' + e(i.nome) + ' <b>' + e(m.quantidadeTexto(i, fator)) + '</b></span>'; }).join('') + '</div>' : '')
         + (p.dica ? '<div class="amr-pl-dica">💡 ' + e(p.dica) + '</div>' : '')
-        + (p.timer ? '<div class="amr-timer"><div class="rel"></div><div class="rot"></div><button type="button" class="rep sec" aria-label="Repor">↺</button><button type="button" class="go"></button></div>' : '')
+        + (p.timer ? '<div class="amr-timer"><div class="info"><div class="rel"></div><div class="rot"></div></div><button type="button" class="rep sec" aria-label="Repor">↺</button><button type="button" class="go"></button></div>' : '')
         + '</div>';
       corpo.scrollTop = 0;
       if(p.timer){
