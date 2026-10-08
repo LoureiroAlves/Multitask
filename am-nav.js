@@ -52,7 +52,15 @@
     sessionStorage.removeItem('amEntra');
   }catch(e){}
   // voltar atrás (página guardada pelo browser): tira o estado de "a sair"
-  window.addEventListener('pageshow', function(ev){ document.body && document.body.classList.remove('am-sai', 'am-sai-e', 'am-sai-d'); var m = document.querySelector('main'); if(m){ m.style.transform = ''; m.style.opacity = ''; m.style.transition = ''; } });
+  window.addEventListener('pageshow', function(ev){
+    aSair = false;
+    document.body && document.body.classList.remove('am-sai', 'am-sai-e', 'am-sai-d');
+    var m = document.querySelector('main'); if(m){ m.style.transform = ''; m.style.opacity = ''; m.style.transition = ''; }
+    document.querySelectorAll('.am-troca').forEach(function(n){ if(n.__amRepor) n.__amRepor(); });      // pílula de volta à área desta página
+    document.querySelectorAll('.am-zoom').forEach(function(z){ z.remove(); });
+    document.querySelectorAll('.porta-c').forEach(function(c){ c.style.visibility = ''; });
+    var esp = document.querySelector('.am-espreita'); if(esp){ esp.style.opacity = '0'; esp.classList.remove('pronta'); }
+  });
 
   function vibra(n){ try{ if(navigator.vibrate) navigator.vibrate(n); }catch(e){} }
   var aSair = false;
@@ -80,14 +88,28 @@
       var on = nav.querySelector('.on'); if(!on) return;
       var pil = document.createElement('i'); pil.className = 'am-pilula'; nav.insertBefore(pil, nav.firstChild);
       function poe(el){ pil.style.left = el.offsetLeft + 'px'; pil.style.width = el.offsetWidth + 'px'; }
-      pil.style.transition = 'none'; poe(on); void pil.offsetWidth; pil.style.transition = '';
-      nav.classList.add('am-pil');
-      window.addEventListener('resize', function(){ var o = nav.querySelector('.am-vai') || nav.querySelector('.on'); if(o) poe(o); });
+      // só esconde o fundo escuro do botão ativo quando a pílula está mesmo no sítio (se o seletor ainda não tiver tamanho, fica o fundo normal)
+      function assenta(){
+        var alvo = nav.querySelector('.am-vai') || on;
+        if(!alvo.offsetWidth){ nav.classList.remove('am-pil'); return; }
+        pil.style.transition = 'none'; poe(alvo); void pil.offsetWidth; pil.style.transition = '';
+        nav.classList.add('am-pil');
+      }
+      assenta();
+      // repor o seletor como estava (ao voltar atrás o browser mostra a página "congelada" a meio da mudança)
+      nav.__amRepor = function(){
+        nav.querySelectorAll('.am-vai').forEach(function(x){ x.classList.remove('am-vai'); });
+        on.classList.remove('am-deixa');
+        assenta();
+      };
+      window.addEventListener('resize', assenta);
+      try{ new ResizeObserver(function(){ if(!nav.querySelector('.am-vai')) assenta(); }).observe(nav); }catch(e){}   // aparece/muda de tamanho → acerta
+      try{ document.fonts && document.fonts.ready.then(assenta); }catch(e){}
       nav.querySelectorAll('a').forEach(function(a, k){
         a.addEventListener('click', function(ev){
           var i = AREAS.map(function(x){ return x.url; }).indexOf(a.getAttribute('href')); if(i < 0) return;
           ev.preventDefault(); if(aSair) return;
-          a.classList.add('am-vai'); on.classList.add('am-deixa'); poe(a);
+          a.classList.add('am-vai'); on.classList.add('am-deixa'); nav.classList.add('am-pil'); poe(a);
           setTimeout(function(){ irPara(i); }, reduz ? 0 : 140);
         });
       });
