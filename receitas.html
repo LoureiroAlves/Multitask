@@ -6,6 +6,7 @@
 <title>àMesa Receitas</title>
 <meta name="description" content="Receitas portuguesas passo a passo, com lista de compras e modo de cozinhar guiado.">
 <meta name="theme-color" content="#faf5ec">
+<script src="am-nav.js"></script>
 <meta property="og:title" content="àMesa Receitas">
 <meta property="og:description" content="Receitas passo a passo, com lista de compras e modo de cozinhar guiado.">
 <meta property="og:image" content="https://amesadigital.pt/og-amesa.png">
@@ -140,8 +141,12 @@
   }
 
   function ir(qs){ history.pushState(null, '', 'receitas.html' + qs); rota(); window.scrollTo(0, 0); }
+  var nivelAntes = null;
   function rota(){
     var p = new URLSearchParams(location.search);
+    var nivel = p.get('r') ? 2 : p.get('c') ? 1 : 0;   // início → categoria → receita
+    if(nivelAntes !== null && window.AMNAV) AMNAV.anima(APP, nivel >= nivelAntes ? 'd' : 'e');
+    nivelAntes = nivel;
     VOLTA.dataset.cat = '';
     if(p.get('r')) receita(p.get('r')); else if(p.get('c')) categoria(p.get('c')); else inicio();
   }

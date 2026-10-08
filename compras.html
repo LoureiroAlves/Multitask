@@ -6,6 +6,7 @@
 <title>àMesa Compras — lista de compras</title>
 <meta name="description" content="Lista de compras por setores do supermercado. Escolhe, junta à tua lista e risca enquanto compras.">
 <meta name="theme-color" content="#faf5ec">
+<script src="am-nav.js"></script>
 <meta property="og:title" content="àMesa Compras">
 <meta property="og:description" content="Lista de compras por setores: escolhe, junta e risca enquanto compras.">
 <meta property="og:image" content="https://amesadigital.pt/og-amesa.png">
@@ -311,8 +312,11 @@
     ov.querySelector('.t').onclick = function(){ L.tirar(id); fechar(); toast('Tirado da lista'); render(); };
   }
 
+  var ultima = null, NIVEL = { inicio:0, setor:1, lista:2 };
   function render(){
-    var r = rotaAtual();
+    var r = rotaAtual(), chave = r.v + (r.s || '');
+    if(ultima && ultima.k !== chave && window.AMNAV){ AMNAV.anima(APP, NIVEL[r.v] >= NIVEL[ultima.v] ? 'd' : 'e'); try{ navigator.vibrate && navigator.vibrate(8); }catch(x){} }   // mudar de ecrã: desliza
+    ultima = { k:chave, v:r.v };
     if(r.v === 'lista'){ document.title = 'A minha lista · àMesa Compras'; lista(); }
     else if(r.v === 'setor'){ setor(r.s); }
     else { document.title = 'àMesa Compras — lista de compras'; inicio(); }
