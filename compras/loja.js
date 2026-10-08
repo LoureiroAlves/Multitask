@@ -48,7 +48,7 @@
     var C = AMC.catalogo, grupos = {};
     ler().itens.forEach(function(i){ var s = C.SETOR[i.setor] ? i.setor : 'outros'; (grupos[s] = grupos[s] || []).push(i); });
     return C.SETORES.filter(function(s){ return grupos[s.id]; }).map(function(s){
-      return { setor:s, itens:grupos[s.id].sort(function(a, b){ return (a.feito - b.feito) || a.nome.localeCompare(b.nome, 'pt'); }) };
+      return { setor:s, itens:grupos[s.id].sort(function(a, b){ return a.nome.localeCompare(b.nome, 'pt'); }) };   // ordem fixa: riscar NÃO muda o produto de sítio
     });
   }
   function texto(){
