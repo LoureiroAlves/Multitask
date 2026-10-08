@@ -122,6 +122,11 @@
   .am-troca a:active{ background:#f3ece0; }
   .am-troca i{ font-style:normal; font-size:18px; line-height:1; }
   .am-troca .on{ background:#2e2418; color:#fff; }
+  /* decorações (emojis grandes) ficam SEMPRE por trás do texto */
+  .setor .e, .cab .e{ z-index:0; pointer-events:none; }
+  .setor b, .setor small, .cab h2, .cab small{ position:relative; z-index:1; }
+  .setor .qt{ z-index:2; }
+  .cab h2{ text-shadow:0 2px 8px rgba(0,0,0,.25); }
 </style>
 </head>
 <body>
