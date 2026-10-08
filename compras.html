@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>àMesa Compras — lista de compras</title>
+<meta name="description" content="Lista de compras por setores do supermercado. Escolhe, junta à tua lista e risca enquanto compras.">
+<meta name="theme-color" content="#faf5ec">
+<meta property="og:title" content="àMesa Compras">
+<meta property="og:description" content="Lista de compras por setores: escolhe, junta e risca enquanto compras.">
+<meta property="og:image" content="https://amesadigital.pt/og-amesa.png">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,600&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{ --bg:#faf5ec; --ink:#2e2418; --muted:#8a7a63; --linha:#eaddc8; --terra:#c05a3a; --verde:#2e7d4f; --ok:#2e9b57; }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; background:var(--bg); color:var(--ink); font-family:'Nunito', system-ui, -apple-system, sans-serif; -webkit-tap-highlight-color:transparent; }
+  button, input, select{ font-family:inherit; }
+  button{ cursor:pointer; }
+  .serif{ font-family:'Playfair Display', Georgia, serif; }
+
+  .topo{ position:sticky; top:0; z-index:50; background:rgba(250,245,236,.93); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border-bottom:1px solid var(--linha); padding:calc(10px + env(safe-area-inset-top)) 16px 10px; display:flex; align-items:center; gap:10px; }
+  .topo .marca{ width:36px; height:36px; border-radius:50%; background:var(--terra); color:#fff; display:flex; align-items:center; justify-content:center; font-family:'Playfair Display', serif; font-weight:700; font-size:1.25rem; text-decoration:none; flex:none; }
+  .topo .tit{ font-family:'Playfair Display', serif; font-weight:700; font-size:1.2rem; color:var(--ink); text-decoration:none; white-space:nowrap; }
+  .topo .tit em{ color:var(--verde); font-style:italic; }
+  .topo .minha{ margin-left:auto; border:none; background:var(--verde); color:#fff; border-radius:999px; padding:8px 13px; font-weight:900; font-size:.85rem; display:flex; align-items:center; gap:6px; box-shadow:0 4px 12px rgba(46,125,79,.3); white-space:nowrap; }
+  .topo .minha.ativa{ background:#fff; color:var(--ink); box-shadow:0 3px 10px rgba(46,36,24,.08); }
+  .topo .minha b{ background:rgba(255,255,255,.25); border-radius:999px; padding:1px 7px; font-size:.78rem; }
+  .topo .minha.ativa b{ background:var(--linha); }
+
+  main{ max-width:760px; margin:0 auto; padding:14px 16px 120px; }
+  .troca{ display:flex; justify-content:center; gap:4px; margin:4px auto 6px; background:#fff; border:1.5px solid var(--linha); border-radius:999px; padding:5px; width:max-content; max-width:100%; overflow-x:auto; }
+  .troca a, .troca span{ padding:8px 13px; border-radius:999px; font-weight:900; font-size:.84rem; text-decoration:none; color:var(--ink); white-space:nowrap; }
+  .troca .on{ background:var(--ink); color:#fff; }
+  h1{ font-family:'Playfair Display', serif; font-size:2rem; line-height:1.05; margin:14px 0 4px; }
+  h1 em{ color:var(--verde); font-style:italic; }
+  .lead{ margin:0 0 14px; color:var(--muted); font-weight:700; }
+  .sec{ font-weight:900; font-size:.74rem; letter-spacing:3px; text-transform:uppercase; color:var(--muted); margin:22px 2px 10px; }
+
+  .pesq{ position:relative; }
+  .pesq input{ width:100%; border:2px solid var(--linha); background:#fff; border-radius:999px; padding:14px 18px 14px 46px; font-weight:700; font-size:1rem; color:var(--ink); outline:none; }
+  .pesq input:focus{ border-color:var(--verde); box-shadow:0 0 0 4px rgba(46,125,79,.15); }
+  .pesq::before{ content:'🔎'; position:absolute; left:17px; top:50%; transform:translateY(-50%); font-size:1.05rem; }
+
+  .setores{ display:grid; grid-template-columns:repeat(2, 1fr); gap:10px; }
+  @media (min-width:600px){ .setores{ grid-template-columns:repeat(3, 1fr); } }
+  .setor{ position:relative; overflow:hidden; border:none; border-radius:20px; padding:14px 12px; min-height:96px; text-align:left; color:#fff; display:flex; flex-direction:column; justify-content:flex-end; background:linear-gradient(150deg, var(--c), color-mix(in srgb, var(--c) 58%, #2e2418)); box-shadow:0 8px 20px rgba(46,36,24,.13); transition:transform .15s; }
+  .setor:active{ transform:scale(.97); }
+  .setor .e{ position:absolute; right:-4px; top:-6px; font-size:3.2rem; transform:rotate(10deg); }
+  .setor b{ position:relative; font-size:1rem; line-height:1.15; }
+  .setor small{ position:relative; font-weight:800; opacity:.85; font-size:.75rem; }
+  .setor .qt{ position:absolute; left:10px; top:10px; background:#fff; color:var(--c); font-weight:900; font-size:.72rem; border-radius:999px; padding:2px 8px; }
+
+  .cab{ border-radius:24px; padding:20px 18px; color:#fff; position:relative; overflow:hidden; margin:10px 0 6px; background:linear-gradient(150deg, var(--c), color-mix(in srgb, var(--c) 55%, #2e2418)); }
+  .cab h2{ margin:0; font-family:'Playfair Display', serif; font-size:1.8rem; }
+  .cab small{ font-weight:800; opacity:.9; }
+  .cab .e{ position:absolute; right:10px; top:-4px; font-size:4.6rem; transform:rotate(10deg); }
+  .voltar{ border:none; background:#fff; border-radius:999px; padding:8px 14px; font-weight:900; color:var(--ink); box-shadow:0 3px 10px rgba(46,36,24,.08); margin-top:8px; }
+
+  .grupo{ font-weight:900; font-size:.8rem; color:var(--muted); margin:16px 4px 6px; }
+  .prods{ background:#fff; border-radius:18px; box-shadow:0 4px 14px rgba(46,36,24,.06); overflow:hidden; }
+  .prod{ display:flex; align-items:center; gap:10px; width:100%; border:none; background:none; text-align:left; padding:13px 14px; border-bottom:1px solid #f1e8d9; font-weight:800; font-size:.98rem; color:var(--ink); }
+  .prod:last-child{ border-bottom:none; }
+  .prod .se{ font-size:.75rem; color:var(--muted); font-weight:800; }
+  .prod .b{ margin-left:auto; flex:none; width:34px; height:34px; border-radius:50%; border:2px solid var(--linha); display:flex; align-items:center; justify-content:center; font-size:1.2rem; font-weight:900; color:var(--verde); transition:all .18s; }
+  .prod.on{ background:#f1f8f3; }
+  .prod.on .b{ background:var(--verde); border-color:var(--verde); color:#fff; font-size:1rem; }
+  .outro{ display:flex; gap:8px; margin-top:12px; flex-wrap:wrap; }
+  .outro input{ flex:1; min-width:160px; border:2px solid var(--linha); border-radius:14px; padding:12px 14px; font-weight:700; font-size:.95rem; outline:none; background:#fff; }
+  .outro input:focus{ border-color:var(--verde); }
+  .outro select{ border:2px solid var(--linha); border-radius:14px; padding:10px; font-weight:700; background:#fff; }
+  .outro button{ border:none; border-radius:14px; padding:12px 16px; background:var(--verde); color:#fff; font-weight:900; }
+
+  .barraf{ position:fixed; left:0; right:0; bottom:0; z-index:60; padding:10px 16px calc(12px + env(safe-area-inset-bottom)); background:linear-gradient(180deg, rgba(250,245,236,0), var(--bg) 35%); display:flex; justify-content:center; pointer-events:none; }
+  .barraf button{ pointer-events:auto; width:100%; max-width:520px; border:none; border-radius:18px; padding:16px; font-weight:900; font-size:1.05rem; color:#fff; background:linear-gradient(180deg, #3a9a63, var(--verde)); box-shadow:0 10px 24px rgba(46,125,79,.35); }
+
+  /* A minha lista */
+  .prog{ display:flex; justify-content:space-between; font-weight:900; font-size:.85rem; color:var(--muted); margin-top:6px; }
+  .barra{ height:9px; border-radius:999px; background:var(--linha); overflow:hidden; margin:6px 0 12px; }
+  .barra i{ display:block; height:100%; width:0; background:var(--ok); border-radius:999px; transition:width .35s; }
+  .acoes{ display:flex; gap:8px; flex-wrap:wrap; margin:10px 0 4px; }
+  .acoes button{ border:1.5px solid var(--linha); background:#fff; border-radius:999px; padding:8px 13px; font-weight:900; font-size:.82rem; color:var(--ink); }
+  .acoes button.on{ background:var(--ink); border-color:var(--ink); color:#fff; }
+  .acoes button.perigo{ color:#b3402f; border-color:#efc9c0; }
+  .lsetor{ display:flex; align-items:center; gap:8px; margin:18px 4px 6px; font-weight:900; color:var(--c); font-size:.92rem; }
+  .lsetor .n{ margin-left:auto; color:var(--muted); font-size:.78rem; }
+  .itens{ list-style:none; margin:0; padding:0; background:#fff; border-radius:18px; overflow:hidden; box-shadow:0 4px 14px rgba(46,36,24,.06); border-left:5px solid var(--c); }
+  .item{ display:flex; align-items:center; gap:12px; padding:13px 10px 13px 12px; border-bottom:1px solid #f1e8d9; cursor:pointer; user-select:none; -webkit-user-select:none; }
+  .item:last-child{ border-bottom:none; }
+  .item .cx{ flex:none; width:28px; height:28px; border-radius:9px; border:2.5px solid var(--linha); display:flex; align-items:center; justify-content:center; color:#fff; font-size:1rem; transition:all .2s; }
+  .item .tx{ flex:1; min-width:0; }
+  .item .nm{ font-weight:800; font-size:1rem; }
+  .item .dt{ font-size:.78rem; color:var(--muted); font-weight:700; margin-top:1px; overflow-wrap:anywhere; }
+  .item .ed{ flex:none; border:none; background:#f5efe2; width:34px; height:34px; border-radius:50%; font-size:1rem; color:var(--muted); font-weight:900; }
+  .item.ok{ background:#fbfaf6; }
+  .item.ok .cx{ background:var(--ok); border-color:var(--ok); animation:pop .3s; }
+  .item.ok .nm{ text-decoration:line-through; text-decoration-thickness:2px; color:var(--muted); }
+  @keyframes pop{ 50%{ transform:scale(1.25); } }
+  .vazio{ text-align:center; padding:40px 14px; color:var(--muted); font-weight:800; }
+  .vazio .e{ font-size:3.4rem; display:block; margin-bottom:8px; }
+  .vazio button{ margin-top:14px; border:none; background:var(--verde); color:#fff; border-radius:16px; padding:14px 20px; font-weight:900; font-size:1rem; }
+  .sug{ background:#fff; border-radius:16px; box-shadow:0 8px 22px rgba(46,36,24,.12); margin-top:6px; overflow:hidden; }
+  .sug button{ display:flex; width:100%; gap:8px; border:none; background:none; text-align:left; padding:11px 14px; font-weight:800; border-bottom:1px solid #f1e8d9; color:var(--ink); }
+  .sug button small{ margin-left:auto; color:var(--muted); font-weight:800; }
+  .feito{ text-align:center; margin:18px 0 0; padding:18px; border-radius:20px; background:#e8f6ed; color:var(--verde); font-weight:900; }
+
+  /* folha de editar */
+  .ov{ position:fixed; inset:0; z-index:90; background:rgba(30,20,10,.5); display:flex; align-items:flex-end; justify-content:center; opacity:0; transition:opacity .2s; }
+  .ov.on{ opacity:1; }
+  .folha{ width:100%; max-width:520px; background:var(--bg); border-radius:26px 26px 0 0; padding:20px 18px calc(22px + env(safe-area-inset-bottom)); transform:translateY(100%); transition:transform .3s cubic-bezier(.2,.9,.3,1); }
+  .ov.on .folha{ transform:none; }
+  .folha h3{ margin:0 0 12px; font-size:1.3rem; }
+  .folha label{ display:block; font-weight:900; font-size:.8rem; color:var(--muted); margin:10px 0 4px; }
+  .folha input, .folha select{ width:100%; border:2px solid var(--linha); border-radius:14px; padding:12px 14px; font-weight:700; font-size:1rem; background:#fff; outline:none; }
+  .folha .bts{ display:flex; gap:8px; margin-top:16px; }
+  .folha .bts button{ flex:1; border:none; border-radius:16px; padding:14px; font-weight:900; font-size:1rem; }
+  .folha .g{ background:var(--verde); color:#fff; }
+  .folha .t{ background:#fff; color:#b3402f; border:2px solid #efc9c0 !important; }
+  .toast{ position:fixed; left:50%; bottom:calc(90px + env(safe-area-inset-bottom)); transform:translateX(-50%) translateY(20px); background:var(--ink); color:#fff; padding:10px 16px; border-radius:999px; font-weight:800; font-size:.88rem; opacity:0; transition:all .25s; z-index:95; pointer-events:none; white-space:nowrap; max-width:92vw; overflow:hidden; text-overflow:ellipsis; }
+  .toast.on{ opacity:1; transform:translateX(-50%); }
+</style>
+</head>
+<body>
+<header class="topo">
+  <a class="marca" href="./?inicio=1" aria-label="àMesa — início">à</a>
+  <a class="tit" href="compras.html">àMesa <em>Compras</em></a>
+  <button type="button" class="minha" id="btMinha">📝 A minha lista <b id="nTopo">0</b></button>
+</header>
+<main id="app"></main>
+<div class="barraf" id="barraf" style="display:none;"><button type="button" id="btVer"></button></div>
+<div class="toast" id="toast"></div>
+
+<script src="compras/catalogo.js"></script>
+<script src="compras/loja.js"></script>
+<script>
+(function(){
+  var C = AMC.catalogo, L = AMC.loja, APP = document.getElementById('app');
+  function e(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]; }); }
+  var esconderRiscados = false;
+  try{ esconderRiscados = localStorage.getItem('amComprasEsconder') === '1'; }catch(x){}
+
+  // ---- som e vibração ----
+  var ctx = null;
+  function som(f1, f2){ try{ ctx = ctx || new (window.AudioContext || window.webkitAudioContext)(); if(ctx.state === 'suspended') ctx.resume(); var t = ctx.currentTime, o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'triangle'; o.frequency.setValueAtTime(f1, t); o.frequency.exponentialRampToValueAtTime(f2, t + .09); g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(.15, t + .01); g.gain.exponentialRampToValueAtTime(.0001, t + .1); o.connect(g); g.connect(ctx.destination); o.start(t); o.stop(t + .12); }catch(x){} }
+  function vibra(n){ try{ if(navigator.vibrate) navigator.vibrate(n); }catch(x){} }
+  var tT = null;
+  function toast(t){ var el = document.getElementById('toast'); el.textContent = t; el.classList.add('on'); clearTimeout(tT); tT = setTimeout(function(){ el.classList.remove('on'); }, 1800); }
+
+  function contagem(){ var it = L.ler().itens; return { total:it.length, feitos:it.filter(function(i){ return i.feito; }).length }; }
+  function contaSetor(id){ return L.ler().itens.filter(function(i){ return i.setor === id; }).length; }
+  function atualizaTopo(){
+    var c = contagem(), vista = rotaAtual().v;
+    var bt = document.getElementById('btMinha');
+    bt.classList.toggle('ativa', vista === 'lista');
+    bt.innerHTML = vista === 'lista' ? '🧺 Escolher produtos' : '📝 A minha lista <b id="nTopo">' + c.total + '</b>';
+    var bf = document.getElementById('barraf');
+    bf.style.display = (vista !== 'lista' && c.total) ? '' : 'none';
+    document.getElementById('btVer').textContent = '📝 Ver a minha lista · ' + c.total + (c.total === 1 ? ' produto' : ' produtos') + ' →';
+  }
+
+  // ---- rotas: #  (escolher)  ·  #s=<setor>  ·  #lista ----
+  function rotaAtual(){ var h = location.hash.replace(/^#/, ''); if(h === 'lista') return { v:'lista' }; if(h.indexOf('s=') === 0) return { v:'setor', s:decodeURIComponent(h.slice(2)) }; return { v:'inicio' }; }
+  function ir(h){ if(location.hash.replace(/^#/, '') === h){ render(); return; } location.hash = h; }
+  window.addEventListener('hashchange', function(){ render(); window.scrollTo(0, 0); });
+
+  // linha de um produto (escolher)
+  function linhaProd(p, mostrarSetor){
+    var on = L.tem(p.id), s = C.SETOR[p.setor];
+    return '<button type="button" class="prod' + (on ? ' on' : '') + '" data-p="' + e(p.id) + '"><span>' + e(p.nome) + (mostrarSetor ? '<br><span class="se">' + s.emoji + ' ' + e(s.nome) + '</span>' : '') + '</span><span class="b">' + (on ? '✓' : '+') + '</span></button>';
+  }
+  function ligaProds(el){
+    el.querySelectorAll('.prod[data-p]').forEach(function(b){
+      b.onclick = function(){
+        var p = C.PORID[b.dataset.p]; if(!p) return;
+        var ficou = L.alternar(p.nome);
+        b.classList.toggle('on', ficou); b.querySelector('.b').textContent = ficou ? '✓' : '+';
+        if(ficou){ som(620, 930); vibra(12); } else { som(700, 480); }
+        atualizaTopo();
+      };
+    });
+  }
+  function formOutro(setorFixo){
+    return '<div class="sec">Não encontras?</div><div class="outro"><input type="text" id="outroNome" placeholder="Escreve outro produto…" maxlength="60" autocomplete="off">'
+      + (setorFixo ? '' : '<select id="outroSetor" aria-label="Setor"><option value="">Setor (automático)</option>' + C.SETORES.map(function(s){ return '<option value="' + s.id + '">' + s.emoji + ' ' + e(s.nome) + '</option>'; }).join('') + '</select>')
+      + '<button type="button" id="outroJuntar">＋ Juntar</button></div>';
+  }
+  function ligaOutro(setorFixo){
+    var inp = document.getElementById('outroNome'); if(!inp) return;
+    function juntar(){
+      var nome = inp.value.trim(); if(!nome) return;
+      var sel = document.getElementById('outroSetor'), setor = setorFixo || (sel && sel.value) || null;
+      var p = C.encontrar(nome);
+      L.juntar(p ? p.nome : nome, p ? {} : { setor:setor || C.adivinharSetor(nome) });
+      som(620, 930); vibra(12); toast('✓ ' + (p ? p.nome : nome) + ' na lista'); inp.value = ''; atualizaTopo(); render();
+    }
+    document.getElementById('outroJuntar').onclick = juntar;
+    inp.onkeydown = function(ev){ if(ev.key === 'Enter') juntar(); };
+  }
+
+  // ===== INÍCIO: pesquisa + setores =====
+  function inicio(){
+    APP.innerHTML = '<div class="troca" aria-label="Mudar de área"><a href="./?ver=restaurantes">🍽️ Restaurantes</a><a href="receitas.html">🍳 Receitas</a><span class="on">🛒 Compras</span></div>'
+      + '<h1>Lista de <em>compras</em></h1><p class="lead">Escolhe o que precisas por setores. Fica tudo guardado no teu telemóvel para riscares no supermercado.</p>'
+      + '<div class="pesq"><input type="search" id="pq" placeholder="Procurar produto (ex.: leite, bacalhau…)" autocomplete="off" enterkeyhint="search"></div>'
+      + '<div id="res"></div><div id="setoresBox"><div class="sec">Setores</div><div class="setores">'
+      + C.SETORES.filter(function(s){ return s.produtos.length; }).map(function(s){ var n = contaSetor(s.id); return '<button type="button" class="setor" style="--c:' + s.cor + '" data-s="' + s.id + '">' + (n ? '<span class="qt">' + n + ' na lista</span>' : '') + '<span class="e">' + s.emoji + '</span><b>' + e(s.nome) + '</b><small>' + s.produtos.length + ' produtos</small></button>'; }).join('')
+      + '</div>' + formOutro(false) + '</div>';
+    APP.querySelectorAll('.setor').forEach(function(b){ b.onclick = function(){ ir('s=' + b.dataset.s); }; });
+    ligaOutro(null);
+    var pq = document.getElementById('pq'), res = document.getElementById('res'), box = document.getElementById('setoresBox');
+    pq.oninput = function(){
+      var q = pq.value.trim();
+      if(!q){ res.innerHTML = ''; box.style.display = ''; return; }
+      box.style.display = 'none';
+      var r = C.procurar(q);
+      res.innerHTML = '<div class="sec">' + (r.length ? r.length + ' resultado' + (r.length === 1 ? '' : 's') : 'Sem resultados') + '</div>'
+        + (r.length ? '<div class="prods">' + r.map(function(p){ return linhaProd(p, true); }).join('') + '</div>' : '')
+        + '<div class="outro"><button type="button" id="juntarPq" style="flex:1;">＋ Juntar «' + e(q) + '» à lista</button></div>';
+      ligaProds(res);
+      document.getElementById('juntarPq').onclick = function(){ L.juntar(q, { setor:C.adivinharSetor(q) }); som(620, 930); vibra(12); toast('✓ ' + q + ' na lista'); pq.value = ''; pq.oninput(); atualizaTopo(); };
+    };
+  }
+
+  // ===== SETOR =====
+  function setor(id){
+    var s = C.SETOR[id]; if(!s){ ir(''); return; }
+    APP.innerHTML = '<button type="button" class="voltar" id="volt">← Setores</button>'
+      + '<div class="cab" style="--c:' + s.cor + '"><span class="e">' + s.emoji + '</span><h2>' + e(s.nome) + '</h2><small>Toca para juntar ou tirar da lista</small></div>'
+      + s.grupos.map(function(g){ var ps = s.produtos.filter(function(p){ return p.grupo === g[0]; }); return (s.grupos.length > 1 ? '<div class="grupo">' + e(g[0]) + '</div>' : '<div style="height:10px"></div>') + '<div class="prods">' + ps.map(function(p){ return linhaProd(p, false); }).join('') + '</div>'; }).join('')
+      + formOutro(true);
+    document.getElementById('volt').onclick = function(){ history.length > 1 ? history.back() : ir(''); };
+    ligaProds(APP); ligaOutro(id);
+  }
+
+  // ===== A MINHA LISTA =====
+  function lista(){
+    var grupos = L.porSetor(), c = contagem();
+    if(!c.total){
+      APP.innerHTML = '<h1>A minha <em>lista</em></h1><div class="vazio"><span class="e">🧺</span>A tua lista está vazia.<br>Escolhe os produtos por setores ou junta os ingredientes de uma receita.<br><button type="button" id="irEsc">🧺 Escolher produtos</button></div>';
+      document.getElementById('irEsc').onclick = function(){ ir(''); };
+      return;
+    }
+    APP.innerHTML = '<h1>A minha <em>lista</em></h1>'
+      + '<div class="prog"><span>' + c.feitos + ' de ' + c.total + ' no cesto</span><span>' + Math.round(c.feitos / c.total * 100) + '%</span></div><div class="barra"><i style="width:' + (c.feitos / c.total * 100) + '%"></i></div>'
+      + '<div class="pesq"><input type="text" id="addR" placeholder="Juntar mais um produto…" autocomplete="off" enterkeyhint="done"></div><div id="sug"></div>'
+      + '<div class="acoes"><button type="button" id="aEsc" class="' + (esconderRiscados ? 'on' : '') + '">' + (esconderRiscados ? '👁 Mostrar riscados' : '🙈 Esconder riscados') + '</button>'
+      + (c.feitos ? '<button type="button" id="aLimpar">🧹 Tirar riscados</button><button type="button" id="aDesm">↺ Desmarcar</button>' : '')
+      + '<button type="button" id="aPart">📤 Partilhar</button><button type="button" id="aApagar" class="perigo">🗑 Apagar lista</button></div>'
+      + grupos.map(function(g){
+          var its = g.itens.filter(function(i){ return !(esconderRiscados && i.feito); });
+          var feitos = g.itens.filter(function(i){ return i.feito; }).length;
+          if(!its.length) return '';
+          return '<div class="lsetor" style="--c:' + g.setor.cor + '">' + g.setor.emoji + ' ' + e(g.setor.nome) + '<span class="n">' + feitos + '/' + g.itens.length + '</span></div><ul class="itens" style="--c:' + g.setor.cor + '">'
+            + its.map(function(i){ var dt = [i.qtd, i.nota].filter(Boolean).join(' · '); return '<li class="item' + (i.feito ? ' ok' : '') + '" data-i="' + e(i.id) + '"><span class="cx">✓</span><span class="tx"><div class="nm">' + e(i.nome) + '</div>' + (dt ? '<div class="dt">' + e(dt) + '</div>' : '') + '</span><button type="button" class="ed" aria-label="Editar">⋯</button></li>'; }).join('')
+            + '</ul>';
+        }).join('')
+      + (c.feitos === c.total ? '<div class="feito">🎉 Tudo no cesto! Boas compras.</div>' : '');
+    APP.querySelectorAll('.item').forEach(function(li){
+      li.onclick = function(ev){
+        if(ev.target.closest('.ed')) return;
+        var ok = !li.classList.contains('ok');
+        L.riscar(li.dataset.i, ok); if(ok){ som(700, 1050); vibra(15); } else som(700, 480);
+        var y = window.scrollY; render(); window.scrollTo(0, y);
+      };
+      li.querySelector('.ed').onclick = function(){ editar(li.dataset.i); };
+    });
+    document.getElementById('aEsc').onclick = function(){ esconderRiscados = !esconderRiscados; try{ localStorage.setItem('amComprasEsconder', esconderRiscados ? '1' : '0'); }catch(x){} render(); };
+    var al = document.getElementById('aLimpar'); if(al) al.onclick = function(){ L.limparRiscados(); toast('Riscados tirados da lista'); render(); };
+    var ad = document.getElementById('aDesm'); if(ad) ad.onclick = function(){ L.desmarcarTudo(); render(); };
+    document.getElementById('aApagar').onclick = function(){ if(confirm('Apagar a lista toda?')){ L.apagarTudo(); render(); } };
+    document.getElementById('aPart').onclick = function(){
+      var t = L.texto();
+      if(navigator.share){ navigator.share({ title:'Lista de compras', text:t }).catch(function(){}); }
+      else { try{ navigator.clipboard.writeText(t); toast('Lista copiada ✓'); }catch(x){ window.open('https://wa.me/?text=' + encodeURIComponent(t), '_blank'); } }
+    };
+    // juntar rápido com sugestões do catálogo
+    var add = document.getElementById('addR'), sug = document.getElementById('sug');
+    function juntarNome(nome){ var p = C.encontrar(nome); L.juntar(p ? p.nome : nome, p ? {} : { setor:C.adivinharSetor(nome) }); som(620, 930); vibra(12); toast('✓ ' + (p ? p.nome : nome) + ' na lista'); render(); var a = document.getElementById('addR'); if(a) a.focus(); }
+    add.oninput = function(){
+      var q = add.value.trim(); if(!q){ sug.innerHTML = ''; return; }
+      var r = C.procurar(q).filter(function(p){ return !L.tem(p.id); }).slice(0, 6);
+      sug.innerHTML = '<div class="sug">' + r.map(function(p){ var s = C.SETOR[p.setor]; return '<button type="button" data-n="' + e(p.nome) + '">＋ ' + e(p.nome) + '<small>' + s.emoji + ' ' + e(s.nome) + '</small></button>'; }).join('')
+        + '<button type="button" data-n="' + e(q) + '">＋ «' + e(q) + '»<small>escrito por ti</small></button></div>';
+      sug.querySelectorAll('button').forEach(function(b){ b.onclick = function(){ juntarNome(b.dataset.n); }; });
+    };
+    add.onkeydown = function(ev){ if(ev.key === 'Enter' && add.value.trim()) juntarNome(add.value.trim()); };
+  }
+
+  function editar(id){
+    var it = L.ler().itens.filter(function(i){ return i.id === id; })[0]; if(!it) return;
+    var ov = document.createElement('div'); ov.className = 'ov';
+    ov.innerHTML = '<div class="folha"><h3>' + e(it.nome) + '</h3>'
+      + '<label for="eQ">Quantidade</label><input id="eQ" type="text" maxlength="40" placeholder="ex.: 2 kg, 6 unidades, 1 pacote" value="' + e(it.qtd) + '">'
+      + '<label for="eN">Nota</label><input id="eN" type="text" maxlength="80" placeholder="ex.: marca, tamanho…" value="' + e(it.nota) + '">'
+      + '<label for="eS">Setor</label><select id="eS">' + C.SETORES.map(function(s){ return '<option value="' + s.id + '"' + (s.id === it.setor ? ' selected' : '') + '>' + s.emoji + ' ' + e(s.nome) + '</option>'; }).join('') + '</select>'
+      + '<div class="bts"><button type="button" class="t">Tirar da lista</button><button type="button" class="g">Guardar</button></div></div>';
+    document.body.appendChild(ov);
+    requestAnimationFrame(function(){ requestAnimationFrame(function(){ ov.classList.add('on'); }); });
+    function fechar(){ ov.classList.remove('on'); setTimeout(function(){ ov.remove(); }, 250); }
+    ov.addEventListener('click', function(ev){ if(ev.target === ov) fechar(); });
+    ov.querySelector('.g').onclick = function(){ L.mudar(id, { qtd:ov.querySelector('#eQ').value.trim(), nota:ov.querySelector('#eN').value.trim(), setor:ov.querySelector('#eS').value }); fechar(); render(); };
+    ov.querySelector('.t').onclick = function(){ L.tirar(id); fechar(); toast('Tirado da lista'); render(); };
+  }
+
+  function render(){
+    var r = rotaAtual();
+    if(r.v === 'lista'){ document.title = 'A minha lista · àMesa Compras'; lista(); }
+    else if(r.v === 'setor'){ setor(r.s); }
+    else { document.title = 'àMesa Compras — lista de compras'; inicio(); }
+    atualizaTopo();
+  }
+  document.getElementById('btMinha').onclick = function(){ ir(rotaAtual().v === 'lista' ? '' : 'lista'); };
+  document.getElementById('btVer').onclick = function(){ ir('lista'); };
+  L.aoMudar(function(){ if(rotaAtual().v === 'lista' && !document.querySelector('.ov') && document.activeElement && document.activeElement.id !== 'addR') render(); else atualizaTopo(); });
+  window.addEventListener('pageshow', function(ev){ if(ev.persisted) render(); });   // voltar atrás a partir das receitas: lista atualizada
+  render();
+})();
+</script>
+</body>
+</html>
