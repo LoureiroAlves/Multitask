@@ -1,4 +1,4 @@
-/* ÀMesa — Service Worker para notificações push
+/* àMesa — Service Worker para notificações push
    Servido a partir da raiz (amesadigital.pt/sw.js) → scope "/". */
 
 self.addEventListener('install', function(){ self.skipWaiting(); });
