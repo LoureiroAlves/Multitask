@@ -21,7 +21,12 @@
     document.body.appendChild(ov);
     function conta(){ var n = Object.keys(marc).filter(function(k){ return marc[k]; }).length, t = r.ingredientes.length; ov.querySelector('.cnt').textContent = n + ' de ' + t + ' no cesto'; ov.querySelector('.amr-barra i').style.width = Math.round(n / t * 100) + '%'; }
     conta();
-    ov.querySelectorAll('.amr-compras li').forEach(function(li){ li.onclick = function(){ var id = li.dataset.id; marc[id] = !marc[id]; if(!marc[id]) delete marc[id]; li.classList.toggle('ok', !!marc[id]); gravar(r, marc); conta(); try{ if(navigator.vibrate) navigator.vibrate(10); }catch(x){} }; });
+    ov.querySelectorAll('.amr-compras li').forEach(function(li){ li.onclick = function(){
+      var id = li.dataset.id;
+      if(marc[id]){ var nome = li.querySelector('.n').textContent; if(!confirm('Desmarcar «' + nome + '»?\n\nJá está no cesto. Queres voltar a pô-lo por comprar?')) return; delete marc[id]; }   // pode ter sido por engano
+      else marc[id] = true;
+      li.classList.toggle('ok', !!marc[id]); gravar(r, marc); conta(); try{ if(navigator.vibrate) navigator.vibrate(10); }catch(x){}
+    }; });
     ov.querySelector('.limpar').onclick = function(){ marc = {}; gravar(r, marc); ov.querySelectorAll('.amr-compras li').forEach(function(li){ li.classList.remove('ok'); }); conta(); };
     function fechar(){ ov.classList.remove('on'); setTimeout(function(){ ov.remove(); if(depois) depois(); }, 300); }
     ov.querySelector('.fechar').onclick = fechar;
