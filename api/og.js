@@ -1,4 +1,4 @@
-// ÀMesa — pré-visualização dos links de cada restaurante (WhatsApp, Facebook, Instagram, Telegram…)
+// àMesa — pré-visualização dos links de cada restaurante (WhatsApp, Facebook, Instagram, Telegram…)
 // Só é chamada para os "robôs" dessas apps (regra no vercel.json). As pessoas continuam a abrir o menu normal.
 // Devolve uma página pequena com o nome e a foto do restaurante nas etiquetas og:*.
 // Usa só a chave pública do Supabase (a mesma que está no site) e lê só dados públicos do menu.
@@ -37,7 +37,7 @@ module.exports = async (req, res) => {
 
   const titulo = convite
     ? ('🥚 Foste convidado para a caça ao ovo' + (nome ? (' no ' + nome) : '') + '!')
-    : (nome ? (nome + ' · Menu digital') : 'ÀMesa — a tua mesa está à espera');
+    : (nome ? (nome + ' · Menu digital') : 'àMesa — a tua mesa está à espera');
   const desc = convite
     ? 'Inscreve-te no menu e procura o ovo escondido. Só jogam os inscritos.'
     : (frase ? (frase + ' — vê o menu, reserva mesa e encomenda pelo telemóvel.') : 'Vê o menu, reserva mesa e encomenda pelo telemóvel — sem esperas.');
@@ -46,7 +46,7 @@ module.exports = async (req, res) => {
   const html = '<!DOCTYPE html><html lang="pt"><head><meta charset="utf-8">'
     + '<title>' + esc(titulo) + '</title>'
     + '<meta name="description" content="' + esc(desc) + '">'
-    + '<meta property="og:site_name" content="ÀMesa"><meta property="og:type" content="website"><meta property="og:locale" content="pt_PT">'
+    + '<meta property="og:site_name" content="àMesa"><meta property="og:type" content="website"><meta property="og:locale" content="pt_PT">'
     + '<meta property="og:title" content="' + esc(titulo) + '">'
     + '<meta property="og:description" content="' + esc(desc) + '">'
     + '<meta property="og:url" content="' + esc(destino) + '">'
