@@ -191,9 +191,12 @@
   .porta-c .ir{ position:relative; margin-top:10px; background:rgba(255,255,255,.2); border-radius:999px; padding:7px 14px; font-weight:900; font-size:.85rem; }
   .porta-c .novo{ position:absolute; left:18px; top:16px; background:#ffd27a; color:#5a3d08; font-weight:900; font-size:.7rem; letter-spacing:1px; border-radius:999px; padding:4px 10px; }
   @keyframes portaEntra{ from{ opacity:0; transform:translateY(18px); } to{ opacity:1; transform:none; } }
-  .troca{ display:flex; justify-content:center; gap:6px; margin:16px auto 0; background:#fff; border:1.5px solid var(--linha); border-radius:999px; padding:5px; width:max-content; max-width:100%; }
-  .troca a, .troca span{ padding:8px 16px; border-radius:999px; font-weight:900; font-size:.88rem; text-decoration:none; color:var(--ink); }
-  .troca .on{ background:var(--ink); color:#fff; }
+  /* Seletor de área — IGUAL em index.html, receitas.html e compras.html (tamanhos fixos em px) */
+  .am-troca{ display:grid; grid-template-columns:repeat(3, 1fr); gap:4px; width:100%; max-width:400px; margin:10px auto 14px; padding:4px; background:#fff; border:1.5px solid #eaddc8; border-radius:16px; box-sizing:border-box; font-family:'Nunito', system-ui, -apple-system, sans-serif; box-shadow:0 3px 10px rgba(46,36,24,.05); }
+  .am-troca a, .am-troca span{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; height:52px; border-radius:12px; font-weight:900; font-size:12.5px; line-height:1; letter-spacing:0; color:#2e2418; text-decoration:none; white-space:nowrap; transition:background .15s; }
+  .am-troca a:active{ background:#f3ece0; }
+  .am-troca i{ font-style:normal; font-size:18px; line-height:1; }
+  .am-troca .on{ background:#2e2418; color:#fff; }
 </style>
 </head>
 <body>
@@ -272,7 +275,7 @@
     if(b) b.addEventListener('click', function(ev){ ev.preventDefault(); restaurantes(); try{ history.replaceState(null, '', './?ver=restaurantes'); }catch(e){} window.scrollTo(0, 0); });
   })();
   </script>
-  <div class="troca" aria-label="Mudar de área"><span class="on">🍽️ Restaurantes</span><a href="receitas.html">🍳 Receitas</a><a href="compras.html">🛒 Compras</a></div>
+  <nav class="am-troca" aria-label="Mudar de área"><span class="on"><i>🍽️</i>Restaurantes</span><a href="receitas.html"><i>🍳</i>Receitas</a><a href="compras.html"><i>🛒</i>Compras</a></nav>
   <section class="hero">
     <h1>A tua mesa está <em>à espera</em>.</h1>
     <p>Descobre restaurantes e abre o menu digital de cada um.</p>

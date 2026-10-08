@@ -30,9 +30,6 @@
   .topo .minha.ativa b{ background:var(--linha); }
 
   main{ max-width:760px; margin:0 auto; padding:14px 16px 120px; }
-  .troca{ display:flex; justify-content:center; gap:4px; margin:4px auto 6px; background:#fff; border:1.5px solid var(--linha); border-radius:999px; padding:5px; width:max-content; max-width:100%; overflow-x:auto; }
-  .troca a, .troca span{ padding:8px 13px; border-radius:999px; font-weight:900; font-size:.84rem; text-decoration:none; color:var(--ink); white-space:nowrap; }
-  .troca .on{ background:var(--ink); color:#fff; }
   h1{ font-family:'Playfair Display', serif; font-size:2rem; line-height:1.05; margin:14px 0 4px; }
   h1 em{ color:var(--verde); font-style:italic; }
   .lead{ margin:0 0 14px; color:var(--muted); font-weight:700; }
@@ -119,6 +116,12 @@
   .folha .t{ background:#fff; color:#b3402f; border:2px solid #efc9c0 !important; }
   .toast{ position:fixed; left:50%; bottom:calc(90px + env(safe-area-inset-bottom)); transform:translateX(-50%) translateY(20px); background:var(--ink); color:#fff; padding:10px 16px; border-radius:999px; font-weight:800; font-size:.88rem; opacity:0; transition:all .25s; z-index:95; pointer-events:none; white-space:nowrap; max-width:92vw; overflow:hidden; text-overflow:ellipsis; }
   .toast.on{ opacity:1; transform:translateX(-50%); }
+  /* Seletor de área — IGUAL em index.html, receitas.html e compras.html (tamanhos fixos em px) */
+  .am-troca{ display:grid; grid-template-columns:repeat(3, 1fr); gap:4px; width:100%; max-width:400px; margin:10px auto 14px; padding:4px; background:#fff; border:1.5px solid #eaddc8; border-radius:16px; box-sizing:border-box; font-family:'Nunito', system-ui, -apple-system, sans-serif; box-shadow:0 3px 10px rgba(46,36,24,.05); }
+  .am-troca a, .am-troca span{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; height:52px; border-radius:12px; font-weight:900; font-size:12.5px; line-height:1; letter-spacing:0; color:#2e2418; text-decoration:none; white-space:nowrap; transition:background .15s; }
+  .am-troca a:active{ background:#f3ece0; }
+  .am-troca i{ font-style:normal; font-size:18px; line-height:1; }
+  .am-troca .on{ background:#2e2418; color:#fff; }
 </style>
 </head>
 <body>
@@ -200,7 +203,7 @@
 
   // ===== INÍCIO: pesquisa + setores =====
   function inicio(){
-    APP.innerHTML = '<div class="troca" aria-label="Mudar de área"><a href="./?ver=restaurantes">🍽️ Restaurantes</a><a href="receitas.html">🍳 Receitas</a><span class="on">🛒 Compras</span></div>'
+    APP.innerHTML = '<nav class="am-troca" aria-label="Mudar de área"><a href="./?ver=restaurantes"><i>🍽️</i>Restaurantes</a><a href="receitas.html"><i>🍳</i>Receitas</a><span class="on"><i>🛒</i>Compras</span></nav>'
       + '<h1>Lista de <em>compras</em></h1><p class="lead">Escolhe o que precisas por setores. Fica tudo guardado no teu telemóvel para riscares no supermercado.</p>'
       + '<div class="pesq"><input type="search" id="pq" placeholder="Procurar produto (ex.: leite, bacalhau…)" autocomplete="off" enterkeyhint="search"></div>'
       + '<div id="res"></div><div id="setoresBox"><div class="sec">Setores</div><div class="setores">'
