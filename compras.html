@@ -61,7 +61,7 @@
   .prod{ display:flex; align-items:center; gap:10px; width:100%; border:none; background:none; text-align:left; padding:13px 14px; border-bottom:1px solid #f1e8d9; font-weight:800; font-size:.98rem; color:var(--ink); }
   .prod:last-child{ border-bottom:none; }
   .prod .se{ font-size:.75rem; color:var(--muted); font-weight:800; }
-  .prod .b{ margin-left:auto; flex:none; width:34px; height:34px; border-radius:50%; border:2px solid var(--linha); display:flex; align-items:center; justify-content:center; font-size:1.2rem; font-weight:900; color:var(--verde); transition:all .18s; }
+  .prod .b{ margin-left:auto; flex:none; width:34px; height:34px; box-sizing:border-box; padding:0; line-height:0; border-radius:50%; border:2px solid var(--linha); display:flex; align-items:center; justify-content:center; font-size:1.2rem; font-weight:900; color:var(--verde); transition:all .18s; }
   .prod.on{ background:#f1f8f3; }
   .prod.on .b{ background:var(--verde); border-color:var(--verde); color:#fff; font-size:1rem; }
   .outro{ display:flex; gap:8px; margin-top:12px; flex-wrap:wrap; }
@@ -86,7 +86,7 @@
   .itens{ list-style:none; margin:0; padding:0; background:#fff; border-radius:18px; overflow:hidden; box-shadow:0 4px 14px rgba(46,36,24,.06); border-left:5px solid var(--c); }
   .item{ display:flex; align-items:center; gap:12px; padding:13px 10px 13px 12px; border-bottom:1px solid #f1e8d9; cursor:pointer; user-select:none; -webkit-user-select:none; }
   .item:last-child{ border-bottom:none; }
-  .item .cx{ flex:none; width:28px; height:28px; border-radius:9px; border:2.5px solid var(--linha); display:flex; align-items:center; justify-content:center; color:#fff; font-size:1rem; transition:all .2s; }
+  .item .cx{ flex:none; width:28px; height:28px; box-sizing:border-box; line-height:0; border-radius:9px; border:2.5px solid var(--linha); display:flex; align-items:center; justify-content:center; color:#fff; font-size:1rem; transition:all .2s; }
   .item .tx{ flex:1; min-width:0; }
   .item .nm{ font-weight:800; font-size:1rem; }
   .item .dt{ font-size:.78rem; color:var(--muted); font-weight:700; margin-top:1px; overflow-wrap:anywhere; }
@@ -146,6 +146,8 @@
   .fab-entra{ animation:fabEntra .4s cubic-bezier(.2,1.5,.4,1) both; }
   @keyframes fabEntra{ from{ transform:scale(0); } to{ transform:scale(1); } }
   .voa{ position:fixed; z-index:80; width:16px; height:16px; margin:-8px 0 0 -8px; border-radius:50%; background:var(--verde); box-shadow:0 2px 8px rgba(46,125,79,.5); pointer-events:none; }
+  .prod .b svg, .item .cx svg{ display:block; }
+  .item .cx svg{ width:15px; height:15px; }
 </style>
 </head>
 <body>
@@ -201,16 +203,18 @@
   window.addEventListener('hashchange', function(){ render(); window.scrollTo(0, 0); });
 
   // linha de um produto (escolher)
+  var IC_MAIS = '<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2.5v11M2.5 8h11" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>';
+  var IC_OK = '<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.4l3.2 3.1L13 4.6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   function linhaProd(p, mostrarSetor){
     var on = L.tem(p.id), s = C.SETOR[p.setor];
-    return '<button type="button" class="prod' + (on ? ' on' : '') + '" data-p="' + e(p.id) + '"><span>' + e(p.nome) + (mostrarSetor ? '<br><span class="se">' + s.emoji + ' ' + e(s.nome) + '</span>' : '') + '</span><span class="b">' + (on ? '✓' : '+') + '</span></button>';
+    return '<button type="button" class="prod' + (on ? ' on' : '') + '" data-p="' + e(p.id) + '"><span>' + e(p.nome) + (mostrarSetor ? '<br><span class="se">' + s.emoji + ' ' + e(s.nome) + '</span>' : '') + '</span><span class="b">' + (on ? IC_OK : IC_MAIS) + '</span></button>';
   }
   function ligaProds(el){
     el.querySelectorAll('.prod[data-p]').forEach(function(b){
       b.onclick = function(){
         var p = C.PORID[b.dataset.p]; if(!p) return;
         var ficou = L.alternar(p.nome);
-        b.classList.toggle('on', ficou); b.querySelector('.b').textContent = ficou ? '✓' : '+';
+        b.classList.toggle('on', ficou); b.querySelector('.b').innerHTML = ficou ? IC_OK : IC_MAIS;
         if(ficou){ som(620, 930); vibra(12); atualizaTopo(); voa(b.querySelector('.b')); } else { som(700, 480); atualizaTopo(); }
       };
     });
@@ -287,7 +291,7 @@
           var feitos = g.itens.filter(function(i){ return i.feito; }).length;
           if(!its.length) return '';
           return '<div class="lsetor" style="--c:' + g.setor.cor + '">' + g.setor.emoji + ' ' + e(g.setor.nome) + '<span class="n" data-s="' + g.setor.id + '"></span></div><ul class="itens" style="--c:' + g.setor.cor + '">'
-            + its.map(function(i){ var dt = [i.qtd, i.nota].filter(Boolean).join(' · '); return '<li class="item' + (i.feito ? ' ok' : '') + '" data-i="' + e(i.id) + '"><span class="cx">✓</span><span class="tx"><div class="nm">' + e(i.nome) + '</div>' + (dt ? '<div class="dt">' + e(dt) + '</div>' : '') + '</span><button type="button" class="ed" aria-label="Editar"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><circle cx="3.5" cy="9" r="1.9" fill="currentColor"/><circle cx="9" cy="9" r="1.9" fill="currentColor"/><circle cx="14.5" cy="9" r="1.9" fill="currentColor"/></svg></button></li>'; }).join('')
+            + its.map(function(i){ var dt = [i.qtd, i.nota].filter(Boolean).join(' · '); return '<li class="item' + (i.feito ? ' ok' : '') + '" data-i="' + e(i.id) + '"><span class="cx">' + IC_OK + '</span><span class="tx"><div class="nm">' + e(i.nome) + '</div>' + (dt ? '<div class="dt">' + e(dt) + '</div>' : '') + '</span><button type="button" class="ed" aria-label="Editar"><svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><circle cx="3.5" cy="9" r="1.9" fill="currentColor"/><circle cx="9" cy="9" r="1.9" fill="currentColor"/><circle cx="14.5" cy="9" r="1.9" fill="currentColor"/></svg></button></li>'; }).join('')
             + '</ul>';
         }).join('')
       + '<div class="feito" id="tudo" style="display:none">🎉 Tudo no cesto! Boas compras.</div>';
