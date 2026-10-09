@@ -55,6 +55,8 @@
   .chipsI{ display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
   .chipsI button{ border:1.5px solid var(--r-linha); background:#fff; border-radius:999px; padding:5px 10px; font-weight:800; font-size:.78rem; cursor:pointer; }
   .chipsI button.on{ background:#2e2418; color:#fff; border-color:#2e2418; }
+  .qtdT{ margin:10px 0 4px; font-weight:900; font-size:.78rem; color:var(--r-muted); } .qtdT small{ font-weight:700; }
+  .qtdL{ display:grid; grid-template-columns:1fr 110px 120px; gap:6px; align-items:center; margin-top:5px; } .qtdL span{ font-weight:800; font-size:.85rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .previa{ position:sticky; top:70px; }
   .tel{ background:#15100b; border-radius:44px; padding:12px; box-shadow:0 30px 60px rgba(46,36,24,.25); }
   .tel .sc{ background:var(--r-bg); border-radius:34px; height:76vh; max-height:780px; overflow:auto; padding:14px 12px 30px; }
@@ -191,12 +193,37 @@
               + '<textarea class="c" data-f="descricao" style="margin-top:8px;" placeholder="O que fazer neste passo">' + e(p.descricao) + '</textarea>'
               + '<div class="linha2"><div><label class="l">⏱ Minutos</label><input class="c" type="number" min="0" data-f="tmin" value="' + Math.floor(tm / 60) + '"></div><div><label class="l">Segundos</label><input class="c" type="number" min="0" max="59" data-f="tseg" value="' + (tm % 60) + '"></div><div style="grid-column:span 2"><label class="l">Nome do temporizador</label><input class="c" data-f="trot" value="' + e(p.timer ? p.timer.rotulo : '') + '" placeholder="(opcional)"></div></div>'
               + '<label class="l">Dica (opcional)</label><input class="c" data-f="dica" value="' + e(p.dica || '') + '">'
-              + '<label class="l">Ingredientes usados neste passo</label><div class="chipsI">' + R.ingredientes.map(function(i){ return '<button type="button" data-ing="' + e(i.ingrediente_id) + '" class="' + ((p.ingredientes || []).indexOf(i.ingrediente_id) >= 0 ? 'on' : '') + '">' + e(i.nome) + '</button>'; }).join('') + '</div></div>'; }).join('') + '</div></div>'
+              + '<label class="l">Ingredientes usados neste passo</label><div class="chipsI">' + R.ingredientes.map(function(i){ return '<button type="button" data-ing="' + e(i.ingrediente_id) + '" class="' + ((p.ingredientes || []).indexOf(i.ingrediente_id) >= 0 ? 'on' : '') + '">' + e(i.nome) + '</button>'; }).join('') + '</div><div class="qtdsP">' + qtdsHTML(p) + '</div></div>'; }).join('') + '</div></div>'
         + '<div class="caixa"><h3>Notas</h3><textarea class="c" id="notas" placeholder="Uma nota por linha">' + e(R.notas.join('\n')) + '</textarea></div>';
       ligaForm();
     }
     var tPrev = null;
     function previa(){ clearTimeout(tPrev); tPrev = setTimeout(function(){ try{ var r = M.normalizar(JSON.parse(JSON.stringify(R))).receita; AMR.layouts.render(document.getElementById('prev'), r, { categoria:catPorSlug(R.categoria) || {}, aoComecar:function(f){ AMR.player.abrir(r, f); }, aoLista:function(f){ AMR.lista.abrir(r, f); } }); }catch(err){ document.getElementById('prev').innerHTML = '<div class="amr-vazio">' + e(err.message) + '</div>'; } }, 200); }
+    // quantidade usada NESTE passo (ingredientesDoPasso). Vazio = usa a quantidade total da receita.
+    function qtdsHTML(p){
+      var sel = (p.ingredientes || []).map(function(id){ return R.ingredientes.filter(function(i){ return i.ingrediente_id === id; })[0]; }).filter(Boolean);
+      if(!sel.length) return '';
+      return '<div class="qtdT">Quantidade neste passo <small>(vazio = a quantidade total)</small></div>' + sel.map(function(i){
+        var d = (p.ingredientesDoPasso || []).filter(function(x){ return x.ingrediente_id === i.ingrediente_id; })[0] || {};
+        var u = d.unidade || i.unidade || 'g';
+        return '<div class="qtdL" data-qi="' + e(i.ingrediente_id) + '"><span>' + e(i.nome) + '</span><input class="c" type="number" step="any" min="0" data-q="q" value="' + (d.quantidade == null ? '' : d.quantidade) + '" placeholder="' + (i.quantidade == null ? 'q.b.' : (i.quantidade + ' (total)')) + '"' + (u === 'q.b.' ? ' disabled' : '') + '><select class="c" data-q="u">' + opcoesUnid(u) + '</select></div>';
+      }).join('');
+    }
+    function ligaQtds(box, p){
+      var c = box.querySelector('.qtdsP'); c.innerHTML = qtdsHTML(p);
+      c.querySelectorAll('.qtdL').forEach(function(l){
+        var id = l.dataset.qi, qi = l.querySelector('[data-q="q"]'), ui = l.querySelector('[data-q="u"]');
+        function grava(){
+          p.ingredientesDoPasso = (p.ingredientesDoPasso || []).filter(function(x){ return x.ingrediente_id !== id; });
+          qi.disabled = ui.value === 'q.b.';
+          if(ui.value === 'q.b.') p.ingredientesDoPasso.push({ ingrediente_id:id, quantidade:null, unidade:'q.b.' });
+          else if(qi.value !== '') p.ingredientesDoPasso.push({ ingrediente_id:id, quantidade:parseFloat(qi.value), unidade:ui.value });
+          if(!p.ingredientesDoPasso.length) delete p.ingredientesDoPasso;
+          previa();
+        }
+        qi.oninput = grava; ui.onchange = grava;
+      });
+    }
     function ligaForm(){
       var f = document.getElementById('form');
       f.querySelectorAll('[data-k]').forEach(function(x){ x.oninput = function(){ var k = x.dataset.k; R[k] = (k === 'porcoes') ? Math.max(1, parseInt(x.value, 10) || 1) : x.value; if(k === 'nome' && !slugMexido){ R.id = M.slug(x.value); document.getElementById('slug').value = R.id; } previa(); }; });
@@ -218,7 +245,7 @@
           previa(); }; });
         row.querySelector('[data-f="nome"]').addEventListener('change', function(){ pintaForm(); });   // ao sair do campo: atualiza os botões de ingredientes nos passos
         row.querySelectorAll('[data-m]').forEach(function(b){ b.onclick = function(){ var k = +row.dataset.i, n = k + (+b.dataset.m); if(n < 0 || n >= R.ingredientes.length) return; var a = R.ingredientes; var t = a[k]; a[k] = a[n]; a[n] = t; pintaForm(); previa(); }; });
-        row.querySelector('[data-d]').onclick = function(){ var id = i.ingrediente_id; R.ingredientes.splice(+row.dataset.i, 1); R.passos.forEach(function(p){ if(p.ingredientes) p.ingredientes = p.ingredientes.filter(function(x){ return x !== id; }); }); pintaForm(); previa(); };
+        row.querySelector('[data-d]').onclick = function(){ var id = i.ingrediente_id; R.ingredientes.splice(+row.dataset.i, 1); R.passos.forEach(function(p){ if(p.ingredientes) p.ingredientes = p.ingredientes.filter(function(x){ return x !== id; }); if(p.ingredientesDoPasso){ p.ingredientesDoPasso = p.ingredientesDoPasso.filter(function(x){ return x.ingrediente_id !== id; }); if(!p.ingredientesDoPasso.length) delete p.ingredientesDoPasso; } }); pintaForm(); previa(); };
       });
       // passos
       document.getElementById('addP').onclick = function(){ R.passos.push({ titulo:'', descricao:'' }); pintaForm(); var ls = document.querySelectorAll('#pss .passoE input[data-f="titulo"]'); if(ls.length) ls[ls.length - 1].focus(); };
@@ -226,7 +253,8 @@
         var p = R.passos[+box.dataset.p];
         function timer(){ var s = (parseInt(box.querySelector('[data-f="tmin"]').value, 10) || 0) * 60 + (parseInt(box.querySelector('[data-f="tseg"]').value, 10) || 0); if(s > 0) p.timer = { ativo:true, segundos:s, rotulo:box.querySelector('[data-f="trot"]').value }; else delete p.timer; }
         box.querySelectorAll('[data-f]').forEach(function(x){ x.oninput = function(){ var k = x.dataset.f; if(k === 'tmin' || k === 'tseg' || k === 'trot') timer(); else p[k] = x.value; previa(); }; });
-        box.querySelectorAll('[data-ing]').forEach(function(b){ b.onclick = function(){ p.ingredientes = p.ingredientes || []; var id = b.dataset.ing, ix = p.ingredientes.indexOf(id); if(ix >= 0) p.ingredientes.splice(ix, 1); else p.ingredientes.push(id); b.classList.toggle('on', ix < 0); previa(); }; });
+        box.querySelectorAll('[data-ing]').forEach(function(b){ b.onclick = function(){ p.ingredientes = p.ingredientes || []; var id = b.dataset.ing, ix = p.ingredientes.indexOf(id); if(ix >= 0){ p.ingredientes.splice(ix, 1); if(p.ingredientesDoPasso){ p.ingredientesDoPasso = p.ingredientesDoPasso.filter(function(x){ return x.ingrediente_id !== id; }); if(!p.ingredientesDoPasso.length) delete p.ingredientesDoPasso; } } else p.ingredientes.push(id); b.classList.toggle('on', ix < 0); ligaQtds(box, p); previa(); }; });
+        ligaQtds(box, p);
         box.querySelectorAll('[data-m]').forEach(function(b){ b.onclick = function(){ var k = +box.dataset.p, n = k + (+b.dataset.m); if(n < 0 || n >= R.passos.length) return; var a = R.passos; var t = a[k]; a[k] = a[n]; a[n] = t; pintaForm(); previa(); }; });
         box.querySelector('[data-d]').onclick = function(){ R.passos.splice(+box.dataset.p, 1); pintaForm(); previa(); };
       });
