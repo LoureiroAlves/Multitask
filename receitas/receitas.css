@@ -148,3 +148,6 @@
 /* botões − / + das pessoas: ícone desenhado, sempre ao centro */
 .amr-porcoes button{ display:inline-flex; align-items:center; justify-content:center; padding:0; line-height:0; box-sizing:border-box; flex:none; }
 .amr-porcoes button svg{ display:block; }
+
+/* quantidades usadas em cada passo (ingredientesDoPasso) */
+.amr-passos .usa{ display:block; margin-top:5px; font-size:.8rem; font-weight:800; color:var(--r-cor); }

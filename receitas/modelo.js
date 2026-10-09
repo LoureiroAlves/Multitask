@@ -87,8 +87,22 @@
       var o = (typeof p === 'string') ? { titulo:'', descricao:txt(p) } : { titulo:txt(p.titulo), descricao:txt(p.descricao || p.texto) };
       o.id = n + 1;
       if(typeof p === 'object'){
-        var ings = Array.isArray(p.ingredientes) ? p.ingredientes.map(function(x){ return slug(x); }).filter(function(x){ return ids[x]; }) : [];
+        // ingredientes do passo: ["batata"] (só o id) e/ou "ingredientesDoPasso": [{ ingrediente_id, quantidade, unidade }] (quanto se usa NESTE passo)
+        var ings = [], dp = [];
+        function juntaId(id){ if(id && ids[id] && ings.indexOf(id) < 0) ings.push(id); }
+        function juntaQtd(x){
+          var id = slug(x.ingrediente_id || x.id || x.nome); if(!ids[id]) return;
+          juntaId(id);
+          var base = r.ingredientes.filter(function(i){ return i.ingrediente_id === id; })[0] || {};
+          var u = txt(x.unidade) || base.unidade || 'un'; if(!UNIDADES[u]) u = base.unidade || 'un';
+          var q = u === 'q.b.' ? null : num(x.quantidade);
+          if(q == null && u !== 'q.b.') return;   // sem quantidade: usa a quantidade total da receita
+          dp = dp.filter(function(d){ return d.ingrediente_id !== id; }); dp.push({ ingrediente_id:id, quantidade:q, unidade:u });
+        }
+        (Array.isArray(p.ingredientes) ? p.ingredientes : []).forEach(function(x){ if(x && typeof x === 'object') juntaQtd(x); else juntaId(slug(x)); });
+        (Array.isArray(p.ingredientesDoPasso) ? p.ingredientesDoPasso : []).forEach(function(x){ if(x && typeof x === 'object') juntaQtd(x); else juntaId(slug(x)); });
         if(ings.length) o.ingredientes = ings;
+        if(dp.length) o.ingredientesDoPasso = dp;
         var tm = p.timer || null; var seg = tm ? int(tm.segundos != null ? tm.segundos : (tm.minutos != null ? tm.minutos * 60 : null)) : null;
         if(tm && tm.ativo !== false && seg > 0) o.timer = { ativo:true, segundos:seg, rotulo:txt(tm.rotulo) || o.titulo };
         if(txt(p.dica)) o.dica = txt(p.dica);
@@ -105,6 +119,12 @@
     if(txt(ly.emoji)) r.layout.emoji = txt(ly.emoji);
     if(/^#[0-9a-f]{3,8}$/i.test(txt(ly.cor))) r.layout.cor = txt(ly.cor);
     return { receita:r, avisos:av };
+  }
+
+  // quantidade a mostrar de um ingrediente num passo: a desse passo (ingredientesDoPasso) ou, se não houver, a total da receita
+  function noPasso(p, ing){
+    var d = (p && p.ingredientesDoPasso || []).filter(function(x){ return x.ingrediente_id === ing.ingrediente_id; })[0];
+    return d ? { ingrediente_id:ing.ingrediente_id, nome:ing.nome, quantidade:d.quantidade, unidade:d.unidade, doPasso:true } : ing;
   }
 
   function validar(r){
@@ -133,6 +153,6 @@
   function relogio(seg){ seg = Math.max(0, Math.round(seg)); var m = Math.floor(seg / 60), s = seg % 60; return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s; }
   function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]; }); }
 
-  AMR.modelo = { UNIDADES:UNIDADES, DIFICULDADES:DIFICULDADES, LAYOUTS:LAYOUTS, normalizar:normalizar, validar:validar, slug:slug, norm:norm,
+  AMR.modelo = { UNIDADES:UNIDADES, DIFICULDADES:DIFICULDADES, LAYOUTS:LAYOUTS, normalizar:normalizar, validar:validar, slug:slug, norm:norm, noPasso:noPasso,
                  quantidadeTexto:quantidadeTexto, tempoTexto:tempoTexto, relogio:relogio, esc:esc, ingredienteDeTexto:ingredienteDeTexto };
 })();
