@@ -157,6 +157,10 @@
     // ===== 3b) ABRIR: o cartão/mosaico em que tocas cresce até encher o ecrã (restaurante, categoria, receita, setor, carrinho) =====
     var ABRE = '.amr-cat, .amr-card, .setor, .fab, article.card[data-slug]';
     function zoomDe(el, fora){
+      if(!fora){ var rf = el.getBoundingClientRect(), cor = getComputedStyle(el).backgroundColor, d = document.createElement('div'); d.className = 'am-iris'; d.style.background = cor; d.style.zIndex = 9995; body.appendChild(d);
+        var pf = Math.round(rf.left + rf.width / 2) + 'px ' + Math.round(rf.top + rf.height / 2) + 'px';
+        d.animate([{ clipPath:'circle(0% at ' + pf + ')', opacity:1 }, { clipPath:'circle(150% at ' + pf + ')', opacity:1, offset:.6 }, { clipPath:'circle(150% at ' + pf + ')', opacity:0 }], { duration:520, easing:'cubic-bezier(.5,0,.3,1)', fill:'forwards' });
+        setTimeout(function(){ d.remove(); }, 540); vibra(10); return; }
       var r = el.getBoundingClientRect(); if(!r.width || !r.height) return;
       var cs = getComputedStyle(el), z = el.cloneNode(true);
       z.removeAttribute('id'); z.classList.add('am-zoom');
@@ -167,15 +171,30 @@
       Array.prototype.forEach.call(z.children, function(f){ try{ f.animate([{ opacity:1 }, { opacity:0 }], { duration:200, fill:'forwards' }); }catch(e){} });
       requestAnimationFrame(function(){ requestAnimationFrame(function(){ z.style.left = '0px'; z.style.top = '0px'; z.style.width = '100vw'; z.style.height = '100vh'; z.style.borderRadius = '0'; }); });
       vibra(10);
-      if(fora){ setTimeout(function(){ z.remove(); }, 5000); return; }   // vai para outra página: fica até ela abrir
-      setTimeout(function(){ z.animate([{ opacity:1 }, { opacity:0 }], { duration:240, fill:'forwards' }); setTimeout(function(){ z.remove(); }, 260); }, 330);   // mesma página: o conteúdo novo aparece por baixo
+      setTimeout(function(){ z.remove(); }, 5000);   // vai para outra página: fica até ela abrir
+    }
+    // mesma página (categoria, receita, setor, lista): "mergulho" — o ecrã atual amplia-se e desvanece a partir do ponto tocado,
+    // e o conteúdo novo entra suave por baixo (sem a cor a encher o ecrã)
+    function mergulho(el, ev){
+      var m = document.querySelector('main'); if(!m) return;
+      var r = m.getBoundingClientRect(), x = (ev && ev.clientX) || (el.getBoundingClientRect().left + el.getBoundingClientRect().width / 2), y = (ev && ev.clientY) || (el.getBoundingClientRect().top + el.getBoundingClientRect().height / 2);
+      var c = m.cloneNode(true); c.removeAttribute('id'); c.classList.add('am-merg');
+      c.querySelectorAll('[id]').forEach(function(n){ n.removeAttribute('id'); });
+      c.style.cssText = 'position:fixed;left:' + r.left + 'px;top:' + r.top + 'px;width:' + r.width + 'px;margin:0;z-index:9990;pointer-events:none;transform-origin:' + (x - r.left) + 'px ' + (y - r.top) + 'px;background:' + (getComputedStyle(body).backgroundColor || '#faf5ec') + ';';
+      body.appendChild(c);
+      // o mosaico tocado destaca-se um instante
+      var alvo = c.querySelectorAll(ABRE)[Array.prototype.indexOf.call(m.querySelectorAll(ABRE), el)];
+      if(alvo) alvo.animate([{ transform:'scale(1)' }, { transform:'scale(1.06)' }], { duration:200, fill:'forwards' });
+      c.animate([{ transform:'scale(1)', opacity:1 }, { transform:'scale(1.06)', opacity:1, offset:.35 }, { transform:'scale(1.35)', opacity:0 }], { duration:420, easing:'cubic-bezier(.4,0,.2,1)', fill:'forwards' });
+      setTimeout(function(){ c.remove(); }, 440);
+      vibra(10);
     }
     document.addEventListener('click', function(ev){
       if(reduz || aSair) return;
       var el = ev.target.closest && ev.target.closest(ABRE); if(!el) return;
       var fora = el.matches('article.card');
       if(fora && ev.target.closest('.fav-btn, .stars, .star, .rating, button')) return;   // coração e estrelas não abrem o restaurante
-      zoomDe(el, fora);
+      if(fora) zoomDe(el, true); else if(el.matches('.fab')) zoomDe(el, false); else mergulho(el, ev);
     }, true);
     // ===== 3c) FECHAR / VOLTAR: o ecrã atual fecha em círculo até ao botão em que tocaste =====
     function iris(x, y){
@@ -190,9 +209,9 @@
       var b = ev.target.closest && ev.target.closest('#volta, .voltar, #voltEsc'); if(!b) return;
       var r = b.getBoundingClientRect(); iris(r.left + r.width / 2, r.top + r.height / 2); vibra(8);
     }, true);
-    window.addEventListener('popstate', function(){ if(!document.querySelector('.am-iris, .am-zoom')) iris(window.innerWidth / 2, 80); });   // botão/gesto "voltar" dentro das Receitas
+    window.addEventListener('popstate', function(){ if(!document.querySelector('.am-iris, .am-zoom, .am-merg')) iris(window.innerWidth / 2, 80); });   // botão/gesto "voltar" dentro das Receitas
     window.addEventListener('hashchange', function(ev){   // voltar dentro das Compras (ex.: de um setor para os setores)
-      try{ var de = new URL(ev.oldURL).hash, para = new URL(ev.newURL).hash; if(de && (!para || para === '#') && !document.querySelector('.am-zoom, .am-iris')) iris(window.innerWidth / 2, 80); }catch(e){}
+      try{ var de = new URL(ev.oldURL).hash, para = new URL(ev.newURL).hash; if(de && (!para || para === '#') && !document.querySelector('.am-zoom, .am-iris, .am-merg')) iris(window.innerWidth / 2, 80); }catch(e){}
     });
 
     // ===== 4) Deslizar o dedo para mudar de área =====
