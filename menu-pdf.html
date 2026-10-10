@@ -57,7 +57,7 @@
   .sec-t h2{ font-weight:700; letter-spacing:3px; text-transform:uppercase; color:var(--tx); }
   .sec-t small{ display:block; font-style:italic; color:var(--suave); margin-top:1mm; }
   .grupo-t{ text-align:center; font-style:italic; color:var(--ac); margin:4mm 0 2.5mm; }
-  .item{ margin:0 0 3.2mm; break-inside:avoid; }
+  .item{ margin:0 0 var(--espItem, 3.2mm); break-inside:avoid; }
   .item .l{ display:flex; align-items:baseline; gap:2mm; }
   .item .n{ font-weight:600; }
   .item .pts{ flex:1; border-bottom:1.2px dotted var(--suave); opacity:.55; transform:translateY(-1.2mm); min-width:6mm; }
@@ -133,6 +133,11 @@
       <div><label for="letra">Tamanho da letra</label><select id="letra"><option value="9">Pequena</option><option value="10.5">Normal</option><option value="12">Grande</option></select></div>
     </div>
 
+    <h2>Espaços</h2>
+    <label for="espSec">Entre secções <b id="vEspSec"></b></label><input type="range" id="espSec" min="0" max="30" step="1" style="width:100%">
+    <label for="espItem">Entre pratos <b id="vEspItem"></b></label><input type="range" id="espItem" min="1" max="8" step=".2" style="width:100%">
+    <label class="chk"><input type="checkbox" id="inteiras"> Não partir secções (cada uma fica inteira na mesma coluna/página)</label>
+
     <h2>Textos</h2>
     <label for="titulo">Nome no menu</label><input type="text" id="titulo">
     <label for="subtitulo">Por cima do nome (pequeno)</label><input type="text" id="subtitulo" placeholder="ex.: Restaurante · Bar">
@@ -147,7 +152,7 @@
     <label class="chk"><input type="checkbox" id="novaPag"> Cada secção começa numa página nova</label>
 
     <h2>Secções <small style="text-transform:none;letter-spacing:0;color:#8a7a63">(visto = mostrar · ↑↓ ordem)</small></h2>
-    <div class="dica" style="margin:-2px 0 8px;"><b>segue</b> = continua na mesma página · <b>pág. nova</b> = começa numa página nova · <b>sozinha</b> = fica numa página só para ela (ex.: os vinhos).</div>
+    <div class="dica" style="margin:-2px 0 8px;"><b>segue</b> = continua logo a seguir · <b>coluna nova</b> = com 2 colunas, começa no topo da coluna da direita · <b>pág. nova</b> = começa numa página nova · <b>sozinha</b> = fica numa página só para ela (ex.: os vinhos).</div>
     <div class="secs" id="secs"></div>
 
     <button type="button" class="btPdf" id="btPdf">📄 Guardar em PDF</button>
@@ -173,7 +178,7 @@
     var cor = '#a8712f'; try{ var f0 = (m.categorias || []).filter(function(x){ return x.fundo && x.fundo.cor; })[0]; if(f0) cor = f0.fundo.cor; }catch(x){}
     return { estilo:'classico', cor:cor, idioma:'pt', colunas:'1', letra:'10.5',
       titulo:m.restaurante || NEG.nome || '', subtitulo:'Restaurante', morada:(c.local && c.local.morada) || '', rodape:'IVA incluído à taxa legal em vigor',
-      capa:true, descricoes:true, menus:true, qrPe:true, novaPag:false, ordem:null, ocultas:{},
+      capa:true, descricoes:true, menus:true, qrPe:true, novaPag:false, ordem:null, ocultas:{}, espSec:'6', espItem:'3.2', inteiras:false,
       paginas:(function(){ var o = {}; (m.categorias || []).forEach(function(c){ if(c.tipo === 'vinhos') o[c.id] = 'so'; }); return o; })() };   // por defeito, os vinhos ficam numa página só para eles
   }
   function grava(){ try{ localStorage.setItem(guardaChave, JSON.stringify(CFG)); }catch(x){} }
@@ -183,7 +188,8 @@
     $('nomeRest').textContent = NEG.nome + '  ·  ' + SLUG;
     Array.prototype.forEach.call($('estilos').children, function(b){ b.classList.toggle('on', b.dataset.st === CFG.estilo); b.onclick = function(){ CFG.estilo = b.dataset.st; painel(); muda(); }; });
     ['cor', 'idioma', 'colunas', 'letra', 'titulo', 'subtitulo', 'morada', 'rodape'].forEach(function(k){ var x = $(k); x.value = CFG[k]; x.oninput = x.onchange = function(){ CFG[k] = x.value; muda(k === 'titulo' || k === 'subtitulo' || k === 'morada' || k === 'rodape' ? 300 : 0); }; });
-    ['capa', 'descricoes', 'menus', 'qrPe', 'novaPag'].forEach(function(k){ var x = $(k); x.checked = !!CFG[k]; x.onchange = function(){ CFG[k] = x.checked; muda(); }; });
+    ['espSec', 'espItem'].forEach(function(k){ var x = $(k), v = $(k === 'espSec' ? 'vEspSec' : 'vEspItem'); x.value = CFG[k]; v.textContent = '(' + CFG[k] + ' mm)'; x.oninput = function(){ CFG[k] = x.value; v.textContent = '(' + x.value + ' mm)'; muda(80); }; });
+    ['capa', 'descricoes', 'menus', 'qrPe', 'novaPag', 'inteiras'].forEach(function(k){ var x = $(k); x.checked = !!CFG[k]; x.onchange = function(){ CFG[k] = x.checked; muda(); }; });
     pintaSecs();
   }
   function ordemCats(){
@@ -194,7 +200,7 @@
   }
   function pintaSecs(){
     var cs = ordemCats();
-    $('secs').innerHTML = cs.map(function(c, k){ return '<div class="s"><input type="checkbox" data-id="' + e(c.id) + '"' + (CFG.ocultas[c.id] ? '' : ' checked') + '><span>' + e(c.emoji || '') + ' ' + e(t(c.tile) || c.id) + '</span>' + '<select data-pg="' + e(c.id) + '" title="Onde começa esta secção">' + [['', 'segue'], ['nova', 'pág. nova'], ['so', 'sozinha']].map(function(o){ return '<option value="' + o[0] + '"' + ((CFG.paginas[c.id] || '') === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select><button type="button" data-up="' + k + '">↑</button><button type="button" data-dn="' + k + '">↓</button></div>'; }).join('');
+    $('secs').innerHTML = cs.map(function(c, k){ return '<div class="s"><input type="checkbox" data-id="' + e(c.id) + '"' + (CFG.ocultas[c.id] ? '' : ' checked') + '><span>' + e(c.emoji || '') + ' ' + e(t(c.tile) || c.id) + '</span>' + '<select data-pg="' + e(c.id) + '" title="Onde começa esta secção">' + [['', 'segue'], ['col', 'coluna nova'], ['nova', 'pág. nova'], ['so', 'sozinha']].map(function(o){ return '<option value="' + o[0] + '"' + ((CFG.paginas[c.id] || '') === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select><button type="button" data-up="' + k + '">↑</button><button type="button" data-dn="' + k + '">↓</button></div>'; }).join('');
     $('secs').querySelectorAll('[data-pg]').forEach(function(x){ x.onchange = function(){ if(x.value) CFG.paginas[x.dataset.pg] = x.value; else delete CFG.paginas[x.dataset.pg]; muda(); }; });
     $('secs').querySelectorAll('input').forEach(function(x){ x.onchange = function(){ if(x.checked) delete CFG.ocultas[x.dataset.id]; else CFG.ocultas[x.dataset.id] = 1; muda(); }; });
     $('secs').querySelectorAll('[data-up],[data-dn]').forEach(function(b){ b.onclick = function(){ var k = +(b.dataset.up || b.dataset.dn), n = b.dataset.up != null ? k - 1 : k + 1; if(n < 0 || n >= CFG.ordem.length) return; var a = CFG.ordem, x = a[k]; a[k] = a[n]; a[n] = x; pintaSecs(); muda(); }; });
@@ -228,8 +234,9 @@
       if(CFG.ocultas[c.id] || !temConteudo(c)) return;
       var modo = CFG.paginas[c.id] || '', quebra = CFG.novaPag || modo === 'nova' || modo === 'so' || forcaProx;
       forcaProx = modo === 'so';   // "sozinha": a secção seguinte começa noutra página
-      var primeiro = true, cab = secTitulo(c), grupoAtual = '';
-      function poe(html){ if(!html) return; var abreGrupo = html.indexOf('<div class="grupo-t"') === 0; out.push({ html:(primeiro ? cab : '') + html, nova:primeiro && quebra, inicioSec:primeiro, cont:t(c.tile) + (grupoAtual && !abreGrupo ? ' · ' + grupoAtual : '') }); primeiro = false; }
+      var primeiro = true, cab = secTitulo(c), grupoAtual = '', destino = out, sub = [];
+      if(CFG.inteiras && c.tipo !== 'menus') destino = sub;   // "não partir secções": junta tudo num bloco (se couber)
+      function poe(html){ if(!html) return; var abreGrupo = html.indexOf('<div class="grupo-t"') === 0; destino.push({ html:(primeiro ? cab : '') + html, nova:primeiro && quebra, coluna:primeiro && modo === 'col', inicioSec:primeiro, cont:t(c.tile) + (grupoAtual && !abreGrupo ? ' · ' + grupoAtual : '') }); primeiro = false; }
       if(c.tipo === 'menus'){
         (c.menus || []).forEach(function(mn){
           var h = '<div class="menuG"><h3 style="font-size:1.3em">' + e(t(mn.nome)) + '</h3>' + (mn.preco ? '<div class="pr">' + e(mn.preco) + '</div>' : '');
@@ -245,6 +252,7 @@
         grupoAtual = cabG ? gt : '';
         (g.itens || []).forEach(function(i, k){ var ih = itemHTML(i); if(!ih) return; poe((k === 0 ? cabG : '') + ih); });
       });
+      if(destino === sub && sub.length) out.push({ html:sub.map(function(x){ return x.html; }).join(''), nova:sub[0].nova, coluna:sub[0].coluna, inicioSec:true, cont:sub[0].cont, partes:sub });
     });
     return out;
   }
@@ -253,7 +261,7 @@
   var NUMPAG = 0;
   function folha(){
     var f = document.createElement('div'); f.className = 'folha st-' + CFG.estilo;
-    f.style.setProperty('--ac', CFG.cor); f.style.fontSize = CFG.letra + 'pt';
+    f.style.setProperty('--ac', CFG.cor); f.style.fontSize = CFG.letra + 'pt'; f.style.setProperty('--espItem', CFG.espItem + 'mm');
     f.innerHTML = '<div class="moldura"></div><div class="corpo' + (CFG.colunas === '2' ? ' c2' : '') + '"></div><div class="pe"><span>' + e(CFG.rodape) + '</span><span class="num"></span></div>';
     FOLHAS.appendChild(f); NUMPAG++;
     f.querySelector('.num').textContent = CFG.titulo + '  ·  ' + NUMPAG;
@@ -270,17 +278,23 @@
         + (CFG.morada ? '<div class="mo">' + e(CFG.morada) + '</div>' : '') + '<div class="qr"><div class="q"></div><span>ESTE MENU TAMBÉM NO TELEMÓVEL</span></div></div>';
       FOLHAS.appendChild(f); NUMPAG++; qr(f.querySelector('.qr .q'), 240);
     }
-    var bs = blocos(), corpo = null;
-    bs.forEach(function(b){
+    var fila = blocos(), corpo = null;
+    while(fila.length){
+      var b = fila.shift();
       if(!corpo || (b.nova && corpo.children.length)) corpo = folha();
-      var d = document.createElement('div'); d.className = 'bloco'; d.innerHTML = b.html; if(b.inicioSec && corpo.children.length) d.style.marginTop = '5mm';
+      var d = document.createElement('div'); d.className = 'bloco'; d.innerHTML = b.html;
+      if(b.inicioSec && corpo.children.length) d.style.marginTop = CFG.espSec + 'mm';
+      if(b.coluna && CFG.colunas === '2' && corpo.children.length){ d.style.breakBefore = 'column'; d.style.marginTop = '0'; }
       corpo.appendChild(d);
+      if(transborda(corpo) && b.partes && corpo.children.length === 1){ corpo.removeChild(d); b.partes[0].coluna = false; fila = b.partes.concat(fila); continue; }   // secção maior que uma página: parte-se
       if(transborda(corpo) && corpo.children.length > 1){
-        corpo.removeChild(d); corpo = folha(); d.style.marginTop = '';
+        corpo.removeChild(d); corpo = folha(); d.style.marginTop = ''; d.style.breakBefore = '';
+        if(transborda((corpo.appendChild(d), corpo)) && b.partes){ corpo.removeChild(d); fila = b.partes.concat(fila); continue; }
+        corpo.removeChild(d);
         if(!b.inicioSec && b.cont){ var ct = document.createElement('div'); ct.className = 'grupo-t'; ct.style.cssText = 'font-size:.95em;margin-top:0'; ct.textContent = b.cont + ' (continuação)'; corpo.appendChild(ct); }   // secção que continua da página anterior
         corpo.appendChild(d);
       }
-    });
+    }
     $('estado').textContent = NUMPAG + (NUMPAG === 1 ? ' página' : ' páginas') + ' A4';
     encaixa();
   }
