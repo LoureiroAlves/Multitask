@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Menu em papel (PDF) · àMesa</title>
+<meta name="robots" content="noindex">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,500;1,600&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Lora:ital,wght@0,400;0,600;1,400&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  /* ===== Ferramenta: menu de papel em PDF (A4), feito a partir do menu verdadeiro do restaurante ===== */
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  body{ font-family:'Montserrat', system-ui, sans-serif; background:#d9d2c5; color:#2e2418; }
+  .app{ display:flex; min-height:100vh; }
+  /* painel de configuração (não sai no PDF) */
+  .painel{ width:340px; flex:none; background:#fffaf2; border-right:1px solid #e3d9c4; padding:20px 18px 40px; height:100vh; overflow:auto; position:sticky; top:0; }
+  .painel h1{ font-family:'Playfair Display', serif; font-size:1.35rem; margin-bottom:2px; }
+  .painel .sub{ font-size:.8rem; color:#8a7a63; margin-bottom:16px; }
+  .painel h2{ font-size:.72rem; letter-spacing:2px; text-transform:uppercase; color:#a8712f; margin:18px 0 8px; }
+  .painel label{ display:block; font-size:.82rem; font-weight:600; margin:8px 0 4px; }
+  .painel input[type=text], .painel select, .painel textarea{ width:100%; border:1.5px solid #e3d9c4; border-radius:9px; padding:8px 10px; font:inherit; font-size:.85rem; background:#fff; }
+  .painel textarea{ resize:vertical; min-height:54px; }
+  .estilos{ display:grid; grid-template-columns:repeat(3,1fr); gap:6px; }
+  .estilos button{ border:2px solid #e3d9c4; border-radius:10px; padding:10px 4px; background:#fff; font:600 .74rem 'Montserrat'; cursor:pointer; }
+  .estilos button.on{ border-color:#2e2418; background:#2e2418; color:#fff; }
+  .estilos button i{ display:block; height:26px; border-radius:6px; margin-bottom:6px; }
+  .linha{ display:flex; gap:8px; align-items:center; }
+  .linha > *{ flex:1; }
+  .chk{ display:flex; align-items:center; gap:8px; font-size:.84rem; margin:7px 0; cursor:pointer; }
+  .chk input{ width:17px; height:17px; accent-color:#2e2418; }
+  .secs{ border:1.5px solid #e3d9c4; border-radius:10px; background:#fff; max-height:300px; overflow:auto; }
+  .secs .s{ display:flex; align-items:center; gap:8px; padding:7px 8px; border-bottom:1px solid #f1e8d9; font-size:.82rem; }
+  .secs .s:last-child{ border-bottom:none; }
+  .secs .s span{ flex:1; }
+  .secs .s button{ border:none; background:#f3ece0; border-radius:6px; width:24px; height:24px; cursor:pointer; font-weight:700; }
+  .btPdf{ width:100%; margin-top:20px; border:none; border-radius:12px; padding:14px; background:#2e2418; color:#fff; font:700 1rem 'Montserrat'; cursor:pointer; }
+  .dica{ font-size:.75rem; color:#8a7a63; margin-top:8px; line-height:1.45; }
+  .estado{ font-size:.8rem; color:#8a7a63; margin-top:10px; }
+  /* pré-visualização */
+  .prev{ flex:1; padding:30px 20px 80px; display:flex; flex-direction:column; align-items:center; gap:26px; }
+  .zoomBox{ display:flex; flex-direction:column; align-items:center; gap:26px; }
+
+  /* ===== a FOLHA (A4) ===== */
+  .folha{ --ac:#a8712f; --tx:#2e2418; --suave:#7a6a52; width:210mm; height:297mm; position:relative; overflow:hidden; background:#fbf6ec; color:var(--tx); box-shadow:0 18px 40px rgba(0,0,0,.25); -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  .folha .moldura{ position:absolute; inset:9mm; border:1.2px solid var(--ac); pointer-events:none; }
+  .folha .moldura::after{ content:''; position:absolute; inset:1.6mm; border:.5px solid var(--ac); opacity:.6; }
+  .folha .corpo{ position:absolute; left:20mm; right:20mm; top:22mm; bottom:24mm; overflow:hidden; }
+  .folha .corpo.c2{ column-count:2; column-gap:12mm; column-fill:auto; }
+  .folha .pe{ position:absolute; left:20mm; right:20mm; bottom:12.5mm; display:flex; justify-content:space-between; align-items:center; font-size:7.5pt; color:var(--suave); letter-spacing:.5px; }
+  .folha .pe .num{ font-style:italic; }
+  /* secção */
+  .bloco{ break-inside:avoid; }
+  .sec-t{ text-align:center; margin:2mm 0 4mm; }
+  .sec-t .orn{ display:flex; align-items:center; gap:4mm; color:var(--ac); }
+  .sec-t .orn::before, .sec-t .orn::after{ content:''; flex:1; height:.6px; background:var(--ac); opacity:.7; }
+  .sec-t h2{ font-weight:700; letter-spacing:3px; text-transform:uppercase; color:var(--tx); }
+  .sec-t small{ display:block; font-style:italic; color:var(--suave); margin-top:1mm; }
+  .grupo-t{ text-align:center; font-style:italic; color:var(--ac); margin:4mm 0 2.5mm; }
+  .item{ margin:0 0 3.2mm; break-inside:avoid; }
+  .item .l{ display:flex; align-items:baseline; gap:2mm; }
+  .item .n{ font-weight:600; }
+  .item .pts{ flex:1; border-bottom:1.2px dotted var(--suave); opacity:.55; transform:translateY(-1.2mm); min-width:6mm; }
+  .item .p{ font-weight:600; white-space:nowrap; color:var(--tx); }
+  .item .d{ font-style:italic; color:var(--suave); margin-top:.6mm; line-height:1.3; }
+  .item .tab{ color:var(--suave); margin-top:.6mm; }
+  .menuG{ border:.8px solid var(--ac); padding:5mm 6mm; margin:0 0 6mm; text-align:center; break-inside:avoid; }
+  .menuG h3{ font-weight:700; letter-spacing:1px; }
+  .menuG .pr{ color:var(--ac); font-weight:600; margin:1mm 0 3mm; }
+  .menuG .ms{ margin:2.5mm 0; } .menuG .ms b{ display:block; font-size:.85em; letter-spacing:2px; text-transform:uppercase; color:var(--ac); }
+  .menuG .ms div{ white-space:pre-line; }
+  .menuG .rd{ white-space:pre-line; font-size:.78em; font-style:italic; color:var(--suave); margin-top:3mm; text-align:left; }
+  /* capa */
+  .capa{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:30mm 25mm; }
+  .capa .pre{ letter-spacing:6px; text-transform:uppercase; font-size:9pt; color:var(--ac); }
+  .capa h1{ font-weight:700; line-height:1.05; margin:6mm 0 4mm; }
+  .capa .fl{ color:var(--ac); font-size:20pt; margin:2mm 0 6mm; }
+  .capa .mo{ font-size:9.5pt; color:var(--suave); line-height:1.5; white-space:pre-line; }
+  .capa .qr{ margin-top:14mm; display:flex; flex-direction:column; align-items:center; gap:3mm; font-size:8pt; color:var(--suave); letter-spacing:1px; }
+  .capa .qr .q{ background:#fff; padding:2.5mm; border:.6px solid var(--ac); }
+  .capa .qr .q img, .capa .qr .q canvas{ display:block; width:30mm !important; height:30mm !important; }
+  .qrPe{ display:flex; align-items:center; gap:2mm; } .qrPe .q img, .qrPe .q canvas{ display:block; width:11mm !important; height:11mm !important; }
+
+  /* ===== ESTILOS ===== */
+  /* Clássico: papel creme, Playfair + Lora, moldura dupla */
+  .st-classico{ background:#fbf6ec; font-family:'Lora', Georgia, serif; }
+  .st-classico .sec-t h2, .st-classico .capa h1, .st-classico .menuG h3{ font-family:'Playfair Display', serif; }
+  .st-classico .grupo-t{ font-family:'Playfair Display', serif; }
+  /* Tasca: papel pardo, Playfair itálico, sem moldura dupla */
+  .st-tasca{ --tx:#2b1e10; --suave:#5d4a30; background:#e8d9bb; background-image:radial-gradient(rgba(120,85,40,.10) 1px, transparent 1.4px), radial-gradient(rgba(255,255,255,.18) 1px, transparent 1.6px); background-size:7px 7px, 11px 11px; font-family:'Lora', Georgia, serif; }
+  .st-tasca .moldura{ inset:8mm; border:2.2px solid var(--tx); border-radius:2mm; } .st-tasca .moldura::after{ display:none; }
+  .st-tasca .sec-t h2{ font-family:'Playfair Display', serif; font-style:italic; text-transform:none; letter-spacing:0; font-size:1.9em !important; }
+  .st-tasca .capa h1{ font-family:'Playfair Display', serif; font-style:italic; }
+  .st-tasca .menuG{ border:1.6px dashed var(--tx); } .st-tasca .menuG h3{ font-family:'Playfair Display', serif; font-style:italic; }
+  /* Elegante: branco, Cormorant + Montserrat, linhas finas douradas */
+  .st-elegante{ --tx:#1d1a16; --suave:#77705f; background:#fffefb; font-family:'Montserrat', sans-serif; }
+  .st-elegante .moldura{ inset:11mm; border:.5px solid var(--ac); } .st-elegante .moldura::after{ display:none; }
+  .st-elegante .sec-t h2{ font-family:'Cormorant Garamond', serif; font-weight:600; letter-spacing:6px; }
+  .st-elegante .capa h1{ font-family:'Cormorant Garamond', serif; font-weight:600; letter-spacing:2px; }
+  .st-elegante .item .n{ font-weight:500; letter-spacing:.3px; } .st-elegante .item .p{ font-weight:500; }
+  .st-elegante .item .d{ font-family:'Cormorant Garamond', serif; font-size:1.12em; }
+  .st-elegante .menuG h3, .st-elegante .grupo-t{ font-family:'Cormorant Garamond', serif; }
+
+  @media print{
+    @page{ size:A4; margin:0; }
+    body{ background:none; }
+    .painel{ display:none; }
+    .prev{ padding:0; gap:0; display:block; }
+    .zoomBox{ zoom:1 !important; display:block; gap:0; }
+    .folha{ box-shadow:none; page-break-after:always; break-after:page; margin:0; }
+    .folha:last-child{ page-break-after:auto; break-after:auto; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="painel">
+    <h1>📄 Menu em papel</h1>
+    <div class="sub" id="nomeRest">A carregar…</div>
+
+    <h2>Estilo</h2>
+    <div class="estilos" id="estilos">
+      <button type="button" data-st="classico"><i style="background:#fbf6ec;border:2px double #a8712f"></i>Clássico</button>
+      <button type="button" data-st="tasca"><i style="background:#e8d9bb;border:2px solid #2b1e10"></i>Tasca</button>
+      <button type="button" data-st="elegante"><i style="background:#fff;border:1px solid #c9a96a"></i>Elegante</button>
+    </div>
+    <div class="linha" style="margin-top:8px;">
+      <div><label for="cor">Cor de destaque</label><input type="color" id="cor" style="width:100%;height:38px;border:1.5px solid #e3d9c4;border-radius:9px;background:#fff;"></div>
+      <div><label for="idioma">Idioma</label><select id="idioma"><option value="pt">Português</option><option value="en">English</option><option value="es">Español</option><option value="fr">Français</option></select></div>
+    </div>
+    <div class="linha">
+      <div><label for="colunas">Colunas</label><select id="colunas"><option value="1">1 coluna</option><option value="2">2 colunas</option></select></div>
+      <div><label for="letra">Tamanho da letra</label><select id="letra"><option value="9">Pequena</option><option value="10.5">Normal</option><option value="12">Grande</option></select></div>
+    </div>
+
+    <h2>Textos</h2>
+    <label for="titulo">Nome no menu</label><input type="text" id="titulo">
+    <label for="subtitulo">Por cima do nome (pequeno)</label><input type="text" id="subtitulo" placeholder="ex.: Restaurante · Bar">
+    <label for="morada">Morada e contactos (capa)</label><textarea id="morada"></textarea>
+    <label for="rodape">Rodapé de cada página</label><input type="text" id="rodape" placeholder="ex.: IVA incluído à taxa em vigor">
+
+    <h2>O que mostrar</h2>
+    <label class="chk"><input type="checkbox" id="capa"> Capa (nome, morada e QR)</label>
+    <label class="chk"><input type="checkbox" id="descricoes"> Descrições dos pratos</label>
+    <label class="chk"><input type="checkbox" id="menus"> Menus de grupo / cerimónia</label>
+    <label class="chk"><input type="checkbox" id="qrPe"> QR pequeno no rodapé</label>
+    <label class="chk"><input type="checkbox" id="novaPag"> Cada secção começa numa página nova</label>
+
+    <h2>Secções <small style="text-transform:none;letter-spacing:0;color:#8a7a63">(tira o visto para esconder · ↑↓ ordem)</small></h2>
+    <div class="secs" id="secs"></div>
+
+    <button type="button" class="btPdf" id="btPdf">📄 Guardar em PDF</button>
+    <div class="dica">Na janela que abre escolhe <b>"Guardar como PDF"</b>, papel <b>A4</b>, margens <b>Nenhuma</b> e liga <b>"Gráficos de fundo"</b>. O menu vem sempre do menu digital — se corrigires um preço no editor, volta a abrir esta página.</div>
+    <div class="dica">A tua configuração fica guardada neste computador.</div>
+    <div class="estado" id="estado"></div>
+  </aside>
+  <main class="prev"><div class="zoomBox" id="folhas"></div></main>
+</div>
+
+<script>
+(function(){
+  var URL_SB = 'https://zewiijcrkyxjkhudlplk.supabase.co', CHAVE = 'sb_publishable_6LP7x2v5c-c9DQkQslnUmA_g13SEjp3';
+  var SLUG = (new URLSearchParams(location.search).get('n') || '').trim().toLowerCase();
+  var $ = function(id){ return document.getElementById(id); };
+  var FOLHAS = $('folhas'), NEG = null, CATS = [], CFG = null;
+  function e(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]; }); }
+  function t(x){ if(x == null) return ''; if(typeof x === 'string') return x; return x[CFG.idioma] || x.pt || x[Object.keys(x)[0]] || ''; }
+  var guardaChave = 'menuPdf:' + SLUG;
+
+  function padrao(){
+    var c = (NEG && NEG.config) || {}, m = (NEG && NEG.menu) || {};
+    var cor = '#a8712f'; try{ var f0 = (m.categorias || []).filter(function(x){ return x.fundo && x.fundo.cor; })[0]; if(f0) cor = f0.fundo.cor; }catch(x){}
+    return { estilo:'classico', cor:cor, idioma:'pt', colunas:'1', letra:'10.5',
+      titulo:m.restaurante || NEG.nome || '', subtitulo:'Restaurante', morada:(c.local && c.local.morada) || '', rodape:'IVA incluído à taxa legal em vigor',
+      capa:true, descricoes:true, menus:true, qrPe:true, novaPag:false, ordem:null, ocultas:{} };
+  }
+  function grava(){ try{ localStorage.setItem(guardaChave, JSON.stringify(CFG)); }catch(x){} }
+
+  // ---------- painel ----------
+  function painel(){
+    $('nomeRest').textContent = NEG.nome + '  ·  ' + SLUG;
+    Array.prototype.forEach.call($('estilos').children, function(b){ b.classList.toggle('on', b.dataset.st === CFG.estilo); b.onclick = function(){ CFG.estilo = b.dataset.st; painel(); muda(); }; });
+    ['cor', 'idioma', 'colunas', 'letra', 'titulo', 'subtitulo', 'morada', 'rodape'].forEach(function(k){ var x = $(k); x.value = CFG[k]; x.oninput = x.onchange = function(){ CFG[k] = x.value; muda(k === 'titulo' || k === 'subtitulo' || k === 'morada' || k === 'rodape' ? 300 : 0); }; });
+    ['capa', 'descricoes', 'menus', 'qrPe', 'novaPag'].forEach(function(k){ var x = $(k); x.checked = !!CFG[k]; x.onchange = function(){ CFG[k] = x.checked; muda(); }; });
+    pintaSecs();
+  }
+  function ordemCats(){
+    var ids = CATS.map(function(c){ return c.id; });
+    var o = (CFG.ordem || []).filter(function(id){ return ids.indexOf(id) >= 0; });
+    ids.forEach(function(id){ if(o.indexOf(id) < 0) o.push(id); });
+    CFG.ordem = o; return o.map(function(id){ return CATS.filter(function(c){ return c.id === id; })[0]; });
+  }
+  function pintaSecs(){
+    var cs = ordemCats();
+    $('secs').innerHTML = cs.map(function(c, k){ return '<div class="s"><input type="checkbox" data-id="' + e(c.id) + '"' + (CFG.ocultas[c.id] ? '' : ' checked') + '><span>' + e(c.emoji || '') + ' ' + e(t(c.tile) || c.id) + '</span><button type="button" data-up="' + k + '">↑</button><button type="button" data-dn="' + k + '">↓</button></div>'; }).join('');
+    $('secs').querySelectorAll('input').forEach(function(x){ x.onchange = function(){ if(x.checked) delete CFG.ocultas[x.dataset.id]; else CFG.ocultas[x.dataset.id] = 1; muda(); }; });
+    $('secs').querySelectorAll('[data-up],[data-dn]').forEach(function(b){ b.onclick = function(){ var k = +(b.dataset.up || b.dataset.dn), n = b.dataset.up != null ? k - 1 : k + 1; if(n < 0 || n >= CFG.ordem.length) return; var a = CFG.ordem, x = a[k]; a[k] = a[n]; a[n] = x; pintaSecs(); muda(); }; });
+  }
+  var tMuda = null;
+  function muda(ms){ grava(); clearTimeout(tMuda); tMuda = setTimeout(desenha, ms || 0); }
+
+  // ---------- conteúdo ----------
+  function temConteudo(c){
+    if(c.contentor) return false;
+    if(c.tipo === 'menus') return CFG.menus && (c.menus || []).length;
+    return (c.grupos || []).some(function(g){ return (g.itens || []).length; });
+  }
+  function itemHTML(i){
+    var nome = t(i.nome), d = CFG.descricoes ? t(i.desc || i.descricao) : '', h = '';
+    if(i.tabela && (i.tabela.doses || []).length){
+      var tb = i.tabela.doses.map(function(d2, k){ return e(d2) + ' <b>' + e((i.tabela.precos || [])[k] || '') + '</b>'; }).join('  ·  ');
+      return '<div class="item">' + (nome ? '<div class="l"><span class="n">' + e(nome) + '</span></div>' : '') + '<div class="tab">' + tb + '</div></div>';
+    }
+    if(!nome) return '';
+    h = '<div class="item"><div class="l"><span class="n">' + e(nome) + '</span>' + (i.preco ? '<span class="pts"></span><span class="p">' + e(i.preco) + '</span>' : '') + '</div>';
+    if(d) h += '<div class="d">' + e(d) + '</div>';
+    return h + '</div>';
+  }
+  function secTitulo(c){ var tt = t(c.tile) || c.id; return '<div class="sec-t"><div class="orn"><span>❦</span></div><h2 style="font-size:1.45em">' + e(tt) + '</h2></div>'; }
+  // blocos: o título da secção vai sempre junto com o 1.º prato (nunca fica sozinho no fundo da página)
+  function blocos(){
+    var out = [];
+    ordemCats().forEach(function(c){
+      if(CFG.ocultas[c.id] || !temConteudo(c)) return;
+      var primeiro = true, cab = secTitulo(c), grupoAtual = '';
+      function poe(html, quebra){ if(!html) return; var abreGrupo = html.indexOf('<div class="grupo-t"') === 0; out.push({ html:(primeiro ? cab : '') + html, nova:primeiro && CFG.novaPag, inicioSec:primeiro, cont:t(c.tile) + (grupoAtual && !abreGrupo ? ' · ' + grupoAtual : '') }); primeiro = false; }
+      if(c.tipo === 'menus'){
+        (c.menus || []).forEach(function(mn){
+          var h = '<div class="menuG"><h3 style="font-size:1.3em">' + e(t(mn.nome)) + '</h3>' + (mn.preco ? '<div class="pr">' + e(mn.preco) + '</div>' : '');
+          (mn.seccoes || []).forEach(function(s){ h += '<div class="ms">' + (t(s.titulo) ? '<b>' + e(t(s.titulo)) + (t(s.sub) ? ' <span style="text-transform:none;letter-spacing:0;font-weight:400">(' + e(t(s.sub).replace(/[()]/g, '')) + ')</span>' : '') + '</b>' : '') + '<div>' + e(t(s.texto)) + '</div></div>'; });
+          if(t(mn.rodape)) h += '<div class="rd">' + e(t(mn.rodape)) + '</div>';
+          poe(h + '</div>');
+        });
+        return;
+      }
+      (c.grupos || []).forEach(function(g, gk){
+        var gt = t(g.summary), ct = t(c.tile);
+        var cabG = (gt && gt.toLowerCase() !== String(ct).toLowerCase()) ? '<div class="grupo-t" style="font-size:1.15em">' + e(gt) + (t(g.subtitulo) ? '<br><small style="font-size:.8em">' + e(t(g.subtitulo)) + '</small>' : '') + '</div>' : '';
+        grupoAtual = cabG ? gt : '';
+        (g.itens || []).forEach(function(i, k){ var ih = itemHTML(i); if(!ih) return; poe((k === 0 ? cabG : '') + ih); });
+      });
+    });
+    return out;
+  }
+
+  // ---------- páginas ----------
+  var NUMPAG = 0;
+  function folha(){
+    var f = document.createElement('div'); f.className = 'folha st-' + CFG.estilo;
+    f.style.setProperty('--ac', CFG.cor); f.style.fontSize = CFG.letra + 'pt';
+    f.innerHTML = '<div class="moldura"></div><div class="corpo' + (CFG.colunas === '2' ? ' c2' : '') + '"></div><div class="pe"><span>' + e(CFG.rodape) + '</span><span class="num"></span></div>';
+    FOLHAS.appendChild(f); NUMPAG++;
+    f.querySelector('.num').textContent = CFG.titulo + '  ·  ' + NUMPAG;
+    if(CFG.qrPe){ var pe = f.querySelector('.pe'), q = document.createElement('span'); q.className = 'qrPe'; q.innerHTML = '<span class="q"></span><span>Menu digital</span>'; pe.insertBefore(q, pe.children[1]); qr(q.querySelector('.q'), 120); }
+    return f.querySelector('.corpo');
+  }
+  function transborda(c){ return c.scrollHeight > c.clientHeight + 1 || c.scrollWidth > c.clientWidth + 1; }
+  function qr(el, tam){ try{ if(window.QRCode) new QRCode(el, { text:'https://amesadigital.pt/' + SLUG, width:tam, height:tam, colorDark:'#1d1a16', colorLight:'#ffffff', correctLevel:QRCode.CorrectLevel.M }); }catch(x){} }
+  function desenha(){
+    FOLHAS.innerHTML = ''; NUMPAG = 0;
+    if(CFG.capa){
+      var f = document.createElement('div'); f.className = 'folha st-' + CFG.estilo; f.style.setProperty('--ac', CFG.cor); f.style.fontSize = CFG.letra + 'pt';
+      f.innerHTML = '<div class="moldura"></div><div class="capa">' + (CFG.subtitulo ? '<div class="pre">' + e(CFG.subtitulo) + '</div>' : '') + '<h1 style="font-size:34pt">' + e(CFG.titulo) + '</h1><div class="fl">❦</div>'
+        + (CFG.morada ? '<div class="mo">' + e(CFG.morada) + '</div>' : '') + '<div class="qr"><div class="q"></div><span>ESTE MENU TAMBÉM NO TELEMÓVEL</span></div></div>';
+      FOLHAS.appendChild(f); NUMPAG++; qr(f.querySelector('.qr .q'), 240);
+    }
+    var bs = blocos(), corpo = null;
+    bs.forEach(function(b){
+      if(!corpo || (b.nova && corpo.children.length)) corpo = folha();
+      var d = document.createElement('div'); d.className = 'bloco'; d.innerHTML = b.html; if(b.inicioSec && corpo.children.length) d.style.marginTop = '5mm';
+      corpo.appendChild(d);
+      if(transborda(corpo) && corpo.children.length > 1){
+        corpo.removeChild(d); corpo = folha(); d.style.marginTop = '';
+        if(!b.inicioSec && b.cont){ var ct = document.createElement('div'); ct.className = 'grupo-t'; ct.style.cssText = 'font-size:.95em;margin-top:0'; ct.textContent = b.cont + ' (continuação)'; corpo.appendChild(ct); }   // secção que continua da página anterior
+        corpo.appendChild(d);
+      }
+    });
+    $('estado').textContent = NUMPAG + (NUMPAG === 1 ? ' página' : ' páginas') + ' A4';
+    encaixa();
+  }
+  function encaixa(){ var w = Math.min(1, (document.querySelector('.prev').clientWidth - 40) / 794); FOLHAS.style.zoom = w; }
+  window.addEventListener('resize', encaixa);
+  $('btPdf').onclick = function(){ var z = FOLHAS.style.zoom; FOLHAS.style.zoom = 1; setTimeout(function(){ window.print(); FOLHAS.style.zoom = z; }, 50); };
+
+  // ---------- arranque ----------
+  if(!SLUG){ $('nomeRest').textContent = 'Falta o restaurante no endereço (?n=slug).'; return; }
+  fetch(URL_SB + '/rest/v1/negocios?select=nome,slug,menu,config&slug=eq.' + encodeURIComponent(SLUG), { headers:{ apikey:CHAVE, Authorization:'Bearer ' + CHAVE } })
+    .then(function(r){ return r.json(); }).then(function(d){
+      NEG = Array.isArray(d) ? d[0] : null;
+      if(!NEG){ $('nomeRest').textContent = 'Restaurante não encontrado: ' + SLUG; return; }
+      CATS = ((NEG.menu || {}).categorias || []).filter(function(c){ return !c.contentor; });
+      var p = padrao(), g = null; try{ g = JSON.parse(localStorage.getItem(guardaChave) || 'null'); }catch(x){}
+      CFG = Object.assign(p, g || {}); CFG.ocultas = CFG.ocultas || {};
+      painel();
+      (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(desenha);
+    }).catch(function(){ $('nomeRest').textContent = 'Não foi possível carregar o menu.'; });
+})();
+</script>
+</body>
+</html>

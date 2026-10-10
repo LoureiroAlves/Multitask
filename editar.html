@@ -284,6 +284,7 @@
       <div style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;">
         <button type="button" id="btnAbrirCardapio" style="padding:9px 12px; border-radius:8px; border:1.5px solid var(--linha); background:var(--branco); color:var(--castanho); cursor:pointer;">Abrir cardápio</button>
         <button type="button" id="btnVideoRest" title="Vídeo do menu deste restaurante para as redes (com botão Gravar)" style="padding:9px 12px; border-radius:8px; border:1.5px solid var(--linha); background:var(--branco); color:var(--castanho); cursor:pointer;">🎬 Vídeo do restaurante</button>
+        <button type="button" id="btnMenuPdf" title="Menu de papel em A4 (PDF), feito a partir deste menu — escolhes o estilo e o que aparece" style="padding:9px 12px; border-radius:8px; border:1.5px solid var(--linha); background:var(--branco); color:var(--castanho); cursor:pointer;">📄 Menu em PDF</button>
         <button type="button" id="btnDescarregarQR" style="padding:9px 12px; border-radius:8px; border:1.5px solid var(--linha); background:var(--branco); color:var(--castanho); cursor:pointer;">Descarregar QR (PDF)</button>
       </div>
       <div id="qrCardapio" style="margin-top:14px; display:flex; justify-content:center; padding:14px; background:#fff; border:1.5px solid var(--linha); border-radius:12px;"></div>
@@ -2123,6 +2124,8 @@ amesadigital.pt</textarea>
     if(btnAbrir) btnAbrir.addEventListener('click', function(){ window.open(CARDAPIO_URL, '_blank'); });
     const btnVid = document.getElementById('btnVideoRest');
     if(btnVid) btnVid.addEventListener('click', function(){ window.open('video.html?n=' + encodeURIComponent(SLUG), '_blank'); });
+    const btnPdf = document.getElementById('btnMenuPdf');
+    if(btnPdf) btnPdf.addEventListener('click', function(){ window.open('menu-pdf.html?n=' + encodeURIComponent(SLUG), '_blank'); });
     // Carrega o jsPDF (para o download em PDF), com CDNs alternativos
     const _CDNS_JSPDF = [
       'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
