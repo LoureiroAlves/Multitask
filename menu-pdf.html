@@ -31,7 +31,7 @@
   .secs{ border:1.5px solid #e3d9c4; border-radius:10px; background:#fff; max-height:300px; overflow:auto; }
   .secs .s{ display:flex; align-items:center; gap:8px; padding:7px 8px; border-bottom:1px solid #f1e8d9; font-size:.82rem; }
   .secs .s:last-child{ border-bottom:none; }
-  .secs .s span{ flex:1; }
+  .secs .s{ flex-wrap:wrap; } .secs .s span{ flex:1 1 70%; }
   .secs .s select{ width:auto; border:1.5px solid #e3d9c4; border-radius:7px; padding:3px 4px; font:600 .72rem 'Montserrat'; background:#fff; }
   .secs .s button{ border:none; background:#f3ece0; border-radius:6px; width:24px; height:24px; cursor:pointer; font-weight:700; }
   .btPdf{ width:100%; margin-top:20px; border:none; border-radius:12px; padding:14px; background:#2e2418; color:#fff; font:700 1rem 'Montserrat'; cursor:pointer; }
@@ -152,7 +152,7 @@
     <label class="chk"><input type="checkbox" id="novaPag"> Cada secção começa numa página nova</label>
 
     <h2>Secções <small style="text-transform:none;letter-spacing:0;color:#8a7a63">(visto = mostrar · ↑↓ ordem)</small></h2>
-    <div class="dica" style="margin:-2px 0 8px;"><b>segue</b> = continua logo a seguir · <b>coluna nova</b> = com 2 colunas, começa no topo da coluna da direita · <b>pág. nova</b> = começa numa página nova · <b>sozinha</b> = fica numa página só para ela (ex.: os vinhos).</div>
+    <div class="dica" style="margin:-2px 0 8px;"><b>segue</b> = continua logo a seguir · <b>coluna nova</b> = com 2 colunas, começa no topo da coluna da direita · <b>pág. nova</b> = começa numa página nova · <b>sozinha</b> = fica numa página só para ela (ex.: os vinhos). <b>1/2 colunas</b> = essa secção sai com o seu próprio nº de colunas (numa página à parte).</div>
     <div class="secs" id="secs"></div>
 
     <button type="button" class="btPdf" id="btPdf">📄 Guardar em PDF</button>
@@ -179,7 +179,8 @@
     return { estilo:'classico', cor:cor, idioma:'pt', colunas:'1', letra:'10.5',
       titulo:m.restaurante || NEG.nome || '', subtitulo:'Restaurante', morada:(c.local && c.local.morada) || '', rodape:'IVA incluído à taxa legal em vigor',
       capa:true, descricoes:true, menus:true, qrPe:true, novaPag:false, ordem:null, ocultas:{}, espSec:'6', espItem:'3.2', inteiras:false,
-      paginas:(function(){ var o = {}; (m.categorias || []).forEach(function(c){ if(c.tipo === 'vinhos') o[c.id] = 'so'; }); return o; })() };   // por defeito, os vinhos ficam numa página só para eles
+      paginas:(function(){ var o = {}; (m.categorias || []).forEach(function(c){ if(c.tipo === 'vinhos') o[c.id] = 'so'; }); return o; })(),
+      colsSec:(function(){ var o = {}; (m.categorias || []).forEach(function(c){ if(c.tipo === 'vinhos') o[c.id] = '2'; }); return o; })() };   // vinhos: 2 colunas por defeito   // por defeito, os vinhos ficam numa página só para eles
   }
   function grava(){ try{ localStorage.setItem(guardaChave, JSON.stringify(CFG)); }catch(x){} }
 
@@ -200,7 +201,8 @@
   }
   function pintaSecs(){
     var cs = ordemCats();
-    $('secs').innerHTML = cs.map(function(c, k){ return '<div class="s"><input type="checkbox" data-id="' + e(c.id) + '"' + (CFG.ocultas[c.id] ? '' : ' checked') + '><span>' + e(c.emoji || '') + ' ' + e(t(c.tile) || c.id) + '</span>' + '<select data-pg="' + e(c.id) + '" title="Onde começa esta secção">' + [['', 'segue'], ['col', 'coluna nova'], ['nova', 'pág. nova'], ['so', 'sozinha']].map(function(o){ return '<option value="' + o[0] + '"' + ((CFG.paginas[c.id] || '') === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select><button type="button" data-up="' + k + '">↑</button><button type="button" data-dn="' + k + '">↓</button></div>'; }).join('');
+    $('secs').innerHTML = cs.map(function(c, k){ return '<div class="s"><input type="checkbox" data-id="' + e(c.id) + '"' + (CFG.ocultas[c.id] ? '' : ' checked') + '><span>' + e(c.emoji || '') + ' ' + e(t(c.tile) || c.id) + '</span>' + '<select data-pg="' + e(c.id) + '" title="Onde começa esta secção">' + [['', 'segue'], ['col', 'coluna nova'], ['nova', 'pág. nova'], ['so', 'sozinha']].map(function(o){ return '<option value="' + o[0] + '"' + ((CFG.paginas[c.id] || '') === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select>' + '<select data-cs="' + e(c.id) + '" title="Colunas desta secção">' + [['', 'colunas: igual'], ['1', '1 coluna'], ['2', '2 colunas']].map(function(o){ return '<option value="' + o[0] + '"' + ((CFG.colsSec[c.id] || '') === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select><button type="button" data-up="' + k + '">↑</button><button type="button" data-dn="' + k + '">↓</button></div>'; }).join('');
+    $('secs').querySelectorAll('[data-cs]').forEach(function(x){ x.onchange = function(){ if(x.value) CFG.colsSec[x.dataset.cs] = x.value; else delete CFG.colsSec[x.dataset.cs]; muda(); }; });
     $('secs').querySelectorAll('[data-pg]').forEach(function(x){ x.onchange = function(){ if(x.value) CFG.paginas[x.dataset.pg] = x.value; else delete CFG.paginas[x.dataset.pg]; muda(); }; });
     $('secs').querySelectorAll('input').forEach(function(x){ x.onchange = function(){ if(x.checked) delete CFG.ocultas[x.dataset.id]; else CFG.ocultas[x.dataset.id] = 1; muda(); }; });
     $('secs').querySelectorAll('[data-up],[data-dn]').forEach(function(b){ b.onclick = function(){ var k = +(b.dataset.up || b.dataset.dn), n = b.dataset.up != null ? k - 1 : k + 1; if(n < 0 || n >= CFG.ordem.length) return; var a = CFG.ordem, x = a[k]; a[k] = a[n]; a[n] = x; pintaSecs(); muda(); }; });
@@ -234,9 +236,9 @@
       if(CFG.ocultas[c.id] || !temConteudo(c)) return;
       var modo = CFG.paginas[c.id] || '', quebra = CFG.novaPag || modo === 'nova' || modo === 'so' || forcaProx;
       forcaProx = modo === 'so';   // "sozinha": a secção seguinte começa noutra página
-      var primeiro = true, cab = secTitulo(c), grupoAtual = '', destino = out, sub = [];
+      var primeiro = true, cab = secTitulo(c), grupoAtual = '', destino = out, sub = [], cols = CFG.colsSec[c.id] || CFG.colunas;
       if(CFG.inteiras && c.tipo !== 'menus') destino = sub;   // "não partir secções": junta tudo num bloco (se couber)
-      function poe(html){ if(!html) return; var abreGrupo = html.indexOf('<div class="grupo-t"') === 0; destino.push({ html:(primeiro ? cab : '') + html, nova:primeiro && quebra, coluna:primeiro && modo === 'col', inicioSec:primeiro, cont:t(c.tile) + (grupoAtual && !abreGrupo ? ' · ' + grupoAtual : '') }); primeiro = false; }
+      function poe(html){ if(!html) return; var abreGrupo = html.indexOf('<div class="grupo-t"') === 0; destino.push({ html:(primeiro ? cab : '') + html, nova:primeiro && quebra, coluna:primeiro && modo === 'col', cols:cols, inicioSec:primeiro, cont:t(c.tile) + (grupoAtual && !abreGrupo ? ' · ' + grupoAtual : '') }); primeiro = false; }
       if(c.tipo === 'menus'){
         (c.menus || []).forEach(function(mn){
           var h = '<div class="menuG"><h3 style="font-size:1.3em">' + e(t(mn.nome)) + '</h3>' + (mn.preco ? '<div class="pr">' + e(mn.preco) + '</div>' : '');
@@ -252,17 +254,18 @@
         grupoAtual = cabG ? gt : '';
         (g.itens || []).forEach(function(i, k){ var ih = itemHTML(i); if(!ih) return; poe((k === 0 ? cabG : '') + ih); });
       });
-      if(destino === sub && sub.length) out.push({ html:sub.map(function(x){ return x.html; }).join(''), nova:sub[0].nova, coluna:sub[0].coluna, inicioSec:true, cont:sub[0].cont, partes:sub });
+      if(destino === sub && sub.length) out.push({ html:sub.map(function(x){ return x.html; }).join(''), nova:sub[0].nova, coluna:sub[0].coluna, cols:cols, inicioSec:true, cont:sub[0].cont, partes:sub });
     });
     return out;
   }
 
   // ---------- páginas ----------
   var NUMPAG = 0;
-  function folha(){
+  function folha(cols){
+    cols = cols || CFG.colunas;
     var f = document.createElement('div'); f.className = 'folha st-' + CFG.estilo;
     f.style.setProperty('--ac', CFG.cor); f.style.fontSize = CFG.letra + 'pt'; f.style.setProperty('--espItem', CFG.espItem + 'mm');
-    f.innerHTML = '<div class="moldura"></div><div class="corpo' + (CFG.colunas === '2' ? ' c2' : '') + '"></div><div class="pe"><span>' + e(CFG.rodape) + '</span><span class="num"></span></div>';
+    f.innerHTML = '<div class="moldura"></div><div class="corpo' + (cols === '2' ? ' c2' : '') + '" data-cols="' + cols + '"></div><div class="pe"><span>' + e(CFG.rodape) + '</span><span class="num"></span></div>';
     FOLHAS.appendChild(f); NUMPAG++;
     f.querySelector('.num').textContent = CFG.titulo + '  ·  ' + NUMPAG;
     if(CFG.qrPe){ var pe = f.querySelector('.pe'), q = document.createElement('span'); q.className = 'qrPe'; q.innerHTML = '<span class="q"></span><span>Menu digital</span>'; pe.insertBefore(q, pe.children[1]); qr(q.querySelector('.q'), 120); }
@@ -281,14 +284,15 @@
     var fila = blocos(), corpo = null;
     while(fila.length){
       var b = fila.shift();
-      if(!corpo || (b.nova && corpo.children.length)) corpo = folha();
+      var bc = b.cols || CFG.colunas;
+      if(!corpo || (b.nova && corpo.children.length) || corpo.dataset.cols !== bc) corpo = folha(bc);   // secção com outro nº de colunas → página própria
       var d = document.createElement('div'); d.className = 'bloco'; d.innerHTML = b.html;
       if(b.inicioSec && corpo.children.length) d.style.marginTop = CFG.espSec + 'mm';
-      if(b.coluna && CFG.colunas === '2' && corpo.children.length){ d.style.breakBefore = 'column'; d.style.marginTop = '0'; }
+      if(b.coluna && bc === '2' && corpo.children.length){ d.style.breakBefore = 'column'; d.style.marginTop = '0'; }
       corpo.appendChild(d);
       if(transborda(corpo) && b.partes && corpo.children.length === 1){ corpo.removeChild(d); b.partes[0].coluna = false; fila = b.partes.concat(fila); continue; }   // secção maior que uma página: parte-se
       if(transborda(corpo) && corpo.children.length > 1){
-        corpo.removeChild(d); corpo = folha(); d.style.marginTop = ''; d.style.breakBefore = '';
+        corpo.removeChild(d); corpo = folha(bc); d.style.marginTop = ''; d.style.breakBefore = '';
         if(transborda((corpo.appendChild(d), corpo)) && b.partes){ corpo.removeChild(d); fila = b.partes.concat(fila); continue; }
         corpo.removeChild(d);
         if(!b.inicioSec && b.cont){ var ct = document.createElement('div'); ct.className = 'grupo-t'; ct.style.cssText = 'font-size:.95em;margin-top:0'; ct.textContent = b.cont + ' (continuação)'; corpo.appendChild(ct); }   // secção que continua da página anterior
@@ -310,7 +314,7 @@
       if(!NEG){ $('nomeRest').textContent = 'Restaurante não encontrado: ' + SLUG; return; }
       CATS = ((NEG.menu || {}).categorias || []).filter(function(c){ return !c.contentor; });
       var p = padrao(), g = null; try{ g = JSON.parse(localStorage.getItem(guardaChave) || 'null'); }catch(x){}
-      CFG = Object.assign(p, g || {}); CFG.ocultas = CFG.ocultas || {}; CFG.paginas = CFG.paginas || {};
+      CFG = Object.assign(p, g || {}); CFG.ocultas = CFG.ocultas || {}; CFG.paginas = CFG.paginas || {}; CFG.colsSec = CFG.colsSec || {};
       painel();
       (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(desenha);
     }).catch(function(){ $('nomeRest').textContent = 'Não foi possível carregar o menu.'; });
