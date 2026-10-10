@@ -101,6 +101,8 @@
   .st-elegante .item .d{ font-family:'Cormorant Garamond', serif; font-size:1.12em; }
   .st-elegante .menuG h3, .st-elegante .grupo-t{ font-family:'Cormorant Garamond', serif; }
 
+  /* telemóvel: painel em cima e a pré-visualização encaixa na largura (no PC e na impressão nada muda) */
+  @media (max-width:760px){ .app{ flex-direction:column; } .painel{ width:auto; height:auto; position:static; border-right:none; border-bottom:1px solid #e3d9c4; } .prev{ min-width:0; padding:20px 12px 60px; } }
   @media print{
     @page{ size:A4; margin:0; }
     body{ background:none; }

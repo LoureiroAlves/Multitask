@@ -244,7 +244,7 @@
 
   <div class="ed-layout">
     <nav class="ed-side">
-      <button type="button" class="ed-brand" id="edBrand" title="Início">🍀 Multitask</button>
+      <button type="button" class="ed-brand" id="edBrand" title="Início">🍀 àMesa</button>
       <button type="button" class="ed-side-item" data-etab="aparencia">🎨 Aparência</button>
       <button type="button" class="ed-side-item" data-etab="conteudo">📋 Conteúdo</button>
       <button type="button" class="ed-side-item" data-etab="menu">🧾 Menu</button>
@@ -257,7 +257,7 @@
     <div class="ed-conteudo">
       <div class="ed-home" data-tab="home">
         <div class="ed-home-logo">🍀</div>
-        <div class="ed-home-tit">Multitask</div>
+        <div class="ed-home-tit">àMesa</div>
         <div class="ed-home-sub">Escolhe uma secção à esquerda para começares a editar o teu negócio.</div>
       </div>
 
@@ -6205,7 +6205,7 @@ amesadigital.pt</textarea>
 
     var side = document.querySelector('.ed-side'); if(!side) return;
     side.innerHTML = '';
-    var brand = document.createElement('button'); brand.type = 'button'; brand.className = 'ed-brand'; brand.textContent = '🍀 Multitask'; brand.title = 'Início';
+    var brand = document.createElement('button'); brand.type = 'button'; brand.className = 'ed-brand'; brand.textContent = '🍀 àMesa'; brand.title = 'Início';
     side.appendChild(brand);
     var subItems = {}, tabHeaders = {}, menuListEl = null;
     function mkSub(txt, fn){ var b = document.createElement('button'); b.type = 'button'; b.className = 'ed-subitem'; b.textContent = txt; b.addEventListener('click', fn); return b; }
