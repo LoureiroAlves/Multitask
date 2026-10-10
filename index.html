@@ -132,6 +132,7 @@
   .qr-scan{ display:flex; align-items:center; gap:8px; background:none; border:none; padding:0; cursor:pointer; font-family:inherit; flex:0 0 auto; }
   .qr-scan .qr-scan-label{ font-size:.72rem; font-weight:800; letter-spacing:2px; color:var(--terra); }
   .qr-scan:hover .qr-montra{ border-color:var(--terra); }
+  @media (max-width:360px){ .qr-scan .qr-scan-label{ display:none; } }   /* ecrãs pequenos (iPhone SE): o botão de ler QR fica só com o ícone para não sair do ecrã */
   .qr-montra{ display:inline-block; padding:4px; background:#fff; border:1px solid var(--linha); border-radius:8px; line-height:0; transition:border-color .15s; }
   .qr-montra img, .qr-montra canvas{ display:block; width:46px; height:46px; }
   /* Modal do QR grande */
@@ -515,11 +516,15 @@
                 : ('<div class="ad-ph">' + corpo + '</div>');
   }
   function tipoDoConfig(cfg){ try{ return (cfg && cfg.tipo) ? String(cfg.tipo).trim() : ''; }catch(e){ return ''; } }
+  // Um negócio pode ter vários tipos separados por vírgula ("Tradicional Portuguesa, Pizzaria") — cada um é um filtro
+  function partirTipos(txt){ return String(txt || '').split(/[,;]/).map(function(t){ return t.trim(); }).filter(Boolean); }
+  function juntarTipo(lista, t){ var k = t.toLowerCase(); if(!lista.some(function(x){ return x.toLowerCase() === k; })) lista.push(t); }
 
   function renderFiltros(){
     // Tipos: parte da lista completa (TIPOS_ALL, carregada à parte) + o que já veio nas páginas.
-    var tipos = (typeof TIPOS_ALL !== 'undefined' && TIPOS_ALL) ? TIPOS_ALL.slice() : [];
-    TODOS.forEach(function(n){ var t = tipoDoConfig(n.config); if(t && tipos.indexOf(t) < 0) tipos.push(t); });
+    var tipos = [];
+    ((typeof TIPOS_ALL !== 'undefined' && TIPOS_ALL) ? TIPOS_ALL : []).forEach(function(t){ partirTipos(t).forEach(function(x){ juntarTipo(tipos, x); }); });
+    TODOS.forEach(function(n){ partirTipos(tipoDoConfig(n.config)).forEach(function(x){ juntarTipo(tipos, x); }); });
     tipos.sort(function(a,b){ return a.localeCompare(b); });
     var el = document.getElementById('filtros');
     var temFav = favGet().length > 0;
@@ -694,7 +699,7 @@
       var sub = subDoConfig(n.config).toLowerCase();
       var tipo = tipoDoConfig(n.config);
       var okBusca = !q || nome.indexOf(q) >= 0 || sub.indexOf(q) >= 0 || tipo.toLowerCase().indexOf(q) >= 0;
-      var okTipo = !filtroTipo || tipo === filtroTipo;
+      var okTipo = !filtroTipo || partirTipos(tipo).some(function(x){ return x.toLowerCase() === filtroTipo.toLowerCase(); });
       var okFav = !soFav || favTem(String(n.slug || '').toLowerCase());
       var okPromo = !soPromo || temPromoAtiva(n);
       return okBusca && okTipo && okFav && okPromo;
@@ -790,10 +795,11 @@
   }
   // Lista completa de tipos (muito leve: só o texto) — barra de filtros sempre completa.
   function _carregarTipos(){
-    var url = SUPA_URL + '/rest/v1/negocios?apagado_em=is.null&slug=neq.' + encodeURIComponent(AMESA_SLUG) + '&select=tipo:config->>tipo';
+    var url = SUPA_URL + '/rest/v1/negocios?apagado_em=is.null&slug=neq.' + encodeURIComponent(AMESA_SLUG) + '&select=tipo:config->>tipo,oculto:config->>oculto';
     return fetch(url, _hdr).then(function(r){ return r.ok ? r.json() : []; }).then(function(rows){
       var set = [];
-      (rows || []).forEach(function(x){ var t = x && x.tipo ? String(x.tipo).trim() : ''; if(t && set.indexOf(t) < 0) set.push(t); });
+      // negócios ocultos não entram (senão aparecia um filtro sem nenhum restaurante)
+      (rows || []).forEach(function(x){ if(!x || String(x.oculto) === 'true') return; partirTipos(x.tipo).forEach(function(t){ juntarTipo(set, t); }); });
       TIPOS_ALL = set;
     }).catch(function(){ TIPOS_ALL = []; });
   }
