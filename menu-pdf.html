@@ -32,6 +32,7 @@
   .secs .s{ display:flex; align-items:center; gap:8px; padding:7px 8px; border-bottom:1px solid #f1e8d9; font-size:.82rem; }
   .secs .s:last-child{ border-bottom:none; }
   .secs .s span{ flex:1; }
+  .secs .s select{ width:auto; border:1.5px solid #e3d9c4; border-radius:7px; padding:3px 4px; font:600 .72rem 'Montserrat'; background:#fff; }
   .secs .s button{ border:none; background:#f3ece0; border-radius:6px; width:24px; height:24px; cursor:pointer; font-weight:700; }
   .btPdf{ width:100%; margin-top:20px; border:none; border-radius:12px; padding:14px; background:#2e2418; color:#fff; font:700 1rem 'Montserrat'; cursor:pointer; }
   .dica{ font-size:.75rem; color:#8a7a63; margin-top:8px; line-height:1.45; }
@@ -145,7 +146,8 @@
     <label class="chk"><input type="checkbox" id="qrPe"> QR pequeno no rodapé</label>
     <label class="chk"><input type="checkbox" id="novaPag"> Cada secção começa numa página nova</label>
 
-    <h2>Secções <small style="text-transform:none;letter-spacing:0;color:#8a7a63">(tira o visto para esconder · ↑↓ ordem)</small></h2>
+    <h2>Secções <small style="text-transform:none;letter-spacing:0;color:#8a7a63">(visto = mostrar · ↑↓ ordem)</small></h2>
+    <div class="dica" style="margin:-2px 0 8px;"><b>segue</b> = continua na mesma página · <b>pág. nova</b> = começa numa página nova · <b>sozinha</b> = fica numa página só para ela (ex.: os vinhos).</div>
     <div class="secs" id="secs"></div>
 
     <button type="button" class="btPdf" id="btPdf">📄 Guardar em PDF</button>
@@ -171,7 +173,8 @@
     var cor = '#a8712f'; try{ var f0 = (m.categorias || []).filter(function(x){ return x.fundo && x.fundo.cor; })[0]; if(f0) cor = f0.fundo.cor; }catch(x){}
     return { estilo:'classico', cor:cor, idioma:'pt', colunas:'1', letra:'10.5',
       titulo:m.restaurante || NEG.nome || '', subtitulo:'Restaurante', morada:(c.local && c.local.morada) || '', rodape:'IVA incluído à taxa legal em vigor',
-      capa:true, descricoes:true, menus:true, qrPe:true, novaPag:false, ordem:null, ocultas:{} };
+      capa:true, descricoes:true, menus:true, qrPe:true, novaPag:false, ordem:null, ocultas:{},
+      paginas:(function(){ var o = {}; (m.categorias || []).forEach(function(c){ if(c.tipo === 'vinhos') o[c.id] = 'so'; }); return o; })() };   // por defeito, os vinhos ficam numa página só para eles
   }
   function grava(){ try{ localStorage.setItem(guardaChave, JSON.stringify(CFG)); }catch(x){} }
 
@@ -191,7 +194,8 @@
   }
   function pintaSecs(){
     var cs = ordemCats();
-    $('secs').innerHTML = cs.map(function(c, k){ return '<div class="s"><input type="checkbox" data-id="' + e(c.id) + '"' + (CFG.ocultas[c.id] ? '' : ' checked') + '><span>' + e(c.emoji || '') + ' ' + e(t(c.tile) || c.id) + '</span><button type="button" data-up="' + k + '">↑</button><button type="button" data-dn="' + k + '">↓</button></div>'; }).join('');
+    $('secs').innerHTML = cs.map(function(c, k){ return '<div class="s"><input type="checkbox" data-id="' + e(c.id) + '"' + (CFG.ocultas[c.id] ? '' : ' checked') + '><span>' + e(c.emoji || '') + ' ' + e(t(c.tile) || c.id) + '</span>' + '<select data-pg="' + e(c.id) + '" title="Onde começa esta secção">' + [['', 'segue'], ['nova', 'pág. nova'], ['so', 'sozinha']].map(function(o){ return '<option value="' + o[0] + '"' + ((CFG.paginas[c.id] || '') === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select><button type="button" data-up="' + k + '">↑</button><button type="button" data-dn="' + k + '">↓</button></div>'; }).join('');
+    $('secs').querySelectorAll('[data-pg]').forEach(function(x){ x.onchange = function(){ if(x.value) CFG.paginas[x.dataset.pg] = x.value; else delete CFG.paginas[x.dataset.pg]; muda(); }; });
     $('secs').querySelectorAll('input').forEach(function(x){ x.onchange = function(){ if(x.checked) delete CFG.ocultas[x.dataset.id]; else CFG.ocultas[x.dataset.id] = 1; muda(); }; });
     $('secs').querySelectorAll('[data-up],[data-dn]').forEach(function(b){ b.onclick = function(){ var k = +(b.dataset.up || b.dataset.dn), n = b.dataset.up != null ? k - 1 : k + 1; if(n < 0 || n >= CFG.ordem.length) return; var a = CFG.ordem, x = a[k]; a[k] = a[n]; a[n] = x; pintaSecs(); muda(); }; });
   }
@@ -219,10 +223,13 @@
   // blocos: o título da secção vai sempre junto com o 1.º prato (nunca fica sozinho no fundo da página)
   function blocos(){
     var out = [];
+    var forcaProx = false;
     ordemCats().forEach(function(c){
       if(CFG.ocultas[c.id] || !temConteudo(c)) return;
+      var modo = CFG.paginas[c.id] || '', quebra = CFG.novaPag || modo === 'nova' || modo === 'so' || forcaProx;
+      forcaProx = modo === 'so';   // "sozinha": a secção seguinte começa noutra página
       var primeiro = true, cab = secTitulo(c), grupoAtual = '';
-      function poe(html, quebra){ if(!html) return; var abreGrupo = html.indexOf('<div class="grupo-t"') === 0; out.push({ html:(primeiro ? cab : '') + html, nova:primeiro && CFG.novaPag, inicioSec:primeiro, cont:t(c.tile) + (grupoAtual && !abreGrupo ? ' · ' + grupoAtual : '') }); primeiro = false; }
+      function poe(html){ if(!html) return; var abreGrupo = html.indexOf('<div class="grupo-t"') === 0; out.push({ html:(primeiro ? cab : '') + html, nova:primeiro && quebra, inicioSec:primeiro, cont:t(c.tile) + (grupoAtual && !abreGrupo ? ' · ' + grupoAtual : '') }); primeiro = false; }
       if(c.tipo === 'menus'){
         (c.menus || []).forEach(function(mn){
           var h = '<div class="menuG"><h3 style="font-size:1.3em">' + e(t(mn.nome)) + '</h3>' + (mn.preco ? '<div class="pr">' + e(mn.preco) + '</div>' : '');
@@ -289,7 +296,7 @@
       if(!NEG){ $('nomeRest').textContent = 'Restaurante não encontrado: ' + SLUG; return; }
       CATS = ((NEG.menu || {}).categorias || []).filter(function(c){ return !c.contentor; });
       var p = padrao(), g = null; try{ g = JSON.parse(localStorage.getItem(guardaChave) || 'null'); }catch(x){}
-      CFG = Object.assign(p, g || {}); CFG.ocultas = CFG.ocultas || {};
+      CFG = Object.assign(p, g || {}); CFG.ocultas = CFG.ocultas || {}; CFG.paginas = CFG.paginas || {};
       painel();
       (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(desenha);
     }).catch(function(){ $('nomeRest').textContent = 'Não foi possível carregar o menu.'; });
