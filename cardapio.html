@@ -6093,6 +6093,19 @@
     }
   }
 
+  // Endereço sem negócio válido (nome errado, apagado ou em falta): mostrar uma mensagem em vez de um ecrã vazio
+  function _semNegocio(){
+    try{
+      document.documentElement.style.background = '#faf6ef';
+      document.body.setAttribute('style', 'margin:0;background:#faf6ef;');
+      document.body.innerHTML = '<div style="font-family:system-ui,-apple-system,sans-serif;max-width:420px;margin:0 auto;padding:70px 24px;text-align:center;color:#3a2a18;">'
+        + '<div style="font-size:3rem;line-height:1;">🍽️</div>'
+        + '<h1 style="font-size:1.35rem;margin:18px 0 8px;">Não encontrámos este restaurante</h1>'
+        + '<p style="margin:0 0 22px;color:#7a6a55;line-height:1.5;">Confirma o endereço ou procura o restaurante na àMesa.</p>'
+        + '<a href="/?ver=restaurantes" style="display:inline-block;background:#c05a3a;color:#fff;text-decoration:none;font-weight:800;padding:13px 22px;border-radius:999px;">Ver restaurantes</a>'
+        + '</div>';
+    }catch(e){ console.error('[ERRO] _semNegocio', e); }
+  }
   function _limparEstatico(){
     try{
       const grid = document.getElementById('categoriaGrid'); if(grid) grid.innerHTML = '';
@@ -6127,11 +6140,11 @@
 
   async function carregarConfig(){
     if(window.__PREVIEW) return; // em pré-visualização, os dados vêm do editor
-    if(!sbC || !SLUG){ _limparEstatico(); console.log('[INFO] Sem negócio (?n=slug).'); return; }
+    if(!sbC || !SLUG){ _limparEstatico(); console.log('[INFO] Sem negócio (?n=slug).'); _semNegocio(); return; }
     try{
       // colunas públicas explícitas (o email e a conta do dono não são públicos)
       const { data:neg } = await sbC.from('negocios').select('id,slug,nome,ativo,config,menu,apagado_em,rating_soma,rating_contagem').eq('slug', SLUG).maybeSingle();
-      if(!neg || neg.apagado_em){ _limparEstatico(); console.log('[INFO] Negócio não encontrado (ou na lixeira):', SLUG); return; }
+      if(!neg || neg.apagado_em){ _limparEstatico(); console.log('[INFO] Negócio não encontrado (ou na lixeira):', SLUG); _semNegocio(); return; }
       if(neg.ativo === false){ document.body.innerHTML = '<div style="font-family:sans-serif;padding:40px;text-align:center;color:#4a3820;">Este menu está temporariamente indisponível.</div>'; return; }
       const { data:ent } = await sbC.from('entitlements').select('*').eq('negocio_id', neg.id).maybeSingle();
       const funcoes = (ent && ent.funcoes) || {};
