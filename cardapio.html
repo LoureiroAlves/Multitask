@@ -2342,7 +2342,10 @@
   /* cada ícone tem a sua caixinha escura, como sobre a foto da abertura — lê-se em fundos claros e escuros */
   #modosBloco.estilo-quadrado .im-ic, #modosBloco.estilo-pilula .im-inner{ background:rgba(24,16,10,.88); border-color:rgba(255,255,255,.22); box-shadow:0 4px 12px rgba(0,0,0,.18); }
   #modosBloco.estilo-quadrado .im-lb{ color:var(--castanho, #3a2c18); }   /* legenda por baixo do ícone: cor do texto do tema */
-  #modosBloco.mb-topo{ margin:14px 16px 2px; }   /* no topo: entre o cabeçalho e a primeira categoria */
+  #modosBloco.mb-topo{ margin:14px 16px 2px; }
+  /* Fundo de vidro nos botões (mesmo aspeto dos "Cartões de vidro"); a legenda usa a cor do texto do tema para se ler em qualquer fundo */
+  #modosBloco.mb-vidro.estilo-quadrado .im-ic, #modosBloco.mb-vidro.estilo-pilula .im-inner{ background:rgba(255,255,255,0.10); -webkit-backdrop-filter:blur(7px) saturate(1.25); backdrop-filter:blur(7px) saturate(1.25); border:1px solid rgba(255,255,255,0.28); box-shadow:0 4px 20px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.35); }
+  #modosBloco.mb-vidro.estilo-pilula .im-lb{ color:var(--castanho, #3a2c18); }   /* no topo: entre o cabeçalho e a primeira categoria */
   #modosBloco .mb-icons{ display:flex; flex-wrap:wrap; gap:12px 16px; justify-content:center; max-width:640px; margin:0 auto; }
   #modosBloco .im-opt{ color:inherit; -webkit-tap-highlight-color:transparent; }
   #modosBloco.estilo-pilula .im-inner{ min-width:0; }
@@ -10030,6 +10033,7 @@
         if(!lista.length) return;
         var sec = document.createElement('section'); sec.id = 'modosBloco';
         sec.className = 'estilo-' + (cfg.estilo || 'pilula');
+        if(cfg.vidro) sec.classList.add('mb-vidro');   // fundo de vidro (opção no editor)
         try{ window.__imAplicarCores(sec, cfg); }catch(e){}
         sec.style.setProperty('--im-just', 'center');
         sec.innerHTML = '<div class="mb-icons">' + lista.map(function(m){

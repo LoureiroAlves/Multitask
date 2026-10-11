@@ -727,6 +727,28 @@ amesadigital.pt</textarea>
           <option value="fim">No fim do menu (depois da última categoria, antes do mapa)</option>
           <option value="topo">No topo (entre o cabeçalho e a primeira categoria)</option>
         </select>
+        <label style="display:block; margin-top:14px; font-size:.85rem; color:var(--castanho);">Estilo dos botões <small style="font-weight:400;">(também o ícone "Menu" da abertura)</small></label>
+        <select id="modoEstilo" style="width:100%; padding:9px; border-radius:10px; border:1px solid #d9c9a8;">
+          <option value="pilula">Pílula — ícone + texto lado a lado</option>
+          <option value="quadrado">Quadrado — ícone com legenda por baixo</option>
+        </select>
+        <label style="display:flex; align-items:center; gap:8px; margin-top:14px; font-size:.85rem; color:var(--castanho); font-weight:700; cursor:pointer;"><input type="checkbox" id="modoCoresOn" style="width:auto;"> 🎨 Escolher as cores dos ícones (senão usa as do modelo)</label>
+        <div id="modoCoresBox" style="display:none; margin-top:6px; padding:10px 12px; border:1px solid #e3d9c4; border-radius:10px;">
+          <div style="display:flex; gap:14px; flex-wrap:wrap; align-items:flex-end;">
+            <div><label style="display:block; font-size:.78rem; color:var(--castanho);">Ícone</label><input type="color" id="modoCorIcone" value="#ffffff" style="width:52px; height:36px; padding:2px;"></div>
+            <div><label style="display:block; font-size:.78rem; color:var(--castanho);">Fundo da caixa</label><input type="color" id="modoCorFundo" value="#000000" style="width:52px; height:36px; padding:2px;"></div>
+            <div><label style="display:block; font-size:.78rem; color:var(--castanho);">Legenda</label><input type="color" id="modoCorTexto" value="#ffffff" style="width:52px; height:36px; padding:2px;"></div>
+          </div>
+          <label style="display:block; margin-top:8px; font-size:.78rem; color:var(--castanho);">Opacidade do fundo — <span id="modoCorOpVal">70%</span></label>
+          <input type="range" id="modoCorOp" min="0" max="100" step="5" value="70" style="width:100%; accent-color:var(--dourado);">
+        </div>
+        <label style="display:block; margin-top:12px; font-size:.85rem; color:var(--castanho);">Alinhamento do conteúdo (só na pílula)</label>
+        <select id="modoAlinhar" style="width:100%; padding:9px; border-radius:10px; border:1px solid #d9c9a8;">
+          <option value="esquerda">À esquerda</option>
+          <option value="centro">Ao centro</option>
+          <option value="direita">À direita</option>
+        </select>
+        <label style="display:flex; align-items:center; gap:8px; margin-top:12px; font-size:.85rem; color:var(--castanho); font-weight:700; cursor:pointer;"><input type="checkbox" id="modoVidro" style="width:auto;"> 🪟 Fundo de vidro (transparente com desfoque, como os "Cartões de vidro")</label>
         <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin:8px 0; font-size:.92rem; color:var(--castanho);"><input type="checkbox" id="modoTakeaway" style="width:auto; margin:0;"> 🛍️ Take away (liga o carrinho; esconde as reservas)</label>
         <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin:8px 0; font-size:.92rem; color:var(--castanho);"><input type="checkbox" id="modoGrupos" style="width:auto; margin:0;"> 👥 Menus de grupo (mostra só as categorias marcadas)</label>
         <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin:8px 0; font-size:.92rem; color:var(--castanho);"><input type="checkbox" id="modoCerimonias" style="width:auto; margin:0;"> 🥂 Cerimónias (mostra só as categorias marcadas)</label>
@@ -994,27 +1016,6 @@ amesadigital.pt</textarea>
           <label style="display:block; margin-top:8px; font-size:.85rem; color:var(--castanho);">📅 Reservas — <span id="modoTamReservasVal">100%</span></label>
           <input type="range" id="modoTamReservas" min="70" max="160" value="100" step="10" style="width:100%; accent-color:var(--dourado);">
           </div>
-          <label style="display:block; margin-top:14px; font-size:.85rem; color:var(--castanho);">Estilo dos ícones <small style="font-weight:400;">(também usado nos botões dentro do cardápio)</small></label>
-          <select id="modoEstilo" style="width:100%; padding:9px; border-radius:10px; border:1px solid #d9c9a8;">
-            <option value="pilula">Pílula — ícone + texto lado a lado</option>
-            <option value="quadrado">Quadrado — ícone com legenda por baixo</option>
-          </select>
-          <label style="display:flex; align-items:center; gap:8px; margin-top:14px; font-size:.85rem; color:var(--castanho); font-weight:700; cursor:pointer;"><input type="checkbox" id="modoCoresOn" style="width:auto;"> 🎨 Escolher as cores dos ícones (senão usa as do modelo)</label>
-          <div id="modoCoresBox" style="display:none; margin-top:6px; padding:10px 12px; border:1px solid #e3d9c4; border-radius:10px;">
-            <div style="display:flex; gap:14px; flex-wrap:wrap; align-items:flex-end;">
-              <div><label style="display:block; font-size:.78rem; color:var(--castanho);">Ícone</label><input type="color" id="modoCorIcone" value="#ffffff" style="width:52px; height:36px; padding:2px;"></div>
-              <div><label style="display:block; font-size:.78rem; color:var(--castanho);">Fundo da caixa</label><input type="color" id="modoCorFundo" value="#000000" style="width:52px; height:36px; padding:2px;"></div>
-              <div><label style="display:block; font-size:.78rem; color:var(--castanho);">Legenda</label><input type="color" id="modoCorTexto" value="#ffffff" style="width:52px; height:36px; padding:2px;"></div>
-            </div>
-            <label style="display:block; margin-top:8px; font-size:.78rem; color:var(--castanho);">Opacidade do fundo — <span id="modoCorOpVal">70%</span></label>
-            <input type="range" id="modoCorOp" min="0" max="100" step="5" value="70" style="width:100%; accent-color:var(--dourado);">
-          </div>
-          <label style="display:block; margin-top:12px; font-size:.85rem; color:var(--castanho);">Alinhamento do conteúdo (pílula)</label>
-          <select id="modoAlinhar" style="width:100%; padding:9px; border-radius:10px; border:1px solid #d9c9a8;">
-            <option value="esquerda">À esquerda</option>
-            <option value="centro">Ao centro</option>
-            <option value="direita">À direita</option>
-          </select>
           <label style="display:block; margin-top:14px; font-size:.85rem; color:var(--castanho);">Animação de entrada dos ícones</label>
           <select id="modoAnim" style="width:100%; padding:9px; border-radius:10px; border:1px solid #d9c9a8;">
             <option value="subir">De baixo para cima</option>
@@ -2833,7 +2834,7 @@ amesadigital.pt</textarea>
     { const _ex = config.experiencia || {}; const _sc = function(id, v){ const e = document.getElementById(id); if(e) e.checked = v !== false; };
       _sc('expAtivo', _ex.ativo); _sc('expInstalarOn', _ex.instalar); _sc('expPartilharOn', _ex.partilhar); _sc('expTextoOn', _ex.texto); _sc('expVibracaoOn', _ex.vibracao); _sc('expNotifOn', _ex.notif); _sc('expLimparOn', _ex.limpar); }
     { const _m = config.modos || {}; const _sb = function(id, v){ const e = document.getElementById(id); if(e) e.checked = (v === true); };
-      _sb('modosAtivo', _m.ativo); _sb('modoTakeaway', _m.takeaway); _sb('modoGrupos', _m.grupos); _sb('modoCerimonias', _m.cerimonias); _sb('modoReservas', _m.reservas); _sb('modoVerBotao', _m.verBotao);
+      _sb('modosAtivo', _m.ativo); _sb('modoTakeaway', _m.takeaway); _sb('modoGrupos', _m.grupos); _sb('modoCerimonias', _m.cerimonias); _sb('modoReservas', _m.reservas); _sb('modoVerBotao', _m.verBotao); _sb('modoVidro', _m.vidro);
       // "Botões no fim do menu": ligar um deles liga também o interruptor geral dos modos (senão não apareceriam)
       ['modoTakeaway','modoGrupos','modoCerimonias','modoReservas'].forEach(function(id){ const el = document.getElementById(id); if(!el || el.__ligaModos) return; el.__ligaModos = true;
         el.addEventListener('change', function(){ if(!el.checked) return; const at = document.getElementById('modosAtivo'); if(at && !at.checked){ at.checked = true; at.dispatchEvent(new Event('change', { bubbles:true })); } }); });
@@ -3790,7 +3791,7 @@ amesadigital.pt</textarea>
         const _estilo = (document.getElementById('modoEstilo') || {}).value || 'pilula';
         const _alinhar = (document.getElementById('modoAlinhar') || {}).value || 'esquerda';
         const _entrada = parseFloat((document.getElementById('modoEntrada') || {}).value) || 0;
-        config.modos = { ativo:_gm('modosAtivo'), normal:_gm('modoNormal'), takeaway:_gm('modoTakeaway'), grupos:_gm('modoGrupos'), cerimonias:_gm('modoCerimonias'), reservas:_gm('modoReservas'), verBotao:_gm('modoVerBotao'), secao:(((document.getElementById('modoSecao') || {}).value === 'topo') ? 'topo' : 'fim'), estilo:_estilo, cores:{ on:_gm('modoCoresOn'), icone:((document.getElementById('modoCorIcone')||{}).value||'#ffffff'), fundo:((document.getElementById('modoCorFundo')||{}).value||'#000000'), texto:((document.getElementById('modoCorTexto')||{}).value||'#ffffff'), opacidade:(parseInt((document.getElementById('modoCorOp')||{}).value,10)||0) }, alinhar:_alinhar, anim:_anim, entrada:_entrada, tam: { normal:_tv('modoTamNormal'), takeaway:_tv('modoTamTakeaway'), grupos:_tv('modoTamGrupos'), cerimonias:_tv('modoTamCerimonias'), reservas:_tv('modoTamReservas') }, pos:_mpos }; }
+        config.modos = { ativo:_gm('modosAtivo'), normal:_gm('modoNormal'), takeaway:_gm('modoTakeaway'), grupos:_gm('modoGrupos'), cerimonias:_gm('modoCerimonias'), reservas:_gm('modoReservas'), verBotao:_gm('modoVerBotao'), secao:(((document.getElementById('modoSecao') || {}).value === 'topo') ? 'topo' : 'fim'), vidro:_gm('modoVidro'), estilo:_estilo, cores:{ on:_gm('modoCoresOn'), icone:((document.getElementById('modoCorIcone')||{}).value||'#ffffff'), fundo:((document.getElementById('modoCorFundo')||{}).value||'#000000'), texto:((document.getElementById('modoCorTexto')||{}).value||'#ffffff'), opacidade:(parseInt((document.getElementById('modoCorOp')||{}).value,10)||0) }, alinhar:_alinhar, anim:_anim, entrada:_entrada, tam: { normal:_tv('modoTamNormal'), takeaway:_tv('modoTamTakeaway'), grupos:_tv('modoTamGrupos'), cerimonias:_tv('modoTamCerimonias'), reservas:_tv('modoTamReservas') }, pos:_mpos }; }
       { const _ca = document.getElementById('carrinhoAtivo'), _cp = document.getElementById('carrinhoPrecos'), _cw = document.getElementById('carrinhoWhats'), _cws = document.getElementById('carrinhoWhatsSempre');
         config.carrinho = { ativo: _ca ? _ca.checked : true, precos: _cp ? _cp.checked : true, whatsapp: _cw ? _cw.value.trim() : '', whatsappSempre: _cws ? _cws.checked : false,
           levantamento: ((document.getElementById('cartLevAtivo') || {}).checked !== false),
