@@ -2317,12 +2317,15 @@
   #modoGate .im-opt:active, #modosBloco .im-opt:active{ filter:brightness(1.12); }
   #introModosWrap .im-opt:active{ filter:brightness(1.12); }
   /* Botões dos modos dentro do cardápio (depois da última categoria, antes do mapa) — mesmo estilo dos ícones de entrada */
-  #modosBloco{ margin:14px 16px 4px; padding:16px 12px 14px; border-radius:18px; background:linear-gradient(160deg, rgba(36,26,16,.94), rgba(14,10,6,.94)); border:1px solid rgba(255,255,255,.08); box-shadow:0 6px 18px rgba(0,0,0,.18); --ic-scale:.9; }   /* escuro neutro, como a sombra da abertura: os ícones leem-se igual em todos os temas */
+  #modosBloco{ margin:18px 16px 6px; padding:0; --ic-scale:.9; }   /* ícones soltos (sem caixa à volta), como na abertura */
+  /* cada ícone tem a sua caixinha escura, como sobre a foto da abertura — lê-se em fundos claros e escuros */
+  #modosBloco.estilo-quadrado .im-ic, #modosBloco.estilo-pilula .im-inner{ background:rgba(24,16,10,.88); border-color:rgba(255,255,255,.22); box-shadow:0 4px 12px rgba(0,0,0,.18); }
+  #modosBloco.estilo-quadrado .im-lb{ color:var(--castanho, #3a2c18); }   /* legenda por baixo do ícone: cor do texto do tema */
   #modosBloco .mb-icons{ display:flex; flex-wrap:wrap; gap:12px 16px; justify-content:center; max-width:640px; margin:0 auto; }
   #modosBloco .im-opt{ color:inherit; -webkit-tap-highlight-color:transparent; }
   #modosBloco.estilo-pilula .im-inner{ min-width:0; }
   #modosBloco .im-opt.on .im-ic, #modosBloco.estilo-pilula .im-opt.on .im-inner{ box-shadow:0 0 0 2px var(--dourado, #c69a3f); }
-  @media (max-width:380px){ #modosBloco{ --ic-scale:.78; padding:14px 8px 12px; } #modosBloco .mb-icons{ gap:10px 10px; } }
+  @media (max-width:380px){ #modosBloco{ --ic-scale:.78; margin:16px 8px 6px; } #modosBloco .mb-icons{ gap:10px 10px; } }
   /* Cores próprias dos ícones (sobrepõem as do modelo) */
   #introModosWrap.im-cores .im-inner, #modoGate.im-cores .im-inner, #modosBloco.im-cores .im-inner{ color:var(--im-cor-ic) !important; }
   #introModosWrap.im-cores.estilo-quadrado .im-ic, #modoGate.im-cores.estilo-quadrado .im-ic, #modosBloco.im-cores.estilo-quadrado .im-ic,
@@ -4877,7 +4880,7 @@
       // O botão antigo "Ver menu" só aparece se NÃO houver modos ativos (ou se o dono o quiser manter). Por defeito está escondido → sem flash.
       try{ document.body.classList.toggle('usa-verbotao', (!window.__modosCfg.ativo || !!window.__modosCfg.verBotao || window.__modosCfg.normal === false)); }catch(e){}
       window.__waGrupo = ((config.agenda && config.agenda.whatsapp) || (config.carrinho && config.carrinho.whatsapp) || '').toString().replace(/\D/g,'').replace(/^00/,'');
-      (function _goModos(){ if(window.__menuOk){ try{ if(window.__initModos) window.__initModos(); }catch(e){} try{ if(window.__renderModosBloco) window.__renderModosBloco(!!window.__ehPreview); }catch(e){} } else setTimeout(_goModos, 60); })();
+      (function _goModos(){ if(window.__menuOk){ try{ if(window.__initModos) window.__initModos(); }catch(e){} try{ if(window.__renderModosBloco) window.__renderModosBloco(!!window.__ehPreview); }catch(e){} try{ if(window.__ajustarCapa) window.__ajustarCapa(); }catch(e){} } else setTimeout(_goModos, 60); })();
       // PILOTO — Fundo do menu independente dos separadores (opcional; vazio = segue o modelo)
       { const _ft = (config.fundoTema || '').toString().trim();
         ['claro','papel','ardosia'].forEach(function(x){ document.body.classList.toggle('fundo-' + x, _ft === x); }); }
@@ -9485,6 +9488,15 @@
       // Nunca reajustar enquanto o utilizador está a fazer scroll (evita saltos)
       if((window.scrollY || window.pageYOffset || 0) > 4) return;
       grid.style.minHeight = '';
+      // Com os botões dos modos (Take away, Grupos…) por baixo das categorias, o espaço extra NÃO pode ficar
+      // entre as categorias e os botões: vai para um espaçador depois dos botões e do mapa.
+      var folga = document.getElementById('capaFolga'); if(folga) folga.style.height = '0px';
+      var usarFolga = !!document.getElementById('modosBloco');
+      function esticar(px){
+        if(!usarFolga){ grid.style.minHeight = (grid.offsetHeight + px) + 'px'; return; }
+        if(!folga){ folga = document.createElement('div'); folga.id = 'capaFolga'; folga.setAttribute('aria-hidden', 'true'); var ref = document.getElementById('anuncioBox') || footer; ref.parentNode.insertBefore(folga, ref); }
+        folga.style.height = px + 'px';
+      }
       // Se o rodapé final está desligado, estica a grelha para encher o ecrã até à barra fixa
       // (senão a página fica curta e vê-se o fundo do html por baixo da barra fixa)
       if(getComputedStyle(footer).display === 'none'){
@@ -9493,13 +9505,13 @@
         if(bar){ var csb = getComputedStyle(bar); if(csb.display !== 'none' && csb.visibility !== 'hidden'){ barTop = bar.getBoundingClientRect().top; } }
         var gridBottom = grid.getBoundingClientRect().bottom;
         var faltam2 = barTop - gridBottom;
-        if(faltam2 > 0){ grid.style.minHeight = (grid.offsetHeight + faltam2) + 'px'; }
+        if(faltam2 > 0){ esticar(faltam2); }
         return;
       }
       // posição do topo do rodapé no documento (independente do scroll — evita saltos)
       var footerTopDoc = footer.getBoundingClientRect().top + (window.scrollY || window.pageYOffset || 0);
       var faltam = window.innerHeight - footerTopDoc;
-      if(faltam > 0){ grid.style.minHeight = (grid.offsetHeight + faltam + 2) + 'px'; }
+      if(faltam > 0){ esticar(faltam + 2); }
     }
     window.__ajustarCapa = ajustarCapa;
     // Só reajusta em mudanças reais (rotação/carregamento), nunca durante o scroll
@@ -9841,6 +9853,7 @@
     window.__modoEscolher = function(m){
       aplicarModo(m);
       try{ if(window.__renderModosBloco) window.__renderModosBloco(false); }catch(e){}   // atualiza os botões dentro do cardápio
+      try{ if(window.__ajustarCapa) window.__ajustarCapa(); }catch(e){}
       if(window.__esconderIntro) window.__esconderIntro();
       if(m === 'reservas'){ setTimeout(function(){ try{ if(window.__abrirAgenda) window.__abrirAgenda(); }catch(e){} }, 380); }   // abre o calendário por cima do menu
     };
@@ -9974,6 +9987,7 @@
           var m = b.getAttribute('data-modo');
           if(m === 'reservas'){ try{ if(window.__abrirAgenda) window.__abrirAgenda(); }catch(e){} return; }   // abre o calendário por cima do menu (como antes)
           aplicarModo(m); window.__renderModosBloco(false);   // muda a vista do menu (carrinho, grupos…) e marca o botão ativo
+          try{ if(window.__ajustarCapa) window.__ajustarCapa(); }catch(e){}   // menos categorias → tudo sobe, sem vazio
         }; });
       }catch(e){}
     };
