@@ -720,8 +720,13 @@ amesadigital.pt</textarea>
       </div>
 
       <div style="margin-top:18px; border-top:1px dotted var(--linha); padding-top:12px;">
-        <div style="font-weight:800; color:var(--dourado-escuro); margin-bottom:6px;">🔘 Botões no fim do menu</div>
-        <p style="margin:0 0 8px; font-size:0.82rem; color:var(--castanho-suave);">Aparecem numa linha <strong>depois da última categoria e antes do mapa</strong>, com o mesmo estilo e cores dos ícones da abertura. Liga só os que este negócio oferece; sem nenhum ligado, a secção não aparece.</p>
+        <div style="font-weight:800; color:var(--dourado-escuro); margin-bottom:6px;">🔘 Botões dos modos (Take away, Grupos…)</div>
+        <p style="margin:0 0 8px; font-size:0.82rem; color:var(--castanho-suave);">Aparecem numa linha dentro do cardápio, com o mesmo estilo e cores dos ícones da abertura. Liga só os que este negócio oferece; sem nenhum ligado, não aparecem.</p>
+        <label for="modoSecao" style="display:block; margin:6px 0 4px; font-size:.85rem; color:var(--castanho); font-weight:700;">Onde aparecem</label>
+        <select id="modoSecao" style="width:100%; padding:9px; border-radius:10px; border:1px solid #d9c9a8; margin-bottom:6px;">
+          <option value="fim">No fim do menu (depois da última categoria, antes do mapa)</option>
+          <option value="topo">No topo (entre o cabeçalho e a primeira categoria)</option>
+        </select>
         <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin:8px 0; font-size:.92rem; color:var(--castanho);"><input type="checkbox" id="modoTakeaway" style="width:auto; margin:0;"> 🛍️ Take away (liga o carrinho; esconde as reservas)</label>
         <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin:8px 0; font-size:.92rem; color:var(--castanho);"><input type="checkbox" id="modoGrupos" style="width:auto; margin:0;"> 👥 Menus de grupo (mostra só as categorias marcadas)</label>
         <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin:8px 0; font-size:.92rem; color:var(--castanho);"><input type="checkbox" id="modoCerimonias" style="width:auto; margin:0;"> 🥂 Cerimónias (mostra só as categorias marcadas)</label>
@@ -2833,6 +2838,7 @@ amesadigital.pt</textarea>
       ['modoTakeaway','modoGrupos','modoCerimonias','modoReservas'].forEach(function(id){ const el = document.getElementById(id); if(!el || el.__ligaModos) return; el.__ligaModos = true;
         el.addEventListener('change', function(){ if(!el.checked) return; const at = document.getElementById('modosAtivo'); if(at && !at.checked){ at.checked = true; at.dispatchEvent(new Event('change', { bubbles:true })); } }); });
       { const e = document.getElementById('modoNormal'); if(e) e.checked = (_m.normal !== false); }
+      { const e = document.getElementById('modoSecao'); if(e) e.value = (_m.secao === 'topo') ? 'topo' : 'fim'; }   // sem valor guardado = no fim (como até agora)
       { const _tm = (_m.tam && typeof _m.tam === 'object') ? _m.tam : {};
         [['modoTamNormal','normal'],['modoTamTakeaway','takeaway'],['modoTamGrupos','grupos'],['modoTamCerimonias','cerimonias'],['modoTamReservas','reservas']].forEach(function(p){
           const el = document.getElementById(p[0]); if(!el) return;
@@ -3784,7 +3790,7 @@ amesadigital.pt</textarea>
         const _estilo = (document.getElementById('modoEstilo') || {}).value || 'pilula';
         const _alinhar = (document.getElementById('modoAlinhar') || {}).value || 'esquerda';
         const _entrada = parseFloat((document.getElementById('modoEntrada') || {}).value) || 0;
-        config.modos = { ativo:_gm('modosAtivo'), normal:_gm('modoNormal'), takeaway:_gm('modoTakeaway'), grupos:_gm('modoGrupos'), cerimonias:_gm('modoCerimonias'), reservas:_gm('modoReservas'), verBotao:_gm('modoVerBotao'), estilo:_estilo, cores:{ on:_gm('modoCoresOn'), icone:((document.getElementById('modoCorIcone')||{}).value||'#ffffff'), fundo:((document.getElementById('modoCorFundo')||{}).value||'#000000'), texto:((document.getElementById('modoCorTexto')||{}).value||'#ffffff'), opacidade:(parseInt((document.getElementById('modoCorOp')||{}).value,10)||0) }, alinhar:_alinhar, anim:_anim, entrada:_entrada, tam: { normal:_tv('modoTamNormal'), takeaway:_tv('modoTamTakeaway'), grupos:_tv('modoTamGrupos'), cerimonias:_tv('modoTamCerimonias'), reservas:_tv('modoTamReservas') }, pos:_mpos }; }
+        config.modos = { ativo:_gm('modosAtivo'), normal:_gm('modoNormal'), takeaway:_gm('modoTakeaway'), grupos:_gm('modoGrupos'), cerimonias:_gm('modoCerimonias'), reservas:_gm('modoReservas'), verBotao:_gm('modoVerBotao'), secao:(((document.getElementById('modoSecao') || {}).value === 'topo') ? 'topo' : 'fim'), estilo:_estilo, cores:{ on:_gm('modoCoresOn'), icone:((document.getElementById('modoCorIcone')||{}).value||'#ffffff'), fundo:((document.getElementById('modoCorFundo')||{}).value||'#000000'), texto:((document.getElementById('modoCorTexto')||{}).value||'#ffffff'), opacidade:(parseInt((document.getElementById('modoCorOp')||{}).value,10)||0) }, alinhar:_alinhar, anim:_anim, entrada:_entrada, tam: { normal:_tv('modoTamNormal'), takeaway:_tv('modoTamTakeaway'), grupos:_tv('modoTamGrupos'), cerimonias:_tv('modoTamCerimonias'), reservas:_tv('modoTamReservas') }, pos:_mpos }; }
       { const _ca = document.getElementById('carrinhoAtivo'), _cp = document.getElementById('carrinhoPrecos'), _cw = document.getElementById('carrinhoWhats'), _cws = document.getElementById('carrinhoWhatsSempre');
         config.carrinho = { ativo: _ca ? _ca.checked : true, precos: _cp ? _cp.checked : true, whatsapp: _cw ? _cw.value.trim() : '', whatsappSempre: _cws ? _cws.checked : false,
           levantamento: ((document.getElementById('cartLevAtivo') || {}).checked !== false),
