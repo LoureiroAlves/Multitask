@@ -749,6 +749,14 @@ amesadigital.pt</textarea>
           <option value="direita">À direita</option>
         </select>
         <label style="display:flex; align-items:center; gap:8px; margin-top:12px; font-size:.85rem; color:var(--castanho); font-weight:700; cursor:pointer;"><input type="checkbox" id="modoVidro" style="width:auto;"> 🪟 Fundo de vidro (transparente com desfoque, como os "Cartões de vidro")</label>
+        <label style="display:flex; align-items:center; gap:8px; margin-top:10px; font-size:.85rem; color:var(--castanho); font-weight:700; cursor:pointer;"><input type="checkbox" id="modoNeon" style="width:auto;"> ✨ Néon nos botões (brilho à volta, como o néon das secções)</label>
+        <div id="modoNeonBox" style="display:none; margin-top:6px; gap:14px; flex-wrap:wrap; align-items:flex-end;">
+          <div><label style="display:block; font-size:.78rem; color:var(--castanho); margin:0 0 3px;">Cor</label><input type="color" id="modoNeonCor" value="#19e9ff" style="width:52px; height:34px; padding:0; border:none; background:none; cursor:pointer;"></div>
+          <div style="flex:1; min-width:150px;"><label style="display:block; font-size:.78rem; color:var(--castanho); margin:0 0 3px;">Piscar</label>
+            <select id="modoNeonPiscar" style="width:100%; padding:8px; border-radius:10px; border:1px solid #d9c9a8;">
+              <option value="">Não pisca</option><option value="2">Devagar</option><option value="1.4">Normal</option><option value="0.8">Depressa</option>
+            </select></div>
+        </div>
         <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin:8px 0; font-size:.92rem; color:var(--castanho);"><input type="checkbox" id="modoTakeaway" style="width:auto; margin:0;"> 🛍️ Take away (liga o carrinho; esconde as reservas)</label>
         <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin:8px 0; font-size:.92rem; color:var(--castanho);"><input type="checkbox" id="modoGrupos" style="width:auto; margin:0;"> 👥 Menus de grupo (mostra só as categorias marcadas)</label>
         <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin:8px 0; font-size:.92rem; color:var(--castanho);"><input type="checkbox" id="modoCerimonias" style="width:auto; margin:0;"> 🥂 Cerimónias (mostra só as categorias marcadas)</label>
@@ -780,6 +788,17 @@ amesadigital.pt</textarea>
       </label>
       <div id="corCabFundoBox" style="display:none; margin-top:6px;">
         <input type="color" id="corCabFundo" value="#1a1a1a" style="width:52px; height:34px; padding:0; border:none; background:none; cursor:pointer;">
+      </div>
+
+      <label style="margin-top:12px; display:flex; align-items:center; gap:8px; cursor:pointer;">
+        <input type="checkbox" id="cabNeonAtivo" style="width:auto;"> ✨ Néon na parte de baixo do cabeçalho (linha luminosa, como o néon das secções)
+      </label>
+      <div id="cabNeonBox" style="display:none; margin-top:6px; gap:14px; flex-wrap:wrap; align-items:flex-end;">
+        <div><label style="display:block; font-size:.78rem; color:var(--castanho); margin:0 0 3px;">Cor</label><input type="color" id="cabNeonCor" value="#19e9ff" style="width:52px; height:34px; padding:0; border:none; background:none; cursor:pointer;"></div>
+        <div style="flex:1; min-width:150px;"><label style="display:block; font-size:.78rem; color:var(--castanho); margin:0 0 3px;">Piscar</label>
+          <select id="cabNeonPiscar" style="width:100%; padding:8px; border-radius:10px; border:1px solid #d9c9a8;">
+            <option value="">Não pisca</option><option value="2">Devagar</option><option value="1.4">Normal</option><option value="0.8">Depressa</option>
+          </select></div>
       </div>
 
       <label for="headerPadrao" style="margin-top:12px;">Base do cabeçalho (padrão)</label>
@@ -1428,12 +1447,14 @@ amesadigital.pt</textarea>
           <label style="display:flex;align-items:center;gap:5px;margin:0;"><input type="checkbox" id="redesCab" style="width:auto;margin:0;" checked> Cabeçalho</label>
           <label style="display:flex;align-items:center;gap:5px;margin:0;"><input type="checkbox" id="redesRod" style="width:auto;margin:0;"> Rodapé (barra de baixo)</label>
           <label style="display:flex;align-items:center;gap:5px;margin:0;"><input type="checkbox" id="redesFlu" style="width:auto;margin:0;"> Flutuante (arrastar)</label>
+          <label style="display:flex;align-items:center;gap:5px;margin:0;"><input type="checkbox" id="redesAbr" style="width:auto;margin:0;"> Abertura (ecrã de entrada)</label>
         </div>
         <div id="redesFlutHint" style="display:none; margin-top:6px;">
           <div class="subtitulo" style="margin:0;">📍 Na pré-visualização, <b>arrasta</b> as redes para onde quiseres.</div>
           <button type="button" id="reporRedesPos" style="margin-top:6px; padding:6px 12px; border:1.5px solid var(--linha); border-radius:8px; background:var(--branco); cursor:pointer; font:inherit; font-size:0.85rem;">↺ Repor posição</button>
         </div>
         <div class="subtitulo" style="margin:5px 0 0;">"Rodapé" = a barra fixa do fundo do ecrã (sempre visível). Ideal para negócios sem cabeçalho.</div>
+        <div class="subtitulo" style="margin:3px 0 0;">"Abertura" = no fundo do ecrã de entrada. Se a abertura estiver desligada, as redes ficam no cabeçalho.</div>
       </div>
     </div>
   </details>
@@ -2639,6 +2660,7 @@ amesadigital.pt</textarea>
         document.getElementById('redesCab').checked = _lc('redes', config.redesLocal, 'cab');
         document.getElementById('redesRod').checked = _lc('redes', config.redesLocal, 'rod');
         document.getElementById('redesFlu').checked = _lc('redes', config.redesLocal, 'flu');
+        { const _ra = document.getElementById('redesAbr'); if(_ra) _ra.checked = config.redesAbr === true; }
         document.getElementById('idiomasFlutHint').style.display = document.getElementById('idiomasFlu').checked ? 'block' : 'none';
         document.getElementById('redesFlutHint').style.display = document.getElementById('redesFlu').checked ? 'block' : 'none'; } }
     document.getElementById('mostrarCamera').checked = config.mostrarCamera !== false;
@@ -2835,6 +2857,11 @@ amesadigital.pt</textarea>
       _sc('expAtivo', _ex.ativo); _sc('expInstalarOn', _ex.instalar); _sc('expPartilharOn', _ex.partilhar); _sc('expTextoOn', _ex.texto); _sc('expVibracaoOn', _ex.vibracao); _sc('expNotifOn', _ex.notif); _sc('expLimparOn', _ex.limpar); }
     { const _m = config.modos || {}; const _sb = function(id, v){ const e = document.getElementById(id); if(e) e.checked = (v === true); };
       _sb('modosAtivo', _m.ativo); _sb('modoTakeaway', _m.takeaway); _sb('modoGrupos', _m.grupos); _sb('modoCerimonias', _m.cerimonias); _sb('modoReservas', _m.reservas); _sb('modoVerBotao', _m.verBotao); _sb('modoVidro', _m.vidro);
+      { const _mn = (_m.neon && typeof _m.neon === 'object') ? _m.neon : null, _on = !!(_mn && _mn.on);   // néon nos botões (sem valor = desligado)
+        const _a = document.getElementById('modoNeon'); if(_a) _a.checked = _on;
+        const _b = document.getElementById('modoNeonBox'); if(_b) _b.style.display = _on ? 'flex' : 'none';
+        const _c = document.getElementById('modoNeonCor'); if(_c) _c.value = (_mn && _mn.cor) || '#19e9ff';
+        const _p = document.getElementById('modoNeonPiscar'); if(_p) _p.value = (_mn && _mn.piscar) ? String(_mn.piscar) : ''; }
       // "Botões no fim do menu": ligar um deles liga também o interruptor geral dos modos (senão não apareceriam)
       ['modoTakeaway','modoGrupos','modoCerimonias','modoReservas'].forEach(function(id){ const el = document.getElementById(id); if(!el || el.__ligaModos) return; el.__ligaModos = true;
         el.addEventListener('change', function(){ if(!el.checked) return; const at = document.getElementById('modosAtivo'); if(at && !at.checked){ at.checked = true; at.dispatchEvent(new Event('change', { bubbles:true })); } }); });
@@ -2881,6 +2908,11 @@ amesadigital.pt</textarea>
       const _a = document.getElementById('corCabFundoAtiva'); if(_a) _a.checked = !!_hf;
       const _b = document.getElementById('corCabFundoBox'); if(_b) _b.style.display = _hf ? 'block' : 'none';
       const _i = document.getElementById('corCabFundo'); if(_i) _i.value = _hf || '#1a1a1a'; }
+    { const _hn = (config.header && config.header.neon) || null, _on = !!(_hn && _hn.on);   // néon do cabeçalho (sem valor = desligado)
+      const _a = document.getElementById('cabNeonAtivo'); if(_a) _a.checked = _on;
+      const _b = document.getElementById('cabNeonBox'); if(_b) _b.style.display = _on ? 'flex' : 'none';
+      const _c = document.getElementById('cabNeonCor'); if(_c) _c.value = (_hn && _hn.cor) || '#19e9ff';
+      const _p = document.getElementById('cabNeonPiscar'); if(_p) _p.value = (_hn && _hn.piscar) ? String(_hn.piscar) : ''; }
     { const _ff = (config.footer && config.footer.corFundo) || '';
       const _a = document.getElementById('corFtrFundoAtiva'); if(_a) _a.checked = !!_ff;
       const _b = document.getElementById('corFtrFundoBox'); if(_b) _b.style.display = _ff ? 'block' : 'none';
@@ -3179,6 +3211,12 @@ amesadigital.pt</textarea>
   { const _a = document.getElementById('corCabFundoAtiva'), _i = document.getElementById('corCabFundo'), _b = document.getElementById('corCabFundoBox');
     if(_a) _a.addEventListener('change', function(){ if(_b) _b.style.display = _a.checked ? 'block' : 'none'; if(window.__agendarPreview) window.__agendarPreview(); });
     if(_i) _i.addEventListener('input', function(){ if(window.__agendarPreview) window.__agendarPreview(); }); }
+  // Néon nos botões dos modos: mostra/esconde as opções
+  { const _a = document.getElementById('modoNeon'), _b = document.getElementById('modoNeonBox');
+    if(_a) _a.addEventListener('change', function(){ if(_b) _b.style.display = _a.checked ? 'flex' : 'none'; }); }
+  // Néon do cabeçalho: mostra/esconde as opções (a pré-visualização atualiza sozinha)
+  { const _a = document.getElementById('cabNeonAtivo'), _b = document.getElementById('cabNeonBox');
+    if(_a) _a.addEventListener('change', function(){ if(_b) _b.style.display = _a.checked ? 'flex' : 'none'; }); }
   // Cor de fundo do rodapé
   { const _a = document.getElementById('corFtrFundoAtiva'), _i = document.getElementById('corFtrFundo'), _b = document.getElementById('corFtrFundoBox');
     if(_a) _a.addEventListener('change', function(){ if(_b) _b.style.display = _a.checked ? 'block' : 'none'; if(window.__agendarPreview) window.__agendarPreview(); });
@@ -3611,6 +3649,8 @@ amesadigital.pt</textarea>
       config.header.realce = false;
       config.header.mostrar = document.getElementById('headerMostrar').checked;
       { const _a = document.getElementById('corCabFundoAtiva'), _i = document.getElementById('corCabFundo'); config.header.corFundo = (_a && _a.checked && _i) ? _i.value : ''; }
+      { const _a = document.getElementById('cabNeonAtivo');
+        config.header.neon = (_a && _a.checked) ? { on:true, cor:((document.getElementById('cabNeonCor') || {}).value || '#19e9ff'), piscar:(parseFloat((document.getElementById('cabNeonPiscar') || {}).value) || 0) } : null; }
       config.mostrarTraducoes = document.getElementById('mostrarTraducoes').checked;
       config.idiomas = {
         pt: document.getElementById('idiomaPt').checked,
@@ -3624,6 +3664,7 @@ amesadigital.pt</textarea>
       config.redesCab = document.getElementById('redesCab').checked;
       config.redesRod = document.getElementById('redesRod').checked;
       config.redesFlu = document.getElementById('redesFlu').checked;
+      { const _ra = document.getElementById('redesAbr'); config.redesAbr = _ra ? _ra.checked : false; }
       config.mostrarCamera = document.getElementById('mostrarCamera').checked;
       { const _pm = document.getElementById('pbMoldura'); config.photobooth = config.photobooth || {}; config.photobooth.moldura = _pm ? _pm.value : 'classica'; }
       config.mostrarAgendaIcon = document.getElementById('mostrarAgendaIcon').checked;
@@ -3791,7 +3832,7 @@ amesadigital.pt</textarea>
         const _estilo = (document.getElementById('modoEstilo') || {}).value || 'pilula';
         const _alinhar = (document.getElementById('modoAlinhar') || {}).value || 'esquerda';
         const _entrada = parseFloat((document.getElementById('modoEntrada') || {}).value) || 0;
-        config.modos = { ativo:_gm('modosAtivo'), normal:_gm('modoNormal'), takeaway:_gm('modoTakeaway'), grupos:_gm('modoGrupos'), cerimonias:_gm('modoCerimonias'), reservas:_gm('modoReservas'), verBotao:_gm('modoVerBotao'), secao:(((document.getElementById('modoSecao') || {}).value === 'topo') ? 'topo' : 'fim'), vidro:_gm('modoVidro'), estilo:_estilo, cores:{ on:_gm('modoCoresOn'), icone:((document.getElementById('modoCorIcone')||{}).value||'#ffffff'), fundo:((document.getElementById('modoCorFundo')||{}).value||'#000000'), texto:((document.getElementById('modoCorTexto')||{}).value||'#ffffff'), opacidade:(parseInt((document.getElementById('modoCorOp')||{}).value,10)||0) }, alinhar:_alinhar, anim:_anim, entrada:_entrada, tam: { normal:_tv('modoTamNormal'), takeaway:_tv('modoTamTakeaway'), grupos:_tv('modoTamGrupos'), cerimonias:_tv('modoTamCerimonias'), reservas:_tv('modoTamReservas') }, pos:_mpos }; }
+        config.modos = { ativo:_gm('modosAtivo'), normal:_gm('modoNormal'), takeaway:_gm('modoTakeaway'), grupos:_gm('modoGrupos'), cerimonias:_gm('modoCerimonias'), reservas:_gm('modoReservas'), verBotao:_gm('modoVerBotao'), secao:(((document.getElementById('modoSecao') || {}).value === 'topo') ? 'topo' : 'fim'), vidro:_gm('modoVidro'), neon:(_gm('modoNeon') ? { on:true, cor:((document.getElementById('modoNeonCor') || {}).value || '#19e9ff'), piscar:(parseFloat((document.getElementById('modoNeonPiscar') || {}).value) || 0) } : null), estilo:_estilo, cores:{ on:_gm('modoCoresOn'), icone:((document.getElementById('modoCorIcone')||{}).value||'#ffffff'), fundo:((document.getElementById('modoCorFundo')||{}).value||'#000000'), texto:((document.getElementById('modoCorTexto')||{}).value||'#ffffff'), opacidade:(parseInt((document.getElementById('modoCorOp')||{}).value,10)||0) }, alinhar:_alinhar, anim:_anim, entrada:_entrada, tam: { normal:_tv('modoTamNormal'), takeaway:_tv('modoTamTakeaway'), grupos:_tv('modoTamGrupos'), cerimonias:_tv('modoTamCerimonias'), reservas:_tv('modoTamReservas') }, pos:_mpos }; }
       { const _ca = document.getElementById('carrinhoAtivo'), _cp = document.getElementById('carrinhoPrecos'), _cw = document.getElementById('carrinhoWhats'), _cws = document.getElementById('carrinhoWhatsSempre');
         config.carrinho = { ativo: _ca ? _ca.checked : true, precos: _cp ? _cp.checked : true, whatsapp: _cw ? _cw.value.trim() : '', whatsappSempre: _cws ? _cws.checked : false,
           levantamento: ((document.getElementById('cartLevAtivo') || {}).checked !== false),
@@ -4086,7 +4127,7 @@ amesadigital.pt</textarea>
     });
   }
   _grupoExclusivo(['idiomasCab','idiomasRod','idiomasFlu']);
-  _grupoExclusivo(['redesCab','redesRod','redesFlu']);
+  _grupoExclusivo(['redesCab','redesRod','redesFlu','redesAbr']);
   { const _ri = document.getElementById('reporIdiomasPos'); if(_ri) _ri.addEventListener('click', function(){ delete config.idiomasPos; if(window.__agendarPreview) window.__agendarPreview(); }); }
   { const _rr = document.getElementById('reporRedesPos'); if(_rr) _rr.addEventListener('click', function(){ delete config.redesPos; if(window.__agendarPreview) window.__agendarPreview(); }); }
   document.getElementById('introRotNome').addEventListener('input', e => {

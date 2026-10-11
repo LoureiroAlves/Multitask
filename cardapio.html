@@ -298,6 +298,11 @@
     border-bottom:1px solid var(--cab-cor, var(--castanho));
     text-align:center;
   }
+  /* Néon na parte de baixo do cabeçalho — mesmo brilho do néon das secções (8px / 18px) */
+  header.cab-neon::after{ content:''; position:absolute; left:0; right:0; bottom:-1px; height:2px; z-index:3; pointer-events:none; background:var(--cab-neon-cor, #19e9ff); box-shadow:0 0 2px #fff, 0 0 8px var(--cab-neon-cor, #19e9ff), 0 0 18px var(--cab-neon-cor, #19e9ff); }
+  header.cab-neon.cab-neon-pisca::after{ animation:cabNeonPisca var(--cab-neon-dur, 1.4s) ease-in-out infinite; }
+  @keyframes cabNeonPisca{ 0%,100%{ opacity:1; } 50%{ opacity:.2; } }
+  @media (prefers-reduced-motion: reduce){ header.cab-neon.cab-neon-pisca::after{ animation:none; } }
   /* Cabeçalho fixo no topo (o menu passa por baixo) */
   body.cabecalho-fixo header{ position:sticky; top:0; box-shadow:0 4px 14px rgba(0,0,0,0.16); }
   /* Secção escondida do menu principal (só abre pelo mosaico) */
@@ -386,6 +391,8 @@
   .redes-icones a{ width:34px; height:34px; border-radius:50%; background:rgba(255,255,255,0.2); border:1px solid rgba(255,255,255,0.3); display:flex; align-items:center; justify-content:center; color:var(--branco); transition:all .15s ease; cursor:pointer; }
   .redes-icones a:hover{ background:rgba(255,255,255,0.3); border-color:rgba(255,255,255,0.5); }
   .redes-icones a svg{ width:17px; height:17px; fill:currentColor; }
+  /* Redes na abertura: mesmo aspeto do cabeçalho, centradas no fundo do ecrã de entrada */
+  #introOverlay .redes-icones.redes-abertura{ position:absolute; left:0; right:0; bottom:calc(30px + env(safe-area-inset-bottom)); justify-content:center; z-index:6; }
   /* Slot no rodapé para idiomas/redes movidos para lá */
   .footer-extras{ position:relative; z-index:2; display:none; flex-direction:column; align-items:center; gap:12px; margin-top:20px; }
   .footer-extras.on{ display:flex; }
@@ -2342,10 +2349,17 @@
   /* cada ícone tem a sua caixinha escura, como sobre a foto da abertura — lê-se em fundos claros e escuros */
   #modosBloco.estilo-quadrado .im-ic, #modosBloco.estilo-pilula .im-inner{ background:rgba(24,16,10,.88); border-color:rgba(255,255,255,.22); box-shadow:0 4px 12px rgba(0,0,0,.18); }
   #modosBloco.estilo-quadrado .im-lb{ color:var(--castanho, #3a2c18); }   /* legenda por baixo do ícone: cor do texto do tema */
-  #modosBloco.mb-topo{ margin:14px 16px 2px; }
+  #modosBloco.mb-topo{ margin:14px 16px 2px; }   /* no topo: entre o cabeçalho e a primeira categoria */
   /* Fundo de vidro nos botões (mesmo aspeto dos "Cartões de vidro"); a legenda usa a cor do texto do tema para se ler em qualquer fundo */
   #modosBloco.mb-vidro.estilo-quadrado .im-ic, #modosBloco.mb-vidro.estilo-pilula .im-inner{ background:rgba(255,255,255,0.10); -webkit-backdrop-filter:blur(7px) saturate(1.25); backdrop-filter:blur(7px) saturate(1.25); border:1px solid rgba(255,255,255,0.28); box-shadow:0 4px 20px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.35); }
-  #modosBloco.mb-vidro.estilo-pilula .im-lb{ color:var(--castanho, #3a2c18); }   /* no topo: entre o cabeçalho e a primeira categoria */
+  #modosBloco.mb-vidro.estilo-pilula .im-lb{ color:var(--castanho, #3a2c18); }
+  /* Néon nos botões dos modos — mesmo brilho do néon das secções (8px / 18px); o botão ativo mantém-se destacado */
+  #modosBloco.mb-neon.estilo-quadrado .im-ic, #modosBloco.mb-neon.estilo-pilula .im-inner,
+  #modosBloco.mb-neon .im-opt.on .im-ic, #modosBloco.mb-neon.estilo-pilula .im-opt.on .im-inner{ border-color:var(--mb-neon-cor, #19e9ff); box-shadow:0 0 8px var(--mb-neon-cor, #19e9ff), 0 0 18px var(--mb-neon-cor, #19e9ff); }
+  #modosBloco.mb-neon .im-opt.on .im-ic, #modosBloco.mb-neon.estilo-pilula .im-opt.on .im-inner{ border-width:2.5px; }
+  #modosBloco.mb-neon.mb-neon-pisca.estilo-quadrado .im-ic, #modosBloco.mb-neon.mb-neon-pisca.estilo-pilula .im-inner{ animation:mbNeonPisca var(--mb-neon-dur, 1.4s) ease-in-out infinite; }
+  @keyframes mbNeonPisca{ 0%,100%{ box-shadow:0 0 8px var(--mb-neon-cor, #19e9ff), 0 0 18px var(--mb-neon-cor, #19e9ff); } 50%{ box-shadow:0 0 0 transparent; } }
+  @media (prefers-reduced-motion: reduce){ #modosBloco.mb-neon-pisca .im-ic, #modosBloco.mb-neon-pisca .im-inner{ animation:none !important; } }
   #modosBloco .mb-icons{ display:flex; flex-wrap:wrap; gap:12px 16px; justify-content:center; max-width:640px; margin:0 auto; }
   #modosBloco .im-opt{ color:inherit; -webkit-tap-highlight-color:transparent; }
   #modosBloco.estilo-pilula .im-inner{ min-width:0; }
@@ -3630,6 +3644,9 @@
     }
     var idi = _locs('idiomas', config.idiomasLocal);
     var red = _locs('redes', config.redesLocal);
+    // Redes na ABERTURA (opção no editor): só se a abertura vai mesmo aparecer; senão ficam no cabeçalho (nunca desaparecem)
+    var _redesAbr = !!config.redesAbr && !!(config.intro && config.intro.ativo) && !window.__refrescando && !window.__esconderijo;
+    if(config.redesAbr && !_redesAbr){ red.cab = true; }
     if(_ls){
       _limparEstiloFlutua(_ls);
       if(_hdr && _ls.parentNode !== _hdr) _hdr.appendChild(_ls);
@@ -3643,6 +3660,12 @@
       _rd.style.display = (_anyR && red.cab) ? '' : 'none';
       if(_anyR && red.rod && _barra) _barra.appendChild(_cloneExtra(_rd));
       if(_anyR && red.flu) _flutuaColocar(_cloneExtra(_rd), config.redesPos, { x:4, y:2 }, 'redes');
+      if(_anyR && _redesAbr){
+        var _ovA = document.getElementById('introOverlay');
+        if(_ovA){ var _cA = _cloneExtra(_rd); _cA.classList.add('redes-abertura');
+          _cA.addEventListener('click', function(e){ e.stopPropagation(); });   // tocar numa rede abre-a, não fecha a abertura
+          _ovA.appendChild(_cA); }
+      }
     }
     if(_barra) _barra.classList.toggle('on', _barra.children.length > 0);
     try{ document.querySelectorAll('.lang-switch button').forEach(function(b){ b.classList.toggle('active', b.dataset.lang === idiomaAtual); }); }catch(e){}
@@ -5024,6 +5047,10 @@
       // Cores próprias do cabeçalho e do rodapé — independentes do tema e do fundo da página
       { const rs = document.documentElement.style;
         if(config.header && config.header.corFundo){ rs.setProperty('--cab-cor', config.header.corFundo); } else { rs.removeProperty('--cab-cor'); }
+        { const _he = document.querySelector('header'), _hn = config.header && config.header.neon, _on = !!(_hn && _hn.on), _pi = _on ? (parseFloat(_hn.piscar) || 0) : 0;   // néon na parte de baixo do cabeçalho
+          if(_he){ _he.classList.toggle('cab-neon', _on); _he.classList.toggle('cab-neon-pisca', _pi > 0);
+            if(_on) _he.style.setProperty('--cab-neon-cor', _hn.cor || '#19e9ff'); else _he.style.removeProperty('--cab-neon-cor');
+            if(_pi > 0) _he.style.setProperty('--cab-neon-dur', _pi + 's'); else _he.style.removeProperty('--cab-neon-dur'); } }
         if(config.footer && config.footer.corFundo){ rs.setProperty('--ftr-cor', config.footer.corFundo); } else { rs.removeProperty('--ftr-cor'); }
       }
       // Fundo do cardápio (liso / cor / gradiente / imagem / textura)
@@ -10034,6 +10061,9 @@
         var sec = document.createElement('section'); sec.id = 'modosBloco';
         sec.className = 'estilo-' + (cfg.estilo || 'pilula');
         if(cfg.vidro) sec.classList.add('mb-vidro');   // fundo de vidro (opção no editor)
+        { var _mn = (cfg.neon && typeof cfg.neon === 'object' && cfg.neon.on) ? cfg.neon : null, _mp = _mn ? (parseFloat(_mn.piscar) || 0) : 0;   // néon nos botões (opção no editor)
+          if(_mn){ sec.classList.add('mb-neon'); sec.style.setProperty('--mb-neon-cor', _mn.cor || '#19e9ff'); }
+          if(_mp > 0){ sec.classList.add('mb-neon-pisca'); sec.style.setProperty('--mb-neon-dur', _mp + 's'); } }
         try{ window.__imAplicarCores(sec, cfg); }catch(e){}
         sec.style.setProperty('--im-just', 'center');
         sec.innerHTML = '<div class="mb-icons">' + lista.map(function(m){
