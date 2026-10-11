@@ -392,7 +392,9 @@
   .redes-icones a:hover{ background:rgba(255,255,255,0.3); border-color:rgba(255,255,255,0.5); }
   .redes-icones a svg{ width:17px; height:17px; fill:currentColor; }
   /* Redes na abertura: mesmo aspeto do cabeçalho, centradas no fundo do ecrã de entrada */
-  #introOverlay .redes-icones.redes-abertura{ position:absolute; left:0; right:0; bottom:calc(30px + env(safe-area-inset-bottom)); justify-content:center; z-index:6; }
+  #introOverlay .redes-icones.redes-abertura{ position:absolute; left:0; right:0; bottom:calc(30px + env(safe-area-inset-bottom)); justify-content:center; z-index:6; gap:calc(10px * var(--rs, 1)); transform:translate(var(--rx, 0px), var(--ry, 0px)); pointer-events:none; }
+  #introOverlay .redes-icones.redes-abertura a{ pointer-events:auto; width:calc(34px * var(--rs, 1)); height:calc(34px * var(--rs, 1)); }
+  #introOverlay .redes-icones.redes-abertura a svg{ width:calc(17px * var(--rs, 1)); height:calc(17px * var(--rs, 1)); }
   /* Slot no rodapé para idiomas/redes movidos para lá */
   .footer-extras{ position:relative; z-index:2; display:none; flex-direction:column; align-items:center; gap:12px; margin-top:20px; }
   .footer-extras.on{ display:flex; }
@@ -3663,8 +3665,13 @@
       if(_anyR && _redesAbr){
         var _ovA = document.getElementById('introOverlay');
         if(_ovA){ var _cA = _cloneExtra(_rd); _cA.classList.add('redes-abertura');
+          // Posição (arrastada no editor) e tamanho: o grupo move-se e cresce junto → sempre centrados entre si, à mesma altura e com o mesmo espaçamento
+          var _rp = (config.redesAbrPos && typeof config.redesAbrPos === 'object') ? config.redesAbrPos : {};
+          _cA.style.setProperty('--rx', (parseFloat(_rp.x) || 0) + 'px'); _cA.style.setProperty('--ry', (parseFloat(_rp.y) || 0) + 'px');
+          _cA.style.setProperty('--rs', Math.max(0.6, Math.min(2.2, parseFloat(config.redesAbrTam) || 1)));
           _cA.addEventListener('click', function(e){ e.stopPropagation(); });   // tocar numa rede abre-a, não fecha a abertura
-          _ovA.appendChild(_cA); }
+          _ovA.appendChild(_cA);
+          if(window.__PREVIEW || window.__ehPreview){ _cA.style.pointerEvents = 'auto'; try{ _introArrastavel(_cA, '--rx', '--ry', 'redesabr'); }catch(e){} } }   // no editor: arrastar para posicionar
       }
     }
     if(_barra) _barra.classList.toggle('on', _barra.children.length > 0);

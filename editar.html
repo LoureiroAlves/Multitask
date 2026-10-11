@@ -1455,6 +1455,12 @@ amesadigital.pt</textarea>
         </div>
         <div class="subtitulo" style="margin:5px 0 0;">"Rodapé" = a barra fixa do fundo do ecrã (sempre visível). Ideal para negócios sem cabeçalho.</div>
         <div class="subtitulo" style="margin:3px 0 0;">"Abertura" = no fundo do ecrã de entrada. Se a abertura estiver desligada, as redes ficam no cabeçalho.</div>
+        <div id="redesAbrBox" style="display:none; margin-top:8px; padding:8px 10px; border:1px solid #e3d9c4; border-radius:10px;">
+          <label for="redesAbrTam" style="display:block; font-size:.82rem; color:var(--castanho); margin:0 0 3px;">Tamanho dos ícones na abertura — <span id="redesAbrTamVal">100%</span></label>
+          <input type="range" id="redesAbrTam" min="60" max="220" step="10" value="100" style="width:100%; accent-color:var(--dourado);">
+          <div class="subtitulo" style="margin:6px 0 0;">📍 Mostra a abertura na pré-visualização e <b>arrasta</b> as redes para onde quiseres — movem-se juntas, sempre alinhadas e com o mesmo espaço entre elas.</div>
+          <button type="button" id="reporRedesAbrPos" style="margin-top:6px; padding:6px 12px; border:1.5px solid var(--linha); border-radius:8px; background:var(--branco); cursor:pointer; font:inherit; font-size:0.85rem;">↺ Repor posição (fundo, ao centro)</button>
+        </div>
       </div>
     </div>
   </details>
@@ -1576,6 +1582,7 @@ amesadigital.pt</textarea>
       <input type="text" id="redeFacebook" placeholder="https://www.facebook.com/oteurestaurante">
       <label for="redeWhatsapp">WhatsApp (número com indicativo do país)</label>
       <input type="text" id="redeWhatsapp" placeholder="Ex: 351912345678">
+      <button type="button" id="usarWaReservas" style="margin-top:6px; padding:6px 12px; border:1.5px solid var(--linha); border-radius:8px; background:var(--branco); cursor:pointer; font:inherit; font-size:0.85rem;">📲 Usar o número do WhatsApp das Reservas/Carrinho</button>
       <div class="ajuda" style="margin-top:4px;">Escreve o número com o indicativo do país e sem espaços (Portugal = 351). Ao tocar no ícone, abre a conversa no WhatsApp.</div>
       <hr style="border:none; border-top:1px solid var(--linha); margin:16px 0;">
       <label for="locMorada">📍 Morada (para o mapa "Como chegar" no cardápio)</label>
@@ -2661,6 +2668,8 @@ amesadigital.pt</textarea>
         document.getElementById('redesRod').checked = _lc('redes', config.redesLocal, 'rod');
         document.getElementById('redesFlu').checked = _lc('redes', config.redesLocal, 'flu');
         { const _ra = document.getElementById('redesAbr'); if(_ra) _ra.checked = config.redesAbr === true; }
+        { const _t = document.getElementById('redesAbrTam'), _v = Math.round((parseFloat(config.redesAbrTam) || 1) * 100); if(_t) _t.value = _v; const _tv = document.getElementById('redesAbrTamVal'); if(_tv) _tv.textContent = _v + '%';
+          const _bx = document.getElementById('redesAbrBox'); if(_bx) _bx.style.display = config.redesAbr === true ? 'block' : 'none'; }
         document.getElementById('idiomasFlutHint').style.display = document.getElementById('idiomasFlu').checked ? 'block' : 'none';
         document.getElementById('redesFlutHint').style.display = document.getElementById('redesFlu').checked ? 'block' : 'none'; } }
     document.getElementById('mostrarCamera').checked = config.mostrarCamera !== false;
@@ -3665,6 +3674,7 @@ amesadigital.pt</textarea>
       config.redesRod = document.getElementById('redesRod').checked;
       config.redesFlu = document.getElementById('redesFlu').checked;
       { const _ra = document.getElementById('redesAbr'); config.redesAbr = _ra ? _ra.checked : false; }
+      { const _t = document.getElementById('redesAbrTam'); config.redesAbrTam = _t ? (parseInt(_t.value, 10) || 100) / 100 : 1; }   // a posição (config.redesAbrPos) vem do arrasto na pré-visualização
       config.mostrarCamera = document.getElementById('mostrarCamera').checked;
       { const _pm = document.getElementById('pbMoldura'); config.photobooth = config.photobooth || {}; config.photobooth.moldura = _pm ? _pm.value : 'classica'; }
       config.mostrarAgendaIcon = document.getElementById('mostrarAgendaIcon').checked;
@@ -4128,6 +4138,16 @@ amesadigital.pt</textarea>
   }
   _grupoExclusivo(['idiomasCab','idiomasRod','idiomasFlu']);
   _grupoExclusivo(['redesCab','redesRod','redesFlu','redesAbr']);
+  { const _ra = document.getElementById('redesAbr'), _bx = document.getElementById('redesAbrBox');
+    const _sync = function(){ if(_bx) _bx.style.display = (_ra && _ra.checked) ? 'block' : 'none'; };
+    ['redesCab','redesRod','redesFlu','redesAbr'].forEach(function(id){ const e = document.getElementById(id); if(e) e.addEventListener('change', _sync); });
+    const _t = document.getElementById('redesAbrTam'), _tv = document.getElementById('redesAbrTamVal');
+    if(_t) _t.addEventListener('input', function(){ if(_tv) _tv.textContent = _t.value + '%'; });
+    const _rp = document.getElementById('reporRedesAbrPos'); if(_rp) _rp.addEventListener('click', function(){ delete config.redesAbrPos; if(window.__agendarPreview) window.__agendarPreview(); }); }
+  { const _w = document.getElementById('redeWhatsapp'), _bw = document.getElementById('usarWaReservas');
+    if(_bw) _bw.addEventListener('click', function(){ const n = ((config.agenda && config.agenda.whatsapp) || (config.carrinho && config.carrinho.whatsapp) || '').toString().replace(/\D/g, '').replace(/^00/, '');
+      if(!n){ alert('Este negócio ainda não tem número de WhatsApp nas Reservas nem no Carrinho.'); return; }
+      if(_w){ _w.value = n; _w.dispatchEvent(new Event('input', { bubbles:true })); } }); }
   { const _ri = document.getElementById('reporIdiomasPos'); if(_ri) _ri.addEventListener('click', function(){ delete config.idiomasPos; if(window.__agendarPreview) window.__agendarPreview(); }); }
   { const _rr = document.getElementById('reporRedesPos'); if(_rr) _rr.addEventListener('click', function(){ delete config.redesPos; if(window.__agendarPreview) window.__agendarPreview(); }); }
   document.getElementById('introRotNome').addEventListener('input', e => {
@@ -6073,6 +6093,7 @@ amesadigital.pt</textarea>
         if(d.alvo === 'nome'){ document.getElementById('introPosNomeX').value = d.x; document.getElementById('introPosNomeY').value = d.y; }
         else if(d.alvo === 'sub'){ document.getElementById('introPosSubX').value = d.x; document.getElementById('introPosSubY').value = d.y; }
         else if(d.alvo === 'botao'){ document.getElementById('introPosBotaoX').value = d.x; document.getElementById('introPosBotaoY').value = d.y; }
+        else if(d.alvo === 'redesabr'){ config.redesAbrPos = { x:d.x, y:d.y }; if(window.__agendarPreview) window.__agendarPreview(); }
         else if(typeof d.alvo === 'string' && d.alvo.indexOf('texto:') === 0 && window.__setIntroTextoPos){ window.__setIntroTextoPos(parseInt(d.alvo.slice(6), 10), d.x, d.y); }
         else if(typeof d.alvo === 'string' && d.alvo.indexOf('botaolivre:') === 0 && window.__setIntroBotaoLivrePos){ window.__setIntroBotaoLivrePos(parseInt(d.alvo.slice(11), 10), d.x, d.y); }
         else if(typeof d.alvo === 'string' && d.alvo.indexOf('modo:') === 0){ const _mm = d.alvo.slice(5); if(!config.modos || typeof config.modos !== 'object') config.modos = {}; if(!config.modos.pos || typeof config.modos.pos !== 'object') config.modos.pos = {}; config.modos.pos[_mm] = { x:d.x, y:d.y }; if(window.__agendarPreview) window.__agendarPreview(); }
