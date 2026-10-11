@@ -3646,8 +3646,9 @@
     }
     var idi = _locs('idiomas', config.idiomasLocal);
     var red = _locs('redes', config.redesLocal);
-    // Redes na ABERTURA (opção no editor): só se a abertura vai mesmo aparecer; senão ficam no cabeçalho (nunca desaparecem)
-    var _redesAbr = !!config.redesAbr && !!(config.intro && config.intro.ativo) && !window.__refrescando && !window.__esconderijo;
+    // Redes na ABERTURA (opção no editor). Só vão para o cabeçalho se a abertura estiver DESLIGADA nas definições
+    // (ou no modo esconderijo, onde nunca há abertura). Ao "puxar para atualizar" ficam na abertura, como o dono escolheu.
+    var _redesAbr = !!config.redesAbr && !!(config.intro && config.intro.ativo) && !window.__esconderijo;
     if(config.redesAbr && !_redesAbr){ red.cab = true; }
     if(_ls){
       _limparEstiloFlutua(_ls);
