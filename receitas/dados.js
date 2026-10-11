@@ -46,12 +46,19 @@
     _receitas: async function(opc){
       opc = opc || {};
       var pag = Math.max(0, opc.pagina || 0), n = opc.porPagina || POR_PAGINA;
-      var c = sb.from('receitas').select(LEVE, { count:'exact' }).order('ordem').order('nome').range(pag * n, pag * n + n - 1);
-      if(opc.categoriaId) c = c.eq('categoria_id', opc.categoriaId);
-      if(!opc.incluirRascunhos) c = c.eq('publicado', true);
       var pesq = q(opc.pesquisa).trim();
-      if(pesq) pesq.split(/\s+/).slice(0, 5).forEach(function(p){ c = c.ilike('pesquisa', '%' + p.replace(/[%_]/g, '') + '%'); });
-      var r = await c; var d = erro(r) || [];
+      function consulta(comExtra){
+        var c = sb.from('receitas').select(LEVE, { count:'exact' }).order('ordem').order('nome').range(pag * n, pag * n + n - 1);
+        // categoria principal OU categoria extra (coluna categorias_extra)
+        if(opc.categoriaId) c = comExtra ? c.or('categoria_id.eq.' + opc.categoriaId + ',categorias_extra.cs.{' + opc.categoriaId + '}') : c.eq('categoria_id', opc.categoriaId);
+        if(!opc.incluirRascunhos) c = c.eq('publicado', true);
+        if(pesq) pesq.split(/\s+/).slice(0, 5).forEach(function(p){ c = c.ilike('pesquisa', '%' + p.replace(/[%_]/g, '') + '%'); });
+        return c;
+      }
+      var r = await consulta(true);
+      // a coluna ainda não existe (SQL receitas-varias-categorias.sql por correr): lista só pela categoria principal
+      if(r.error && opc.categoriaId && /categorias_extra/.test(String(r.error.message || ''))){ r = await consulta(false); }
+      var d = erro(r) || [];
       return { lista:d, total:(r.count == null ? d.length : r.count), pagina:pag, porPagina:n };
     },
     receitaPorId: async function(id){ return erro(await sb.from('receitas').select('id,slug,categoria_id,dados,publicado,ordem').eq('id', id).maybeSingle()); },
