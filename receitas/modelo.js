@@ -57,6 +57,8 @@
     if(!r.nome) av.push('Falta o nome da receita.');
     r.id = slug(j.id || j.slug || r.nome);
     r.categoria = slug(j.categoria || '');
+    // outras categorias onde a receita também aparece (slugs; nunca a principal, sem repetidos)
+    r.categoriasExtra = (Array.isArray(j.categoriasExtra) ? j.categoriasExtra : []).map(function(x){ return slug(x); }).filter(function(x, i, arr){ return x && x !== r.categoria && arr.indexOf(x) === i; });
     r.descricao = txt(j.descricao);
     r.porcoes = Math.max(1, int(j.porcoes || j.pessoas, 4));
     var t = j.tempo || {};
