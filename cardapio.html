@@ -2409,7 +2409,7 @@
   body.texto-grande .categoria-painel-conteudo .grupo-prato > summary, body.texto-grande .categoria-painel-conteudo .grupo-vinho > summary{ font-size:1.08em !important; }
 
   /* ===== Cartão de fidelidade ===== */
-  #fidOverlay{ position:fixed; inset:0; z-index:600; background:rgba(0,0,0,0); display:flex; align-items:flex-end; justify-content:center; padding:0; pointer-events:none; transition:background .32s ease; }
+  #fidOverlay{ position:fixed; inset:0; z-index:600; background:rgba(0,0,0,0); display:flex; align-items:flex-end; justify-content:center; padding:calc(12px + var(--sa-top, env(safe-area-inset-top))) 0 0; pointer-events:none; transition:background .32s ease; }   /* topo: nunca por baixo do entalhe/coluna de som */
   #fidOverlay.aberto{ background:rgba(0,0,0,0.55); pointer-events:auto; }
 
   /* ===== Agenda / Reservas ===== */
@@ -2471,7 +2471,7 @@
   .ag-btn:disabled{ opacity:.45; cursor:default; }
   .ag-fechar{ background:none; border:none; color:var(--castanho-suave); font-size:0.9rem; cursor:pointer; display:block; margin:12px auto 0; text-decoration:underline; }
   .ag-passo-tit{ font-size:0.8rem; font-weight:700; color:var(--dourado-escuro); margin:14px 0 4px; }
-  .fid-card{ background:var(--branco); width:100%; max-width:440px; border-radius:18px 18px 0 0; padding:20px 18px calc(20px + var(--sa-bottom, env(safe-area-inset-bottom))); transform:translateY(100%); pointer-events:none; }
+  .fid-card{ background:var(--branco); width:100%; max-width:440px; border-radius:18px 18px 0 0; padding:20px 18px calc(20px + var(--sa-bottom, env(safe-area-inset-bottom))); transform:translateY(100%); pointer-events:none; max-height:100%; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; box-sizing:border-box; }   /* se não couber, faz scroll por dentro */
   #fidOverlay.aberto .fid-card{ transform:translateY(0); pointer-events:auto; }
   .fid-stamps{ display:grid; grid-template-columns:repeat(4, 1fr); gap:10px; margin:6px 0; }
   .fid-stamp{ aspect-ratio:1/1; border-radius:50%; border:2px dashed var(--linha); display:flex; align-items:center; justify-content:center; font-size:1.4rem; color:var(--castanho-suave); }
