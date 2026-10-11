@@ -2472,7 +2472,12 @@
   .ag-fechar{ background:none; border:none; color:var(--castanho-suave); font-size:0.9rem; cursor:pointer; display:block; margin:12px auto 0; text-decoration:underline; }
   .ag-passo-tit{ font-size:0.8rem; font-weight:700; color:var(--dourado-escuro); margin:14px 0 4px; }
   .fid-card{ background:var(--branco); width:100%; max-width:440px; border-radius:18px 18px 0 0; padding:20px 18px calc(20px + var(--sa-bottom, env(safe-area-inset-bottom))); transform:translateY(100%); pointer-events:none; max-height:100%; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; box-sizing:border-box; }   /* se não couber, faz scroll por dentro */
-  #fidOverlay.aberto .fid-card{ transform:translateY(0); pointer-events:auto; }
+  #fidOverlay.aberto .fid-card{ transform:translateY(0); pointer-events:auto; transition:transform .5s cubic-bezier(.32,.72,0,1); }
+  .fid-card{ transition:transform .34s cubic-bezier(.4,0,1,1); will-change:transform; }   /* abrir/fechar como as Reservas */
+  #fidOverlay.aberto{ transition:background .5s cubic-bezier(.32,.72,0,1); }
+  .fid-card::before{ content:''; display:block; width:42px; height:5px; border-radius:3px; background:var(--linha); margin:-8px auto 12px; transition:background .2s; }   /* pega para arrastar */
+  .fid-card.a-arrastar::before{ background:var(--castanho-suave); }
+  .fid-card h3{ cursor:grab; -webkit-user-select:none; user-select:none; touch-action:none; }
   .fid-stamps{ display:grid; grid-template-columns:repeat(4, 1fr); gap:10px; margin:6px 0; }
   .fid-stamp{ aspect-ratio:1/1; border-radius:50%; border:2px dashed var(--linha); display:flex; align-items:center; justify-content:center; font-size:1.4rem; color:var(--castanho-suave); }
   .fid-stamp.on{ background:linear-gradient(180deg,#c79a3b,var(--dourado)); border-style:solid; border-color:var(--dourado); color:#fff; box-shadow:0 2px 4px rgba(74,56,32,0.2); }
@@ -6805,6 +6810,71 @@
   // ==========================================================
   //  CARTÃO DE FIDELIDADE
   // ==========================================================
+  // ==========================================================
+  //  Folha que fecha a arrastar para baixo (estilo iOS) — usada pelas Reservas e pelo Cartão de fidelidade.
+  //  A folha acompanha o dedo; puxar além de 110 px (ou um "flick" rápido) fecha; largar antes volta suavemente;
+  //  puxar para cima tem resistência elástica; o fundo clareia conforme a posição. (Código que era só das Reservas.)
+  // ==========================================================
+  window.__folhaArrastavel = function(ov, card, opts){
+    opts = opts || {};
+    var y0=0, x0=0, dy=0, startY=0, drag=false, decidiu=false, naZona=false;
+    var H=1, vy=0, yPrev=0, tPrev=0;
+    var ABRE_ESCURO = (opts.escuro != null) ? opts.escuro : 0.5, LIMITE = 110, FLICK = 0.5;   // fechar: >110px OU velocidade > 0.5 px/ms
+    var CURVA_ABRIR='cubic-bezier(.32,.72,0,1)', CURVA_FECHAR='cubic-bezier(.4,0,1,1)';
+    function _zonaPega(e){ return opts.zona ? !!opts.zona(e) : ((e.clientY - card.getBoundingClientRect().top) < 92); }
+    function _resist(d){ return d < 0 ? -Math.pow(-d, 0.82) : d; }   // resistência elástica ao subir
+    function _limpar(){ card.style.transition=''; card.style.transform=''; ov.style.transition=''; ov.style.background=''; }
+    card.addEventListener('pointerdown', function(e){
+      if(e.pointerType==='mouse' && e.button!==0) return;
+      y0=e.clientY; x0=e.clientX; dy=0; drag=false; decidiu=false;
+      naZona = _zonaPega(e);
+      yPrev=e.clientY; tPrev=(e.timeStamp||performance.now()); vy=0;
+      H = card.getBoundingClientRect().height || 1;
+    });
+    card.addEventListener('pointermove', function(e){
+      if(!naZona) return;
+      if(decidiu && !drag) return;
+      var d = e.clientY - y0, dx = e.clientX - x0;
+      if(!drag){
+        if(Math.abs(d) < 6 && Math.abs(dx) < 6) return;
+        if(Math.abs(d) > Math.abs(dx)){   // gesto mais vertical que horizontal -> arrasto da folha
+          drag=true; startY=e.clientY;   // ancora AQUI: o movimento começa em 0, sem o salto do limiar
+          card.style.transition='none'; ov.style.transition='none'; card.classList.add('a-arrastar');
+          try{ card.setPointerCapture(e.pointerId); }catch(_){}
+        } else { decidiu=true; return; }
+      }
+      var now=(e.timeStamp||performance.now()), dt=now-tPrev;
+      if(dt>0){ vy=(e.clientY-yPrev)/dt; yPrev=e.clientY; tPrev=now; }   // velocidade instantânea (px/ms)
+      dy = e.clientY - startY;
+      var eff=_resist(dy);
+      card.style.transform = 'translate3d(0,'+eff+'px,0)';   // 3d -> camada GPU, sem tremura
+      var prog = Math.max(0, Math.min(1, (eff>0?eff:0)/H));
+      ov.style.background = 'rgba(0,0,0,'+(ABRE_ESCURO*(1-prog)).toFixed(3)+')';
+      if(e.cancelable) e.preventDefault();
+    });
+    function fim(){
+      naZona=false;
+      if(!drag) return; drag=false;
+      card.classList.remove('a-arrastar');
+      var fecha = (dy > LIMITE) || (vy > FLICK);
+      // fim determinístico com transições EXPLÍCITAS (não depende de reflow nem de troca de classe)
+      if(fecha){
+        card.style.transition='transform .34s '+CURVA_FECHAR; ov.style.transition='background .34s '+CURVA_FECHAR;
+        card.style.transform='translate3d(0,100%,0)'; ov.style.background='rgba(0,0,0,0)';
+        var doneF=function(ev){ if(ev && ev.propertyName && ev.propertyName!=='transform') return; card.removeEventListener('transitionend', doneF); ov.classList.remove('aberto'); _limpar(); };
+        card.addEventListener('transitionend', doneF); setTimeout(function(){ doneF(); }, 420);
+        try{ if(opts.aoFechar) opts.aoFechar(); }catch(_){}
+      } else {
+        card.style.transition='transform .5s '+CURVA_ABRIR; ov.style.transition='background .5s '+CURVA_ABRIR;
+        card.style.transform='translate3d(0,0,0)'; ov.style.background='rgba(0,0,0,'+ABRE_ESCURO+')';
+        var doneB=function(ev){ if(ev && ev.propertyName && ev.propertyName!=='transform') return; card.removeEventListener('transitionend', doneB); _limpar(); };
+        card.addEventListener('transitionend', doneB); setTimeout(function(){ doneB(); }, 560);
+      }
+    }
+    card.addEventListener('pointerup', fim);
+    card.addEventListener('pointercancel', fim);
+  };
+
   window._fidelidade = window._fidelidade || null;
   (function(){
     const _fidSlug = (typeof __slugDoEndereco === 'function' ? __slugDoEndereco() : ((new URLSearchParams(location.search)).get('n') || '').toLowerCase().replace(/[^a-z0-9]/g, '')) || 'geral';
@@ -6815,7 +6885,10 @@
     ov.id = 'fidOverlay';
     ov.innerHTML = '<div class="fid-card" id="fidCard"></div>';
     document.body.appendChild(ov);
-    (window.__ovAnim||(window.__ovAnim=function(cont,sel){ var pn=cont.querySelector(sel); if(!pn) return; var an=null,was=cont.classList.contains('aberto'); new MutationObserver(function(){ var open=cont.classList.contains('aberto'); if(open!==was){ was=open; if(an){try{an.cancel();}catch(e){}} if(pn.animate){ an=pn.animate(open?[{transform:'translateY(100%)'},{transform:'translateY(0)'}]:[{transform:'translateY(0)'},{transform:'translateY(100%)'}],{duration:open?380:320,easing:'cubic-bezier(.22,.9,.3,1)'}); } } var a=document.querySelector('#cartOverlay.aberto,#favOverlay.aberto,#agendaOverlay.aberto,#fidOverlay.aberto,#escOverlay.aberto,.categoria-painel.aberto'); document.documentElement.classList.toggle('scroll-lock',!!a); document.body.classList.toggle('scroll-lock',!!a); }).observe(cont,{attributes:true,attributeFilter:['class']}); }))(ov,'.fid-card');
+    /* Como as Reservas: transições CSS próprias + arrastar para baixo para fechar (sem o animador genérico __ovAnim, que entrava em conflito com o arrasto). Mantém o bloqueio de scroll do fundo. */
+    (function(){ new MutationObserver(function(){ var a=document.querySelector('#cartOverlay.aberto,#favOverlay.aberto,#agendaOverlay.aberto,#fidOverlay.aberto,#escOverlay.aberto,.categoria-painel.aberto'); document.documentElement.classList.toggle('scroll-lock',!!a); document.body.classList.toggle('scroll-lock',!!a); }).observe(ov,{attributes:true,attributeFilter:['class']}); })();
+    { const _fc = ov.querySelector('#fidCard'); if(_fc && window.__folhaArrastavel) window.__folhaArrastavel(ov, _fc, { escuro:0.55,
+        zona:function(e){ var t = e.target; if(t && t.closest && (t.tagName==='H3' || t.closest('h3'))) return true; return (e.clientY - _fc.getBoundingClientRect().top) < 92; } }); }
     ov.addEventListener('click', e => { if(e.target === ov) ov.classList.remove('aberto'); });
     btn.addEventListener('click', abrirFid);
 
@@ -6984,73 +7057,15 @@
     window.__abrirAgenda = abrir;   // permite abrir o calendário a partir do carrinho (menu de grupo)
     window.__reservaRerender = function(){ try{ if(ov.classList.contains('aberto')) render(); }catch(e){} };   // re-desenhar após sincronização com o servidor
 
-    // ── Arrasto com o dedo, estilo iOS ──
-    // A folha acompanha o dedo em tempo real. Puxar para baixo além do limite (ou um "flick"
-    // rápido) fecha; largar antes disso volta suavemente. Puxar para cima tem resistência
-    // elástica (rubber-band). O fundo escurece/clareia conforme a posição da folha.
+    // ── Arrasto com o dedo, estilo iOS ── (código comum em window.__folhaArrastavel, partilhado com o cartão de fidelidade)
     (function(){
       var card = ov.querySelector('#agCard'); if(!card) return;
-      var y0=0, x0=0, dy=0, startY=0, drag=false, decidiu=false, naZona=false;
-      var H=1, vy=0, yPrev=0, tPrev=0;
-      var ABRE_ESCURO = 0.5, LIMITE = 110, FLICK = 0.5;   // fechar: >110px OU velocidade > 0.5 px/ms
-      var CURVA_ABRIR='cubic-bezier(.32,.72,0,1)', CURVA_FECHAR='cubic-bezier(.4,0,1,1)';
-      function _zonaPega(e){
+      window.__folhaArrastavel(ov, card, {
+        escuro:0.5,
         // arrastar só pela zona do cabeçalho: a pega, o título "Reservas" e o subtítulo
-        var t = e.target;
-        if(t && t.closest && (t.tagName==='H3' || t.closest('h3') || t.classList.contains('ag-sub'))) return true;
-        return (e.clientY - card.getBoundingClientRect().top) < 92;   // faixa do topo (pega + título)
-      }
-      function _resist(d){ return d < 0 ? -Math.pow(-d, 0.82) : d; }   // resistência elástica ao subir
-      function _limpar(){ card.style.transition=''; card.style.transform=''; ov.style.transition=''; ov.style.background=''; }
-      card.addEventListener('pointerdown', function(e){
-        if(e.pointerType==='mouse' && e.button!==0) return;
-        y0=e.clientY; x0=e.clientX; dy=0; drag=false; decidiu=false;
-        naZona = _zonaPega(e);
-        yPrev=e.clientY; tPrev=(e.timeStamp||performance.now()); vy=0;
-        H = card.getBoundingClientRect().height || 1;
+        zona:function(e){ var t = e.target; if(t && t.closest && (t.tagName==='H3' || t.closest('h3') || t.classList.contains('ag-sub'))) return true; return (e.clientY - card.getBoundingClientRect().top) < 92; },
+        aoFechar:function(){ try{ _fechouSemConcluir(); }catch(_){} }
       });
-      card.addEventListener('pointermove', function(e){
-        if(!naZona) return;
-        if(decidiu && !drag) return;
-        var d = e.clientY - y0, dx = e.clientX - x0;
-        if(!drag){
-          if(Math.abs(d) < 6 && Math.abs(dx) < 6) return;
-          if(Math.abs(d) > Math.abs(dx)){   // gesto mais vertical que horizontal -> arrasto da folha
-            drag=true; startY=e.clientY;   // ancora AQUI: o movimento começa em 0, sem o salto do limiar
-            card.style.transition='none'; ov.style.transition='none'; card.classList.add('a-arrastar');
-            try{ card.setPointerCapture(e.pointerId); }catch(_){}
-          } else { decidiu=true; return; }
-        }
-        var now=(e.timeStamp||performance.now()), dt=now-tPrev;
-        if(dt>0){ vy=(e.clientY-yPrev)/dt; yPrev=e.clientY; tPrev=now; }   // velocidade instantânea (px/ms)
-        dy = e.clientY - startY;
-        var eff=_resist(dy);
-        card.style.transform = 'translate3d(0,'+eff+'px,0)';   // 3d -> camada GPU, sem tremura
-        var prog = Math.max(0, Math.min(1, (eff>0?eff:0)/H));
-        ov.style.background = 'rgba(0,0,0,'+(ABRE_ESCURO*(1-prog)).toFixed(3)+')';
-        if(e.cancelable) e.preventDefault();
-      });
-      function fim(){
-        naZona=false;
-        if(!drag) return; drag=false;
-        card.classList.remove('a-arrastar');
-        var fecha = (dy > LIMITE) || (vy > FLICK);
-        // fim determinístico com transições EXPLÍCITAS (não depende de reflow nem de troca de classe)
-        if(fecha){
-          card.style.transition='transform .34s '+CURVA_FECHAR; ov.style.transition='background .34s '+CURVA_FECHAR;
-          card.style.transform='translate3d(0,100%,0)'; ov.style.background='rgba(0,0,0,0)';
-          var doneF=function(ev){ if(ev && ev.propertyName && ev.propertyName!=='transform') return; card.removeEventListener('transitionend', doneF); ov.classList.remove('aberto'); _limpar(); };
-          card.addEventListener('transitionend', doneF); setTimeout(function(){ doneF(); }, 420);
-          try{ _fechouSemConcluir(); }catch(_){}
-        } else {
-          card.style.transition='transform .5s '+CURVA_ABRIR; ov.style.transition='background .5s '+CURVA_ABRIR;
-          card.style.transform='translate3d(0,0,0)'; ov.style.background='rgba(0,0,0,'+ABRE_ESCURO+')';
-          var doneB=function(ev){ if(ev && ev.propertyName && ev.propertyName!=='transform') return; card.removeEventListener('transitionend', doneB); _limpar(); };
-          card.addEventListener('transitionend', doneB); setTimeout(function(){ doneB(); }, 560);
-        }
-      }
-      card.addEventListener('pointerup', fim);
-      card.addEventListener('pointercancel', fim);
     })();
 
     const MESES = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
