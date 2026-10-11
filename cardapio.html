@@ -2303,24 +2303,31 @@
   .im-inner.im-anima.anim-rodar{ animation-name:imRodar; }
   /* Ecrã sem foto: mesma linha de ícones novos */
   #modoGate .mg-icons{ display:flex; gap:16px; flex-wrap:wrap; justify-content:center; }
-  #modoGate .im-opt{ background:transparent; border:none; cursor:pointer; font-family:var(--fonte-titulo); padding:0; }
+  #modoGate .im-opt, #modosBloco .im-opt{ background:transparent; border:none; cursor:pointer; font-family:var(--fonte-titulo); padding:0; }
   /* PÍLULA */
-  #modoGate.estilo-pilula .im-inner{ box-sizing:border-box; display:inline-flex; flex-direction:row; align-items:center; justify-content:var(--im-just, flex-start); gap:calc(10px * var(--ic-scale, 1)); min-width:calc(200px * var(--ic-scale, 1)); padding:calc(12px * var(--ic-scale, 1)) calc(22px * var(--ic-scale, 1)); border-radius:999px; border:1.5px solid rgba(255,255,255,.3); background:rgba(0,0,0,.28); color:var(--dourado, #c69a3f); }
-  #modoGate.estilo-pilula .im-ic{ width:calc(28px * var(--ic-scale, 1)); height:calc(28px * var(--ic-scale, 1)); display:flex; align-items:center; justify-content:center; flex:0 0 auto; }
-  #modoGate.estilo-pilula .im-ic svg{ width:100%; height:100%; }
-  #modoGate.estilo-pilula .im-lb{ font-size:calc(1rem * var(--ic-scale, 1)); font-weight:600; color:#f4ead2; letter-spacing:.3px; white-space:nowrap; }
+  #modoGate.estilo-pilula .im-inner, #modosBloco.estilo-pilula .im-inner{ box-sizing:border-box; display:inline-flex; flex-direction:row; align-items:center; justify-content:var(--im-just, flex-start); gap:calc(10px * var(--ic-scale, 1)); min-width:calc(200px * var(--ic-scale, 1)); padding:calc(12px * var(--ic-scale, 1)) calc(22px * var(--ic-scale, 1)); border-radius:999px; border:1.5px solid rgba(255,255,255,.3); background:rgba(0,0,0,.28); color:var(--dourado, #c69a3f); }
+  #modoGate.estilo-pilula .im-ic, #modosBloco.estilo-pilula .im-ic{ width:calc(28px * var(--ic-scale, 1)); height:calc(28px * var(--ic-scale, 1)); display:flex; align-items:center; justify-content:center; flex:0 0 auto; }
+  #modoGate.estilo-pilula .im-ic svg, #modosBloco.estilo-pilula .im-ic svg{ width:100%; height:100%; }
+  #modoGate.estilo-pilula .im-lb, #modosBloco.estilo-pilula .im-lb{ font-size:calc(1rem * var(--ic-scale, 1)); font-weight:600; color:#f4ead2; letter-spacing:.3px; white-space:nowrap; }
   /* QUADRADO */
-  #modoGate.estilo-quadrado .im-inner{ display:flex; flex-direction:column; align-items:center; gap:8px; color:var(--dourado, #c69a3f); }
-  #modoGate.estilo-quadrado .im-ic{ width:calc(66px * var(--ic-scale, 1)); height:calc(66px * var(--ic-scale, 1)); display:flex; align-items:center; justify-content:center; border:1.5px solid rgba(255,255,255,.3); border-radius:16px; background:rgba(0,0,0,.28); }
-  #modoGate.estilo-quadrado .im-ic svg{ width:62%; height:62%; }
-  #modoGate.estilo-quadrado .im-lb{ font-size:calc(.9rem * var(--ic-scale, 1)); font-weight:600; color:#f4ead2; letter-spacing:.3px; }
-  #modoGate .im-opt:active{ filter:brightness(1.12); }
+  #modoGate.estilo-quadrado .im-inner, #modosBloco.estilo-quadrado .im-inner{ display:flex; flex-direction:column; align-items:center; gap:8px; color:var(--dourado, #c69a3f); }
+  #modoGate.estilo-quadrado .im-ic, #modosBloco.estilo-quadrado .im-ic{ width:calc(66px * var(--ic-scale, 1)); height:calc(66px * var(--ic-scale, 1)); display:flex; align-items:center; justify-content:center; border:1.5px solid rgba(255,255,255,.3); border-radius:16px; background:rgba(0,0,0,.28); }
+  #modoGate.estilo-quadrado .im-ic svg, #modosBloco.estilo-quadrado .im-ic svg{ width:62%; height:62%; }
+  #modoGate.estilo-quadrado .im-lb, #modosBloco.estilo-quadrado .im-lb{ font-size:calc(.9rem * var(--ic-scale, 1)); font-weight:600; color:#f4ead2; letter-spacing:.3px; }
+  #modoGate .im-opt:active, #modosBloco .im-opt:active{ filter:brightness(1.12); }
   #introModosWrap .im-opt:active{ filter:brightness(1.12); }
+  /* Botões dos modos dentro do cardápio (depois da última categoria, antes do mapa) — mesmo estilo dos ícones de entrada */
+  #modosBloco{ margin:14px 16px 4px; padding:16px 12px 14px; border-radius:18px; background:linear-gradient(160deg, rgba(36,26,16,.94), rgba(14,10,6,.94)); border:1px solid rgba(255,255,255,.08); box-shadow:0 6px 18px rgba(0,0,0,.18); --ic-scale:.9; }   /* escuro neutro, como a sombra da abertura: os ícones leem-se igual em todos os temas */
+  #modosBloco .mb-icons{ display:flex; flex-wrap:wrap; gap:12px 16px; justify-content:center; max-width:640px; margin:0 auto; }
+  #modosBloco .im-opt{ color:inherit; -webkit-tap-highlight-color:transparent; }
+  #modosBloco.estilo-pilula .im-inner{ min-width:0; }
+  #modosBloco .im-opt.on .im-ic, #modosBloco.estilo-pilula .im-opt.on .im-inner{ box-shadow:0 0 0 2px var(--dourado, #c69a3f); }
+  @media (max-width:380px){ #modosBloco{ --ic-scale:.78; padding:14px 8px 12px; } #modosBloco .mb-icons{ gap:10px 10px; } }
   /* Cores próprias dos ícones (sobrepõem as do modelo) */
-  #introModosWrap.im-cores .im-inner, #modoGate.im-cores .im-inner{ color:var(--im-cor-ic) !important; }
-  #introModosWrap.im-cores.estilo-quadrado .im-ic, #modoGate.im-cores.estilo-quadrado .im-ic,
-  #introModosWrap.im-cores.estilo-pilula .im-inner, #modoGate.im-cores.estilo-pilula .im-inner{ background:var(--im-cor-fundo) !important; border-color:var(--im-cor-borda) !important; }
-  #introModosWrap.im-cores .im-lb, #modoGate.im-cores .im-lb{ color:var(--im-cor-txt) !important; }
+  #introModosWrap.im-cores .im-inner, #modoGate.im-cores .im-inner, #modosBloco.im-cores .im-inner{ color:var(--im-cor-ic) !important; }
+  #introModosWrap.im-cores.estilo-quadrado .im-ic, #modoGate.im-cores.estilo-quadrado .im-ic, #modosBloco.im-cores.estilo-quadrado .im-ic,
+  #introModosWrap.im-cores.estilo-pilula .im-inner, #modoGate.im-cores.estilo-pilula .im-inner, #modosBloco.im-cores.estilo-pilula .im-inner{ background:var(--im-cor-fundo) !important; border-color:var(--im-cor-borda) !important; }
+  #introModosWrap.im-cores .im-lb, #modoGate.im-cores .im-lb, #modosBloco.im-cores .im-lb{ color:var(--im-cor-txt) !important; }
   #introModosWrap .im-guia{ position:absolute; background:rgba(120,200,255,.9); pointer-events:none; z-index:6; box-shadow:0 0 4px rgba(120,200,255,.7); }
   #introModosWrap .im-guia-h{ left:0; right:0; height:1px; }
   #introModosWrap .im-guia-v{ top:0; bottom:0; width:1px; }
@@ -4868,9 +4875,9 @@
       window.__modosCfg = (config.modos && typeof config.modos === 'object') ? config.modos : {};
       window.__modosTam = (config.modos && config.modos.tam && typeof config.modos.tam === 'object') ? config.modos.tam : {};
       // O botão antigo "Ver menu" só aparece se NÃO houver modos ativos (ou se o dono o quiser manter). Por defeito está escondido → sem flash.
-      try{ document.body.classList.toggle('usa-verbotao', (!window.__modosCfg.ativo || !!window.__modosCfg.verBotao)); }catch(e){}
+      try{ document.body.classList.toggle('usa-verbotao', (!window.__modosCfg.ativo || !!window.__modosCfg.verBotao || window.__modosCfg.normal === false)); }catch(e){}
       window.__waGrupo = ((config.agenda && config.agenda.whatsapp) || (config.carrinho && config.carrinho.whatsapp) || '').toString().replace(/\D/g,'').replace(/^00/,'');
-      (function _goModos(){ if(window.__menuOk){ try{ if(window.__initModos) window.__initModos(); }catch(e){} } else setTimeout(_goModos, 60); })();
+      (function _goModos(){ if(window.__menuOk){ try{ if(window.__initModos) window.__initModos(); }catch(e){} try{ if(window.__renderModosBloco) window.__renderModosBloco(!!window.__ehPreview); }catch(e){} } else setTimeout(_goModos, 60); })();
       // PILOTO — Fundo do menu independente dos separadores (opcional; vazio = segue o modelo)
       { const _ft = (config.fundoTema || '').toString().trim();
         ['claro','papel','ardosia'].forEach(function(x){ document.body.classList.toggle('fundo-' + x, _ft === x); }); }
@@ -6372,12 +6379,10 @@
       if(!cfg.ativo) return;
       var _temGr = function(){ return !!document.querySelector('#categoriaGrid .tile[data-grupo="1"]'); };
       var _temCer = function(){ return !!document.querySelector('#categoriaGrid .tile[data-cerimonia="1"]'); };
+      // Na abertura fica só o botão de entrada ("Menu"). Take away, Grupos, Cerimónias e Reservas
+      // aparecem dentro do cardápio, depois da última categoria (window.__renderModosBloco).
       var modos = [];
       if(cfg.normal) modos.push('normal');
-      if(cfg.takeaway) modos.push('takeaway');
-      if(cfg.grupos && (preview || _temGr())) modos.push('grupos');
-      if(cfg.cerimonias && (preview || _temCer())) modos.push('cerimonias');
-      if(cfg.reservas && (preview || !!window._agenda)) modos.push('reservas');
       if(!modos.length) return;
       // Esconde o botão antigo "Ver menu" quando há ícones de modo (a não ser que o dono o queira manter)
       try{ document.body.classList.toggle('usa-verbotao', !!cfg.verBotao); }catch(e){}
@@ -6388,7 +6393,7 @@
       var reflow = null;
       try{
         var tinha = cfg.__tinha || {};
-        var configurados = ['normal','takeaway','grupos','cerimonias','reservas'].filter(function(m){ return cfg[m] || tinha[m]; });
+        var configurados = ['normal'].filter(function(m){ return cfg[m] || tinha[m]; });   // só o "Menu" está na abertura: fica onde o dono o pôs
         if(!preview && modos.length < configurados.length){
           var xs = [], ys = [];
           configurados.forEach(function(m, k){ var p0 = pos[m]; xs.push((p0 && p0.x != null) ? parseFloat(p0.x) : ((k - (configurados.length - 1) / 2) * 98)); ys.push((p0 && p0.y != null) ? parseFloat(p0.y) : 0); });
@@ -9835,6 +9840,7 @@
 
     window.__modoEscolher = function(m){
       aplicarModo(m);
+      try{ if(window.__renderModosBloco) window.__renderModosBloco(false); }catch(e){}   // atualiza os botões dentro do cardápio
       if(window.__esconderIntro) window.__esconderIntro();
       if(m === 'reservas'){ setTimeout(function(){ try{ if(window.__abrirAgenda) window.__abrirAgenda(); }catch(e){} }, 380); }   // abre o calendário por cima do menu
     };
@@ -9924,11 +9930,51 @@
         { var _mAt = /\bmodo-(normal|takeaway|grupos|cerimonias)\b/.exec(document.body.className);
           if(_mAt){ modosAtuais = modos; try{ aplicarModo(_mAt[1]); }catch(e){} return; }   // reaplica o modo atual (carrinho ligado/desligado) sem mostrar nada
           if(window.__refrescando) return; }
+        // Entra logo no menu: "Menu" se estiver ligado; senão, o 1.º modo de vista ligado (ex.: só Take away).
+        // Os outros modos ficam como botões dentro do cardápio (__renderModosBloco) — já não há ecrã de escolha.
+        modosAtuais = modos;
+        var entrada = (modos.indexOf('normal') >= 0) ? 'normal' : (modos.filter(function(m){ return m !== 'reservas'; })[0] || 'normal');
+        aplicarModo(entrada);
         var ov = document.getElementById('introOverlay');
         var introViva = window.__introAtiva && ov && !ov.dataset.saiu && ov.style.display !== 'none';
-        if(introViva){ integrarNoIntro(modos); }               // desenha o(s) ícone(s) sobre a abertura, mesmo que só haja 1
-        else if(modos.length === 1){ modosAtuais = modos; aplicarModo(modos[0]); if(modos[0] === 'reservas'){ setTimeout(function(){ try{ if(window.__abrirAgenda) window.__abrirAgenda(); }catch(e){} }, 60); } }
-        else { mostrarGate(modos); }
+        if(introViva && modos.indexOf('normal') >= 0){ integrarNoIntro(modos); }   // desenha só o ícone "Menu" sobre a abertura
+      }catch(e){}
+    };
+
+    // Botões dos modos DENTRO do cardápio: depois da última categoria e antes do mapa (#localBloco).
+    // Mesmo desenho e cores dos ícones de entrada (estilo pílula/quadrado e cores escolhidas no editor).
+    // Só aparecem os modos ligados no editor; sem nenhum, a secção não existe.
+    window.__renderModosBloco = function(preview){
+      try{
+        var old = document.getElementById('modosBloco'); if(old) old.remove();
+        var cfg = window.__modosCfg || {};
+        if(!cfg.ativo || window.__esconderijo) return;
+        var IC = window.__IC_MODOS || {};
+        var atual = (/\bmodo-(normal|takeaway|grupos|cerimonias)\b/.exec(document.body.className) || [])[1] || 'normal';
+        var lista = [];
+        if(cfg.normal && atual !== 'normal' && !preview) lista.push('normal');   // para voltar ao menu normal
+        if(cfg.takeaway) lista.push('takeaway');
+        if(cfg.grupos && (preview || temGrupos())) lista.push('grupos');
+        if(cfg.cerimonias && (preview || temCerimonias())) lista.push('cerimonias');
+        if(cfg.reservas && (preview || !!window._agenda)) lista.push('reservas');
+        lista = lista.filter(function(m){ return IC[m]; });
+        if(!lista.length) return;
+        var sec = document.createElement('section'); sec.id = 'modosBloco';
+        sec.className = 'estilo-' + (cfg.estilo || 'pilula');
+        try{ window.__imAplicarCores(sec, cfg); }catch(e){}
+        sec.style.setProperty('--im-just', 'center');
+        sec.innerHTML = '<div class="mb-icons">' + lista.map(function(m){
+          return '<button class="im-opt' + (m === atual ? ' on' : '') + '" type="button" data-modo="' + m + '"' + (m === atual ? ' aria-current="true"' : '') + '><span class="im-inner"><span class="im-ic">' + IC[m][1] + '</span><span class="im-lb">' + IC[m][0] + '</span></span></button>';
+        }).join('') + '</div>';
+        var mapa = document.getElementById('localBloco');
+        if(mapa && mapa.parentNode) mapa.parentNode.insertBefore(sec, mapa);
+        else { var main = document.querySelector('main'); if(main && main.parentNode) main.parentNode.insertBefore(sec, main.nextSibling); else document.body.appendChild(sec); }
+        if(preview) return;
+        Array.prototype.forEach.call(sec.querySelectorAll('.im-opt'), function(b){ b.onclick = function(){
+          var m = b.getAttribute('data-modo');
+          if(m === 'reservas'){ try{ if(window.__abrirAgenda) window.__abrirAgenda(); }catch(e){} return; }   // abre o calendário por cima do menu (como antes)
+          aplicarModo(m); window.__renderModosBloco(false);   // muda a vista do menu (carrinho, grupos…) e marca o botão ativo
+        }; });
       }catch(e){}
     };
 

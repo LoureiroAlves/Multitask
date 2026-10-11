@@ -718,6 +718,16 @@ amesadigital.pt</textarea>
           <input type="range" id="fundoAnimInt" min="2" max="40" step="1" value="12" style="width:100%;">
         </div>
       </div>
+
+      <div style="margin-top:18px; border-top:1px dotted var(--linha); padding-top:12px;">
+        <div style="font-weight:800; color:var(--dourado-escuro); margin-bottom:6px;">🔘 Botões no fim do menu</div>
+        <p style="margin:0 0 8px; font-size:0.82rem; color:var(--castanho-suave);">Aparecem numa linha <strong>depois da última categoria e antes do mapa</strong>, com o mesmo estilo e cores dos ícones da abertura. Liga só os que este negócio oferece; sem nenhum ligado, a secção não aparece.</p>
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin:8px 0; font-size:.92rem; color:var(--castanho);"><input type="checkbox" id="modoTakeaway" style="width:auto; margin:0;"> 🛍️ Take away (liga o carrinho; esconde as reservas)</label>
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin:8px 0; font-size:.92rem; color:var(--castanho);"><input type="checkbox" id="modoGrupos" style="width:auto; margin:0;"> 👥 Menus de grupo (mostra só as categorias marcadas)</label>
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin:8px 0; font-size:.92rem; color:var(--castanho);"><input type="checkbox" id="modoCerimonias" style="width:auto; margin:0;"> 🥂 Cerimónias (mostra só as categorias marcadas)</label>
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin:8px 0; font-size:.92rem; color:var(--castanho);"><input type="checkbox" id="modoReservas" style="width:auto; margin:0;"> 📅 Reservas (abre o calendário por cima do menu)</label>
+        <p style="margin:6px 0 0; font-size:0.78rem; color:var(--castanho-suave);">"Grupos" e "Cerimónias" só aparecem se marcares categorias/pastas para esse modo (no Menu). "Reservas" só aparece com a agenda ligada.</p>
+      </div>
     </div>
   </details>
 
@@ -958,21 +968,18 @@ amesadigital.pt</textarea>
         </div>
 
         <div style="margin-top:16px; border-top:1px dotted var(--linha); padding-top:12px;">
-          <div style="font-weight:800; color:var(--dourado-escuro); margin-bottom:6px;">🚪 Ecrã de entrada (modos)</div>
-          <p style="margin:0 0 10px; font-size:0.82rem; color:var(--castanho-suave);">O cliente escolhe como ver o menu, tocando num ícone aqui na abertura. Liga os modos que este negócio oferece.</p>
+          <div style="font-weight:800; color:var(--dourado-escuro); margin-bottom:6px;">🚪 Botão de entrada (Menu)</div>
+          <p style="margin:0 0 10px; font-size:0.82rem; color:var(--castanho-suave);">Na abertura fica só o ícone <strong>Menu</strong>, que leva o cliente ao cardápio. <strong>Take away, Grupos, Cerimónias e Reservas</strong> passaram para dentro do cardápio: escolhe-os em <strong>🎨 Aspeto do cardápio (layout) → Botões no fim do menu</strong>.</p>
           <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:700;">
-            <input type="checkbox" id="modosAtivo" style="width:auto; margin:0;"> Ativar ícones de modo na abertura
+            <input type="checkbox" id="modosAtivo" style="width:auto; margin:0;"> Ativar o ícone "Menu" e os botões de modo
           </label>
           <div style="margin:10px 0 0; padding-left:10px; border-left:2px solid var(--linha);">
-            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin:8px 0; font-size:.92rem; color:var(--castanho);"><input type="checkbox" id="modoNormal" style="width:auto; margin:0;"> 🍽️ Menu normal (sem carrinho nem reservas)</label>
-            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin:8px 0; font-size:.92rem; color:var(--castanho);"><input type="checkbox" id="modoTakeaway" style="width:auto; margin:0;"> 🛍️ Take away (liga o carrinho; esconde as reservas)</label>
-            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin:8px 0; font-size:.92rem; color:var(--castanho);"><input type="checkbox" id="modoGrupos" style="width:auto; margin:0;"> 👥 Menus de grupo (mostra só as categorias marcadas)</label>
-            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin:8px 0; font-size:.92rem; color:var(--castanho);"><input type="checkbox" id="modoCerimonias" style="width:auto; margin:0;"> 🥂 Cerimónias (mostra só as categorias marcadas)</label>
-            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin:8px 0; font-size:.92rem; color:var(--castanho);"><input type="checkbox" id="modoReservas" style="width:auto; margin:0;"> 📅 Reservas (abre o calendário por cima do menu)</label>
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin:8px 0; font-size:.92rem; color:var(--castanho);"><input type="checkbox" id="modoNormal" style="width:auto; margin:0;"> 🍽️ Mostrar o ícone "Menu" na abertura (menu normal, sem carrinho)</label>
           </div>
-          <div style="margin-top:14px; font-weight:700; font-size:.9rem; color:var(--castanho);">Tamanho de cada ícone</div>
+          <div style="margin-top:14px; font-weight:700; font-size:.9rem; color:var(--castanho);">Tamanho do ícone</div>
           <label style="display:block; margin-top:8px; font-size:.85rem; color:var(--castanho);">🍽️ Menu — <span id="modoTamNormalVal">100%</span></label>
           <input type="range" id="modoTamNormal" min="70" max="160" value="100" step="10" style="width:100%; accent-color:var(--dourado);">
+          <div style="display:none;"><!-- tamanhos antigos dos ícones que saíram da abertura: ficam guardados como estavam -->
           <label style="display:block; margin-top:8px; font-size:.85rem; color:var(--castanho);">🛍️ Take away — <span id="modoTamTakeawayVal">100%</span></label>
           <input type="range" id="modoTamTakeaway" min="70" max="160" value="100" step="10" style="width:100%; accent-color:var(--dourado);">
           <label style="display:block; margin-top:8px; font-size:.85rem; color:var(--castanho);">👥 Grupos — <span id="modoTamGruposVal">100%</span></label>
@@ -981,7 +988,8 @@ amesadigital.pt</textarea>
           <input type="range" id="modoTamCerimonias" min="70" max="160" value="100" step="10" style="width:100%; accent-color:var(--dourado);">
           <label style="display:block; margin-top:8px; font-size:.85rem; color:var(--castanho);">📅 Reservas — <span id="modoTamReservasVal">100%</span></label>
           <input type="range" id="modoTamReservas" min="70" max="160" value="100" step="10" style="width:100%; accent-color:var(--dourado);">
-          <label style="display:block; margin-top:14px; font-size:.85rem; color:var(--castanho);">Estilo dos ícones</label>
+          </div>
+          <label style="display:block; margin-top:14px; font-size:.85rem; color:var(--castanho);">Estilo dos ícones <small style="font-weight:400;">(também usado nos botões dentro do cardápio)</small></label>
           <select id="modoEstilo" style="width:100%; padding:9px; border-radius:10px; border:1px solid #d9c9a8;">
             <option value="pilula">Pílula — ícone + texto lado a lado</option>
             <option value="quadrado">Quadrado — ícone com legenda por baixo</option>
@@ -1013,7 +1021,7 @@ amesadigital.pt</textarea>
           <label style="display:block; margin-top:12px; font-size:.85rem; color:var(--castanho);">Momento de entrada — <span id="modoEntradaVal">0,0 s</span> depois de a abertura começar</label>
           <input type="range" id="modoEntrada" min="0" max="4" value="0" step="0.2" style="width:100%; accent-color:var(--dourado);">
           <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin:12px 0 0; font-size:.92rem; color:var(--castanho);"><input type="checkbox" id="modoVerBotao" style="width:auto; margin:0;"> Manter também o botão antigo "Ver menu"</label>
-          <p style="margin:10px 0 0; font-size:0.8rem; color:var(--castanho-suave);">Aparece se tiveres <strong>2 ou mais</strong> modos ligados (com 1, entra logo nesse). O "Grupos" só aparece se marcares categorias/pastas com "Aparece no modo Grupos" (no Menu).</p>
+          <p style="margin:10px 0 0; font-size:0.8rem; color:var(--castanho-suave);">Sem o ícone "Menu", aparece o botão "Ver menu" para entrar.</p>
         </div>
       </div>
     </div>
@@ -2821,6 +2829,9 @@ amesadigital.pt</textarea>
       _sc('expAtivo', _ex.ativo); _sc('expInstalarOn', _ex.instalar); _sc('expPartilharOn', _ex.partilhar); _sc('expTextoOn', _ex.texto); _sc('expVibracaoOn', _ex.vibracao); _sc('expNotifOn', _ex.notif); _sc('expLimparOn', _ex.limpar); }
     { const _m = config.modos || {}; const _sb = function(id, v){ const e = document.getElementById(id); if(e) e.checked = (v === true); };
       _sb('modosAtivo', _m.ativo); _sb('modoTakeaway', _m.takeaway); _sb('modoGrupos', _m.grupos); _sb('modoCerimonias', _m.cerimonias); _sb('modoReservas', _m.reservas); _sb('modoVerBotao', _m.verBotao);
+      // "Botões no fim do menu": ligar um deles liga também o interruptor geral dos modos (senão não apareceriam)
+      ['modoTakeaway','modoGrupos','modoCerimonias','modoReservas'].forEach(function(id){ const el = document.getElementById(id); if(!el || el.__ligaModos) return; el.__ligaModos = true;
+        el.addEventListener('change', function(){ if(!el.checked) return; const at = document.getElementById('modosAtivo'); if(at && !at.checked){ at.checked = true; at.dispatchEvent(new Event('change', { bubbles:true })); } }); });
       { const e = document.getElementById('modoNormal'); if(e) e.checked = (_m.normal !== false); }
       { const _tm = (_m.tam && typeof _m.tam === 'object') ? _m.tam : {};
         [['modoTamNormal','normal'],['modoTamTakeaway','takeaway'],['modoTamGrupos','grupos'],['modoTamCerimonias','cerimonias'],['modoTamReservas','reservas']].forEach(function(p){
