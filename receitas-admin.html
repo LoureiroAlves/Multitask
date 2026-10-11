@@ -136,7 +136,7 @@
       var r = await D.receitas({ categoriaId:c.id, pesquisa:termo, pagina:pagina, incluirRascunhos:true, porPagina:50 });
       var l = document.getElementById('l');
       if(!r.lista.length && pagina === 0){ l.innerHTML = '<div class="amr-vazio">' + (termo ? 'Nada encontrado.' : 'Ainda não há receitas nesta categoria. Cria a primeira! 👆') + '</div>'; }
-      l.insertAdjacentHTML('beforeend', r.lista.map(function(x){ return '<div class="item" data-id="' + e(x.id) + '"><span class="ic">' + e(x.emoji || c.emoji) + '</span><div><b>' + e(x.nome) + '</b><div class="m">' + e([M.DIFICULDADES[x.dificuldade], M.tempoTexto(x.tempo_total), x.porcoes ? x.porcoes + ' pax' : ''].filter(Boolean).join(' · ')) + ' · /' + e(x.slug) + '</div></div><span class="st ' + (x.publicado ? 'pub' : 'ras') + '">' + (x.publicado ? 'PUBLICADA' : 'RASCUNHO') + '</span></div>'; }).join(''));
+      l.insertAdjacentHTML('beforeend', r.lista.map(function(x){ return '<div class="item" data-id="' + e(x.id) + '"><span class="ic">' + e(x.emoji || c.emoji) + '</span><div><b>' + e(x.nome) + '</b>' + (x.categoria_id && x.categoria_id !== c.id ? ' <small style="color:#a8712f;font-weight:900;">· extra (principal: ' + e((catPorId(x.categoria_id) || {}).nome || '?') + ')</small>' : '') + '<div class="m">' + e([M.DIFICULDADES[x.dificuldade], M.tempoTexto(x.tempo_total), x.porcoes ? x.porcoes + ' pax' : ''].filter(Boolean).join(' · ')) + ' · /' + e(x.slug) + '</div></div><span class="st ' + (x.publicado ? 'pub' : 'ras') + '">' + (x.publicado ? 'PUBLICADA' : 'RASCUNHO') + '</span></div>'; }).join(''));
       l.querySelectorAll('.item').forEach(function(it){ it.onclick = function(){ location.hash = 'rec=' + it.dataset.id + '&cat=' + c.slug; }; });
       var mais = document.getElementById('mais'); mais.innerHTML = '';
       if((pagina + 1) * r.porPagina < r.total){ var b = document.createElement('button'); b.className = 'amr-mais'; b.textContent = 'Ver mais (' + (r.total - (pagina + 1) * r.porPagina) + ')'; b.onclick = function(){ pagina++; carregar(false); }; mais.appendChild(b); }
@@ -178,6 +178,7 @@
       f.innerHTML = '<div class="caixa"><h3>Básico</h3>'
         + '<label class="l">Nome</label><input class="c" data-k="nome" value="' + e(R.nome) + '">'
         + '<div class="linha2"><div style="grid-column:span 2"><label class="l">Endereço (slug)</label><input class="c" id="slug" value="' + e(R.id) + '"></div><div style="grid-column:span 2"><label class="l">Categoria</label><select class="c" id="selCat">' + CATS.map(function(c){ return '<option value="' + e(c.slug) + '"' + (c.slug === R.categoria ? ' selected' : '') + '>' + e(c.emoji + ' ' + c.nome) + '</option>'; }).join('') + '</select></div></div>'
+        + '<label class="l">Também aparece em <small style="font-weight:700;">(opcional — ex.: Inverno, Natal)</small></label><div class="chipsI" id="catsExtra"></div>'
         + '<label class="l">Descrição</label><textarea class="c" data-k="descricao">' + e(R.descricao) + '</textarea>'
         + '<div class="linha2"><div><label class="l">Porções</label><input class="c" type="number" min="1" data-k="porcoes" value="' + R.porcoes + '"></div><div><label class="l">Preparação (min)</label><input class="c" type="number" min="0" data-t="preparacao" value="' + (R.tempo.preparacao || 0) + '"></div><div><label class="l">Cozedura (min)</label><input class="c" type="number" min="0" data-t="cozedura" value="' + (R.tempo.cozedura || 0) + '"></div><div><label class="l">Total (min)</label><input class="c" type="number" min="0" data-t="total" value="' + (R.tempo.total || 0) + '"></div></div>'
         + '<div class="linha2"><div><label class="l">Dificuldade</label><select class="c" data-k="dificuldade">' + Object.keys(M.DIFICULDADES).map(function(d){ return '<option value="' + d + '"' + (d === R.dificuldade ? ' selected' : '') + '>' + M.DIFICULDADES[d] + '</option>'; }).join('') + '</select></div><div><label class="l">Emoji</label><input class="c" data-ly="emoji" value="' + e(R.layout.emoji || '') + '" placeholder="' + e((catPorSlug(R.categoria) || {}).emoji || '') + '"></div><div><label class="l">Cor</label><input class="c" type="color" data-ly="cor" value="' + e(R.layout.cor || (catPorSlug(R.categoria) || {}).cor || '#c05a3a') + '" style="height:40px;padding:3px;"></div><div><label class="l">Layout</label><select class="c" data-ly="tipo">' + AMR.layouts.nomes().map(function(n){ return '<option' + (n === R.layout.tipo ? ' selected' : '') + '>' + n + '</option>'; }).join('') + '</select></div></div>'
@@ -230,7 +231,14 @@
       f.querySelectorAll('[data-t]').forEach(function(x){ x.oninput = function(){ R.tempo[x.dataset.t] = parseInt(x.value, 10) || 0; if(x.dataset.t !== 'total'){ R.tempo.total = (R.tempo.preparacao || 0) + (R.tempo.cozedura || 0); f.querySelector('[data-t="total"]').value = R.tempo.total; } previa(); }; });
       f.querySelectorAll('[data-ly]').forEach(function(x){ x.oninput = function(){ R.layout[x.dataset.ly] = x.value; previa(); }; });
       document.getElementById('slug').oninput = function(ev){ slugMexido = true; R.id = M.slug(ev.target.value); };
-      document.getElementById('selCat').onchange = function(ev){ R.categoria = ev.target.value; previa(); };
+      function pintaExtra(){
+        var cx = document.getElementById('catsExtra'); if(!cx) return;
+        R.categoriasExtra = (R.categoriasExtra || []).filter(function(s){ return s !== R.categoria && catPorSlug(s); });
+        cx.innerHTML = CATS.filter(function(c){ return c.slug !== R.categoria; }).map(function(c){ return '<button type="button" data-x="' + e(c.slug) + '"' + (R.categoriasExtra.indexOf(c.slug) >= 0 ? ' class="on"' : '') + '>' + e(c.emoji + ' ' + c.nome) + '</button>'; }).join('');
+        cx.querySelectorAll('[data-x]').forEach(function(b){ b.onclick = function(){ var s = b.dataset.x, i = R.categoriasExtra.indexOf(s); if(i >= 0) R.categoriasExtra.splice(i, 1); else R.categoriasExtra.push(s); b.classList.toggle('on', i < 0); }; });
+      }
+      pintaExtra();
+      document.getElementById('selCat').onchange = function(ev){ R.categoria = ev.target.value; pintaExtra(); previa(); };
       document.getElementById('tags').oninput = function(ev){ R.tags = ev.target.value.split(','); previa(); };
       document.getElementById('plAtivo').onchange = function(ev){ R.player.ativo = ev.target.checked; previa(); };
       document.getElementById('notas').oninput = function(ev){ R.notas = ev.target.value.split('\n'); previa(); };
@@ -267,6 +275,8 @@
         if(!nova.nome && !nova.ingredientes.length && !nova.passos.length) throw new Error('Não encontrei uma receita neste JSON (falta nome, ingredientes e passos).');
         if(nova.categoria && !catPorSlug(nova.categoria)) res.avisos.push('A categoria "' + nova.categoria + '" não existe — ficou em ' + R.categoria + '.');
         if(!nova.categoria || !catPorSlug(nova.categoria)) nova.categoria = R.categoria;
+        (nova.categoriasExtra || []).forEach(function(s){ if(!catPorSlug(s)) res.avisos.push('A categoria extra "' + s + '" não existe — cria-a primeiro (ficou de fora).'); });
+        nova.categoriasExtra = (nova.categoriasExtra || []).filter(function(s){ return catPorSlug(s) && s !== nova.categoria; });
         nova.ingredientes.forEach(function(i){ i._idFixo = true; });
         R = nova; slugMexido = true; pintaForm(); previa();
         msg(MSG, 'JSON importado ✓ — revê os campos e carrega em <b>💾 Guardar</b>.' + (res.avisos.length ? '<br>⚠️ ' + res.avisos.map(e).join('<br>⚠️ ') : ''), res.avisos.length ? 'av' : 'ok');

@@ -79,7 +79,7 @@
   }
   function ligaLinks(el){
     el.querySelectorAll('a[data-r]').forEach(function(a){ a.addEventListener('pointerdown', function(){ D.adiantar('rec', a.dataset.r); }, { passive:true }); });
-    el.querySelectorAll('[data-c]').forEach(function(b){ b.addEventListener('pointerdown', function(){ var c = catPorSlug ? catPorSlug(b.dataset.c) : null; if(c) D.adiantar('cat', c.id); }, { passive:true }); }); el.querySelectorAll('a[data-r]').forEach(function(a){ a.onclick = function(ev){ ev.preventDefault(); ir('?r=' + encodeURIComponent(a.dataset.r)); }; }); el.querySelectorAll('[data-c]').forEach(function(b){ b.onclick = function(ev){ ev.preventDefault(); ir('?c=' + encodeURIComponent(b.dataset.c)); }; }); }
+    el.querySelectorAll('[data-c]').forEach(function(b){ b.addEventListener('pointerdown', function(){ var c = catPorSlug ? catPorSlug(b.dataset.c) : null; if(c) D.adiantar('cat', c.id); }, { passive:true }); }); el.querySelectorAll('a[data-r]').forEach(function(a){ a.onclick = function(ev){ ev.preventDefault(); var de = new URLSearchParams(location.search).get('c'); ir('?r=' + encodeURIComponent(a.dataset.r) + (de ? '&c=' + encodeURIComponent(de) : '')); }; }); el.querySelectorAll('[data-c]').forEach(function(b){ b.onclick = function(ev){ ev.preventDefault(); ir('?c=' + encodeURIComponent(b.dataset.c)); }; }); }
   async function categorias(){ if(!CATS) CATS = await D.categorias(); return CATS; }
   function catPorSlug(s){ return (CATS || []).filter(function(c){ return c.slug === s; })[0]; }
   function catPorId(id){ return (CATS || []).filter(function(c){ return c.id === id; })[0]; }
@@ -142,7 +142,8 @@
       var cat = catPorId(reg.categoria_id) || {};
       document.title = r.nome + ' · àMesa Receitas';
       APP.innerHTML = (reg.publicado ? '' : '<div class="aviso-rasc">👁 Pré-visualização de administrador — esta receita ainda é um rascunho.</div>') + '<div id="rec"></div>';
-      VOLTA.dataset.cat = cat.slug || '';
+      // "Voltar" regressa à categoria de onde se veio (ex.: Inverno) ou, se não houver, à principal
+      VOLTA.dataset.cat = new URLSearchParams(location.search).get('c') || cat.slug || '';
       AMR.layouts.render(document.getElementById('rec'), r, {
         categoria:cat,
         aoComecar:function(f){ AMR.player.abrir(r, f); },
