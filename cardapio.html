@@ -6898,7 +6898,15 @@
     let _fid2Timer = null, _fid2Ult = null;
     function tok2(){ try{ return localStorage.getItem(KEY2) || ''; }catch(e){ return ''; } }
     function novoTok(){ const a = new Uint8Array(24); (window.crypto || window.msCrypto).getRandomValues(a); return Array.prototype.map.call(a, function(b){ return ('0' + b.toString(16)).slice(-2); }).join(''); }
-    function fidPinta(html){ document.getElementById('fidCard').innerHTML = html + '<button class="fid-fechar" onclick="fidFechar()">Fechar</button>'; }
+    var _fidAbertoEm = 0;   // quando a folha acabou de abrir (para não misturar a subida com o ajuste de altura)
+    function fidPinta(html){
+      const c = document.getElementById('fidCard');
+      const aberta = ov.classList.contains('aberto') && (Date.now() - _fidAbertoEm > 520);   // já parada no sítio
+      const h0 = aberta ? c.offsetHeight : 0;
+      c.innerHTML = html + '<button class="fid-fechar" onclick="fidFechar()">Fechar</button>';
+      // Mudou de altura com a folha aberta (ex.: "A abrir…" → cartão completo)? Desliza suave até à nova altura, sem salto.
+      if(aberta && c.animate){ const d = c.offsetHeight - h0; if(Math.abs(d) > 4){ try{ c.animate([{ transform:'translateY(' + d + 'px)' }, { transform:'translateY(0)' }], { duration:340, easing:'cubic-bezier(.32,.72,0,1)' }); }catch(e){} } }
+    }
     function fidQR(tok){ const q = document.getElementById('fidQR'); if(q && window.QRCode){ q.innerHTML = ''; try{ new QRCode(q, { text:'AMFID:' + tok, width:190, height:190, colorDark:'#2e2418', colorLight:'#ffffff', correctLevel:QRCode.CorrectLevel.M }); }catch(e){} } }
     // número de carimbos no botão ⭐ do menu (o cliente vê sem abrir o cartão)
     function fidSelo(n, total){
@@ -6979,13 +6987,17 @@
       }, 4000);
     }
     async function abrirFid2(){
-      requestAnimationFrame(function(){ ov.classList.add('aberto'); });
-      if(typeof sbC === 'undefined' || !sbC || !window.__negocioId){ fidPinta('<p style="text-align:center;margin:16px 0;">Cartão indisponível neste momento.</p>'); return; }
+      // Como as Reservas: o conteúdo é desenhado ANTES de a folha subir, para subir já com a altura final (sem saltos)
+      const abrirJa = function(){ if(ov.classList.contains('aberto')) return; requestAnimationFrame(function(){ ov.classList.add('aberto'); _fidAbertoEm = Date.now(); }); };
+      if(typeof sbC === 'undefined' || !sbC || !window.__negocioId){ fidPinta('<p style="text-align:center;margin:16px 0;">Cartão indisponível neste momento.</p>'); abrirJa(); return; }
       const tk = tok2(); _fid2Ult = null;
-      if(!tk){ fidEntrada(); return; }
-      fidPinta('<p style="text-align:center;margin:16px 0;color:var(--castanho-suave);">A abrir o teu cartão…</p>');
-      try{ const r = await sbC.rpc('fid_ver', { p_negocio:window.__negocioId, p_token:tk }); if(r.error) throw r.error; fidMostra(r.data || {}); }
-      catch(e){ fidPinta('<p style="text-align:center;margin:16px 0;">Não foi possível abrir o cartão. Verifica a ligação.</p>'); }
+      if(!tk){ fidEntrada(); abrirJa(); return; }
+      // Espera um instante pela resposta para abrir já com o cartão completo; se a rede for lenta, abre com "A abrir…"
+      let pronto = false;
+      const espera = setTimeout(function(){ if(!pronto){ fidPinta('<p style="text-align:center;margin:16px 0;color:var(--castanho-suave);">A abrir o teu cartão…</p>'); abrirJa(); } }, 350);
+      try{ const r = await sbC.rpc('fid_ver', { p_negocio:window.__negocioId, p_token:tk }); pronto = true; clearTimeout(espera); if(r.error) throw r.error; fidMostra(r.data || {}); }
+      catch(e){ pronto = true; clearTimeout(espera); fidPinta('<p style="text-align:center;margin:16px 0;">Não foi possível abrir o cartão. Verifica a ligação.</p>'); }
+      abrirJa();
     }
 
     function abrirFid(){ if(window._fidelidade) abrirFid2(); }
