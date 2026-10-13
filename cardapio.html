@@ -4215,7 +4215,7 @@
     if(target.classList.contains('sec-pratodia') && target.dataset.pdBg){ painel.style.background = target.dataset.pdBg; painel.classList.add('painel-pratodia'); }
     else { painel.style.background = ''; painel.classList.remove('painel-pratodia'); }
 
-    document.querySelectorAll('.grupo-prato, .grupo-vinho').forEach(det => { if(det.__amAnim){ det.__amAnim.onfinish = null; det.__amAnim.cancel(); det.__amAnim = null; } (det.__amCorpo || []).forEach(function(x){ try{ x.cancel(); }catch(e){} }); det.__amCorpo = []; det.style.overflow = ''; det.open = false; });   // limpa animações de grupos a meio
+    document.querySelectorAll('.grupo-prato, .grupo-vinho').forEach(det => { if(window.__amPararGrupo) window.__amPararGrupo(det); det.open = false; });   // limpa animações de grupos a meio
     // Se a categoria só tem UM grupo, abre-o sozinho (menos um clique).
     // Se tem VÁRIAS secções (ex.: vinhos, menus), nascem todas fechadas e o cliente abre a que quiser.
     const grupos = target.querySelectorAll('.grupo-prato, .grupo-vinho');
@@ -4275,26 +4275,45 @@
   // entra/sai a esbater. Um toque a meio inverte a partir de onde está (sem saltos). "Reduzir movimento" → como antes.
   (function(){
     function reduz(){ try{ return window.matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){ return false; } }
-    function animar(det, abrir){
-      var hAtual = det.getBoundingClientRect().height;   // o que se vê agora (mesmo a meio de outra animação)
-      if(det.__amAnim){ det.__amAnim.onfinish = null; det.__amAnim.cancel(); det.__amAnim = null; }
+    // Anima o CARTÃO de dentro (altura, margens, padding, bordas) e não o grupo inteiro: assim a borda arredondada e a sombra
+    // do cartão acompanham sempre o fundo dele (antes eram cortadas durante a animação e apareciam de repente no fim = saltinho),
+    // e as margens crescem com ele (os grupos de baixo deslizam e acabam exatamente onde ficam — sem acerto final).
+    var PROPS = ['height','paddingTop','paddingBottom','marginTop','marginBottom','borderTopWidth','borderBottomWidth'];
+    var ZERO = {}; PROPS.forEach(function(k){ ZERO[k] = '0px'; });
+    function medidas(el){ var cs = getComputedStyle(el), o = {}; PROPS.forEach(function(k){ o[k] = cs[k]; }); return o; }
+    function filhosDe(det){ return Array.prototype.filter.call(det.children, function(c){ return c.tagName !== 'SUMMARY'; }); }
+    function parar(det){
+      if(det.__amAnim){ det.__amAnim.onfinish = null; det.__amAnim = null; }
       (det.__amCorpo || []).forEach(function(x){ try{ x.cancel(); }catch(e){} }); det.__amCorpo = [];
+      filhosDe(det).forEach(function(c){ c.style.overflow = ''; });
+    }
+    window.__amPararGrupo = parar;
+    function animar(det, abrir){
+      var filhos = filhosDe(det);
+      var aMeio = !!det.__amAnim;
+      // onde está agora (a meio de outra animação: os valores atuais → inverte sem saltar)
+      var agora = filhos.map(function(c){ return (aMeio || det.open) ? Object.assign(medidas(c), { opacity:getComputedStyle(c).opacity }) : Object.assign({}, ZERO, { opacity:'0' }); });
+      parar(det);
       det.__amAlvo = abrir;
-      var hFim;
-      if(abrir){ det.open = true; hFim = det.getBoundingClientRect().height; }
-      else { det.open = false; hFim = det.getBoundingClientRect().height; det.open = true; }   // mede o fechado sem pintar
-      if(Math.abs(hFim - hAtual) < 2){ det.open = abrir; det.style.overflow = ''; return; }
-      det.style.overflow = 'hidden';
-      var a = det.animate([{ height:hAtual + 'px' }, { height:hFim + 'px' }],
-        { duration: abrir ? 440 : 340, easing: abrir ? 'cubic-bezier(.32,.72,0,1)' : 'cubic-bezier(.4,0,.2,1)',   // abrir: trava suave; fechar: assenta suave (os de baixo param sem solavanco)
-          fill: abrir ? 'none' : 'forwards' });   // ao fechar, segura a altura final até o grupo estar mesmo fechado (sem 1 frame de "aberto" no fim)
-      // o conteúdo acompanha a altura: entra a esbater e a descer 6px / sai a esbater
-      Array.prototype.forEach.call(det.children, function(c){ if(c.tagName === 'SUMMARY') return;
-        try{ det.__amCorpo.push(c.animate(abrir ? [{ opacity:0, transform:'translateY(-6px)' }, { opacity:1, transform:'none' }] : [{ opacity:1 }, { opacity:0 }],
-          { duration: abrir ? 380 : 200, easing: abrir ? 'cubic-bezier(.2,.7,.3,1)' : 'cubic-bezier(.4,0,1,1)', fill: abrir ? 'backwards' : 'forwards' })); }catch(e){} });
-      det.__amAnim = a;
-      a.onfinish = function(){ if(det.__amAnim !== a) return; det.__amAnim = null; det.style.overflow = '';
-        if(!abrir){ det.open = false; (det.__amCorpo || []).forEach(function(x){ try{ x.cancel(); }catch(e){} }); det.__amCorpo = []; a.cancel(); } };   // fecha primeiro, depois larga a altura segura
+      det.open = true;
+      var fim = filhos.map(function(c){ return abrir ? Object.assign(medidas(c), { opacity:'1' }) : Object.assign({}, ZERO, { opacity:'0' }); });
+      if(!filhos.length){ det.open = abrir; return; }
+      var tam = { duration: abrir ? 440 : 340, easing: abrir ? 'cubic-bezier(.32,.72,0,1)' : 'cubic-bezier(.4,0,.2,1)', fill:'forwards' };
+      var esb = { duration: abrir ? 380 : 200, easing: abrir ? 'cubic-bezier(.2,.7,.3,1)' : 'cubic-bezier(.4,0,1,1)', fill:'forwards' };
+      var primeira = null;
+      filhos.forEach(function(c, i){
+        if(!c.getClientRects().length) return;   // escondido: não anima
+        c.style.overflow = 'hidden';   // corta só o que está DENTRO do cartão; a borda e a sombra do próprio cartão ficam sempre visíveis
+        var de = {}, ate = {}; PROPS.forEach(function(k){ de[k] = agora[i][k]; ate[k] = fim[i][k]; });
+        var a = c.animate([de, ate], tam); if(!primeira) primeira = a;
+        var deO = +agora[i].opacity, ateO = +fim[i].opacity;
+        det.__amCorpo.push(a, c.animate([{ opacity:deO }, { opacity:ateO }], esb));
+      });
+      if(!primeira){ det.open = abrir; return; }
+      det.__amAnim = primeira;
+      primeira.onfinish = function(){ if(det.__amAnim !== primeira) return;
+        if(!abrir) det.open = false;   // fecha primeiro (com o cartão já a zero) e só depois larga as animações → nada se mexe
+        parar(det); };
     }
     document.addEventListener('click', function(e){
       if(e.defaultPrevented) return;
