@@ -2544,9 +2544,11 @@
   @keyframes decorArvSacudir{ 0%,72%{ transform:rotate(0deg); } 74%{ transform:rotate(-4deg); } 76%{ transform:rotate(4deg); } 78%{ transform:rotate(-3deg); } 80%{ transform:rotate(2deg); } 82%{ transform:rotate(0deg); } 100%{ transform:rotate(0deg); } }
   .decor-fixa{ position:fixed; z-index:391; pointer-events:none; user-select:none; line-height:1; text-shadow:0 2px 6px rgba(0,0,0,.35); transform:translate(-50%,-50%); }
   /* Ao abrir uma categoria, escondem-se os adereços grandes (a neve e as luzes ficam) */
-  body.secao-aberta #decorFixas{ display:none !important; opacity:0; }
-  /* esbate em vez de desaparecer/aparecer de repente (browsers recentes; nos antigos fica como antes) */
-  #decorFixas{ transition:opacity .22s var(--am-mover, ease), display .22s allow-discrete; }
+  /* Ao ABRIR: passa logo para TRÁS do painel (z-index abaixo dos 300 do painel) e esbate depressa — as letras animadas
+     (ex.: promoção do São Caetano) já não se veem por cima do efeito de abertura. Ao FECHAR: só volta depois de o efeito de
+     fecho acabar (atraso), como o cabeçalho e o rodapé. */
+  body.secao-aberta #decorFixas{ display:none !important; opacity:0; z-index:299 !important; transition:opacity .14s var(--am-sai-op, ease), display .14s allow-discrete; }
+  #decorFixas{ transition:opacity .3s var(--am-entra-op, ease) .34s, display .3s allow-discrete .34s; }
   @starting-style{ #decorFixas{ opacity:0; } }
   .idecor-fixa{ position:absolute; z-index:32; pointer-events:none; user-select:none; line-height:1; text-shadow:0 2px 6px rgba(0,0,0,.4); transform:translate(-50%,-50%); }
 
