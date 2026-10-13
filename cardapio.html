@@ -6983,8 +6983,14 @@
     function tok2(){ try{ return localStorage.getItem(KEY2) || ''; }catch(e){ return ''; } }
     function novoTok(){ const a = new Uint8Array(24); (window.crypto || window.msCrypto).getRandomValues(a); return Array.prototype.map.call(a, function(b){ return ('0' + b.toString(16)).slice(-2); }).join(''); }
     var _fidAbertoEm = 0;   // quando a folha acabou de abrir (para não misturar a subida com o ajuste de altura)
+    var _fidPend = null, _fidPendT = null;
     function fidPinta(html){
       const c = document.getElementById('fidCard');
+      // A resposta chegou com a folha AINDA a subir (rede lenta → abriu com "A abrir…")? Trocar o conteúdo a meio da subida
+      // fazia a folha saltar. Guarda-se e troca-se assim que a folha pára — e aí desliza suave para a nova altura.
+      const _aSubir = ov.classList.contains('aberto') && (Date.now() - _fidAbertoEm <= 520);
+      if(_aSubir){ _fidPend = html; if(!_fidPendT) _fidPendT = setTimeout(function(){ _fidPendT = null; var h = _fidPend; _fidPend = null; if(h != null){ fidPinta(h); if(document.getElementById('fidQR')) fidQR(tok2()); } }, 540 - (Date.now() - _fidAbertoEm)); return; }
+      _fidPend = null; if(_fidPendT){ clearTimeout(_fidPendT); _fidPendT = null; }
       const aberta = ov.classList.contains('aberto') && (Date.now() - _fidAbertoEm > 520);   // já parada no sítio
       const h0 = aberta ? c.offsetHeight : 0;
       c.innerHTML = html + '<button class="fid-fechar" onclick="fidFechar()">Fechar</button>';
