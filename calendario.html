@@ -988,8 +988,10 @@
     let encPend = 0, encAtivas = 0;
     try{
       const desde = new Date(); desde.setDate(desde.getDate()-30);
-      const { data } = await sb.from('encomendas').select('estado').eq('negocio_id', negocio.id).gte('criado_em', desde.toISOString());
-      (data||[]).forEach(function(e){ const s=e.estado||'pendente'; if(s==='pendente'){ encPend++; encAtivas++; } else if(s==='confirmada'||s==='pronta'){ encAtivas++; } });
+      let { data, error } = await sb.from('encomendas').select('estado, arquivada').eq('negocio_id', negocio.id).gte('criado_em', desde.toISOString());
+      if(error){ const r2 = await sb.from('encomendas').select('estado').eq('negocio_id', negocio.id).gte('criado_em', desde.toISOString()); data = r2.data; }   // base sem a coluna "arquivada"
+      // conta igual à lista das Encomendas: pendentes contam sempre (mesmo arquivadas — continuam a precisar de resposta); as em curso só se não estiverem arquivadas
+      (data||[]).forEach(function(e){ const s=e.estado||'pendente'; if(s==='pendente'){ encPend++; encAtivas++; } else if((s==='confirmada'||s==='pronta') && !e.arquivada){ encAtivas++; } });
     }catch(e){}
     const nome = (negocio && negocio.nome) || 'Restaurante';
     const dd = new Date();
@@ -2170,7 +2172,7 @@
     if(['cancelada','entregue'].indexOf(est) < 0) acoes += '<button class="enc-a" data-a="cancelada" data-id="' + e.id + '" style="border:none; background:#fbe7e4; color:#b23; border-radius:8px; padding:7px 11px; cursor:pointer; font-family:inherit; font-weight:800; font-size:.82rem;">✕ Cancelar</button>';
     if(est === 'cancelada') acoes += '<button class="enc-del" data-id="' + e.id + '" title="Apagar definitivamente" style="border:1px solid #e8c4bf; color:var(--vermelho); background:#fff; border-radius:8px; padding:7px 10px; cursor:pointer; font-family:inherit; font-weight:700; font-size:.82rem;">🗑</button>';
     else if(e.arquivada) acoes += '<button class="enc-arq" data-id="' + e.id + '" data-v="0" title="Voltar a mostrar" style="border:1px solid var(--linha); color:#6b4a1f; background:#fff; border-radius:8px; padding:7px 10px; cursor:pointer; font-family:inherit; font-weight:700; font-size:.82rem;">↩ Desarquivar</button>';
-    else acoes += '<button class="enc-arq" data-id="' + e.id + '" data-v="1" title="Arquivar (sai da lista, fica guardada para as contas)" style="border:1px solid var(--linha); color:#6b4a1f; background:#fff; border-radius:8px; padding:7px 10px; cursor:pointer; font-family:inherit; font-weight:700; font-size:.82rem;">📦</button>';
+    else if(est !== 'pendente') acoes += '<button class="enc-arq" data-id="' + e.id + '" data-v="1" title="Arquivar (sai da lista, fica guardada para as contas)" style="border:1px solid var(--linha); color:#6b4a1f; background:#fff; border-radius:8px; padding:7px 10px; cursor:pointer; font-family:inherit; font-weight:700; font-size:.82rem;">📦</button>';
     const falta = (est === 'pendente' || est === 'confirmada') ? _encFaltaTxt(e) : { txt:'', urg:0 };
     const neon = entregue ? 'box-shadow:none;' : (est === 'pendente' ? '' : ('box-shadow:0 0 0 1.5px ' + cor + ', 0 0 12px ' + glow + ';'));
     const pulsa = (est === 'pendente') ? ' pulsa' : '';
@@ -2224,8 +2226,13 @@
     if(!_ENC_GRP[_encFiltro]) _encFiltro = 'pendente';
     // contagens: Pendentes = todas as que esperam resposta (qualquer dia); as outras = do dia escolhido
     const cont = { pendente:0, confirmada:0, pronta:0, entregue:0, cancelada:0 };
-    ativas.forEach(function(e){ if((e.estado || 'pendente') === 'pendente') cont.pendente++; });
+    // Pendentes: TODAS as que esperam resposta, mesmo que tenham sido arquivadas por engano (antes ficavam invisíveis mas contavam no início)
+    todas.forEach(function(e){ if((e.estado || 'pendente') === 'pendente') cont.pendente++; });
     doDia.forEach(function(e){ const st = e.estado || 'pendente'; if(st !== 'pendente') cont[st] = (cont[st] || 0) + 1; });
+    // Em curso de DIAS ANTERIORES (aceites/prontas que ficaram por entregar): antes só apareciam se se fosse a esse dia,
+    // e o início do gestor dizia "3 em curso" sem se verem em lado nenhum. Agora aparecem sempre, no topo, e contam.
+    const _atrasadas = function(st){ return ativas.filter(function(e){ const d = _encDiaDe(e); return (e.estado || 'pendente') === st && d < hojeIso && d !== _encDia; }); };
+    ['confirmada','pronta'].forEach(function(st){ cont[st] += _atrasadas(st).length; });
     const somBtn = '<button id="encSomBtn" type="button" style="border:1px solid var(--linha); background:#fff; border-radius:999px; padding:6px 12px; cursor:pointer; font-family:inherit; font-weight:700; font-size:.8rem; color:var(--castanho);">' + (_encSomOn() ? '🔔 Som ligado' : '🔕 Som desligado') + '</button>';
     // barra do dia
     const dd = new Date(_encDia + 'T00:00:00');
@@ -2255,7 +2262,7 @@
     if(_encFiltro === 'pendente'){
       // a responder: de todos os dias, por ordem de levantamento
       const chave = function(e){ const d = _encLevDate(e); return d ? d.getTime() : new Date(e.criado_em).getTime(); };
-      lista = ativas.filter(function(e){ return (e.estado || 'pendente') === 'pendente'; }).sort(function(x, y){ return chave(x) - chave(y); });
+      lista = todas.filter(function(e){ return (e.estado || 'pendente') === 'pendente'; }).sort(function(x, y){ return chave(x) - chave(y); });
       if(!lista.length){ html += '<div class="card"><div style="color:#8a7a5c; font-size:.9rem;">Nenhuma encomenda à espera de resposta.</div></div>'; }
       else {
         const hoje = lista.filter(function(e){ return _encDiaDe(e) <= hojeIso; }), prox = lista.filter(function(e){ return _encDiaDe(e) > hojeIso; });
@@ -2266,7 +2273,13 @@
     } else {
       const chave = function(e){ const d = _encLevDate(e); return d ? d.getTime() : new Date(e.criado_em).getTime(); };
       lista = doDia.filter(function(e){ return (e.estado || 'pendente') === _encFiltro; }).sort(function(x, y){ return (_encFiltro === 'entregue') ? ((y.numero || 0) - (x.numero || 0)) : (chave(x) - chave(y)); });
-      if(!lista.length) html += '<div class="card"><div style="color:#8a7a5c; font-size:.9rem;">Sem encomendas em "' + _ENC_GRP[_encFiltro].nome + '" neste dia.</div></div>';
+      const atr = (_encFiltro === 'confirmada' || _encFiltro === 'pronta') ? _atrasadas(_encFiltro).sort(function(x, y){ return chave(x) - chave(y); }) : [];
+      if(atr.length){
+        html += '<div style="font-size:.8rem;font-weight:800;color:#b23;margin:6px 0 6px;">⚠️ DE DIAS ANTERIORES (por entregar) · ' + atr.length + '</div>';
+        atr.forEach(function(e){ html += _cartaEnc(e, _ENC_GRP[_encFiltro]); });
+        if(lista.length) html += '<div style="font-size:.8rem;font-weight:800;color:#8a7a5c;margin:14px 0 6px;">' + (_encDia === hojeIso ? 'HOJE' : 'NESTE DIA') + ' · ' + lista.length + '</div>';
+      }
+      if(!lista.length && !atr.length) html += '<div class="card"><div style="color:#8a7a5c; font-size:.9rem;">Sem encomendas em "' + _ENC_GRP[_encFiltro].nome + '" neste dia.</div></div>';
       else lista.forEach(function(e){ html += _cartaEnc(e, _ENC_GRP[_encFiltro]); });
     }
     if(nArq || _encVerArq) html += '<label style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:.85rem;color:#8a7a5c;cursor:pointer;"><input type="checkbox" id="encVerArq"' + (_encVerArq ? ' checked' : '') + ' style="width:auto;"> Mostrar arquivadas deste dia (' + nArq + ')</label>';
