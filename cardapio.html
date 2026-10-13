@@ -2334,6 +2334,13 @@
   @keyframes ptrSpin{ to{ transform:rotate(360deg); } }
   /* Promoção do dia no cardápio (por baixo do cabeçalho) — com destaque */
   #promoDia{ margin:22px 20px 8px; overflow:visible; }
+  /* Com uma categoria aberta, a promoção (que pulsa sem parar) e o resto do menu por trás deixam de ser pintados:
+     no iPhone o Safari desenhava as letras animadas POR CIMA do painel (efeitos 3D: flip, livro, tombar), durante e depois da abertura.
+     A promoção sai logo (esbate em 0,14 s); o resto do menu só depois de o efeito de abertura acabar (continua a ver-se por trás durante o efeito).
+     Ao fechar, volta tudo de imediato. */
+  body.secao-aberta #promoDia{ opacity:0; visibility:hidden; transition:opacity .14s var(--am-sai-op, ease), visibility 0s linear .14s; }
+  #promoDia{ transition:opacity .25s var(--am-entra-op, ease) .1s, visibility 0s; }
+  body.secao-aberta :is(#ovoSelo, #pratoDiaGrid, #modosBloco, #mosaicoGrid, #categoriaGrid, #menuLacre, #localBloco, #anuncioBox, #rodapeFinal){ visibility:hidden; transition:visibility 0s linear .6s; }
   #promoDia .promo-cartao{ position:relative; display:block; border-radius:20px; padding:16px 20px 15px; overflow:visible;
     background:linear-gradient(135deg, var(--pd-cor2,#ff7a18), var(--pd-cor,#e0245e));
     color:#fff; border:4px solid #fff; box-shadow:0 16px 30px -6px var(--pd-cor,#e0245e), 0 4px 0 rgba(0,0,0,.12);
