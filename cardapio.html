@@ -1529,7 +1529,7 @@
      ABRIR  → responde logo ao toque e trava longa e suavemente (a mesma curva das Reservas e do Cartão).
      FECHAR → começa logo (movimento visível no 2.º frame), recolhe a acelerar e assenta suave; ~30% mais curto; a opacidade acaba COM o movimento.
      Cada efeito mantém a sua personalidade (zoom, flip, livro, cortina…); só a qualidade do movimento é comum. */
-  :root{ --am-abrir:cubic-bezier(.32,.72,0,1); --am-fechar:cubic-bezier(.32,.08,.24,1); --am-entra-op:cubic-bezier(.2,.7,.3,1); --am-sai-op:cubic-bezier(.4,0,1,1); --am-mover:cubic-bezier(.4,0,.2,1); --am-folha-fechar:cubic-bezier(.3,.15,.5,.5); }   /* folha-fechar: responde logo ao toque e sai do ecrã a acelerar (sem cauda invisível) */
+  :root{ --am-abrir:cubic-bezier(.32,.72,0,1); --am-fechar:cubic-bezier(.32,.08,.24,1); --am-entra-op:cubic-bezier(.2,.7,.3,1); --am-sai-op:cubic-bezier(.4,0,1,1); --am-mover:cubic-bezier(.4,0,.2,1); --am-folha-fechar:cubic-bezier(.3,.15,.5,.5); --am-fora:calc(100% + 160px); }   /* --am-fora: folha fechada bem abaixo do ecrã — no iPhone (Safari) a zona da barra de baixo fica ABAIXO do fundo da janela e, com só 100%, via-se o topo do cartão ali em baixo (barra branca/bege antes de abrir e depois de fechar) */   /* folha-fechar: responde logo ao toque e sai do ecrã a acelerar (sem cauda invisível) */
   /* ===== Efeitos de abertura das secções (config.abrirEfeito → classe body.abrir-*) ===== */
   /* "zoom" é o comportamento base (scale a partir do separador tocado) — sem classe própria */
   /* Flip 3D — vira na vertical */
@@ -2197,7 +2197,7 @@
   .cart-painel{
     background:var(--branco); width:100%; max-width:520px; max-height:82vh;
     border-radius:18px 18px 0 0; padding:18px 16px calc(26px + var(--sa-bottom, env(safe-area-inset-bottom))); overflow-y:auto;
-    transform:translateY(100%); pointer-events:none; position:relative;
+    transform:translateY(var(--am-fora)); pointer-events:none; position:relative;
   }
   .cart-x{ position:sticky; top:-10px; float:right; margin:-8px -6px 0 0; width:38px; height:38px; border-radius:50%; border:none; background:var(--bege); color:var(--castanho); font-size:1.15rem; font-weight:800; cursor:pointer; z-index:5; display:flex; align-items:center; justify-content:center; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
   .cart-acoes button, .cart-whats, .cart-x{ touch-action:manipulation; }
@@ -2260,7 +2260,7 @@
   /* Escolha de tamanho/dose */
   #escOverlay{ position:fixed; inset:0; z-index:450; background:rgba(0,0,0,0); display:flex; align-items:flex-end; justify-content:center; pointer-events:none; transition:background .32s ease; }
   #escOverlay.aberto{ background:rgba(0,0,0,0.5); pointer-events:auto; }
-  .esc-painel{ background:var(--branco); width:100%; max-width:520px; border-radius:18px 18px 0 0; padding:18px 16px 24px; transform:translateY(100%); pointer-events:none; }
+  .esc-painel{ background:var(--branco); width:100%; max-width:520px; border-radius:18px 18px 0 0; padding:18px 16px 24px; transform:translateY(var(--am-fora)); pointer-events:none; }
   #escOverlay.aberto .esc-painel{ transform:translateY(0); pointer-events:auto; }
   @keyframes apPop{ from{ transform:scale(0.05); opacity:0; } to{ transform:scale(1); opacity:1; } }
   .esc-painel h3{ font-family:var(--fonte-titulo); color:var(--castanho); font-size:1.1rem; text-align:center; margin-bottom:4px; }
@@ -2411,7 +2411,7 @@
   @keyframes imRodar{ from{ opacity:0; transform:rotate(-22deg) scale(.5); } to{ opacity:1; transform:rotate(0) scale(1); } }
   #expOverlay{ position:fixed; inset:0; z-index:640; background:rgba(0,0,0,0); display:flex; align-items:flex-end; justify-content:center; padding:0; pointer-events:none; transition:background .3s ease; }
   #expOverlay.aberto{ background:rgba(0,0,0,0.5); pointer-events:auto; }
-  .exp-card{ background:#fff; width:100%; max-width:460px; max-height:88vh; overflow-y:auto; border-radius:18px 18px 0 0; padding:18px 18px calc(20px + var(--sa-bottom, env(safe-area-inset-bottom))); transform:translateY(100%); }
+  .exp-card{ background:#fff; width:100%; max-width:460px; max-height:88vh; overflow-y:auto; border-radius:18px 18px 0 0; padding:18px 18px calc(20px + var(--sa-bottom, env(safe-area-inset-bottom))); transform:translateY(var(--am-fora)); }
   #expOverlay.aberto .exp-card{ transform:translateY(0); }
   .exp-card h3{ font-family:var(--fonte-titulo); color:#3a2c18; margin:0 0 2px; font-size:1.25rem; text-align:center; }
   .exp-sub{ text-align:center; color:#8a7a5c; font-size:.82rem; margin:0 0 14px; }
@@ -2448,7 +2448,7 @@
   #agendaOverlay{ position:fixed; inset:0; z-index:660; background:rgba(0,0,0,0); display:flex; align-items:flex-end; justify-content:center; padding:0; pointer-events:none; visibility:hidden; transition:background .3s var(--am-folha-fechar), visibility 0s linear .3s; }
   body.scroll-lock .info-fixa{ transform:translateY(130%); }   /* enquanto uma folha está aberta, o rodapé desliza para fora (para baixo) — e volta a subir ao fechar, em vez de desaparecer por corte */
   #agendaOverlay.aberto{ background:rgba(0,0,0,0.5); pointer-events:auto; visibility:visible; transition:background .5s cubic-bezier(.32,.72,0,1), visibility 0s; }
-  .ag-card{ background:linear-gradient(180deg,#fffdf9,var(--branco)); width:100%; max-width:440px; max-height:88vh; overflow-y:auto; overscroll-behavior:contain; border-radius:22px 22px 0 0; padding:14px 16px calc(18px + var(--sa-bottom, env(safe-area-inset-bottom))); margin-bottom:calc(-1 * var(--sa-bottom, env(safe-area-inset-bottom))); transform:translateY(100%); pointer-events:none; border-top:3px solid var(--dourado); box-shadow:0 -10px 34px rgba(0,0,0,.20); transition:transform .3s var(--am-folha-fechar); will-change:transform; }
+  .ag-card{ background:linear-gradient(180deg,#fffdf9,var(--branco)); width:100%; max-width:440px; max-height:88vh; overflow-y:auto; overscroll-behavior:contain; border-radius:22px 22px 0 0; padding:14px 16px calc(18px + var(--sa-bottom, env(safe-area-inset-bottom))); margin-bottom:calc(-1 * var(--sa-bottom, env(safe-area-inset-bottom))); transform:translateY(var(--am-fora)); pointer-events:none; border-top:3px solid var(--dourado); box-shadow:0 -10px 34px rgba(0,0,0,.20); transition:transform .3s var(--am-folha-fechar); will-change:transform; }
   .ag-card::before{ content:''; display:block; width:42px; height:5px; border-radius:3px; background:var(--linha); margin:0 auto 12px; transition:background .2s; }
   .ag-card.a-arrastar::before{ background:var(--castanho-suave); }
   #agendaOverlay.aberto .ag-card{ transform:translateY(0); pointer-events:auto; transition:transform .5s cubic-bezier(.32,.72,0,1); }
@@ -2499,7 +2499,7 @@
   .ag-btn:disabled{ opacity:.45; cursor:default; }
   .ag-fechar{ background:none; border:none; color:var(--castanho-suave); font-size:0.9rem; cursor:pointer; display:block; margin:12px auto 0; text-decoration:underline; }
   .ag-passo-tit{ font-size:0.8rem; font-weight:700; color:var(--dourado-escuro); margin:14px 0 4px; }
-  .fid-card{ background:var(--branco); width:100%; max-width:440px; border-radius:18px 18px 0 0; padding:20px 18px calc(20px + var(--sa-bottom, env(safe-area-inset-bottom))); transform:translateY(100%); pointer-events:none; max-height:100%; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; box-sizing:border-box; }   /* se não couber, faz scroll por dentro */
+  .fid-card{ background:var(--branco); width:100%; max-width:440px; border-radius:18px 18px 0 0; padding:20px 18px calc(20px + var(--sa-bottom, env(safe-area-inset-bottom))); transform:translateY(var(--am-fora)); pointer-events:none; max-height:100%; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; box-sizing:border-box; }   /* se não couber, faz scroll por dentro */
   #fidOverlay.aberto .fid-card{ transform:translateY(0); pointer-events:auto; transition:transform .5s cubic-bezier(.32,.72,0,1); }
   .fid-card{ transition:transform .3s var(--am-folha-fechar); will-change:transform; }   /* abrir/fechar como as Reservas */
   #fidOverlay.aberto{ transition:background .5s cubic-bezier(.32,.72,0,1); }
@@ -5790,7 +5790,7 @@
             const ov = document.createElement('div');
             ov.id = 'gerirOverlay';
             ov.style.cssText = 'position:fixed; inset:0; z-index:9700; background:rgba(0,0,0,0); transition:background .5s var(--am-abrir); display:flex; align-items:flex-end; justify-content:center; padding:0;';
-            ov.innerHTML = '<div style="background:linear-gradient(180deg,#fffdf9,var(--branco,#fff)); border-radius:22px 22px 0 0; border-top:3px solid var(--dourado,#a8712f); max-width:440px; width:100%; max-height:92vh; overflow:auto; padding:20px 18px calc(20px + var(--sa-bottom, env(safe-area-inset-bottom))); margin-bottom:calc(-1 * var(--sa-bottom, env(safe-area-inset-bottom))); box-shadow:0 -12px 40px rgba(0,0,0,.30); transform:translateY(100%); transition:transform .5s var(--am-abrir); will-change:transform;">'
+            ov.innerHTML = '<div style="background:linear-gradient(180deg,#fffdf9,var(--branco,#fff)); border-radius:22px 22px 0 0; border-top:3px solid var(--dourado,#a8712f); max-width:440px; width:100%; max-height:92vh; overflow:auto; padding:20px 18px calc(20px + var(--sa-bottom, env(safe-area-inset-bottom))); margin-bottom:calc(-1 * var(--sa-bottom, env(safe-area-inset-bottom))); box-shadow:0 -12px 40px rgba(0,0,0,.30); transform:translateY(var(--am-fora)); transition:transform .5s var(--am-abrir); will-change:transform;">'
               + '<h3 style="margin:0 0 4px; text-align:center; font-family:var(--fonte-titulo); color:var(--castanho);">A tua reserva</h3>'
               + '<div style="text-align:center; color:var(--castanho-suave); font-size:.9rem; margin-bottom:12px;">' + resumo + '</div>'
               + est
@@ -5815,7 +5815,7 @@
             const _sheet = ov.firstElementChild;
             void ov.offsetWidth;   // garante que parte de baixo (às vezes aparecia logo aberta, sem deslizar)
             if(_sheet) _sheet.style.transform = 'translateY(0)'; ov.style.background = 'rgba(0,0,0,.55)';   // sobe e o fundo escurece ao mesmo tempo
-            const fechar = function(){ if(ov.__aFechar) return; ov.__aFechar = true; ov.style.pointerEvents = 'none'; if(_sheet){ _sheet.style.transition = 'transform .3s var(--am-folha-fechar)'; _sheet.style.transform='translateY(100%)'; } ov.style.transition='background .3s var(--am-folha-fechar)'; ov.style.background='rgba(0,0,0,0)'; setTimeout(function(){ try{ ov.remove(); }catch(e){} document.body.style.overflow = ''; }, 330); };   // só sai depois de a folha descer toda
+            const fechar = function(){ if(ov.__aFechar) return; ov.__aFechar = true; ov.style.pointerEvents = 'none'; if(_sheet){ _sheet.style.transition = 'transform .3s var(--am-folha-fechar)'; _sheet.style.transform='translateY(var(--am-fora))'; } ov.style.transition='background .3s var(--am-folha-fechar)'; ov.style.background='rgba(0,0,0,0)'; setTimeout(function(){ try{ ov.remove(); }catch(e){} document.body.style.overflow = ''; }, 330); };   // só sai depois de a folha descer toda
             const $g = function(id){ return document.getElementById(id); };
             const msg = function(t, cor){ const m = $g('grMsg'); if(m){ m.textContent = t; m.style.color = cor || 'var(--castanho)'; } };
             const falhou = function(e){ const t = String((e && e.message) || e || ''); msg(/function|não existe|does not exist|PGRST/i.test(t) ? 'Ainda não disponível neste restaurante — usa o WhatsApp.' : 'Sem ligação. Tenta outra vez.', '#b23'); };
@@ -5893,7 +5893,7 @@
             const ov = document.createElement('div');
             ov.id = 'gerirOverlay';
             ov.style.cssText = 'position:fixed; inset:0; z-index:9000; background:rgba(0,0,0,0); transition:background .5s var(--am-abrir); display:flex; align-items:flex-end; justify-content:center; padding:0;';
-            ov.innerHTML = '<div style="background:linear-gradient(180deg,#fffdf9,var(--branco,#fff)); border-radius:22px 22px 0 0; border-top:3px solid var(--dourado,#a8712f); max-width:440px; width:100%; max-height:92vh; overflow:auto; padding:20px 18px calc(20px + var(--sa-bottom, env(safe-area-inset-bottom))); margin-bottom:calc(-1 * var(--sa-bottom, env(safe-area-inset-bottom))); box-shadow:0 -12px 40px rgba(0,0,0,.30); transform:translateY(100%); transition:transform .5s var(--am-abrir); will-change:transform;">'
+            ov.innerHTML = '<div style="background:linear-gradient(180deg,#fffdf9,var(--branco,#fff)); border-radius:22px 22px 0 0; border-top:3px solid var(--dourado,#a8712f); max-width:440px; width:100%; max-height:92vh; overflow:auto; padding:20px 18px calc(20px + var(--sa-bottom, env(safe-area-inset-bottom))); margin-bottom:calc(-1 * var(--sa-bottom, env(safe-area-inset-bottom))); box-shadow:0 -12px 40px rgba(0,0,0,.30); transform:translateY(var(--am-fora)); transition:transform .5s var(--am-abrir); will-change:transform;">'
               + '<h3 style="margin:0 0 4px; text-align:center; font-family:var(--fonte-titulo); color:var(--castanho);">A tua reserva</h3>'
               + '<div style="text-align:center; color:var(--castanho-suave); font-size:.9rem; margin-bottom:14px;">' + resumo + '</div>'
               + (tel
@@ -5915,7 +5915,7 @@
             const _sheet = ov.firstElementChild;
             void ov.offsetWidth;   // garante que parte de baixo (às vezes aparecia logo aberta, sem deslizar)
             if(_sheet) _sheet.style.transform = 'translateY(0)'; ov.style.background = 'rgba(0,0,0,.55)';   // sobe e o fundo escurece ao mesmo tempo
-            const fechar = function(){ if(ov.__aFechar) return; ov.__aFechar = true; ov.style.pointerEvents = 'none'; if(_sheet){ _sheet.style.transition = 'transform .3s var(--am-folha-fechar)'; _sheet.style.transform='translateY(100%)'; } ov.style.transition='background .3s var(--am-folha-fechar)'; ov.style.background='rgba(0,0,0,0)'; setTimeout(function(){ try{ ov.remove(); }catch(e){} document.body.style.overflow = ''; }, 330); };   // só sai depois de a folha descer toda
+            const fechar = function(){ if(ov.__aFechar) return; ov.__aFechar = true; ov.style.pointerEvents = 'none'; if(_sheet){ _sheet.style.transition = 'transform .3s var(--am-folha-fechar)'; _sheet.style.transform='translateY(var(--am-fora))'; } ov.style.transition='background .3s var(--am-folha-fechar)'; ov.style.background='rgba(0,0,0,0)'; setTimeout(function(){ try{ ov.remove(); }catch(e){} document.body.style.overflow = ''; }, 330); };   // só sai depois de a folha descer toda
             const gf = document.getElementById('grFechar'); if(gf) gf.onclick = fechar;
             const grm = document.getElementById('grRemover'); if(grm) grm.onclick = function(){ if(confirm('Remover esta reserva do teu telemóvel? O restaurante continua com ela — isto só apaga o atalho aqui.')){ remover(r); fechar(); } };
             ov.addEventListener('click', function(e){ if(e.target === ov) fechar(); });
@@ -6959,12 +6959,12 @@
       // fim determinístico com transições EXPLÍCITAS (não depende de reflow nem de troca de classe)
       if(fecha){
         // continua à velocidade do dedo: a folha não "pára" ao largar e depois arranca — segue o gesto até sair do ecrã
-        var falta = Math.max(1, H - Math.max(0, dy)), v0 = Math.max(vy, 0.9);   // px que faltam; px/ms (mínimo para não arrastar)
+        var falta = Math.max(1, H + 160 - Math.max(0, dy)), v0 = Math.max(vy, 0.9);   // px que faltam; px/ms (mínimo para não arrastar)
         var T = Math.round(Math.max(160, Math.min(320, falta / v0 * 1.6)));
         var y1 = Math.min(1, v0 * T * 0.3 / falta).toFixed(3);   // inclinação inicial da curva = velocidade do dedo
         var CURVA_SEGUE = 'cubic-bezier(.3,' + y1 + ',.6,.9)';
         card.style.transition='transform '+T+'ms '+CURVA_SEGUE; ov.style.transition='background '+T+'ms '+CURVA_SEGUE;
-        card.style.transform='translate3d(0,100%,0)'; ov.style.background='rgba(0,0,0,0)';
+        card.style.transform='translate3d(0,var(--am-fora),0)'; ov.style.background='rgba(0,0,0,0)';
         var doneF=function(ev){ if(ev && ((ev.propertyName && ev.propertyName!=='transform') || ev.target!==card)) return;   // ignora transições de elementos lá dentro
           card.removeEventListener('transitionend', doneF); if(doneF.feito) return; doneF.feito = true; ov.classList.remove('aberto');
           card.style.transition='none'; ov.style.transition='none'; card.style.transform=''; ov.style.background=''; void card.offsetWidth; _limpar(); };   // troca o estilo do dedo pelo da classe SEM animar entre os dois (antes podia piscar um frame)
@@ -7128,7 +7128,7 @@
   (function(){
     var ov = document.createElement('div'); ov.id = 'amModal';
     ov.style.cssText = 'position:fixed;inset:0;z-index:12000;display:none;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.5);padding:0;opacity:0;transition:opacity .3s var(--am-folha-fechar);';
-    ov.innerHTML = '<div id="amCard" style="background:linear-gradient(180deg,#fffdf9,var(--branco,#fff));width:100%;max-width:440px;border-radius:22px 22px 0 0;border-top:3px solid var(--dourado,#a8712f);box-shadow:0 -12px 40px rgba(0,0,0,.30);padding:20px 18px calc(20px + var(--sa-bottom, env(safe-area-inset-bottom)));margin-bottom:calc(-1 * var(--sa-bottom, env(safe-area-inset-bottom)));transform:translateY(100%);transition:transform .36s cubic-bezier(.2,.9,.3,1);will-change:transform;">'
+    ov.innerHTML = '<div id="amCard" style="background:linear-gradient(180deg,#fffdf9,var(--branco,#fff));width:100%;max-width:440px;border-radius:22px 22px 0 0;border-top:3px solid var(--dourado,#a8712f);box-shadow:0 -12px 40px rgba(0,0,0,.30);padding:20px 18px calc(20px + var(--sa-bottom, env(safe-area-inset-bottom)));margin-bottom:calc(-1 * var(--sa-bottom, env(safe-area-inset-bottom)));transform:translateY(var(--am-fora));transition:transform .36s cubic-bezier(.2,.9,.3,1);will-change:transform;">'
       + '<div id="amTit" style="font-family:var(--fonte-titulo,inherit);color:var(--castanho,#4a3820);font-size:1.12rem;font-weight:800;text-align:center;margin-bottom:6px;"></div>'
       + '<div id="amMsg" style="color:var(--castanho-suave,#8a7350);font-size:.9rem;line-height:1.4;text-align:center;margin-bottom:12px;white-space:pre-line;"></div>'
       + '<input id="amInput" style="display:none;width:100%;box-sizing:border-box;padding:12px 13px;border:1.5px solid var(--linha,#e6dcc8);border-radius:12px;font-family:inherit;font-size:1rem;color:var(--castanho,#4a3820);background:var(--branco,#fff);margin-bottom:14px;">'
@@ -7139,12 +7139,12 @@
     document.body.appendChild(ov);
     var card=ov.querySelector('#amCard'), tit=ov.querySelector('#amTit'), msg=ov.querySelector('#amMsg'), inp=ov.querySelector('#amInput'), bOk=ov.querySelector('#amOk'), bC=ov.querySelector('#amCancel');
     var _res=null, _prompt=false, _hideTimer=null;
-    function fechar(val){ ov.style.transition='opacity .3s var(--am-folha-fechar)'; card.style.transition='transform .3s var(--am-folha-fechar)'; ov.style.opacity='0'; card.style.transform='translateY(100%)'; if(_hideTimer) clearTimeout(_hideTimer); _hideTimer=setTimeout(function(){ ov.style.display='none'; _hideTimer=null; },320); var r=_res; _res=null; if(r) r(val); }
+    function fechar(val){ ov.style.transition='opacity .3s var(--am-folha-fechar)'; card.style.transition='transform .3s var(--am-folha-fechar)'; ov.style.opacity='0'; card.style.transform='translateY(var(--am-fora))'; if(_hideTimer) clearTimeout(_hideTimer); _hideTimer=setTimeout(function(){ ov.style.display='none'; _hideTimer=null; },320); var r=_res; _res=null; if(r) r(val); }
     function abrir(){
       var aMeio = !!_hideTimer;   // a anterior ainda a descer (ex.: confirmar → pedir texto): sobe a partir de onde está, sem saltar para baixo
       if(_hideTimer){ clearTimeout(_hideTimer); _hideTimer=null; }
       ov.style.display='flex';
-      if(!aMeio){ card.style.transition='none'; card.style.transform='translateY(100%)'; ov.style.opacity='0'; void ov.offsetWidth; }   // começa em baixo
+      if(!aMeio){ card.style.transition='none'; card.style.transform='translateY(var(--am-fora))'; ov.style.opacity='0'; void ov.offsetWidth; }   // começa em baixo
       card.style.transition='transform .44s var(--am-abrir)'; ov.style.transition='opacity .36s var(--am-entra-op)';
       ov.style.opacity='1'; card.style.transform='translateY(0)';
     }
