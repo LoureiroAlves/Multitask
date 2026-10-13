@@ -1503,19 +1503,29 @@
     function _prPagsUI(){
       var box = $('prPags'); if(!box) return;
       var pg = Array.isArray(_prEdit.paginas) ? _prEdit.paginas : (_prEdit.paginas = []);
+      var tt = Array.isArray(_prEdit.paginasTit) ? _prEdit.paginasTit : (_prEdit.paginasTit = []);
+      while(tt.length < pg.length) tt.push('');
+      var _SUG = ['Na Brasa', 'Sugestão', 'Prato do dia'];
       var auto = _prEdit.auto === 'pratoDia';
       var h = '';
       pg.forEach(function(t, i){
         h += '<div style="margin-top:8px;"><div style="display:flex;justify-content:space-between;align-items:center;font-size:.8rem;font-weight:800;color:#8a7a5c;">Conteúdo ' + (i + 2)
           + '<button type="button" data-rm="' + i + '" style="border:none;background:none;color:#b23;font-weight:800;cursor:pointer;font-family:inherit;font-size:.8rem;">✕ Tirar</button></div>'
+          + (auto ? ('<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:4px 0 6px;"><input data-tit="' + i + '" maxlength="30" value="' + esc(tt[i] || '') + '" placeholder="Título (no lugar de &quot;Prato do dia&quot;)" style="flex:1;min-width:150px;margin:0;">'
+              + _SUG.map(function(sg){ return '<button type="button" data-tsug="' + i + '" data-v="' + sg + '" style="border:1px solid #e0d3b5;background:' + ((tt[i] || '') === sg ? '#8a5a10;color:#fff' : '#fbf6ec;color:var(--castanho)') + ';border-radius:999px;padding:5px 10px;cursor:pointer;font-family:inherit;font-weight:800;font-size:.75rem;">' + sg + '</button>'; }).join('') + '</div>') : '')
           + '<textarea data-pg="' + i + '" maxlength="300" rows="' + (auto ? 4 : 3) + '" placeholder="' + (auto ? 'Ex.: Sobremesa: Arroz doce' : 'Ex.: Sangria · jarro 8€') + '" style="resize:vertical;">' + esc(t || '') + '</textarea></div>';
       });
       h += '<button type="button" id="prPgAdd" style="margin-top:8px;border:1.5px dashed #c9b48a;background:#fffaf0;color:#6b4a1f;border-radius:10px;padding:8px 12px;cursor:pointer;font-family:inherit;font-weight:800;font-size:.82rem;width:100%;">➕ Acrescentar conteúdo que roda (mesmo layout)</button>';
       if(pg.length) h += '<div style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:.85rem;font-weight:700;color:var(--castanho);">Trocar a cada <input id="prSeg" type="number" min="2" max="60" value="' + (parseFloat(_prEdit.intervalo) || 5) + '" style="width:64px;margin:0;text-align:center;"> segundos</div>';
       box.innerHTML = h;
       box.querySelectorAll('textarea[data-pg]').forEach(function(ta){ ta.addEventListener('input', function(){ _prEdit.paginas[+ta.dataset.pg] = ta.value; prev(); }); });
-      box.querySelectorAll('[data-rm]').forEach(function(b){ b.onclick = function(){ _prEdit.paginas.splice(+b.dataset.rm, 1); _prPagsUI(); prev(); }; });
-      $('prPgAdd').onclick = function(){ _prEdit.paginas.push(''); _prPagsUI(); prev(); var tas = box.querySelectorAll('textarea[data-pg]'); try{ tas[tas.length - 1].focus(); }catch(e){} };
+      box.querySelectorAll('input[data-tit]').forEach(function(inp){ inp.addEventListener('input', function(){ _prEdit.paginasTit[+inp.dataset.tit] = inp.value; prev(); }); });
+      box.querySelectorAll('[data-tsug]').forEach(function(b){ b.onclick = function(){ _prEdit.paginasTit[+b.dataset.tsug] = b.dataset.v; _prPagsUI(); prev(); }; });
+      box.querySelectorAll('[data-rm]').forEach(function(b){ b.onclick = function(){ var k = +b.dataset.rm; _prEdit.paginas.splice(k, 1); _prEdit.paginasTit.splice(k, 1); _prPagsUI(); prev(); }; });
+      $('prPgAdd').onclick = function(){
+        // título já escolhido automaticamente (1.º extra "Na Brasa", 2.º "Sugestão"); muda-se com um toque ou escrevendo
+        var usados = _prEdit.paginasTit.slice(0, _prEdit.paginas.length); var prox = ['Na Brasa', 'Sugestão'].filter(function(x){ return usados.indexOf(x) < 0; })[0] || '';
+        _prEdit.paginas.push(''); _prEdit.paginasTit[_prEdit.paginas.length - 1] = prox; _prPagsUI(); prev(); var tas = box.querySelectorAll('textarea[data-pg]'); try{ tas[tas.length - 1].focus(); }catch(e){} };
       var sg = $('prSeg'); if(sg) sg.addEventListener('input', function(){ var v = parseFloat(sg.value); if(v >= 2 && v <= 60){ _prEdit.intervalo = v; prev(); } });
     }
     _prPagsUI();
@@ -1564,7 +1574,7 @@
     }
     async function guardar(comPush){
       var msg = $('prMsg'); var e = validar(); if(e){ msg.textContent = e; msg.className = 'msg erro'; return; }
-      syncHora(); _prEdit.texto = ($('prTexto').value || '').trim(); _prEdit.paginas = (_prEdit.paginas || []).map(function(t){ return String(t || '').trim(); }).filter(Boolean); if(!_prEdit.paginas.length){ delete _prEdit.paginas; delete _prEdit.intervalo; } else { _prEdit.intervalo = Math.max(2, Math.min(60, parseFloat(_prEdit.intervalo) || 5)); } _prEdit.selo = ($('prSelo').value || '').trim(); _prEdit.emoji = ($('prEmoji').value || '').trim(); _prEdit.push = { titulo:($('prPushTit').value || '').trim(), url:($('prPushUrl').value || '').trim() };
+      syncHora(); _prEdit.texto = ($('prTexto').value || '').trim(); var _pgT = _prEdit.paginasTit || []; var _pgOk = (_prEdit.paginas || []).map(function(t, i){ return { t:String(t || '').trim(), tit:String(_pgT[i] || '').trim() }; }).filter(function(o){ return o.t; }); _prEdit.paginas = _pgOk.map(function(o){ return o.t; }); _prEdit.paginasTit = _pgOk.map(function(o){ return o.tit; }); if(!_prEdit.paginas.length){ delete _prEdit.paginas; delete _prEdit.paginasTit; delete _prEdit.intervalo; } else { _prEdit.intervalo = Math.max(2, Math.min(60, parseFloat(_prEdit.intervalo) || 5)); } _prEdit.selo = ($('prSelo').value || '').trim(); _prEdit.emoji = ($('prEmoji').value || '').trim(); _prEdit.push = { titulo:($('prPushTit').value || '').trim(), url:($('prPushUrl').value || '').trim() };
       if(comPush){
         var est = _prEstado(_prEdit); if(est !== 'ativa' || !_prBate(_prEdit.quando, _prHoje(), new Date().getDay())){
           if(!(await window.__amConfirm('Enviar aviso?', { texto:'Esta promoção não está no menu hoje (' + _prQuandoTxt(_prEdit.quando) + '). Queres enviar o aviso mesmo assim?', ok:'Sim, enviar', cancelar:'Não' }))) return;
@@ -3567,27 +3577,31 @@
     // Layout "Prato do dia" (automático): título = dia da semana; por baixo "Prato do dia" (ao domingo "Sugestão");
     // o texto são os pratos — cada linha (Enter) é um parágrafo. O selo só aparece se o restaurante escrever um.
     var autoPD = (p.auto === 'pratoDia');
-    var bigFix = '', subPD = '';
+    var bigFix = '', subPD = '', subAuto = '';
     if(autoPD){
       var _dv = (dataVer instanceof Date && !isNaN(dataVer)) ? dataVer : new Date();
       bigFix = ['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'][_dv.getDay()];
-      subPD = '<div class="pd-sub2">' + (_dv.getDay() === 0 ? 'Sugestão' : 'Prato do dia') + '</div>';
+      subAuto = (_dv.getDay() === 0 ? 'Sugestão' : 'Prato do dia');
+      subPD = '<div class="pd-sub2">' + subAuto + '</div>';
       selo = seloP;
       if(!(p.emoji && String(p.emoji).trim())) emoji = '🍽️';
     }
     // Conteúdos que RODAM: o texto principal + os conteúdos extra (p.paginas). Mesmo layout, só muda o conteúdo,
     // de X em X segundos (p.intervalo). Com um só conteúdo fica tudo como antes.
-    var textos = [p.texto].concat(Array.isArray(p.paginas) ? p.paginas : []).map(function(t){ return String(t||'').trim(); }).filter(Boolean);
-    if(!textos.length) textos = [''];
+    // cada conteúdo extra pode ter o seu título (p.paginasTit — ex.: "Na Brasa", "Sugestão"); no 1.º fica o automático
+    var _tits = Array.isArray(p.paginasTit) ? p.paginasTit : [];
+    var textos = [{ t:p.texto, tit:'' }].concat((Array.isArray(p.paginas) ? p.paginas : []).map(function(t, i){ return { t:t, tit:String(_tits[i] || '').trim() }; }))
+      .map(function(o){ return { t:String(o.t||'').trim(), tit:o.tit }; }).filter(function(o){ return o.t; });
+    if(!textos.length) textos = [{ t:'', tit:'' }];
     var seg = Math.max(2, Math.min(60, parseFloat(p.intervalo) || 5));
-    var pags = textos.map(function(t){
-      var l = linhasDe(t);
-      if(autoPD) return { big:bigFix, msgH:(l.length ? ('<div class="pd-pratos">' + l.map(function(x){ return '<div class="pd-msg">'+_esc(x)+'</div>'; }).join('') + '</div>') : ''), msg:_esc(l.join(' · ')) };
+    var pags = textos.map(function(o){
+      var t = o.t, l = linhasDe(t);
+      if(autoPD) return { big:bigFix, sub:'<div class="pd-sub2">' + (o.tit ? _esc(o.tit.slice(0, 30)) : subAuto) + '</div>', msgH:(l.length ? ('<div class="pd-pratos">' + l.map(function(x){ return '<div class="pd-msg">'+_esc(x)+'</div>'; }).join('') + '</div>') : ''), msg:_esc(l.join(' · ')) };
       var b = _esc(l.shift() || 'Promoção'), m = _esc(l.join(' '));
       return { big:b, msgH:(m ? '<div class="pd-msg">'+m+'</div>' : ''), msg:m };
     });
     function rot(fn){ if(pags.length < 2) return fn(pags[0]); return '<div class="pd-rot" data-seg="'+seg+'">' + pags.map(function(g, i){ return '<div class="pd-pag'+(i ? '' : ' on')+'">'+fn(g)+'</div>'; }).join('') + '</div>'; }
-    var CORPO = autoPD ? ('<div class="pd-big">'+bigFix+'</div>' + subPD + rot(function(g){ return g.msgH; }))
+    var CORPO = autoPD ? ('<div class="pd-big">'+bigFix+'</div>' + (pags.length > 1 ? rot(function(g){ return g.sub + g.msgH; }) : (subPD + pags[0].msgH)))
                        : rot(function(g){ return '<div class="pd-big">'+g.big+'</div>' + g.msgH; });
     var hora = (p.horaIni && p.horaFim) ? ('🕒 '+_esc(p.horaIni)+' – '+_esc(p.horaFim)) : '';
     var horaH = hora ? '<span class="pd-hora">'+hora+'</span>' : '';
@@ -3599,7 +3613,7 @@
       case 'cupao':    return card('pd-cupao','<span class="pd-selo">'+(seloP||'Vale de hoje')+'</span>'+CORPO+horaH);
       case 'neon':     return card('pd-neon','<span class="pd-selo">'+selo+'</span>'+CORPO+horaH);
       case 'urgencia': return card('pd-urgencia','<span class="pd-alerta"><span class="pd-dot"></span> '+(seloP||'Só hoje')+'</span>'+CORPO+horaH);
-      case 'selo':     return card('pd-seloR','<div class="pd-med"><span class="pd-med-v">'+(autoPD ? bigFix : pags[0].big)+'</span></div><div class="pd-med-txt">'+(autoPD ? (subPD + rot(function(g){ return g.msgH; })) : rot(function(g){ return g.msgH || ('<div class="pd-msg">'+selo+'</div>'); }))+horaH+'</div>');
+      case 'selo':     return card('pd-seloR','<div class="pd-med"><span class="pd-med-v">'+(autoPD ? bigFix : pags[0].big)+'</span></div><div class="pd-med-txt">'+(autoPD ? (pags.length > 1 ? rot(function(g){ return g.sub + g.msgH; }) : (subPD + pags[0].msgH)) : rot(function(g){ return g.msgH || ('<div class="pd-msg">'+selo+'</div>'); }))+horaH+'</div>');
       case 'oval':     return card('pd-oval','<span class="pd-selo">'+selo+'</span>'+CORPO+horaH);
       default:         return card('pd-autocolante','<span class="pd-emoji">'+emoji+'</span><span class="pd-selo">'+selo+'</span>'+CORPO+horaH);
     }
