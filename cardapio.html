@@ -2212,6 +2212,13 @@
   #cartOverlay.aberto .cart-painel, #favOverlay.aberto .cart-painel, #escOverlay.aberto .esc-painel, #expOverlay.aberto .exp-card{ transition:transform .5s var(--am-abrir); }
   #cartOverlay, #favOverlay, #escOverlay, #expOverlay{ transition:background .3s var(--am-folha-fechar) !important; }
   #cartOverlay.aberto, #favOverlay.aberto, #escOverlay.aberto, #expOverlay.aberto{ transition:background .5s var(--am-abrir) !important; }
+  /* Fundo das folhas prolongado PARA BAIXO do ecrã (uma "aba" da mesma cor, presa ao cartão): no iPhone a zona da barra de
+     baixo do Safari/indicador não é tapada pelo fundo escuro, e via-se ali uma barra bege solta — aparecia quando o rodapé
+     descia e só desaparecia depois de o cartão já ter fechado. Agora essa zona é tapada pelo próprio cartão: sobe e desce com ele.
+     (box-shadow: não ocupa espaço, não é cortada pelo scroll do cartão e só se vê abaixo dele.) */
+  #agendaOverlay .ag-card{ box-shadow:0 -10px 34px rgba(0,0,0,.20), 0 160px 0 0 var(--branco); }
+  #fidOverlay .fid-card, #cartOverlay .cart-painel, #favOverlay .cart-painel, #escOverlay .esc-painel{ box-shadow:0 160px 0 0 var(--branco); }
+  #expOverlay .exp-card{ box-shadow:0 160px 0 0 #fff; }
   /* Botão + painel de FAVORITOS (pratos) */
   #favBtn{ position:fixed; right:14px; bottom:77px; z-index:200; width:46px; height:46px; border-radius:50%; border:none; background:#e0245e; color:#fff; font-size:1.35rem; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,0.4); display:none; align-items:center; justify-content:center; }
   #favBtn .fav-badge{ position:absolute; top:-5px; right:-5px; background:var(--dourado); color:#fff; font-size:0.68rem; font-weight:700; min-width:18px; height:18px; border-radius:9px; display:flex; align-items:center; justify-content:center; padding:0 4px; border:2px solid var(--branco); }
