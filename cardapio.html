@@ -352,6 +352,9 @@
   @media (hover:hover) and (pointer:fine){ html.scroll-lock, body.scroll-lock{ overflow:hidden !important; } }
   html.scroll-lock:has(body.secao-aberta), body.scroll-lock.secao-aberta{ overflow:hidden !important; }
   .cart-painel, .esc-painel, .exp-card, .fid-card, .ag-card{ overscroll-behavior:contain; }
+  /* Toques rápidos seguidos (ex.: + + + para juntar pessoas) não podem ser lidos pelo iPhone como "toque duplo para ampliar":
+     sem isto o 2.º toque não contava e o ecrã parecia bloqueado. manipulation = toques e scroll normais, sem o atraso/zoom do toque duplo. */
+  button, .cart-qtd button, .cart-pessoas button, .btn-add-lista, .ag-btn, summary, .tile{ touch-action:manipulation; }
   #cartBtn{ transition:opacity .3s ease, visibility .3s ease; }
   body.cart-oculto #cartBtn{ opacity:0; visibility:hidden; pointer-events:none; }   /* o ⭐ da fidelidade está no cabeçalho: sai e volta com ele, tal como o ícone das reservas (antes reaparecia ~1 s depois) */
   /* Carrinho desativado pelo dono: esconde o botão e os "+" de adicionar */
@@ -9078,7 +9081,11 @@
         p.innerHTML = '<button type="button" class="cart-x" data-cart-x aria-label="Fechar">✕</button><h3>' + titulo + '</h3>' + _encH + '<div class="cart-vazio">' + _vazioTxt + '</div><div class="cart-acoes"><button class="cart-fechar" id="cartFechar">Fechar</button></div>';
       } else {
         let html = '<button type="button" class="cart-x" data-cart-x aria-label="Fechar">✕</button><h3>' + titulo + '</h3>' + _encH;
-        if(!mostrarPrecos){ html += '<div class="cart-vazio" style="padding:2px 0 12px; font-size:0.82rem;">Mostra esta lista ao empregado para fazer o pedido.</div>'; }
+        // Frase de ajuda conforme o que a lista serve agora (o antigo "Mostra esta lista ao empregado" já não se aplicava)
+        { let _dica = '';
+          if(lista.some(function(i){ return i.menu; }) && window._agenda) _dica = 'Ajusta o número de pessoas no <strong>+</strong> e depois escolhe o dia e a hora.';
+          else if(document.body.classList.contains('modo-takeaway')) _dica = 'Revê o teu pedido e envia-o ao restaurante.';
+          if(_dica) html += '<div class="cart-vazio" style="padding:2px 0 12px; font-size:0.82rem;">' + _dica + '</div>'; }
         let total = 0;
         lista.forEach((it, idx) => {
           total += it.preco * it.qtd;
