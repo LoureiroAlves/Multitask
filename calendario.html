@@ -1446,7 +1446,9 @@
       + '<div style="font-size:1.05rem;font-weight:800;color:var(--castanho);margin-bottom:6px;">' + (novo ? '🏷️ Nova promoção' : '🏷️ Editar promoção') + '</div>'
       + '<div style="font-size:.8rem;color:#8a7a5c;font-weight:800;margin-top:8px;">⚡ Modelos rápidos</div>'
       + '<div id="prTpls" style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 4px;">' + _PR_TPLS.map(function(t, i){ return '<button type="button" data-i="' + i + '" style="border:1px solid #e0d3b5;background:#fbf6ec;border-radius:999px;padding:6px 11px;cursor:pointer;font-family:inherit;font-weight:700;font-size:.78rem;color:var(--castanho);">' + t.ico + ' ' + t.nome + '</button>'; }).join('') + '</div>'
-      + '<label>Texto da promoção</label><textarea id="prTexto" maxlength="300" rows="3" placeholder="Ex.: Menu de Natal · 25€&#10;(Enter muda de linha)" style="resize:vertical;">' + esc(p.texto || '') + '</textarea>'
+      + '<label style="display:flex;gap:8px;align-items:flex-start;margin-top:10px;padding:10px 12px;border:1.5px solid #e0d3b5;border-radius:12px;background:#fffaf0;cursor:pointer;font-weight:700;"><input type="checkbox" id="prAuto"' + (p.auto === 'pratoDia' ? ' checked' : '') + ' style="width:auto;margin:3px 0 0;"><span>🍽️ Layout <b>Prato do dia</b><br><span style="font-weight:400;font-size:.8rem;color:#8a7a5c;">O título é automático: o dia da semana e, por baixo, "Prato do dia" (ao domingo, "Sugestão"). Escreve os pratos — cada Enter é um parágrafo.</span></span></label>'
+      + '<label id="prTextoLbl">' + (p.auto === 'pratoDia' ? 'Pratos <span style="font-weight:400;color:#8a7a5c;">(um por linha)</span>' : 'Texto da promoção') + '</label><textarea id="prTexto" maxlength="300" rows="' + (p.auto === 'pratoDia' ? 5 : 3) + '" placeholder="' + (p.auto === 'pratoDia' ? 'Ex.: Bacalhau à Brás&#10;Frango assado com batata' : 'Ex.: Menu de Natal · 25€&#10;(Enter muda de linha)') + '" style="resize:vertical;">' + esc(p.texto || '') + '</textarea>'
+      + '<div id="prPags"></div>'   // conteúdos extra que rodam (mesmo layout, só muda o conteúdo)
       + '<label>Estilo</label><div id="prEstilos" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;">' + ests.map(function(e){ return '<button type="button" data-e="' + e.id + '" style="border:1px solid #e0d3b5;background:#fff;color:#4a3820;border-radius:999px;padding:6px 11px;cursor:pointer;font-family:inherit;font-weight:800;font-size:.78rem;">' + e.nome + '</button>'; }).join('') + '</div>'
       + '<label>Texto do selo <span style="font-weight:400;color:#8a7a5c;">(a etiqueta pequena — vazio = "Promoção de hoje")</span></label>'
       + '<div style="display:flex;gap:8px;align-items:center;"><input id="prSelo" maxlength="28" value="' + esc(p.selo || '') + '" placeholder="Ex.: Só este fim de semana" style="flex:1;margin:0;"><input id="prEmoji" maxlength="4" value="' + esc(p.emoji || '') + '" placeholder="🔥" title="Emoji (autocolante)" style="width:58px;margin:0;text-align:center;font-size:1.2rem;"></div>'
@@ -1486,12 +1488,43 @@
       $('prQSemFimBox').style.display = $('prQSemFim').checked ? '' : 'none'; }
     function pintaDias(){ var ds = ((_prEdit.quando || {}).dias || []).map(Number); $('prQDias').querySelectorAll('button').forEach(function(b){ var on = ds.indexOf(+b.dataset.d) >= 0; b.style.background = on ? '#a8712f' : '#fff'; b.style.color = on ? '#fff' : '#4a3820'; b.style.borderColor = on ? '#a8712f' : '#e0d3b5'; }); }
     function pintaEst(){ var atual = _prEdit.estilo || 'autocolante'; $('prEstilos').querySelectorAll('button').forEach(function(x){ var on = x.dataset.e === atual; x.style.background = on ? '#a8712f' : '#fff'; x.style.color = on ? '#fff' : '#4a3820'; x.style.borderColor = on ? '#a8712f' : '#e0d3b5'; }); }
-    function prev(){ var box = $('prPrev'); if(!box) return; box.style.setProperty('--pd-fundo', '#fbf8f2'); if(!(_prEdit.texto || '').trim()){ box.innerHTML = '<div style="color:#b9ab8e;font-size:.82rem;">Escreve o texto para veres a pré-visualização.</div>'; } else { box.innerHTML = (typeof window.__amPromoCard === 'function') ? window.__amPromoCard(_prEdit) : ''; } _pdFit(); setTimeout(_pdFit, 60); }
+    function prev(){ var box = $('prPrev'); if(!box) return; box.style.setProperty('--pd-fundo', '#fbf8f2'); if(!(_prEdit.texto || '').trim()){ box.innerHTML = '<div style="color:#b9ab8e;font-size:.82rem;">' + ((_prEdit.auto === 'pratoDia') ? 'Escreve os pratos para veres a pré-visualização.' : 'Escreve o texto para veres a pré-visualização.') + '</div>'; } else { box.innerHTML = (typeof window.__amPromoCard === 'function') ? window.__amPromoCard(_prEdit, (_prEdit.quando && _prEdit.quando.tipo === 'dia' && _prEdit.quando.data) ? new Date(_prEdit.quando.data + 'T00:00:00') : undefined) : ''; } _pdFit(); setTimeout(_pdFit, 60); }
     if(!_prEdit.quando) _prEdit.quando = { tipo:'dia', data:_prHoje() };
     if(_prEdit.quando.tipo === 'semanal' && !Array.isArray(_prEdit.quando.dias)) _prEdit.quando.dias = [];
     pintaTipo(); pintaDias(); pintaEst(); prev();
     $('prVoltar').onclick = function(){ _prEdit = null; renderNotif(); };
-    $('prTpls').querySelectorAll('button').forEach(function(b){ b.onclick = function(){ _prEdit.texto = _PR_TPLS[+b.dataset.i].texto; $('prTexto').value = _prEdit.texto; prev(); try{ $('prTexto').focus(); }catch(e){} }; });
+    function _prAutoUI(){   // liga/desliga o layout "Prato do dia" (título automático)
+      var on = _prEdit.auto === 'pratoDia'; var cb = $('prAuto'); if(cb) cb.checked = on;
+      var lb = $('prTextoLbl'); if(lb) lb.innerHTML = on ? 'Pratos <span style="font-weight:400;color:#8a7a5c;">(um por linha)</span>' : 'Texto da promoção';
+      var tx = $('prTexto'); if(tx){ tx.placeholder = on ? 'Ex.: Bacalhau à Brás\nFrango assado com batata' : 'Ex.: Menu de Natal · 25€\n(Enter muda de linha)'; tx.rows = on ? 5 : 3; }
+      try{ _prPagsUI(); }catch(e){}
+    }
+    // ---- Conteúdos que rodam: mais conteúdos com o MESMO layout, a trocar de X em X segundos ----
+    function _prPagsUI(){
+      var box = $('prPags'); if(!box) return;
+      var pg = Array.isArray(_prEdit.paginas) ? _prEdit.paginas : (_prEdit.paginas = []);
+      var auto = _prEdit.auto === 'pratoDia';
+      var h = '';
+      pg.forEach(function(t, i){
+        h += '<div style="margin-top:8px;"><div style="display:flex;justify-content:space-between;align-items:center;font-size:.8rem;font-weight:800;color:#8a7a5c;">Conteúdo ' + (i + 2)
+          + '<button type="button" data-rm="' + i + '" style="border:none;background:none;color:#b23;font-weight:800;cursor:pointer;font-family:inherit;font-size:.8rem;">✕ Tirar</button></div>'
+          + '<textarea data-pg="' + i + '" maxlength="300" rows="' + (auto ? 4 : 3) + '" placeholder="' + (auto ? 'Ex.: Sobremesa: Arroz doce' : 'Ex.: Sangria · jarro 8€') + '" style="resize:vertical;">' + esc(t || '') + '</textarea></div>';
+      });
+      h += '<button type="button" id="prPgAdd" style="margin-top:8px;border:1.5px dashed #c9b48a;background:#fffaf0;color:#6b4a1f;border-radius:10px;padding:8px 12px;cursor:pointer;font-family:inherit;font-weight:800;font-size:.82rem;width:100%;">➕ Acrescentar conteúdo que roda (mesmo layout)</button>';
+      if(pg.length) h += '<div style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:.85rem;font-weight:700;color:var(--castanho);">Trocar a cada <input id="prSeg" type="number" min="2" max="60" value="' + (parseFloat(_prEdit.intervalo) || 5) + '" style="width:64px;margin:0;text-align:center;"> segundos</div>';
+      box.innerHTML = h;
+      box.querySelectorAll('textarea[data-pg]').forEach(function(ta){ ta.addEventListener('input', function(){ _prEdit.paginas[+ta.dataset.pg] = ta.value; prev(); }); });
+      box.querySelectorAll('[data-rm]').forEach(function(b){ b.onclick = function(){ _prEdit.paginas.splice(+b.dataset.rm, 1); _prPagsUI(); prev(); }; });
+      $('prPgAdd').onclick = function(){ _prEdit.paginas.push(''); _prPagsUI(); prev(); var tas = box.querySelectorAll('textarea[data-pg]'); try{ tas[tas.length - 1].focus(); }catch(e){} };
+      var sg = $('prSeg'); if(sg) sg.addEventListener('input', function(){ var v = parseFloat(sg.value); if(v >= 2 && v <= 60){ _prEdit.intervalo = v; prev(); } });
+    }
+    _prPagsUI();
+    $('prAuto').onchange = function(){ if(this.checked) _prEdit.auto = 'pratoDia'; else delete _prEdit.auto; _prAutoUI(); prev(); };
+    $('prTpls').querySelectorAll('button').forEach(function(b){ b.onclick = function(){
+      var t = _PR_TPLS[+b.dataset.i];
+      if(t.nome === 'Prato do dia'){ _prEdit.auto = 'pratoDia'; _prEdit.texto = ''; }   // título automático: só faltam os pratos
+      else { delete _prEdit.auto; _prEdit.texto = t.texto; }
+      $('prTexto').value = _prEdit.texto; _prAutoUI(); prev(); try{ $('prTexto').focus(); }catch(e){} }; });
     $('prTexto').addEventListener('input', function(){ _prEdit.texto = $('prTexto').value; prev(); });
     $('prEstilos').querySelectorAll('button').forEach(function(b){ b.onclick = function(){ _prEdit.estilo = b.dataset.e; pintaEst(); prev(); }; });
     $('prCor').addEventListener('input', function(){ _prEdit.cor = $('prCor').value; prev(); });
@@ -1520,7 +1553,7 @@
       _prEdit = null; renderNotif(); renderCal();
     };
     function validar(){
-      var t = ($('prTexto').value || '').trim(); if(!t) return 'Escreve o texto da promoção.';
+      var t = ($('prTexto').value || '').trim(); if(!t) return (_prEdit.auto === 'pratoDia') ? 'Escreve os pratos (um por linha).' : 'Escreve o texto da promoção.';
       var q = _prEdit.quando || {};
       if(q.tipo === 'dia' && !q.data) return 'Escolhe o dia.';
       if(q.tipo === 'intervalo' && (!q.de || !q.ate)) return 'Escolhe as datas de início e fim.';
@@ -1531,7 +1564,7 @@
     }
     async function guardar(comPush){
       var msg = $('prMsg'); var e = validar(); if(e){ msg.textContent = e; msg.className = 'msg erro'; return; }
-      syncHora(); _prEdit.texto = ($('prTexto').value || '').trim(); _prEdit.selo = ($('prSelo').value || '').trim(); _prEdit.emoji = ($('prEmoji').value || '').trim(); _prEdit.push = { titulo:($('prPushTit').value || '').trim(), url:($('prPushUrl').value || '').trim() };
+      syncHora(); _prEdit.texto = ($('prTexto').value || '').trim(); _prEdit.paginas = (_prEdit.paginas || []).map(function(t){ return String(t || '').trim(); }).filter(Boolean); if(!_prEdit.paginas.length){ delete _prEdit.paginas; delete _prEdit.intervalo; } else { _prEdit.intervalo = Math.max(2, Math.min(60, parseFloat(_prEdit.intervalo) || 5)); } _prEdit.selo = ($('prSelo').value || '').trim(); _prEdit.emoji = ($('prEmoji').value || '').trim(); _prEdit.push = { titulo:($('prPushTit').value || '').trim(), url:($('prPushUrl').value || '').trim() };
       if(comPush){
         var est = _prEstado(_prEdit); if(est !== 'ativa' || !_prBate(_prEdit.quando, _prHoje(), new Date().getDay())){
           if(!(await window.__amConfirm('Enviar aviso?', { texto:'Esta promoção não está no menu hoje (' + _prQuandoTxt(_prEdit.quando) + '). Queres enviar o aviso mesmo assim?', ok:'Sim, enviar', cancelar:'Não' }))) return;
@@ -3433,6 +3466,13 @@
   .pd-card .pd-selo{ display:inline-block; font-size:.62rem; font-weight:800; letter-spacing:2px; text-transform:uppercase; }
   .pd-card .pd-big{ font-weight:900; line-height:1; text-transform:uppercase; }
   .pd-card .pd-msg{ font-weight:700; font-size:.92rem; margin-top:5px; }
+  /* Layout "Prato do dia": dia da semana (título) + "Prato do dia"/"Sugestão" por baixo + um parágrafo por prato */
+  .pd-card .pd-sub2{ font-weight:800; font-size:calc(.95rem * var(--pd-escala,1)); letter-spacing:2px; text-transform:uppercase; opacity:.95; margin:3px 0 6px; }
+  .pd-card .pd-pratos .pd-msg{ margin-top:4px; }
+  /* Promoção com vários conteúdos: ficam uns por cima dos outros (a altura é a do maior → nada salta) e trocam a esbater */
+  .pd-rot{ display:grid; }
+  .pd-rot > .pd-pag{ grid-area:1 / 1; opacity:0; visibility:hidden; transition:opacity .45s ease, visibility 0s linear .45s; }
+  .pd-rot > .pd-pag.on{ opacity:1; visibility:visible; transition:opacity .45s ease .15s, visibility 0s; }
   /* 1 · autocolante */
   .pd-autocolante{ background:linear-gradient(135deg,var(--pd-cor2,#ff5a8a),var(--pd-cor,#e0245e)); border:4px solid #fff; border-radius:20px; padding:16px 18px; transform:rotate(-2.4deg); box-shadow:0 14px 26px -6px var(--pd-cor,#e0245e),0 4px 0 rgba(0,0,0,.12); color:#fff; overflow:visible; }
   .pd-autocolante .pd-emoji{ position:absolute; top:-24px; left:-12px; font-size:2.8rem; transform:rotate(-14deg); filter:drop-shadow(0 3px 5px rgba(0,0,0,.35)); }
@@ -3514,34 +3554,68 @@
     { id:'cupao', nome:'Cupão' }, { id:'neon', nome:'Néon' }, { id:'urgencia', nome:'Urgência' },
     { id:'selo', nome:'Selo redondo' }, { id:'oval', nome:'Oval' }
   ];
-  window.__amPromoCard = function(p){
+  window.__amPromoCard = function(p, dataVer){
     p = p || {};
     var estilo = p.estilo || 'autocolante';
     var cor = p.cor || '#e0245e';
     var escala = Math.max(0.7, Math.min(1.6, parseFloat(p.escala)||1));
     var vars = '--pd-cor:'+cor+';--pd-cor2:'+_lighten(cor,0.42)+';--pd-escala:'+escala+';';
-    var linhas = String(p.texto||'').split(/\r?\n/).map(function(s){return s.trim();}).filter(Boolean);
-    var big = _esc(linhas.shift() || 'Promoção');
-    var msg = _esc(linhas.join(' '));
     var emoji = _esc((p.emoji && String(p.emoji).trim()) || '🔥');
     var seloP = _esc(String(p.selo || '').trim().slice(0, 28));   // texto do selo escolhido pelo restaurante
     var selo = seloP || 'Promoção de hoje';
+    function linhasDe(t){ return String(t||'').split(/\r?\n/).map(function(s){return s.trim();}).filter(Boolean); }
+    // Layout "Prato do dia" (automático): título = dia da semana; por baixo "Prato do dia" (ao domingo "Sugestão");
+    // o texto são os pratos — cada linha (Enter) é um parágrafo. O selo só aparece se o restaurante escrever um.
+    var autoPD = (p.auto === 'pratoDia');
+    var bigFix = '', subPD = '';
+    if(autoPD){
+      var _dv = (dataVer instanceof Date && !isNaN(dataVer)) ? dataVer : new Date();
+      bigFix = ['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'][_dv.getDay()];
+      subPD = '<div class="pd-sub2">' + (_dv.getDay() === 0 ? 'Sugestão' : 'Prato do dia') + '</div>';
+      selo = seloP;
+      if(!(p.emoji && String(p.emoji).trim())) emoji = '🍽️';
+    }
+    // Conteúdos que RODAM: o texto principal + os conteúdos extra (p.paginas). Mesmo layout, só muda o conteúdo,
+    // de X em X segundos (p.intervalo). Com um só conteúdo fica tudo como antes.
+    var textos = [p.texto].concat(Array.isArray(p.paginas) ? p.paginas : []).map(function(t){ return String(t||'').trim(); }).filter(Boolean);
+    if(!textos.length) textos = [''];
+    var seg = Math.max(2, Math.min(60, parseFloat(p.intervalo) || 5));
+    var pags = textos.map(function(t){
+      var l = linhasDe(t);
+      if(autoPD) return { big:bigFix, msgH:(l.length ? ('<div class="pd-pratos">' + l.map(function(x){ return '<div class="pd-msg">'+_esc(x)+'</div>'; }).join('') + '</div>') : ''), msg:_esc(l.join(' · ')) };
+      var b = _esc(l.shift() || 'Promoção'), m = _esc(l.join(' '));
+      return { big:b, msgH:(m ? '<div class="pd-msg">'+m+'</div>' : ''), msg:m };
+    });
+    function rot(fn){ if(pags.length < 2) return fn(pags[0]); return '<div class="pd-rot" data-seg="'+seg+'">' + pags.map(function(g, i){ return '<div class="pd-pag'+(i ? '' : ' on')+'">'+fn(g)+'</div>'; }).join('') + '</div>'; }
+    var CORPO = autoPD ? ('<div class="pd-big">'+bigFix+'</div>' + subPD + rot(function(g){ return g.msgH; }))
+                       : rot(function(g){ return '<div class="pd-big">'+g.big+'</div>' + g.msgH; });
     var hora = (p.horaIni && p.horaFim) ? ('🕒 '+_esc(p.horaIni)+' – '+_esc(p.horaFim)) : '';
     var horaH = hora ? '<span class="pd-hora">'+hora+'</span>' : '';
-    var msgH = msg ? '<div class="pd-msg">'+msg+'</div>' : '';
     var neonCls = ''; if(p.neon){ vars += '--pd-neonCor:'+(p.neonCor||'#19e9ff')+';--pd-neonF:'+(Math.max(0.3, Math.min(2.5, parseFloat(p.neonForca)||1)))+';'; neonCls = ' pd-neon-on'; }
-    function card(cls, inner){ return '<div class="pd-card '+cls+neonCls+'" style="'+vars+'">'+inner+'</div>'; }
+    function card(cls, inner){ if(autoPD && !seloP) inner = inner.replace(/<span class="pd-(selo|fita-lbl)"><\/span>/g, ''); return '<div class="pd-card '+cls+neonCls+'" style="'+vars+'">'+inner+'</div>'; }
     switch(estilo){
-      case 'fita':     return card('pd-fita','<span class="pd-fita-lbl">'+selo+'</span><div class="pd-big">'+big+'</div>'+msgH+horaH);
-      case 'etiqueta': return card('pd-etiqueta','<span class="pd-selo">'+selo+'</span><div class="pd-big">'+big+'</div>'+msgH+horaH);
-      case 'cupao':    return card('pd-cupao','<span class="pd-selo">'+(seloP||'Vale de hoje')+'</span><div class="pd-big">'+big+'</div>'+msgH+horaH);
-      case 'neon':     return card('pd-neon','<span class="pd-selo">'+selo+'</span><div class="pd-big">'+big+'</div>'+msgH+horaH);
-      case 'urgencia': return card('pd-urgencia','<span class="pd-alerta"><span class="pd-dot"></span> '+(seloP||'Só hoje')+'</span><div class="pd-big">'+big+'</div>'+msgH+horaH);
-      case 'selo':     return card('pd-seloR','<div class="pd-med"><span class="pd-med-v">'+big+'</span></div><div class="pd-med-txt">'+(msg?('<div class="pd-msg">'+msg+'</div>'):('<div class="pd-msg">'+selo+'</div>'))+horaH+'</div>');
-      case 'oval':     return card('pd-oval','<span class="pd-selo">'+selo+'</span><div class="pd-big">'+big+'</div>'+msgH+horaH);
-      default:         return card('pd-autocolante','<span class="pd-emoji">'+emoji+'</span><span class="pd-selo">'+selo+'</span><div class="pd-big">'+big+'</div>'+msgH+horaH);
+      case 'fita':     return card('pd-fita','<span class="pd-fita-lbl">'+selo+'</span>'+CORPO+horaH);
+      case 'etiqueta': return card('pd-etiqueta','<span class="pd-selo">'+selo+'</span>'+CORPO+horaH);
+      case 'cupao':    return card('pd-cupao','<span class="pd-selo">'+(seloP||'Vale de hoje')+'</span>'+CORPO+horaH);
+      case 'neon':     return card('pd-neon','<span class="pd-selo">'+selo+'</span>'+CORPO+horaH);
+      case 'urgencia': return card('pd-urgencia','<span class="pd-alerta"><span class="pd-dot"></span> '+(seloP||'Só hoje')+'</span>'+CORPO+horaH);
+      case 'selo':     return card('pd-seloR','<div class="pd-med"><span class="pd-med-v">'+(autoPD ? bigFix : pags[0].big)+'</span></div><div class="pd-med-txt">'+(autoPD ? (subPD + rot(function(g){ return g.msgH; })) : rot(function(g){ return g.msgH || ('<div class="pd-msg">'+selo+'</div>'); }))+horaH+'</div>');
+      case 'oval':     return card('pd-oval','<span class="pd-selo">'+selo+'</span>'+CORPO+horaH);
+      default:         return card('pd-autocolante','<span class="pd-emoji">'+emoji+'</span><span class="pd-selo">'+selo+'</span>'+CORPO+horaH);
     }
   };
+  // Roda os conteúdos das promoções com vários conteúdos (um só relógio para a página toda)
+  if(!window.__amPdRot){ window.__amPdRot = setInterval(function(){
+    var agora = Date.now();
+    document.querySelectorAll('.pd-rot').forEach(function(r){
+      var s = (parseFloat(r.dataset.seg) || 5) * 1000, t = +r.dataset.t || 0;
+      if(!t){ r.dataset.t = agora; return; }
+      if(agora - t < s) return;
+      r.dataset.t = agora;
+      var ps = r.children, i = 0; for(var k = 0; k < ps.length; k++){ if(ps[k].classList.contains('on')) i = k; }
+      ps[i].classList.remove('on'); ps[(i + 1) % ps.length].classList.add('on');
+    });
+  }, 400); }
 })();
 </script>
 
