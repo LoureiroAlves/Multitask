@@ -2497,7 +2497,7 @@
   .fid-card{ transition:transform .3s var(--am-folha-fechar); will-change:transform; }   /* abrir/fechar como as Reservas */
   #fidOverlay.aberto{ transition:background .5s cubic-bezier(.32,.72,0,1); }
   #fidOverlay:not(.aberto){ transition:background .3s var(--am-folha-fechar); }
-  .fid-card::before{ content:''; display:block; width:42px; height:5px; border-radius:3px; background:var(--linha); margin:-8px auto 12px; transition:background .2s; }   /* pega para arrastar */
+  .fid-card::before{ content:''; display:block; width:42px; height:5px; border-radius:3px; background:var(--linha); margin:-8px auto 12px; transition:background .2s; touch-action:none; }   /* pega para arrastar */
   .fid-card.a-arrastar::before{ background:var(--castanho-suave); }
   .fid-card h3{ cursor:grab; -webkit-user-select:none; user-select:none; touch-action:none; }
   .fid-stamps{ display:grid; grid-template-columns:repeat(4, 1fr); gap:10px; margin:6px 0; }
@@ -6939,7 +6939,9 @@
         var CURVA_SEGUE = 'cubic-bezier(.3,' + y1 + ',.6,.9)';
         card.style.transition='transform '+T+'ms '+CURVA_SEGUE; ov.style.transition='background '+T+'ms '+CURVA_SEGUE;
         card.style.transform='translate3d(0,100%,0)'; ov.style.background='rgba(0,0,0,0)';
-        var doneF=function(ev){ if(ev && ev.propertyName && ev.propertyName!=='transform') return; card.removeEventListener('transitionend', doneF); ov.classList.remove('aberto'); _limpar(); };
+        var doneF=function(ev){ if(ev && ((ev.propertyName && ev.propertyName!=='transform') || ev.target!==card)) return;   // ignora transições de elementos lá dentro
+          card.removeEventListener('transitionend', doneF); if(doneF.feito) return; doneF.feito = true; ov.classList.remove('aberto');
+          card.style.transition='none'; ov.style.transition='none'; card.style.transform=''; ov.style.background=''; void card.offsetWidth; _limpar(); };   // troca o estilo do dedo pelo da classe SEM animar entre os dois (antes podia piscar um frame)
         card.addEventListener('transitionend', doneF); setTimeout(function(){ doneF(); }, 420);
         try{ if(opts.aoFechar) opts.aoFechar(); }catch(_){}
       } else {
@@ -6951,6 +6953,10 @@
     }
     card.addEventListener('pointerup', fim);
     card.addEventListener('pointercancel', fim);
+    // Na zona da pega (ex.: o espaço acima do título no cartão de fidelidade) o telemóvel começava TAMBÉM o seu próprio
+    // scroll/ressalto: cancelava o gesto a meio e, depois de a folha fechar, o ressalto ainda se via a voltar atrás um frame.
+    // Aqui o dedo fica só para a folha (o scroll do conteúdo, fora da zona, continua normal).
+    card.addEventListener('touchmove', function(e){ if(naZona && !(decidiu && !drag) && e.cancelable) e.preventDefault(); }, { passive:false });
   };
 
   window._fidelidade = window._fidelidade || null;
