@@ -345,7 +345,13 @@
   body.pwa-standalone.secao-aberta #btnHome{ display:none; }
   /* Isolar o scroll: com uma secção aberta, o fundo (menu principal, rodapé e publicidade) não faz scroll.
      Usa overflow:hidden (mantém a posição de scroll — não há salto ao voltar). */
-  html.scroll-lock, body.scroll-lock{ overflow:hidden !important; }
+  /* No telemóvel, com uma FOLHA aberta (reservas, fidelidade, carrinho…), NÃO se põe overflow:hidden no html: no iPhone isso
+     mexe na altura visível do Safari e aparecia uma barra (cor de fundo do restaurante) por baixo da folha — a janela de
+     confirmação, que não bloqueia, ficava bem. O fundo continua sem fazer scroll: arrastar no fundo escuro não faz nada (ver "__amSemScrollFundo") e a folha
+     não passa o scroll para trás (overscroll-behavior). No computador e com uma secção aberta, tudo como antes. */
+  @media (hover:hover) and (pointer:fine){ html.scroll-lock, body.scroll-lock{ overflow:hidden !important; } }
+  html.scroll-lock:has(body.secao-aberta), body.scroll-lock.secao-aberta{ overflow:hidden !important; }
+  .cart-painel, .esc-painel, .exp-card, .fid-card, .ag-card{ overscroll-behavior:contain; }
   #cartBtn{ transition:opacity .3s ease, visibility .3s ease; }
   body.cart-oculto #cartBtn{ opacity:0; visibility:hidden; pointer-events:none; }   /* o ⭐ da fidelidade está no cabeçalho: sai e volta com ele, tal como o ícone das reservas (antes reaparecia ~1 s depois) */
   /* Carrinho desativado pelo dono: esconde o botão e os "+" de adicionar */
@@ -2219,6 +2225,8 @@
   #agendaOverlay .ag-card{ box-shadow:0 -10px 34px rgba(0,0,0,.20), 0 160px 0 0 var(--branco); }
   #fidOverlay .fid-card, #cartOverlay .cart-painel, #favOverlay .cart-painel, #escOverlay .esc-painel{ box-shadow:0 160px 0 0 var(--branco); }
   #expOverlay .exp-card{ box-shadow:0 160px 0 0 #fff; }
+  /* e o fundo escuro também se prolonga para baixo (a folha fica no mesmo sítio), para essa zona nunca ficar por escurecer */
+  html body #cartOverlay, html body #favOverlay, html body #agendaOverlay, html body #fidOverlay, html body #escOverlay, html body #expOverlay{ bottom:-140px; padding-bottom:140px; }
   /* Botão + painel de FAVORITOS (pratos) */
   #favBtn{ position:fixed; right:14px; bottom:77px; z-index:200; width:46px; height:46px; border-radius:50%; border:none; background:#e0245e; color:#fff; font-size:1.35rem; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,0.4); display:none; align-items:center; justify-content:center; }
   #favBtn .fav-badge{ position:absolute; top:-5px; right:-5px; background:var(--dourado); color:#fff; font-size:0.68rem; font-weight:700; min-width:18px; height:18px; border-radius:9px; display:flex; align-items:center; justify-content:center; padding:0 4px; border:2px solid var(--branco); }
@@ -6914,6 +6922,11 @@
   //  A folha acompanha o dedo; puxar além de 110 px (ou um "flick" rápido) fecha; largar antes volta suavemente;
   //  puxar para cima tem resistência elástica; o fundo clareia conforme a posição. (Código que era só das Reservas.)
   // ==========================================================
+  // Arrastar no fundo escuro de uma folha aberta não faz scroll ao menu por trás (substitui o overflow:hidden no telemóvel)
+  (function(){ if(window.__amSemScrollFundo) return; window.__amSemScrollFundo = true;
+    var IDS = { cartOverlay:1, favOverlay:1, agendaOverlay:1, fidOverlay:1, escOverlay:1, expOverlay:1 };
+    document.addEventListener('touchmove', function(e){ var t = e.target; if(!t || !e.cancelable) return; if((IDS[t.id] && t.classList.contains('aberto')) || (t.closest && t.closest('#escOverlay.aberto'))) e.preventDefault(); }, { passive:false });   // (a folha das escolhas não tem scroll próprio: lá dentro também não mexe o fundo)
+  })();
   window.__folhaArrastavel = function(ov, card, opts){
     opts = opts || {};
     var y0=0, x0=0, dy=0, startY=0, drag=false, decidiu=false, naZona=false;
