@@ -7390,7 +7390,10 @@
       document.querySelectorAll('#agCard [data-slot]').forEach(function(b){ b.onclick = function(){ estado.slotSel = b.getAttribute('data-slot'); render(); }; });
       const pe = document.getElementById('agPessoas'); if(pe) pe.onchange = function(){ estado.pessoas = Math.max(1, parseInt(pe.value,10)||1); estado.slotSel = null; render(); };
       const f = document.getElementById('agFechar'); if(f) f.onclick = function(){ ov.classList.remove('aberto'); _fechouSemConcluir(); };
-      const env = document.getElementById('agEnviar'); if(env) env.onclick = enviar;
+      const env = document.getElementById('agEnviar'); if(env) env.onclick = async function(){   // toque com resposta imediata (a verificação de mesa pode demorar uns segundos)
+        if(env.disabled) return; env.disabled = true; const _t = env.innerHTML; env.innerHTML = '⏳ Um momento…'; env.style.opacity = '.75';
+        try{ await enviar(); } finally { if(document.body.contains(env)){ env.disabled = false; env.innerHTML = _t; env.style.opacity = ''; } }
+      };
       const am = document.getElementById('agMinhas'); if(am) am.onclick = function(){
         const atual = (window._meuTelefoneGuardado && window._meuTelefoneGuardado()) || '+351 ';
         window.__amPrompt('As tuas reservas', { texto:'Escreve o teu número de telemóvel (o mesmo com que reservaste).', valor:atual, tipo:'tel', ok:'Ver reservas' }).then(function(t){
@@ -7493,20 +7496,25 @@
       // Reservas normais: o pedido fica na àMesa e o restaurante responde aqui (com notificação). WhatsApp só como último recurso.
       const apb = document.getElementById('agApp');
       if(apb) apb.onclick = function(){
-        apb.disabled = true;
+        apb.disabled = true; const _apbTxt = apb.innerHTML; apb.innerHTML = '⏳ A enviar…'; apb.style.opacity = '.75';   // resposta imediata ao toque
         const _h = document.getElementById('agTit'); if(_h) _h.textContent = 'A enviar…';
         // pede já as notificações (ainda dentro do toque — o iPhone/Android exigem-no)
         const pPush = (window.__ovoObterPush ? window.__ovoObterPush() : Promise.resolve('')).catch(function(){ return ''; });
         _gravarReserva().then(async function(gravou){
-          if(!gravou){ apb.disabled = false; if(_h) _h.textContent = 'Confirma o teu pedido'; return; }
-          let ep = '';
-          try{ ep = await Promise.race([pPush, new Promise(function(ok){ setTimeout(function(){ ok(''); }, 20000); })]); }catch(e){}
-          if(ep && _ridGravado){ try{ await sbC.rpc('reserva_set_push', { p_id:_ridGravado, p_endpoint:ep }); }catch(e){} }
+          if(!gravou){ apb.disabled = false; apb.innerHTML = _apbTxt; apb.style.opacity = ''; if(_h) _h.textContent = 'Confirma o teu pedido'; return; }
           const _ios = /iphone|ipad|ipod/i.test(navigator.userAgent || '') || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+          const _txtComPush = '🔔 Avisamos-te por notificação quando o restaurante responder.';
+          const _txtSemPush = 'Para veres a resposta, toca no ícone das reservas 📅 no menu.' + (_ios ? ' Para receberes um aviso, adiciona a àMesa ao ecrã principal (Partilhar ⬆️ → "Adicionar ao Ecrã Principal").' : '');
+          // O pedido JÁ está gravado: mostra logo "Pedido enviado". Antes esperava-se aqui pelas notificações (até 20 s no iPhone)
+          // e parecia que o botão não fazia nada. Agora as notificações ligam-se em segundo plano e a linha de baixo atualiza-se sozinha.
+          const _ridPush = _ridGravado;
+          Promise.race([pPush, new Promise(function(ok){ setTimeout(function(){ ok(''); }, 20000); })]).then(function(ep){
+            if(ep && _ridPush){ try{ sbC.rpc('reserva_set_push', { p_id:_ridPush, p_endpoint:ep }).then(function(){}, function(){}); }catch(e){} }
+            const _li = document.getElementById('agPushInfo'); if(_li) _li.innerHTML = ep ? _txtComPush : _txtSemPush;
+          }, function(){ const _li = document.getElementById('agPushInfo'); if(_li) _li.innerHTML = _txtSemPush; });
           let fim = '<h3 id="agTit">Pedido enviado ✓</h3>'
             + '<div class="ag-resumo"><strong>' + d.getDate() + ' de ' + MESES[d.getMonth()] + '</strong> às <strong>' + estado.slotSel + '</strong> · ' + pessoas + ' pessoa(s)<br>O restaurante responde <strong>aqui, na àMesa</strong>.</div>'
-            + (ep ? '<div class="ag-sub" style="margin-top:8px;">🔔 Avisamos-te por notificação quando o restaurante responder.</div>'
-                  : '<div class="ag-sub" style="margin-top:8px;">Para veres a resposta, toca no ícone das reservas 📅 no menu.' + (_ios ? ' Para receberes um aviso, adiciona a àMesa ao ecrã principal (Partilhar ⬆️ → "Adicionar ao Ecrã Principal").' : '') + '</div>');
+            + '<div class="ag-sub" id="agPushInfo" style="margin-top:8px;">Para veres a resposta, toca no ícone das reservas 📅 no menu.</div>';
           if(a.pagamentoLink){ fim += '<div class="ag-passo-tit">Garante a tua reserva</div><button type="button" class="ag-btn pay" id="agPagar2">💳 Pagar sinal' + (sinal > 0 ? (' (' + sinal.toFixed(2) + '€)') : '') + '</button>'; }
           if(telResto) fim += '<button type="button" id="agWaExtra" style="width:100%; margin-top:12px; background:none; border:none; color:#1e7a43; font-weight:700; cursor:pointer; padding:6px; font-size:.85rem; text-decoration:underline;">💬 Preferes falar por WhatsApp? (último recurso)</button>';
           fim += '<button type="button" class="ag-fechar" id="agFechar2">Fechar</button>';
