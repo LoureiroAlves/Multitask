@@ -346,8 +346,8 @@
   /* Isolar o scroll: com uma secção aberta, o fundo (menu principal, rodapé e publicidade) não faz scroll.
      Usa overflow:hidden (mantém a posição de scroll — não há salto ao voltar). */
   html.scroll-lock, body.scroll-lock{ overflow:hidden !important; }
-  #cartBtn, #linkFidelidade{ transition:opacity .3s ease, visibility .3s ease; }
-  body.cart-oculto #cartBtn, body.cart-oculto #linkFidelidade{ opacity:0; visibility:hidden; pointer-events:none; }
+  #cartBtn{ transition:opacity .3s ease, visibility .3s ease; }
+  body.cart-oculto #cartBtn{ opacity:0; visibility:hidden; pointer-events:none; }   /* o ⭐ da fidelidade está no cabeçalho: sai e volta com ele, tal como o ícone das reservas (antes reaparecia ~1 s depois) */
   /* Carrinho desativado pelo dono: esconde o botão e os "+" de adicionar */
   body.carrinho-off #cartBtn{ display:none !important; }
   body.carrinho-off .btn-add-lista{ display:none !important; }
@@ -1529,7 +1529,7 @@
      ABRIR  → responde logo ao toque e trava longa e suavemente (a mesma curva das Reservas e do Cartão).
      FECHAR → começa logo (movimento visível no 2.º frame), recolhe a acelerar e assenta suave; ~30% mais curto; a opacidade acaba COM o movimento.
      Cada efeito mantém a sua personalidade (zoom, flip, livro, cortina…); só a qualidade do movimento é comum. */
-  :root{ --am-abrir:cubic-bezier(.32,.72,0,1); --am-fechar:cubic-bezier(.32,.08,.24,1); --am-entra-op:cubic-bezier(.2,.7,.3,1); --am-sai-op:cubic-bezier(.4,0,1,1); --am-mover:cubic-bezier(.4,0,.2,1); }
+  :root{ --am-abrir:cubic-bezier(.32,.72,0,1); --am-fechar:cubic-bezier(.32,.08,.24,1); --am-entra-op:cubic-bezier(.2,.7,.3,1); --am-sai-op:cubic-bezier(.4,0,1,1); --am-mover:cubic-bezier(.4,0,.2,1); --am-folha-fechar:cubic-bezier(.3,.15,.5,.5); }   /* folha-fechar: responde logo ao toque e sai do ecrã a acelerar (sem cauda invisível) */
   /* ===== Efeitos de abertura das secções (config.abrirEfeito → classe body.abrir-*) ===== */
   /* "zoom" é o comportamento base (scale a partir do separador tocado) — sem classe própria */
   /* Flip 3D — vira na vertical */
@@ -1902,6 +1902,12 @@
     padding:20px;
   }
   .modal-overlay.aberto{display:flex;}
+  /* Janelas ao centro (vinho, foto, jogo, publicidade, fotografia): o fundo esbate a entrar E a sair e a janela
+     encolhe ligeiramente ao fechar (antes desaparecia num instante). Em browsers antigos o fecho fica instantâneo, como antes. */
+  .modal-overlay, .ad-popup-overlay, #camOverlay{ opacity:0; pointer-events:none; transition:opacity .2s var(--am-sai-op), display .2s allow-discrete; }
+  .modal-overlay.aberto, .ad-popup-overlay.aberto, #camOverlay.aberto{ opacity:1; pointer-events:auto; transition:opacity .26s var(--am-entra-op), display 0s allow-discrete; }
+  @starting-style{ .modal-overlay.aberto, .ad-popup-overlay.aberto, #camOverlay.aberto{ opacity:0; } }
+  .modal-overlay:not(.aberto) > *, .ad-popup-overlay:not(.aberto) > *, #camOverlay:not(.aberto) > *{ transform:scale(.97); transition:transform .2s var(--am-sai-op); }
   .modal-vinho{
     background:var(--branco);
     border-radius:16px;
@@ -1909,10 +1915,10 @@
     padding:22px 22px 20px;
     box-shadow:0 12px 32px rgba(74,56,32,0.25);
     position:relative;
-    animation:modalPop .18s ease;
+    animation:modalPop .32s var(--am-abrir);
   }
   @keyframes modalPop{
-    from{transform:scale(.92); opacity:0;}
+    from{transform:scale(.94); opacity:0;}
     to{transform:scale(1); opacity:1;}
   }
   .modal-vinho .fechar{
@@ -1964,7 +1970,7 @@
     padding:16px 16px 18px;
     box-shadow:0 12px 32px rgba(74,56,32,0.25);
     position:relative;
-    animation:modalPop .18s ease;
+    animation:modalPop .32s var(--am-abrir);
   }
   .modal-foto .fechar{
     position:absolute; top:8px; right:10px;
@@ -2021,7 +2027,7 @@
     text-align:center;
     gap:10px;
     position:relative;
-    animation:modalPop .18s ease;
+    animation:modalPop .32s var(--am-abrir);
   }
   .ad-popup .ad-texto{
     font-family:var(--fonte-titulo);
@@ -2199,6 +2205,13 @@
   .cart-chip{ border:1.5px solid var(--linha); background:#fff; color:var(--castanho); border-radius:999px; padding:9px 13px; font-weight:800; font-family:inherit; font-size:.9rem; cursor:pointer; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
   .cart-chip.on{ background:var(--castanho); border-color:var(--castanho); color:#fff; }
   #cartOverlay.aberto .cart-painel, #favOverlay.aberto .cart-painel{ transform:translateY(0); pointer-events:auto; }
+  /* Folhas de baixo (carrinho, favoritos, escolhas, experiência) — mesmo movimento das Reservas:
+     abrir sobe e trava suave; fechar responde logo e sai a acelerar; o fundo escurece/clareia no mesmo tempo.
+     Transições CSS (e não animações soltas): um toque a meio inverte a partir de onde a folha está, sem saltar. */
+  .cart-painel, .esc-painel, .exp-card{ transition:transform .3s var(--am-folha-fechar); will-change:transform; }
+  #cartOverlay.aberto .cart-painel, #favOverlay.aberto .cart-painel, #escOverlay.aberto .esc-painel, #expOverlay.aberto .exp-card{ transition:transform .5s var(--am-abrir); }
+  #cartOverlay, #favOverlay, #escOverlay, #expOverlay{ transition:background .3s var(--am-folha-fechar) !important; }
+  #cartOverlay.aberto, #favOverlay.aberto, #escOverlay.aberto, #expOverlay.aberto{ transition:background .5s var(--am-abrir) !important; }
   /* Botão + painel de FAVORITOS (pratos) */
   #favBtn{ position:fixed; right:14px; bottom:77px; z-index:200; width:46px; height:46px; border-radius:50%; border:none; background:#e0245e; color:#fff; font-size:1.35rem; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,0.4); display:none; align-items:center; justify-content:center; }
   #favBtn .fav-badge{ position:absolute; top:-5px; right:-5px; background:var(--dourado); color:#fff; font-size:0.68rem; font-weight:700; min-width:18px; height:18px; border-radius:9px; display:flex; align-items:center; justify-content:center; padding:0 4px; border:2px solid var(--branco); }
@@ -2425,10 +2438,10 @@
      Fechada: invisível e sem interação. Abrir: sobe com ease-out (curva iOS), fundo escurece.
      Fechar: desce mais depressa com ease-in. O overlay e o cartão têm transições diferentes
      no estado base (fechar) e no .aberto (abrir), para entrada lenta e saída rápida. */
-  #agendaOverlay{ position:fixed; inset:0; z-index:660; background:rgba(0,0,0,0); display:flex; align-items:flex-end; justify-content:center; padding:0; pointer-events:none; visibility:hidden; transition:background .34s cubic-bezier(.4,0,1,1), visibility 0s linear .34s; }
+  #agendaOverlay{ position:fixed; inset:0; z-index:660; background:rgba(0,0,0,0); display:flex; align-items:flex-end; justify-content:center; padding:0; pointer-events:none; visibility:hidden; transition:background .3s var(--am-folha-fechar), visibility 0s linear .3s; }
   body.scroll-lock .info-fixa{ transform:translateY(130%); }   /* enquanto uma folha está aberta, o rodapé desliza para fora (para baixo) — e volta a subir ao fechar, em vez de desaparecer por corte */
   #agendaOverlay.aberto{ background:rgba(0,0,0,0.5); pointer-events:auto; visibility:visible; transition:background .5s cubic-bezier(.32,.72,0,1), visibility 0s; }
-  .ag-card{ background:linear-gradient(180deg,#fffdf9,var(--branco)); width:100%; max-width:440px; max-height:88vh; overflow-y:auto; overscroll-behavior:contain; border-radius:22px 22px 0 0; padding:14px 16px calc(18px + var(--sa-bottom, env(safe-area-inset-bottom))); margin-bottom:calc(-1 * var(--sa-bottom, env(safe-area-inset-bottom))); transform:translateY(100%); pointer-events:none; border-top:3px solid var(--dourado); box-shadow:0 -10px 34px rgba(0,0,0,.20); transition:transform .34s cubic-bezier(.4,0,1,1); will-change:transform; }
+  .ag-card{ background:linear-gradient(180deg,#fffdf9,var(--branco)); width:100%; max-width:440px; max-height:88vh; overflow-y:auto; overscroll-behavior:contain; border-radius:22px 22px 0 0; padding:14px 16px calc(18px + var(--sa-bottom, env(safe-area-inset-bottom))); margin-bottom:calc(-1 * var(--sa-bottom, env(safe-area-inset-bottom))); transform:translateY(100%); pointer-events:none; border-top:3px solid var(--dourado); box-shadow:0 -10px 34px rgba(0,0,0,.20); transition:transform .3s var(--am-folha-fechar); will-change:transform; }
   .ag-card::before{ content:''; display:block; width:42px; height:5px; border-radius:3px; background:var(--linha); margin:0 auto 12px; transition:background .2s; }
   .ag-card.a-arrastar::before{ background:var(--castanho-suave); }
   #agendaOverlay.aberto .ag-card{ transform:translateY(0); pointer-events:auto; transition:transform .5s cubic-bezier(.32,.72,0,1); }
@@ -2481,8 +2494,9 @@
   .ag-passo-tit{ font-size:0.8rem; font-weight:700; color:var(--dourado-escuro); margin:14px 0 4px; }
   .fid-card{ background:var(--branco); width:100%; max-width:440px; border-radius:18px 18px 0 0; padding:20px 18px calc(20px + var(--sa-bottom, env(safe-area-inset-bottom))); transform:translateY(100%); pointer-events:none; max-height:100%; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; box-sizing:border-box; }   /* se não couber, faz scroll por dentro */
   #fidOverlay.aberto .fid-card{ transform:translateY(0); pointer-events:auto; transition:transform .5s cubic-bezier(.32,.72,0,1); }
-  .fid-card{ transition:transform .34s cubic-bezier(.4,0,1,1); will-change:transform; }   /* abrir/fechar como as Reservas */
+  .fid-card{ transition:transform .3s var(--am-folha-fechar); will-change:transform; }   /* abrir/fechar como as Reservas */
   #fidOverlay.aberto{ transition:background .5s cubic-bezier(.32,.72,0,1); }
+  #fidOverlay:not(.aberto){ transition:background .3s var(--am-folha-fechar); }
   .fid-card::before{ content:''; display:block; width:42px; height:5px; border-radius:3px; background:var(--linha); margin:-8px auto 12px; transition:background .2s; }   /* pega para arrastar */
   .fid-card.a-arrastar::before{ background:var(--castanho-suave); }
   .fid-card h3{ cursor:grab; -webkit-user-select:none; user-select:none; touch-action:none; }
@@ -2568,7 +2582,7 @@
   .cam-painel{
     background:var(--branco); width:100%; max-width:520px; border-radius:16px;
     padding:16px; text-align:center; max-height:92vh; overflow-y:auto;
-    animation:cartSobe .2s ease;
+    animation:cartSobe .34s var(--am-abrir);
   }
   .cam-painel h3{ font-family:var(--fonte-titulo); color:var(--castanho); margin-bottom:10px; }
   .cam-painel img.preview{ width:100%; border-radius:10px; margin-bottom:12px; display:block; }
@@ -5749,8 +5763,8 @@
             const notifOk = (typeof Notification !== 'undefined' && Notification.permission === 'granted');
             const ov = document.createElement('div');
             ov.id = 'gerirOverlay';
-            ov.style.cssText = 'position:fixed; inset:0; z-index:9700; background:rgba(0,0,0,.55); display:flex; align-items:flex-end; justify-content:center; padding:0;';
-            ov.innerHTML = '<div style="background:linear-gradient(180deg,#fffdf9,var(--branco,#fff)); border-radius:22px 22px 0 0; border-top:3px solid var(--dourado,#a8712f); max-width:440px; width:100%; max-height:92vh; overflow:auto; padding:20px 18px calc(20px + var(--sa-bottom, env(safe-area-inset-bottom))); margin-bottom:calc(-1 * var(--sa-bottom, env(safe-area-inset-bottom))); box-shadow:0 -12px 40px rgba(0,0,0,.30); transform:translateY(100%); transition:transform .36s cubic-bezier(.2,.9,.3,1);">'
+            ov.style.cssText = 'position:fixed; inset:0; z-index:9700; background:rgba(0,0,0,0); transition:background .5s var(--am-abrir); display:flex; align-items:flex-end; justify-content:center; padding:0;';
+            ov.innerHTML = '<div style="background:linear-gradient(180deg,#fffdf9,var(--branco,#fff)); border-radius:22px 22px 0 0; border-top:3px solid var(--dourado,#a8712f); max-width:440px; width:100%; max-height:92vh; overflow:auto; padding:20px 18px calc(20px + var(--sa-bottom, env(safe-area-inset-bottom))); margin-bottom:calc(-1 * var(--sa-bottom, env(safe-area-inset-bottom))); box-shadow:0 -12px 40px rgba(0,0,0,.30); transform:translateY(100%); transition:transform .5s var(--am-abrir); will-change:transform;">'
               + '<h3 style="margin:0 0 4px; text-align:center; font-family:var(--fonte-titulo); color:var(--castanho);">A tua reserva</h3>'
               + '<div style="text-align:center; color:var(--castanho-suave); font-size:.9rem; margin-bottom:12px;">' + resumo + '</div>'
               + est
@@ -5773,8 +5787,9 @@
             document.body.appendChild(ov);
             document.body.style.overflow = 'hidden';
             const _sheet = ov.firstElementChild;
-            requestAnimationFrame(function(){ if(_sheet) _sheet.style.transform = 'translateY(0)'; });
-            const fechar = function(){ if(_sheet){ _sheet.style.transform='translateY(100%)'; } ov.style.background='rgba(0,0,0,0)'; ov.style.transition='background .3s'; setTimeout(function(){ try{ ov.remove(); }catch(e){} document.body.style.overflow = ''; }, 320); };
+            void ov.offsetWidth;   // garante que parte de baixo (às vezes aparecia logo aberta, sem deslizar)
+            if(_sheet) _sheet.style.transform = 'translateY(0)'; ov.style.background = 'rgba(0,0,0,.55)';   // sobe e o fundo escurece ao mesmo tempo
+            const fechar = function(){ if(ov.__aFechar) return; ov.__aFechar = true; ov.style.pointerEvents = 'none'; if(_sheet){ _sheet.style.transition = 'transform .3s var(--am-folha-fechar)'; _sheet.style.transform='translateY(100%)'; } ov.style.transition='background .3s var(--am-folha-fechar)'; ov.style.background='rgba(0,0,0,0)'; setTimeout(function(){ try{ ov.remove(); }catch(e){} document.body.style.overflow = ''; }, 330); };   // só sai depois de a folha descer toda
             const $g = function(id){ return document.getElementById(id); };
             const msg = function(t, cor){ const m = $g('grMsg'); if(m){ m.textContent = t; m.style.color = cor || 'var(--castanho)'; } };
             const falhou = function(e){ const t = String((e && e.message) || e || ''); msg(/function|não existe|does not exist|PGRST/i.test(t) ? 'Ainda não disponível neste restaurante — usa o WhatsApp.' : 'Sem ligação. Tenta outra vez.', '#b23'); };
@@ -5851,8 +5866,8 @@
             }
             const ov = document.createElement('div');
             ov.id = 'gerirOverlay';
-            ov.style.cssText = 'position:fixed; inset:0; z-index:9000; background:rgba(0,0,0,.55); display:flex; align-items:flex-end; justify-content:center; padding:0;';
-            ov.innerHTML = '<div style="background:linear-gradient(180deg,#fffdf9,var(--branco,#fff)); border-radius:22px 22px 0 0; border-top:3px solid var(--dourado,#a8712f); max-width:440px; width:100%; max-height:92vh; overflow:auto; padding:20px 18px calc(20px + var(--sa-bottom, env(safe-area-inset-bottom))); margin-bottom:calc(-1 * var(--sa-bottom, env(safe-area-inset-bottom))); box-shadow:0 -12px 40px rgba(0,0,0,.30); transform:translateY(100%); transition:transform .36s cubic-bezier(.2,.9,.3,1);">'
+            ov.style.cssText = 'position:fixed; inset:0; z-index:9000; background:rgba(0,0,0,0); transition:background .5s var(--am-abrir); display:flex; align-items:flex-end; justify-content:center; padding:0;';
+            ov.innerHTML = '<div style="background:linear-gradient(180deg,#fffdf9,var(--branco,#fff)); border-radius:22px 22px 0 0; border-top:3px solid var(--dourado,#a8712f); max-width:440px; width:100%; max-height:92vh; overflow:auto; padding:20px 18px calc(20px + var(--sa-bottom, env(safe-area-inset-bottom))); margin-bottom:calc(-1 * var(--sa-bottom, env(safe-area-inset-bottom))); box-shadow:0 -12px 40px rgba(0,0,0,.30); transform:translateY(100%); transition:transform .5s var(--am-abrir); will-change:transform;">'
               + '<h3 style="margin:0 0 4px; text-align:center; font-family:var(--fonte-titulo); color:var(--castanho);">A tua reserva</h3>'
               + '<div style="text-align:center; color:var(--castanho-suave); font-size:.9rem; margin-bottom:14px;">' + resumo + '</div>'
               + (tel
@@ -5872,8 +5887,9 @@
             document.body.appendChild(ov);
             document.body.style.overflow = 'hidden';
             const _sheet = ov.firstElementChild;
-            requestAnimationFrame(function(){ if(_sheet) _sheet.style.transform = 'translateY(0)'; });   // desliza de baixo
-            const fechar = function(){ if(_sheet){ _sheet.style.transform='translateY(100%)'; } ov.style.background='rgba(0,0,0,0)'; ov.style.transition='background .3s'; setTimeout(function(){ try{ ov.remove(); }catch(e){} document.body.style.overflow = ''; }, 320); };
+            void ov.offsetWidth;   // garante que parte de baixo (às vezes aparecia logo aberta, sem deslizar)
+            if(_sheet) _sheet.style.transform = 'translateY(0)'; ov.style.background = 'rgba(0,0,0,.55)';   // sobe e o fundo escurece ao mesmo tempo
+            const fechar = function(){ if(ov.__aFechar) return; ov.__aFechar = true; ov.style.pointerEvents = 'none'; if(_sheet){ _sheet.style.transition = 'transform .3s var(--am-folha-fechar)'; _sheet.style.transform='translateY(100%)'; } ov.style.transition='background .3s var(--am-folha-fechar)'; ov.style.background='rgba(0,0,0,0)'; setTimeout(function(){ try{ ov.remove(); }catch(e){} document.body.style.overflow = ''; }, 330); };   // só sai depois de a folha descer toda
             const gf = document.getElementById('grFechar'); if(gf) gf.onclick = fechar;
             const grm = document.getElementById('grRemover'); if(grm) grm.onclick = function(){ if(confirm('Remover esta reserva do teu telemóvel? O restaurante continua com ela — isto só apaga o atalho aqui.')){ remover(r); fechar(); } };
             ov.addEventListener('click', function(e){ if(e.target === ov) fechar(); });
@@ -6877,7 +6893,7 @@
     var y0=0, x0=0, dy=0, startY=0, drag=false, decidiu=false, naZona=false;
     var H=1, vy=0, yPrev=0, tPrev=0;
     var ABRE_ESCURO = (opts.escuro != null) ? opts.escuro : 0.5, LIMITE = 110, FLICK = 0.5;   // fechar: >110px OU velocidade > 0.5 px/ms
-    var CURVA_ABRIR='cubic-bezier(.32,.72,0,1)', CURVA_FECHAR='cubic-bezier(.4,0,1,1)';
+    var CURVA_ABRIR='cubic-bezier(.32,.72,0,1)';
     function _zonaPega(e){ return opts.zona ? !!opts.zona(e) : ((e.clientY - card.getBoundingClientRect().top) < 92); }
     function _resist(d){ return d < 0 ? -Math.pow(-d, 0.82) : d; }   // resistência elástica ao subir
     function _limpar(){ card.style.transition=''; card.style.transform=''; ov.style.transition=''; ov.style.background=''; }
@@ -6916,7 +6932,12 @@
       var fecha = (dy > LIMITE) || (vy > FLICK);
       // fim determinístico com transições EXPLÍCITAS (não depende de reflow nem de troca de classe)
       if(fecha){
-        card.style.transition='transform .34s '+CURVA_FECHAR; ov.style.transition='background .34s '+CURVA_FECHAR;
+        // continua à velocidade do dedo: a folha não "pára" ao largar e depois arranca — segue o gesto até sair do ecrã
+        var falta = Math.max(1, H - Math.max(0, dy)), v0 = Math.max(vy, 0.9);   // px que faltam; px/ms (mínimo para não arrastar)
+        var T = Math.round(Math.max(160, Math.min(320, falta / v0 * 1.6)));
+        var y1 = Math.min(1, v0 * T * 0.3 / falta).toFixed(3);   // inclinação inicial da curva = velocidade do dedo
+        var CURVA_SEGUE = 'cubic-bezier(.3,' + y1 + ',.6,.9)';
+        card.style.transition='transform '+T+'ms '+CURVA_SEGUE; ov.style.transition='background '+T+'ms '+CURVA_SEGUE;
         card.style.transform='translate3d(0,100%,0)'; ov.style.background='rgba(0,0,0,0)';
         var doneF=function(ev){ if(ev && ev.propertyName && ev.propertyName!=='transform') return; card.removeEventListener('transitionend', doneF); ov.classList.remove('aberto'); _limpar(); };
         card.addEventListener('transitionend', doneF); setTimeout(function(){ doneF(); }, 420);
@@ -7068,7 +7089,7 @@
   // ==========================================================
   (function(){
     var ov = document.createElement('div'); ov.id = 'amModal';
-    ov.style.cssText = 'position:fixed;inset:0;z-index:12000;display:none;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.5);padding:0;opacity:0;transition:opacity .28s ease;';
+    ov.style.cssText = 'position:fixed;inset:0;z-index:12000;display:none;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.5);padding:0;opacity:0;transition:opacity .3s var(--am-folha-fechar);';
     ov.innerHTML = '<div id="amCard" style="background:linear-gradient(180deg,#fffdf9,var(--branco,#fff));width:100%;max-width:440px;border-radius:22px 22px 0 0;border-top:3px solid var(--dourado,#a8712f);box-shadow:0 -12px 40px rgba(0,0,0,.30);padding:20px 18px calc(20px + var(--sa-bottom, env(safe-area-inset-bottom)));margin-bottom:calc(-1 * var(--sa-bottom, env(safe-area-inset-bottom)));transform:translateY(100%);transition:transform .36s cubic-bezier(.2,.9,.3,1);will-change:transform;">'
       + '<div id="amTit" style="font-family:var(--fonte-titulo,inherit);color:var(--castanho,#4a3820);font-size:1.12rem;font-weight:800;text-align:center;margin-bottom:6px;"></div>'
       + '<div id="amMsg" style="color:var(--castanho-suave,#8a7350);font-size:.9rem;line-height:1.4;text-align:center;margin-bottom:12px;white-space:pre-line;"></div>'
@@ -7080,14 +7101,14 @@
     document.body.appendChild(ov);
     var card=ov.querySelector('#amCard'), tit=ov.querySelector('#amTit'), msg=ov.querySelector('#amMsg'), inp=ov.querySelector('#amInput'), bOk=ov.querySelector('#amOk'), bC=ov.querySelector('#amCancel');
     var _res=null, _prompt=false, _hideTimer=null;
-    function fechar(val){ ov.style.opacity='0'; card.style.transform='translateY(100%)'; if(_hideTimer) clearTimeout(_hideTimer); _hideTimer=setTimeout(function(){ ov.style.display='none'; _hideTimer=null; },380); var r=_res; _res=null; if(r) r(val); }
+    function fechar(val){ ov.style.transition='opacity .3s var(--am-folha-fechar)'; card.style.transition='transform .3s var(--am-folha-fechar)'; ov.style.opacity='0'; card.style.transform='translateY(100%)'; if(_hideTimer) clearTimeout(_hideTimer); _hideTimer=setTimeout(function(){ ov.style.display='none'; _hideTimer=null; },320); var r=_res; _res=null; if(r) r(val); }
     function abrir(){
+      var aMeio = !!_hideTimer;   // a anterior ainda a descer (ex.: confirmar → pedir texto): sobe a partir de onde está, sem saltar para baixo
       if(_hideTimer){ clearTimeout(_hideTimer); _hideTimer=null; }
       ov.style.display='flex';
-      card.style.transition='none'; card.style.transform='translateY(100%)'; ov.style.opacity='0';
-      void ov.offsetWidth;   // começa sempre em baixo → sobe até parar (sem saltos)
-      card.style.transition='transform .36s cubic-bezier(.2,.9,.3,1)';
-      requestAnimationFrame(function(){ ov.style.opacity='1'; card.style.transform='translateY(0)'; });
+      if(!aMeio){ card.style.transition='none'; card.style.transform='translateY(100%)'; ov.style.opacity='0'; void ov.offsetWidth; }   // começa em baixo
+      card.style.transition='transform .44s var(--am-abrir)'; ov.style.transition='opacity .36s var(--am-entra-op)';
+      ov.style.opacity='1'; card.style.transform='translateY(0)';
     }
     bOk.onclick=function(){ fechar(_prompt ? inp.value : true); };
     bC.onclick=function(){ fechar(_prompt ? null : false); };
@@ -8888,7 +8909,7 @@
         const acao = (x.id === 'cartVoltar') ? function(){ render(); } : function(){ overlay.classList.remove('aberto'); };
         setTimeout(acao, 80); };
       overlay.addEventListener('pointerup', fechaX); overlay.addEventListener('click', fechaX); })();
-    (window.__ovAnim||(window.__ovAnim=function(cont,sel){ var pn=cont.querySelector(sel); if(!pn) return; var an=null,was=cont.classList.contains('aberto'); new MutationObserver(function(){ var open=cont.classList.contains('aberto'); if(open!==was){ was=open; if(an){try{an.cancel();}catch(e){}} if(pn.animate){ an=pn.animate(open?[{transform:'translateY(100%)'},{transform:'translateY(0)'}]:[{transform:'translateY(0)'},{transform:'translateY(100%)'}],{duration:open?380:320,easing:'cubic-bezier(.22,.9,.3,1)'}); } } var a=document.querySelector('#cartOverlay.aberto,#favOverlay.aberto,#agendaOverlay.aberto,#fidOverlay.aberto,#escOverlay.aberto,.categoria-painel.aberto'); document.documentElement.classList.toggle('scroll-lock',!!a); document.body.classList.toggle('scroll-lock',!!a); }).observe(cont,{attributes:true,attributeFilter:['class']}); }))(overlay,'.cart-painel');
+    (window.__ovAnim||(window.__ovAnim=function(cont,sel){ var pn=cont.querySelector(sel); if(!pn) return; var an=null,was=cont.classList.contains('aberto'); new MutationObserver(function(){ var open=cont.classList.contains('aberto'); if(open!==was){ was=open; if(an){try{an.cancel();}catch(e){}} /* movimento: transições CSS da folha (sem salto se o toque vier a meio) */ } var a=document.querySelector('#cartOverlay.aberto,#favOverlay.aberto,#agendaOverlay.aberto,#fidOverlay.aberto,#escOverlay.aberto,.categoria-painel.aberto'); document.documentElement.classList.toggle('scroll-lock',!!a); document.body.classList.toggle('scroll-lock',!!a); }).observe(cont,{attributes:true,attributeFilter:['class']}); }))(overlay,'.cart-painel');
     overlay.addEventListener('click', e => { if(e.target === overlay) overlay.classList.remove('aberto'); });
     cartBtn.addEventListener('click', () => { try{ _encSync(); }catch(e){} render(); requestAnimationFrame(() => overlay.classList.add('aberto')); });
     // Arranca a sincronização do estado das encomendas (se houver alguma por confirmar) + ao voltar a primeiro plano
@@ -8905,7 +8926,7 @@
     favOverlay.id = 'favOverlay';
     favOverlay.innerHTML = '<div class="cart-painel" id="favPainel"></div>';
     document.body.appendChild(favOverlay);
-    (window.__ovAnim||(window.__ovAnim=function(cont,sel){ var pn=cont.querySelector(sel); if(!pn) return; var an=null,was=cont.classList.contains('aberto'); new MutationObserver(function(){ var open=cont.classList.contains('aberto'); if(open!==was){ was=open; if(an){try{an.cancel();}catch(e){}} if(pn.animate){ an=pn.animate(open?[{transform:'translateY(100%)'},{transform:'translateY(0)'}]:[{transform:'translateY(0)'},{transform:'translateY(100%)'}],{duration:open?380:320,easing:'cubic-bezier(.22,.9,.3,1)'}); } } var a=document.querySelector('#cartOverlay.aberto,#favOverlay.aberto,#agendaOverlay.aberto,#fidOverlay.aberto,#escOverlay.aberto,.categoria-painel.aberto'); document.documentElement.classList.toggle('scroll-lock',!!a); document.body.classList.toggle('scroll-lock',!!a); }).observe(cont,{attributes:true,attributeFilter:['class']}); }))(favOverlay,'.cart-painel');
+    (window.__ovAnim||(window.__ovAnim=function(cont,sel){ var pn=cont.querySelector(sel); if(!pn) return; var an=null,was=cont.classList.contains('aberto'); new MutationObserver(function(){ var open=cont.classList.contains('aberto'); if(open!==was){ was=open; if(an){try{an.cancel();}catch(e){}} /* movimento: transições CSS da folha (sem salto se o toque vier a meio) */ } var a=document.querySelector('#cartOverlay.aberto,#favOverlay.aberto,#agendaOverlay.aberto,#fidOverlay.aberto,#escOverlay.aberto,.categoria-painel.aberto'); document.documentElement.classList.toggle('scroll-lock',!!a); document.body.classList.toggle('scroll-lock',!!a); }).observe(cont,{attributes:true,attributeFilter:['class']}); }))(favOverlay,'.cart-painel');
     favOverlay.addEventListener('click', e => { if(e.target === favOverlay) favOverlay.classList.remove('aberto'); });
     favBtn.addEventListener('click', () => { favRender(); requestAnimationFrame(() => favOverlay.classList.add('aberto')); });
     function favRender(){
@@ -9242,7 +9263,7 @@
     escOverlay.id = 'escOverlay';
     escOverlay.innerHTML = '<div class="esc-painel" id="escPainel"></div>';
     document.body.appendChild(escOverlay);
-    (window.__ovAnim||(window.__ovAnim=function(cont,sel){ var pn=cont.querySelector(sel); if(!pn) return; var an=null,was=cont.classList.contains('aberto'); new MutationObserver(function(){ var open=cont.classList.contains('aberto'); if(open!==was){ was=open; if(an){try{an.cancel();}catch(e){}} if(pn.animate){ an=pn.animate(open?[{transform:'translateY(100%)'},{transform:'translateY(0)'}]:[{transform:'translateY(0)'},{transform:'translateY(100%)'}],{duration:open?380:320,easing:'cubic-bezier(.22,.9,.3,1)'}); } } var a=document.querySelector('#cartOverlay.aberto,#favOverlay.aberto,#agendaOverlay.aberto,#fidOverlay.aberto,#escOverlay.aberto,.categoria-painel.aberto'); document.documentElement.classList.toggle('scroll-lock',!!a); document.body.classList.toggle('scroll-lock',!!a); }).observe(cont,{attributes:true,attributeFilter:['class']}); }))(escOverlay,'.esc-painel');
+    (window.__ovAnim||(window.__ovAnim=function(cont,sel){ var pn=cont.querySelector(sel); if(!pn) return; var an=null,was=cont.classList.contains('aberto'); new MutationObserver(function(){ var open=cont.classList.contains('aberto'); if(open!==was){ was=open; if(an){try{an.cancel();}catch(e){}} /* movimento: transições CSS da folha (sem salto se o toque vier a meio) */ } var a=document.querySelector('#cartOverlay.aberto,#favOverlay.aberto,#agendaOverlay.aberto,#fidOverlay.aberto,#escOverlay.aberto,.categoria-painel.aberto'); document.documentElement.classList.toggle('scroll-lock',!!a); document.body.classList.toggle('scroll-lock',!!a); }).observe(cont,{attributes:true,attributeFilter:['class']}); }))(escOverlay,'.esc-painel');
     escOverlay.addEventListener('click', e => { if(e.target === escOverlay) escOverlay.classList.remove('aberto'); });
 
     function feedbackBtn(b){
@@ -9858,8 +9879,8 @@
     var card = ov.querySelector('.exp-card');
     ov.addEventListener('click', function(e){ if(e.target === ov) fechar(); });
 
-    function abrir(){ construir(); ov.classList.add('aberto'); if(card.animate){ card.animate([{transform:'translateY(100%)'},{transform:'translateY(0)'}], {duration:360, easing:'cubic-bezier(.22,.9,.3,1)'}); } }
-    function fechar(){ if(card.animate){ var a = card.animate([{transform:'translateY(0)'},{transform:'translateY(100%)'}], {duration:300, easing:'cubic-bezier(.22,.9,.3,1)'}); a.onfinish = function(){ ov.classList.remove('aberto'); }; } else { ov.classList.remove('aberto'); } }
+    function abrir(){ construir(); ov.classList.add('aberto'); }   // movimento: transição CSS (igual às Reservas)
+    function fechar(){ ov.classList.remove('aberto'); }   // o fundo clareia ao mesmo tempo que a folha desce
     btn.addEventListener('click', abrir);
 
     function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
