@@ -444,14 +444,17 @@
   function _promoNova(cfg){
     var lista = cfg && Array.isArray(cfg.promocoes) ? cfg.promocoes : []; if(!lista.length) return null;
     var iso = _isoHoje(), wd = new Date().getDay(), ordem = { dia:0, intervalo:1, semanal:2 };
-    var melhor = null, mr = 99, mi = -1;
+    var melhor = null, mr = 99, mk = -1, mi = -1;
     lista.forEach(function(p, i){
       if(!p || p.ativo === false || !_promoTemConteudo(p)) return; var q = p.quando || {}; var ok = false;
+      if(!_promoDentroHorario(p)) return;   // fora do seu horário passa a vez à seguinte (igual ao menu)
       if(q.tipo === 'dia') ok = (q.data === iso);
       else if(q.tipo === 'intervalo') ok = !!q.de && q.de <= iso && (!q.ate || iso <= q.ate);
       else if(q.tipo === 'semanal'){ var ds = Array.isArray(q.dias) ? q.dias.map(Number) : []; ok = ds.indexOf(wd) >= 0 && (!q.de || q.de <= iso) && (!q.ate || iso <= q.ate); }
       if(!ok) return; var r = ordem[q.tipo]; if(r == null) return;
-      if(r < mr || (r === mr && i > mi)){ melhor = p; mr = r; mi = i; }
+      r = r * 2 + ((p.horaIni && p.horaFim && p.horaIni !== p.horaFim) ? 0 : 1);   // com horário (e dentro dele) é mais específica
+      var k = Date.parse(p.atualizadoEm || p.criadoEm || '') || 0;                  // empate → a última guardada
+      if(r < mr || (r === mr && (k > mk || (k === mk && i > mi)))){ melhor = p; mr = r; mk = k; mi = i; }
     });
     return melhor;
   }

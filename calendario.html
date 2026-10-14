@@ -1298,11 +1298,12 @@
   }
   function _prResolver(lista, iso){
     var wd = _prDataDe(iso).getDay(); var ordem = { dia:0, intervalo:1, semanal:2 };
-    var melhor = null, mr = 99, mi = -1;
+    var melhor = null, mr = 99, mk = -1, mi = -1;
     (lista || []).forEach(function(p, i){
       if(!_prTemTexto(p) || !_prBate(p.quando, iso, wd)) return;
       var r = ordem[p.quando.tipo]; if(r == null) return;
-      if(r < mr || (r === mr && i > mi)){ melhor = p; mr = r; mi = i; }
+      var k = Date.parse(p.atualizadoEm || p.criadoEm || '') || 0;   // empate → a última guardada (igual ao menu)
+      if(r < mr || (r === mr && (k > mk || (k === mk && i > mi)))){ melhor = p; mr = r; mk = k; mi = i; }
     });
     return melhor;
   }
@@ -1376,6 +1377,12 @@
   }
   // Imagem colorida para o aviso do Prato do dia (aparece no Android/Chrome; o iPhone mostra só o texto).
   // Desenhada aqui com as cores da promoção e guardada sempre no MESMO ficheiro do restaurante (não acumula imagens).
+  // Clientes que recebem as promoções = subscrições do restaurante MENOS os telemóveis do dono (app de Gestão), que já não as recebem
+  async function _prContarClientes(){
+    var r1 = await sb.from('push_subs').select('*', { count:'exact', head:true }).eq('negocio_id', negocio.id);
+    var r2 = await sb.from('donos_push').select('*', { count:'exact', head:true }).eq('negocio_id', negocio.id);
+    return Math.max(0, ((r1 && r1.count) || 0) - (((r2 && !r2.error) && r2.count) || 0));
+  }
   async function _prPushImagem(p){
     try{
       var W = 720, H = 360, c = document.createElement('canvas'); c.width = W; c.height = H; var g = c.getContext('2d');
@@ -1477,7 +1484,7 @@
       });
     });
     v.innerHTML = html;
-    sb.from('push_subs').select('*', { count:'exact', head:true }).eq('negocio_id', negocio.id).then(function(r){ var el = $('prCount'); if(el) el.textContent = ((r && r.count) || 0) + ' cliente(s) a receber os teus avisos'; }).catch(function(){ var el = $('prCount'); if(el) el.textContent = ''; });
+    _prContarClientes().then(function(n){ var el = $('prCount'); if(el) el.textContent = n + ' cliente(s) a receber os teus avisos'; }).catch(function(){ var el = $('prCount'); if(el) el.textContent = ''; });
     $('prNova').onclick = function(){ _prAbrir(null); };
     v.querySelectorAll('.pr-item').forEach(function(el){ el.onclick = function(){ _prAbrir(el.dataset.id); }; });
     v.querySelectorAll('.pr-repetir').forEach(function(b){ b.onclick = function(ev){ ev.stopPropagation(); var src = _prLista().filter(function(x){ return x.id === b.dataset.id; })[0]; if(!src) return; var c = JSON.parse(JSON.stringify(src)); c.id = ''; delete c.ultimoPushEm; delete c.criadoEm; c.quando = { tipo:'dia', data:_prHoje() }; _prEdit = c; renderNotif(); try{ window.scrollTo(0,0); }catch(e){} }; });
@@ -1617,7 +1624,7 @@
     $('prHoraIni').addEventListener('input', function(){ syncHora(); prev(); }); $('prHoraFim').addEventListener('input', function(){ syncHora(); prev(); });
     $('prPushTit').addEventListener('input', function(){ _prEdit.push.titulo = $('prPushTit').value; });
     $('prPushUrl').addEventListener('input', function(){ _prEdit.push.url = $('prPushUrl').value; });
-    sb.from('push_subs').select('*', { count:'exact', head:true }).eq('negocio_id', negocio.id).then(function(r){ var el = $('prCount'); if(el) el.textContent = '· ' + ((r && r.count) || 0) + ' cliente(s)'; }).catch(function(){});
+    _prContarClientes().then(function(n){ var el = $('prCount'); if(el) el.textContent = '· ' + n + ' cliente(s)'; }).catch(function(){});
     var rm = $('prRemover'); if(rm) rm.onclick = async function(){
       if(!(await window.__amConfirm('Confirmar', { texto:'Remover esta promoção? Deixa de aparecer no menu.', ok:'Sim, remover', cancelar:'Não' }))) return;
       var id = _prEdit.id; var err = await _prGuardarCfg(function(cfg){ cfg.promocoes = cfg.promocoes.filter(function(x){ return x.id !== id; }); });
@@ -1644,6 +1651,7 @@
       }
       $('prGuardar').disabled = true; $('prGuardarPush').disabled = true; msg.textContent = 'A guardar…'; msg.className = 'msg';
       if(!_prEdit.id){ _prEdit.id = _prNovoId(); _prEdit.criadoEm = new Date().toISOString(); }
+      _prEdit.atualizadoEm = new Date().toISOString();   // "Atualizar" volta a pôr esta promoção à frente das outras do mesmo dia
       _prEdit.ativo = true;
       var copia = JSON.parse(JSON.stringify(_prEdit));
       var err = await _prGuardarCfg(function(cfg){ var k = -1; cfg.promocoes.forEach(function(x, i){ if(x.id === copia.id) k = i; }); if(k >= 0) cfg.promocoes[k] = copia; else cfg.promocoes.push(copia); });

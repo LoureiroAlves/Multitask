@@ -5003,7 +5003,9 @@
       window.__cfgPromo = config;
       // Qual a promoção em vigor num dia? Lê config.promocoes (novo: dia / intervalo / semanal) e,
       // se não houver nenhuma, cai no formato antigo config.promoDatas[AAAA-MM-DD]. (Mesma função no Gestor.)
-      window.__amPromoResolver = function(cfg, d){
+      // comHora = true (menu, agora): uma promoção com horário só conta DENTRO do horário — fora dele passa a vez à seguinte
+      // (antes ganhava na mesma e o menu ficava sem nada, ex.: Happy Hour 18h–20h escondia o Prato do dia o dia todo).
+      window.__amPromoResolver = function(cfg, d, comHora){
         cfg = cfg || {}; d = d || new Date();
         var iso = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
         var wd = d.getDay();
@@ -5017,11 +5019,20 @@
         }
         var ordem = { dia:0, intervalo:1, semanal:2 };
         var lista = Array.isArray(cfg.promocoes) ? cfg.promocoes : [];
-        var melhor = null, melhorR = 99, melhorIdx = -1;
+        var nowM = d.getHours()*60 + d.getMinutes();
+        function hm(s){ var m = /^(\d{1,2}):(\d{2})$/.exec(String(s || '')); return m ? (parseInt(m[1],10)*60 + parseInt(m[2],10)) : null; }
+        function temHora(p){ var a = hm(p.horaIni), b = hm(p.horaFim); return a != null && b != null && a !== b; }
+        function dentro(p){ if(!temHora(p)) return true; var a = hm(p.horaIni), b = hm(p.horaFim); return a < b ? (nowM >= a && nowM <= b) : (nowM >= a || nowM <= b); }
+        function rec(p){ return Date.parse(p.atualizadoEm || p.criadoEm || '') || 0; }
+        var melhor = null, melhorR = 99, melhorK = -1, melhorIdx = -1;
         lista.forEach(function(p, i){
           if(!temTexto(p) || !bate(p.quando)) return;
+          if(comHora && !dentro(p)) return;
           var r = ordem[p.quando.tipo]; if(r == null) return;
-          if(r < melhorR || (r === melhorR && i > melhorIdx)){ melhor = p; melhorR = r; melhorIdx = i; }   // específico ganha; em empate, a mais recente
+          r = r * 2 + ((comHora && temHora(p)) ? 0 : 1);   // dentro do seu horário é mais específica do que uma de todo o dia
+          var k = rec(p);
+          // específico ganha; em empate, a ÚLTIMA GUARDADA (antes era a última criada — guardar outra vez não a punha à frente)
+          if(r < melhorR || (r === melhorR && (k > melhorK || (k === melhorK && i > melhorIdx)))){ melhor = p; melhorR = r; melhorK = k; melhorIdx = i; }
         });
         if(melhor) return melhor;
         var pDatas = (cfg.promoDatas && typeof cfg.promoDatas === 'object') ? cfg.promoDatas : {};
@@ -5040,8 +5051,8 @@
           var _m = function(s){ var a = String(s).split(':'); return (parseInt(a[0],10)||0)*60 + (parseInt(a[1],10)||0); };
           function _dentroHora(o){ if(o.horaIni && o.horaFim){ return (now >= _m(o.horaIni) && now <= _m(o.horaFim)); } return true; }
           // Promoção em vigor hoje (config.promocoes → fallback config.promoDatas)
-          var p = window.__amPromoResolver(cfg, d);
-          if(!p || !_dentroHora(p)){ _off(); return; }
+          var p = window.__amPromoResolver(cfg, d, true);   // já só devolve promoções dentro do horário
+          if(!p){ _off(); return; }
           // Renderiza o estilo escolhido (autocolante, fita, etiqueta, cupão, néon, urgência, selo, oval)
           try{ el.style.setProperty('--pd-fundo', getComputedStyle(document.body).backgroundColor || '#fbf7ef'); }catch(e){}
           var _pdH = (typeof window.__amPromoCard === 'function') ? window.__amPromoCard(p) : ('<div style="padding:14px;background:'+(p.cor||'#e0245e')+';color:#fff;border-radius:14px;font-weight:800;">'+String(p.texto||'').replace(/</g,'&lt;')+'</div>');
