@@ -1376,6 +1376,10 @@
   }
   async function _prEnviarPush(p){
     var corpo = String(p.texto || '').replace(/\s+/g, ' ').trim();
+    if(p.auto === 'pratoDia'){   // aviso do Prato do dia: "🍽️ Prato do dia · 8,50€: Bacalhau à Brás · Frango assado"
+      var _pr = String(p.preco || '').trim(), _m = /^(\d+)(?:[.,](\d{1,2}))?\s*€?$/.exec(_pr); if(_m) _pr = _m[1] + ',' + ((_m[2] || '') + '00').slice(0, 2) + '€';
+      corpo = '🍽️ ' + (new Date().getDay() === 0 ? 'Sugestão' : 'Prato do dia') + (_pr ? (' · ' + _pr) : '') + ': ' + String(p.texto || '').split(/\r?\n/).map(function(x){ return x.trim(); }).filter(Boolean).join(' · ');
+    }
     var tit = (p.push && p.push.titulo) || (negocio && negocio.nome) || 'Promoção';
     var url = (p.push && p.push.url) || _linkCardapio();
     var r = await sb.functions.invoke('enviar-push', { body:{ negocio:negocio.id, titulo:tit, corpo:corpo, url:url } });

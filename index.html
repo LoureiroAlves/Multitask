@@ -618,6 +618,13 @@
       // Promoção do dono (grátis) — foto com texto por cima, no cartão da montra (respeita dia + horário)
       var promo = _promoAtual(n);
       var promoTxt = (promo && promo.texto) ? String(promo.texto).trim() : '';
+      // Promoção com o layout "Prato do dia": na montra só "🍽️ Prato do dia · 8,50€" (ao domingo "Sugestão") — os pratos ficam no menu
+      var promoPD = !!(promo && promo.auto === 'pratoDia');
+      if(promoPD){
+        var _pv = String(promo.preco == null ? '' : promo.preco).trim(), _pm = /^(\d+)(?:[.,](\d{1,2}))?\s*€?$/.exec(_pv);
+        if(_pm) _pv = _pm[1] + ',' + ((_pm[2] || '') + '00').slice(0, 2) + '€';
+        promoTxt = '🍽️ ' + (new Date().getDay() === 0 ? 'Sugestão' : 'Prato do dia') + (_pv ? (' · ' + _pv.slice(0, 24)) : '');
+      }
       var promoFoto = (promo && promo.foto) ? promo.foto : '';
       var promoCor = (promo && /^#[0-9a-fA-F]{3,8}$/.test(String(promo.cor||''))) ? promo.cor : '#e0245e';
       var _pt2 = promo ? parseInt(promo.tamanho, 10) : 0;
@@ -635,7 +642,7 @@
           '<button type="button" class="fav-btn' + (favTem(slug) ? ' on' : '') + '" data-fav="' + esc(slug) + '" aria-label="Favorito">' + (favTem(slug) ? '♥' : '♡') + '</button>' +
           '<a class="foto" style="' + estiloFoto + '"' + bgAttr + ' href="' + cardapio + '" aria-label="' + esc(nome) + '">' +
             (fotoCartao ? '' : '<span class="inicial">' + inicial + '</span>') +
-            (promo ? '<span class="promo-ribbon">PROMO</span>' : '') +
+            (promo ? '<span class="promo-ribbon">' + (promoPD ? 'HOJE' : 'PROMO') + '</span>' : '') +
             (promoTxt ? '<div class="promo-band" style="' + promoBandStyle + '">' + esc(promoTxt) + '</div>' : '') +
           '</a>' +
           '<div class="corpo">' +
