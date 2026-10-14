@@ -6936,15 +6936,29 @@
       const f = document.querySelector('.info-fixa'); if(!f || !c || !c.isConnected) return;
       const cs = getComputedStyle(f); if(cs.display === 'none' || cs.visibility === 'hidden') return;
       if(document.body.classList.contains('scroll-lock') || document.body.classList.contains('secao-aberta')) return;   // rodapé fora do sítio: tenta mais tarde
-      const fr = f.getBoundingClientRect(); if(!fr.height) return;
+      if(!f.offsetHeight) return;
+      // Decide pela posição ESCOLHIDA no editor (% do ecrã), não pela posição medida: no Safari, com as barras visíveis,
+      // a frase a 95% ficava ACIMA do rodapé e não era apanhada. Tudo o que está nos 20% de baixo vai com o rodapé
+      // (a frase, a teia e a aranha juntas), à mesma distância do fundo do ecrã.
       c.querySelectorAll('.decor-fixa').forEach(function(el){
-        const r = el.getBoundingClientRect(), cy = r.top + r.height / 2;
-        if(cy < fr.top || cy > fr.bottom) return;
-        el.style.position = 'absolute'; el.style.top = Math.round(cy - fr.top) + 'px'; el.style.zIndex = '103';
+        const y = parseFloat(el.style.top); if(!(y >= 80)) return;
+        el.dataset.y = y;
+        el.style.position = 'absolute'; el.style.zIndex = '103';
         el.classList.add('no-rodape'); f.appendChild(el);
       });
+      _decorRodapePos();
+      if(!window.__decorRodapeOuv){ window.__decorRodapeOuv = true; window.addEventListener('resize', _decorRodapePos); setTimeout(_decorRodapePos, 3000); setTimeout(_decorRodapePos, 9500); }
     }catch(e){}
   }
+  // (re)calcula a posição dentro do rodapé: mesma distância ao fundo do ecrã que no editor (o rodapé pode mudar de altura)
+  function _decorRodapePos(){
+    try{
+      const f = document.querySelector('.info-fixa'); if(!f) return; const fh = f.offsetHeight; if(!fh) return;
+      const H = window.innerHeight || document.documentElement.clientHeight || 800;
+      f.querySelectorAll('.decor-fixa.no-rodape').forEach(function(el){ const y = parseFloat(el.dataset.y); if(isNaN(y)) return; el.style.top = Math.round(fh - H * (1 - y / 100)) + 'px'; });
+    }catch(e){}
+  }
+
   function aplicarDecorIntro(config, arrastavel){
     const ov = document.getElementById('introOverlay'); if(!ov) return;
     ['introDecorQueda','introDecorLuzes','introDecorFixas'].forEach(function(id){ const e = document.getElementById(id); if(e) e.remove(); });
