@@ -10391,6 +10391,10 @@
   .pd-card .pd-msg{ font-weight:700; font-size:.92rem; margin-top:5px; }
   /* Layout "Prato do dia": dia da semana (título) + "Prato do dia"/"Sugestão" por baixo + um parágrafo por prato */
   .pd-card .pd-sub2{ font-weight:900; font-size:calc(1.65rem * var(--pd-escala,1)); line-height:1.05; letter-spacing:1.5px; text-transform:uppercase; margin:4px 0 6px; text-shadow:0 2px 0 rgba(0,0,0,.14); }   /* destaque: Prato do dia / Na Brasa / Sugestão */
+  /* preço do conteúdo (campo próprio) e preço por prato (no fim da linha) */
+  .pd-card .pd-preco{ display:inline-block; margin-top:9px; font-weight:900; font-size:calc(1.35rem * var(--pd-escala,1)); line-height:1; background:#fff; color:var(--pd-cor,#e0245e); padding:5px 14px 4px; border-radius:999px; box-shadow:0 3px 0 rgba(0,0,0,.15); }
+  .pd-card .pd-linha{ display:flex; justify-content:space-between; align-items:baseline; gap:10px; text-align:left; }
+  .pd-card .pd-linha .pd-lp{ font-weight:900; white-space:nowrap; }
   .pd-card .pd-pratos .pd-msg{ margin-top:4px; font-size:calc(.92rem * var(--pd-pratos,1) * var(--pd-escala,1)); line-height:1.25; }   /* tamanho dos pratos: controlo próprio */
   /* Promoção com vários conteúdos: ficam uns por cima dos outros (a altura é a do maior → nada salta) e trocam a esbater */
   .pd-rot{ display:grid; }
@@ -10446,6 +10450,28 @@
   .pd-oval{ background:linear-gradient(135deg,var(--pd-cor2,#00b894),var(--pd-cor,#0984e3)); color:#fff; border-radius:999px; padding:24px 34px; text-align:center; box-shadow:0 14px 28px -8px var(--pd-cor,#0984e3); }
   .pd-oval .pd-selo{ opacity:.9; }
   .pd-oval .pd-big{ font-size:calc(2rem * var(--pd-escala,1)); margin:5px 0 2px; text-shadow:0 2px 6px rgba(0,0,0,.18); }
+
+  /* ===== Estilo "Quadro de giz" — pensado para o PRATO DO DIA: quadro escuro com moldura de madeira,
+     título (dia) a branco "giz", subtítulo (Prato do dia / Na Brasa / Sugestão) numa faixa na cor escolhida, pratos com separadores ===== */
+  .pd-lousa{ position:relative; color:#f6f1e6; text-align:center; border-radius:16px; padding:18px 18px 16px;
+    background:radial-gradient(120% 90% at 30% 20%, #3a3a36 0%, #262622 55%, #1b1b18 100%);
+    border:7px solid #7a5530; box-shadow:inset 0 0 0 2px rgba(0,0,0,.35), inset 0 0 28px rgba(0,0,0,.55), 0 12px 26px -8px rgba(0,0,0,.45), 0 0 0 2px #5a3d22; }
+  .pd-lousa::before{ content:''; position:absolute; inset:0; border-radius:9px; pointer-events:none; opacity:.18;
+    background:repeating-linear-gradient(115deg, rgba(255,255,255,.07) 0 2px, transparent 2px 7px); }   /* textura de giz */
+  .pd-lousa > *{ position:relative; }
+  .pd-lousa .pd-emoji{ position:absolute; top:-26px; right:-10px; font-size:2.4rem; line-height:1; transform:rotate(12deg); filter:drop-shadow(0 4px 5px rgba(0,0,0,.4)); }
+  .pd-lousa .pd-selo{ color:#ffd76a; opacity:.95; letter-spacing:3px; }
+  .pd-lousa .pd-big{ font-size:calc(2.25rem * var(--pd-escala,1)); color:#ffffff; margin:4px 0 2px; letter-spacing:1px;
+    text-shadow:0 0 1px rgba(255,255,255,.9), 0 2px 0 rgba(0,0,0,.35), 0 0 14px rgba(255,255,255,.18); }
+  .pd-card.pd-lousa .pd-sub2{ display:table; color:#fff; background:var(--pd-cor,#e0245e); padding:5px 14px 4px; border-radius:6px; margin:6px auto 10px;
+    transform:rotate(-2deg); box-shadow:0 4px 0 rgba(0,0,0,.3), 0 0 18px color-mix(in srgb, var(--pd-cor,#e0245e) 55%, transparent); text-shadow:0 2px 0 rgba(0,0,0,.25); }
+  .pd-card.pd-lousa .pd-pratos{ display:block; text-align:center; width:84%; margin:0 auto; }
+  .pd-card.pd-lousa .pd-pratos .pd-msg{ color:#f6f1e6; font-weight:700; padding:5px 4px; margin:0; }
+  .pd-lousa .pd-pratos .pd-msg + .pd-msg{ border-top:1.5px dashed rgba(246,241,230,.28); }
+  .pd-lousa > .pd-msg, .pd-lousa .pd-pag > .pd-msg{ color:#f6f1e6; }
+  .pd-card.pd-lousa .pd-preco{ display:table; margin:10px auto 0; background:#ffd76a; color:#1b1b18; transform:rotate(2deg); box-shadow:0 4px 0 rgba(0,0,0,.35); }
+  .pd-card.pd-lousa .pd-linha .pd-lp{ color:#ffd76a; }
+  .pd-lousa .pd-hora{ display:inline-block; margin-top:9px; color:#1b1b18; background:#ffd76a; font-weight:800; font-size:.76rem; padding:3px 12px; border-radius:20px; }
   .pd-oval .pd-hora{ display:inline-block; margin-top:8px; background:rgba(255,255,255,.25); font-weight:800; font-size:.76rem; padding:3px 13px; border-radius:20px; }
   /* Neon à volta (opcional, qualquer estilo) — intensidade por --pd-neonF */
   .pd-card.pd-neon-on{ box-shadow:0 0 calc(9px * var(--pd-neonF,1)) var(--pd-neonCor,#19e9ff), 0 0 calc(26px * var(--pd-neonF,1)) var(--pd-neonCor,#19e9ff) !important; }
@@ -10475,7 +10501,7 @@
   window.__AM_PROMO_ESTILOS = [
     { id:'autocolante', nome:'Autocolante' }, { id:'fita', nome:'Fita' }, { id:'etiqueta', nome:'Etiqueta' },
     { id:'cupao', nome:'Cupão' }, { id:'neon', nome:'Néon' }, { id:'urgencia', nome:'Urgência' },
-    { id:'selo', nome:'Selo redondo' }, { id:'oval', nome:'Oval' }
+    { id:'selo', nome:'Selo redondo' }, { id:'oval', nome:'Oval' }, { id:'lousa', nome:'Quadro de giz' }
   ];
   window.__amPromoCard = function(p, dataVer){
     p = p || {};
@@ -10502,16 +10528,23 @@
     // Conteúdos que RODAM: o texto principal + os conteúdos extra (p.paginas). Mesmo layout, só muda o conteúdo,
     // de X em X segundos (p.intervalo). Com um só conteúdo fica tudo como antes.
     // cada conteúdo extra pode ter o seu título (p.paginasTit — ex.: "Na Brasa", "Sugestão"); no 1.º fica o automático
-    var _tits = Array.isArray(p.paginasTit) ? p.paginasTit : [];
-    var textos = [{ t:p.texto, tit:'' }].concat((Array.isArray(p.paginas) ? p.paginas : []).map(function(t, i){ return { t:t, tit:String(_tits[i] || '').trim() }; }))
-      .map(function(o){ return { t:String(o.t||'').trim(), tit:o.tit }; }).filter(function(o){ return o.t; });
-    if(!textos.length) textos = [{ t:'', tit:'' }];
+    var _tits = Array.isArray(p.paginasTit) ? p.paginasTit : [], _precs = Array.isArray(p.paginasPreco) ? p.paginasPreco : [];
+    var textos = [{ t:p.texto, tit:'', pr:p.preco }].concat((Array.isArray(p.paginas) ? p.paginas : []).map(function(t, i){ return { t:t, tit:String(_tits[i] || '').trim(), pr:_precs[i] }; }))
+      .map(function(o){ return { t:String(o.t||'').trim(), tit:o.tit, pr:o.pr }; }).filter(function(o){ return o.t; });
+    if(!textos.length) textos = [{ t:'', tit:'', pr:'' }];
+    // preço: "8,5" → "8,50€"; texto livre (ex.: "Meia dose 6€") fica como está
+    function precoTxt(v){ v = String(v == null ? '' : v).trim(); if(!v) return ''; var m = /^(\d+)(?:[.,](\d{1,2}))?\s*€?$/.exec(v); if(m) return m[1] + ',' + ((m[2] || '') + '00').slice(0, 2) + '€'; return v.slice(0, 24); }
+    function precoH(v){ var t = precoTxt(v); return t ? '<div class="pd-preco">' + _esc(t) + '</div>' : ''; }
+    // linha de prato com preço no fim (ex.: "Bacalhau à Brás 9,50€" ou "Bacalhau à Brás - 9,50"): o preço vai para a direita
+    function linhaPrato(x){ var m = /^(.*?\S)\s*[-–·|:]?\s+(\d+(?:[.,]\d{1,2})?\s?€)$/.exec(x) || /^(.*?\S)\s*[-–·|:]\s*(\d+(?:[.,]\d{1,2})?)$/.exec(x);
+      if(m) return '<div class="pd-msg pd-linha"><span>' + _esc(m[1]) + '</span><span class="pd-lp">' + _esc(precoTxt(m[2])) + '</span></div>';
+      return '<div class="pd-msg">' + _esc(x) + '</div>'; }
     var seg = Math.max(2, Math.min(60, parseFloat(p.intervalo) || 5));
     var pags = textos.map(function(o){
       var t = o.t, l = linhasDe(t);
-      if(autoPD) return { big:bigFix, sub:'<div class="pd-sub2">' + (o.tit ? _esc(o.tit.slice(0, 30)) : subAuto) + '</div>', msgH:(l.length ? ('<div class="pd-pratos">' + l.map(function(x){ return '<div class="pd-msg">'+_esc(x)+'</div>'; }).join('') + '</div>') : ''), msg:_esc(l.join(' · ')) };
+      if(autoPD) return { big:bigFix, sub:'<div class="pd-sub2">' + (o.tit ? _esc(o.tit.slice(0, 30)) : subAuto) + '</div>', msgH:(l.length ? ('<div class="pd-pratos">' + l.map(linhaPrato).join('') + '</div>') : '') + precoH(o.pr), msg:_esc(l.join(' · ')) };
       var b = _esc(l.shift() || 'Promoção'), m = _esc(l.join(' '));
-      return { big:b, msgH:(m ? '<div class="pd-msg">'+m+'</div>' : ''), msg:m };
+      return { big:b, msgH:(m ? '<div class="pd-msg">'+m+'</div>' : '') + precoH(o.pr), msg:m };
     });
     function rot(fn){ if(pags.length < 2) return fn(pags[0]); return '<div class="pd-rot" data-seg="'+seg+'">' + pags.map(function(g, i){ return '<div class="pd-pag'+(i ? '' : ' on')+'">'+fn(g)+'</div>'; }).join('') + '</div>'; }
     var CORPO = autoPD ? ('<div class="pd-big">'+bigFix+'</div>' + (pags.length > 1 ? rot(function(g){ return g.sub + g.msgH; }) : (subPD + pags[0].msgH)))
@@ -10527,6 +10560,7 @@
       case 'neon':     return card('pd-neon','<span class="pd-selo">'+selo+'</span>'+CORPO+horaH);
       case 'urgencia': return card('pd-urgencia','<span class="pd-alerta"><span class="pd-dot"></span> '+(seloP||'Só hoje')+'</span>'+CORPO+horaH);
       case 'selo':     return card('pd-seloR','<div class="pd-med"><span class="pd-med-v">'+(autoPD ? bigFix : pags[0].big)+'</span></div><div class="pd-med-txt">'+(autoPD ? (pags.length > 1 ? rot(function(g){ return g.sub + g.msgH; }) : (subPD + pags[0].msgH)) : rot(function(g){ return g.msgH || ('<div class="pd-msg">'+selo+'</div>'); }))+horaH+'</div>');
+      case 'lousa':    return card('pd-lousa','<span class="pd-emoji">'+emoji+'</span><span class="pd-selo">'+selo+'</span>'+CORPO+horaH);
       case 'oval':     return card('pd-oval','<span class="pd-selo">'+selo+'</span>'+CORPO+horaH);
       default:         return card('pd-autocolante','<span class="pd-emoji">'+emoji+'</span><span class="pd-selo">'+selo+'</span>'+CORPO+horaH);
     }

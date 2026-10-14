@@ -1448,6 +1448,8 @@
       + '<div id="prTpls" style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 4px;">' + _PR_TPLS.map(function(t, i){ return '<button type="button" data-i="' + i + '" style="border:1px solid #e0d3b5;background:#fbf6ec;border-radius:999px;padding:6px 11px;cursor:pointer;font-family:inherit;font-weight:700;font-size:.78rem;color:var(--castanho);">' + t.ico + ' ' + t.nome + '</button>'; }).join('') + '</div>'
       + '<label style="display:flex;gap:8px;align-items:flex-start;margin-top:10px;padding:10px 12px;border:1.5px solid #e0d3b5;border-radius:12px;background:#fffaf0;cursor:pointer;font-weight:700;"><input type="checkbox" id="prAuto"' + (p.auto === 'pratoDia' ? ' checked' : '') + ' style="width:auto;margin:3px 0 0;"><span>🍽️ Layout <b>Prato do dia</b><br><span style="font-weight:400;font-size:.8rem;color:#8a7a5c;">O título é automático: o dia da semana e, por baixo, "Prato do dia" (ao domingo, "Sugestão"). Escreve os pratos — cada Enter é um parágrafo.</span></span></label>'
       + '<label id="prTextoLbl">' + (p.auto === 'pratoDia' ? 'Pratos <span style="font-weight:400;color:#8a7a5c;">(um por linha)</span>' : 'Texto da promoção') + '</label><textarea id="prTexto" maxlength="300" rows="' + (p.auto === 'pratoDia' ? 5 : 3) + '" placeholder="' + (p.auto === 'pratoDia' ? 'Ex.: Bacalhau à Brás&#10;Frango assado com batata' : 'Ex.: Menu de Natal · 25€&#10;(Enter muda de linha)') + '" style="resize:vertical;">' + esc(p.texto || '') + '</textarea>'
+      + '<div style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:.85rem;font-weight:800;color:var(--castanho);">💶 Preço <input id="prPreco" maxlength="24" value="' + esc(p.preco || '') + '" placeholder="Ex.: 8,50 (opcional)" style="flex:1;margin:0;"></div>'
+      + '<div style="font-size:.74rem;color:#8a7a5c;margin-top:4px;">Dica: para um preço por prato, escreve-o no fim da linha (ex.: <i>Bacalhau à Brás 9,50€</i>).</div>'
       + '<div id="prTamPratos" style="display:' + (p.auto === 'pratoDia' ? 'flex' : 'none') + ';align-items:center;gap:8px;margin-top:8px;font-size:.85rem;font-weight:800;color:var(--castanho);">🔠 Tamanho dos pratos'
       +   '<button type="button" data-tp="-1" style="width:34px;height:34px;border-radius:50%;border:1.5px solid #e0d3b5;background:#fff;font-size:1.1rem;font-weight:900;cursor:pointer;color:var(--castanho);">−</button>'
       +   '<span id="prTamPratosV" style="min-width:48px;text-align:center;">' + Math.round((parseFloat(p.tamPratos) || 1) * 100) + '%</span>'
@@ -1514,7 +1516,8 @@
       var box = $('prPags'); if(!box) return;
       var pg = Array.isArray(_prEdit.paginas) ? _prEdit.paginas : (_prEdit.paginas = []);
       var tt = Array.isArray(_prEdit.paginasTit) ? _prEdit.paginasTit : (_prEdit.paginasTit = []);
-      while(tt.length < pg.length) tt.push('');
+      var pp = Array.isArray(_prEdit.paginasPreco) ? _prEdit.paginasPreco : (_prEdit.paginasPreco = []);
+      while(tt.length < pg.length) tt.push(''); while(pp.length < pg.length) pp.push('');
       var _SUG = ['Na Brasa', 'Sugestão', 'Prato do dia'];
       var auto = _prEdit.auto === 'pratoDia';
       var h = '';
@@ -1523,19 +1526,21 @@
           + '<button type="button" data-rm="' + i + '" style="border:none;background:none;color:#b23;font-weight:800;cursor:pointer;font-family:inherit;font-size:.8rem;">✕ Tirar</button></div>'
           + (auto ? ('<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:4px 0 6px;"><input data-tit="' + i + '" maxlength="30" value="' + esc(tt[i] || '') + '" placeholder="Título (no lugar de &quot;Prato do dia&quot;)" style="flex:1;min-width:150px;margin:0;">'
               + _SUG.map(function(sg){ return '<button type="button" data-tsug="' + i + '" data-v="' + sg + '" style="border:1px solid #e0d3b5;background:' + ((tt[i] || '') === sg ? '#8a5a10;color:#fff' : '#fbf6ec;color:var(--castanho)') + ';border-radius:999px;padding:5px 10px;cursor:pointer;font-family:inherit;font-weight:800;font-size:.75rem;">' + sg + '</button>'; }).join('') + '</div>') : '')
-          + '<textarea data-pg="' + i + '" maxlength="300" rows="' + (auto ? 4 : 3) + '" placeholder="' + (auto ? 'Ex.: Sobremesa: Arroz doce' : 'Ex.: Sangria · jarro 8€') + '" style="resize:vertical;">' + esc(t || '') + '</textarea></div>';
+          + '<textarea data-pg="' + i + '" maxlength="300" rows="' + (auto ? 4 : 3) + '" placeholder="' + (auto ? 'Ex.: Sobremesa: Arroz doce' : 'Ex.: Sangria · jarro 8€') + '" style="resize:vertical;">' + esc(t || '') + '</textarea>'
+          + '<div style="display:flex;align-items:center;gap:8px;margin-top:4px;font-size:.82rem;font-weight:800;color:var(--castanho);">💶 Preço <input data-pp="' + i + '" maxlength="24" value="' + esc(pp[i] || '') + '" placeholder="opcional" style="flex:1;margin:0;"></div></div>';
       });
       h += '<button type="button" id="prPgAdd" style="margin-top:8px;border:1.5px dashed #c9b48a;background:#fffaf0;color:#6b4a1f;border-radius:10px;padding:8px 12px;cursor:pointer;font-family:inherit;font-weight:800;font-size:.82rem;width:100%;">➕ Acrescentar conteúdo que roda (mesmo layout)</button>';
       if(pg.length) h += '<div style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:.85rem;font-weight:700;color:var(--castanho);">Trocar a cada <input id="prSeg" type="number" min="2" max="60" value="' + (parseFloat(_prEdit.intervalo) || 5) + '" style="width:64px;margin:0;text-align:center;"> segundos</div>';
       box.innerHTML = h;
       box.querySelectorAll('textarea[data-pg]').forEach(function(ta){ ta.addEventListener('input', function(){ _prEdit.paginas[+ta.dataset.pg] = ta.value; prev(); }); });
+      box.querySelectorAll('input[data-pp]').forEach(function(inp){ inp.addEventListener('input', function(){ _prEdit.paginasPreco[+inp.dataset.pp] = inp.value; prev(); }); });
       box.querySelectorAll('input[data-tit]').forEach(function(inp){ inp.addEventListener('input', function(){ _prEdit.paginasTit[+inp.dataset.tit] = inp.value; prev(); }); });
       box.querySelectorAll('[data-tsug]').forEach(function(b){ b.onclick = function(){ _prEdit.paginasTit[+b.dataset.tsug] = b.dataset.v; _prPagsUI(); prev(); }; });
-      box.querySelectorAll('[data-rm]').forEach(function(b){ b.onclick = function(){ var k = +b.dataset.rm; _prEdit.paginas.splice(k, 1); _prEdit.paginasTit.splice(k, 1); _prPagsUI(); prev(); }; });
+      box.querySelectorAll('[data-rm]').forEach(function(b){ b.onclick = function(){ var k = +b.dataset.rm; _prEdit.paginas.splice(k, 1); _prEdit.paginasTit.splice(k, 1); _prEdit.paginasPreco.splice(k, 1); _prPagsUI(); prev(); }; });
       $('prPgAdd').onclick = function(){
         // título já escolhido automaticamente (1.º extra "Na Brasa", 2.º "Sugestão"); muda-se com um toque ou escrevendo
         var usados = _prEdit.paginasTit.slice(0, _prEdit.paginas.length); var prox = ['Na Brasa', 'Sugestão'].filter(function(x){ return usados.indexOf(x) < 0; })[0] || '';
-        _prEdit.paginas.push(''); _prEdit.paginasTit[_prEdit.paginas.length - 1] = prox; _prPagsUI(); prev(); var tas = box.querySelectorAll('textarea[data-pg]'); try{ tas[tas.length - 1].focus(); }catch(e){} };
+        _prEdit.paginas.push(''); _prEdit.paginasTit[_prEdit.paginas.length - 1] = prox; _prEdit.paginasPreco[_prEdit.paginas.length - 1] = ''; _prPagsUI(); prev(); var tas = box.querySelectorAll('textarea[data-pg]'); try{ tas[tas.length - 1].focus(); }catch(e){} };
       var sg = $('prSeg'); if(sg) sg.addEventListener('input', function(){ var v = parseFloat(sg.value); if(v >= 2 && v <= 60){ _prEdit.intervalo = v; prev(); } });
     }
     _prPagsUI();
@@ -1546,6 +1551,7 @@
       else { delete _prEdit.auto; _prEdit.texto = t.texto; }
       $('prTexto').value = _prEdit.texto; _prAutoUI(); prev(); try{ $('prTexto').focus(); }catch(e){} }; });
     $('prTexto').addEventListener('input', function(){ _prEdit.texto = $('prTexto').value; prev(); });
+    $('prPreco').addEventListener('input', function(){ _prEdit.preco = $('prPreco').value; prev(); });
     $('prEstilos').querySelectorAll('button').forEach(function(b){ b.onclick = function(){ _prEdit.estilo = b.dataset.e; pintaEst(); prev(); }; });
     $('prCor').addEventListener('input', function(){ _prEdit.cor = $('prCor').value; prev(); });
     $('prSelo').addEventListener('input', function(){ _prEdit.selo = $('prSelo').value; prev(); });
@@ -1584,7 +1590,7 @@
     }
     async function guardar(comPush){
       var msg = $('prMsg'); var e = validar(); if(e){ msg.textContent = e; msg.className = 'msg erro'; return; }
-      syncHora(); _prEdit.texto = ($('prTexto').value || '').trim(); var _pgT = _prEdit.paginasTit || []; var _pgOk = (_prEdit.paginas || []).map(function(t, i){ return { t:String(t || '').trim(), tit:String(_pgT[i] || '').trim() }; }).filter(function(o){ return o.t; }); _prEdit.paginas = _pgOk.map(function(o){ return o.t; }); _prEdit.paginasTit = _pgOk.map(function(o){ return o.tit; }); if(!_prEdit.paginas.length){ delete _prEdit.paginas; delete _prEdit.paginasTit; delete _prEdit.intervalo; } else { _prEdit.intervalo = Math.max(2, Math.min(60, parseFloat(_prEdit.intervalo) || 5)); } _prEdit.selo = ($('prSelo').value || '').trim(); _prEdit.emoji = ($('prEmoji').value || '').trim(); _prEdit.push = { titulo:($('prPushTit').value || '').trim(), url:($('prPushUrl').value || '').trim() };
+      syncHora(); _prEdit.texto = ($('prTexto').value || '').trim(); _prEdit.preco = ($('prPreco').value || '').trim(); if(!_prEdit.preco) delete _prEdit.preco; var _pgT = _prEdit.paginasTit || [], _pgP = _prEdit.paginasPreco || []; var _pgOk = (_prEdit.paginas || []).map(function(t, i){ return { t:String(t || '').trim(), tit:String(_pgT[i] || '').trim(), pr:String(_pgP[i] || '').trim() }; }).filter(function(o){ return o.t; }); _prEdit.paginas = _pgOk.map(function(o){ return o.t; }); _prEdit.paginasTit = _pgOk.map(function(o){ return o.tit; }); _prEdit.paginasPreco = _pgOk.map(function(o){ return o.pr; }); if(!_prEdit.paginas.length){ delete _prEdit.paginas; delete _prEdit.paginasTit; delete _prEdit.paginasPreco; delete _prEdit.intervalo; } else { _prEdit.intervalo = Math.max(2, Math.min(60, parseFloat(_prEdit.intervalo) || 5)); } _prEdit.selo = ($('prSelo').value || '').trim(); _prEdit.emoji = ($('prEmoji').value || '').trim(); _prEdit.push = { titulo:($('prPushTit').value || '').trim(), url:($('prPushUrl').value || '').trim() };
       if(comPush){
         var est = _prEstado(_prEdit); if(est !== 'ativa' || !_prBate(_prEdit.quando, _prHoje(), new Date().getDay())){
           if(!(await window.__amConfirm('Enviar aviso?', { texto:'Esta promoção não está no menu hoje (' + _prQuandoTxt(_prEdit.quando) + '). Queres enviar o aviso mesmo assim?', ok:'Sim, enviar', cancelar:'Não' }))) return;
@@ -3488,6 +3494,10 @@
   .pd-card .pd-msg{ font-weight:700; font-size:.92rem; margin-top:5px; }
   /* Layout "Prato do dia": dia da semana (título) + "Prato do dia"/"Sugestão" por baixo + um parágrafo por prato */
   .pd-card .pd-sub2{ font-weight:900; font-size:calc(1.65rem * var(--pd-escala,1)); line-height:1.05; letter-spacing:1.5px; text-transform:uppercase; margin:4px 0 6px; text-shadow:0 2px 0 rgba(0,0,0,.14); }   /* destaque: Prato do dia / Na Brasa / Sugestão */
+  /* preço do conteúdo (campo próprio) e preço por prato (no fim da linha) */
+  .pd-card .pd-preco{ display:inline-block; margin-top:9px; font-weight:900; font-size:calc(1.35rem * var(--pd-escala,1)); line-height:1; background:#fff; color:var(--pd-cor,#e0245e); padding:5px 14px 4px; border-radius:999px; box-shadow:0 3px 0 rgba(0,0,0,.15); }
+  .pd-card .pd-linha{ display:flex; justify-content:space-between; align-items:baseline; gap:10px; text-align:left; }
+  .pd-card .pd-linha .pd-lp{ font-weight:900; white-space:nowrap; }
   .pd-card .pd-pratos .pd-msg{ margin-top:4px; font-size:calc(.92rem * var(--pd-pratos,1) * var(--pd-escala,1)); line-height:1.25; }   /* tamanho dos pratos: controlo próprio */
   /* Promoção com vários conteúdos: ficam uns por cima dos outros (a altura é a do maior → nada salta) e trocam a esbater */
   .pd-rot{ display:grid; }
@@ -3543,6 +3553,28 @@
   .pd-oval{ background:linear-gradient(135deg,var(--pd-cor2,#00b894),var(--pd-cor,#0984e3)); color:#fff; border-radius:999px; padding:24px 34px; text-align:center; box-shadow:0 14px 28px -8px var(--pd-cor,#0984e3); }
   .pd-oval .pd-selo{ opacity:.9; }
   .pd-oval .pd-big{ font-size:calc(2rem * var(--pd-escala,1)); margin:5px 0 2px; text-shadow:0 2px 6px rgba(0,0,0,.18); }
+
+  /* ===== Estilo "Quadro de giz" — pensado para o PRATO DO DIA: quadro escuro com moldura de madeira,
+     título (dia) a branco "giz", subtítulo (Prato do dia / Na Brasa / Sugestão) numa faixa na cor escolhida, pratos com separadores ===== */
+  .pd-lousa{ position:relative; color:#f6f1e6; text-align:center; border-radius:16px; padding:18px 18px 16px;
+    background:radial-gradient(120% 90% at 30% 20%, #3a3a36 0%, #262622 55%, #1b1b18 100%);
+    border:7px solid #7a5530; box-shadow:inset 0 0 0 2px rgba(0,0,0,.35), inset 0 0 28px rgba(0,0,0,.55), 0 12px 26px -8px rgba(0,0,0,.45), 0 0 0 2px #5a3d22; }
+  .pd-lousa::before{ content:''; position:absolute; inset:0; border-radius:9px; pointer-events:none; opacity:.18;
+    background:repeating-linear-gradient(115deg, rgba(255,255,255,.07) 0 2px, transparent 2px 7px); }   /* textura de giz */
+  .pd-lousa > *{ position:relative; }
+  .pd-lousa .pd-emoji{ position:absolute; top:-26px; right:-10px; font-size:2.4rem; line-height:1; transform:rotate(12deg); filter:drop-shadow(0 4px 5px rgba(0,0,0,.4)); }
+  .pd-lousa .pd-selo{ color:#ffd76a; opacity:.95; letter-spacing:3px; }
+  .pd-lousa .pd-big{ font-size:calc(2.25rem * var(--pd-escala,1)); color:#ffffff; margin:4px 0 2px; letter-spacing:1px;
+    text-shadow:0 0 1px rgba(255,255,255,.9), 0 2px 0 rgba(0,0,0,.35), 0 0 14px rgba(255,255,255,.18); }
+  .pd-card.pd-lousa .pd-sub2{ display:table; color:#fff; background:var(--pd-cor,#e0245e); padding:5px 14px 4px; border-radius:6px; margin:6px auto 10px;
+    transform:rotate(-2deg); box-shadow:0 4px 0 rgba(0,0,0,.3), 0 0 18px color-mix(in srgb, var(--pd-cor,#e0245e) 55%, transparent); text-shadow:0 2px 0 rgba(0,0,0,.25); }
+  .pd-card.pd-lousa .pd-pratos{ display:block; text-align:center; width:84%; margin:0 auto; }
+  .pd-card.pd-lousa .pd-pratos .pd-msg{ color:#f6f1e6; font-weight:700; padding:5px 4px; margin:0; }
+  .pd-lousa .pd-pratos .pd-msg + .pd-msg{ border-top:1.5px dashed rgba(246,241,230,.28); }
+  .pd-lousa > .pd-msg, .pd-lousa .pd-pag > .pd-msg{ color:#f6f1e6; }
+  .pd-card.pd-lousa .pd-preco{ display:table; margin:10px auto 0; background:#ffd76a; color:#1b1b18; transform:rotate(2deg); box-shadow:0 4px 0 rgba(0,0,0,.35); }
+  .pd-card.pd-lousa .pd-linha .pd-lp{ color:#ffd76a; }
+  .pd-lousa .pd-hora{ display:inline-block; margin-top:9px; color:#1b1b18; background:#ffd76a; font-weight:800; font-size:.76rem; padding:3px 12px; border-radius:20px; }
   .pd-oval .pd-hora{ display:inline-block; margin-top:8px; background:rgba(255,255,255,.25); font-weight:800; font-size:.76rem; padding:3px 13px; border-radius:20px; }
   /* Neon à volta (opcional, qualquer estilo) — intensidade por --pd-neonF */
   .pd-card.pd-neon-on{ box-shadow:0 0 calc(9px * var(--pd-neonF,1)) var(--pd-neonCor,#19e9ff), 0 0 calc(26px * var(--pd-neonF,1)) var(--pd-neonCor,#19e9ff) !important; }
@@ -3572,7 +3604,7 @@
   window.__AM_PROMO_ESTILOS = [
     { id:'autocolante', nome:'Autocolante' }, { id:'fita', nome:'Fita' }, { id:'etiqueta', nome:'Etiqueta' },
     { id:'cupao', nome:'Cupão' }, { id:'neon', nome:'Néon' }, { id:'urgencia', nome:'Urgência' },
-    { id:'selo', nome:'Selo redondo' }, { id:'oval', nome:'Oval' }
+    { id:'selo', nome:'Selo redondo' }, { id:'oval', nome:'Oval' }, { id:'lousa', nome:'Quadro de giz' }
   ];
   window.__amPromoCard = function(p, dataVer){
     p = p || {};
@@ -3599,16 +3631,23 @@
     // Conteúdos que RODAM: o texto principal + os conteúdos extra (p.paginas). Mesmo layout, só muda o conteúdo,
     // de X em X segundos (p.intervalo). Com um só conteúdo fica tudo como antes.
     // cada conteúdo extra pode ter o seu título (p.paginasTit — ex.: "Na Brasa", "Sugestão"); no 1.º fica o automático
-    var _tits = Array.isArray(p.paginasTit) ? p.paginasTit : [];
-    var textos = [{ t:p.texto, tit:'' }].concat((Array.isArray(p.paginas) ? p.paginas : []).map(function(t, i){ return { t:t, tit:String(_tits[i] || '').trim() }; }))
-      .map(function(o){ return { t:String(o.t||'').trim(), tit:o.tit }; }).filter(function(o){ return o.t; });
-    if(!textos.length) textos = [{ t:'', tit:'' }];
+    var _tits = Array.isArray(p.paginasTit) ? p.paginasTit : [], _precs = Array.isArray(p.paginasPreco) ? p.paginasPreco : [];
+    var textos = [{ t:p.texto, tit:'', pr:p.preco }].concat((Array.isArray(p.paginas) ? p.paginas : []).map(function(t, i){ return { t:t, tit:String(_tits[i] || '').trim(), pr:_precs[i] }; }))
+      .map(function(o){ return { t:String(o.t||'').trim(), tit:o.tit, pr:o.pr }; }).filter(function(o){ return o.t; });
+    if(!textos.length) textos = [{ t:'', tit:'', pr:'' }];
+    // preço: "8,5" → "8,50€"; texto livre (ex.: "Meia dose 6€") fica como está
+    function precoTxt(v){ v = String(v == null ? '' : v).trim(); if(!v) return ''; var m = /^(\d+)(?:[.,](\d{1,2}))?\s*€?$/.exec(v); if(m) return m[1] + ',' + ((m[2] || '') + '00').slice(0, 2) + '€'; return v.slice(0, 24); }
+    function precoH(v){ var t = precoTxt(v); return t ? '<div class="pd-preco">' + _esc(t) + '</div>' : ''; }
+    // linha de prato com preço no fim (ex.: "Bacalhau à Brás 9,50€" ou "Bacalhau à Brás - 9,50"): o preço vai para a direita
+    function linhaPrato(x){ var m = /^(.*?\S)\s*[-–·|:]?\s+(\d+(?:[.,]\d{1,2})?\s?€)$/.exec(x) || /^(.*?\S)\s*[-–·|:]\s*(\d+(?:[.,]\d{1,2})?)$/.exec(x);
+      if(m) return '<div class="pd-msg pd-linha"><span>' + _esc(m[1]) + '</span><span class="pd-lp">' + _esc(precoTxt(m[2])) + '</span></div>';
+      return '<div class="pd-msg">' + _esc(x) + '</div>'; }
     var seg = Math.max(2, Math.min(60, parseFloat(p.intervalo) || 5));
     var pags = textos.map(function(o){
       var t = o.t, l = linhasDe(t);
-      if(autoPD) return { big:bigFix, sub:'<div class="pd-sub2">' + (o.tit ? _esc(o.tit.slice(0, 30)) : subAuto) + '</div>', msgH:(l.length ? ('<div class="pd-pratos">' + l.map(function(x){ return '<div class="pd-msg">'+_esc(x)+'</div>'; }).join('') + '</div>') : ''), msg:_esc(l.join(' · ')) };
+      if(autoPD) return { big:bigFix, sub:'<div class="pd-sub2">' + (o.tit ? _esc(o.tit.slice(0, 30)) : subAuto) + '</div>', msgH:(l.length ? ('<div class="pd-pratos">' + l.map(linhaPrato).join('') + '</div>') : '') + precoH(o.pr), msg:_esc(l.join(' · ')) };
       var b = _esc(l.shift() || 'Promoção'), m = _esc(l.join(' '));
-      return { big:b, msgH:(m ? '<div class="pd-msg">'+m+'</div>' : ''), msg:m };
+      return { big:b, msgH:(m ? '<div class="pd-msg">'+m+'</div>' : '') + precoH(o.pr), msg:m };
     });
     function rot(fn){ if(pags.length < 2) return fn(pags[0]); return '<div class="pd-rot" data-seg="'+seg+'">' + pags.map(function(g, i){ return '<div class="pd-pag'+(i ? '' : ' on')+'">'+fn(g)+'</div>'; }).join('') + '</div>'; }
     var CORPO = autoPD ? ('<div class="pd-big">'+bigFix+'</div>' + (pags.length > 1 ? rot(function(g){ return g.sub + g.msgH; }) : (subPD + pags[0].msgH)))
@@ -3624,6 +3663,7 @@
       case 'neon':     return card('pd-neon','<span class="pd-selo">'+selo+'</span>'+CORPO+horaH);
       case 'urgencia': return card('pd-urgencia','<span class="pd-alerta"><span class="pd-dot"></span> '+(seloP||'Só hoje')+'</span>'+CORPO+horaH);
       case 'selo':     return card('pd-seloR','<div class="pd-med"><span class="pd-med-v">'+(autoPD ? bigFix : pags[0].big)+'</span></div><div class="pd-med-txt">'+(autoPD ? (pags.length > 1 ? rot(function(g){ return g.sub + g.msgH; }) : (subPD + pags[0].msgH)) : rot(function(g){ return g.msgH || ('<div class="pd-msg">'+selo+'</div>'); }))+horaH+'</div>');
+      case 'lousa':    return card('pd-lousa','<span class="pd-emoji">'+emoji+'</span><span class="pd-selo">'+selo+'</span>'+CORPO+horaH);
       case 'oval':     return card('pd-oval','<span class="pd-selo">'+selo+'</span>'+CORPO+horaH);
       default:         return card('pd-autocolante','<span class="pd-emoji">'+emoji+'</span><span class="pd-selo">'+selo+'</span>'+CORPO+horaH);
     }
