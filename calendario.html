@@ -98,6 +98,8 @@
   .r-meta{ font-size:.83rem; color:#8a7a5c; margin-top:3px; }
   .r-menu{ font-size:.85rem; color:var(--dourado-escuro); margin-top:6px; font-weight:600; background:#faf4e8; border-radius:8px; padding:6px 9px; }
   .r-acoes{ display:flex; gap:7px; flex-wrap:wrap; margin-top:11px; }
+  #apInfo.ap-cartao{ background:none; border:none; padding:0; }   /* pop-up: só o cartão da reserva (igual ao do calendário) */
+  #apInfo.ap-cartao .r{ margin-bottom:4px; }
   .r-acoes button, .r-acoes a button{ border:1px solid var(--linha); background:#fff; border-radius:9px; padding:8px 12px; cursor:pointer; font-size:.82rem; font-weight:700; }
   .r-acoes button.ok{ color:#fff; background:var(--verde); border-color:var(--verde); }
   .r-acoes button.no{ color:var(--vermelho); border-color:#e8c4bf; }
@@ -890,29 +892,19 @@
     _irParaDiaReserva(r);
     const d = new Date(r.data+'T00:00:00');
     const wd = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'][d.getDay()];
-    const obs = (r.obs||'').toString().trim();
     _apId = r.id;
+    // Etiqueta conforme o que a reserva precisa (antes dizia sempre "Pré-reserva a aguardar", mesmo confirmada)
+    const tag = document.querySelector('#modalAprovar .ap-tag');
+    if(tag) tag.textContent = (r.alt_hora || r.alt_pessoas) ? '🔁 Pedido de alteração' : (r.estado === 'confirmada' ? '✅ Reserva confirmada' : (r.estado === 'cancelada' ? '✕ Reserva cancelada' : '🔔 Pré-reserva a aguardar'));
     $('apData').innerHTML = '<span class="ap-wd db-'+d.getDay()+'">'+wd+'</span> '+d.getDate()+' de '+MESES[d.getMonth()].toLowerCase();
-    $('apInfo').innerHTML = '<div class="ap-hora">'+esc(r.hora||'')+' · '+(Number(r.pessoas)||1)+' pessoa(s)</div>'
-      + '<div class="ap-nome">'+esc(r.nome||'')+'</div>'
-      + '<div class="ap-meta">📱 '+esc(r.telefone||'')+'</div>'
-      + (obs ? '<div class="ap-menu">🍽 '+esc(obs)+'</div>' : '');
-    const jaConf = (r.estado === 'confirmada');
-    $('apConfirmar').style.display = jaConf ? 'none' : '';
-    $('apEstado').textContent = jaConf ? 'Esta reserva já está confirmada.' : 'A aguardar a tua aprovação.';
-    // respostas rápidas (reservas normais, grupos e cerimónias — tudo pela àMesa; WhatsApp só como último recurso)
-    let _apx = $('apExtra'); if(!_apx){ _apx = document.createElement('div'); _apx.id = 'apExtra'; $('apEstado').after(_apx); }
-    _apx.innerHTML = '';
-    $('apRecusar').textContent = _eGrupo(r) ? '✕ Recusar' : '✕ Sem disponibilidade';
-    {
-      _apx.innerHTML = (_eGrupo(r) ? ('<div class="r-menu" style="margin:6px 0;">🍽 ' + esc(r.obs) + '</div>') : '') + _infoResposta(r)
-        + ((r.alt_hora || r.alt_pessoas) ? '<div style="display:flex;gap:8px;margin-top:8px;"><button type="button" class="ap-ok" id="apAltOk" style="flex:1;">✔ Aceitar alteração</button><button type="button" class="ap-no" id="apAltNao" style="flex:1;">✕ Recusar</button></div>' : '')
-        + '<button type="button" class="ap-ver" id="apResponder" style="color:#2a4f86;font-weight:800;">💬 Propor outra hora / nº de pessoas · nota</button>';
-      $('apResponder').onclick = function(){ fecharAprovar(); _responder(r); };
-      const ao = $('apAltOk'), an = $('apAltNao');
-      if(ao) ao.onclick = function(){ fecharAprovar(); _resp(r, 'altok'); };
-      if(an) an.onclick = function(){ fecharAprovar(); _resp(r, 'altnao'); };
-    }
+    // O MESMO cartão do calendário (mesmo aspeto e mesmos botões: aceitar/recusar alteração, confirmar, responder,
+    // sem disponibilidade, ligar, editar, apagar, WhatsApp) — antes era um cartão diferente, com botões repetidos e textos contraditórios.
+    $('apInfo').innerHTML = _cartaReservaHTML(r);
+    $('apInfo').classList.add('ap-cartao');
+    $('apEstado').style.display = 'none';
+    const acts = document.querySelector('#modalAprovar .ap-acts'); if(acts) acts.style.display = 'none';
+    const _apx = $('apExtra'); if(_apx) _apx.remove();
+    $('apInfo').querySelectorAll('[data-a]').forEach(function(btn){ btn.onclick = function(){ const id = btn.getAttribute('data-id'), a = btn.getAttribute('data-a'); fecharAprovar(); accao(id, a); }; });
     $('modalAprovar').classList.remove('hide');
     document.body.style.overflow = 'hidden';
   }
@@ -3143,6 +3135,30 @@
     carregar();
   }
 
+  // Cartão de UMA reserva (calendário do dia E pop-up "A precisar de resposta"): mesmo aspeto, mesmos botões.
+  // Grupos e cerimónias: iguais às outras reservas (o menu escolhido aparece em 🍽).
+  function _cartaReservaHTML(r){
+    let acoes = '';
+    if(r.alt_hora || r.alt_pessoas){
+      acoes += '<button class="ok" data-a="altok" data-id="'+r.id+'">✔ Aceitar alteração</button>';
+      acoes += '<button class="no" data-a="altnao" data-id="'+r.id+'">✕ Recusar alteração</button>';
+    }
+    if(r.estado!=='confirmada') acoes += '<button class="ok" data-a="confirmar" data-id="'+r.id+'">✔ Confirmar</button>';
+    acoes += '<button class="resp" data-a="responder" data-id="'+r.id+'">💬 Responder</button>';
+    if(r.estado!=='cancelada') acoes += '<button class="no" data-a="cancelar" data-id="'+r.id+'">✕ Sem disponibilidade</button>';
+    acoes += '<a href="tel:'+esc(r.telefone||'')+'"><button>📞 Ligar</button></a>';
+    acoes += '<button class="edit" data-a="editar" data-id="'+r.id+'">✏️ Editar</button>';
+    acoes += '<button class="del" data-a="apagar" data-id="'+r.id+'">🗑 Apagar</button>';
+    acoes += '<button class="wa2" data-a="avisar" data-id="'+r.id+'">📲 WhatsApp</button>';
+    const menu = r.obs ? ('<div class="r-menu">🍽 '+esc(r.obs)+'</div>') : '';
+    return '<div class="r '+r.estado+'">'
+      + '<div class="r-top"><span class="r-quando">'+esc(r.hora||'')+'</span><span class="pill '+r.estado+'">'+r.estado+'</span></div>'
+      + '<div class="r-nome">'+esc(r.nome||'')+' · '+(Number(r.pessoas)||1)+' pessoa(s)'+(r.push_endpoint ? '<span class="r-sino" title="O cliente recebe as respostas por notificação">🔔</span>' : '')+'</div>'
+      + '<div class="r-meta">📱 '+esc(r.telefone||'')+'</div>'
+      + menu
+      + _infoResposta(r)
+      + '<div class="r-acoes">'+acoes+'</div></div>';
+  }
   function renderDia(iso){
     const d = new Date(iso + 'T00:00:00');
     const rs = (porDia[iso] || []).filter(function(r){ return r.estado !== 'cancelada' || _porArquivar(r); }).sort(function(a,b){ return (a.hora||'').localeCompare(b.hora||''); });
@@ -3156,8 +3172,6 @@
     if(!rs.length) html += '<div style="color:#8a7a5c; font-size:.9rem;">Sem reservas neste dia.</div>';
     html += '</div>';
     rs.forEach(function(r){
-      let acoes = '';
-      const grupo = false;   // grupos e cerimónias: iguais às outras reservas (o menu escolhido aparece em 🍽)
       if(r.estado === 'cancelada'){
         // cancelada (pelo cliente ou pelo restaurante): fica à vista até o dono a enviar para a pasta
         html += '<div class="r cancelada">'
@@ -3171,32 +3185,7 @@
           + '<button class="del" data-a="apagar" data-id="'+r.id+'">🗑 Apagar</button></div></div>';
         return;
       }
-      if(grupo){
-        // Menus de grupo: continuam pelo WhatsApp (como sempre)
-        if(r.estado!=='confirmada') acoes += '<button class="ok" data-a="confirmar" data-id="'+r.id+'">✔ Confirmar</button>';
-        if(r.estado!=='cancelada') acoes += '<button class="no" data-a="cancelar" data-id="'+r.id+'">✕ Recusar</button>';
-        acoes += '<button class="wa" data-a="avisar" data-id="'+r.id+'">📲 Avisar cliente</button>';
-      } else {
-        if(r.alt_hora || r.alt_pessoas){
-          acoes += '<button class="ok" data-a="altok" data-id="'+r.id+'">✔ Aceitar alteração</button>';
-          acoes += '<button class="no" data-a="altnao" data-id="'+r.id+'">✕ Recusar alteração</button>';
-        }
-        if(r.estado!=='confirmada') acoes += '<button class="ok" data-a="confirmar" data-id="'+r.id+'">✔ Confirmar</button>';
-        acoes += '<button class="resp" data-a="responder" data-id="'+r.id+'">💬 Responder</button>';
-        if(r.estado!=='cancelada') acoes += '<button class="no" data-a="cancelar" data-id="'+r.id+'">✕ Sem disponibilidade</button>';
-      }
-      acoes += '<a href="tel:'+esc(r.telefone||'')+'"><button>📞 Ligar</button></a>';
-      acoes += '<button class="edit" data-a="editar" data-id="'+r.id+'">✏️ Editar</button>';
-      acoes += '<button class="del" data-a="apagar" data-id="'+r.id+'">🗑 Apagar</button>';
-      if(!grupo) acoes += '<button class="wa2" data-a="avisar" data-id="'+r.id+'">📲 WhatsApp</button>';
-      const menu = r.obs ? ('<div class="r-menu">🍽 '+esc(r.obs)+'</div>') : '';
-      html += '<div class="r '+r.estado+'">'
-        + '<div class="r-top"><span class="r-quando">'+esc(r.hora||'')+'</span><span class="pill '+r.estado+'">'+r.estado+'</span></div>'
-        + '<div class="r-nome">'+esc(r.nome||'')+' · '+(Number(r.pessoas)||1)+' pessoa(s)'+(!grupo && r.push_endpoint ? '<span class="r-sino" title="O cliente recebe as respostas por notificação">🔔</span>' : '')+'</div>'
-        + '<div class="r-meta">📱 '+esc(r.telefone||'')+'</div>'
-        + menu
-        + (grupo ? '' : _infoResposta(r))
-        + '<div class="r-acoes">'+acoes+'</div></div>';
+      html += _cartaReservaHTML(r);   // o mesmo cartão (e os mesmos botões) do pop-up de aprovação
     });
     // histórico do dia: recusadas e canceladas (não desaparecem)
     html += _histHTML((porDia[iso] || []).filter(function(r){ return r.estado === 'cancelada' && r.arquivada; }).sort(function(a,b){ return (a.hora||'').localeCompare(b.hora||''); }), 'Pasta das canceladas neste dia');
