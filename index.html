@@ -461,6 +461,7 @@
   function _promoCandidatas(cfg){
     var out = [];
     var nova = _promoNova(cfg); if(nova) out.push(nova);
+    if(cfg && (cfg.promocoesV || (Array.isArray(cfg.promocoes) && cfg.promocoes.length))) return out;   // lista nova: os formatos antigos são só cópias — não contam
     var datas = cfg && cfg.promoDatas;
     var dt = datas && datas[_isoHoje()];
     if(dt && dt.ativo && _promoTemConteudo(dt)) out.push(dt);

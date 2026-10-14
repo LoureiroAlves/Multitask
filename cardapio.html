@@ -5035,9 +5035,12 @@
           if(r < melhorR || (r === melhorR && (k > melhorK || (k === melhorK && i > melhorIdx)))){ melhor = p; melhorR = r; melhorK = k; melhorIdx = i; }
         });
         if(melhor) return melhor;
+        // O formato antigo (promoDatas) é só um ESPELHO resumido da lista nova (sem layout Prato do dia, sem conteúdos que rodam).
+        // Se a lista nova existe, NUNCA se recorre a ele — antes, fora do horário, aparecia a cópia resumida ("promo antiga", baralhada).
+        if(cfg.promocoesV || lista.length) return null;
         var pDatas = (cfg.promoDatas && typeof cfg.promoDatas === 'object') ? cfg.promoDatas : {};
         var pl = pDatas[iso];
-        return temTexto(pl) ? pl : null;
+        return (temTexto(pl) && (!comHora || dentro(pl))) ? pl : null;
       };
       window.__renderPromoDia = function(cfg){
         try{
@@ -10568,7 +10571,7 @@
     var CORPO = autoPD ? ('<div class="pd-big">'+bigFix+'</div>' + (pags.length > 1 ? rot(function(g){ return g.sub + g.msgH; }) : (pags[0].sub + pags[0].msgH)))
                        : rot(function(g){ return '<div class="pd-big">'+g.big+'</div>' + g.msgH; });
     var hora = (p.horaIni && p.horaFim) ? ('🕒 '+_esc(p.horaIni)+' – '+_esc(p.horaFim)) : '';
-    var horaH = hora ? '<span class="pd-hora">'+hora+'</span>' : '';
+    var horaH = (hora && !autoPD) ? '<span class="pd-hora">'+hora+'</span>' : '';   // no Prato do dia o horário só serve para mostrar/esconder — não se escreve
     var neonCls = ''; if(p.neon){ vars += '--pd-neonCor:'+(p.neonCor||'#19e9ff')+';--pd-neonF:'+(Math.max(0.3, Math.min(2.5, parseFloat(p.neonForca)||1)))+';'; neonCls = ' pd-neon-on'; }
     function card(cls, inner){ if(autoPD && !seloP) inner = inner.replace(/<span class="pd-(selo|fita-lbl)"><\/span>/g, ''); return '<div class="pd-card '+cls+neonCls+'" style="'+vars+'">'+inner+'</div>'; }
     switch(estilo){

@@ -1347,8 +1347,8 @@
     var novo = {}, hoje = _prHoje();
     for(var i = 0; i < 14; i++){
       var iso = _prIsoAdd(hoje, i); var p = _prResolver(lista, iso); if(!p) continue;
-      var o = { texto:p.texto, cor:p.cor || '#e0245e', estilo:p.estilo || 'autocolante', escala:(parseFloat(p.escala) || 1), ativo:true };
-      if(p.emoji) o.emoji = p.emoji; if(p.selo) o.selo = p.selo; if(p.horaIni && p.horaFim){ o.horaIni = p.horaIni; o.horaFim = p.horaFim; }
+      var o = JSON.parse(JSON.stringify(p)); delete o.push; delete o.quando; delete o.id; o.ativo = true;   // cópia completa (layout Prato do dia, conteúdos que rodam, preço…)
+      o.cor = o.cor || '#e0245e'; o.estilo = o.estilo || 'autocolante'; o.escala = (parseFloat(o.escala) || 1);
       novo[iso] = o;
     }
     var mudou = JSON.stringify(cfg.promoDatas || {}) !== JSON.stringify(novo);
@@ -3714,7 +3714,7 @@
     var CORPO = autoPD ? ('<div class="pd-big">'+bigFix+'</div>' + (pags.length > 1 ? rot(function(g){ return g.sub + g.msgH; }) : (pags[0].sub + pags[0].msgH)))
                        : rot(function(g){ return '<div class="pd-big">'+g.big+'</div>' + g.msgH; });
     var hora = (p.horaIni && p.horaFim) ? ('🕒 '+_esc(p.horaIni)+' – '+_esc(p.horaFim)) : '';
-    var horaH = hora ? '<span class="pd-hora">'+hora+'</span>' : '';
+    var horaH = (hora && !autoPD) ? '<span class="pd-hora">'+hora+'</span>' : '';   // no Prato do dia o horário só serve para mostrar/esconder — não se escreve
     var neonCls = ''; if(p.neon){ vars += '--pd-neonCor:'+(p.neonCor||'#19e9ff')+';--pd-neonF:'+(Math.max(0.3, Math.min(2.5, parseFloat(p.neonForca)||1)))+';'; neonCls = ' pd-neon-on'; }
     function card(cls, inner){ if(autoPD && !seloP) inner = inner.replace(/<span class="pd-(selo|fita-lbl)"><\/span>/g, ''); return '<div class="pd-card '+cls+neonCls+'" style="'+vars+'">'+inner+'</div>'; }
     switch(estilo){
