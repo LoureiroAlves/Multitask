@@ -1374,15 +1374,57 @@
     negocio.config = cfg;
     return null;
   }
+  // Imagem colorida para o aviso do Prato do dia (aparece no Android/Chrome; o iPhone mostra só o texto).
+  // Desenhada aqui com as cores da promoção e guardada sempre no MESMO ficheiro do restaurante (não acumula imagens).
+  async function _prPushImagem(p){
+    try{
+      var W = 720, H = 360, c = document.createElement('canvas'); c.width = W; c.height = H; var g = c.getContext('2d');
+      var cor = /^#[0-9a-fA-F]{6}$/.test(String(p.cor || '')) ? p.cor : '#e0245e';
+      var dw = new Date().getDay(), dia = ['DOMINGO','SEGUNDA-FEIRA','TERÇA-FEIRA','QUARTA-FEIRA','QUINTA-FEIRA','SEXTA-FEIRA','SÁBADO'][dw];
+      var sub = (dw === 0 ? 'SUGESTÃO' : 'PRATO DO DIA'), nome = String((negocio && negocio.nome) || '').slice(0, 40);
+      var F = '"Helvetica Neue", Arial, sans-serif';
+      function ajusta(txt, peso, max, larg){ var t = max; do { g.font = peso + ' ' + t + 'px ' + F; t -= 2; } while(g.measureText(txt).width > larg && t > 18); }
+      g.textAlign = 'center'; g.textBaseline = 'middle';
+      if(p.estilo === 'lousa'){
+        g.fillStyle = '#7a5530'; g.fillRect(0, 0, W, H);
+        var rg = g.createRadialGradient(W*.3, H*.25, 20, W*.5, H*.5, W*.7); rg.addColorStop(0, '#3a3a36'); rg.addColorStop(.55, '#262622'); rg.addColorStop(1, '#1b1b18');
+        g.fillStyle = rg; g.fillRect(16, 16, W - 32, H - 32);
+        g.fillStyle = '#ffffff'; ajusta(dia, '900', 76, W - 90); g.fillText(dia, W/2, 120);
+        ajusta(sub, '900', 46, W - 200); var lw = g.measureText(sub).width + 48;
+        g.save(); g.translate(W/2, 212); g.rotate(-0.035); g.fillStyle = 'rgba(0,0,0,.35)'; g.fillRect(-lw/2, -30 + 6, lw, 62); g.fillStyle = cor; g.fillRect(-lw/2, -32, lw, 62); g.fillStyle = '#fff'; g.fillText(sub, 0, 0); g.restore();
+        g.fillStyle = '#ffd76a'; ajusta(nome, '800', 28, W - 90); g.fillText(nome, W/2, 300);
+      } else {
+        var lg = g.createLinearGradient(0, 0, W, H);
+        var h = cor.replace('#',''), r = parseInt(h.slice(0,2),16), gg = parseInt(h.slice(2,4),16), b = parseInt(h.slice(4,6),16);
+        var claro = 'rgb(' + Math.round(r + (255-r)*.42) + ',' + Math.round(gg + (255-gg)*.42) + ',' + Math.round(b + (255-b)*.42) + ')';
+        lg.addColorStop(0, claro); lg.addColorStop(1, cor); g.fillStyle = lg; g.fillRect(0, 0, W, H);
+        g.fillStyle = 'rgba(255,255,255,.14)'; g.beginPath(); g.arc(W - 70, 60, 150, 0, Math.PI*2); g.fill();
+        g.fillStyle = '#ffffff'; g.shadowColor = 'rgba(0,0,0,.22)'; g.shadowOffsetY = 4;
+        ajusta(dia, '900', 76, W - 90); g.fillText(dia, W/2, 128);
+        ajusta(sub, '900', 52, W - 120); g.fillText(sub, W/2, 210);
+        g.shadowColor = 'transparent'; g.fillStyle = 'rgba(255,255,255,.9)'; ajusta(nome, '800', 28, W - 90); g.fillText(nome, W/2, 295);
+      }
+      g.font = '64px ' + F; g.fillText('🍽️', 70, 66);
+      var blob = await new Promise(function(res){ c.toBlob(res, 'image/png'); }); if(!blob) return '';
+      var session = (await sb.auth.getSession()).data.session; if(!session || !session.access_token) return '';
+      var envia = function(nf){ return fetch(SUPA_URL + '/storage/v1/object/imagens/' + nf, { method:'POST', headers:{ 'Authorization':'Bearer ' + session.access_token, 'apikey':SUPA_KEY, 'Content-Type':'image/png', 'x-upsert':'true', 'cache-control':'max-age=60' }, body:blob }); };
+      var nomeF = (SLUG || 'geral') + '/aviso-prato-do-dia.png';
+      var resp = await envia(nomeF);
+      if(!resp.ok){ nomeF = (SLUG || 'geral') + '/aviso-prato-do-dia-' + Date.now() + '.png'; resp = await envia(nomeF); }   // sem permissão para substituir: ficheiro novo
+      if(!resp.ok) return '';
+      return SUPA_URL + '/storage/v1/object/public/imagens/' + nomeF + '?v=' + Date.now();   // ?v= → o telemóvel vai buscar sempre a imagem nova
+    }catch(e){ return ''; }
+  }
   async function _prEnviarPush(p){
     var corpo = String(p.texto || '').replace(/\s+/g, ' ').trim();
-    if(p.auto === 'pratoDia'){   // aviso do Prato do dia: "🍽️ Prato do dia · 8,50€: Bacalhau à Brás · Frango assado"
-      var _pr = String(p.preco || '').trim(), _m = /^(\d+)(?:[.,](\d{1,2}))?\s*€?$/.exec(_pr); if(_m) _pr = _m[1] + ',' + ((_m[2] || '') + '00').slice(0, 2) + '€';
-      corpo = '🍽️ ' + (new Date().getDay() === 0 ? 'Sugestão' : 'Prato do dia') + (_pr ? (' · ' + _pr) : '') + ': ' + String(p.texto || '').split(/\r?\n/).map(function(x){ return x.trim(); }).filter(Boolean).join(' · ');
+    if(p.auto === 'pratoDia'){   // aviso do Prato do dia: só um lembrete (sem os pratos) — para saber o que há, toca e abre o menu
+      var _dw = new Date().getDay(), _dn = ['domingo','segunda','terça','quarta','quinta','sexta','sábado'][_dw];
+      corpo = (_dw === 0 ? '🍽️ A sugestão de domingo já está no menu. Toca para veres o que há hoje!' : ('🍽️ O prato do dia de ' + _dn + ' já está no menu. Toca para veres o que há hoje!'));
     }
     var tit = (p.push && p.push.titulo) || (negocio && negocio.nome) || 'Promoção';
     var url = (p.push && p.push.url) || _linkCardapio();
-    var r = await sb.functions.invoke('enviar-push', { body:{ negocio:negocio.id, titulo:tit, corpo:corpo, url:url } });
+    var _img = (p.auto === 'pratoDia') ? await _prPushImagem(p) : '';   // imagem com a cor da promoção (se falhar, vai só o texto)
+    var r = await sb.functions.invoke('enviar-push', { body:{ negocio:negocio.id, titulo:tit, corpo:corpo, url:url, image:(_img || undefined) } });
     if(r.error){ var det = r.error.message || String(r.error); try{ if(r.error.context && typeof r.error.context.json === 'function'){ var b = await r.error.context.json(); if(b && (b.erro || b.detalhe)) det = (b.erro || '') + (b.detalhe ? (' — ' + b.detalhe) : ''); } }catch(_){ } throw new Error(det); }
     if(r.data && r.data.erro) throw new Error(r.data.erro);
     return r.data || {};
