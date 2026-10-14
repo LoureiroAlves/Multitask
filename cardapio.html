@@ -2555,10 +2555,8 @@
      (ex.: promoção do São Caetano) já não se veem por cima do efeito de abertura. Ao FECHAR: só volta depois de o efeito de
      fecho acabar (atraso), como o cabeçalho e o rodapé. */
   body.secao-aberta #decorFixas{ display:none !important; opacity:0; z-index:299 !important; transition:opacity .14s var(--am-sai-op, ease), display .14s allow-discrete; }
-  #decorFixas{ transition:opacity .3s var(--am-entra-op, ease) .34s, display .3s allow-discrete .34s, transform .34s cubic-bezier(.4,0,1,1); }
-  /* Com uma folha aberta (reservas, fidelidade, carrinho…) o rodapé desce — as decorações que estão POR CIMA dele
-     (ex.: a frase "tenham medo muito medo" do São Caetano) descem JUNTO, com o mesmo movimento, e voltam com ele. */
-  body.scroll-lock:not(.secao-aberta) #decorFixas{ transform:translateY(calc(var(--rodape-h, 100px) * 1.3)); transition:transform .5s cubic-bezier(.32,.72,0,1), opacity .3s var(--am-entra-op, ease) .34s, display .3s allow-discrete .34s; }
+  #decorFixas{ transition:opacity .3s var(--am-entra-op, ease) .34s, display .3s allow-discrete .34s; }
+
   @starting-style{ #decorFixas{ opacity:0; } }
   .idecor-fixa{ position:absolute; z-index:32; pointer-events:none; user-select:none; line-height:1; text-shadow:0 2px 6px rgba(0,0,0,.4); transform:translate(-50%,-50%); }
 
@@ -6916,6 +6914,7 @@
 
   function aplicarDecor(config){
     ['decorQueda','decorLuzes','decorFixas'].forEach(function(id){ const e = document.getElementById(id); if(e) e.remove(); });
+    document.querySelectorAll('.info-fixa .decor-fixa.no-rodape').forEach(function(e){ e.remove(); });   // as que tinham ido para dentro do rodapé
     const dec = config && config.decor;
     if(!dec || !dec.tema || dec.tema === 'nenhum') return;
     const T = TEMAS_DECOR[dec.tema]; if(!T) return;
@@ -6926,7 +6925,25 @@
       c.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:391;';
       _decorRenderFixas(c, dec.fixas, 'decor-fixa', !!window.__PREVIEW, 'cardapio', dec.tema);
       document.body.appendChild(c);
+      if(!window.__PREVIEW){ _decorParaRodape(c); setTimeout(function(){ _decorParaRodape(c); }, 1200); }
     }
+  }
+  // Decorações que estão POR CIMA do rodapé (ex.: a frase "tenham medo muito medo" do São Caetano) passam a fazer PARTE do rodapé:
+  // assim acompanham-no SEMPRE — ao abrir/fechar reservas, fidelidade ou carrinho, ao abrir categorias e quando o Safari
+  // mostra/esconde as barras ao fazer scroll. (Antes ficavam soltas no ecrã e separavam-se do rodapé.) No editor ficam como estão.
+  function _decorParaRodape(c){
+    try{
+      const f = document.querySelector('.info-fixa'); if(!f || !c || !c.isConnected) return;
+      const cs = getComputedStyle(f); if(cs.display === 'none' || cs.visibility === 'hidden') return;
+      if(document.body.classList.contains('scroll-lock') || document.body.classList.contains('secao-aberta')) return;   // rodapé fora do sítio: tenta mais tarde
+      const fr = f.getBoundingClientRect(); if(!fr.height) return;
+      c.querySelectorAll('.decor-fixa').forEach(function(el){
+        const r = el.getBoundingClientRect(), cy = r.top + r.height / 2;
+        if(cy < fr.top || cy > fr.bottom) return;
+        el.style.position = 'absolute'; el.style.top = Math.round(cy - fr.top) + 'px'; el.style.zIndex = '103';
+        el.classList.add('no-rodape'); f.appendChild(el);
+      });
+    }catch(e){}
   }
   function aplicarDecorIntro(config, arrastavel){
     const ov = document.getElementById('introOverlay'); if(!ov) return;
@@ -6957,9 +6974,6 @@
     var IDS = { cartOverlay:1, favOverlay:1, agendaOverlay:1, fidOverlay:1, escOverlay:1, expOverlay:1 };
     document.addEventListener('touchmove', function(e){ var t = e.target; if(!t || !e.cancelable) return; if((IDS[t.id] && t.classList.contains('aberto')) || (t.closest && t.closest('#escOverlay.aberto'))) e.preventDefault(); }, { passive:false });   // (a folha das escolhas não tem scroll próprio: lá dentro também não mexe o fundo)
   })();
-  // Altura do rodapé (para as decorações por cima dele descerem exatamente a mesma distância que ele)
-  (function(){ function upd(){ try{ var f = document.querySelector('.info-fixa'); if(f && f.offsetHeight) document.documentElement.style.setProperty('--rodape-h', f.offsetHeight + 'px'); }catch(e){} }
-    upd(); setTimeout(upd, 1500); setTimeout(upd, 5000); window.addEventListener('resize', upd); })();
   window.__folhaArrastavel = function(ov, card, opts){
     opts = opts || {};
     var y0=0, x0=0, dy=0, startY=0, drag=false, decidiu=false, naZona=false;
