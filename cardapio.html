@@ -6925,7 +6925,8 @@
       c.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:391;';
       _decorRenderFixas(c, dec.fixas, 'decor-fixa', !!window.__PREVIEW, 'cardapio', dec.tema);
       document.body.appendChild(c);
-      if(!window.__PREVIEW){ _decorParaRodape(c); setTimeout(function(){ _decorParaRodape(c); }, 1200); }
+      // tenta já e vai tentando (a intro, uma folha aberta ou o rodapé ainda sem altura adiam) até as decorações de baixo estarem no rodapé
+      if(!window.__PREVIEW){ let _tent = 0; (function _tenta(){ _decorParaRodape(c); const falta = c.isConnected && [].some.call(c.querySelectorAll('.decor-fixa'), function(el){ return parseFloat(el.style.top) >= 80; }); if(falta && ++_tent < 60) setTimeout(_tenta, 700); })(); }
     }
   }
   // Decorações que estão POR CIMA do rodapé (ex.: a frase "tenham medo muito medo" do São Caetano) passam a fazer PARTE do rodapé:
@@ -6935,8 +6936,7 @@
     try{
       const f = document.querySelector('.info-fixa'); if(!f || !c || !c.isConnected) return;
       const cs = getComputedStyle(f); if(cs.display === 'none' || cs.visibility === 'hidden') return;
-      if(document.body.classList.contains('scroll-lock') || document.body.classList.contains('secao-aberta')) return;   // rodapé fora do sítio: tenta mais tarde
-      if(!f.offsetHeight) return;
+      if(!f.offsetHeight) return;   // (a posição escolhida não depende de onde o rodapé está agora — folhas/categorias abertas não atrapalham)
       // Decide pela posição ESCOLHIDA no editor (% do ecrã), não pela posição medida: no Safari, com as barras visíveis,
       // a frase a 95% ficava ACIMA do rodapé e não era apanhada. Tudo o que está nos 20% de baixo vai com o rodapé
       // (a frase, a teia e a aranha juntas), à mesma distância do fundo do ecrã.
