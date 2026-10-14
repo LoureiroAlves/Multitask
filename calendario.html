@@ -1448,6 +1448,10 @@
       + '<div id="prTpls" style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 4px;">' + _PR_TPLS.map(function(t, i){ return '<button type="button" data-i="' + i + '" style="border:1px solid #e0d3b5;background:#fbf6ec;border-radius:999px;padding:6px 11px;cursor:pointer;font-family:inherit;font-weight:700;font-size:.78rem;color:var(--castanho);">' + t.ico + ' ' + t.nome + '</button>'; }).join('') + '</div>'
       + '<label style="display:flex;gap:8px;align-items:flex-start;margin-top:10px;padding:10px 12px;border:1.5px solid #e0d3b5;border-radius:12px;background:#fffaf0;cursor:pointer;font-weight:700;"><input type="checkbox" id="prAuto"' + (p.auto === 'pratoDia' ? ' checked' : '') + ' style="width:auto;margin:3px 0 0;"><span>🍽️ Layout <b>Prato do dia</b><br><span style="font-weight:400;font-size:.8rem;color:#8a7a5c;">O título é automático: o dia da semana e, por baixo, "Prato do dia" (ao domingo, "Sugestão"). Escreve os pratos — cada Enter é um parágrafo.</span></span></label>'
       + '<label id="prTextoLbl">' + (p.auto === 'pratoDia' ? 'Pratos <span style="font-weight:400;color:#8a7a5c;">(um por linha)</span>' : 'Texto da promoção') + '</label><textarea id="prTexto" maxlength="300" rows="' + (p.auto === 'pratoDia' ? 5 : 3) + '" placeholder="' + (p.auto === 'pratoDia' ? 'Ex.: Bacalhau à Brás&#10;Frango assado com batata' : 'Ex.: Menu de Natal · 25€&#10;(Enter muda de linha)') + '" style="resize:vertical;">' + esc(p.texto || '') + '</textarea>'
+      + '<div id="prTamPratos" style="display:' + (p.auto === 'pratoDia' ? 'flex' : 'none') + ';align-items:center;gap:8px;margin-top:8px;font-size:.85rem;font-weight:800;color:var(--castanho);">🔠 Tamanho dos pratos'
+      +   '<button type="button" data-tp="-1" style="width:34px;height:34px;border-radius:50%;border:1.5px solid #e0d3b5;background:#fff;font-size:1.1rem;font-weight:900;cursor:pointer;color:var(--castanho);">−</button>'
+      +   '<span id="prTamPratosV" style="min-width:48px;text-align:center;">' + Math.round((parseFloat(p.tamPratos) || 1) * 100) + '%</span>'
+      +   '<button type="button" data-tp="1" style="width:34px;height:34px;border-radius:50%;border:1.5px solid #e0d3b5;background:#fff;font-size:1.1rem;font-weight:900;cursor:pointer;color:var(--castanho);">+</button></div>'
       + '<div id="prPags"></div>'   // conteúdos extra que rodam (mesmo layout, só muda o conteúdo)
       + '<label>Estilo</label><div id="prEstilos" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;">' + ests.map(function(e){ return '<button type="button" data-e="' + e.id + '" style="border:1px solid #e0d3b5;background:#fff;color:#4a3820;border-radius:999px;padding:6px 11px;cursor:pointer;font-family:inherit;font-weight:800;font-size:.78rem;">' + e.nome + '</button>'; }).join('') + '</div>'
       + '<label>Texto do selo <span style="font-weight:400;color:#8a7a5c;">(a etiqueta pequena — vazio = "Promoção de hoje")</span></label>'
@@ -1498,7 +1502,13 @@
       var lb = $('prTextoLbl'); if(lb) lb.innerHTML = on ? 'Pratos <span style="font-weight:400;color:#8a7a5c;">(um por linha)</span>' : 'Texto da promoção';
       var tx = $('prTexto'); if(tx){ tx.placeholder = on ? 'Ex.: Bacalhau à Brás\nFrango assado com batata' : 'Ex.: Menu de Natal · 25€\n(Enter muda de linha)'; tx.rows = on ? 5 : 3; }
       try{ _prPagsUI(); }catch(e){}
+      var tb = $('prTamPratos'); if(tb) tb.style.display = on ? 'flex' : 'none';
     }
+    // tamanho da letra dos pratos (70% a 180%, de 10 em 10)
+    $('prTamPratos').querySelectorAll('[data-tp]').forEach(function(b){ b.onclick = function(){
+      var v = Math.round(((parseFloat(_prEdit.tamPratos) || 1) + (+b.dataset.tp) * 0.1) * 10) / 10;
+      v = Math.max(0.7, Math.min(1.8, v)); if(v === 1) delete _prEdit.tamPratos; else _prEdit.tamPratos = v;
+      $('prTamPratosV').textContent = Math.round(v * 100) + '%'; prev(); }; });
     // ---- Conteúdos que rodam: mais conteúdos com o MESMO layout, a trocar de X em X segundos ----
     function _prPagsUI(){
       var box = $('prPags'); if(!box) return;
@@ -3477,8 +3487,8 @@
   .pd-card .pd-big{ font-weight:900; line-height:1; text-transform:uppercase; }
   .pd-card .pd-msg{ font-weight:700; font-size:.92rem; margin-top:5px; }
   /* Layout "Prato do dia": dia da semana (título) + "Prato do dia"/"Sugestão" por baixo + um parágrafo por prato */
-  .pd-card .pd-sub2{ font-weight:800; font-size:calc(.95rem * var(--pd-escala,1)); letter-spacing:2px; text-transform:uppercase; opacity:.95; margin:3px 0 6px; }
-  .pd-card .pd-pratos .pd-msg{ margin-top:4px; }
+  .pd-card .pd-sub2{ font-weight:900; font-size:calc(1.65rem * var(--pd-escala,1)); line-height:1.05; letter-spacing:1.5px; text-transform:uppercase; margin:4px 0 6px; text-shadow:0 2px 0 rgba(0,0,0,.14); }   /* destaque: Prato do dia / Na Brasa / Sugestão */
+  .pd-card .pd-pratos .pd-msg{ margin-top:4px; font-size:calc(.92rem * var(--pd-pratos,1) * var(--pd-escala,1)); line-height:1.25; }   /* tamanho dos pratos: controlo próprio */
   /* Promoção com vários conteúdos: ficam uns por cima dos outros (a altura é a do maior → nada salta) e trocam a esbater */
   .pd-rot{ display:grid; }
   .pd-rot > .pd-pag{ grid-area:1 / 1; opacity:0; visibility:hidden; transition:opacity .45s ease, visibility 0s linear .45s; }
@@ -3569,7 +3579,7 @@
     var estilo = p.estilo || 'autocolante';
     var cor = p.cor || '#e0245e';
     var escala = Math.max(0.7, Math.min(1.6, parseFloat(p.escala)||1));
-    var vars = '--pd-cor:'+cor+';--pd-cor2:'+_lighten(cor,0.42)+';--pd-escala:'+escala+';';
+    var vars = '--pd-cor:'+cor+';--pd-cor2:'+_lighten(cor,0.42)+';--pd-escala:'+escala+';--pd-pratos:'+Math.max(0.7, Math.min(1.8, parseFloat(p.tamPratos)||1))+';';
     var emoji = _esc((p.emoji && String(p.emoji).trim()) || '🔥');
     var seloP = _esc(String(p.selo || '').trim().slice(0, 28));   // texto do selo escolhido pelo restaurante
     var selo = seloP || 'Promoção de hoje';

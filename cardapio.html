@@ -10390,8 +10390,8 @@
   .pd-card .pd-big{ font-weight:900; line-height:1; text-transform:uppercase; }
   .pd-card .pd-msg{ font-weight:700; font-size:.92rem; margin-top:5px; }
   /* Layout "Prato do dia": dia da semana (título) + "Prato do dia"/"Sugestão" por baixo + um parágrafo por prato */
-  .pd-card .pd-sub2{ font-weight:800; font-size:calc(.95rem * var(--pd-escala,1)); letter-spacing:2px; text-transform:uppercase; opacity:.95; margin:3px 0 6px; }
-  .pd-card .pd-pratos .pd-msg{ margin-top:4px; }
+  .pd-card .pd-sub2{ font-weight:900; font-size:calc(1.65rem * var(--pd-escala,1)); line-height:1.05; letter-spacing:1.5px; text-transform:uppercase; margin:4px 0 6px; text-shadow:0 2px 0 rgba(0,0,0,.14); }   /* destaque: Prato do dia / Na Brasa / Sugestão */
+  .pd-card .pd-pratos .pd-msg{ margin-top:4px; font-size:calc(.92rem * var(--pd-pratos,1) * var(--pd-escala,1)); line-height:1.25; }   /* tamanho dos pratos: controlo próprio */
   /* Promoção com vários conteúdos: ficam uns por cima dos outros (a altura é a do maior → nada salta) e trocam a esbater */
   .pd-rot{ display:grid; }
   .pd-rot > .pd-pag{ grid-area:1 / 1; opacity:0; visibility:hidden; transition:opacity .45s ease, visibility 0s linear .45s; }
@@ -10482,7 +10482,7 @@
     var estilo = p.estilo || 'autocolante';
     var cor = p.cor || '#e0245e';
     var escala = Math.max(0.7, Math.min(1.6, parseFloat(p.escala)||1));
-    var vars = '--pd-cor:'+cor+';--pd-cor2:'+_lighten(cor,0.42)+';--pd-escala:'+escala+';';
+    var vars = '--pd-cor:'+cor+';--pd-cor2:'+_lighten(cor,0.42)+';--pd-escala:'+escala+';--pd-pratos:'+Math.max(0.7, Math.min(1.8, parseFloat(p.tamPratos)||1))+';';
     var emoji = _esc((p.emoji && String(p.emoji).trim()) || '🔥');
     var seloP = _esc(String(p.selo || '').trim().slice(0, 28));   // texto do selo escolhido pelo restaurante
     var selo = seloP || 'Promoção de hoje';
