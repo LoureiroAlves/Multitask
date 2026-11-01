@@ -10583,7 +10583,7 @@
     if(autoPD){
       var _dv = (dataVer instanceof Date && !isNaN(dataVer)) ? dataVer : new Date();
       bigFix = ['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'][_dv.getDay()];
-      subAuto = (_dv.getDay() === 0 ? 'Sugestão' : 'Prato do dia');
+      subAuto = (p.semPD ? 'Sugestão' : 'Prato do dia');   // o dono escolhe: ✓ Prato do dia e/ou ✓ Sugestão (só Sugestão → semPD)
       subPD = '<div class="pd-sub2">' + subAuto + '</div>';
       selo = seloP;
       if(!(p.emoji && String(p.emoji).trim())) emoji = '🍽️';
@@ -10592,7 +10592,8 @@
     // de X em X segundos (p.intervalo). Com um só conteúdo fica tudo como antes.
     // cada conteúdo extra pode ter o seu título (p.paginasTit — ex.: "Na Brasa", "Sugestão"); no 1.º fica o automático
     var _tits = Array.isArray(p.paginasTit) ? p.paginasTit : [], _precs = Array.isArray(p.paginasPreco) ? p.paginasPreco : [];
-    var textos = [{ t:p.texto, tit:'', pr:p.preco }].concat((Array.isArray(p.paginas) ? p.paginas : []).map(function(t, i){ return { t:t, tit:String(_tits[i] || '').trim(), pr:_precs[i] }; }))
+    var _sugCart = (autoPD && p.sugestao && !p.semPD) ? [{ t:p.sugTexto, tit:'Sugestão', pr:p.sugPreco }] : [];   // ✓ Prato do dia + ✓ Sugestão → 2.º cartão "Sugestão" a rodar
+    var textos = [{ t:p.texto, tit:'', pr:p.preco }].concat(_sugCart).concat((Array.isArray(p.paginas) ? p.paginas : []).map(function(t, i){ return { t:t, tit:String(_tits[i] || '').trim(), pr:_precs[i] }; }))
       .map(function(o){ return { t:String(o.t||'').trim(), tit:o.tit, pr:o.pr }; }).filter(function(o){ return o.t; });
     if(!textos.length) textos = [{ t:'', tit:'', pr:'' }];
     // preço: "8,5" → "8,50€"; texto livre (ex.: "Meia dose 6€") fica como está
