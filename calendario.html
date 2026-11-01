@@ -1380,7 +1380,7 @@
       var W = 720, H = 360, c = document.createElement('canvas'); c.width = W; c.height = H; var g = c.getContext('2d');
       var cor = /^#[0-9a-fA-F]{6}$/.test(String(p.cor || '')) ? p.cor : '#e0245e';
       var dw = new Date().getDay(), dia = ['DOMINGO','SEGUNDA-FEIRA','TERÇA-FEIRA','QUARTA-FEIRA','QUINTA-FEIRA','SEXTA-FEIRA','SÁBADO'][dw];
-      var sub = (dw === 0 ? 'SUGESTÃO' : 'PRATO DO DIA'), nome = String((negocio && negocio.nome) || '').slice(0, 40);
+      var sub = (p.semPD ? 'SUGESTÃO' : (p.sugestao ? 'PRATO DO DIA · SUGESTÃO' : 'PRATO DO DIA')), nome = String((negocio && negocio.nome) || '').slice(0, 40);
       var F = '"Helvetica Neue", Arial, sans-serif';
       function ajusta(txt, peso, max, larg){ var t = max; do { g.font = peso + ' ' + t + 'px ' + F; t -= 2; } while(g.measureText(txt).width > larg && t > 18); }
       g.textAlign = 'center'; g.textBaseline = 'middle';
@@ -1418,7 +1418,7 @@
     var corpo = String(p.texto || '').replace(/\s+/g, ' ').trim();
     if(p.auto === 'pratoDia'){   // aviso do Prato do dia: só um lembrete (sem os pratos) — para saber o que há, toca e abre o menu
       var _dw = new Date().getDay(), _dn = ['domingo','segunda','terça','quarta','quinta','sexta','sábado'][_dw];
-      corpo = (_dw === 0 ? '🍽️ A sugestão de domingo já está no menu. Toca para veres o que há hoje!' : ('🍽️ O prato do dia de ' + _dn + ' já está no menu. Toca para veres o que há hoje!'));
+      corpo = p.semPD ? ('🍽️ A sugestão de ' + _dn + ' já está no menu. Toca para veres o que há hoje!') : (p.sugestao ? ('🍽️ O prato do dia e a sugestão de ' + _dn + ' já estão no menu. Toca para veres o que há hoje!') : ('🍽️ O prato do dia de ' + _dn + ' já está no menu. Toca para veres o que há hoje!'));
     }
     var tit = (p.push && p.push.titulo) || (negocio && negocio.nome) || 'Promoção';
     var url = (p.push && p.push.url) || _linkCardapio();
@@ -1491,9 +1491,14 @@
       + '<div style="font-size:1.05rem;font-weight:800;color:var(--castanho);margin-bottom:6px;">' + (novo ? '🏷️ Nova promoção' : '🏷️ Editar promoção') + '</div>'
       + '<div style="font-size:.8rem;color:#8a7a5c;font-weight:800;margin-top:8px;">⚡ Modelos rápidos</div>'
       + '<div id="prTpls" style="display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 4px;">' + _PR_TPLS.map(function(t, i){ return '<button type="button" data-i="' + i + '" style="border:1px solid #e0d3b5;background:#fbf6ec;border-radius:999px;padding:6px 11px;cursor:pointer;font-family:inherit;font-weight:700;font-size:.78rem;color:var(--castanho);">' + t.ico + ' ' + t.nome + '</button>'; }).join('') + '</div>'
-      + '<label style="display:flex;gap:8px;align-items:flex-start;margin-top:10px;padding:10px 12px;border:1.5px solid #e0d3b5;border-radius:12px;background:#fffaf0;cursor:pointer;font-weight:700;"><input type="checkbox" id="prAuto"' + (p.auto === 'pratoDia' ? ' checked' : '') + ' style="width:auto;margin:3px 0 0;"><span>🍽️ Layout <b>Prato do dia</b><br><span style="font-weight:400;font-size:.8rem;color:#8a7a5c;">O título é automático: o dia da semana e, por baixo, "Prato do dia" (ao domingo, "Sugestão"). Escreve os pratos — cada Enter é um parágrafo.</span></span></label>'
+      + '<label style="display:flex;gap:8px;align-items:flex-start;margin-top:10px;padding:10px 12px;border:1.5px solid #e0d3b5;border-radius:12px;background:#fffaf0;cursor:pointer;font-weight:700;"><input type="checkbox" id="prAuto"' + (p.auto === 'pratoDia' ? ' checked' : '') + ' style="width:auto;margin:3px 0 0;"><span>🍽️ <b>Prato do dia</b><br><span style="font-weight:400;font-size:.8rem;color:#8a7a5c;">Título automático: o dia da semana e, por baixo, "Prato do dia". Escreve os pratos — cada Enter é um parágrafo.</span></span></label>'
+      + '<label style="display:flex;gap:8px;align-items:flex-start;margin-top:6px;padding:10px 12px;border:1.5px solid #e0d3b5;border-radius:12px;background:#fffaf0;cursor:pointer;font-weight:700;"><input type="checkbox" id="prSug"' + ((p.auto === 'pratoDia' && p.sugestao) ? ' checked' : '') + ' style="width:auto;margin:3px 0 0;"><span>✨ <b>Sugestão</b><br><span style="font-weight:400;font-size:.8rem;color:#8a7a5c;">O mesmo cartão com "Sugestão" por baixo do dia. Com os dois vistos, o menu alterna entre o cartão do Prato do dia e o da Sugestão.</span></span></label>'
       + '<label id="prTextoLbl">' + (p.auto === 'pratoDia' ? 'Pratos <span style="font-weight:400;color:#8a7a5c;">(um por linha)</span>' : 'Texto da promoção') + '</label><textarea id="prTexto" maxlength="300" rows="' + (p.auto === 'pratoDia' ? 5 : 3) + '" placeholder="' + (p.auto === 'pratoDia' ? 'Ex.: Bacalhau à Brás&#10;Frango assado com batata' : 'Ex.: Menu de Natal · 25€&#10;(Enter muda de linha)') + '" style="resize:vertical;">' + esc(p.texto || '') + '</textarea>'
       + '<div style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:.85rem;font-weight:800;color:var(--castanho);">💶 Preço <input id="prPreco" maxlength="24" value="' + esc(p.preco || '') + '" placeholder="Ex.: 8,50 (opcional)" style="flex:1;margin:0;"></div>'
+      + '<div id="prSugBloco" style="display:' + ((p.auto === 'pratoDia' && p.sugestao && !p.semPD) ? 'block' : 'none') + ';margin-top:10px;padding:10px 12px;border:1.5px dashed #e0d3b5;border-radius:12px;background:#fff;">'
+      +   '<label style="margin-top:0;">✨ Pratos da <b>Sugestão</b> <span style="font-weight:400;color:#8a7a5c;">(um por linha)</span></label><textarea id="prSugTexto" maxlength="300" rows="4" placeholder="Ex.: Polvo à lagareiro" style="resize:vertical;">' + esc(p.sugTexto || '') + '</textarea>'
+      +   '<div style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:.85rem;font-weight:800;color:var(--castanho);">💶 Preço <input id="prSugPreco" maxlength="24" value="' + esc(p.sugPreco || '') + '" placeholder="Ex.: 12,50 (opcional)" style="flex:1;margin:0;"></div>'
+      + '</div>'
       + '<div style="font-size:.74rem;color:#8a7a5c;margin-top:4px;">Dica: para um preço por prato, escreve-o no fim da linha (ex.: <i>Bacalhau à Brás 9,50€</i>).</div>'
       + '<div id="prTamPratos" style="display:' + (p.auto === 'pratoDia' ? 'flex' : 'none') + ';align-items:center;gap:8px;margin-top:8px;font-size:.85rem;font-weight:800;color:var(--castanho);">🔠 Tamanho dos pratos'
       +   '<button type="button" data-tp="-1" style="width:34px;height:34px;border-radius:50%;border:1.5px solid #e0d3b5;background:#fff;font-size:1.1rem;font-weight:900;cursor:pointer;color:var(--castanho);">−</button>'
@@ -1544,9 +1549,11 @@
     if(_prEdit.quando.tipo === 'semanal' && !Array.isArray(_prEdit.quando.dias)) _prEdit.quando.dias = [];
     pintaTipo(); pintaDias(); pintaEst(); prev();
     $('prVoltar').onclick = function(){ _prEdit = null; renderNotif(); };
-    function _prAutoUI(){   // liga/desliga o layout "Prato do dia" (título automático)
-      var on = _prEdit.auto === 'pratoDia'; var cb = $('prAuto'); if(cb) cb.checked = on;
-      var lb = $('prTextoLbl'); if(lb) lb.innerHTML = on ? 'Pratos <span style="font-weight:400;color:#8a7a5c;">(um por linha)</span>' : 'Texto da promoção';
+    function _prAutoUI(){   // vistos "Prato do dia" e "Sugestão" (layout com título automático)
+      var on = _prEdit.auto === 'pratoDia'; var cb = $('prAuto'); if(cb) cb.checked = on && !_prEdit.semPD;
+      var cs = $('prSug'); if(cs) cs.checked = on && !!_prEdit.sugestao;
+      var dois = on && !!_prEdit.sugestao && !_prEdit.semPD; var sbl = $('prSugBloco'); if(sbl) sbl.style.display = dois ? 'block' : 'none';
+      var lb = $('prTextoLbl'); if(lb) lb.innerHTML = on ? ((_prEdit.semPD ? 'Pratos da <b>Sugestão</b>' : (dois ? 'Pratos do <b>Prato do dia</b>' : 'Pratos')) + ' <span style="font-weight:400;color:#8a7a5c;">(um por linha)</span>') : 'Texto da promoção';
       var tx = $('prTexto'); if(tx){ tx.placeholder = on ? 'Ex.: Bacalhau à Brás\nFrango assado com batata' : 'Ex.: Menu de Natal · 25€\n(Enter muda de linha)'; tx.rows = on ? 5 : 3; }
       try{ _prPagsUI(); }catch(e){}
       var tb = $('prTamPratos'); if(tb) tb.style.display = on ? 'flex' : 'none';
@@ -1589,11 +1596,21 @@
       var sg = $('prSeg'); if(sg) sg.addEventListener('input', function(){ var v = parseFloat(sg.value); if(v >= 2 && v <= 60){ _prEdit.intervalo = v; prev(); } });
     }
     _prPagsUI();
-    $('prAuto').onchange = function(){ if(this.checked) _prEdit.auto = 'pratoDia'; else delete _prEdit.auto; _prAutoUI(); prev(); };
+    function _prVistos(){   // ✓ Prato do dia e/ou ✓ Sugestão → layout automático; nenhum → promoção normal
+      var pd = $('prAuto').checked, sg = $('prSug').checked;
+      if(pd || sg) _prEdit.auto = 'pratoDia'; else delete _prEdit.auto;
+      if(sg) _prEdit.sugestao = true; else delete _prEdit.sugestao;
+      if(sg && !pd) _prEdit.semPD = true; else delete _prEdit.semPD;
+      _prAutoUI(); prev();
+    }
+    $('prAuto').onchange = _prVistos;
+    $('prSug').onchange = _prVistos;
+    $('prSugTexto').addEventListener('input', function(){ _prEdit.sugTexto = $('prSugTexto').value; prev(); });
+    $('prSugPreco').addEventListener('input', function(){ _prEdit.sugPreco = $('prSugPreco').value; prev(); });
     $('prTpls').querySelectorAll('button').forEach(function(b){ b.onclick = function(){
       var t = _PR_TPLS[+b.dataset.i];
-      if(t.nome === 'Prato do dia'){ _prEdit.auto = 'pratoDia'; _prEdit.texto = ''; }   // título automático: só faltam os pratos
-      else { delete _prEdit.auto; _prEdit.texto = t.texto; }
+      if(t.nome === 'Prato do dia'){ _prEdit.auto = 'pratoDia'; _prEdit.texto = ''; delete _prEdit.semPD; }   // título automático: só faltam os pratos
+      else { delete _prEdit.auto; delete _prEdit.sugestao; delete _prEdit.semPD; _prEdit.texto = t.texto; }
       $('prTexto').value = _prEdit.texto; _prAutoUI(); prev(); try{ $('prTexto').focus(); }catch(e){} }; });
     $('prTexto').addEventListener('input', function(){ _prEdit.texto = $('prTexto').value; prev(); });
     $('prPreco').addEventListener('input', function(){ _prEdit.preco = $('prPreco').value; prev(); });
@@ -1625,6 +1642,7 @@
     };
     function validar(){
       var t = ($('prTexto').value || '').trim(); if(!t) return (_prEdit.auto === 'pratoDia') ? 'Escreve os pratos (um por linha).' : 'Escreve o texto da promoção.';
+      if(_prEdit.auto === 'pratoDia' && _prEdit.sugestao && !_prEdit.semPD && !(($('prSugTexto').value || '').trim())) return 'Escreve os pratos da Sugestão (ou tira o visto da Sugestão).';
       var q = _prEdit.quando || {};
       if(q.tipo === 'dia' && !q.data) return 'Escolhe o dia.';
       if(q.tipo === 'intervalo' && (!q.de || !q.ate)) return 'Escolhe as datas de início e fim.';
@@ -1635,7 +1653,7 @@
     }
     async function guardar(comPush){
       var msg = $('prMsg'); var e = validar(); if(e){ msg.textContent = e; msg.className = 'msg erro'; return; }
-      syncHora(); _prEdit.texto = ($('prTexto').value || '').trim(); _prEdit.preco = ($('prPreco').value || '').trim(); if(!_prEdit.preco) delete _prEdit.preco; var _pgT = _prEdit.paginasTit || [], _pgP = _prEdit.paginasPreco || []; var _pgOk = (_prEdit.paginas || []).map(function(t, i){ return { t:String(t || '').trim(), tit:String(_pgT[i] || '').trim(), pr:String(_pgP[i] || '').trim() }; }).filter(function(o){ return o.t; }); _prEdit.paginas = _pgOk.map(function(o){ return o.t; }); _prEdit.paginasTit = _pgOk.map(function(o){ return o.tit; }); _prEdit.paginasPreco = _pgOk.map(function(o){ return o.pr; }); if(!_prEdit.paginas.length){ delete _prEdit.paginas; delete _prEdit.paginasTit; delete _prEdit.paginasPreco; delete _prEdit.intervalo; } else { _prEdit.intervalo = Math.max(2, Math.min(60, parseFloat(_prEdit.intervalo) || 5)); } _prEdit.selo = ($('prSelo').value || '').trim(); _prEdit.emoji = ($('prEmoji').value || '').trim(); _prEdit.push = { titulo:($('prPushTit').value || '').trim(), url:($('prPushUrl').value || '').trim() };
+      syncHora(); _prEdit.texto = ($('prTexto').value || '').trim(); _prEdit.preco = ($('prPreco').value || '').trim(); if(!_prEdit.preco) delete _prEdit.preco; if(_prEdit.auto === 'pratoDia' && _prEdit.sugestao && !_prEdit.semPD){ _prEdit.sugTexto = ($('prSugTexto').value || '').trim(); _prEdit.sugPreco = ($('prSugPreco').value || '').trim(); if(!_prEdit.sugPreco) delete _prEdit.sugPreco; } else { delete _prEdit.sugTexto; delete _prEdit.sugPreco; } var _pgT = _prEdit.paginasTit || [], _pgP = _prEdit.paginasPreco || []; var _pgOk = (_prEdit.paginas || []).map(function(t, i){ return { t:String(t || '').trim(), tit:String(_pgT[i] || '').trim(), pr:String(_pgP[i] || '').trim() }; }).filter(function(o){ return o.t; }); _prEdit.paginas = _pgOk.map(function(o){ return o.t; }); _prEdit.paginasTit = _pgOk.map(function(o){ return o.tit; }); _prEdit.paginasPreco = _pgOk.map(function(o){ return o.pr; }); if(!_prEdit.paginas.length){ delete _prEdit.paginas; delete _prEdit.paginasTit; delete _prEdit.paginasPreco; delete _prEdit.intervalo; } else { _prEdit.intervalo = Math.max(2, Math.min(60, parseFloat(_prEdit.intervalo) || 5)); } _prEdit.selo = ($('prSelo').value || '').trim(); _prEdit.emoji = ($('prEmoji').value || '').trim(); _prEdit.push = { titulo:($('prPushTit').value || '').trim(), url:($('prPushUrl').value || '').trim() };
       if(comPush){
         var est = _prEstado(_prEdit); if(est !== 'ativa' || !_prBate(_prEdit.quando, _prHoje(), new Date().getDay())){
           if(!(await window.__amConfirm('Enviar aviso?', { texto:'Esta promoção não está no menu hoje (' + _prQuandoTxt(_prEdit.quando) + '). Queres enviar o aviso mesmo assim?', ok:'Sim, enviar', cancelar:'Não' }))) return;
@@ -3671,7 +3689,7 @@
     if(autoPD){
       var _dv = (dataVer instanceof Date && !isNaN(dataVer)) ? dataVer : new Date();
       bigFix = ['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'][_dv.getDay()];
-      subAuto = (_dv.getDay() === 0 ? 'Sugestão' : 'Prato do dia');
+      subAuto = (p.semPD ? 'Sugestão' : 'Prato do dia');   // o dono escolhe: ✓ Prato do dia e/ou ✓ Sugestão (só Sugestão → semPD)
       subPD = '<div class="pd-sub2">' + subAuto + '</div>';
       selo = seloP;
       if(!(p.emoji && String(p.emoji).trim())) emoji = '🍽️';
@@ -3680,7 +3698,8 @@
     // de X em X segundos (p.intervalo). Com um só conteúdo fica tudo como antes.
     // cada conteúdo extra pode ter o seu título (p.paginasTit — ex.: "Na Brasa", "Sugestão"); no 1.º fica o automático
     var _tits = Array.isArray(p.paginasTit) ? p.paginasTit : [], _precs = Array.isArray(p.paginasPreco) ? p.paginasPreco : [];
-    var textos = [{ t:p.texto, tit:'', pr:p.preco }].concat((Array.isArray(p.paginas) ? p.paginas : []).map(function(t, i){ return { t:t, tit:String(_tits[i] || '').trim(), pr:_precs[i] }; }))
+    var _sugCart = (autoPD && p.sugestao && !p.semPD) ? [{ t:p.sugTexto, tit:'Sugestão', pr:p.sugPreco }] : [];   // ✓ Prato do dia + ✓ Sugestão → 2.º cartão "Sugestão" a rodar
+    var textos = [{ t:p.texto, tit:'', pr:p.preco }].concat(_sugCart).concat((Array.isArray(p.paginas) ? p.paginas : []).map(function(t, i){ return { t:t, tit:String(_tits[i] || '').trim(), pr:_precs[i] }; }))
       .map(function(o){ return { t:String(o.t||'').trim(), tit:o.tit, pr:o.pr }; }).filter(function(o){ return o.t; });
     if(!textos.length) textos = [{ t:'', tit:'', pr:'' }];
     // preço: "8,5" → "8,50€"; texto livre (ex.: "Meia dose 6€") fica como está
