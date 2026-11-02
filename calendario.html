@@ -1307,6 +1307,15 @@
     if(q.tipo === 'semanal'){ if(q.ate && q.ate < hoje) return 'passada'; return (q.de && q.de > hoje) ? 'programada' : 'ativa'; }
     return 'inativa';
   }
+  // Dia em que esta promoção aparece (para mostrar o dia da semana certo na pré-visualização e no aviso):
+  // dia → essa data; intervalo/semanal → o próximo dia em que bate (a partir de hoje); passada → o último dia.
+  function _prDiaVer(p){
+    var q = (p && p.quando) || {}, hoje = _prHoje();
+    if(q.tipo === 'dia') return q.data || hoje;
+    var ini = (q.de && q.de > hoje) ? q.de : hoje;
+    for(var i = 0; i < 370; i++){ var iso = _prIsoAdd(ini, i); if(q.ate && iso > q.ate) break; if(_prBate(q, iso, _prDataDe(iso).getDay())) return iso; }
+    return q.ate || q.de || hoje;
+  }
   function _prFim(p){ var q = p.quando || {}; if(q.tipo === 'dia') return q.data || ''; return q.ate || ''; }   // '' = sem fim
   function _prQuandoTxt(q){
     q = q || {};
@@ -1379,7 +1388,7 @@
     try{
       var W = 720, H = 360, c = document.createElement('canvas'); c.width = W; c.height = H; var g = c.getContext('2d');
       var cor = /^#[0-9a-fA-F]{6}$/.test(String(p.cor || '')) ? p.cor : '#e0245e';
-      var dw = new Date().getDay(), dia = ['DOMINGO','SEGUNDA-FEIRA','TERÇA-FEIRA','QUARTA-FEIRA','QUINTA-FEIRA','SEXTA-FEIRA','SÁBADO'][dw];
+      var dw = _prDataDe(_prDiaVer(p)).getDay(), dia = ['DOMINGO','SEGUNDA-FEIRA','TERÇA-FEIRA','QUARTA-FEIRA','QUINTA-FEIRA','SEXTA-FEIRA','SÁBADO'][dw];
       var sub = (p.semPD ? 'SUGESTÃO' : (p.sugestao ? 'PRATO DO DIA · SUGESTÃO' : 'PRATO DO DIA')), nome = String((negocio && negocio.nome) || '').slice(0, 40);
       var F = '"Helvetica Neue", Arial, sans-serif';
       function ajusta(txt, peso, max, larg){ var t = max; do { g.font = peso + ' ' + t + 'px ' + F; t -= 2; } while(g.measureText(txt).width > larg && t > 18); }
@@ -1417,8 +1426,9 @@
   async function _prEnviarPush(p){
     var corpo = String(p.texto || '').replace(/\s+/g, ' ').trim();
     if(p.auto === 'pratoDia'){   // aviso do Prato do dia: só um lembrete (sem os pratos) — para saber o que há, toca e abre o menu
-      var _dw = new Date().getDay(), _dn = ['domingo','segunda','terça','quarta','quinta','sexta','sábado'][_dw];
+      var _diaP = _prDiaVer(p), _dw = _prDataDe(_diaP).getDay(), _dn = ['domingo','segunda','terça','quarta','quinta','sexta','sábado'][_dw];
       corpo = p.semPD ? ('🍽️ A sugestão de ' + _dn + ' já está no menu. Toca para veres o que há hoje!') : (p.sugestao ? ('🍽️ O prato do dia e a sugestão de ' + _dn + ' já estão no menu. Toca para veres o que há hoje!') : ('🍽️ O prato do dia de ' + _dn + ' já está no menu. Toca para veres o que há hoje!'));
+      if(_diaP !== _prHoje()) corpo = corpo.replace(' já está no menu. Toca para veres o que há hoje!', ' já está escolhido! Toca para abrir o menu.').replace(' já estão no menu. Toca para veres o que há hoje!', ' já estão escolhidos! Toca para abrir o menu.');   // aviso enviado antes do dia
     }
     var tit = (p.push && p.push.titulo) || (negocio && negocio.nome) || 'Promoção';
     var url = (p.push && p.push.url) || _linkCardapio();
@@ -1437,8 +1447,8 @@
     if($('vistaNotif').classList.contains('hide')) mostrarVista('notif'); else renderNotif();
     try{ window.scrollTo(0,0); }catch(e){}
   }
-  function _prCartaoPrev(p){
-    var esc_ = ((typeof window.__amPromoCard === 'function') ? window.__amPromoCard(p) : '');
+  function _prCartaoPrev(p, iso){
+    var esc_ = ((typeof window.__amPromoCard === 'function') ? window.__amPromoCard(p, _prDataDe(iso || _prDiaVer(p))) : '');
     return '<div style="--pd-fundo:#fff;padding:18px 6px 6px;overflow:visible;pointer-events:none;transform:scale(.82);transform-origin:top left;width:122%;">' + esc_ + '</div>';
   }
   function _prRenderLista(){
@@ -1544,7 +1554,7 @@
       $('prQSemFimBox').style.display = $('prQSemFim').checked ? '' : 'none'; }
     function pintaDias(){ var ds = ((_prEdit.quando || {}).dias || []).map(Number); $('prQDias').querySelectorAll('button').forEach(function(b){ var on = ds.indexOf(+b.dataset.d) >= 0; b.style.background = on ? '#a8712f' : '#fff'; b.style.color = on ? '#fff' : '#4a3820'; b.style.borderColor = on ? '#a8712f' : '#e0d3b5'; }); }
     function pintaEst(){ var atual = _prEdit.estilo || 'autocolante'; $('prEstilos').querySelectorAll('button').forEach(function(x){ var on = x.dataset.e === atual; x.style.background = on ? '#a8712f' : '#fff'; x.style.color = on ? '#fff' : '#4a3820'; x.style.borderColor = on ? '#a8712f' : '#e0d3b5'; }); }
-    function prev(){ var box = $('prPrev'); if(!box) return; box.style.setProperty('--pd-fundo', '#fbf8f2'); if(!(_prEdit.texto || '').trim()){ box.innerHTML = '<div style="color:#b9ab8e;font-size:.82rem;">' + ((_prEdit.auto === 'pratoDia') ? 'Escreve os pratos para veres a pré-visualização.' : 'Escreve o texto para veres a pré-visualização.') + '</div>'; } else { box.innerHTML = (typeof window.__amPromoCard === 'function') ? window.__amPromoCard(_prEdit, (_prEdit.quando && _prEdit.quando.tipo === 'dia' && _prEdit.quando.data) ? new Date(_prEdit.quando.data + 'T00:00:00') : undefined) : ''; } _pdFit(); setTimeout(_pdFit, 60); }
+    function prev(){ var box = $('prPrev'); if(!box) return; box.style.setProperty('--pd-fundo', '#fbf8f2'); if(!(_prEdit.texto || '').trim()){ box.innerHTML = '<div style="color:#b9ab8e;font-size:.82rem;">' + ((_prEdit.auto === 'pratoDia') ? 'Escreve os pratos para veres a pré-visualização.' : 'Escreve o texto para veres a pré-visualização.') + '</div>'; } else { box.innerHTML = (typeof window.__amPromoCard === 'function') ? window.__amPromoCard(_prEdit, _prDataDe(_prDiaVer(_prEdit))) : ''; } _pdFit(); setTimeout(_pdFit, 60); }
     if(!_prEdit.quando) _prEdit.quando = { tipo:'dia', data:_prHoje() };
     if(_prEdit.quando.tipo === 'semanal' && !Array.isArray(_prEdit.quando.dias)) _prEdit.quando.dias = [];
     pintaTipo(); pintaDias(); pintaEst(); prev();
@@ -3189,6 +3199,15 @@
     html += '<button class="nova-btn" id="btnNova" type="button">➕ Nova reserva</button>' + _formNovaHTML();
     if(!rs.length) html += '<div style="color:#8a7a5c; font-size:.9rem;">Sem reservas neste dia.</div>';
     html += '</div>';
+    // 🏷️ promoção / prato do dia que o menu mostra neste dia (se houver)
+    const _prD = _prResolver(_prLista(), iso);
+    if(_prD){
+      html += '<div class="card" style="overflow:hidden;"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:4px;">'
+        + '<div style="font-weight:800;color:#c01e50;">🏷️ ' + (_prD.auto === 'pratoDia' ? (_prD.semPD ? 'Sugestão' : (_prD.sugestao ? 'Prato do dia e Sugestão' : 'Prato do dia')) : 'Promoção') + ' neste dia</div>'
+        + '<button type="button" id="diaPromoEd" class="pdf-btn" style="margin:0;padding:6px 12px;font-size:.8rem;">✏️ Editar</button></div>'
+        + '<div style="font-size:.78rem;color:#8a7a5c;">' + esc(_prQuandoTxt(_prD.quando)) + esc(_prHoraTxt(_prD)) + '</div>'
+        + _prCartaoPrev(_prD, iso) + '</div>';
+    }
     rs.forEach(function(r){
       if(r.estado === 'cancelada'){
         // cancelada (pelo cliente ou pelo restaurante): fica à vista até o dono a enviar para a pasta
@@ -3209,6 +3228,8 @@
     html += _histHTML((porDia[iso] || []).filter(function(r){ return r.estado === 'cancelada' && r.arquivada; }).sort(function(a,b){ return (a.hora||'').localeCompare(b.hora||''); }), 'Pasta das canceladas neste dia');
     $('detalhe').innerHTML = html;
     _wireNova(iso);
+    const _bPr = $('diaPromoEd'); if(_bPr && _prD) _bPr.onclick = function(){ _prAbrir(_prD.id); };
+    if(_prD){ try{ _pdFit(); setTimeout(_pdFit, 60); }catch(e){} }
     $('detalhe').querySelectorAll('.r-hist .linha-r').forEach(function(el){ el.onclick = function(){ abrirModalEdicao(el.getAttribute('data-id')); }; });
     $('detalhe').querySelectorAll('[data-a]').forEach(function(btn){ btn.onclick = function(){ accao(btn.getAttribute('data-id'), btn.getAttribute('data-a')); }; });
   }
