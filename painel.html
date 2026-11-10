@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <script>/* Domínio oficial: se abrir pelo GitHub Pages, salta para o amesadigital.pt */(function(){try{if(/github\.io$/i.test(location.hostname)){location.replace('https://amesadigital.pt'+location.pathname.replace(/^\/Multitask/i,'')+location.search+location.hash);}}catch(e){}})();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Painel — àMesa</title>
+<title>Painel — Multitask</title>
 <style>
   :root{ --castanho:#3a2c18; --dourado:#a8712f; --dourado-escuro:#6b4a1f; --bege:#f5efe2; --bege-claro:#fbf8f2; --linha:#e3d9c4; --verde:#2e9b57; --vermelho:#c0392b; --azul:#2a5aa8; }
   *{ box-sizing:border-box; }
@@ -116,7 +116,7 @@
 </head>
 <body>
 <header class="top">
-  <h1>🍀 àMesa — Painel</h1>
+  <h1>🍀 Multitask — Painel</h1>
 </header>
 
 <div class="wrap">
@@ -168,7 +168,7 @@
 
         <section class="tab-panel hide" data-panel="inicio">
           <div class="ini-ola">Olá Fernando 👋</div>
-          <div class="ini-sub">Escolhe o que queres fazer. Cada cor é uma área do àMesa e repete-se na barra à esquerda.</div>
+          <div class="ini-sub">Escolhe o que queres fazer. Cada cor é uma área do Multitask e repete-se na barra à esquerda.</div>
 
           <div class="ini-sec ar-rest">Restaurantes</div>
           <div class="ini-grid">
@@ -221,6 +221,8 @@
       </div>
       <label for="nEmailDono">Email do dono (para ele entrar no editor)</label>
       <input type="email" id="nEmailDono" placeholder="dono@exemplo.com (podes deixar em branco e definir depois)">
+      <label for="nSetor">Tipo de negócio</label>
+      <select id="nSetor"><option value="restauracao">🍽️ Restauração (àMesa)</option><option value="beleza">💆 Beleza e bem-estar</option></select>
 
       <div style="margin-top:12px;"><button class="acao" id="btnCriar">Criar negócio</button></div>
       <div id="criarMsg"></div>
@@ -597,6 +599,8 @@
     const div = document.createElement('div'); div.className = 'neg'; div.dataset.slug = n.slug;
     const planoBadge = '<span class="badge b-' + (ent.plano||'basico') + '">' + (ent.plano||'basico') + '</span>';
     const estadoBadge = n.ativo ? '' : ' <span class="badge b-off">suspenso</span>';
+    const _setor = (n.config && n.config.setor) || 'restauracao';
+    const setorBadge = ' <span class="badge" style="background:' + (_setor === 'beleza' ? '#fbe8f3;color:#a3367a' : '#fbf1e2;color:#8a5a1c') + ';">' + (_setor === 'beleza' ? '💆 beleza' : '🍽️ restauração') + '</span>';
     const _rSoma = Number(n.rating_soma) || 0, _rCont = Number(n.rating_contagem) || 0;
     const _rMedia = _rCont > 0 ? (_rSoma / _rCont) : 0;
     const _rEstrelas = _rCont > 0 ? ('★'.repeat(Math.round(_rMedia)) + '☆'.repeat(5 - Math.round(_rMedia))) : '☆☆☆☆☆';
@@ -607,7 +611,7 @@
       ratingLinha;
     div.innerHTML =
       '<div class="neg-top">' +
-        '<div><div class="neg-nome">' + n.nome + ' ' + planoBadge + estadoBadge + '</div><div class="neg-slug">/' + n.slug + '</div>' +
+        '<div><div class="neg-nome">' + n.nome + ' ' + planoBadge + setorBadge + estadoBadge + '</div><div class="neg-slug">/' + n.slug + '</div>' +
           '<div class="neg-slug" style="margin-top:2px; color:' + (n.dono_email ? '#5a7a8a' : '#c05a3a') + ';">👤 ' + (n.dono_email ? n.dono_email : 'sem dono definido') + '</div>' +
           metLinha + '</div>' +
         '<div style="display:flex; gap:6px; flex-wrap:wrap;">' +
@@ -624,6 +628,8 @@
         '<div class="linha-pub" style="background:#fff6f0; border:1.5px solid #c05a3a; border-radius:9px; padding:9px 11px;"><input type="checkbox" data-oculto' + ((n.config && n.config.oculto === true) ? ' checked' : '') + '> <label style="margin:0; color:#a3452b; font-weight:700;">🙈 Esconder da àMesa (montra pública)</label></div>' +
         '<div class="linha-pub" style="background:#fbf6e6; border:1.5px solid #c9a24a; border-radius:9px; padding:9px 11px; flex-wrap:wrap;"><input type="checkbox" data-exemplo' + ((n.config && n.config.exemplo === true) ? ' checked' : '') + '> <label style="margin:0; color:#7a5320; font-weight:700;">⭐ Usar como exemplo no formulário de registo</label>' +
           '<input type="text" data-exdesc value="' + ((n.config && n.config.exemploDesc) || '').replace(/"/g, '&quot;') + '" placeholder="Frase curta que o cliente vê (ex.: Clássico e elegante, ideal para marisqueiras)" style="flex-basis:100%; margin-top:7px;"></div>' +
+        '<label style="margin-top:12px;">Tipo de negócio</label><select data-setor>' + '<option value="restauracao">🍽️ Restauração (àMesa)</option><option value="beleza">💆 Beleza e bem-estar</option>'.replace('value="' + _setor + '"', 'value="' + _setor + '" selected') + '</select>' +
+        '<div style="font-size:.74rem;color:#9a8b6f;margin-top:3px;">Só os negócios de restauração aparecem na montra da àMesa.</div>' +
         '<label style="margin-top:12px;">Tipo de cozinha (filtro da àMesa)</label><input type="text" data-tipo value="' + ((n.config && n.config.tipo) || '').replace(/"/g, '&quot;') + '" placeholder="Ex.: Português, Pizzaria, Sushi, Pastelaria…">' +
         '<div style="margin-top:14px; font-size:.82rem; color:#7a5320; background:#fbf6e6; border:1.5px solid #e9d6a6; border-radius:9px; padding:9px 11px;">✨ <b>Extras:</b> ' + (function(){ const ex = funcoes.extras; if(!ex || typeof ex !== 'object') return 'todos desbloqueados (restaurante antigo)'; const n = Object.keys(ex).filter(function(k){ return ex[k] === true; }).length; return n + ' desbloqueado(s)'; })() + ' — ligam-se e desligam-se na <b>Gestão</b> deste restaurante (botão 📅 abaixo → Extras).</div>' +
         '<div style="margin-top:12px; font-size:.78rem; color:#9a8b6f; background:#fbf8f2; border:1px solid var(--linha); border-radius:8px; padding:8px 10px;">🗂 Pasta das imagens no Storage: <code style="color:var(--castanho); font-weight:700;">imagens/' + n.slug + '/</code><br><span style="color:#b3a68a;">O slug (<code>/' + n.slug + '</code>) é fixo e não muda quando alteras o nome — por isso a pasta mantém sempre este nome.</span></div>' +
@@ -686,6 +692,8 @@
       intro:  { ativo:false },
       oculto: true   // nasce escondido da montra; publica-se desmarcando "Esconder da àMesa"
     };
+    // Multitask: tipo de negócio (sem valor = restauração, como todos os negócios antigos)
+    { const _st = $('nSetor') ? $('nSetor').value : ''; if(_st && _st !== 'restauracao') config.setor = _st; }
     const menu = { restaurante:'', categorias:[] };
     const { data:neg, error } = await sb.from('negocios').insert({ nome:nome, slug:slug, dono_email:emailDono || null, config:config, menu:menu }).select().single();
     if(error){ $('btnCriar').disabled = false; msg($('criarMsg'), 'Erro: ' + error.message, 'erro'); return; }
@@ -695,7 +703,7 @@
     const { error:e2 } = await sb.from('entitlements').insert({ negocio_id:neg.id, plano:plano, funcoes:funcoes, publicidade:publicidade });
     $('btnCriar').disabled = false;
     if(e2){ msg($('criarMsg'), 'Negócio criado, mas erro nas permissões: ' + e2.message, 'erro'); }
-    else { msg($('criarMsg'), 'Negócio "' + nome + '" criado ✓. Abre o editor para começar do zero.', 'ok'); $('nNome').value=''; $('nSlug').value=''; $('nEmailDono').value=''; }
+    else { msg($('criarMsg'), 'Negócio "' + nome + '" criado ✓. Abre o editor para começar do zero.', 'ok'); $('nNome').value=''; $('nSlug').value=''; $('nEmailDono').value=''; if($('nSetor')) $('nSetor').value = 'restauracao'; }
     await carregar();
     try{ if(window.__abrirNeg) window.__abrirNeg(slug); }catch(e){}
   }
@@ -934,6 +942,7 @@
       _cfg = Object.assign({}, _cfg);
       _cfg.oculto = !!(_ocEl && _ocEl.checked);
       _cfg.tipo = (_tpEl ? _tpEl.value : '').trim();
+      { const _seEl = div.querySelector('[data-setor]'); const _sv = _seEl ? _seEl.value : ''; if(_sv && _sv !== 'restauracao') _cfg.setor = _sv; else delete _cfg.setor; }   // Multitask: tipo de negócio
       // Exemplo do formulário de registo
       { const _exEl = div.querySelector('[data-exemplo]'), _exD = div.querySelector('[data-exdesc]');
         if(_exEl && _exEl.checked){ _cfg.exemplo = true; } else { delete _cfg.exemplo; }
