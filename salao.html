@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Marcações</title>
+<meta name="description" content="Veja os serviços e peça a sua marcação.">
+<meta name="theme-color" content="#8E3653">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  /* Multitask — página do cliente de um salão (Beleza e bem-estar). Não é usada pelos restaurantes. */
+  :root{ --ac:#8E3653; --ink:#1F1C1A; --suave:#6B625C; --linha:#E6E0DA; --borda:#DDD6D0; --fundo:#F6F4F2; --verde:#3F5A47; --verde-f:#EEF2EE; }
+  *{ box-sizing:border-box; }
+  body{ margin:0; background:var(--fundo); color:var(--ink); font-family:Manrope, system-ui, -apple-system, sans-serif; -webkit-text-size-adjust:100%; }
+  button, input, textarea, select{ font-family:inherit; }
+  button{ cursor:pointer; }
+  a{ color:var(--ac); }
+  .hide{ display:none !important; }
+  .topo{ background:var(--ac); color:#fff; }
+  .topo-in{ max-width:1180px; margin:0 auto; padding:22px 20px 20px; display:flex; flex-wrap:wrap; gap:14px; align-items:flex-end; }
+  .topo-tx{ flex:1 1 260px; display:flex; flex-direction:column; gap:6px; }
+  .topo-sup{ font-size:12px; font-weight:700; letter-spacing:1.6px; text-transform:uppercase; opacity:.85; }
+  .topo h1{ margin:0; font-size:28px; font-weight:800; line-height:1.1; }
+  .topo-info{ font-size:14px; opacity:.92; }
+  .topo-acoes{ display:flex; gap:8px; flex-wrap:wrap; }
+  .topo-acoes a{ color:#fff; text-decoration:none; border:1.5px solid rgba(255,255,255,.55); border-radius:999px; padding:9px 14px; font-weight:700; font-size:14px; }
+  .cats{ max-width:1180px; margin:0 auto; padding:14px 16px 4px; display:flex; gap:8px; overflow-x:auto; scrollbar-width:none; }
+  .cats::-webkit-scrollbar{ display:none; }
+  .cat{ border:1.5px solid var(--borda); background:#fff; color:var(--ink); border-radius:999px; padding:9px 15px; font-weight:700; font-size:14px; white-space:nowrap; }
+  .cat.on{ background:var(--ink); border-color:var(--ink); color:#fff; }
+  .wrap{ max-width:1180px; margin:0 auto; padding:10px 16px 120px; display:flex; flex-wrap:wrap; gap:28px; align-items:flex-start; }
+  .col-serv{ flex:999 1 560px; min-width:0; display:flex; flex-direction:column; gap:22px; }
+  .grupo h2{ margin:0 0 10px; font-size:13px; font-weight:800; letter-spacing:1.3px; text-transform:uppercase; color:var(--suave); }
+  .grelha{ display:grid; grid-template-columns:repeat(auto-fill, minmax(250px, 1fr)); gap:10px; }
+  .serv{ background:#fff; border-radius:14px; padding:14px; display:flex; flex-direction:column; gap:6px; box-shadow:0 1px 2px rgba(31,28,26,.06); border:2px solid transparent; }
+  .serv.sel{ border-color:var(--ac); }
+  .serv-nome{ font-size:16px; font-weight:700; }
+  .serv-desc{ font-size:14px; color:var(--suave); line-height:1.45; }
+  .serv-pe{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:4px; }
+  .serv-info{ font-size:14px; font-weight:700; }
+  .btn-ac{ border:none; border-radius:10px; min-height:44px; padding:0 16px; background:var(--ac); color:#fff; font-weight:800; font-size:14px; }
+  .btn-ac:disabled{ opacity:.5; cursor:default; }
+  .btn-sec{ border:1.5px solid var(--borda); border-radius:10px; min-height:44px; padding:0 14px; background:#fff; color:var(--ink); font-weight:700; font-size:14px; }
+  .vaga{ background:var(--verde-f); border-radius:14px; padding:14px; display:flex; flex-direction:column; gap:4px; color:var(--verde); }
+  .vaga b{ color:var(--ink); }
+  /* painel do pedido: ao lado no computador, folha por baixo no telemóvel */
+  .painel{ flex:1 1 340px; max-width:430px; background:#fff; border-radius:18px; padding:22px; display:flex; flex-direction:column; gap:16px; box-shadow:0 2px 10px rgba(31,28,26,.06); position:sticky; top:16px; }
+  .painel h3{ margin:0; font-size:20px; font-weight:800; }
+  .rot{ font-size:13px; font-weight:800; }
+  .esc{ background:var(--fundo); border-radius:12px; padding:12px 14px; display:flex; flex-direction:column; gap:2px; }
+  .esc small{ font-size:12px; font-weight:700; color:var(--suave); }
+  .dias{ display:flex; gap:6px; overflow-x:auto; padding-bottom:4px; scrollbar-width:thin; }
+  .dia{ flex:0 0 62px; border-radius:12px; min-height:60px; border:1.5px solid var(--borda); background:#fff; color:var(--ink); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px; }
+  .dia span{ font-size:12px; font-weight:700; opacity:.8; }
+  .dia b{ font-size:18px; }
+  .dia.on{ background:var(--ac); border-color:var(--ac); color:#fff; }
+  .dia:disabled{ opacity:.4; cursor:default; }
+  .horas{ display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:6px; }
+  .hora{ border-radius:10px; min-height:44px; border:1.5px solid var(--borda); background:#fff; color:var(--ink); font-weight:700; font-size:14px; }
+  .hora.on{ background:var(--ac); border-color:var(--ac); color:#fff; }
+  .hora:disabled{ border-style:dashed; background:transparent; color:#8A817A; text-decoration:line-through; cursor:default; }
+  .campos{ display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:10px; }
+  .campo{ display:flex; flex-direction:column; gap:4px; }
+  .campo label{ font-size:13px; font-weight:700; }
+  .campo input, .campo textarea{ border:1.5px solid var(--borda); border-radius:10px; padding:12px; font-size:16px; background:#fff; color:var(--ink); }
+  .nota{ font-size:12px; color:var(--suave); }
+  .msg{ font-size:14px; font-weight:700; }
+  .msg.erro{ color:#A3262A; } .msg.ok{ color:var(--verde); }
+  .minhas{ display:flex; flex-direction:column; gap:10px; }
+  .minha{ background:#fff; border-radius:14px; padding:14px; display:flex; flex-direction:column; gap:8px; box-shadow:0 1px 2px rgba(31,28,26,.06); }
+  .estado{ display:inline-block; border-radius:999px; padding:3px 10px; font-size:12px; font-weight:800; }
+  .e-pendente{ background:#FFF3DF; color:#8A5A10; } .e-confirmada{ background:var(--verde-f); color:var(--verde); } .e-cancelada{ background:#F4E7E7; color:#8A2A2A; } .e-proposta{ background:#F3E6EA; color:var(--ac); }
+  .barra{ display:none; }
+  .fechar-folha{ display:none; }
+  @media (max-width: 860px){
+    .painel{ position:fixed; left:0; right:0; bottom:0; top:auto; max-width:none; max-height:92vh; overflow-y:auto; border-radius:20px 20px 0 0; z-index:20; transform:translateY(105%); transition:transform .3s cubic-bezier(.2,.8,.2,1); padding-bottom:calc(22px + env(safe-area-inset-bottom)); }
+    .painel.aberto{ transform:translateY(0); }
+    .fundo-folha{ position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:19; }
+    .fechar-folha{ display:inline-flex; position:absolute; right:14px; top:14px; width:44px; height:44px; border:none; border-radius:12px; background:var(--fundo); align-items:center; justify-content:center; font-size:20px; }
+    .barra{ display:flex; position:fixed; left:0; right:0; bottom:0; padding:12px 16px calc(14px + env(safe-area-inset-bottom)); background:rgba(246,244,242,.96); border-top:1px solid var(--linha); z-index:10; }
+    .barra a, .barra button{ flex:1; }
+    .topo h1{ font-size:26px; }
+    .campos{ grid-template-columns:1fr; }
+  }
+  .vazio{ background:#fff; border-radius:14px; padding:24px; text-align:center; color:var(--suave); }
+</style>
+</head>
+<body>
+<header class="topo">
+  <div class="topo-in">
+    <div class="topo-tx">
+      <div class="topo-sup">Beleza e bem-estar</div>
+      <h1 id="nomeSalao">…</h1>
+      <div class="topo-info" id="infoSalao"></div>
+    </div>
+    <div class="topo-acoes" id="acoesSalao"></div>
+  </div>
+</header>
+<nav class="cats" id="cats" aria-label="Categorias de serviços"></nav>
+<main class="wrap">
+  <div class="col-serv">
+    <section id="secMinhas" class="hide">
+      <div class="grupo"><h2>As minhas marcações</h2></div>
+      <div class="minhas" id="minhas"></div>
+    </section>
+    <div id="servicos" style="display:flex;flex-direction:column;gap:22px;"><div class="vazio">A carregar…</div></div>
+    <div class="nota" id="politica"></div>
+  </div>
+  <aside class="painel" id="painel" aria-label="Pedir marcação">
+    <button type="button" class="fechar-folha" id="fecharFolha" aria-label="Fechar">✕</button>
+    <h3>Pedir marcação</h3>
+    <div class="esc" id="escServ"><small>Serviço</small><span id="escServNome">Escolha um serviço na lista</span></div>
+    <div id="passoDia" class="hide" style="display:flex;flex-direction:column;gap:8px;">
+      <div class="rot">Dia</div>
+      <div class="dias" id="dias"></div>
+    </div>
+    <div id="passoHora" class="hide" style="display:flex;flex-direction:column;gap:8px;">
+      <div class="rot" id="rotHora">Hora que prefere</div>
+      <div class="horas" id="horas"></div>
+      <div class="nota">As horas riscadas já estão ocupadas. O salão confirma ou propõe outra hora.</div>
+    </div>
+    <div id="passoDados" class="hide" style="display:flex;flex-direction:column;gap:10px;">
+      <div class="campos">
+        <div class="campo"><label for="pNome">Nome</label><input id="pNome" type="text" autocomplete="name" maxlength="80"></div>
+        <div class="campo"><label for="pTel">Telemóvel</label><input id="pTel" type="tel" autocomplete="tel" inputmode="tel" maxlength="20"></div>
+      </div>
+      <div class="campo"><label for="pObs">Observações <span style="font-weight:400;color:var(--suave);">(opcional)</span></label><textarea id="pObs" rows="2" maxlength="300"></textarea></div>
+      <button type="button" class="btn-ac" id="btnEnviar">Enviar pedido</button>
+      <div class="nota">O salão confirma ou propõe outra hora. Pode receber a resposta por notificação.</div>
+    </div>
+    <div class="msg" id="pMsg" role="status"></div>
+  </aside>
+</main>
+<div class="barra" id="barra"><button type="button" class="btn-ac" id="btnBarra" style="min-height:50px;font-size:15px;">Pedir marcação</button></div>
+
+<script>
+(function(){
+  var SUPA_URL = 'https://zewiijcrkyxjkhudlplk.supabase.co';
+  var SUPA_KEY = 'sb_publishable_6LP7x2v5c-c9DQkQslnUmA_g13SEjp3';
+  var VAPID_PUB = 'BOXUnQlON7ETx2-D9E9A3nPONd4xdujOUp2UFFpMGe_0V00njcbxAL-4ETDVpHG7s68Jz1tARbDJ83X75-2irg4';
+  var HDR = { apikey:SUPA_KEY, Authorization:'Bearer ' + SUPA_KEY, 'Content-Type':'application/json' };
+  var params = new URLSearchParams(location.search);
+  var SLUG = (params.get('n') || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  var NEG = null, CFG = {}, SAL = {}, SERV = [];
+  var sel = { serv:null, dia:null, hora:null };
+  var DIAS_C = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'], DIAS_L = ['domingo','segunda','terça','quarta','quinta','sexta','sábado'];
+  var MESES = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+  function $(id){ return document.getElementById(id); }
+  function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]; }); }
+  function iso(d){ return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
+  function minDe(h){ var m = /^(\d{1,2}):(\d{2})$/.exec(String(h || '')); return m ? (+m[1]) * 60 + (+m[2]) : null; }
+  function hDe(min){ return String(Math.floor(min / 60)).padStart(2,'0') + ':' + String(min % 60).padStart(2,'0'); }
+  function precoTxt(v){ v = String(v == null ? '' : v).trim(); if(!v) return ''; var m = /^(\d+)(?:[.,](\d{1,2}))?\s*€?$/.exec(v); return m ? (m[1] + ',' + ((m[2] || '') + '00').slice(0,2) + ' €') : v; }
+  function durTxt(m){ m = +m || 0; if(m < 60) return m + ' min'; var h = Math.floor(m / 60), r = m % 60; return h + ' h' + (r ? (' ' + r) : ''); }
+  function quando(dIso, h){ var d = new Date(dIso + 'T00:00:00'); return DIAS_C[d.getDay()] + ' ' + d.getDate() + ' ' + MESES[d.getMonth()] + (h ? (' · ' + h) : ''); }
+  function rpc(nome, args){ return fetch(SUPA_URL + '/rest/v1/rpc/' + nome, { method:'POST', headers:HDR, body:JSON.stringify(args || {}) }).then(function(r){ return r.text().then(function(t){ var j = null; try{ j = t ? JSON.parse(t) : null; }catch(e){} if(!r.ok) throw new Error((j && (j.message || j.hint)) || ('erro ' + r.status)); return j; }); }); }
+  function msg(t, tipo){ var m = $('pMsg'); m.textContent = t || ''; m.className = 'msg' + (tipo ? (' ' + tipo) : ''); }
+
+  // ---------- configuração do salão ----------
+  function horarioDe(wd){ var h = (SAL.horario || {})[String(wd)]; if(h === undefined) h = (wd === 0) ? null : ['09:00','19:00']; return (Array.isArray(h) && minDe(h[0]) != null && minDe(h[1]) != null) ? h : null; }
+  function passo(){ var p = parseInt(SAL.passo, 10); return [10,15,20,30,45,60].indexOf(p) >= 0 ? p : 30; }
+  function antecedencia(){ var a = parseInt(SAL.antecedencia, 10); return isNaN(a) ? 60 : Math.max(0, a); }
+  function diasMax(){ var d = parseInt(SAL.diasMax, 10); return isNaN(d) ? 30 : Math.max(1, Math.min(120, d)); }
+  function fechadoEm(dIso){ var f = Array.isArray(SAL.fechos) ? SAL.fechos : []; return f.some(function(x){ return x && x.de && dIso >= x.de && dIso <= (x.ate || x.de); }); }
+
+  function carregar(){
+    if(!SLUG){ $('servicos').innerHTML = '<div class="vazio">Falta o endereço do salão.</div>'; return; }
+    fetch(SUPA_URL + '/rest/v1/negocios?slug=eq.' + encodeURIComponent(SLUG) + '&apagado_em=is.null&select=id,nome,ativo,config', { headers:HDR })
+      .then(function(r){ return r.json(); }).then(function(rows){
+        NEG = (rows || [])[0];
+        if(!NEG){ $('servicos').innerHTML = '<div class="vazio">Não encontrámos este salão.</div>'; return; }
+        CFG = NEG.config || {};
+        if(CFG.setor !== 'beleza'){ location.replace('/cardapio.html?n=' + encodeURIComponent(SLUG)); return; }
+        SAL = CFG.salao || {}; SERV = (Array.isArray(CFG.servicos) ? CFG.servicos : []).filter(function(s){ return s && s.id && s.nome && !s.oculto; });
+        if(NEG.ativo === false){ $('servicos').innerHTML = '<div class="vazio">Este salão não está disponível de momento.</div>'; }
+        pintarTopo(); pintarServicos(); pintarMinhas();
+        var sid = params.get('s'); if(sid){ var s = SERV.filter(function(x){ return x.id === sid; })[0]; if(s) escolherServ(s); }
+      }).catch(function(){ $('servicos').innerHTML = '<div class="vazio">Sem ligação. Tente outra vez daqui a pouco.</div>'; });
+  }
+
+  function pintarTopo(){
+    var cor = /^#[0-9a-fA-F]{6}$/.test(SAL.cor || '') ? SAL.cor : '#8E3653';
+    document.documentElement.style.setProperty('--ac', cor);
+    var mt = document.querySelector('meta[name="theme-color"]'); if(mt) mt.content = cor;
+    var nome = SAL.nome || NEG.nome || 'Salão'; document.title = nome + ' · Marcações';
+    $('nomeSalao').textContent = nome;
+    var hojeH = horarioDe(new Date().getDay());
+    var info = [SAL.frase, SAL.morada, (hojeH ? ('Hoje ' + hojeH[0] + '–' + hojeH[1]) : 'Hoje fechado')].filter(Boolean).map(esc).join(' · ');
+    $('infoSalao').innerHTML = info;
+    var ac = '';
+    if(SAL.telefone) ac += '<a href="tel:' + esc(String(SAL.telefone).replace(/\s/g,'')) + '">Ligar</a>';
+    if(SAL.whatsapp){ var w = String(SAL.whatsapp).replace(/\D/g,''); if(w.length === 9) w = '351' + w; ac += '<a href="https://wa.me/' + esc(w) + '" target="_blank" rel="noopener">WhatsApp</a>'; }
+    if(SAL.instagram){ var ig = String(SAL.instagram).replace(/^@/, '').replace(/^https?:\/\/(www\.)?instagram\.com\//, '').replace(/\/.*$/, ''); ac += '<a href="https://instagram.com/' + esc(ig) + '" target="_blank" rel="noopener">Instagram</a>'; }
+    if(SAL.morada) ac += '<a href="https://maps.google.com/?q=' + encodeURIComponent(SAL.morada) + '" target="_blank" rel="noopener">Mapa</a>';
+    $('acoesSalao').innerHTML = ac;
+    $('politica').textContent = SAL.politica || '';
+  }
+
+  var catSel = '';
+  function cats(){ var c = []; SERV.forEach(function(s){ var k = (s.cat || 'Serviços').trim(); if(c.indexOf(k) < 0) c.push(k); }); return c; }
+  function pintarServicos(){
+    var cs = cats();
+    $('cats').innerHTML = cs.length > 1 ? (['<button type="button" class="cat' + (catSel ? '' : ' on') + '" data-c="">Todos</button>'].concat(cs.map(function(c){ return '<button type="button" class="cat' + (catSel === c ? ' on' : '') + '" data-c="' + esc(c) + '">' + esc(c) + '</button>'; })).join('')) : '';
+    $('cats').querySelectorAll('[data-c]').forEach(function(b){ b.onclick = function(){ catSel = b.getAttribute('data-c'); pintarServicos(); }; });
+    if(!SERV.length){ $('servicos').innerHTML = '<div class="vazio">Este salão ainda não publicou os serviços.</div>'; return; }
+    var html = '';
+    var vg = Array.isArray(SAL.vagas) ? SAL.vagas.filter(function(v){ return v && v.data >= iso(new Date()) && v.texto; }) : [];
+    vg.slice(0, 2).forEach(function(v){ html += '<div class="vaga"><div style="font-size:12px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;">Vaga de última hora</div><b>' + esc(quando(v.data, v.hora)) + '</b><div>' + esc(v.texto) + '</div></div>'; });
+    cs.filter(function(c){ return !catSel || c === catSel; }).forEach(function(c){
+      html += '<section class="grupo"><h2>' + esc(c) + '</h2><div class="grelha">';
+      SERV.filter(function(s){ return (s.cat || 'Serviços').trim() === c; }).forEach(function(s){
+        var on = sel.serv && sel.serv.id === s.id;
+        var p = precoTxt(s.preco);
+        html += '<div class="serv' + (on ? ' sel' : '') + '"><div class="serv-nome">' + esc(s.nome) + '</div>'
+          + (s.desc ? ('<div class="serv-desc">' + esc(s.desc) + '</div>') : '')
+          + '<div class="serv-pe"><span class="serv-info">' + esc(durTxt(s.dur)) + (p ? (' · ' + esc(p)) : '') + '</span>'
+          + (s.online === false ? '<span class="nota">Marcação por telefone</span>' : ('<button type="button" class="btn-ac" data-s="' + esc(s.id) + '">' + (on ? 'Escolhido' : 'Marcar') + '</button>'))
+          + '</div></div>';
+      });
+      html += '</div></section>';
+    });
+    $('servicos').innerHTML = html;
+    $('servicos').querySelectorAll('[data-s]').forEach(function(b){ b.onclick = function(){ var s = SERV.filter(function(x){ return x.id === b.getAttribute('data-s'); })[0]; if(s){ escolherServ(s); abrirFolha(); } }; });
+  }
+
+  // ---------- pedido ----------
+  function escolherServ(s){
+    sel.serv = s; sel.hora = null; msg('');
+    $('escServNome').innerHTML = '<b>' + esc(s.nome) + '</b> · ' + esc(durTxt(s.dur)) + (precoTxt(s.preco) ? (' · ' + esc(precoTxt(s.preco))) : '');
+    $('passoDia').classList.remove('hide'); pintarDias(); pintarServicos();
+  }
+  function pintarDias(){
+    var h = new Date(); h.setHours(0,0,0,0); var html = '', primeiro = null;
+    for(var i = 0; i < diasMax(); i++){
+      var d = new Date(h); d.setDate(h.getDate() + i); var k = iso(d);
+      var aberto = !!horarioDe(d.getDay()) && !fechadoEm(k);
+      if(aberto && !primeiro) primeiro = k;
+      html += '<button type="button" class="dia' + (sel.dia === k ? ' on' : '') + '" data-d="' + k + '"' + (aberto ? '' : ' disabled') + '><span>' + DIAS_C[d.getDay()] + '</span><b>' + d.getDate() + '</b><span>' + MESES[d.getMonth()] + '</span></button>';
+    }
+    $('dias').innerHTML = html;
+    $('dias').querySelectorAll('[data-d]').forEach(function(b){ b.onclick = function(){ sel.dia = b.getAttribute('data-d'); sel.hora = null; pintarDias(); pintarHoras(); }; });
+    if(!sel.dia && primeiro){ sel.dia = primeiro; pintarDias(); pintarHoras(); }
+  }
+  function pintarHoras(){
+    if(!sel.serv || !sel.dia) return;
+    $('passoHora').classList.remove('hide');
+    var d = new Date(sel.dia + 'T00:00:00'); $('rotHora').textContent = 'Hora que prefere · ' + DIAS_L[d.getDay()] + ', ' + d.getDate() + ' ' + MESES[d.getMonth()];
+    $('horas').innerHTML = '<div class="nota" style="grid-column:1/-1;">A ver as horas livres…</div>';
+    var dia = sel.dia;
+    rpc('marcacoes_ocupadas', { p_negocio:NEG.id, p_dia:dia }).then(function(ocup){
+      if(dia !== sel.dia) return;
+      var hh = horarioDe(d.getDay()); if(!hh){ $('horas').innerHTML = '<div class="nota">Fechado neste dia.</div>'; return; }
+      var ini = minDe(hh[0]), fim = minDe(hh[1]), dur = Math.max(5, +sel.serv.dur || 30), pas = passo();
+      var agora = new Date(), minAgora = (dia === iso(agora)) ? (agora.getHours() * 60 + agora.getMinutes() + antecedencia()) : -1;
+      var ocupados = (ocup || []).map(function(o){ var a = minDe(o.hora); return a == null ? null : [a, a + (+o.duracao || 30)]; }).filter(Boolean);
+      var html = '', livres = 0;
+      for(var t = ini; t + dur <= fim; t += pas){
+        var ocupado = ocupados.some(function(o){ return o[0] < t + dur && t < o[1]; }) || t < minAgora;
+        if(!ocupado) livres++;
+        var hs = hDe(t);
+        html += '<button type="button" class="hora' + (sel.hora === hs ? ' on' : '') + '" data-h="' + hs + '"' + (ocupado ? ' disabled' : '') + '>' + hs.replace(':', 'h') + '</button>';
+      }
+      $('horas').innerHTML = livres ? html : '<div class="nota" style="grid-column:1/-1;">Sem horas livres neste dia para este serviço. Escolha outro dia.</div>';
+      $('horas').querySelectorAll('[data-h]').forEach(function(b){ b.onclick = function(){ sel.hora = b.getAttribute('data-h'); pintarHoras(); $('passoDados').classList.remove('hide'); $('btnEnviar').textContent = 'Enviar pedido · ' + quando(sel.dia, sel.hora); }; });
+    }).catch(function(){ $('horas').innerHTML = '<div class="nota" style="grid-column:1/-1;">Não foi possível ver as horas. Tente outra vez.</div>'; });
+  }
+  function guardados(){ try{ return JSON.parse(localStorage.getItem('salao_marc_' + SLUG) || '[]') || []; }catch(e){ return []; } }
+  function guardar(l){ try{ localStorage.setItem('salao_marc_' + SLUG, JSON.stringify(l.slice(-20))); }catch(e){} }
+  $('btnEnviar').onclick = function(){
+    var nome = $('pNome').value.trim(), tel = $('pTel').value.trim(), obs = $('pObs').value.trim();
+    if(!sel.serv || !sel.dia || !sel.hora){ msg('Escolha o serviço, o dia e a hora.', 'erro'); return; }
+    if(!nome || tel.replace(/\D/g,'').length < 9){ msg('Escreva o nome e um telemóvel válido.', 'erro'); return; }
+    var b = $('btnEnviar'); b.disabled = true; msg('A enviar…');
+    try{ localStorage.setItem('salao_cliente', JSON.stringify({ nome:nome, tel:tel })); }catch(e){}
+    rpc('criar_marcacao', { p_negocio:NEG.id, p_data:sel.dia, p_hora:sel.hora, p_nome:nome, p_tel:tel, p_servico:sel.serv.id, p_obs:obs || null }).then(function(id){
+      var l = guardados(); l.push({ id:id, servico:sel.serv.nome, data:sel.dia, hora:sel.hora }); guardar(l);
+      b.disabled = false; msg('');
+      sel = { serv:null, dia:null, hora:null };
+      ['passoDia','passoHora','passoDados'].forEach(function(k){ $(k).classList.add('hide'); });
+      $('escServNome').textContent = 'Escolha um serviço na lista'; $('pObs').value = '';
+      fecharFolha(); pintarServicos(); pintarMinhas(true);
+      try{ window.scrollTo({ top:0, behavior:'smooth' }); }catch(e){}
+    }).catch(function(e){
+      b.disabled = false; var t = String(e.message || e);
+      msg(/ocupado/.test(t) ? 'Essa hora acabou de ficar ocupada. Escolha outra.' : /faltam_dados/.test(t) ? 'Escreva o nome e um telemóvel válido.' : /servico_invalido/.test(t) ? 'Este serviço já não está disponível.' : /function|does not exist|PGRST/i.test(t) ? 'As marcações ainda não estão ativas neste salão.' : 'Não foi possível enviar. Tente outra vez.', 'erro');
+      if(/ocupado/.test(t)){ sel.hora = null; pintarHoras(); }
+    });
+  };
+  (function(){ try{ var c = JSON.parse(localStorage.getItem('salao_cliente') || 'null'); if(c){ $('pNome').value = c.nome || ''; $('pTel').value = c.tel || ''; } }catch(e){} })();
+
+  // ---------- as minhas marcações ----------
+  function pintarMinhas(nova){
+    var l = guardados(); var m = params.get('m');
+    if(m && !l.some(function(x){ return x.id === m; })){ l.push({ id:m, servico:'', data:'', hora:'' }); guardar(l); }
+    if(!l.length){ $('secMinhas').classList.add('hide'); return; }
+    rpc('reservas_estado', { p_ids:l.map(function(x){ return x.id; }) }).then(function(rows){
+      var hoje = iso(new Date());
+      var por = {}; (rows || []).forEach(function(r){ por[r.id] = r; });
+      var vis = l.filter(function(x){ var r = por[x.id]; return r && r.data >= hoje; });
+      if(!vis.length){ $('secMinhas').classList.add('hide'); return; }
+      $('secMinhas').classList.remove('hide');
+      $('minhas').innerHTML = vis.map(function(x){
+        var r = por[x.id], prop = r.estado === 'pendente' && r.proposta_hora;
+        var est = prop ? ['proposta', 'Proposta do salão'] : r.estado === 'confirmada' ? ['confirmada', 'Confirmada'] : r.estado === 'cancelada' ? ['cancelada', 'Cancelada'] : ['pendente', 'À espera de confirmação'];
+        var h = '<div class="minha"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center;"><b>' + esc(x.servico || 'Marcação') + '</b><span class="estado e-' + est[0] + '">' + est[1] + '</span></div>'
+          + '<div>' + esc(quando(r.data, r.hora)) + '</div>';
+        if(prop) h += '<div style="color:var(--ac);font-weight:700;">O salão propõe às ' + esc(r.proposta_hora) + '.</div><div style="display:flex;gap:8px;flex-wrap:wrap;"><button type="button" class="btn-ac" data-ac="sim" data-id="' + esc(x.id) + '">Aceito</button><button type="button" class="btn-sec" data-ac="nao" data-id="' + esc(x.id) + '">Não dá</button></div>';
+        if(r.nota) h += '<div class="nota">Nota do salão: ' + esc(r.nota) + '</div>';
+        if(r.estado !== 'cancelada') h += '<div style="display:flex;gap:8px;flex-wrap:wrap;"><button type="button" class="btn-sec" data-ac="push" data-id="' + esc(x.id) + '">🔔 Avisar-me por notificação</button><button type="button" class="btn-sec" data-ac="cancelar" data-id="' + esc(x.id) + '" style="color:#8A2A2A;">Já não vou</button></div>';
+        return h + '</div>';
+      }).join('') + (nova ? '<div class="msg ok">Pedido enviado ✓ O salão vai confirmar. Ligue as notificações para saber a resposta.</div>' : '');
+      $('minhas').querySelectorAll('[data-ac]').forEach(function(b){ b.onclick = function(){ acaoMinha(b.getAttribute('data-ac'), b.getAttribute('data-id'), b); }; });
+    }).catch(function(){});
+  }
+  function acaoMinha(ac, id, b){
+    if(ac === 'push'){ b.disabled = true; b.textContent = 'A ligar…'; obterPush().then(function(ep){ if(!ep) throw new Error('sem_push'); return rpc('marcacao_set_push', { p_id:id, p_endpoint:ep }); }).then(function(){ b.textContent = '🔔 Notificações ligadas'; }).catch(function(){ b.disabled = false; b.textContent = '🔔 Avisar-me por notificação'; alert('Não foi possível ligar as notificações. No iPhone, adicione primeiro esta página ao ecrã principal (Partilhar → "Adicionar ao Ecrã Principal").'); }); return; }
+    if(ac === 'cancelar'){ if(!confirm('Cancelar esta marcação? O salão é avisado.')) return; rpc('reserva_cancelar_cliente', { p_id:id }).then(function(){ pintarMinhas(); }); return; }
+    if(ac === 'sim' || ac === 'nao'){ rpc('reserva_responder', { p_id:id, p_aceita:(ac === 'sim') }).then(function(){ pintarMinhas(); }).catch(function(){ alert('Não foi possível responder. Tente outra vez.'); }); }
+  }
+
+  // ---------- notificações (o mesmo service worker da àMesa) ----------
+  function b64(s){ var p = '='.repeat((4 - s.length % 4) % 4), b = (s + p).replace(/-/g, '+').replace(/_/g, '/'), r = atob(b), o = new Uint8Array(r.length); for(var i = 0; i < r.length; i++) o[i] = r.charCodeAt(i); return o; }
+  function obterPush(){
+    if(!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) return Promise.resolve('');
+    return Notification.requestPermission().then(function(p){
+      if(p !== 'granted') return '';
+      return navigator.serviceWorker.register('/sw.js').then(function(){ return navigator.serviceWorker.ready; }).then(function(reg){
+        return reg.pushManager.getSubscription().then(function(s){ return s || reg.pushManager.subscribe({ userVisibleOnly:true, applicationServerKey:b64(VAPID_PUB) }); });
+      }).then(function(sub){
+        var j = sub.toJSON(), k = j.keys || {};
+        return rpc('guardar_push_sub', { p_negocio:NEG.id, p_endpoint:sub.endpoint, p_p256dh:k.p256dh || '', p_auth:k.auth || '' }).then(function(){ return sub.endpoint; });
+      });
+    }).catch(function(){ return ''; });
+  }
+
+  // ---------- folha (telemóvel) ----------
+  var fundo = null;
+  function abrirFolha(){ if(window.matchMedia('(max-width: 860px)').matches){ $('painel').classList.add('aberto'); if(!fundo){ fundo = document.createElement('div'); fundo.className = 'fundo-folha'; fundo.onclick = fecharFolha; document.body.appendChild(fundo); } } }
+  function fecharFolha(){ $('painel').classList.remove('aberto'); if(fundo){ fundo.remove(); fundo = null; } }
+  $('fecharFolha').onclick = fecharFolha;
+  $('btnBarra').onclick = function(){ if(!sel.serv){ var p = document.querySelector('.grupo h2'); if(p) p.scrollIntoView({ behavior:'smooth' }); msg(''); } abrirFolha(); };
+  window.addEventListener('pageshow', function(){ if(NEG) pintarMinhas(); });
+  carregar();
+})();
+</script>
+</body>
+</html>
