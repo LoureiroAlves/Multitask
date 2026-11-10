@@ -24,6 +24,9 @@
   .neg-top{ display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
   .neg-nome{ font-weight:700; font-size:1.05rem; }
   .neg-slug{ font-size:.8rem; color:#9a8b6f; }
+  .setor-chip{ border:1.5px solid #e0d3b5; background:#fff; color:var(--castanho); border-radius:999px; padding:9px 14px; font-family:inherit; font-weight:800; font-size:.88rem; cursor:pointer; width:auto; }
+  .setor-chip.on{ background:#a8712f; border-color:#a8712f; color:#fff; }
+  .setor-chip.novo{ border-style:dashed; color:#a8712f; background:#fffaf0; }
   .badge{ display:inline-block; font-size:.72rem; font-weight:700; padding:3px 9px; border-radius:20px; }
   .b-basico{ background:#eee; color:#555; }
   .b-intermedio{ background:#dfeaf7; color:var(--azul); }
@@ -139,10 +142,10 @@
       <nav class="side">
         <button class="side-item ar-inicio" data-tab="inicio">🏠 Início</button>
 
-        <div class="side-grupo ar-rest">Restaurantes</div>
-        <button class="side-item ar-rest" data-tab="negocios">🏪 Os meus restaurantes</button>
+        <div class="side-grupo ar-rest">Negócios</div>
+        <button class="side-item ar-rest" data-tab="negocios">🏪 Os meus negócios</button>
         <div id="negSublist" class="side-sublist ar-rest"></div>
-        <button class="side-item ar-rest" data-tab="criar">➕ Criar restaurante</button>
+        <button class="side-item ar-rest" data-tab="criar">➕ Criar negócio</button>
         <button class="side-item ar-rest" data-tab="formulario">📨 Registos recebidos <span id="regBadge" style="display:none; margin-left:auto; background:#c0392b; color:#fff; font-size:.72rem; font-weight:800; min-width:20px; height:20px; border-radius:10px; padding:0 6px; align-items:center; justify-content:center;"></span></button>
 
         <div class="side-grupo ar-rec">Receitas</div>
@@ -170,10 +173,10 @@
           <div class="ini-ola">Olá Fernando 👋</div>
           <div class="ini-sub">Escolhe o que queres fazer. Cada cor é uma área do Multitask e repete-se na barra à esquerda.</div>
 
-          <div class="ini-sec ar-rest">Restaurantes</div>
+          <div class="ini-sec ar-rest">Negócios</div>
           <div class="ini-grid">
-            <button type="button" class="ini-card ar-rest" data-ir="negocios"><div class="ic">🏪</div><div class="t">Os meus restaurantes</div><div class="n" id="iniNeg">…</div><div class="d">Ver e gerir cada restaurante: editor do menu, dono, plano, extras, link e QR.</div><div class="ir">Abrir →</div></button>
-            <button type="button" class="ini-card ar-rest" data-ir="criar"><div class="ic">➕</div><div class="t">Criar restaurante</div><div class="n"><small>novo</small></div><div class="d">Do zero, a partir do ficheiro que o Claude prepara, ou a duplicar um existente.</div><div class="ir">Criar →</div></button>
+            <button type="button" class="ini-card ar-rest" data-ir="negocios"><div class="ic">🏪</div><div class="t">Os meus negócios</div><div class="n" id="iniNeg">…</div><div class="d">Ver e gerir cada negócio (restaurantes, beleza…): editor, dono, plano, extras, link e QR.</div><div class="ir">Abrir →</div></button>
+            <button type="button" class="ini-card ar-rest" data-ir="criar"><div class="ic">➕</div><div class="t">Criar negócio</div><div class="n"><small>novo</small></div><div class="d">Do zero, a partir do ficheiro que o Claude prepara, ou a duplicar um existente.</div><div class="ir">Criar →</div></button>
             <button type="button" class="ini-card ar-rest" data-ir="formulario" id="iniRegCard"><div class="ic">📨</div><div class="t">Registos recebidos</div><div class="n" id="iniReg">…</div><div class="d">Formulários enviados pelos donos. Envia o link a um dono novo a partir daqui.</div><div class="ir">Ver registos →</div></button>
           </div>
 
@@ -202,17 +205,23 @@
           </div>
 
           <div class="ini-passos">
-            <h3>🧭 Novo restaurante, passo a passo</h3>
+            <h3>🧭 Novo negócio, passo a passo</h3>
             <ol>
               <li><b>Registos recebidos</b> → envia o formulário ao dono (WhatsApp ou email).</li>
               <li>Quando o registo chegar, carrega em <b>Copiar para o Claude</b> e cola no chat.</li>
-              <li><b>Criar restaurante</b> → <b>Criar a partir de ficheiro</b> com o .json que o Claude te dá.</li>
-              <li>Em <b>Os meus restaurantes</b>, abre o editor, revê o menu e envia o link ao dono.</li>
+              <li><b>Criar negócio</b> → <b>Criar a partir de ficheiro</b> com o .json que o Claude te dá.</li>
+              <li>Em <b>Os meus negócios</b>, abre o editor, revê o menu e envia o link ao dono.</li>
             </ol>
           </div>
         </section>
 
         <section class="tab-panel hide" data-panel="criar">
+    <div class="card" style="border-left:4px solid #a8712f;">
+      <h2 style="margin:0 0 6px; font-size:1.05rem;">🗂 Categoria do negócio</h2>
+      <div style="font-size:.82rem; color:#9a8b6f; margin-bottom:10px;">Escolhe a categoria antes de criar. Vale para as três maneiras abaixo (do zero, a partir de ficheiro ou a duplicar). Só a Restauração aparece na montra da àMesa.</div>
+      <div id="setoresBox" style="display:flex; flex-wrap:wrap; gap:8px;"></div>
+      <div id="setoresMsg"></div>
+    </div>
     <div class="card">
       <h2 style="margin:0 0 10px; font-size:1.05rem;">➕ Novo negócio</h2>
       <div class="row2">
@@ -221,8 +230,6 @@
       </div>
       <label for="nEmailDono">Email do dono (para ele entrar no editor)</label>
       <input type="email" id="nEmailDono" placeholder="dono@exemplo.com (podes deixar em branco e definir depois)">
-      <label for="nSetor">Tipo de negócio</label>
-      <select id="nSetor"><option value="restauracao">🍽️ Restauração (àMesa)</option><option value="beleza">💆 Beleza e bem-estar</option></select>
 
       <div style="margin-top:12px;"><button class="acao" id="btnCriar">Criar negócio</button></div>
       <div id="criarMsg"></div>
@@ -511,6 +518,7 @@
     const config = JSON.parse(JSON.stringify(orig.config || {}));
     const menu = JSON.parse(JSON.stringify(orig.menu || {}));
     try{ config.header = config.header || {}; config.header.titulo = nome; }catch(e){}
+    _aplicaSetor(config);   // Multitask: categoria escolhida no topo
     const { data:neg, error } = await sb.from('negocios').insert({ nome:nome, slug:slug, dono_email: emailDono || null, config:config, menu:menu }).select().single();
     if(error){ $('btnDuplicar').disabled = false; msg($('dupMsg'),'Erro: '+error.message,'erro'); return; }
     // Copia as permissões da origem (plano + funções + publicidade)
@@ -526,7 +534,50 @@
     carregar();
   }
 
+  // ============ Multitask: categorias (setores) de negócio ============
+  // Guardadas em config.setores da linha reservada '__amesa__' (a mesma da publicidade). As duas de base existem sempre.
+  // No negócio: config.setor (sem valor = restauração). Só a restauração aparece na montra da àMesa.
+  const SETORES_BASE = [ { id:'restauracao', nome:'Restauração', ico:'🍽️' }, { id:'beleza', nome:'Beleza e bem-estar', ico:'💆' } ];
+  let SETORES = SETORES_BASE.slice();
+  let SETOR_SEL = 'restauracao';
+  function _setorInfo(id){ id = id || 'restauracao'; return SETORES.filter(function(x){ return x.id === id; })[0] || { id:id, nome:id, ico:'🏷️' }; }
+  function _aplicaSetor(cfg){ if(!cfg) return cfg; if(SETOR_SEL && SETOR_SEL !== 'restauracao') cfg.setor = SETOR_SEL; else delete cfg.setor; return cfg; }
+  function _setoresOpcoes(sel){ sel = sel || 'restauracao'; return SETORES.map(function(x){ return '<option value="' + _escP(x.id) + '"' + (x.id === sel ? ' selected' : '') + '>' + x.ico + ' ' + _escP(x.nome) + (x.id === 'restauracao' ? ' (àMesa)' : '') + '</option>'; }).join(''); }
+  async function _setoresCarregar(){
+    try{
+      const { data } = await sb.from('negocios').select('config').eq('slug', AMESA_SLUG).maybeSingle();
+      const extra = (data && data.config && Array.isArray(data.config.setores)) ? data.config.setores : [];
+      SETORES = SETORES_BASE.concat(extra.filter(function(x){ return x && x.id && !SETORES_BASE.some(function(b){ return b.id === x.id; }); }));
+    }catch(e){}
+    _setoresPintar();
+  }
+  function _setoresPintar(){
+    const box = $('setoresBox'); if(!box) return;
+    box.innerHTML = SETORES.map(function(x){ return '<button type="button" class="setor-chip' + (x.id === SETOR_SEL ? ' on' : '') + '" data-setor-id="' + _escP(x.id) + '">' + x.ico + ' ' + _escP(x.nome) + '</button>'; }).join('')
+      + '<button type="button" class="setor-chip novo" id="setorNovo">＋ Criar categoria</button>';
+    box.querySelectorAll('[data-setor-id]').forEach(function(b){ b.onclick = function(){ SETOR_SEL = b.getAttribute('data-setor-id'); _setoresPintar(); }; });
+    $('setorNovo').onclick = _setorCriar;
+  }
+  async function _setorCriar(){
+    const nome = String((await window.__amPrompt('Nova categoria', { texto:'Nome da categoria (ex.: Barbearia, Clínica, Ginásio)' })) || '').trim().slice(0, 40);
+    if(!nome) return;
+    const ico = (String((await window.__amPrompt('Ícone da categoria', { texto:'Um emoji para a reconhecer (opcional)', valor:'🏷️' })) || '').trim() || '🏷️').slice(0, 4);
+    const id = nome.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 30);
+    if(!id){ msg($('setoresMsg'), 'Escreve um nome com letras ou números.', 'erro'); return; }
+    if(SETORES.some(function(x){ return x.id === id; })){ SETOR_SEL = id; _setoresPintar(); msg($('setoresMsg'), 'Essa categoria já existe — ficou escolhida.', 'ok'); return; }
+    const nova = { id:id, nome:nome, ico:ico };
+    const { data:ex, error:eG } = await sb.from('negocios').select('id,config').eq('slug', AMESA_SLUG).maybeSingle();
+    if(eG){ msg($('setoresMsg'), 'Erro: ' + eG.message, 'erro'); return; }
+    let error;
+    if(ex){ const cfg = Object.assign({}, ex.config || {}); cfg.setores = (Array.isArray(cfg.setores) ? cfg.setores : []).concat([nova]); ({ error } = await sb.from('negocios').update({ config:cfg }).eq('id', ex.id)); }
+    else { ({ error } = await sb.from('negocios').insert({ nome:'àMesa — Publicidade', slug:AMESA_SLUG, config:{ setores:[nova], naApp:false }, menu:{} })); }
+    if(error){ msg($('setoresMsg'), 'Erro ao guardar a categoria: ' + error.message, 'erro'); return; }
+    SETORES = SETORES.concat([nova]); SETOR_SEL = id; _setoresPintar();
+    msg($('setoresMsg'), 'Categoria "' + _escP(nome) + '" criada ✓ e escolhida.', 'ok');
+  }
+
   async function carregar(){
+    await _setoresCarregar();
     $('lista').innerHTML = '<p style="color:#9a8b6f; font-size:.9rem;">A carregar…</p>';
     const { data:negsRaw, error } = await sb.from('negocios').select('*').order('criado_em', { ascending:false });
     if(error){ $('lista').innerHTML = '<div class="msg erro">Erro a carregar: ' + error.message + '</div>'; return; }
@@ -600,7 +651,8 @@
     const planoBadge = '<span class="badge b-' + (ent.plano||'basico') + '">' + (ent.plano||'basico') + '</span>';
     const estadoBadge = n.ativo ? '' : ' <span class="badge b-off">suspenso</span>';
     const _setor = (n.config && n.config.setor) || 'restauracao';
-    const setorBadge = ' <span class="badge" style="background:' + (_setor === 'beleza' ? '#fbe8f3;color:#a3367a' : '#fbf1e2;color:#8a5a1c') + ';">' + (_setor === 'beleza' ? '💆 beleza' : '🍽️ restauração') + '</span>';
+    const _sInf = _setorInfo(_setor);
+    const setorBadge = ' <span class="badge" style="background:' + (_setor === 'beleza' ? '#fbe8f3;color:#a3367a' : (_setor === 'restauracao' ? '#fbf1e2;color:#8a5a1c' : '#eef0f4;color:#4a5568')) + ';">' + _sInf.ico + ' ' + _escP(_sInf.nome.toLowerCase()) + '</span>';
     const _rSoma = Number(n.rating_soma) || 0, _rCont = Number(n.rating_contagem) || 0;
     const _rMedia = _rCont > 0 ? (_rSoma / _rCont) : 0;
     const _rEstrelas = _rCont > 0 ? ('★'.repeat(Math.round(_rMedia)) + '☆'.repeat(5 - Math.round(_rMedia))) : '☆☆☆☆☆';
@@ -628,8 +680,8 @@
         '<div class="linha-pub" style="background:#fff6f0; border:1.5px solid #c05a3a; border-radius:9px; padding:9px 11px;"><input type="checkbox" data-oculto' + ((n.config && n.config.oculto === true) ? ' checked' : '') + '> <label style="margin:0; color:#a3452b; font-weight:700;">🙈 Esconder da àMesa (montra pública)</label></div>' +
         '<div class="linha-pub" style="background:#fbf6e6; border:1.5px solid #c9a24a; border-radius:9px; padding:9px 11px; flex-wrap:wrap;"><input type="checkbox" data-exemplo' + ((n.config && n.config.exemplo === true) ? ' checked' : '') + '> <label style="margin:0; color:#7a5320; font-weight:700;">⭐ Usar como exemplo no formulário de registo</label>' +
           '<input type="text" data-exdesc value="' + ((n.config && n.config.exemploDesc) || '').replace(/"/g, '&quot;') + '" placeholder="Frase curta que o cliente vê (ex.: Clássico e elegante, ideal para marisqueiras)" style="flex-basis:100%; margin-top:7px;"></div>' +
-        '<label style="margin-top:12px;">Tipo de negócio</label><select data-setor>' + '<option value="restauracao">🍽️ Restauração (àMesa)</option><option value="beleza">💆 Beleza e bem-estar</option>'.replace('value="' + _setor + '"', 'value="' + _setor + '" selected') + '</select>' +
-        '<div style="font-size:.74rem;color:#9a8b6f;margin-top:3px;">Só os negócios de restauração aparecem na montra da àMesa.</div>' +
+        '<label style="margin-top:12px;">Categoria</label><select data-setor>' + _setoresOpcoes(_setor) + '</select>' +
+        '<div style="font-size:.74rem;color:#9a8b6f;margin-top:3px;">Só a Restauração aparece na montra da àMesa.</div>' +
         '<label style="margin-top:12px;">Tipo de cozinha (filtro da àMesa)</label><input type="text" data-tipo value="' + ((n.config && n.config.tipo) || '').replace(/"/g, '&quot;') + '" placeholder="Ex.: Português, Pizzaria, Sushi, Pastelaria…">' +
         '<div style="margin-top:14px; font-size:.82rem; color:#7a5320; background:#fbf6e6; border:1.5px solid #e9d6a6; border-radius:9px; padding:9px 11px;">✨ <b>Extras:</b> ' + (function(){ const ex = funcoes.extras; if(!ex || typeof ex !== 'object') return 'todos desbloqueados (restaurante antigo)'; const n = Object.keys(ex).filter(function(k){ return ex[k] === true; }).length; return n + ' desbloqueado(s)'; })() + ' — ligam-se e desligam-se na <b>Gestão</b> deste restaurante (botão 📅 abaixo → Extras).</div>' +
         '<div style="margin-top:12px; font-size:.78rem; color:#9a8b6f; background:#fbf8f2; border:1px solid var(--linha); border-radius:8px; padding:8px 10px;">🗂 Pasta das imagens no Storage: <code style="color:var(--castanho); font-weight:700;">imagens/' + n.slug + '/</code><br><span style="color:#b3a68a;">O slug (<code>/' + n.slug + '</code>) é fixo e não muda quando alteras o nome — por isso a pasta mantém sempre este nome.</span></div>' +
@@ -692,8 +744,7 @@
       intro:  { ativo:false },
       oculto: true   // nasce escondido da montra; publica-se desmarcando "Esconder da àMesa"
     };
-    // Multitask: tipo de negócio (sem valor = restauração, como todos os negócios antigos)
-    { const _st = $('nSetor') ? $('nSetor').value : ''; if(_st && _st !== 'restauracao') config.setor = _st; }
+    _aplicaSetor(config);   // Multitask: categoria escolhida no topo (sem valor = restauração)
     const menu = { restaurante:'', categorias:[] };
     const { data:neg, error } = await sb.from('negocios').insert({ nome:nome, slug:slug, dono_email:emailDono || null, config:config, menu:menu }).select().single();
     if(error){ $('btnCriar').disabled = false; msg($('criarMsg'), 'Erro: ' + error.message, 'erro'); return; }
@@ -703,7 +754,7 @@
     const { error:e2 } = await sb.from('entitlements').insert({ negocio_id:neg.id, plano:plano, funcoes:funcoes, publicidade:publicidade });
     $('btnCriar').disabled = false;
     if(e2){ msg($('criarMsg'), 'Negócio criado, mas erro nas permissões: ' + e2.message, 'erro'); }
-    else { msg($('criarMsg'), 'Negócio "' + nome + '" criado ✓. Abre o editor para começar do zero.', 'ok'); $('nNome').value=''; $('nSlug').value=''; $('nEmailDono').value=''; if($('nSetor')) $('nSetor').value = 'restauracao'; }
+    else { msg($('criarMsg'), 'Negócio "' + nome + '" criado ✓. Abre o editor para começar do zero.', 'ok'); $('nNome').value=''; $('nSlug').value=''; $('nEmailDono').value=''; }
     await carregar();
     try{ if(window.__abrirNeg) window.__abrirNeg(slug); }catch(e){}
   }
@@ -894,6 +945,7 @@
       if(existe){ msg(box, 'Já existe um negócio com o slug "' + slug + '". Muda o slug no ficheiro.', 'erro'); return; }
       let config = o.config || {};
       config.oculto = true;   // negócios importados nascem escondidos da montra até seres tu a publicar
+      _aplicaSetor(config);   // Multitask: categoria escolhida no topo
       // WhatsApp das reservas (do formulário) → vai para a agenda, no sítio que o cardápio e o calendário usam
       { var _waRes = (o.whatsappReservas || o.whatsapp || '').toString().trim();
         if(_waRes){ config.agenda = config.agenda || {}; if(!config.agenda.whatsapp){ config.agenda.whatsapp = _waRes; } } }
@@ -1457,9 +1509,9 @@
   // ===== Início + cabeçalho colorido de cada área =====
   (function(){
     var CAB = {
-      negocios:   ['ar-rest','🏪','Restaurantes','Os meus restaurantes','Escolhe um restaurante na lista à esquerda para abrir o editor, mudar o plano, os extras ou o dono.'],
-      criar:      ['ar-rest','➕','Restaurantes','Criar restaurante','Três maneiras: do zero, a partir do ficheiro .json do Claude, ou a duplicar um restaurante que já existe.'],
-      formulario: ['ar-rest','📨','Restaurantes','Registos recebidos','Envia o formulário a um dono novo. Quando ele o preencher, aparece aqui em baixo.'],
+      negocios:   ['ar-rest','🏪','Negócios','Os meus negócios','Escolhe um negócio na lista à esquerda para abrir o editor, mudar o plano, os extras ou o dono.'],
+      criar:      ['ar-rest','➕','Negócios','Criar negócio','Três maneiras: do zero, a partir do ficheiro .json do Claude, ou a duplicar um negócio que já existe.'],
+      formulario: ['ar-rest','📨','Negócios','Registos recebidos','Envia o formulário a um dono novo. Quando ele o preencher, aparece aqui em baixo.'],
       publicidade:['ar-mon','📢','Montra e promoção','Publicidade','Anúncios que aparecem na montra amesadigital.pt. Arrasta-os à esquerda para mudar a ordem.'],
       ovo:        ['ar-jogo','🥚','Jogo','No Cu da Galinha','Caça ao ovo: sessões, esconderijos, patrocinadores e vencedores.'],
       fotos:      ['ar-man','⚡','Manutenção','Otimizar fotos','Deixa as fotos mais leves para os menus abrirem mais depressa.'],
@@ -1487,7 +1539,7 @@
     window.__inicioAtualizar = async function(){
       if(aCorrer) return; aCorrer = true;
       try{
-        por('iniNeg', pl(document.querySelectorAll('#lista .neg').length, 'restaurante', 'restaurantes'));
+        por('iniNeg', pl(document.querySelectorAll('#lista .neg').length, 'negócio', 'negócios'));
         try{ var ads = (window.__pubAds && window.__pubAds()) || []; por('iniPub', pl(ads.length, 'anúncio', 'anúncios')); }catch(e){}
         try{
           var r = await sb.from('registos').select('id', { count:'exact', head:true }).eq('tratado', false);
