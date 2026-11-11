@@ -498,7 +498,7 @@
         if(val == null){ var sv = SERV.filter(function(v){ return v.nome === serv; })[0], pm = /(\d+(?:[.,]\d{1,2})?)/.exec(String((sv && sv.preco) || '')); if(pm) val = parseFloat(pm[1].replace(',', '.')); }
         var preco = val == null || r.estado === 'cancelada' ? '' : ((+r.desconto && base != null) ? ('<s style="color:var(--suave);font-weight:600;font-size:12px;">' + eu(base) + '</s> ' + eu(val)) : eu(val));
         var aberta = _minhaAberta === x.id;
-        var h = '<div class="minha' + (aberta ? ' aberta' : '') + '" data-id="' + esc(x.id) + '"><button type="button" class="minha-cab" data-abrir="' + esc(x.id) + '" aria-expanded="' + aberta + '">'
+        var h = '<div class="minha' + (aberta ? ' aberta' : '') + '" data-id="' + esc(x.id) + '"' + (r.estado === 'cancelada' ? ' style="opacity:.7;"' : '') + '><button type="button" class="minha-cab" data-abrir="' + esc(x.id) + '" aria-expanded="' + aberta + '">'
           + '<b>' + esc(serv) + '</b><span class="estado e-' + est[0] + '">' + est[1] + '</span>'
           + '<span class="q">' + esc(quando(r.data, r.hora)) + '</span><span class="p">' + preco + '</span>'
           + '<span class="seta">' + (aberta ? '▲ Fechar' : '▼ Ver detalhes e opções') + '</span></button>';
@@ -506,13 +506,14 @@
         h += '<div class="minha-corpo">';
         if(r.profissional && nomeProf(r.profissional)) h += '<div>👤 Com <b>' + esc(nomeProf(r.profissional)) + '</b></div>';
         if(+r.desconto) h += '<div>🎁 Desconto de <b>' + (+r.desconto) + '%</b> oferecido pelo salão</div>';
+        if(r.estado === 'cancelada') h += '<div style="font-weight:700;color:#8A2A2A;">🚫 Esta marcação foi cancelada. Se quiser, faça uma nova marcação na lista de serviços.</div>';
         if(r.nota) h += '<div class="nota" style="margin:0;">💬 Nota do salão: ' + esc(r.nota) + '</div>';
         if(r.estado !== 'cancelada'){
           h += pushOn ? '<div style="font-size:13px;color:var(--verde);font-weight:700;">🔔 Notificações ligadas</div>' : '<button type="button" class="btn-sec" data-ac="push" data-id="' + esc(x.id) + '">🔔 Avisar-me por notificação</button>';
           h += '<div style="display:flex;gap:8px;flex-wrap:wrap;"><button type="button" class="btn-sec" data-ac="reag" data-id="' + esc(x.id) + '" style="flex:1;">📅 Mudar dia/hora</button><button type="button" class="btn-sec" data-ac="cancelar" data-id="' + esc(x.id) + '" style="flex:1;color:#8A2A2A;">Já não vou</button></div>';
         }
         return h + '</div></div>';
-      }).join('') + (nova ? ('<div class="msg ok">' + (nova === 'reag' ? 'Nova hora enviada ✓ O salão vai confirmar a mudança.' : (pushLigado() ? 'Pedido enviado ✓ O salão vai confirmar — recebe a resposta por notificação.' : 'Pedido enviado ✓ O salão vai confirmar. Abra a marcação e ligue as notificações para saber a resposta.')) + '</div>') : '');
+      }).join('') + (nova ? ('<div class="msg ok">' + (nova === 'canc' ? 'Marcação cancelada ✓ O salão já foi avisado e a hora ficou livre.' : nova === 'reag' ? 'Nova hora enviada ✓ O salão vai confirmar a mudança.' : (pushLigado() ? 'Pedido enviado ✓ O salão vai confirmar — recebe a resposta por notificação.' : 'Pedido enviado ✓ O salão vai confirmar. Abra a marcação e ligue as notificações para saber a resposta.')) + '</div>') : '');
       $('minhas').querySelectorAll('[data-ac]').forEach(function(b){ b.onclick = function(){ acaoMinha(b.getAttribute('data-ac'), b.getAttribute('data-id'), b); }; });
       $('minhas').querySelectorAll('[data-abrir]').forEach(function(b){ b.onclick = function(){ var id = b.getAttribute('data-abrir'); _minhaAberta = _minhaAberta === id ? '' : id;
         $('minhas').querySelectorAll('.minha').forEach(function(c){ var on = c.getAttribute('data-id') === _minhaAberta; c.classList.toggle('aberta', on); var cb = c.querySelector('.minha-cab'); cb.setAttribute('aria-expanded', on); cb.querySelector('.seta').textContent = on ? '▲ Fechar' : '▼ Ver detalhes e opções'; }); }; });
@@ -560,7 +561,7 @@
     if(ac === 'push'){ b.disabled = true; b.textContent = 'A ligar…'; obterPush().then(function(ep){ if(!ep) throw new Error('sem_push'); try{ localStorage.setItem('salao_push_on', '1'); }catch(e){} _pushFeitos = {}; return rpc('marcacao_set_push', { p_id:id, p_endpoint:ep }); }).then(function(){ pintarMinhas(); }).catch(function(){ b.disabled = false; b.textContent = '🔔 Avisar-me por notificação'; alert('Não foi possível ligar as notificações. No iPhone, adicione primeiro esta página ao ecrã principal (Partilhar → "Adicionar ao Ecrã Principal").'); }); return; }
     if(ac === 'cancelar'){ if(!confirm('Cancelar esta marcação? O salão é avisado.')) return;
       rpc('marcacao_cancelar', { p_id:id }).catch(function(e){ if(/PGRST202|Could not find|does not exist/i.test(String(e.message || e))) return rpc('reserva_cancelar_cliente', { p_id:id }); throw e; })
-        .then(function(){ pintarMinhas(); }).catch(function(){ alert('Não foi possível cancelar. Tente outra vez ou contacte o salão.'); }); return; }
+        .then(function(){ _minhaAberta = ''; pintarMinhas('canc'); }).catch(function(){ alert('Não foi possível cancelar. Tente outra vez ou contacte o salão.'); }); return; }
     if(ac === 'sim' || ac === 'nao'){
       var rr = _minhasRows[id] || {};
       if(ac === 'nao' && !confirm(rr.estado === 'confirmada' ? 'Recusar a mudança? A sua marcação mantém-se como estava.' : 'Recusar a proposta? O seu pedido será cancelado.')) return;
