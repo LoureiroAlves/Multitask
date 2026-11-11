@@ -110,7 +110,7 @@
     .painel{ position:fixed; left:0; right:0; bottom:0; top:auto; max-width:none; max-height:92vh; overflow-y:auto; border-radius:20px 20px 0 0; z-index:20; transform:translateY(105%); transition:transform .3s cubic-bezier(.2,.8,.2,1); padding-bottom:calc(22px + env(safe-area-inset-bottom)); }
     .painel.aberto{ transform:translateY(0); }
     .fundo-folha{ position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:19; }
-    .fechar-folha{ display:inline-flex; position:absolute; right:14px; top:14px; width:44px; height:44px; border:none; border-radius:12px; background:var(--fundo); align-items:center; justify-content:center; font-size:20px; }
+    .fechar-folha{ display:inline-flex; padding:0; line-height:1; color:var(--ink); position:absolute; right:14px; top:14px; width:44px; height:44px; border:none; border-radius:12px; background:var(--fundo); align-items:center; justify-content:center; font-size:20px; }
     .barra{ display:flex; position:fixed; left:0; right:0; bottom:0; padding:12px 16px calc(14px + env(safe-area-inset-bottom)); background:rgba(246,244,242,.96); border-top:1px solid var(--linha); z-index:10; }
     .barra a, .barra button{ flex:1; }
     .topo h1{ font-size:26px; }
@@ -138,7 +138,7 @@
   .sub{ background:#fff; border-radius:18px; width:100%; max-width:560px; max-height:88vh; overflow:auto; display:flex; flex-direction:column; }
   .sub-cab{ position:sticky; top:0; background:#fff; display:flex; align-items:center; gap:10px; padding:16px 18px; border-bottom:1px solid var(--linha); z-index:1; }
   .sub-cab h3{ margin:0; flex:1; font-size:20px; }
-  .sub-cab button{ width:44px; height:44px; border:none; border-radius:12px; background:var(--fundo); font-size:20px; }
+  .sub-cab button{ width:44px; height:44px; flex:0 0 44px; border:none; border-radius:12px; background:var(--fundo); font-size:20px; line-height:1; padding:0; display:flex; align-items:center; justify-content:center; color:var(--ink); }
   .sub-it{ display:flex; gap:12px; align-items:center; padding:14px 18px; border-bottom:1px solid var(--linha); }
   .sub-it:last-child{ border-bottom:none; }
   .sub-it img{ width:64px; height:64px; border-radius:12px; object-fit:cover; flex:0 0 auto; cursor:zoom-in; }
@@ -218,7 +218,7 @@
 <footer style="max-width:1180px;margin:0 auto;padding:0 16px 110px;display:flex;justify-content:flex-end;">
   <a href="https://4trevo.com" target="_blank" rel="noopener" aria-label="4Trevo" style="display:flex;align-items:center;gap:2px;opacity:.45;text-decoration:none;color:#1F1C1A;"><svg width="36" height="30" viewBox="22 70 220 182" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g transform="translate(150,160) rotate(60)" fill="none" stroke="currentColor" stroke-linejoin="round"><path d="M0,-4 C-4,-12 -18,-14 -30,-28 C-44,-44 -42,-68 -22,-76 C-4,-82 14,-72 18,-54 C22,-38 12,-18 0,-4Z" stroke-width="6"/><path d="M4,0 C12,-4 14,-18 28,-30 C44,-44 68,-42 76,-22 C82,-4 72,14 54,18 C38,22 18,12 4,0Z" stroke-width="6"/><path d="M0,4 C4,12 18,14 30,28 C44,44 42,68 22,76 C4,82 -14,72 -18,54 C-22,38 -12,18 0,4Z" stroke-width="6"/><path d="M-4,0 C-12,4 -14,18 -28,30 C-44,44 -68,42 -76,22 C-82,4 -72,-14 -54,-18 C-38,-22 -18,-12 -4,0Z" stroke-width="6"/><g stroke-width="1" opacity="0.6"><line x1="2" y1="-2" x2="44" y2="-44"/><line x1="2" y1="2" x2="44" y2="44"/><line x1="-2" y1="2" x2="-44" y2="44"/><line x1="-2" y1="-2" x2="-44" y2="-44"/></g><circle cx="0" cy="0" r="4" stroke-width="2"/><path d="M8,82 C10,100 6,120 0,142" stroke-width="6" stroke-linecap="round"/></g></svg><span style="font:700 15px 'Space Grotesk', Manrope, sans-serif;letter-spacing:1px;">4Trevo</span></a>
 </footer>
-<div class="barra" id="barra"><button type="button" class="btn-ac" id="btnBarra" style="min-height:50px;font-size:15px;">Pedir marcação</button></div>
+<div class="barra hide" id="barra"><button type="button" class="btn-ac" id="btnBarra" style="min-height:50px;font-size:15px;">Pedir marcação</button></div>
 
 <script>
 (function(){
@@ -586,8 +586,11 @@
 
   // ---------- folha (telemóvel) ----------
   var fundo = null;
-  function abrirFolha(){ if(window.matchMedia('(max-width: 860px)').matches){ $('painel').classList.add('aberto'); if(!fundo){ fundo = document.createElement('div'); fundo.className = 'fundo-folha'; fundo.onclick = fecharFolha; document.body.appendChild(fundo); } } }
-  function fecharFolha(){ $('painel').classList.remove('aberto'); if(fundo){ fundo.remove(); fundo = null; } }
+  function abrirFolha(){ if(window.matchMedia('(max-width: 860px)').matches){ $('barra').classList.add('hide'); $('painel').classList.add('aberto'); if(!fundo){ fundo = document.createElement('div'); fundo.className = 'fundo-folha'; fundo.onclick = fecharFolha; document.body.appendChild(fundo); } } }
+  // a barra de baixo (telemóvel) só aparece para voltar a uma marcação começada e fechada a meio
+  function fecharFolha(){ $('painel').classList.remove('aberto'); if(fundo){ fundo.remove(); fundo = null; }
+    var temServ = !!(sel && sel.serv); $('barra').classList.toggle('hide', !temServ);
+    if(temServ) $('btnBarra').textContent = (sel.reag ? 'Continuar a reagendar · ' : 'Continuar marcação · ') + sel.serv.nome; }
   $('fecharFolha').onclick = fecharFolha;
   $('btnBarra').onclick = function(){ if(!sel.serv){ var p = document.querySelector('.cat-grelha'); if(p) p.scrollIntoView({ behavior:'smooth', block:'center' }); msg(''); return; } abrirFolha(); };
   window.addEventListener('pageshow', function(){ if(NEG) pintarMinhas(); });
