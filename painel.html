@@ -663,11 +663,12 @@
     const metLinha = '<div style="font-size:.75rem; color:#8a9a6f; margin-top:3px;">👁 ' + (met.menu||0) + ' visitas · 🔗 ' + (met.amesa||0) + ' cliques àMesa · 🎮 ' + (met.jogos||0) + ' jogos</div>' +
       '<div style="font-size:.75rem; color:#8a9a6f; margin-top:2px;">📣 anúncio no menu: ' + (met.anuncio_view||0) + ' vistas · ' + (met.anuncio_click||0) + ' cliques</div>' +
       ratingLinha;
+    const _rest = (_setor === 'restauracao');   // Multitask: o que é da àMesa (montra, publicidade, jogo, extras, fotos do menu…) só aparece nos restaurantes
     div.innerHTML =
       '<div class="neg-top">' +
         '<div><div class="neg-nome">' + n.nome + ' ' + planoBadge + setorBadge + estadoBadge + '</div><div class="neg-slug">/' + n.slug + '</div>' +
           '<div class="neg-slug" style="margin-top:2px; color:' + (n.dono_email ? '#5a7a8a' : '#c05a3a') + ';">👤 ' + (n.dono_email ? n.dono_email : 'sem dono definido') + '</div>' +
-          metLinha + '</div>' +
+          (_rest ? metLinha : '') + '</div>' +
         '<div style="display:flex; gap:6px; flex-wrap:wrap;">' +
           '<button class="mini" data-act="editar">⚙️ Gerir</button>' +
           '<button class="mini" data-act="qr">📱 QR</button>' +
@@ -678,22 +679,27 @@
       '<div class="det-corpo hide" data-corpo>' +
         '<label>Nome do negócio</label><input type="text" data-nome value="' + (n.nome || '').replace(/"/g, '&quot;') + '" placeholder="Nome do negócio">' +
         '<label style="margin-top:12px;">Email do dono</label><input type="email" data-email value="' + (n.dono_email || '') + '" placeholder="dono@exemplo.com">' +
+        (_rest ? (
         '<div class="linha-pub"><input type="checkbox" data-pub' + (pub.ativo ? ' checked' : '') + '> <label style="margin:0; color:var(--castanho); font-weight:600;">Mostrar publicidade neste negócio</label></div>' +
         '<div class="linha-pub" style="background:#fff6f0; border:1.5px solid #c05a3a; border-radius:9px; padding:9px 11px;"><input type="checkbox" data-oculto' + ((n.config && n.config.oculto === true) ? ' checked' : '') + '> <label style="margin:0; color:#a3452b; font-weight:700;">🙈 Esconder da àMesa (montra pública)</label></div>' +
         '<div class="linha-pub" style="background:#fbf6e6; border:1.5px solid #c9a24a; border-radius:9px; padding:9px 11px; flex-wrap:wrap;"><input type="checkbox" data-exemplo' + ((n.config && n.config.exemplo === true) ? ' checked' : '') + '> <label style="margin:0; color:#7a5320; font-weight:700;">⭐ Usar como exemplo no formulário de registo</label>' +
           '<input type="text" data-exdesc value="' + ((n.config && n.config.exemploDesc) || '').replace(/"/g, '&quot;') + '" placeholder="Frase curta que o cliente vê (ex.: Clássico e elegante, ideal para marisqueiras)" style="flex-basis:100%; margin-top:7px;"></div>' +
+        '') : '') +
         '<label style="margin-top:12px;">Categoria</label><select data-setor>' + _setoresOpcoes(_setor) + '</select>' +
-        '<div style="font-size:.74rem;color:#9a8b6f;margin-top:3px;">Só a Restauração aparece na montra da àMesa.</div>' +
+        '<div style="font-size:.74rem;color:#9a8b6f;margin-top:3px;">' + (_rest ? 'Só a Restauração aparece na montra da àMesa.' : 'Mudar a categoria muda as páginas que este negócio usa.') + '</div>' +
+        (_rest ? (
         '<label style="margin-top:12px;">Tipo de cozinha (filtro da àMesa)</label><input type="text" data-tipo value="' + ((n.config && n.config.tipo) || '').replace(/"/g, '&quot;') + '" placeholder="Ex.: Português, Pizzaria, Sushi, Pastelaria…">' +
         '<div style="margin-top:14px; font-size:.82rem; color:#7a5320; background:#fbf6e6; border:1.5px solid #e9d6a6; border-radius:9px; padding:9px 11px;">✨ <b>Extras:</b> ' + (function(){ const ex = funcoes.extras; if(!ex || typeof ex !== 'object') return 'todos desbloqueados (restaurante antigo)'; const n = Object.keys(ex).filter(function(k){ return ex[k] === true; }).length; return n + ' desbloqueado(s)'; })() + ' — ligam-se e desligam-se na <b>Gestão</b> deste restaurante (botão 📅 abaixo → Extras).</div>' +
         '<div style="margin-top:12px; font-size:.78rem; color:#9a8b6f; background:#fbf8f2; border:1px solid var(--linha); border-radius:8px; padding:8px 10px;">🗂 Pasta das imagens no Storage: <code style="color:var(--castanho); font-weight:700;">imagens/' + n.slug + '/</code><br><span style="color:#b3a68a;">O slug (<code>/' + n.slug + '</code>) é fixo e não muda quando alteras o nome — por isso a pasta mantém sempre este nome.</span></div>' +
+        '') : (
+        '<div style="margin-top:14px; font-size:.85rem; color:#4a5568; background:#f6f4f2; border:1.5px solid #e6e0da; border-radius:9px; padding:10px 12px;">' + _sInf.ico + ' <b>' + _escP(_sInf.nome) + '</b>: os serviços, a página, o horário e as marcações gerem-se nos links abaixo.</div>')) +
         '<div style="margin-top:12px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">' +
           '<button class="acao" data-act="guardar">Guardar</button>' +
           '<button class="mini" data-act="magic">✉️ Enviar acesso ao dono</button>' +
           '<button class="mini" data-act="copiar">📋 Copiar acessos</button>' +
-          '<button class="mini" data-act="migrarFotos">📦 Migrar fotos p/ definitivo</button>' +
+          (_rest ? ('<button class="mini" data-act="migrarFotos">📦 Migrar fotos p/ definitivo</button>' +
           '<button class="mini perigo" data-act="reporRating">⭐ Repor avaliações</button>' +
-          '<button class="mini" data-act="reporBackup">🛟 Repor cópia de segurança</button>' +
+          '<button class="mini" data-act="reporBackup">🛟 Repor cópia de segurança</button>') : '') +
           (_setor === 'beleza'
             ? ('<a class="link" href="' + SITE + '/salao-gestao.html?n=' + n.slug + '#servicos" target="_blank">💅 Serviços e página ↗</a>' +
                '<a class="link" href="' + SITE + '/salao-gestao.html?n=' + n.slug + '" target="_blank">📅 Agenda do salão ↗</a>' +
@@ -716,14 +722,21 @@
     div.querySelector('[data-act="guardar"]').onclick = function(){ guardarEnt(n, div); };
     div.querySelector('[data-act="magic"]').onclick = function(){ enviarAcessoDono(n, div); };
     div.querySelector('[data-act="copiar"]').onclick = function(e){ copiarAcessos(n, e.currentTarget); };
-    div.querySelector('[data-act="migrarFotos"]').onclick = function(e){ migrarFotosNegocio(n, e.currentTarget); };
-    div.querySelector('[data-act="reporRating"]').onclick = function(){ reporRating(n, div); };
-    div.querySelector('[data-act="reporBackup"]').onclick = function(e){ reporBackupNeg(n, div, e.currentTarget); };
+    if(_rest){
+      div.querySelector('[data-act="migrarFotos"]').onclick = function(e){ migrarFotosNegocio(n, e.currentTarget); };
+      div.querySelector('[data-act="reporRating"]').onclick = function(){ reporRating(n, div); };
+      div.querySelector('[data-act="reporBackup"]').onclick = function(e){ reporBackupNeg(n, div, e.currentTarget); };
+    }
     return div;
   }
 
   function copiarAcessos(n, btn){
-    const msg = 'Olá! Aqui estão os teus acessos àMesa para o ' + (n.nome || n.slug) + ':\n'
+    const _sal = ((n.config && n.config.setor) || 'restauracao') !== 'restauracao';
+    const msg = _sal ? ('Olá! Aqui estão os acessos de gestão de ' + (n.nome || n.slug) + ':\n'
+      + '📅 Agenda, serviços e página: ' + SITE + '/salao-gestao.html?n=' + n.slug + '\n'
+      + 'Entra com o teu email' + (n.dono_email ? (' (' + n.dono_email + ')') : '') + ' e a password que recebeste.\n'
+      + '🔗 Página para os clientes marcarem: ' + SITE + '/salao.html?n=' + n.slug)
+      : 'Olá! Aqui estão os teus acessos àMesa para o ' + (n.nome || n.slug) + ':\n'
       + '📊 Gestão do negócio: ' + SITE + '/calendario.html?n=' + n.slug + '\n'
       + 'Entra com o teu email' + (n.dono_email ? (' (' + n.dono_email + ')') : '') + ' e a password que recebeste.\n'
       + 'Dica: no telemóvel, abre o link das Reservas e faz "Adicionar ao ecrã principal" para ficar como app.';
@@ -987,7 +1000,7 @@
     const funcoes = Object.assign({}, FUNCOES_TODAS);   // tudo ligado (o gating do site foi retirado)
     // os EXTRAS (desbloqueados na Gestão) não se perdem ao guardar aqui
     try{ const { data:entCur } = await sb.from('entitlements').select('funcoes').eq('negocio_id', n.id).maybeSingle(); if(entCur && entCur.funcoes && entCur.funcoes.extras) funcoes.extras = entCur.funcoes.extras; }catch(e){}
-    const publicidade = { ativo: div.querySelector('[data-pub]').checked };
+    const _pubEl = div.querySelector('[data-pub]'); const publicidade = { ativo: _pubEl ? _pubEl.checked : false };   // outros setores: sem publicidade da àMesa
     const emailDono = (div.querySelector('[data-email]').value || '').trim().toLowerCase();
     const nomeNovo = (div.querySelector('[data-nome]').value || '').trim();
     const box = div.querySelector('[data-msg]');
@@ -998,13 +1011,13 @@
       let _cfg = n.config || {};
       try{ const { data:fresh } = await sb.from('negocios').select('config').eq('id', n.id).maybeSingle(); if(fresh && fresh.config) _cfg = fresh.config; }catch(e){}
       _cfg = Object.assign({}, _cfg);
-      _cfg.oculto = !!(_ocEl && _ocEl.checked);
-      _cfg.tipo = (_tpEl ? _tpEl.value : '').trim();
+      if(_ocEl) _cfg.oculto = !!_ocEl.checked;   // só a ficha dos restaurantes tem estes campos
+      if(_tpEl) _cfg.tipo = (_tpEl.value || '').trim();
       { const _seEl = div.querySelector('[data-setor]'); const _sv = _seEl ? _seEl.value : ''; if(_sv && _sv !== 'restauracao') _cfg.setor = _sv; else delete _cfg.setor; }   // Multitask: tipo de negócio
       // Exemplo do formulário de registo
       { const _exEl = div.querySelector('[data-exemplo]'), _exD = div.querySelector('[data-exdesc]');
-        if(_exEl && _exEl.checked){ _cfg.exemplo = true; } else { delete _cfg.exemplo; }
-        const _dsc = (_exD ? _exD.value : '').trim(); if(_dsc) _cfg.exemploDesc = _dsc.slice(0, 140); else delete _cfg.exemploDesc; }
+        if(_exEl){ if(_exEl.checked){ _cfg.exemplo = true; } else { delete _cfg.exemplo; }
+          const _dsc = (_exD ? _exD.value : '').trim(); if(_dsc) _cfg.exemploDesc = _dsc.slice(0, 140); else delete _cfg.exemploDesc; } }
       _upNeg.config = _cfg;
     }
     const { error:eN } = await sb.from('negocios').update(_upNeg).eq('id', n.id);
@@ -1017,7 +1030,7 @@
     const box = div.querySelector('[data-msg]');
     const email = ((div.querySelector('[data-email]') || {}).value || n.dono_email || '').trim().toLowerCase();
     if(!email){ msg(box, 'Este negócio ainda não tem email de dono. Preenche o email e carrega em Guardar primeiro.', 'erro'); return; }
-    const redir = QR_BASE + 'calendario.html?n=' + n.slug;   // os donos só usam o Gestor
+    const redir = QR_BASE + ((((n.config && n.config.setor) || 'restauracao') !== 'restauracao') ? 'salao-gestao.html?n=' : 'calendario.html?n=') + n.slug;   // os donos só usam o Gestor (salão: a gestão do salão)
     msg(box, 'A enviar link de acesso…', 'ok');
     const { error } = await sb.auth.signInWithOtp({ email: email, options: { emailRedirectTo: redir, shouldCreateUser: true, data: { negocio: n.slug, negocio_nome: n.nome } } });
     if(error){ msg(box, 'Erro: ' + error.message, 'erro'); }
