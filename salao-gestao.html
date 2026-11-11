@@ -5,9 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Gestão do salão</title>
 <meta name="robots" content="noindex">
-<link rel="icon" href="/icon-192.png">
+<link rel="icon" type="image/png" href="/trevo-64.png">
+<link rel="apple-touch-icon" href="/apple-icon-trevo-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<script>
+  // 4 Trevo: app instalável com o nome e o ícone do próprio negócio (não da àMesa)
+  (function(){ var s = (new URLSearchParams(location.search).get('n') || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    var l = document.createElement('link'); l.rel = 'manifest'; l.href = '/api/manifest?n=' + encodeURIComponent(s) + '&g=1'; document.head.appendChild(l); })();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js"></script>
 <style>
   /* Multitask — Gestão de um salão (Beleza e bem-estar): agenda, serviços, página e horário. Pensada para o computador da receção. */
@@ -107,6 +115,7 @@
     </nav>
     <a class="sair" id="verPagina" target="_blank" rel="noopener" style="text-decoration:none;">Ver página ↗</a>
     <button type="button" class="sair" id="bSair">Sair</button>
+    <span aria-label="4Trevo" style="display:flex;align-items:center;gap:2px;opacity:.55;"><svg width="32" height="27" viewBox="22 70 220 182" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g transform="translate(150,160) rotate(60)" fill="none" stroke="#FFFFFF" stroke-linejoin="round"><path d="M0,-4 C-4,-12 -18,-14 -30,-28 C-44,-44 -42,-68 -22,-76 C-4,-82 14,-72 18,-54 C22,-38 12,-18 0,-4Z" stroke-width="6"/><path d="M4,0 C12,-4 14,-18 28,-30 C44,-44 68,-42 76,-22 C82,-4 72,14 54,18 C38,22 18,12 4,0Z" stroke-width="6"/><path d="M0,4 C4,12 18,14 30,28 C44,44 42,68 22,76 C4,82 -14,72 -18,54 C-22,38 -12,18 0,4Z" stroke-width="6"/><path d="M-4,0 C-12,4 -14,18 -28,30 C-44,44 -68,42 -76,22 C-82,4 -72,-14 -54,-18 C-38,-22 -18,-12 -4,0Z" stroke-width="6"/><g stroke-width="1" opacity="0.6"><line x1="2" y1="-2" x2="44" y2="-44"/><line x1="2" y1="2" x2="44" y2="44"/><line x1="-2" y1="2" x2="-44" y2="44"/><line x1="-2" y1="-2" x2="-44" y2="-44"/></g><circle cx="0" cy="0" r="4" stroke-width="2"/><path d="M8,82 C10,100 6,120 0,142" stroke-width="6" stroke-linecap="round"/></g></svg><span style="font:700 14px 'Space Grotesk', Manrope, sans-serif;letter-spacing:1px;">4Trevo</span></span>
   </div></header>
 
   <!-- AGENDA -->
@@ -222,7 +231,7 @@
     $('vLogin').classList.add('hide'); $('vApp').classList.remove('hide');
     aplicarCor(); $('tNome').innerHTML = esc(SAL.nome || NEG.nome) + ' <span>· Gestão</span>';
     $('verPagina').href = '/salao.html?n=' + encodeURIComponent(SLUG);
-    document.title = (SAL.nome || NEG.nome) + ' · Gestão';
+    document.title = (SAL.nome || NEG.nome) + ' · Gestão · 4 Trevo';
     if(params.get('d')) dataSel = dDe(params.get('d'));
     var t = (location.hash || '').replace('#', ''); if(['servicos','pagina','horario'].indexOf(t) >= 0) irPara(t);
     await carregarRes();

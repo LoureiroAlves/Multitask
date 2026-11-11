@@ -13,8 +13,9 @@ self.addEventListener('push', function(event){
   var titulo = data.titulo || 'Novidade';
   var opcoes = {
     body: data.corpo || '',
-    icon: data.icon || '/icon-192.png',
-    badge: data.badge || '/icon-192.png',
+    // 4 Trevo: avisos dos negócios fora da àMesa (salões…) levam o ícone do trevo; os restaurantes ficam com o da àMesa
+    icon: data.icon || (/\/salao(-gestao)?\.html/.test(String(data.url || '')) ? '/icon-trevo-192.png' : '/icon-192.png'),
+    badge: data.badge || (/\/salao(-gestao)?\.html/.test(String(data.url || '')) ? '/icon-trevo-192.png' : '/icon-192.png'),
     data: { url: data.url || '/' },
     vibrate: data.fixa ? [120, 60, 120, 60, 240] : [80, 40, 80],
     renotify: !!data.tag,
