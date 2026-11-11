@@ -93,7 +93,14 @@
   .msg{ font-size:14px; font-weight:700; }
   .msg.erro{ color:#A3262A; } .msg.ok{ color:var(--verde); }
   .minhas{ display:flex; flex-direction:column; gap:10px; }
-  .minha{ background:#fff; border-radius:14px; padding:14px; display:flex; flex-direction:column; gap:8px; box-shadow:0 1px 2px rgba(31,28,26,.06); }
+  .minha{ background:#fff; border:1.5px solid var(--borda); border-radius:14px; display:flex; flex-direction:column; overflow:hidden; }
+  .minha.aberta{ border-color:var(--ac); }
+  .minha-cab{ display:grid; grid-template-columns:1fr auto; gap:4px 10px; align-items:center; padding:12px 14px; background:none; border:none; text-align:left; width:100%; color:var(--ink); }
+  .minha-cab b{ font-size:15px; } .minha-cab .q{ font-size:14px; color:var(--ink); } .minha-cab .p{ font-size:14px; font-weight:800; text-align:right; }
+  .minha-cab .seta{ grid-column:1/-1; font-size:12px; color:var(--suave); }
+  .minha-corpo{ display:none; flex-direction:column; gap:8px; padding:0 14px 14px; border-top:1px solid var(--linha); padding-top:12px; }
+  .minha.aberta .minha-corpo{ display:flex; }
+  .minha-prop{ margin:0 14px 12px; background:#F3E6EA; border-radius:10px; padding:10px 12px; display:flex; flex-direction:column; gap:8px; }
   .estado{ display:inline-block; border-radius:999px; padding:3px 10px; font-size:12px; font-weight:800; }
   .e-pendente{ background:#FFF3DF; color:#8A5A10; } .e-confirmada{ background:var(--verde-f); color:var(--verde); } .e-cancelada{ background:#F4E7E7; color:#8A2A2A; } .e-proposta{ background:#F3E6EA; color:var(--ac); }
   .barra{ display:none; }
@@ -437,21 +444,38 @@
       var hoje = iso(new Date());
       var por = {}; (rows || []).forEach(function(r){ por[r.id] = r; }); _minhasRows = por;
       var vis = l.filter(function(x){ var r = por[x.id]; return r && r.data >= hoje; });
+      vis.sort(function(a, b){ return (por[a.id].data + por[a.id].hora).localeCompare(por[b.id].data + por[b.id].hora); });   // a mais próxima primeiro
       if(!vis.length){ $('secMinhas').classList.add('hide'); return; }
       $('secMinhas').classList.remove('hide');
+      var eu = function(v){ return (Math.round(v * 100) / 100).toLocaleString('pt-PT', { minimumFractionDigits:2, maximumFractionDigits:2 }) + ' €'; };
+      var pushOn = pushLigado();
       $('minhas').innerHTML = vis.map(function(x){
-        var r = por[x.id], prop = r.estado !== 'cancelada' && r.proposta_hora;
-        var est = prop ? ['proposta', 'Proposta do salão'] : r.estado === 'confirmada' ? ['confirmada', 'Confirmada'] : r.estado === 'cancelada' ? ['cancelada', 'Cancelada'] : ['pendente', 'À espera de confirmação'];
-        var h = '<div class="minha"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center;"><b>' + esc(x.servico || 'Marcação') + '</b><span class="estado e-' + est[0] + '">' + est[1] + '</span></div>'
-          + '<div>' + esc(quando(r.data, r.hora)) + (r.profissional && nomeProf(r.profissional) ? (' · com ' + esc(nomeProf(r.profissional))) : '') + '</div>';
-        if(r.valor != null && r.estado !== 'cancelada'){ var eu = function(v){ return (Math.round(v * 100) / 100).toLocaleString('pt-PT', { minimumFractionDigits:2, maximumFractionDigits:2 }) + ' €'; };
-          h += (+r.desconto && r.valor_base != null) ? ('<div><s style="color:var(--suave);">' + eu(+r.valor_base) + '</s> <b>' + eu(+r.valor) + '</b> <span style="background:#EEF2EE;color:var(--verde);border-radius:999px;padding:1px 8px;font-size:12px;font-weight:800;">🎁 −' + (+r.desconto) + '%</span></div>') : ('<div style="color:var(--suave);">' + eu(+r.valor) + '</div>'); }
-        if(prop) h += '<div style="background:#F3E6EA;border-radius:10px;padding:10px 12px;color:var(--ink);"><b style="color:var(--ac);">🕘 O salão propõe mudar para ' + esc(quando(r.proposta_data || r.data, r.proposta_hora)) + '.</b><br><span style="font-size:13px;">' + (r.estado === 'confirmada' ? 'Se não aceitar, a marcação mantém-se como está.' : 'Se não aceitar, o pedido é cancelado.') + '</span></div><div style="display:flex;gap:8px;flex-wrap:wrap;"><button type="button" class="btn-ac" data-ac="sim" data-id="' + esc(x.id) + '">Aceito a nova hora</button><button type="button" class="btn-sec" data-ac="nao" data-id="' + esc(x.id) + '">Não dá</button></div>';
-        if(r.nota) h += '<div class="nota">Nota do salão: ' + esc(r.nota) + '</div>';
-        if(r.estado !== 'cancelada') h += '<div style="display:flex;gap:8px;flex-wrap:wrap;"><button type="button" class="btn-sec" data-ac="push" data-id="' + esc(x.id) + '">🔔 Avisar-me por notificação</button><button type="button" class="btn-sec" data-ac="reag" data-id="' + esc(x.id) + '">📅 Mudar dia/hora</button><button type="button" class="btn-sec" data-ac="cancelar" data-id="' + esc(x.id) + '" style="color:#8A2A2A;">Já não vou</button></div>';
-        return h + '</div>';
-      }).join('') + (nova ? ('<div class="msg ok">' + (nova === 'reag' ? 'Nova hora enviada ✓ O salão vai confirmar a mudança.' : 'Pedido enviado ✓ O salão vai confirmar. Ligue as notificações para saber a resposta.') + '</div>') : '');
+        var r = por[x.id], prop = r.estado !== 'cancelada' && r.proposta_hora, serv = r.servico || x.servico || 'Marcação';
+        var est = prop ? ['proposta', 'Proposta do salão'] : r.estado === 'confirmada' ? ['confirmada', 'Confirmada'] : r.estado === 'cancelada' ? ['cancelada', 'Cancelada'] : ['pendente', 'Por confirmar'];
+        // preço: o da marcação; se ainda não vier do servidor, o do serviço
+        var base = r.valor_base != null ? +r.valor_base : null, val = r.valor != null ? +r.valor : null;
+        if(val == null){ var sv = SERV.filter(function(v){ return v.nome === serv; })[0], pm = /(\d+(?:[.,]\d{1,2})?)/.exec(String((sv && sv.preco) || '')); if(pm) val = parseFloat(pm[1].replace(',', '.')); }
+        var preco = val == null || r.estado === 'cancelada' ? '' : ((+r.desconto && base != null) ? ('<s style="color:var(--suave);font-weight:600;font-size:12px;">' + eu(base) + '</s> ' + eu(val)) : eu(val));
+        var aberta = _minhaAberta === x.id;
+        var h = '<div class="minha' + (aberta ? ' aberta' : '') + '" data-id="' + esc(x.id) + '"><button type="button" class="minha-cab" data-abrir="' + esc(x.id) + '" aria-expanded="' + aberta + '">'
+          + '<b>' + esc(serv) + '</b><span class="estado e-' + est[0] + '">' + est[1] + '</span>'
+          + '<span class="q">' + esc(quando(r.data, r.hora)) + '</span><span class="p">' + preco + '</span>'
+          + '<span class="seta">' + (aberta ? '▲ Fechar' : '▼ Ver detalhes e opções') + '</span></button>';
+        if(prop) h += '<div class="minha-prop"><b style="color:var(--ac);">🕘 O salão propõe mudar para ' + esc(quando(r.proposta_data || r.data, r.proposta_hora)) + '.</b><span style="font-size:13px;">' + (r.estado === 'confirmada' ? 'Se não aceitar, a marcação mantém-se como está.' : 'Se não aceitar, o pedido é cancelado.') + '</span><div style="display:flex;gap:8px;flex-wrap:wrap;"><button type="button" class="btn-ac" data-ac="sim" data-id="' + esc(x.id) + '">Aceito a nova hora</button><button type="button" class="btn-sec" data-ac="nao" data-id="' + esc(x.id) + '">Não dá</button></div></div>';
+        h += '<div class="minha-corpo">';
+        if(r.profissional && nomeProf(r.profissional)) h += '<div>👤 Com <b>' + esc(nomeProf(r.profissional)) + '</b></div>';
+        if(+r.desconto) h += '<div>🎁 Desconto de <b>' + (+r.desconto) + '%</b> oferecido pelo salão</div>';
+        if(r.nota) h += '<div class="nota" style="margin:0;">💬 Nota do salão: ' + esc(r.nota) + '</div>';
+        if(r.estado !== 'cancelada'){
+          h += pushOn ? '<div style="font-size:13px;color:var(--verde);font-weight:700;">🔔 Notificações ligadas</div>' : '<button type="button" class="btn-sec" data-ac="push" data-id="' + esc(x.id) + '">🔔 Avisar-me por notificação</button>';
+          h += '<div style="display:flex;gap:8px;flex-wrap:wrap;"><button type="button" class="btn-sec" data-ac="reag" data-id="' + esc(x.id) + '" style="flex:1;">📅 Mudar dia/hora</button><button type="button" class="btn-sec" data-ac="cancelar" data-id="' + esc(x.id) + '" style="flex:1;color:#8A2A2A;">Já não vou</button></div>';
+        }
+        return h + '</div></div>';
+      }).join('') + (nova ? ('<div class="msg ok">' + (nova === 'reag' ? 'Nova hora enviada ✓ O salão vai confirmar a mudança.' : (pushLigado() ? 'Pedido enviado ✓ O salão vai confirmar — recebe a resposta por notificação.' : 'Pedido enviado ✓ O salão vai confirmar. Abra a marcação e ligue as notificações para saber a resposta.')) + '</div>') : '');
       $('minhas').querySelectorAll('[data-ac]').forEach(function(b){ b.onclick = function(){ acaoMinha(b.getAttribute('data-ac'), b.getAttribute('data-id'), b); }; });
+      $('minhas').querySelectorAll('[data-abrir]').forEach(function(b){ b.onclick = function(){ var id = b.getAttribute('data-abrir'); _minhaAberta = _minhaAberta === id ? '' : id;
+        $('minhas').querySelectorAll('.minha').forEach(function(c){ var on = c.getAttribute('data-id') === _minhaAberta; c.classList.toggle('aberta', on); var cb = c.querySelector('.minha-cab'); cb.setAttribute('aria-expanded', on); cb.querySelector('.seta').textContent = on ? '▲ Fechar' : '▼ Ver detalhes e opções'; }); }; });
+      if(pushOn) ligarPushTodas(vis.filter(function(x){ return por[x.id].estado !== 'cancelada'; }).map(function(x){ return x.id; }));
     }).catch(function(){});
   }
   function enviarReag(){
@@ -482,10 +506,17 @@
     pintarDias(); pintarHoras(); pintarServicos(); abrirFolha();
     if(!window.matchMedia('(max-width: 860px)').matches){ try{ $('painel').scrollIntoView({ behavior:'smooth', block:'start' }); }catch(e){} }
   }
-  var _minhasRows = {};
+  var _minhasRows = {}, _minhaAberta = '';
+  // notificações: depois de ligadas uma vez neste telemóvel, ficam ligadas para todas as marcações
+  function pushLigado(){ try{ return 'Notification' in window && 'serviceWorker' in navigator && Notification.permission === 'granted'; }catch(e){ return false; } }
+  var _pushFeitos = {};
+  function ligarPushTodas(ids){
+    var falta = ids.filter(function(id){ return !_pushFeitos[id]; }); if(!falta.length) return;
+    obterPush().then(function(ep){ if(!ep) return; falta.forEach(function(id){ _pushFeitos[id] = 1; rpc('marcacao_set_push', { p_id:id, p_endpoint:ep }).catch(function(){ delete _pushFeitos[id]; }); }); });
+  }
   function acaoMinha(ac, id, b){
     if(ac === 'reag'){ var x = guardados().filter(function(v){ return v.id === id; })[0], r = _minhasRows[id]; if(x && r) iniciarReag(x, r); return; }
-    if(ac === 'push'){ b.disabled = true; b.textContent = 'A ligar…'; obterPush().then(function(ep){ if(!ep) throw new Error('sem_push'); return rpc('marcacao_set_push', { p_id:id, p_endpoint:ep }); }).then(function(){ b.textContent = '🔔 Notificações ligadas'; }).catch(function(){ b.disabled = false; b.textContent = '🔔 Avisar-me por notificação'; alert('Não foi possível ligar as notificações. No iPhone, adicione primeiro esta página ao ecrã principal (Partilhar → "Adicionar ao Ecrã Principal").'); }); return; }
+    if(ac === 'push'){ b.disabled = true; b.textContent = 'A ligar…'; obterPush().then(function(ep){ if(!ep) throw new Error('sem_push'); try{ localStorage.setItem('salao_push_on', '1'); }catch(e){} _pushFeitos = {}; return rpc('marcacao_set_push', { p_id:id, p_endpoint:ep }); }).then(function(){ pintarMinhas(); }).catch(function(){ b.disabled = false; b.textContent = '🔔 Avisar-me por notificação'; alert('Não foi possível ligar as notificações. No iPhone, adicione primeiro esta página ao ecrã principal (Partilhar → "Adicionar ao Ecrã Principal").'); }); return; }
     if(ac === 'cancelar'){ if(!confirm('Cancelar esta marcação? O salão é avisado.')) return; rpc('reserva_cancelar_cliente', { p_id:id }).then(function(){ pintarMinhas(); }); return; }
     if(ac === 'sim' || ac === 'nao'){
       var rr = _minhasRows[id] || {};
