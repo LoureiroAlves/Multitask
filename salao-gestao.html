@@ -928,7 +928,8 @@
     $(box).querySelectorAll('[data-esq]').forEach(function(b){ b.onclick = function(){ var i = +b.getAttribute('data-esq'), n = arr.slice(), t = n[i - 1]; n[i - 1] = n[i]; n[i] = t; grava(n); }; });
   }
   // ---------- QR code (um por salão) ----------
-  function linkSalao(){ return 'https://4trevo.com/salao.html?n=' + encodeURIComponent(SLUG); }
+  // na versão de testes (teste.amesadigital.pt / teste.4trevo.com) o QR abre a página de testes
+  function linkSalao(){ return (/(^|\.)teste\./.test(location.hostname) ? 'https://teste.4trevo.com' : 'https://4trevo.com') + '/salao.html?n=' + encodeURIComponent(SLUG); }
   function pintarQR(){
     var box = $('qrBox'); box.innerHTML = ''; $('qrUrl').textContent = linkSalao();
     if(typeof QRCode !== 'function'){ box.textContent = 'Sem ligação para gerar o QR.'; return; }
