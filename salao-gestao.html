@@ -81,6 +81,8 @@
   .foto.logo img{ object-fit:contain; }
   .foto-ops{ position:absolute; right:4px; top:4px; display:flex; gap:4px; }
   .foto-ops button{ width:30px; height:30px; border:none; border-radius:8px; background:rgba(0,0,0,.6); color:#fff; font-size:14px; }
+  .foto.fundo{ width:320px; height:120px; }
+  .foto video{ width:100%; height:100%; object-fit:cover; display:block; }
   .foto-add{ width:150px; height:100px; border:2px dashed var(--borda); border-radius:10px; background:#fff; color:var(--suave); font-weight:700; display:flex; align-items:center; justify-content:center; text-align:center; padding:6px; }
   .bloco-sec{ background:#fff; border-radius:12px; padding:16px; margin-top:16px; }
   .bloco-sec h3{ margin:0 0 4px; font-size:16px; }
@@ -193,6 +195,7 @@
     <div class="campo" style="margin-top:12px;"><label for="pgPol">Política de cancelamento / informações</label><textarea id="pgPol" rows="3" maxlength="400" placeholder="Ex.: Pedimos que avise com 24 h de antecedência se não puder vir."></textarea></div>
     <div class="guardar-barra"><button type="button" class="btn-ac" id="pgGuardar">Guardar página</button><span class="msg" id="pgMsg"></span></div>
     <div class="bloco-sec"><h3>Logótipo</h3><p class="sub" style="margin:0;">Aparece no topo da página do salão. De preferência quadrado.</p><div class="fotos" id="ftLogo"></div></div>
+    <div class="bloco-sec"><h3>Fundo do cabeçalho</h3><p class="sub" style="margin:0;">Foto ou vídeo curto por trás do nome do salão, no topo da página. O vídeo passa sem som, em repetição (MP4, até 15 MB). Sem fundo, fica a cor do salão.</p><div class="fotos" id="ftFundo"></div></div>
     <div class="bloco-sec"><h3>Fotos de capa</h3><p class="sub" style="margin:0;">Até 5 fotos do espaço, no topo da página. A primeira é a principal.</p><div class="fotos" id="ftCapas"></div></div>
     <div class="bloco-sec"><h3>Galeria de trabalhos</h3><p class="sub" style="margin:0;">Até 12 fotos de resultados (unhas, maquilhagem, sobrancelhas…).</p><div class="fotos" id="ftGaleria"></div></div>
     <div class="bloco-sec"><h3>QR code do salão</h3><p class="sub" style="margin:0 0 10px;">Para imprimir e pôr no balcão, na montra ou nos cartões. Abre a página de marcações deste salão.</p>
@@ -540,10 +543,26 @@
   // ---------- página ----------
   // ---------- fotos (Storage "imagens/<slug>/salao/…": cada salão só mexe na sua pasta) ----------
   var _ftCb = null, _ftOpt = {};
-  function escolherFoto(opt, cb){ _ftOpt = opt || {}; _ftCb = cb; $('ftInput').value = ''; $('ftInput').click(); }
+  function escolherFoto(opt, cb){ _ftOpt = opt || {}; _ftCb = cb; $('ftInput').accept = _ftOpt.video ? 'image/*,video/mp4,video/webm,video/quicktime' : 'image/*'; $('ftInput').value = ''; $('ftInput').click(); }
+  async function subirOriginal(f, nome){   // vídeo ou GIF animado: vai tal como está (não passa pela compressão)
+    var ext = (f.name.split('.').pop() || '').toLowerCase().replace(/[^a-z0-9]/g, '') || 'bin';
+    var caminho = SLUG + '/salao/' + nome + '-' + Date.now().toString(36) + '.' + ext;
+    var up = await sb.storage.from('imagens').upload(caminho, f, { contentType:f.type || undefined, cacheControl:'31536000', upsert:false });
+    if(up.error) throw up.error;
+    return sb.storage.from('imagens').getPublicUrl(caminho).data.publicUrl;
+  }
   $('ftInput').onchange = async function(){
     var f = this.files && this.files[0]; if(!f || !_ftCb) return;
-    toast('A carregar a foto…');
+    var eVideo = /^video\//.test(f.type || ''), eGif = f.type === 'image/gif';
+    if(eVideo && !_ftOpt.video){ alert('Aqui só pode pôr fotos.'); return; }
+    if(eVideo && f.size > 15 * 1024 * 1024){ alert('O vídeo tem ' + (f.size / 1048576).toFixed(1) + ' MB. O máximo são 15 MB — encurte-o ou exporte em menor qualidade.'); return; }
+    if(eGif && f.size > 8 * 1024 * 1024){ alert('O GIF é demasiado grande (máximo 8 MB).'); return; }
+    toast(eVideo ? 'A carregar o vídeo… (pode demorar um pouco)' : 'A carregar a foto…');
+    if(eVideo || eGif){
+      try{ var u0 = await subirOriginal(f, _ftOpt.nome || 'ficheiro'); var cb0 = _ftCb; _ftCb = null; cb0(u0, eVideo ? 'video' : 'img'); }
+      catch(e){ alert('Não foi possível carregar o ficheiro: ' + (e.message || e)); }
+      return;
+    }
     try{
       var bmp = await createImageBitmap(f);
       var max = _ftOpt.max || 1600, k = Math.min(1, max / Math.max(bmp.width, bmp.height));
@@ -555,7 +574,7 @@
       var up = await sb.storage.from('imagens').upload(caminho, blob, { contentType:tipo, cacheControl:'31536000', upsert:false });
       if(up.error) throw up.error;
       var url = sb.storage.from('imagens').getPublicUrl(caminho).data.publicUrl;
-      var cb = _ftCb; _ftCb = null; cb(url);
+      var cb = _ftCb; _ftCb = null; cb(url, 'img');
     }catch(e){ alert('Não foi possível carregar a foto: ' + (e.message || e)); }
   };
   function apagarFicheiro(url){ try{ var m = String(url || '').split('/storage/v1/object/public/imagens/')[1]; if(m && m.indexOf(SLUG + '/') === 0) sb.storage.from('imagens').remove([decodeURIComponent(m.split('?')[0])]); }catch(e){} }
@@ -564,6 +583,11 @@
     $('ftLogo').innerHTML = (lg ? ('<div class="foto logo"><img src="' + esc(lg) + '" alt="Logótipo"><div class="foto-ops"><button type="button" data-x aria-label="Tirar">✕</button></div></div>') : '') + '<button type="button" class="foto-add" data-add>' + (lg ? 'Mudar logótipo' : '+ Logótipo') + '</button>';
     $('ftLogo').querySelector('[data-add]').onclick = function(){ escolherFoto({ max:600, png:true, nome:'logo' }, async function(url){ var antigo = SAL.logo; var e = await guardarCfg(function(c){ c.salao = Object.assign({}, c.salao || {}, { logo:url }); }); if(e) return alert('Erro: ' + e.message); apagarFicheiro(antigo); pintarFotos(); toast('Logótipo guardado ✓'); }); };
     var lx = $('ftLogo').querySelector('[data-x]'); if(lx) lx.onclick = async function(){ if(!confirm('Tirar o logótipo?')) return; var antigo = SAL.logo; var e = await guardarCfg(function(c){ c.salao = Object.assign({}, c.salao || {}); delete c.salao.logo; }); if(!e){ apagarFicheiro(antigo); pintarFotos(); } };
+    var fu = SAL.fundo && SAL.fundo.url ? SAL.fundo : null;
+    $('ftFundo').innerHTML = (fu ? ('<div class="foto fundo">' + (fu.tipo === 'video' ? ('<video src="' + esc(fu.url) + '" muted loop autoplay playsinline></video>') : ('<img src="' + esc(fu.url) + '" alt="">')) + '<div class="foto-ops"><button type="button" data-x aria-label="Tirar">✕</button></div></div>') : '')
+      + '<button type="button" class="foto-add" data-add>' + (fu ? 'Mudar fundo' : '+ Foto ou vídeo') + '</button>';
+    $('ftFundo').querySelector('[data-add]').onclick = function(){ escolherFoto({ max:2000, nome:'fundo', video:true }, async function(url, tipo){ var antigo = fu && fu.url; var e = await guardarCfg(function(c){ c.salao = Object.assign({}, c.salao || {}, { fundo:{ url:url, tipo:tipo || 'img' } }); }); if(e) return alert('Erro: ' + e.message); apagarFicheiro(antigo); pintarFotos(); toast('Fundo guardado ✓'); }); };
+    var fx = $('ftFundo').querySelector('[data-x]'); if(fx) fx.onclick = async function(){ if(!confirm('Tirar o fundo do cabeçalho?')) return; var antigo = fu.url; var e = await guardarCfg(function(c){ c.salao = Object.assign({}, c.salao || {}); delete c.salao.fundo; }); if(!e){ apagarFicheiro(antigo); pintarFotos(); } };
     lista('ftCapas', 'capas', 5, 'capa', 1800);
     lista('ftGaleria', 'galeria', 12, 'galeria', 1400);
   }
