@@ -329,7 +329,12 @@
     var t = (location.hash || '').replace('#', ''); if(['servicos','pagina','horario','equipa','clientes'].indexOf(t) >= 0) irPara(t);
     await carregarRes();
     if(params.get('rid')){ var x = RES.filter(function(z){ return z.id === params.get('rid'); })[0]; if(x) abrirDetalhe(x); }
-    setInterval(function(){ if(!document.hidden && !document.querySelector('.modal-fundo')) carregarRes(); }, 60000);
+    // atualizar sozinho: quando chega uma notificação, quando se volta à página e de 30 em 30 s
+    var _ultAt = 0; function atualizar(forcar){ if(document.querySelector('.modal-fundo') && !forcar) return; if(Date.now() - _ultAt < 1500) return; _ultAt = Date.now(); carregarRes(); if(!$('tClientes').classList.contains('hide')) carregarClientes(); }
+    if('serviceWorker' in navigator){ try{ navigator.serviceWorker.addEventListener('message', function(e){ if(e.data && (e.data.tipo === 'push' || e.data.tipo === 'abrir')){ atualizar(true); if(e.data.tipo === 'push') toast('🔔 Novidade — agenda atualizada'); } }); }catch(e){} }
+    document.addEventListener('visibilitychange', function(){ if(!document.hidden) atualizar(); });
+    window.addEventListener('focus', function(){ atualizar(); });
+    setInterval(function(){ if(!document.hidden) atualizar(); }, 30000);
   }
   $('lEntrar').onclick = async function(){
     var e = $('lEmail').value.trim(), p = $('lPass').value; if(!e || !p) return;

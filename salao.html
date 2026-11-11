@@ -497,6 +497,14 @@
     }
   }
 
+  // ---------- atualizar sozinho: quando chega uma notificação, quando se volta à página e de 30 em 30 s ----------
+  var _ultAtual = 0;
+  function atualizarMinhas(){ if(!NEG || !NEG.id || Date.now() - _ultAtual < 1500) return; _ultAtual = Date.now(); pintarMinhas(); }
+  if('serviceWorker' in navigator){ try{ navigator.serviceWorker.addEventListener('message', function(e){ if(e.data && (e.data.tipo === 'push' || e.data.tipo === 'abrir')) atualizarMinhas(); }); }catch(e){} }
+  document.addEventListener('visibilitychange', function(){ if(!document.hidden) atualizarMinhas(); });
+  window.addEventListener('focus', atualizarMinhas);
+  setInterval(function(){ if(!document.hidden && guardados().length) atualizarMinhas(); }, 30000);
+
   // ---------- notificações (o mesmo service worker da àMesa) ----------
   function b64(s){ var p = '='.repeat((4 - s.length % 4) % 4), b = (s + p).replace(/-/g, '+').replace(/_/g, '/'), r = atob(b), o = new Uint8Array(r.length); for(var i = 0; i < r.length; i++) o[i] = r.charCodeAt(i); return o; }
   function obterPush(){

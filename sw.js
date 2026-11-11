@@ -24,8 +24,15 @@ self.addEventListener('push', function(event){
   };
   if (data.image) opcoes.image = data.image;                 // imagem grande (Android/Chrome; o iPhone ignora)
   if (data.fixa) opcoes.requireInteraction = true;           // "está pronta": fica no ecrã até o cliente tocar
-  if (data.url) opcoes.actions = [{ action: 'abrir', title: data.fixa ? 'Ver encomenda' : 'Abrir menu' }];
-  event.waitUntil(self.registration.showNotification(titulo, opcoes));
+  var eSalao = /\/salao(-gestao)?\.html/.test(String(data.url || ''));
+  if (data.url) opcoes.actions = [{ action: 'abrir', title: eSalao ? 'Abrir' : (data.fixa ? 'Ver encomenda' : 'Abrir menu') }];
+  event.waitUntil(Promise.all([
+    self.registration.showNotification(titulo, opcoes),
+    // avisa as páginas abertas para se atualizarem sozinhas (quem não liga a isto ignora)
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(wins){
+      wins.forEach(function(w){ try { w.postMessage({ tipo: 'push', url: data.url || '', tag: data.tag || '' }); } catch (e) {} });
+    })
+  ]));
 });
 
 // Ao tocar na notificação, abre (ou foca) o cardápio
@@ -36,7 +43,7 @@ self.addEventListener('notificationclick', function(event){
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(wins){
       for (var i = 0; i < wins.length; i++) {
         var w = wins[i];
-        try { if (w.url.indexOf(url.split('?')[0]) === 0 && 'focus' in w) return w.focus(); } catch (e) {}
+        try { if (w.url.indexOf(url.split('?')[0]) === 0 && 'focus' in w) { try { w.postMessage({ tipo: 'abrir', url: url }); } catch (e2) {} return w.focus(); } } catch (e) {}
       }
       if (self.clients.openWindow) return self.clients.openWindow(url);
     })
