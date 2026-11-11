@@ -558,7 +558,9 @@
   function acaoMinha(ac, id, b){
     if(ac === 'reag'){ var x = guardados().filter(function(v){ return v.id === id; })[0], r = _minhasRows[id]; if(x && r) iniciarReag(x, r); return; }
     if(ac === 'push'){ b.disabled = true; b.textContent = 'A ligar…'; obterPush().then(function(ep){ if(!ep) throw new Error('sem_push'); try{ localStorage.setItem('salao_push_on', '1'); }catch(e){} _pushFeitos = {}; return rpc('marcacao_set_push', { p_id:id, p_endpoint:ep }); }).then(function(){ pintarMinhas(); }).catch(function(){ b.disabled = false; b.textContent = '🔔 Avisar-me por notificação'; alert('Não foi possível ligar as notificações. No iPhone, adicione primeiro esta página ao ecrã principal (Partilhar → "Adicionar ao Ecrã Principal").'); }); return; }
-    if(ac === 'cancelar'){ if(!confirm('Cancelar esta marcação? O salão é avisado.')) return; rpc('reserva_cancelar_cliente', { p_id:id }).then(function(){ pintarMinhas(); }); return; }
+    if(ac === 'cancelar'){ if(!confirm('Cancelar esta marcação? O salão é avisado.')) return;
+      rpc('marcacao_cancelar', { p_id:id }).catch(function(e){ if(/PGRST202|Could not find|does not exist/i.test(String(e.message || e))) return rpc('reserva_cancelar_cliente', { p_id:id }); throw e; })
+        .then(function(){ pintarMinhas(); }).catch(function(){ alert('Não foi possível cancelar. Tente outra vez ou contacte o salão.'); }); return; }
     if(ac === 'sim' || ac === 'nao'){
       var rr = _minhasRows[id] || {};
       if(ac === 'nao' && !confirm(rr.estado === 'confirmada' ? 'Recusar a mudança? A sua marcação mantém-se como estava.' : 'Recusar a proposta? O seu pedido será cancelado.')) return;
