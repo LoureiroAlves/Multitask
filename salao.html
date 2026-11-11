@@ -238,6 +238,8 @@
   function capazes(wd){ return EQ().filter(function(p){ return sel.serv && fazServ(p, sel.serv.id) && (wd == null || trabalha(p, wd)) && (!sel.prof || p.id === sel.prof); }); }
   function nomeProf(id){ var p = EQ().filter(function(x){ return x.id === id; })[0]; return p ? p.nome : ''; }
   function pintarProfs(){
+    // o cliente não escolhe a pessoa: o salão atribui automaticamente quem faz o serviço e está livre
+    sel.prof = ''; $('passoProf').classList.add('hide'); return;
     var l = EQ().filter(function(p){ return sel.serv && fazServ(p, sel.serv.id); });
     $('passoProf').classList.toggle('hide', l.length < 1);
     if(sel.prof && !l.some(function(p){ return p.id === sel.prof; })) sel.prof = '';

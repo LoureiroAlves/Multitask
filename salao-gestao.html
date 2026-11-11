@@ -232,7 +232,7 @@
   <!-- EQUIPA -->
   <section id="tEquipa" class="pag hide">
     <h2>Equipa</h2>
-    <p class="sub">Quem faz os serviços. Cada pessoa tem a sua agenda: duas pessoas podem atender à mesma hora. O cliente escolhe com quem quer ou "Sem preferência" (o sistema escolhe quem estiver livre). Sem equipa, o salão funciona com uma agenda só.</p>
+    <p class="sub">Quem faz os serviços. Cada pessoa tem a sua agenda: duas pessoas podem atender à mesma hora. Marque com um visto os serviços que cada pessoa faz. O cliente não escolhe a pessoa: cada marcação vai automaticamente para quem faz esse serviço e está livre (primeiro quem tem menos marcações nesse dia). Na agenda pode sempre mudar a pessoa de uma marcação.</p>
     <div id="eqLista"></div>
     <button type="button" class="btn" id="eqNovo">+ Acrescentar pessoa</button>
     <div class="guardar-barra"><button type="button" class="btn-ac" id="eqGuardar">Guardar equipa</button><span class="msg" id="eqMsg"></span></div>
@@ -395,21 +395,25 @@
         + '<div class="campo" style="flex:1;min-width:200px;"><label>Nome</label><input data-k="nome" maxlength="40" value="' + esc(p.nome || '') + '" placeholder="Ex.: Ana"></div>'
         + '<button type="button" class="btn-lnk" data-op="apagar">Retirar</button></div>'
         + '<div><div class="eq-rot">Dias em que trabalha</div><div class="eq-chips">' + ordemD.map(function(d){ var on = !Array.isArray(p.dias) || !p.dias.length || p.dias.indexOf(d) >= 0; return '<label><input type="checkbox" data-dia="' + d + '"' + (on ? ' checked' : '') + '> ' + DS[d] + '</label>'; }).join('') + '</div></div>'
-        + '<div><div class="eq-rot">Serviços que faz</div><div class="eq-chips"><label><input type="checkbox" data-todos' + (todos ? ' checked' : '') + '> Todos</label>'
-        + (todos ? '' : serv.map(function(x){ return '<label><input type="checkbox" data-sv="' + esc(x.id) + '"' + (p.servicos.indexOf(x.id) >= 0 ? ' checked' : '') + '> ' + esc(x.nome) + '</label>'; }).join('')) + '</div></div></div>';
+        + '<div><div class="eq-rot">Serviços que faz <span style="text-transform:none;letter-spacing:0;font-weight:600;">(marque com um visto)</span></div><div class="eq-chips">'
+        + serv.map(function(x){ return '<label><input type="checkbox" data-sv="' + esc(x.id) + '"' + (todos || p.servicos.indexOf(x.id) >= 0 ? ' checked' : '') + '> ' + esc(x.nome) + '</label>'; }).join('')
+        + '</div>' + (!todos && !p.servicos.length ? '<div style="color:#A33;font-weight:700;font-size:13px;margin-top:4px;">⚠️ Marque pelo menos um serviço</div>' : '') + '</div></div>';
     }).join('') : '<div style="background:#fff;border-radius:12px;padding:16px;color:var(--suave);margin-bottom:10px;">Ainda não há equipa: o salão usa uma agenda só. Carregue em "+ Acrescentar pessoa" se mais de uma pessoa atende ao mesmo tempo.</div>';
     $('eqLista').querySelectorAll('.eq-linha').forEach(function(l){
       var i = +l.getAttribute('data-i'), p = EQED[i];
       l.querySelector('[data-k="nome"]').oninput = function(){ p.nome = this.value; };
       l.querySelectorAll('[data-dia]').forEach(function(c){ c.onchange = function(){ var ds = []; l.querySelectorAll('[data-dia]').forEach(function(x){ if(x.checked) ds.push(+x.getAttribute('data-dia')); }); p.dias = ds.length === 7 ? [] : ds.sort(); }; });
-      var t = l.querySelector('[data-todos]'); t.onchange = function(){ p.servicos = t.checked ? [] : SERV.filter(function(x){ return x && x.nome; }).map(function(x){ return x.id; }); desenharEquipa(); };
-      l.querySelectorAll('[data-sv]').forEach(function(c){ c.onchange = function(){ var sv = []; l.querySelectorAll('[data-sv]').forEach(function(x){ if(x.checked) sv.push(x.getAttribute('data-sv')); }); p.servicos = sv; }; });
+      l.querySelectorAll('[data-sv]').forEach(function(c){ c.onchange = function(){ var sv = []; l.querySelectorAll('[data-sv]').forEach(function(x){ if(x.checked) sv.push(x.getAttribute('data-sv')); }); p.servicos = sv; p._explicito = true; if(!sv.length) desenharEquipa(); }; });
       l.querySelector('[data-op="apagar"]').onclick = function(){ if(!confirm('Retirar ' + (p.nome || 'esta pessoa') + ' da equipa? As marcações já feitas ficam na agenda.')) return; EQED.splice(i, 1); desenharEquipa(); };
     });
   }
-  $('eqNovo').onclick = function(){ EQED.push({ id:'p_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), nome:'', servicos:[], dias:[] }); desenharEquipa(); var ins = $('eqLista').querySelectorAll('input[data-k="nome"]'); if(ins.length) ins[ins.length - 1].focus(); };
+  $('eqNovo').onclick = function(){ EQED.push({ id:'p_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), nome:'', servicos:[], dias:[], _explicito:true }); desenharEquipa(); var ins = $('eqLista').querySelectorAll('input[data-k="nome"]'); if(ins.length) ins[ins.length - 1].focus(); };
   $('eqGuardar').onclick = async function(){
-    var limpo = EQED.filter(function(p){ return String(p.nome || '').trim(); }).map(function(p){ return { id:p.id, nome:String(p.nome).trim().slice(0, 40), servicos:Array.isArray(p.servicos) ? p.servicos : [], dias:Array.isArray(p.dias) ? p.dias : [] }; });
+    var todosIds = SERV.filter(function(x){ return x && x.nome && x.id; }).map(function(x){ return x.id; });
+    var limpo = EQED.filter(function(p){ return String(p.nome || '').trim(); }).map(function(p){ var sv = Array.isArray(p.servicos) ? p.servicos : []; if(!sv.length && !p._explicito) sv = todosIds.slice();   // "todos" antigo → lista com vistos
+      return { id:p.id, nome:String(p.nome).trim().slice(0, 40), servicos:sv, dias:Array.isArray(p.dias) ? p.dias : [] }; });
+    var semServ = limpo.filter(function(p){ return !p.servicos.length; });
+    if(semServ.length){ $('eqMsg').textContent = 'Marque pelo menos um serviço para: ' + semServ.map(function(p){ return p.nome; }).join(', '); $('eqMsg').className = 'msg erro'; return; }
     $('eqMsg').textContent = 'A guardar…'; $('eqMsg').className = 'msg';
     var e = await guardarCfg(function(c){ if(limpo.length) c.equipa = limpo; else delete c.equipa; });
     $('eqMsg').textContent = e ? ('Erro: ' + e.message) : 'Guardado ✓'; $('eqMsg').className = 'msg ' + (e ? 'erro' : 'ok');
@@ -859,8 +863,9 @@
       l.querySelectorAll('[data-k]').forEach(function(inp){ inp.addEventListener('input', function(){ var k = inp.getAttribute('data-k'); SERV[i][k] = inp.type === 'checkbox' ? inp.checked : (k === 'dur' ? (parseInt(inp.value, 10) || 30) : inp.value); }); inp.addEventListener('change', function(){ if(inp.type === 'checkbox'){ SERV[i][inp.getAttribute('data-k')] = inp.checked; } }); });
       l.querySelectorAll('[data-faz]').forEach(function(c){ c.onchange = function(){ var p = EQSV.filter(function(x){ return x.id === c.getAttribute('data-faz'); })[0], sid = SERV[i].id; if(!p || !sid) return;
         var todos = SERV.filter(function(x){ return x && x.nome && x.id; }).map(function(x){ return x.id; });
-        if(c.checked){ if(Array.isArray(p.servicos) && p.servicos.length && p.servicos.indexOf(sid) < 0) p.servicos.push(sid); if(p.servicos && p.servicos.length >= todos.length && todos.every(function(t){ return p.servicos.indexOf(t) >= 0; })) p.servicos = []; }
-        else { if(!Array.isArray(p.servicos) || !p.servicos.length) p.servicos = todos.slice(); p.servicos = p.servicos.filter(function(t){ return t !== sid; }); }
+        if(!Array.isArray(p.servicos) || !p.servicos.length) p.servicos = todos.slice();   // "todos" antigo → lista com vistos
+        if(c.checked){ if(p.servicos.indexOf(sid) < 0) p.servicos.push(sid); }
+        else { if(p.servicos.length <= 1){ c.checked = true; alert(p.nome + ' tem de fazer pelo menos um serviço.'); return; } p.servicos = p.servicos.filter(function(t){ return t !== sid; }); }
         pintarServ(); $('servMsg').textContent = 'Por guardar…'; $('servMsg').className = 'msg'; }; });
       l.querySelectorAll('[data-op]').forEach(function(b){ b.onclick = function(){ var op = b.getAttribute('data-op');
         if(op === 'foto'){ escolherFoto({ max:1200 }, function(url){ SERV[i].foto = url; guardarServ('Foto guardada ✓'); }); return; }
