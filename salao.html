@@ -115,6 +115,14 @@
   .lb{ position:fixed; inset:0; background:rgba(0,0,0,.9); z-index:100; display:flex; align-items:center; justify-content:center; padding:16px; }
   .lb img{ max-width:100%; max-height:100%; border-radius:8px; }
   .lb button{ position:absolute; top:12px; right:12px; width:44px; height:44px; border:none; border-radius:50%; background:rgba(255,255,255,.15); color:#fff; font-size:20px; }
+  .locais{ display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:12px; flex:1 1 100%; }
+  .local{ background:#fff; border-radius:14px; overflow:hidden; display:flex; flex-direction:column; text-decoration:none; color:var(--ink); box-shadow:0 1px 2px rgba(31,28,26,.06); border:2px solid transparent; }
+  .local:hover{ border-color:var(--ac); }
+  .local img{ width:100%; height:140px; object-fit:cover; background:var(--linha); display:block; }
+  .local-tx{ padding:14px; display:flex; flex-direction:column; gap:4px; }
+  .local-tx b{ font-size:17px; }
+  .local-tx span{ font-size:14px; color:var(--suave); }
+  .local-tx i{ font-style:normal; font-weight:800; color:var(--ac); margin-top:6px; }
   .vazio{ background:#fff; border-radius:14px; padding:24px; text-align:center; color:var(--suave); }
 </style>
 </head>
@@ -180,6 +188,7 @@
   var HDR = { apikey:SUPA_KEY, Authorization:'Bearer ' + SUPA_KEY, 'Content-Type':'application/json' };
   var params = new URLSearchParams(location.search);
   var SLUG = (params.get('n') || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  var GRUPO = (params.get('g') || '').toLowerCase().replace(/[^a-z0-9]/g, '');   // marca com vários salões (locais)
   var NEG = null, CFG = {}, SAL = {}, SERV = [];
   var sel = { serv:null, dia:null, hora:null };
   var DIAS_C = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'], DIAS_L = ['domingo','segunda','terça','quarta','quinta','sexta','sábado'];
@@ -202,7 +211,27 @@
   function diasMax(){ var d = parseInt(SAL.diasMax, 10); return isNaN(d) ? 30 : Math.max(1, Math.min(120, d)); }
   function fechadoEm(dIso){ var f = Array.isArray(SAL.fechos) ? SAL.fechos : []; return f.some(function(x){ return x && x.de && dIso >= x.de && dIso <= (x.ate || x.de); }); }
 
+  // ---------- marca com vários salões: primeiro escolhe-se o local ----------
+  function carregarGrupo(){
+    $('painel').classList.add('hide'); $('barra').classList.add('hide'); $('cats').innerHTML = '';
+    fetch(SUPA_URL + '/rest/v1/negocios?config->grupo->>id=eq.' + encodeURIComponent(GRUPO) + '&apagado_em=is.null&select=slug,nome,ativo,config', { headers:HDR })
+      .then(function(r){ return r.json(); }).then(function(rows){
+        var ls = (rows || []).filter(function(n){ return n && n.ativo !== false && n.config && n.config.setor === 'beleza'; })
+          .sort(function(a, b){ return (+(a.config.grupo.ordem) || 0) - (+(b.config.grupo.ordem) || 0) || String(a.nome).localeCompare(String(b.nome), 'pt'); });
+        if(!ls.length){ $('servicos').innerHTML = '<div class="vazio">Não encontrámos esta marca.</div>'; return; }
+        if(ls.length === 1){ location.replace('salao.html?n=' + encodeURIComponent(ls[0].slug)); return; }
+        var g = ls[0].config.grupo || {}; NEG = { nome:g.nome || ls[0].nome }; CFG = ls[0].config; SAL = Object.assign({}, CFG.salao || {}, { nome:g.nome || '', frase:'', morada:'', telefone:'', whatsapp:'', mostrarHoje:false }); SERV = [];
+        pintarTopo(); $('capas').className = 'capas hide'; $('secGaleria').classList.add('hide'); $('politica').textContent = '';
+        document.title = (g.nome || 'Marcações') + ' · Marcações';
+        $('servicos').innerHTML = '<section class="grupo" style="flex:1 1 100%;"><h2>Escolha o local</h2><div class="locais">' + ls.map(function(n){
+          var s = n.config.salao || {}, foto = (Array.isArray(s.capas) && urlOk(s.capas[0])) ? s.capas[0] : (s.fundo && s.fundo.tipo !== 'video' && urlOk(s.fundo.url) ? s.fundo.url : '');
+          return '<a class="local" href="salao.html?n=' + encodeURIComponent(n.slug) + '&g=' + encodeURIComponent(GRUPO) + '">' + (foto ? '<img src="' + esc(foto) + '" alt="" loading="lazy">' : '')
+            + '<div class="local-tx"><b>' + esc(s.nome || n.nome) + '</b>' + (s.morada ? '<span>' + esc(s.morada) + '</span>' : '') + (s.telefone ? '<span>' + esc(s.telefone) + '</span>' : '') + '<i>Marcar aqui →</i></div></a>';
+        }).join('') + '</div></section>';
+      }).catch(function(){ $('servicos').innerHTML = '<div class="vazio">Sem ligação. Tente outra vez daqui a pouco.</div>'; });
+  }
   function carregar(){
+    if(!SLUG && GRUPO){ carregarGrupo(); return; }
     if(!SLUG){ $('servicos').innerHTML = '<div class="vazio">Falta o endereço do salão.</div>'; return; }
     fetch(SUPA_URL + '/rest/v1/negocios?slug=eq.' + encodeURIComponent(SLUG) + '&apagado_em=is.null&select=id,nome,ativo,config', { headers:HDR })
       .then(function(r){ return r.json(); }).then(function(rows){
@@ -232,6 +261,7 @@
     if(SAL.whatsapp){ var w = String(SAL.whatsapp).replace(/\D/g,''); if(w.length === 9) w = '351' + w; ac += '<a href="https://wa.me/' + esc(w) + '" target="_blank" rel="noopener">WhatsApp</a>'; }
     if(SAL.instagram){ var ig = String(SAL.instagram).replace(/^@/, '').replace(/^https?:\/\/(www\.)?instagram\.com\//, '').replace(/\/.*$/, ''); ac += '<a href="https://instagram.com/' + esc(ig) + '" target="_blank" rel="noopener">Instagram</a>'; }
     if(SAL.morada) ac += '<a href="https://maps.google.com/?q=' + encodeURIComponent(SAL.morada) + '" target="_blank" rel="noopener">Mapa</a>';
+    if(GRUPO && SLUG) ac = '<a href="salao.html?g=' + encodeURIComponent(GRUPO) + '">← Outros locais</a>' + ac;
     $('acoesSalao').innerHTML = ac;
     $('politica').textContent = SAL.politica || '';
     pintarFotos();
