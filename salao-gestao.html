@@ -577,6 +577,7 @@
     $('pedidos').innerHTML = todos.map(function(r){
       return '<div class="pedido"><div><b>' + esc(r.nome || '') + '</b><div style="font-size:13px;">' + esc(r.servico || '') + (r.duracao ? (' · ' + r.duracao + ' min') : '') + (nomeProf(r.profissional) ? (' · com ' + esc(nomeProf(r.profissional))) : '') + '</div>'
         + '<div style="font-size:13px;font-weight:700;">' + esc(quando(r.data, r.hora)) + '</div>'
+        + (r.reagendada_de ? ('<div style="font-size:12px;color:var(--ac);font-weight:700;">🔁 Reagendada · antes: ' + esc(quando(String(r.reagendada_de).slice(0, 10), String(r.reagendada_de).slice(11))) + '</div>') : '')
         + (r.alt_hora ? ('<div style="font-size:13px;color:var(--ac);font-weight:700;">Pede para mudar para as ' + esc(r.alt_hora) + '</div>') : '')
         + (r.obs ? ('<div style="font-size:12px;color:var(--suave);">“' + esc(r.obs) + '”</div>') : '')
         + '</div><div class="pedido-acoes">'
@@ -643,6 +644,25 @@
     else toast('Guardado ✓');
   }
 
+  // o salão muda o dia/hora de uma marcação (o cliente é avisado)
+  async function reagendarSalao(r, d, h, nota){
+    var a = minDe(h), du = +r.duracao || 30, pr = r.profissional || '';
+    var choca = RES.some(function(x){ return x.id !== r.id && x.data === d && x.estado !== 'cancelada' && minDe(x.hora) != null && (!pr || !x.profissional || x.profissional === pr) && minDe(x.hora) < a + du && a < minDe(x.hora) + (+x.duracao || 30); });
+    if(choca && !confirm((pr && nomeProf(pr) ? (nomeProf(pr) + ' já tem') : 'Já há') + ' uma marcação nesse dia a essa hora. Mudar mesmo assim?')) return;
+    var patch = { data:d, hora:h, reagendada_de:r.data + ' ' + r.hora, proposta_hora:null, lembrete_em:null, lembrete_vespera_em:null };
+    if((nota || '').trim()) patch.nota = nota.trim();
+    var u = await sb.from('reservas').update(patch).eq('id', r.id);
+    if(u.error && /reagendada_de|column/i.test(u.error.message)){ delete patch.reagendada_de; u = await sb.from('reservas').update(patch).eq('id', r.id); }
+    if(u.error){ toast('Erro: ' + u.error.message); return; }
+    dataSel = dDe(d); await carregarRes();
+    var casa = SAL.nome || NEG.nome, corpo = casa + ': a sua marcação de ' + (r.servico || '') + ' passou de ' + quando(r.data, r.hora) + ' para ' + quando(d, h) + '.' + ((nota || '').trim() ? (' Nota: ' + nota.trim()) : '');
+    var ok = await pushCliente(Object.assign({}, r, patch), '📅 Marcação mudada', corpo);
+    if(ok){ toast('✓ Reagendada · cliente avisado por notificação'); return; }
+    var wl = waLink(r, corpo);
+    if(wl && confirm('Reagendada ✓\n\nEste cliente não tem notificações ligadas. Quer avisá-lo por WhatsApp?')) window.open(wl, '_blank', 'noopener');
+    else toast('Reagendada ✓');
+  }
+
   // ---------- janelas ----------
   function modal(html){ fecharModal(); var f = document.createElement('div'); f.className = 'modal-fundo'; f.innerHTML = '<div class="modal" role="dialog" aria-modal="true"><button type="button" class="fechar" aria-label="Fechar">✕</button>' + html + '</div>'; document.body.appendChild(f); f.querySelector('.fechar').onclick = fecharModal; f.addEventListener('click', function(e){ if(e.target === f) fecharModal(); }); return f; }
   function fecharModal(){ var f = document.querySelector('.modal-fundo'); if(f) f.remove(); }
@@ -653,6 +673,7 @@
     var f = modal('<h3>' + esc(r.nome || 'Marcação') + '</h3>'
       + '<div><b>' + esc(r.servico || '') + '</b>' + (r.duracao ? (' · ' + r.duracao + ' min') : '') + '</div>'
       + '<div>' + esc(quando(r.data, r.hora)) + ' · <span style="font-weight:800;">' + esc(est) + '</span></div>'
+      + (r.reagendada_de ? ('<div style="font-size:13px;color:var(--ac);font-weight:700;">🔁 Reagendada · antes: ' + esc(quando(String(r.reagendada_de).slice(0, 10), String(r.reagendada_de).slice(11))) + '</div>') : '')
       + (EQ().length ? ('<div class="campo"><label for="dProf">Profissional</label><select id="dProf"><option value="">— Sem profissional —</option>' + EQ().map(function(p){ return '<option value="' + esc(p.id) + '"' + (r.profissional === p.id ? ' selected' : '') + '>' + esc(p.nome) + '</option>'; }).join('') + '</select></div>') : '')
       + (tel ? ('<div>📱 <a href="tel:' + esc(tel.replace(/\s/g,'')) + '">' + esc(tel) + '</a>' + (waLink(r, '') ? (' · <a href="' + esc(waLink(r, 'Olá ' + (r.nome || '') + '!')) + '" target="_blank" rel="noopener">WhatsApp</a>') : '') + '</div>') : '')
       + (r.obs ? ('<div style="color:var(--suave);">“' + esc(r.obs) + '”</div>') : '')
@@ -662,10 +683,12 @@
       + '<label for="dNota">Nota para o cliente (opcional)</label><textarea id="dNota" rows="2" maxlength="200">' + esc(r.nota || '') + '</textarea>'
       + (r.estado !== 'cancelada' ? (
           (r.estado !== 'confirmada' ? '<button type="button" class="btn-ok" data-d="confirmar">✅ Confirmar</button>' : '')
+          + '<div style="display:flex;gap:8px;align-items:end;flex-wrap:wrap;"><div class="campo" style="flex:1;min-width:130px;"><label for="dRDia">Mudar para o dia</label><input id="dRDia" type="date" value="' + esc(r.data) + '"></div><div class="campo" style="flex:1;min-width:110px;"><label for="dRHora">Hora</label><input id="dRHora" type="time" step="300" value="' + esc(r.hora || '') + '"></div><button type="button" class="btn" data-d="reagendar">📅 Reagendar</button></div>'
           + '<div style="display:flex;gap:8px;align-items:end;"><div class="campo" style="flex:1;"><label for="dHora">Propor outra hora</label><input id="dHora" type="time" step="300" value="' + esc(r.proposta_hora || r.hora || '') + '"></div><button type="button" class="btn" data-d="propor">Enviar proposta</button></div>'
           + (r.estado !== 'confirmada' ? '<button type="button" class="btn-lnk" data-d="recusar">❌ Sem disponibilidade (recusar)</button>' : '<button type="button" class="btn-lnk" data-d="desmarcar">🚫 Cancelar esta marcação</button>')
         ) : ''));
     f.querySelectorAll('[data-d]').forEach(function(b){ b.onclick = async function(){ var a = b.getAttribute('data-d'), nota = $('dNota').value;
+      if(a === 'reagendar'){ var nd = $('dRDia').value, nh = $('dRHora').value; if(!nd || !nh){ toast('Escolha o dia e a hora.'); return; } if(nd === r.data && nh === r.hora){ toast('É o mesmo dia e hora.'); return; } fecharModal(); await reagendarSalao(r, nd, nh, nota); return; }
       if(a === 'recusar' || a === 'desmarcar'){ if(!confirm(a === 'recusar' ? 'Recusar este pedido? O cliente é avisado.' : 'Cancelar esta marcação? O cliente é avisado.')) return; }
       fecharModal(); await responder(r, a, { hora:(a === 'propor' ? ($('dHora') ? $('dHora').value : '') : undefined), nota:nota }); }; });
     var dv = f.querySelector('#dValor'); if(dv) dv.onchange = async function(){ var t = dv.value.trim().replace(/\s|€/g, '').replace(',', '.'), v = t === '' ? null : Math.round(parseFloat(t) * 100) / 100; if(t !== '' && isNaN(v)){ toast('Valor inválido'); return; }
