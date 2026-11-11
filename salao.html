@@ -486,7 +486,7 @@
         var r = por[x.id], prop = r.estado !== 'cancelada' && r.proposta_hora, serv = r.servico || x.servico || 'Marcação';
         var est = prop ? ['proposta', 'Proposta do salão'] : r.estado === 'confirmada' ? ['confirmada', 'Confirmada'] : r.estado === 'cancelada' ? ['cancelada', 'Cancelada'] : ['pendente', 'Por confirmar'];
         // preço: o da marcação; se ainda não vier do servidor, o do serviço
-        var base = r.valor_base != null ? +r.valor_base : null, val = r.valor != null ? +r.valor : null;
+        var base = +r.valor_base > 0 ? +r.valor_base : null, val = +r.valor > 0 ? +r.valor : null;
         if(val == null){ var sv = SERV.filter(function(v){ return v.nome === serv; })[0], pm = /(\d+(?:[.,]\d{1,2})?)/.exec(String((sv && sv.preco) || '')); if(pm) val = parseFloat(pm[1].replace(',', '.')); }
         var preco = val == null || r.estado === 'cancelada' ? '' : ((+r.desconto && base != null) ? ('<s style="color:var(--suave);font-weight:600;font-size:12px;">' + eu(base) + '</s> ' + eu(val)) : eu(val));
         var aberta = _minhaAberta === x.id;

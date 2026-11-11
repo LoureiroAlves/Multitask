@@ -530,7 +530,7 @@
   }
   var DESCONTOS = [0, 5, 10, 15, 20, 25, 30, 40, 50];
   function precoServ(nome){ var sv = SERV.filter(function(x){ return x.nome === nome; })[0]; var m = /(\d+(?:[.,]\d{1,2})?)/.exec(String((sv && sv.preco) || '')); return m ? parseFloat(m[1].replace(',', '.')) : null; }
-  function baseDe(r){ return r.valor_base != null ? +r.valor_base : (r.valor != null && !(+r.desconto) ? +r.valor : precoServ(r.servico)); }
+  function baseDe(r){ return +r.valor_base > 0 ? +r.valor_base : (+r.valor > 0 && !(+r.desconto) ? +r.valor : precoServ(r.servico)); }
   function comDesc(b, d){ return b == null ? null : Math.round(b * (100 - (+d || 0))) / 100; }
   function opcoesDesc(sel){ return DESCONTOS.map(function(d){ return '<option value="' + d + '"' + ((+sel || 0) === d ? ' selected' : '') + '>' + (d ? ('−' + d + '%') : 'Sem desconto') + '</option>'; }).join(''); }
   function propTxt(r){ return r.proposta_hora ? quando(r.proposta_data || r.data, r.proposta_hora) : ''; }
