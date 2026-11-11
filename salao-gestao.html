@@ -66,6 +66,7 @@
   .bloco.curto span{ flex:1 1 0; min-width:0; color:var(--suave); }
   .b-confirmada{ background:var(--verde-f); border-left:4px solid var(--verde); }
   .b-faltou{ opacity:.55; } .b-faltou b{ text-decoration:line-through; }
+  .b-fantasma{ background:repeating-linear-gradient(135deg, #fff, #fff 6px, #F3E6EA 6px, #F3E6EA 12px); border:1.5px dashed var(--ac); opacity:.85; }
   .b-pendente{ background:#fff; border:2px dashed var(--ac); }
   .b-proposta{ background:#F3E6EA; border-left:4px solid var(--ac); }
   .mes{ display:grid; grid-template-columns:repeat(7, minmax(110px, 1fr)); }
@@ -486,7 +487,8 @@
     if(r.error){ toast('Erro a carregar: ' + r.error.message); return; }
     RES = r.data || []; pintarAgenda(); pintarPedidos();
   }
-  function cls(r){ if(r.faltou) return 'b-confirmada b-faltou'; return r.estado === 'confirmada' ? 'b-confirmada' : (r.estado === 'pendente' && r.proposta_hora) ? 'b-proposta' : 'b-pendente'; }
+  function propTxt(r){ return r.proposta_hora ? quando(r.proposta_data || r.data, r.proposta_hora) : ''; }
+  function cls(r){ if(r._fantasma) return 'b-fantasma'; if(r.faltou) return 'b-confirmada b-faltou'; return r.estado === 'confirmada' ? 'b-confirmada' : (r.estado === 'pendente' && r.proposta_hora) ? 'b-proposta' : 'b-pendente'; }
   function pintarAgenda(){
     pintarFiltroProf();
     if(vista === 'mes') return pintarMes();
@@ -518,7 +520,9 @@
       var k = c.dia, dd = dDe(k), hh = horarioDe(dd.getDay()), fechado = !hh || fechadoEm(k) || c.folga;
       h += '<div class="ag-col' + (fechado ? ' fechado' : '') + '" data-dia="' + k + '" data-prof="' + esc(c.prof === '__sem' ? '' : c.prof) + '" style="height:' + alt + 'px;">';
       if(k === hoje){ var n = new Date(), nm = n.getHours() * 60 + n.getMinutes(); if(nm >= ini && nm <= fim) h += '<div class="agora" style="top:' + ((nm - ini) * PX) + 'px;"></div>'; }
-      var lst = RES.filter(function(r){ if(r.data !== k || r.estado === 'cancelada' || minDe(r.hora) == null) return false;
+      var fant = RES.filter(function(r){ return r.proposta_hora && r.estado !== 'cancelada' && (r.proposta_data || r.data) === k && minDe(r.proposta_hora) != null; })
+        .map(function(r){ return Object.assign({}, r, { id:r.id, _fantasma:true, data:k, hora:r.proposta_hora }); });
+      var lst = RES.concat(fant).filter(function(r){ if(r.data !== k || r.estado === 'cancelada' || minDe(r.hora) == null) return false;
         if(c.prof === '__sem') return !r.profissional || !nomeProf(r.profissional);
         if(c.prof) return r.profissional === c.prof;
         return !profFiltro || r.profissional === profFiltro || !r.profissional; });
@@ -529,12 +533,13 @@
       lst.forEach(function(r){ var a0 = minDe(r.hora), f0 = a0 + (+r.duracao || 30);
         if(a0 >= grupoFim) fechaGrupo();
         var l = fimLane.findIndex(function(f){ return f <= a0; }); if(l < 0){ l = fimLane.length; fimLane.push(f0); } else fimLane[l] = f0;
-        lanes[r.id] = { l:l, n:1 }; grupo.push(r.id); grupoFim = Math.max(grupoFim, f0); });
+        var kk = r._fantasma ? (r.id + '_p') : r.id; lanes[kk] = { l:l, n:1 }; grupo.push(kk); grupoFim = Math.max(grupoFim, f0); });
       fechaGrupo();
       lst.forEach(function(r){
         var a = minDe(r.hora), du = +r.duracao || 30;
-        var ln = lanes[r.id], pos = 'left:calc(' + (ln.l * 100 / ln.n) + '% + 3px);right:auto;width:calc(' + (100 / ln.n) + '% - 6px);';
+        var ln = lanes[r._fantasma ? (r.id + '_p') : r.id], pos = 'left:calc(' + (ln.l * 100 / ln.n) + '% + 3px);right:auto;width:calc(' + (100 / ln.n) + '% - 6px);';
         var top = (a - ini) * PX, hg = Math.max(22, du * PX - 3);
+        if(r._fantasma){ h += '<button type="button" class="bloco curto b-fantasma" data-id="' + esc(r.id) + '" title="' + esc('Proposta enviada a ' + (r.nome || '') + ' — à espera da resposta') + '" style="' + pos + 'top:' + (top + 1) + 'px;height:' + hg + 'px;"><b>🕘 ' + esc(r.nome || '') + '</b><span>proposta</span></button>'; return; }
         var dica = r.hora + '–' + hDe(a + du) + ' · ' + (r.nome || '') + ' · ' + (r.servico || '') + (nomeProf(r.profissional) ? (' · ' + nomeProf(r.profissional)) : '') + (r.estado === 'pendente' ? (r.proposta_hora ? (' · Proposta: ' + r.proposta_hora) : ' · Por confirmar') : '');
         if(hg < 46){   // curta: uma linha só
           h += '<button type="button" class="bloco curto ' + cls(r) + '" data-id="' + esc(r.id) + '" title="' + esc(dica) + '" style="' + pos + 'top:' + (top + 1) + 'px;height:' + hg + 'px;">'
@@ -545,7 +550,7 @@
           + '<b>' + (hg < 78 && !c.prof && nomeProf(r.profissional) ? ('<i style="font-style:normal;color:' + corProf(r.profissional) + ';">●</i> ') : '') + esc(r.nome || '') + '</b>'
           + '<span>' + esc(r.hora) + '–' + hDe(a + du) + ' · ' + esc(r.servico || ((r.pessoas || 1) + ' pessoa(s)')) + '</span>'
           + (hg >= 78 && !c.prof && r.profissional && nomeProf(r.profissional) ? ('<span class="prof" style="color:' + corProf(r.profissional) + ';">● ' + esc(nomeProf(r.profissional)) + '</span>') : '')
-          + (r.estado === 'pendente' && hg >= (!c.prof && nomeProf(r.profissional) ? 94 : 78) ? ('<span style="font-weight:800;color:var(--ac);">' + (r.proposta_hora ? ('Proposta: ' + esc(r.proposta_hora)) : 'Por confirmar') + '</span>') : '')
+          + (r.estado === 'pendente' && hg >= (!c.prof && nomeProf(r.profissional) ? 94 : 78) ? ('<span style="font-weight:800;color:var(--ac);">' + (r.proposta_hora ? ('Proposta: ' + esc(propTxt(r))) : 'Por confirmar') + '</span>') : '')
           + '</button>';
       });
       h += '</div>';
@@ -571,7 +576,8 @@
     var hoje = iso(new Date());
     var ped = RES.filter(function(r){ return r.estado === 'pendente' && !r.proposta_hora && r.data >= hoje; });
     var alt = RES.filter(function(r){ return r.estado !== 'cancelada' && (r.alt_hora) && r.data >= hoje; });
-    var todos = ped.concat(alt.filter(function(r){ return ped.indexOf(r) < 0; }));
+    var esp = RES.filter(function(r){ return r.estado !== 'cancelada' && r.proposta_hora && r.data >= hoje; });
+    var todos = ped.concat(alt.filter(function(r){ return ped.indexOf(r) < 0; })).concat(esp.filter(function(r){ return ped.indexOf(r) < 0; }));
     $('nPed').textContent = todos.length;
     if(!todos.length){ $('pedidos').innerHTML = '<div style="color:var(--suave);font-size:14px;">Nada por responder. 👌</div>'; return; }
     $('pedidos').innerHTML = todos.map(function(r){
@@ -580,12 +586,13 @@
         + (r.reagendada_de ? ('<div style="font-size:12px;color:var(--ac);font-weight:700;">🔁 Reagendada · antes: ' + esc(quando(String(r.reagendada_de).slice(0, 10), String(r.reagendada_de).slice(11))) + '</div>') : '')
         + (r.alt_hora ? ('<div style="font-size:13px;color:var(--ac);font-weight:700;">Pede para mudar para as ' + esc(r.alt_hora) + '</div>') : '')
         + (r.obs ? ('<div style="font-size:12px;color:var(--suave);">“' + esc(r.obs) + '”</div>') : '')
+        + (r.proposta_hora ? ('<div style="font-size:13px;color:var(--ac);font-weight:700;">🕘 Proposta: ' + esc(propTxt(r)) + ' · à espera do cliente</div>') : '')
         + '</div><div class="pedido-acoes">'
-        + (r.alt_hora ? ('<button type="button" class="btn-ok" data-a="altok" data-id="' + esc(r.id) + '">Aceitar mudança</button><button type="button" class="btn" data-a="altnao" data-id="' + esc(r.id) + '">Manter</button>')
+        + (r.proposta_hora ? ('<button type="button" class="btn" data-a="ver" data-id="' + esc(r.id) + '">Ver</button><button type="button" class="btn-lnk" data-a="semprop" data-id="' + esc(r.id) + '">Retirar proposta</button>') : r.alt_hora ? ('<button type="button" class="btn-ok" data-a="altok" data-id="' + esc(r.id) + '">Aceitar mudança</button><button type="button" class="btn" data-a="altnao" data-id="' + esc(r.id) + '">Manter</button>')
                      : ('<button type="button" class="btn-ok" data-a="confirmar" data-id="' + esc(r.id) + '">Confirmar</button><button type="button" class="btn" data-a="propor" data-id="' + esc(r.id) + '">Propor outra hora</button><button type="button" class="btn-lnk" data-a="recusar" data-id="' + esc(r.id) + '">Recusar</button>'))
         + '</div></div>';
     }).join('');
-    $('pedidos').querySelectorAll('[data-a]').forEach(function(b){ b.onclick = function(){ var r = RES.filter(function(x){ return x.id === b.getAttribute('data-id'); })[0]; if(!r) return; var a = b.getAttribute('data-a'); if(a === 'propor') abrirDetalhe(r, true); else responder(r, a); }; });
+    $('pedidos').querySelectorAll('[data-a]').forEach(function(b){ b.onclick = function(){ var r = RES.filter(function(x){ return x.id === b.getAttribute('data-id'); })[0]; if(!r) return; var a = b.getAttribute('data-a'); if(a === 'propor' || a === 'ver') abrirDetalhe(r, true); else responder(r, a); }; });
   }
   function mudar(sinal){ if(vista === 'mes'){ dataSel = new Date(dataSel.getFullYear(), dataSel.getMonth() + sinal, 1); } else dataSel.setDate(dataSel.getDate() + sinal * (vista === 'dia' ? 1 : 7)); carregarRes(); }
   $('aAnt').onclick = function(){ mudar(-1); };
@@ -626,12 +633,13 @@
   function waLink(r, texto){ var t = String(r.telefone || '').replace(/\D/g, ''); if(t.length === 9) t = '351' + t; return t ? ('https://wa.me/' + t + '?text=' + encodeURIComponent(texto)) : ''; }
   async function responder(r, tipo, o){
     o = o || {}; var casa = SAL.nome || NEG.nome, patch, titulo, corpo;
-    if(tipo === 'confirmar'){ patch = { estado:'confirmada', proposta_hora:null }; titulo = '✅ Marcação confirmada'; corpo = casa + ': ' + quando(r.data, r.hora) + ' · ' + (r.servico || '') + '. Até já!'; }
-    else if(tipo === 'recusar'){ patch = { estado:'cancelada', proposta_hora:null }; titulo = '❌ Sem disponibilidade'; corpo = casa + ' não tem vaga para ' + quando(r.data, r.hora) + '. Pedimos desculpa — escolha outra hora na nossa página.'; }
+    if(tipo === 'confirmar'){ patch = { estado:'confirmada', proposta_hora:null, proposta_data:null }; titulo = '✅ Marcação confirmada'; corpo = casa + ': ' + quando(r.data, r.hora) + ' · ' + (r.servico || '') + '. Até já!'; }
+    else if(tipo === 'recusar'){ patch = { estado:'cancelada', proposta_hora:null, proposta_data:null }; titulo = '❌ Sem disponibilidade'; corpo = casa + ' não tem vaga para ' + quando(r.data, r.hora) + '. Pedimos desculpa — escolha outra hora na nossa página.'; }
     else if(tipo === 'propor'){ if(!o.hora) return; patch = { estado:'pendente', proposta_hora:o.hora }; titulo = '🕘 ' + casa + ' propõe outra hora'; corpo = 'Para ' + quando(r.data) + ' conseguimos às ' + o.hora + '. Toque para aceitar ou recusar.'; }
     else if(tipo === 'altok'){ patch = { estado:'confirmada', hora:r.alt_hora || r.hora, alt_hora:null, alt_pessoas:null, proposta_hora:null }; titulo = '✅ Alteração aceite'; corpo = casa + ': ' + quando(r.data, r.alt_hora || r.hora) + '. Até já!'; }
     else if(tipo === 'altnao'){ patch = { alt_hora:null, alt_pessoas:null }; titulo = '❌ Não foi possível mudar'; corpo = casa + ': mantém-se ' + quando(r.data, r.hora) + '.'; }
-    else if(tipo === 'desmarcar'){ patch = { estado:'cancelada' }; titulo = '🚫 Marcação cancelada'; corpo = casa + ' cancelou a marcação de ' + quando(r.data, r.hora) + '.'; }
+    else if(tipo === 'semprop'){ patch = { proposta_hora:null, proposta_data:null }; titulo = '↩️ Proposta retirada'; corpo = casa + ': a proposta de mudança foi retirada. A sua marcação mantém-se ' + quando(r.data, r.hora) + '.'; }
+    else if(tipo === 'desmarcar'){ patch = { estado:'cancelada', proposta_hora:null, proposta_data:null }; titulo = '🚫 Marcação cancelada'; corpo = casa + ' cancelou a marcação de ' + quando(r.data, r.hora) + '.'; }
     else return;
     if(o.nota !== undefined){ patch.nota = (o.nota || '').trim() || null; if(patch.nota) corpo += ' Nota: ' + patch.nota; }
     var u = await sb.from('reservas').update(patch).eq('id', r.id);
@@ -649,7 +657,7 @@
     var a = minDe(h), du = +r.duracao || 30, pr = r.profissional || '';
     var choca = RES.some(function(x){ return x.id !== r.id && x.data === d && x.estado !== 'cancelada' && minDe(x.hora) != null && (!pr || !x.profissional || x.profissional === pr) && minDe(x.hora) < a + du && a < minDe(x.hora) + (+x.duracao || 30); });
     if(choca && !confirm((pr && nomeProf(pr) ? (nomeProf(pr) + ' já tem') : 'Já há') + ' uma marcação nesse dia a essa hora. Mudar mesmo assim?')) return;
-    var patch = { data:d, hora:h, reagendada_de:r.data + ' ' + r.hora, proposta_hora:null, lembrete_em:null, lembrete_vespera_em:null };
+    var patch = { data:d, hora:h, reagendada_de:r.data + ' ' + r.hora, proposta_hora:null, proposta_data:null, lembrete_em:null, lembrete_vespera_em:null };
     if((nota || '').trim()) patch.nota = nota.trim();
     var u = await sb.from('reservas').update(patch).eq('id', r.id);
     if(u.error && /reagendada_de|column/i.test(u.error.message)){ delete patch.reagendada_de; u = await sb.from('reservas').update(patch).eq('id', r.id); }
@@ -663,16 +671,37 @@
     else toast('Reagendada ✓');
   }
 
+  // o salão PROPÕE um novo dia/hora: o cliente aceita ou recusa (a hora fica guardada até ele responder)
+  async function proporSalao(r, d, h, nota){
+    var a = minDe(h), du = +r.duracao || 30, pr = r.profissional || '';
+    var choca = RES.some(function(x){ if(x.id === r.id || x.estado === 'cancelada') return false; var ok = (!pr || !x.profissional || x.profissional === pr);
+      var c1 = x.data === d && minDe(x.hora) != null && minDe(x.hora) < a + du && a < minDe(x.hora) + (+x.duracao || 30);
+      var c2 = x.proposta_hora && (x.proposta_data || x.data) === d && minDe(x.proposta_hora) < a + du && a < minDe(x.proposta_hora) + (+x.duracao || 30);
+      return ok && (c1 || c2); });
+    if(choca && !confirm((pr && nomeProf(pr) ? (nomeProf(pr) + ' já tem') : 'Já há') + ' uma marcação nesse dia a essa hora. Propor mesmo assim?')) return;
+    var patch = { proposta_data:d, proposta_hora:h }; if((nota || '').trim()) patch.nota = nota.trim();
+    var u = await sb.from('reservas').update(patch).eq('id', r.id);
+    if(u.error){ toast(/proposta_data|column/i.test(u.error.message) ? 'Falta correr no Supabase o salao-propostas.sql.' : ('Erro: ' + u.error.message)); return; }
+    await carregarRes();
+    var casa = SAL.nome || NEG.nome, corpo = casa + ' propõe mudar a sua marcação de ' + (r.servico || '') + ' (' + quando(r.data, r.hora) + ') para ' + quando(d, h) + '. Toque para aceitar ou recusar.' + ((nota || '').trim() ? (' Nota: ' + nota.trim()) : '');
+    var ok = await pushCliente(Object.assign({}, r, patch), '🕘 Proposta de nova hora', corpo);
+    if(ok){ toast('✓ Proposta enviada · à espera da resposta do cliente'); return; }
+    var wl = waLink(r, corpo + ' Responda aqui: ' + location.origin + '/salao.html?n=' + encodeURIComponent(SLUG) + '&m=' + encodeURIComponent(r.id));
+    if(wl && confirm('Proposta guardada ✓\n\nEste cliente não tem notificações ligadas. Quer enviar-lhe a proposta por WhatsApp?')) window.open(wl, '_blank', 'noopener');
+    else toast('Proposta guardada ✓');
+  }
+
   // ---------- janelas ----------
   function modal(html){ fecharModal(); var f = document.createElement('div'); f.className = 'modal-fundo'; f.innerHTML = '<div class="modal" role="dialog" aria-modal="true"><button type="button" class="fechar" aria-label="Fechar">✕</button>' + html + '</div>'; document.body.appendChild(f); f.querySelector('.fechar').onclick = fecharModal; f.addEventListener('click', function(e){ if(e.target === f) fecharModal(); }); return f; }
   function fecharModal(){ var f = document.querySelector('.modal-fundo'); if(f) f.remove(); }
   document.addEventListener('keydown', function(e){ if(e.key === 'Escape') fecharModal(); });
   function abrirDetalhe(r, propor){
-    var est = r.estado === 'confirmada' ? 'Confirmada' : r.estado === 'cancelada' ? 'Cancelada' : r.proposta_hora ? ('Proposta enviada: ' + r.proposta_hora) : 'Por confirmar';
+    var est = r.estado === 'confirmada' ? 'Confirmada' : r.estado === 'cancelada' ? 'Cancelada' : 'Por confirmar';
     var tel = String(r.telefone || '');
     var f = modal('<h3>' + esc(r.nome || 'Marcação') + '</h3>'
       + '<div><b>' + esc(r.servico || '') + '</b>' + (r.duracao ? (' · ' + r.duracao + ' min') : '') + '</div>'
       + '<div>' + esc(quando(r.data, r.hora)) + ' · <span style="font-weight:800;">' + esc(est) + '</span></div>'
+      + (r.proposta_hora && r.estado !== 'cancelada' ? ('<div style="background:#F3E6EA;border-radius:10px;padding:10px 12px;font-size:14px;"><b>🕘 Proposta enviada: ' + esc(propTxt(r)) + '</b><br>À espera da resposta do cliente. A hora fica guardada para ele.<br><button type="button" class="btn-lnk" data-d="semprop" style="padding:0;min-height:30px;">Retirar proposta</button></div>') : '')
       + (r.reagendada_de ? ('<div style="font-size:13px;color:var(--ac);font-weight:700;">🔁 Reagendada · antes: ' + esc(quando(String(r.reagendada_de).slice(0, 10), String(r.reagendada_de).slice(11))) + '</div>') : '')
       + (EQ().length ? ('<div class="campo"><label for="dProf">Profissional</label><select id="dProf"><option value="">— Sem profissional —</option>' + EQ().map(function(p){ return '<option value="' + esc(p.id) + '"' + (r.profissional === p.id ? ' selected' : '') + '>' + esc(p.nome) + '</option>'; }).join('') + '</select></div>') : '')
       + (tel ? ('<div>📱 <a href="tel:' + esc(tel.replace(/\s/g,'')) + '">' + esc(tel) + '</a>' + (waLink(r, '') ? (' · <a href="' + esc(waLink(r, 'Olá ' + (r.nome || '') + '!')) + '" target="_blank" rel="noopener">WhatsApp</a>') : '') + '</div>') : '')
@@ -683,21 +712,28 @@
       + '<label for="dNota">Nota para o cliente (opcional)</label><textarea id="dNota" rows="2" maxlength="200">' + esc(r.nota || '') + '</textarea>'
       + (r.estado !== 'cancelada' ? (
           (r.estado !== 'confirmada' ? '<button type="button" class="btn-ok" data-d="confirmar">✅ Confirmar</button>' : '')
-          + '<div style="display:flex;gap:8px;align-items:end;flex-wrap:wrap;"><div class="campo" style="flex:1;min-width:130px;"><label for="dRDia">Mudar para o dia</label><input id="dRDia" type="date" value="' + esc(r.data) + '"></div><div class="campo" style="flex:1;min-width:110px;"><label for="dRHora">Hora</label><input id="dRHora" type="time" step="300" value="' + esc(r.hora || '') + '"></div><button type="button" class="btn" data-d="reagendar">📅 Reagendar</button></div>'
-          + '<div style="display:flex;gap:8px;align-items:end;"><div class="campo" style="flex:1;"><label for="dHora">Propor outra hora</label><input id="dHora" type="time" step="300" value="' + esc(r.proposta_hora || r.hora || '') + '"></div><button type="button" class="btn" data-d="propor">Enviar proposta</button></div>'
+          + '<div style="border:1px solid var(--linha);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px;"><b style="font-size:14px;">📅 Mudar dia/hora</b>'
+          + '<div style="display:flex;gap:8px;align-items:end;flex-wrap:wrap;"><div class="campo" style="flex:1;min-width:130px;"><label for="dRDia">Novo dia</label><input id="dRDia" type="date" value="' + esc(r.proposta_data || r.data) + '"></div><div class="campo" style="flex:1;min-width:110px;"><label for="dRHora">Nova hora</label><input id="dRHora" type="time" step="300" value="' + esc(r.proposta_hora || r.hora || '') + '"></div></div>'
+          + '<label style="display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;"><input type="checkbox" id="dJa" style="width:18px;height:18px;"> O cliente já concordou (por telefone, ao balcão…) — mudar já</label>'
+          + '<button type="button" class="btn" data-d="mudar">Enviar proposta ao cliente</button>'
+          + '<div style="font-size:12px;color:var(--suave);">Sem a caixa marcada, o cliente recebe uma pergunta e tem de aceitar. A marcação só muda quando ele aceitar.</div></div>'
           + (r.estado !== 'confirmada' ? '<button type="button" class="btn-lnk" data-d="recusar">❌ Sem disponibilidade (recusar)</button>' : '<button type="button" class="btn-lnk" data-d="desmarcar">🚫 Cancelar esta marcação</button>')
         ) : ''));
     f.querySelectorAll('[data-d]').forEach(function(b){ b.onclick = async function(){ var a = b.getAttribute('data-d'), nota = $('dNota').value;
-      if(a === 'reagendar'){ var nd = $('dRDia').value, nh = $('dRHora').value; if(!nd || !nh){ toast('Escolha o dia e a hora.'); return; } if(nd === r.data && nh === r.hora){ toast('É o mesmo dia e hora.'); return; } fecharModal(); await reagendarSalao(r, nd, nh, nota); return; }
+      if(a === 'mudar'){ var nd = $('dRDia').value, nh = $('dRHora').value; if(!nd || !nh){ toast('Escolha o dia e a hora.'); return; } if(nd === r.data && nh === r.hora){ toast('É o mesmo dia e hora.'); return; }
+        var ja = $('dJa').checked; fecharModal(); if(ja) await reagendarSalao(r, nd, nh, nota); else await proporSalao(r, nd, nh, nota); return; }
       if(a === 'recusar' || a === 'desmarcar'){ if(!confirm(a === 'recusar' ? 'Recusar este pedido? O cliente é avisado.' : 'Cancelar esta marcação? O cliente é avisado.')) return; }
       fecharModal(); await responder(r, a, { hora:(a === 'propor' ? ($('dHora') ? $('dHora').value : '') : undefined), nota:nota }); }; });
+    var dj = f.querySelector('#dJa'); if(dj) dj.onchange = function(){ var bt = f.querySelector('[data-d="mudar"]'); if(bt) bt.textContent = dj.checked ? 'Mudar já e avisar o cliente' : 'Enviar proposta ao cliente'; };
     var dv = f.querySelector('#dValor'); if(dv) dv.onchange = async function(){ var t = dv.value.trim().replace(/\s|€/g, '').replace(',', '.'), v = t === '' ? null : Math.round(parseFloat(t) * 100) / 100; if(t !== '' && isNaN(v)){ toast('Valor inválido'); return; }
       var u = await sb.from('reservas').update({ valor:v }).eq('id', r.id); if(u.error){ toast(/valor|column/i.test(u.error.message) ? 'Falta correr no Supabase o salao-clientes.sql.' : ('Erro: ' + u.error.message)); return; } r.valor = v; toast('Valor guardado ✓'); };
     var df = f.querySelector('#dFaltou'); if(df) df.onchange = async function(){ var u = await sb.from('reservas').update({ faltou:df.checked }).eq('id', r.id); if(u.error){ toast(/faltou|column/i.test(u.error.message) ? 'Falta correr no Supabase o salao-clientes.sql.' : ('Erro: ' + u.error.message)); df.checked = !df.checked; return; } r.faltou = df.checked; toast(df.checked ? 'Marcado como falta' : 'Falta retirada'); carregarRes(); };
     var dp = f.querySelector('#dProf'); if(dp) dp.onchange = async function(){ var v = dp.value || null;
       var a = minDe(r.hora), du = +r.duracao || 30;
       if(v && RES.some(function(x){ return x.id !== r.id && x.data === r.data && x.estado !== 'cancelada' && (x.profissional === v || !x.profissional) && minDe(x.hora) < a + du && a < minDe(x.hora) + (+x.duracao || 30); }) && !confirm(nomeProf(v) + ' já tem uma marcação a essa hora. Mudar mesmo assim?')){ dp.value = r.profissional || ''; return; }
-      var u = await sb.from('reservas').update({ profissional:v }).eq('id', r.id); if(u.error){ toast('Erro: ' + u.error.message); return; } r.profissional = v; toast('Profissional mudado ✓'); carregarRes(); };
+      var u = await sb.from('reservas').update({ profissional:v }).eq('id', r.id); if(u.error){ toast('Erro: ' + u.error.message); return; } r.profissional = v; carregarRes();
+      var okp = v ? await pushCliente(r, '👤 Mudança de profissional', (SAL.nome || NEG.nome) + ': a sua marcação de ' + quando(r.data, r.hora) + ' passa a ser com ' + nomeProf(v) + '.') : false;
+      toast(okp ? 'Profissional mudado ✓ · cliente avisado' : 'Profissional mudado ✓'); };
     if(propor){ var hi = f.querySelector('#dHora'); if(hi) hi.focus(); }
   }
   function novaMarcacao(dia, hora, prof){
