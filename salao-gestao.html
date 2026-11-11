@@ -215,12 +215,13 @@
   <!-- CLIENTES -->
   <section id="tClientes" class="pag hide" style="max-width:1200px;">
     <h2>Clientes</h2>
-    <p class="sub">Cada marcação cria a ficha do cliente (ou junta-a à que já existe, pelo telemóvel). As visitas e o total gasto contam as marcações confirmadas até hoje, pelo preço de cada uma.</p>
+    <p class="sub">Cada marcação cria a ficha do cliente (ou junta-a à que já existe, pelo telemóvel ou, se não houver contacto, pelo nome). As visitas e o total gasto contam as marcações confirmadas até hoje, pelo preço de cada uma.</p>
     <div class="cli-tot" id="cliTot"></div>
     <div class="cli-barra">
       <input id="cliBusca" type="search" placeholder="Procurar nome ou telemóvel…" style="flex:1;min-width:200px;">
       <select id="cliOrdem" aria-label="Ordenar"><option value="rec">Visita mais recente</option><option value="vis">Mais visitas</option><option value="gasto">Mais gasto</option><option value="nome">Nome</option><option value="novo">Mais novos</option></select>
       <label style="display:flex;align-items:center;gap:6px;font-size:14px;font-weight:600;background:#fff;border:1.5px solid var(--borda);border-radius:10px;padding:0 12px;min-height:40px;" title="Soma das marcações futuras já confirmadas"><input type="checkbox" id="cliPrev" style="width:18px;height:18px;"> Mostrar valor previsto</label>
+      <button type="button" class="btn-ac" id="cliNovo">+ Novo cliente</button>
       <button type="button" class="btn" id="cliCsv">⬇️ Clientes (Excel)</button>
       <button type="button" class="btn" id="cliCsvMes">⬇️ Marcações do mês (Excel)</button>
     </div>
@@ -411,6 +412,8 @@
 
   // ---------- clientes (fichas) ----------
   var CLI = [], CLIRES = [];
+  function nomeNorm(n){ return String(n || '').replace(/\s+/g, ' ').trim().toLowerCase(); }
+  function chaveCli(tel, nome){ var t = telNorm(tel); return t.length >= 9 ? t : (nomeNorm(nome) ? ('n:' + nomeNorm(nome)) : ''); }
   function telNorm(t){ var d = String(t || '').replace(/\D/g, ''); return /^351\d{9}$/.test(d) ? d.slice(3) : d; }
   function euro(v){ return (Math.round((+v || 0) * 100) / 100).toLocaleString('pt-PT', { minimumFractionDigits:2, maximumFractionDigits:2 }) + ' €'; }
   function dataPt(k){ if(!k) return '—'; var d = dDe(String(k).slice(0, 10)); return d.getDate() + ' ' + MESES[d.getMonth()].slice(0, 3) + ' ' + d.getFullYear(); }
@@ -423,8 +426,10 @@
   }
   function statsCli(){
     var hoje = iso(new Date()), m = {};
-    CLI.forEach(function(c){ m[c.tel_norm] = { c:c, vis:0, gasto:0, prev:0, ult:'', prox:'', faltas:0, canc:0, serv:{}, hist:[] }; });
-    CLIRES.forEach(function(r){ var k = telNorm(r.telefone); if(!m[k]) return; var x = m[k]; x.hist.push(r);
+    var ali = {};
+    CLI.forEach(function(c){ m[c.tel_norm] = { c:c, vis:0, gasto:0, prev:0, ult:'', prox:'', faltas:0, canc:0, serv:{}, hist:[] }; ali[c.tel_norm] = c.tel_norm; });
+    CLI.forEach(function(c){ var t = telNorm(c.telefone); if(t.length >= 9 && !ali[t]) ali[t] = c.tel_norm; var nn = 'n:' + nomeNorm(c.nome); if(nomeNorm(c.nome) && !ali[nn]) ali[nn] = c.tel_norm; });
+    CLIRES.forEach(function(r){ var k = ali[chaveCli(r.telefone, r.nome)]; if(!k || !m[k]) return; var x = m[k]; x.hist.push(r);
       if(r.estado === 'cancelada'){ x.canc++; return; }
       if(r.faltou){ x.faltas++; return; }
       if(r.data <= hoje && r.estado === 'confirmada'){ x.vis++; x.gasto += +r.valor || 0; if(r.data > x.ult) x.ult = r.data; x.serv[r.servico] = (x.serv[r.servico] || 0) + 1; }
@@ -440,33 +445,56 @@
     $('cliTot').innerHTML = '<div><b>' + l.length + '</b><span>clientes</span></div><div><b>' + CLI.filter(function(c){ return String(c.criado_em || '').slice(0, 7) === mes; }).length + '</b><span>novos este mês</span></div><div><b>' + euro(fatMes) + '</b><span>faturado este mês</span></div><div><b>' + euro(fatAno) + '</b><span>faturado este ano</span></div>'
       + (prevOn ? ('<div style="border:1.5px dashed var(--borda);"><b>' + euro(prevMes) + '</b><span>previsto até ao fim do mês</span></div><div style="border:1.5px dashed var(--borda);"><b>' + euro(prevTot) + '</b><span>previsto (todas as marcações futuras)</span></div>') : '');
     var q = ($('cliBusca').value || '').trim().toLowerCase(), qd = q.replace(/\D/g, '');
-    if(q) l = l.filter(function(x){ return String(x.c.nome || '').toLowerCase().indexOf(q) >= 0 || (qd && x.c.tel_norm.indexOf(qd) >= 0); });
+    if(q) l = l.filter(function(x){ return String(x.c.nome || '').toLowerCase().indexOf(q) >= 0 || (qd && telNorm(x.c.telefone).indexOf(qd) >= 0); });
     var o = $('cliOrdem').value;
     l.sort(function(a, b){ return o === 'vis' ? b.vis - a.vis : o === 'gasto' ? b.gasto - a.gasto : o === 'nome' ? String(a.c.nome || '').localeCompare(String(b.c.nome || ''), 'pt') : o === 'novo' ? String(b.c.criado_em).localeCompare(String(a.c.criado_em)) : String(b.ult || b.prox).localeCompare(String(a.ult || a.prox)); });
     if(!l.length){ $('cliLista').innerHTML = '<div style="background:#fff;border-radius:12px;padding:16px;color:var(--suave);">' + (CLI.length ? 'Nenhum cliente encontrado.' : 'Ainda não há clientes. As fichas aparecem aqui a partir da primeira marcação.') + '</div>'; return; }
     $('cliLista').innerHTML = '<table class="cli-tab"><thead><tr><th>Cliente</th><th>Telemóvel</th><th class="n">Visitas</th><th class="n">Total gasto</th>' + (prevOn ? '<th class="n opc">Previsto</th>' : '') + '<th>Última visita</th><th class="opc">Próxima</th><th class="n opc">Faltas</th></tr></thead><tbody>'
-      + l.slice(0, 500).map(function(x){ return '<tr class="l" data-t="' + esc(x.c.tel_norm) + '"><td><b>' + esc(x.c.nome || '—') + '</b>' + (x.vis >= 3 ? '<span class="etq reg">Regular</span>' : x.vis <= 1 ? '<span class="etq novo">Novo</span>' : '') + '</td><td>' + esc(x.c.telefone || x.c.tel_norm) + '</td><td class="n">' + x.vis + '</td><td class="n">' + euro(x.gasto) + '</td>' + (prevOn ? ('<td class="n opc" style="color:var(--suave);">' + (x.prev ? euro(x.prev) : '—') + '</td>') : '') + '<td>' + dataPt(x.ult) + '</td><td class="opc">' + (x.prox ? dataPt(x.prox) : '—') + '</td><td class="n opc">' + (x.faltas || '') + '</td></tr>'; }).join('')
+      + l.slice(0, 500).map(function(x){ return '<tr class="l" data-t="' + esc(x.c.tel_norm) + '"><td><b>' + esc(x.c.nome || '—') + '</b>' + (x.vis >= 3 ? '<span class="etq reg">Regular</span>' : x.vis <= 1 ? '<span class="etq novo">Novo</span>' : '') + '</td><td>' + (x.c.telefone ? esc(x.c.telefone) : '<span style="color:var(--suave);">sem contacto</span>') + '</td><td class="n">' + x.vis + '</td><td class="n">' + euro(x.gasto) + '</td>' + (prevOn ? ('<td class="n opc" style="color:var(--suave);">' + (x.prev ? euro(x.prev) : '—') + '</td>') : '') + '<td>' + dataPt(x.ult) + '</td><td class="opc">' + (x.prox ? dataPt(x.prox) : '—') + '</td><td class="n opc">' + (x.faltas || '') + '</td></tr>'; }).join('')
       + '</tbody></table>';
     $('cliLista').querySelectorAll('tr.l').forEach(function(tr){ tr.onclick = function(){ abrirFicha(m[tr.getAttribute('data-t')]); }; });
   }
+  $('cliNovo').onclick = function(){
+    var f = modal('<h3>Novo cliente</h3><div style="font-size:14px;color:var(--suave);">Só o nome é obrigatório. O contacto é opcional.</div>'
+      + '<div class="campo"><label for="kNome">Nome</label><input id="kNome" maxlength="80"></div>'
+      + '<div class="grelha2"><div class="campo"><label for="kTel">Telemóvel (opcional)</label><input id="kTel" inputmode="tel" maxlength="20"></div><div class="campo"><label for="kEmail">Email (opcional)</label><input id="kEmail" type="email" maxlength="120"></div></div>'
+      + '<div class="grelha2"><div class="campo"><label for="kNasc">Data de nascimento (opcional)</label><input id="kNasc" type="date"></div><div></div></div>'
+      + '<div class="campo"><label for="kNotas">Notas (opcional)</label><textarea id="kNotas" rows="2" maxlength="1000"></textarea></div>'
+      + '<button type="button" class="btn-ac" id="kGuardar">Guardar cliente</button><div class="msg" id="kMsg"></div>');
+    f.querySelector('#kNome').focus();
+    f.querySelector('#kGuardar').onclick = async function(){
+      var nome = $('kNome').value.trim(), tel = $('kTel').value.trim(), t = telNorm(tel);
+      if(!nome){ $('kMsg').textContent = 'Escreva o nome.'; $('kMsg').className = 'msg erro'; return; }
+      if(tel && t.length < 9){ $('kMsg').textContent = 'O telemóvel tem de ter pelo menos 9 números (ou deixe vazio).'; $('kMsg').className = 'msg erro'; return; }
+      var ch = chaveCli(tel, nome);
+      if(CLI.some(function(c){ return c.tel_norm === ch; })){ $('kMsg').textContent = t.length >= 9 ? 'Já existe um cliente com este telemóvel.' : 'Já existe um cliente sem contacto com este nome. Acrescente o apelido ou o telemóvel.'; $('kMsg').className = 'msg erro'; return; }
+      var r = await sb.from('clientes').insert({ negocio_id:NEG.id, tel_norm:ch, nome:nome, telefone:tel || null, email:$('kEmail').value.trim() || null, nascimento:$('kNasc').value || null, notas:$('kNotas').value.trim() || null });
+      if(r.error){ $('kMsg').textContent = 'Erro: ' + r.error.message; $('kMsg').className = 'msg erro'; return; }
+      fecharModal(); toast('Cliente criado ✓'); carregarClientes();
+    };
+  };
   $('cliBusca').oninput = pintarClientes; $('cliOrdem').onchange = pintarClientes;
   $('cliPrev').onchange = async function(){ var on = this.checked; var e = await guardarCfg(function(c){ c.salao = Object.assign({}, c.salao || {}, { mostrarPrevisto:on }); }); if(e){ toast('Erro: ' + e.message); this.checked = !on; return; } pintarClientes(); };
   function abrirFicha(x){
     var c = x.c, fav = Object.keys(x.serv).sort(function(a, b){ return x.serv[b] - x.serv[a]; })[0] || '—';
-    var media = x.vis ? x.gasto / x.vis : 0, tel = String(c.telefone || c.tel_norm);
+    var media = x.vis ? x.gasto / x.vis : 0, tel = String(c.telefone || '');
     var f = modal('<h3>' + esc(c.nome || 'Cliente') + '</h3>'
-      + '<div>📱 <a href="tel:' + esc(tel.replace(/\s/g, '')) + '">' + esc(tel) + '</a>' + (waLink({ telefone:tel }, '') ? (' · <a href="' + esc(waLink({ telefone:tel }, 'Olá ' + (c.nome || '') + '!')) + '" target="_blank" rel="noopener">WhatsApp</a>') : '') + ' · cliente desde ' + dataPt(c.criado_em) + '</div>'
+      + '<div>' + (tel ? ('📱 <a href="tel:' + esc(tel.replace(/\s/g, '')) + '">' + esc(tel) + '</a>' + (waLink({ telefone:tel }, '') ? (' · <a href="' + esc(waLink({ telefone:tel }, 'Olá ' + (c.nome || '') + '!')) + '" target="_blank" rel="noopener">WhatsApp</a>') : '')) : '<span style="color:var(--suave);">Sem contacto</span>') + ' · cliente desde ' + dataPt(c.criado_em) + '</div>'
       + '<div class="nums" style="grid-template-columns:repeat(4,minmax(0,1fr));"><div><b>' + x.vis + '</b><span>visitas</span></div><div><b style="font-size:18px;">' + euro(x.gasto) + '</b><span>total gasto</span></div><div><b style="font-size:18px;">' + euro(media) + '</b><span>por visita</span></div><div><b>' + x.faltas + '</b><span>faltas</span></div></div>'
       + (SAL.mostrarPrevisto === true && x.prev ? ('<div style="font-size:14px;">Previsto (marcações futuras confirmadas): <b>' + euro(x.prev) + '</b></div>') : '')
       + '<div style="font-size:14px;">Serviço preferido: <b>' + esc(fav) + '</b>' + (x.canc ? (' · ' + x.canc + ' cancelada(s)') : '') + '</div>'
       + '<div class="grelha2"><div class="campo"><label for="fNome">Nome</label><input id="fNome" maxlength="80" value="' + esc(c.nome || '') + '"></div><div class="campo"><label for="fEmail">Email</label><input id="fEmail" type="email" maxlength="120" value="' + esc(c.email || '') + '"></div></div>'
-      + '<div class="grelha2"><div class="campo"><label for="fNasc">Data de nascimento</label><input id="fNasc" type="date" value="' + esc(c.nascimento || '') + '"></div><div></div></div>'
+      + '<div class="grelha2"><div class="campo"><label for="fTel">Telemóvel (opcional)</label><input id="fTel" inputmode="tel" maxlength="20" value="' + esc(c.telefone || '') + '"></div><div class="campo"><label for="fNasc">Data de nascimento</label><input id="fNasc" type="date" value="' + esc(c.nascimento || '') + '"></div></div>'
       + '<div class="campo"><label for="fNotas">Notas (só o salão vê: alergias, preferências…)</label><textarea id="fNotas" rows="3" maxlength="1000">' + esc(c.notas || '') + '</textarea></div>'
       + '<button type="button" class="btn-ac" id="fGuardar">Guardar ficha</button><div class="msg" id="fMsg"></div>'
       + '<div style="font-weight:800;font-size:14px;margin-top:4px;">Histórico</div><div class="hist">' + (x.hist.length ? x.hist.map(function(r){ var e = r.estado === 'cancelada' ? 'Cancelada' : r.faltou ? 'Faltou' : r.estado === 'confirmada' ? (r.data <= iso(new Date()) ? 'Feita' : 'Marcada') : 'Por confirmar';
           return '<div><span style="min-width:92px;">' + dataPt(r.data) + '</span><span style="min-width:44px;">' + esc(r.hora || '') + '</span><span style="flex:1;">' + esc(r.servico || '') + (nomeProf(r.profissional) ? (' · ' + esc(nomeProf(r.profissional))) : '') + '</span><span style="min-width:70px;text-align:right;">' + (r.valor != null ? euro(r.valor) : '') + '</span><span style="min-width:84px;text-align:right;font-weight:700;color:' + (e === 'Feita' ? 'var(--verde)' : e === 'Faltou' || e === 'Cancelada' ? 'var(--ac)' : 'var(--suave)') + ';">' + e + '</span></div>'; }).join('') : '<div>Sem marcações.</div>') + '</div>');
     f.querySelector('#fGuardar').onclick = async function(){
-      var u = await sb.from('clientes').update({ nome:$('fNome').value.trim() || null, email:$('fEmail').value.trim() || null, nascimento:$('fNasc').value || null, notas:$('fNotas').value.trim() || null, atualizado_em:new Date().toISOString() }).eq('id', c.id);
+      var nt = $('fTel').value.trim(), nk = telNorm(nt);
+      if(nt && nk.length < 9){ $('fMsg').textContent = 'O telemóvel tem de ter pelo menos 9 números (ou deixe vazio).'; $('fMsg').className = 'msg erro'; return; }
+      var up = { nome:$('fNome').value.trim() || null, telefone:nt || null, email:$('fEmail').value.trim() || null, nascimento:$('fNasc').value || null, notas:$('fNotas').value.trim() || null, atualizado_em:new Date().toISOString() };
+      if(nk.length >= 9 && /^n:/.test(c.tel_norm) && !CLI.some(function(o){ return o.id !== c.id && o.tel_norm === nk; })) up.tel_norm = nk;   // passa a ser identificado pelo telemóvel
+      var u = await sb.from('clientes').update(up).eq('id', c.id);
       if(u.error){ $('fMsg').textContent = 'Erro: ' + u.error.message; $('fMsg').className = 'msg erro'; return; }
       fecharModal(); toast('Ficha guardada ✓'); carregarClientes();
     };
@@ -750,9 +778,13 @@
       + '<div class="campo"><label for="nServ">Serviço</label><select id="nServ">' + vis.map(function(s){ return '<option value="' + esc(s.id) + '">' + esc(s.nome) + ' · ' + (+s.dur || 30) + ' min</option>'; }).join('') + '</select></div>'
       + (EQ().length ? ('<div class="campo"><label for="nProf">Profissional</label><select id="nProf">' + EQ().map(function(p){ return '<option value="' + esc(p.id) + '"' + (prof === p.id ? ' selected' : '') + '>' + esc(p.nome) + '</option>'; }).join('') + '</select></div>') : '')
       + '<div class="grelha2"><div class="campo"><label for="nDia">Dia</label><input id="nDia" type="date" value="' + esc(dia) + '"></div><div class="campo"><label for="nHora">Hora</label><input id="nHora" type="time" step="300" value="' + esc(hora) + '"></div></div>'
-      + '<div class="grelha2"><div class="campo"><label for="nNome">Nome do cliente</label><input id="nNome" maxlength="80"></div><div class="campo"><label for="nTel">Telemóvel</label><input id="nTel" maxlength="20" inputmode="tel"></div></div>'
+      + '<div class="grelha2"><div class="campo"><label for="nNome">Cliente</label><input id="nNome" maxlength="80" list="nCliLista" placeholder="Nome (ou escolha da lista)" autocomplete="off"><datalist id="nCliLista"></datalist></div><div class="campo"><label for="nTel">Telemóvel <span style="font-weight:400;color:var(--suave);">(opcional)</span></label><input id="nTel" maxlength="20" inputmode="tel"></div></div>'
       + '<div class="campo"><label for="nObs">Observações</label><input id="nObs" maxlength="300"></div>'
       + '<button type="button" class="btn-ac" id="nGuardar">Guardar marcação (confirmada)</button><div class="msg" id="nMsg"></div>');
+    (async function(){ if(!CLI.length){ var a = await sb.from('clientes').select('*').eq('negocio_id', NEG.id); if(!a.error) CLI = a.data || []; }
+      var dl = f.querySelector('#nCliLista'); if(dl) dl.innerHTML = CLI.slice().sort(function(a, b){ return String(a.nome || '').localeCompare(String(b.nome || ''), 'pt'); }).map(function(c){ return '<option value="' + esc(c.nome || '') + '">' + esc(c.telefone || 'sem contacto') + '</option>'; }).join('');
+      var ni = f.querySelector('#nNome'); if(ni) ni.addEventListener('change', function(){ var c = CLI.filter(function(x){ return nomeNorm(x.nome) === nomeNorm(ni.value); })[0]; if(c && c.telefone && !$('nTel').value) $('nTel').value = c.telefone; });
+    })();
     f.querySelector('#nGuardar').onclick = async function(){
       var s = SERV.filter(function(x){ return x.id === $('nServ').value; })[0], d = $('nDia').value, h = $('nHora').value, nome = $('nNome').value.trim();
       if(!s || !d || !h || !nome){ $('nMsg').textContent = 'Preencha o serviço, o dia, a hora e o nome.'; $('nMsg').className = 'msg erro'; return; }
