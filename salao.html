@@ -484,7 +484,11 @@
     rpc('marcacoes_estado', { p_ids:ids }).catch(function(){ return rpc('reservas_estado', { p_ids:ids }); }).then(function(rows){
       var hoje = iso(new Date());
       var por = {}; (rows || []).forEach(function(r){ por[r.id] = r; }); _minhasRows = por;
-      var vis = l.filter(function(x){ var r = por[x.id]; return r && r.data >= hoje; });
+      // canceladas: ficam à vista até ao fim do dia em que o cliente as viu canceladas; no dia seguinte desaparecem
+      var mudou = false, agoraMs = Date.now();
+      l.forEach(function(x){ var r = por[x.id]; if(r && r.estado === 'cancelada' && !x.cancVisto){ x.cancVisto = agoraMs; mudou = true; } if(r && r.estado !== 'cancelada' && x.cancVisto){ delete x.cancVisto; mudou = true; } });
+      if(mudou) guardar(l);
+      var vis = l.filter(function(x){ var r = por[x.id]; return r && r.data >= hoje && !(r.estado === 'cancelada' && iso(new Date(x.cancVisto || agoraMs)) < hoje); });
       vis.sort(function(a, b){ return (por[a.id].data + por[a.id].hora).localeCompare(por[b.id].data + por[b.id].hora); });   // a mais próxima primeiro
       if(!vis.length){ $('secMinhas').classList.add('hide'); return; }
       $('secMinhas').classList.remove('hide');
