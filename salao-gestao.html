@@ -353,7 +353,7 @@
     document.querySelectorAll('.tab').forEach(function(b){ b.classList.toggle('on', b.getAttribute('data-t') === t); });
     $('tAgenda').classList.toggle('hide', t !== 'agenda'); $('tServicos').classList.toggle('hide', t !== 'servicos');
     $('tPagina').classList.toggle('hide', t !== 'pagina'); $('tHorario').classList.toggle('hide', t !== 'horario'); $('tEquipa').classList.toggle('hide', t !== 'equipa'); $('tClientes').classList.toggle('hide', t !== 'clientes');
-    if(t === 'servicos') pintarServ(); if(t === 'equipa') pintarEquipa(); if(t === 'clientes') carregarClientes(); if(t === 'pagina') pintarPagina(); if(t === 'horario') pintarHorario();
+    if(t === 'servicos'){ EQSV = null; pintarServ(); } if(t === 'equipa') pintarEquipa(); if(t === 'clientes') carregarClientes(); if(t === 'pagina') pintarPagina(); if(t === 'horario') pintarHorario();
     try{ history.replaceState(null, '', location.pathname + location.search + (t === 'agenda' ? '' : ('#' + t))); }catch(e){}
   }
   document.querySelectorAll('.tab').forEach(function(b){ b.onclick = function(){ irPara(b.getAttribute('data-t')); }; });
@@ -835,7 +835,8 @@
   };
 
   // ---------- serviços ----------
-  function pintarServ(){ setTimeout(pintarCatFotos, 0);
+  var EQSV = null;   // equipa a ser editada a partir dos serviços ("Quem faz")
+  function pintarServ(){ setTimeout(pintarCatFotos, 0); if(!EQSV) EQSV = JSON.parse(JSON.stringify(EQ()));
     if(!SERV.length) $('servLista').innerHTML = '<div style="background:#fff;border-radius:12px;padding:16px;color:var(--suave);margin-bottom:10px;">Ainda não há serviços. Carregue em "+ Novo serviço".</div>';
     else $('servLista').innerHTML = SERV.map(function(s, i){
       return '<div class="serv-linha" data-i="' + i + '">'
@@ -846,6 +847,8 @@
         + '<div></div>'
         + '<div class="campo desc"><label>Descrição curta</label><input data-k="desc" value="' + esc(s.desc || '') + '" maxlength="160"></div>'
         + '<div class="serv-foto" style="grid-column:1/-1;">' + (s.foto ? ('<img src="' + esc(s.foto) + '" alt=""><button type="button" class="btn-lnk" data-op="semfoto">Tirar foto</button>') : '') + '<button type="button" class="btn" data-op="foto">📷 ' + (s.foto ? 'Mudar foto' : 'Foto do serviço (opcional)') + '</button></div>'
+        + (EQSV.length ? ('<div style="grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px;align-items:center;"><span class="eq-rot" style="margin-right:4px;">Quem faz</span><span class="eq-chips">' + EQSV.map(function(p){ return '<label><input type="checkbox" data-faz="' + esc(p.id) + '"' + (fazServ(p, s.id) ? ' checked' : '') + '> ' + esc(p.nome) + '</label>'; }).join('') + '</span>'
+            + (EQSV.some(function(p){ return fazServ(p, s.id); }) ? '' : '<span style="color:#A33;font-weight:700;font-size:13px;">⚠️ Ninguém faz este serviço — os clientes não o conseguem marcar</span>') + '</div>') : '')
         + '<div class="op"><label style="font-weight:600;"><input type="checkbox" data-k="online"' + (s.online === false ? '' : ' checked') + '> Aceita pedidos online</label>'
         + '<label style="font-weight:600;"><input type="checkbox" data-k="oculto"' + (s.oculto ? ' checked' : '') + '> Escondido</label>'
         + '<span style="flex:1;"></span><button type="button" class="btn" data-op="sobe" aria-label="Subir">↑</button><button type="button" class="btn" data-op="desce" aria-label="Descer">↓</button><button type="button" class="btn-lnk" data-op="apagar">Apagar</button></div>'
@@ -854,6 +857,11 @@
     $('servLista').querySelectorAll('.serv-linha').forEach(function(l){
       var i = +l.getAttribute('data-i');
       l.querySelectorAll('[data-k]').forEach(function(inp){ inp.addEventListener('input', function(){ var k = inp.getAttribute('data-k'); SERV[i][k] = inp.type === 'checkbox' ? inp.checked : (k === 'dur' ? (parseInt(inp.value, 10) || 30) : inp.value); }); inp.addEventListener('change', function(){ if(inp.type === 'checkbox'){ SERV[i][inp.getAttribute('data-k')] = inp.checked; } }); });
+      l.querySelectorAll('[data-faz]').forEach(function(c){ c.onchange = function(){ var p = EQSV.filter(function(x){ return x.id === c.getAttribute('data-faz'); })[0], sid = SERV[i].id; if(!p || !sid) return;
+        var todos = SERV.filter(function(x){ return x && x.nome && x.id; }).map(function(x){ return x.id; });
+        if(c.checked){ if(Array.isArray(p.servicos) && p.servicos.length && p.servicos.indexOf(sid) < 0) p.servicos.push(sid); if(p.servicos && p.servicos.length >= todos.length && todos.every(function(t){ return p.servicos.indexOf(t) >= 0; })) p.servicos = []; }
+        else { if(!Array.isArray(p.servicos) || !p.servicos.length) p.servicos = todos.slice(); p.servicos = p.servicos.filter(function(t){ return t !== sid; }); }
+        pintarServ(); $('servMsg').textContent = 'Por guardar…'; $('servMsg').className = 'msg'; }; });
       l.querySelectorAll('[data-op]').forEach(function(b){ b.onclick = function(){ var op = b.getAttribute('data-op');
         if(op === 'foto'){ escolherFoto({ max:1200 }, function(url){ SERV[i].foto = url; guardarServ('Foto guardada ✓'); }); return; }
         if(op === 'semfoto'){ apagarFicheiro(SERV[i].foto); delete SERV[i].foto; guardarServ('Foto retirada ✓'); return; }
@@ -874,9 +882,12 @@
   async function guardarServ(okTxt){
     var limpo = SERV.filter(function(s){ return s && String(s.nome || '').trim(); }).map(function(s){ var o = { id:s.id || novoId(), nome:String(s.nome).trim().slice(0, 80), cat:String(s.cat || '').trim().slice(0, 40), dur:Math.max(5, Math.min(600, parseInt(s.dur, 10) || 30)), preco:String(s.preco || '').trim().slice(0, 24), desc:String(s.desc || '').trim().slice(0, 160) }; if(s.foto) o.foto = String(s.foto); if(s.online === false) o.online = false; if(s.oculto) o.oculto = true; return o; });
     $('servMsg').textContent = 'A guardar…'; $('servMsg').className = 'msg';
-    var e = await guardarCfg(function(c){ c.servicos = limpo; });
-    $('servMsg').textContent = e ? ('Erro: ' + e.message) : (okTxt || 'Guardado ✓'); $('servMsg').className = 'msg ' + (e ? 'erro' : 'ok');
-    if(!e) pintarServ();
+    var ids = limpo.map(function(x){ return x.id; });
+    var eqNova = EQSV && EQSV.length ? EQSV.map(function(p){ return { id:p.id, nome:p.nome, dias:Array.isArray(p.dias) ? p.dias : [], servicos:(Array.isArray(p.servicos) ? p.servicos : []).filter(function(t){ return ids.indexOf(t) >= 0; }) }; }) : null;
+    var e = await guardarCfg(function(c){ c.servicos = limpo; if(eqNova) c.equipa = eqNova; });
+    var semNinguem = eqNova ? limpo.filter(function(x){ return !x.oculto && x.online !== false && !eqNova.some(function(p){ return fazServ(p, x.id); }); }) : [];
+    $('servMsg').textContent = e ? ('Erro: ' + e.message) : ((okTxt || 'Guardado ✓') + (semNinguem.length ? (' · ⚠️ ' + semNinguem.length + ' serviço(s) sem ninguém da equipa') : '')); $('servMsg').className = 'msg ' + (e ? 'erro' : (semNinguem.length ? 'erro' : 'ok'));
+    if(!e){ EQSV = null; pintarServ(); }
   }
 
   // ---------- página ----------

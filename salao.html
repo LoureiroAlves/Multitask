@@ -401,6 +401,11 @@
       html += '<button type="button" class="dia' + (sel.dia === k ? ' on' : '') + '" data-d="' + k + '"' + (aberto ? '' : ' disabled') + '><span>' + DIAS_C[d.getDay()] + '</span><b>' + d.getDate() + '</b><span>' + MESES[d.getMonth()] + '</span></button>';
     }
     if(sel.dia && !abertos[sel.dia]){ sel.dia = null; sel.hora = null; }
+    if(EQ().length && sel.serv && !EQ().some(function(p){ return fazServ(p, sel.serv.id); })){   // ninguém da equipa faz este serviço
+      $('dias').innerHTML = '<div class="nota" style="padding:4px 0;">De momento este serviço não pode ser marcado online.' + (SAL.telefone ? (' Ligue para o salão: <a href="tel:' + esc(String(SAL.telefone).replace(/\s/g, '')) + '">' + esc(SAL.telefone) + '</a>.') : ' Contacte o salão.') + '</div>';
+      $('passoHora').classList.add('hide'); $('passoDados').classList.add('hide'); return;
+    }
+    if(!primeiro){ $('dias').innerHTML = html + '<div class="nota" style="padding:4px 0;">Sem dias disponíveis para este serviço nas próximas semanas.</div>'; $('passoHora').classList.add('hide'); return; }
     $('dias').innerHTML = html;
     $('dias').querySelectorAll('[data-d]').forEach(function(b){ b.onclick = function(){ sel.dia = b.getAttribute('data-d'); sel.hora = null; pintarDias(); pintarHoras(); }; });
     if(!sel.dia && primeiro){ sel.dia = primeiro; pintarDias(); pintarHoras(); }
