@@ -210,6 +210,7 @@
     <div id="servLista"></div>
     <button type="button" class="btn" id="servNovo">+ Novo serviço</button>
     <div class="guardar-barra"><button type="button" class="btn-ac" id="servGuardar">Guardar serviços</button><span class="msg" id="servMsg"></span></div>
+    <div class="bloco-sec"><h3>Fotos das categorias</h3><p class="sub" style="margin:0 0 6px;">Na página do cliente, cada categoria aparece numa janela com esta foto (sem preços). Ao abrir, o cliente vê os serviços, os preços e "Marcar". Sem foto, usa a foto do primeiro serviço da categoria.</p><div id="catFotos"></div></div>
   </section>
 
   <!-- CLIENTES -->
@@ -834,7 +835,7 @@
   };
 
   // ---------- serviços ----------
-  function pintarServ(){
+  function pintarServ(){ setTimeout(pintarCatFotos, 0);
     if(!SERV.length) $('servLista').innerHTML = '<div style="background:#fff;border-radius:12px;padding:16px;color:var(--suave);margin-bottom:10px;">Ainda não há serviços. Carregue em "+ Novo serviço".</div>';
     else $('servLista').innerHTML = SERV.map(function(s, i){
       return '<div class="serv-linha" data-i="' + i + '">'
@@ -861,6 +862,12 @@
         if(op === 'desce' && i < SERV.length - 1){ var t2 = SERV[i + 1]; SERV[i + 1] = SERV[i]; SERV[i] = t2; }
         pintarServ(); }; });
     });
+  }
+  function pintarCatFotos(){
+    var cf = SAL.catFotos || {}, cs = []; SERV.forEach(function(x){ var k = (x.cat || 'Serviços').trim(); if(x.nome && cs.indexOf(k) < 0) cs.push(k); });
+    $('catFotos').innerHTML = cs.length ? '<div class="fotos">' + cs.map(function(c, i){ return '<div style="display:flex;flex-direction:column;gap:6px;width:150px;">' + (cf[c] ? ('<div class="foto"><img src="' + esc(cf[c]) + '" alt=""><div class="foto-ops"><button type="button" data-cx="' + i + '" aria-label="Tirar">✕</button></div></div>') : '<button type="button" class="foto-add" data-ca="' + i + '">+ Foto</button>') + '<b style="font-size:13px;">' + esc(c) + '</b>' + (cf[c] ? ('<button type="button" class="btn-lnk" data-ca="' + i + '" style="padding:0;min-height:24px;text-align:left;">Mudar foto</button>') : '') + '</div>'; }).join('') + '</div>' : '<div style="color:var(--suave);font-size:14px;">Crie primeiro os serviços com categoria.</div>';
+    $('catFotos').querySelectorAll('[data-ca]').forEach(function(b){ b.onclick = function(){ var c = cs[+b.getAttribute('data-ca')]; escolherFoto({ max:1400, nome:'categoria' }, async function(url){ var antigo = (SAL.catFotos || {})[c]; var e = await guardarCfg(function(cfg){ cfg.salao = Object.assign({}, cfg.salao || {}); cfg.salao.catFotos = Object.assign({}, cfg.salao.catFotos || {}); cfg.salao.catFotos[c] = url; }); if(e) return alert('Erro: ' + e.message); apagarFicheiro(antigo); pintarCatFotos(); toast('Foto da categoria guardada ✓'); }); }; });
+    $('catFotos').querySelectorAll('[data-cx]').forEach(function(b){ b.onclick = async function(){ var c = cs[+b.getAttribute('data-cx')]; if(!confirm('Tirar a foto de "' + c + '"?')) return; var antigo = (SAL.catFotos || {})[c]; var e = await guardarCfg(function(cfg){ cfg.salao = Object.assign({}, cfg.salao || {}); cfg.salao.catFotos = Object.assign({}, cfg.salao.catFotos || {}); delete cfg.salao.catFotos[c]; }); if(!e){ apagarFicheiro(antigo); pintarCatFotos(); } }; });
   }
   $('servNovo').onclick = function(){ var ult = SERV[SERV.length - 1]; SERV.push({ id:novoId(), nome:'', cat:(ult && ult.cat) || '', dur:30, preco:'', desc:'', online:true }); pintarServ(); var ins = $('servLista').querySelectorAll('input[data-k="nome"]'); if(ins.length) ins[ins.length - 1].focus(); };
   $('servGuardar').onclick = function(){ guardarServ('Guardado ✓'); };

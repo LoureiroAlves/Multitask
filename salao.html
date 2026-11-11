@@ -125,6 +125,29 @@
   .serv-img img{ width:100%; height:100%; object-fit:cover; display:block; cursor:zoom-in; }
   .galeria{ display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:8px; }
   .galeria img{ width:100%; aspect-ratio:1; object-fit:cover; border-radius:12px; background:var(--linha); cursor:zoom-in; display:block; }
+  /* montra: uma janela por categoria (sem preços); ao abrir, os serviços com preço e "Marcar" */
+  .cat-grelha{ display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:12px; flex:1 1 100%; }
+  .cat-card{ background:#fff; border:1.5px solid var(--borda); border-radius:16px; overflow:hidden; display:flex; flex-direction:column; text-align:left; padding:0; color:var(--ink); }
+  .cat-card:hover, .cat-card.sel{ border-color:var(--ac); }
+  .cat-card .ci{ height:150px; background:var(--linha); display:flex; align-items:center; justify-content:center; font-size:44px; font-weight:800; color:#fff; }
+  .cat-card .ci img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .cat-card .ct{ padding:14px; display:flex; flex-direction:column; gap:4px; }
+  .cat-card .ct b{ font-size:17px; } .cat-card .ct span{ font-size:13px; color:var(--suave); }
+  .cat-card .ct i{ font-style:normal; font-weight:800; color:var(--ac); font-size:14px; margin-top:4px; }
+  .sub-fundo{ position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:30; display:flex; align-items:center; justify-content:center; padding:16px; }
+  .sub{ background:#fff; border-radius:18px; width:100%; max-width:560px; max-height:88vh; overflow:auto; display:flex; flex-direction:column; }
+  .sub-cab{ position:sticky; top:0; background:#fff; display:flex; align-items:center; gap:10px; padding:16px 18px; border-bottom:1px solid var(--linha); z-index:1; }
+  .sub-cab h3{ margin:0; flex:1; font-size:20px; }
+  .sub-cab button{ width:44px; height:44px; border:none; border-radius:12px; background:var(--fundo); font-size:20px; }
+  .sub-it{ display:flex; gap:12px; align-items:center; padding:14px 18px; border-bottom:1px solid var(--linha); }
+  .sub-it:last-child{ border-bottom:none; }
+  .sub-it img{ width:64px; height:64px; border-radius:12px; object-fit:cover; flex:0 0 auto; cursor:zoom-in; }
+  .sub-it .tx{ flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; }
+  .sub-it .tx b{ font-size:16px; } .sub-it .tx span{ font-size:13px; color:var(--suave); }
+  .sub-it .tx em{ font-style:normal; font-weight:800; font-size:14px; }
+  .pill{ border:none; border-radius:999px; background:var(--ac); color:#fff; font-weight:800; font-size:14px; padding:10px 18px; min-height:42px; flex:0 0 auto; }
+  @media (max-width: 560px){ .cat-grelha{ grid-template-columns:1fr 1fr; gap:10px; } .cat-card .ci{ height:110px; } .cat-card .ct{ padding:11px; } .cat-card .ct b{ font-size:15px; } .cat-card .ct i{ font-size:13px; } }
+  @media (max-width: 860px){ .sub-fundo{ align-items:flex-end; padding:0; } .sub{ border-radius:20px 20px 0 0; max-height:85vh; } }
   .lb{ position:fixed; inset:0; background:rgba(0,0,0,.9); z-index:100; display:flex; align-items:center; justify-content:center; padding:16px; }
   .lb img{ max-width:100%; max-height:100%; border-radius:8px; }
   .lb button{ position:absolute; top:12px; right:12px; width:44px; height:44px; border:none; border-radius:50%; background:rgba(255,255,255,.15); color:#fff; font-size:20px; }
@@ -321,30 +344,40 @@
 
   var catSel = '';
   function cats(){ var c = []; SERV.forEach(function(s){ var k = (s.cat || 'Serviços').trim(); if(c.indexOf(k) < 0) c.push(k); }); return c; }
+  function servDe(c){ return SERV.filter(function(s){ return (s.cat || 'Serviços').trim() === c; }); }
+  function abrirCategoria(c){
+    var l = servDe(c); fecharCategoria();
+    var f = document.createElement('div'); f.className = 'sub-fundo'; f.id = 'subMenu';
+    f.innerHTML = '<div class="sub" role="dialog" aria-modal="true" aria-label="' + esc(c) + '"><div class="sub-cab"><h3>' + esc(c) + '</h3><button type="button" aria-label="Fechar">✕</button></div>'
+      + l.map(function(s){ var p = precoTxt(s.preco);
+          return '<div class="sub-it">' + (urlOk(s.foto) ? ('<img src="' + esc(s.foto) + '" alt="" loading="lazy" data-lb>') : '')
+            + '<div class="tx"><b>' + esc(s.nome) + '</b>' + (s.desc ? ('<span>' + esc(s.desc) + '</span>') : '') + '<em>' + esc(durTxt(s.dur)) + (p ? (' · ' + esc(p)) : '') + '</em></div>'
+            + (s.online === false ? '<span class="nota" style="max-width:110px;text-align:right;">Marcação por telefone</span>' : ('<button type="button" class="pill" data-s="' + esc(s.id) + '">Marcar</button>')) + '</div>'; }).join('')
+      + '</div>';
+    document.body.appendChild(f);
+    f.querySelector('.sub-cab button').onclick = fecharCategoria;
+    f.addEventListener('click', function(e){ if(e.target === f) fecharCategoria(); });
+    f.querySelectorAll('[data-s]').forEach(function(b){ b.onclick = function(){ var s = SERV.filter(function(x){ return x.id === b.getAttribute('data-s'); })[0]; if(!s) return; fecharCategoria(); escolherServ(s); abrirFolha();
+      if(!window.matchMedia('(max-width: 860px)').matches){ try{ $('painel').scrollIntoView({ behavior:'smooth', block:'start' }); }catch(e){} } }; });
+  }
+  function fecharCategoria(){ var f = $('subMenu'); if(f) f.remove(); }
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape') fecharCategoria(); });
   function pintarServicos(){
     var cs = cats();
-    $('cats').innerHTML = cs.length > 1 ? (['<button type="button" class="cat' + (catSel ? '' : ' on') + '" data-c="">Todos</button>'].concat(cs.map(function(c){ return '<button type="button" class="cat' + (catSel === c ? ' on' : '') + '" data-c="' + esc(c) + '">' + esc(c) + '</button>'; })).join('')) : '';
-    $('cats').querySelectorAll('[data-c]').forEach(function(b){ b.onclick = function(){ catSel = b.getAttribute('data-c'); pintarServicos(); }; });
+    $('cats').innerHTML = '';
     if(!SERV.length){ $('servicos').innerHTML = '<div class="vazio">Este salão ainda não publicou os serviços.</div>'; return; }
     var html = '';
     var vg = Array.isArray(SAL.vagas) ? SAL.vagas.filter(function(v){ return v && v.data >= iso(new Date()) && v.texto; }) : [];
     vg.slice(0, 2).forEach(function(v){ html += '<div class="vaga"><div style="font-size:12px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;">Vaga de última hora</div><b>' + esc(quando(v.data, v.hora)) + '</b><div>' + esc(v.texto) + '</div></div>'; });
-    cs.filter(function(c){ return !catSel || c === catSel; }).forEach(function(c){
-      var nS = SERV.filter(function(s){ return (s.cat || 'Serviços').trim() === c; }).length;
-      html += '<section class="grupo" style="--lg:' + (nS * 250 + (nS - 1) * 10) + 'px"><h2>' + esc(c) + '</h2><div class="grelha">';
-      SERV.filter(function(s){ return (s.cat || 'Serviços').trim() === c; }).forEach(function(s){
-        var on = sel.serv && sel.serv.id === s.id;
-        var p = precoTxt(s.preco);
-        html += '<div class="serv' + (on ? ' sel' : '') + '">' + (urlOk(s.foto) ? ('<div class="serv-img"><img src="' + esc(s.foto) + '" alt="" loading="lazy" data-lb></div>') : '') + '<div class="serv-nome">' + esc(s.nome) + '</div>'
-          + (s.desc ? ('<div class="serv-desc">' + esc(s.desc) + '</div>') : '')
-          + '<div class="serv-pe"><span class="serv-info">' + esc(durTxt(s.dur)) + (p ? (' · ' + esc(p)) : '') + '</span>'
-          + (s.online === false ? '<span class="nota">Marcação por telefone</span>' : ('<button type="button" class="btn-ac" data-s="' + esc(s.id) + '">' + (on ? 'Escolhido' : 'Marcar') + '</button>'))
-          + '</div></div>';
-      });
-      html += '</div></section>';
-    });
+    var catFotos = SAL.catFotos || {};
+    html += '<section class="grupo" style="flex:1 1 100%;"><h2>Serviços</h2><div class="cat-grelha">' + cs.map(function(c){
+      var l = servDe(c), foto = urlOk(catFotos[c]) ? catFotos[c] : ((l.filter(function(s){ return urlOk(s.foto); })[0] || {}).foto || '');
+      var on = sel.serv && (sel.serv.cat || 'Serviços').trim() === c;
+      return '<button type="button" class="cat-card' + (on ? ' sel' : '') + '" data-cat="' + esc(c) + '"><div class="ci"' + (foto ? '' : ' style="background:var(--ac);"') + '>' + (foto ? ('<img src="' + esc(foto) + '" alt="" loading="lazy">') : esc(c.trim().charAt(0).toUpperCase())) + '</div>'
+        + '<div class="ct"><b>' + esc(c) + '</b><span>' + l.length + (l.length === 1 ? ' serviço' : ' serviços') + '</span><i>' + (on ? ('✓ ' + esc(sel.serv.nome)) : 'Ver serviços e preços →') + '</i></div></button>';
+    }).join('') + '</div></section>';
     $('servicos').innerHTML = html;
-    $('servicos').querySelectorAll('[data-s]').forEach(function(b){ b.onclick = function(){ var s = SERV.filter(function(x){ return x.id === b.getAttribute('data-s'); })[0]; if(s){ escolherServ(s); abrirFolha(); } }; });
+    $('servicos').querySelectorAll('[data-cat]').forEach(function(b){ b.onclick = function(){ abrirCategoria(b.getAttribute('data-cat')); }; });
   }
 
   // ---------- pedido ----------
@@ -556,7 +589,7 @@
   function abrirFolha(){ if(window.matchMedia('(max-width: 860px)').matches){ $('painel').classList.add('aberto'); if(!fundo){ fundo = document.createElement('div'); fundo.className = 'fundo-folha'; fundo.onclick = fecharFolha; document.body.appendChild(fundo); } } }
   function fecharFolha(){ $('painel').classList.remove('aberto'); if(fundo){ fundo.remove(); fundo = null; } }
   $('fecharFolha').onclick = fecharFolha;
-  $('btnBarra').onclick = function(){ if(!sel.serv){ var p = document.querySelector('.grupo h2'); if(p) p.scrollIntoView({ behavior:'smooth' }); msg(''); } abrirFolha(); };
+  $('btnBarra').onclick = function(){ if(!sel.serv){ var p = document.querySelector('.cat-grelha'); if(p) p.scrollIntoView({ behavior:'smooth', block:'center' }); msg(''); return; } abrirFolha(); };
   window.addEventListener('pageshow', function(){ if(NEG) pintarMinhas(); });
   carregar();
 })();
