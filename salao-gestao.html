@@ -420,7 +420,7 @@
   async function carregarClientes(){
     var a = await sb.from('clientes').select('*').eq('negocio_id', NEG.id);
     if(a.error){ $('cliLista').innerHTML = '<div class="msg erro">' + (/clientes|relation|does not exist|schema cache/i.test(a.error.message) ? 'Falta correr no Supabase o ficheiro salao-clientes.sql.' : esc(a.error.message)) + '</div>'; return; }
-    var b = await sb.from('reservas').select('id,data,hora,nome,telefone,estado,servico,valor,faltou,profissional,duracao').eq('negocio_id', NEG.id).not('servico', 'is', null).order('data', { ascending:false }).limit(10000);
+    var b = await sb.from('reservas').select('*').eq('negocio_id', NEG.id).not('servico', 'is', null).order('data', { ascending:false }).limit(10000);
     CLI = a.data || []; CLIRES = b.data || [];
     pintarClientes();
   }
@@ -488,7 +488,7 @@
       + '<div class="campo"><label for="fNotas">Notas (só o salão vê: alergias, preferências…)</label><textarea id="fNotas" rows="3" maxlength="1000">' + esc(c.notas || '') + '</textarea></div>'
       + '<button type="button" class="btn-ac" id="fGuardar">Guardar ficha</button><div class="msg" id="fMsg"></div>'
       + '<div style="font-weight:800;font-size:14px;margin-top:4px;">Histórico</div><div class="hist">' + (x.hist.length ? x.hist.map(function(r){ var e = r.estado === 'cancelada' ? 'Cancelada' : r.faltou ? 'Faltou' : r.estado === 'confirmada' ? (r.data <= iso(new Date()) ? 'Feita' : 'Marcada') : 'Por confirmar';
-          return '<div><span style="min-width:92px;">' + dataPt(r.data) + '</span><span style="min-width:44px;">' + esc(r.hora || '') + '</span><span style="flex:1;">' + esc(r.servico || '') + (nomeProf(r.profissional) ? (' · ' + esc(nomeProf(r.profissional))) : '') + '</span><span style="min-width:70px;text-align:right;">' + (r.valor != null ? euro(r.valor) : '') + '</span><span style="min-width:84px;text-align:right;font-weight:700;color:' + (e === 'Feita' ? 'var(--verde)' : e === 'Faltou' || e === 'Cancelada' ? 'var(--ac)' : 'var(--suave)') + ';">' + e + '</span></div>'; }).join('') : '<div>Sem marcações.</div>') + '</div>');
+          return '<div><span style="min-width:92px;">' + dataPt(r.data) + '</span><span style="min-width:44px;">' + esc(r.hora || '') + '</span><span style="flex:1;">' + esc(r.servico || '') + (nomeProf(r.profissional) ? (' · ' + esc(nomeProf(r.profissional))) : '') + '</span><span style="min-width:70px;text-align:right;">' + (r.valor != null ? (euro(r.valor) + ((+r.desconto) ? (' <span style="color:var(--ac);font-size:11px;">−' + r.desconto + '%</span>') : '')) : '') + '</span><span style="min-width:84px;text-align:right;font-weight:700;color:' + (e === 'Feita' ? 'var(--verde)' : e === 'Faltou' || e === 'Cancelada' ? 'var(--ac)' : 'var(--suave)') + ';">' + e + '</span></div>'; }).join('') : '<div>Sem marcações.</div>') + '</div>');
     f.querySelector('#fGuardar').onclick = async function(){
       var nt = $('fTel').value.trim(), nk = telNorm(nt);
       if(nt && nk.length < 9){ $('fMsg').textContent = 'O telemóvel tem de ter pelo menos 9 números (ou deixe vazio).'; $('fMsg').className = 'msg erro'; return; }
@@ -508,7 +508,7 @@
     csv('clientes-' + SLUG + '.csv', [['Nome','Telemóvel','Email','Nascimento','Cliente desde','Visitas','Total gasto (€)','Previsto (€)','Última visita','Próxima','Faltas','Notas']].concat(Object.keys(m).map(function(k){ var x = m[k], c = x.c; return [c.nome, c.telefone || c.tel_norm, c.email, c.nascimento, String(c.criado_em || '').slice(0, 10), x.vis, num(x.gasto), num(x.prev), x.ult, x.prox, x.faltas, c.notas]; }))); };
   $('cliCsvMes').onclick = function(){ var mes = iso(new Date()).slice(0, 7);
     var l = CLIRES.filter(function(r){ return r.data.slice(0, 7) === mes && r.estado !== 'cancelada'; }).sort(function(a, b){ return (a.data + a.hora).localeCompare(b.data + b.hora); });
-    csv('marcacoes-' + SLUG + '-' + mes + '.csv', [['Data','Hora','Cliente','Telemóvel','Serviço','Profissional','Valor (€)','Estado']].concat(l.map(function(r){ return [r.data, r.hora, r.nome, r.telefone, r.servico, nomeProf(r.profissional), r.valor != null ? num(r.valor) : '', r.faltou ? 'Faltou' : r.estado === 'confirmada' ? (r.data <= iso(new Date()) ? 'Feita' : 'Marcada') : 'Por confirmar']; }))); };
+    csv('marcacoes-' + SLUG + '-' + mes + '.csv', [['Data','Hora','Cliente','Telemóvel','Serviço','Profissional','Preço (€)','Desconto (%)','Valor (€)','Estado']].concat(l.map(function(r){ return [r.data, r.hora, r.nome, r.telefone, r.servico, nomeProf(r.profissional), baseDe(r) != null ? num(baseDe(r)) : '', +r.desconto || 0, r.valor != null ? num(r.valor) : '', r.faltou ? 'Faltou' : r.estado === 'confirmada' ? (r.data <= iso(new Date()) ? 'Feita' : 'Marcada') : 'Por confirmar']; }))); };
 
   // ---------- agenda ----------
   function intervalo(){ if(vista === 'dia') return [iso(dataSel), iso(dataSel)];
@@ -522,6 +522,11 @@
     if(r.error){ toast('Erro a carregar: ' + r.error.message); return; }
     RES = r.data || []; pintarAgenda(); pintarPedidos();
   }
+  var DESCONTOS = [0, 5, 10, 15, 20, 25, 30, 40, 50];
+  function precoServ(nome){ var sv = SERV.filter(function(x){ return x.nome === nome; })[0]; var m = /(\d+(?:[.,]\d{1,2})?)/.exec(String((sv && sv.preco) || '')); return m ? parseFloat(m[1].replace(',', '.')) : null; }
+  function baseDe(r){ return r.valor_base != null ? +r.valor_base : (r.valor != null && !(+r.desconto) ? +r.valor : precoServ(r.servico)); }
+  function comDesc(b, d){ return b == null ? null : Math.round(b * (100 - (+d || 0))) / 100; }
+  function opcoesDesc(sel){ return DESCONTOS.map(function(d){ return '<option value="' + d + '"' + ((+sel || 0) === d ? ' selected' : '') + '>' + (d ? ('−' + d + '%') : 'Sem desconto') + '</option>'; }).join(''); }
   function propTxt(r){ return r.proposta_hora ? quando(r.proposta_data || r.data, r.proposta_hora) : ''; }
   function cls(r){ if(r._fantasma) return 'b-fantasma'; if(r.faltou) return 'b-confirmada b-faltou'; return r.estado === 'confirmada' ? 'b-confirmada' : (r.estado === 'pendente' && r.proposta_hora) ? 'b-proposta' : 'b-pendente'; }
   function pintarAgenda(){
@@ -742,7 +747,7 @@
       + (tel ? ('<div>📱 <a href="tel:' + esc(tel.replace(/\s/g,'')) + '">' + esc(tel) + '</a>' + (waLink(r, '') ? (' · <a href="' + esc(waLink(r, 'Olá ' + (r.nome || '') + '!')) + '" target="_blank" rel="noopener">WhatsApp</a>') : '') + '</div>') : '')
       + (r.obs ? ('<div style="color:var(--suave);">“' + esc(r.obs) + '”</div>') : '')
       + '<div style="font-size:12px;color:var(--suave);">' + (r.push_marcacao ? '🔔 O cliente recebe as respostas por notificação.' : 'O cliente não tem notificações ligadas (pode avisar por WhatsApp).') + '</div>'
-      + (r.servico ? ('<div class="grelha2"><div class="campo"><label for="dValor">Valor (€)</label><input id="dValor" inputmode="decimal" value="' + esc(r.valor != null ? String(r.valor).replace('.', ',') : '') + '" placeholder="Ex.: 25"></div>'
+      + (r.servico ? ('<div class="grelha2"><div class="campo"><label for="dDesc">Preço · desconto</label><div style="display:flex;gap:8px;align-items:center;"><span style="font-weight:800;white-space:nowrap;" id="dPreco">' + (baseDe(r) != null ? (((+r.desconto) ? ('<s style="color:var(--suave);font-weight:600;">' + euro(baseDe(r)) + '</s> ') : '') + euro(comDesc(baseDe(r), r.desconto))) : '—') + '</span><select id="dDesc" style="flex:1;min-height:40px;border:1.5px solid var(--borda);border-radius:10px;padding:0 8px;">' + opcoesDesc(r.desconto) + '</select></div></div>'
           + (r.estado === 'confirmada' && r.data <= iso(new Date()) ? ('<label style="display:flex;align-items:center;gap:8px;font-weight:700;align-self:end;min-height:44px;"><input type="checkbox" id="dFaltou"' + (r.faltou ? ' checked' : '') + ' style="width:20px;height:20px;"> O cliente faltou</label>') : '<div></div>') + '</div>') : '')
       + '<label for="dNota">Nota para o cliente (opcional)</label><textarea id="dNota" rows="2" maxlength="200">' + esc(r.nota || '') + '</textarea>'
       + (r.estado !== 'cancelada' ? (
@@ -760,8 +765,16 @@
       if(a === 'recusar' || a === 'desmarcar'){ if(!confirm(a === 'recusar' ? 'Recusar este pedido? O cliente é avisado.' : 'Cancelar esta marcação? O cliente é avisado.')) return; }
       fecharModal(); await responder(r, a, { hora:(a === 'propor' ? ($('dHora') ? $('dHora').value : '') : undefined), nota:nota }); }; });
     var dj = f.querySelector('#dJa'); if(dj) dj.onchange = function(){ var bt = f.querySelector('[data-d="mudar"]'); if(bt) bt.textContent = dj.checked ? 'Mudar já e avisar o cliente' : 'Enviar proposta ao cliente'; };
-    var dv = f.querySelector('#dValor'); if(dv) dv.onchange = async function(){ var t = dv.value.trim().replace(/\s|€/g, '').replace(',', '.'), v = t === '' ? null : Math.round(parseFloat(t) * 100) / 100; if(t !== '' && isNaN(v)){ toast('Valor inválido'); return; }
-      var u = await sb.from('reservas').update({ valor:v }).eq('id', r.id); if(u.error){ toast(/valor|column/i.test(u.error.message) ? 'Falta correr no Supabase o salao-clientes.sql.' : ('Erro: ' + u.error.message)); return; } r.valor = v; toast('Valor guardado ✓'); };
+    var dd = f.querySelector('#dDesc'); if(dd) dd.onchange = async function(){ var d = +dd.value || 0, b = baseDe(r), antes = +r.desconto || 0;
+      if(b == null){ toast('Este serviço não tem preço definido.'); dd.value = String(antes); return; }
+      var v = comDesc(b, d), u = await sb.from('reservas').update({ desconto:d, valor_base:b, valor:v }).eq('id', r.id);
+      if(u.error){ toast(/desconto|valor_base|column/i.test(u.error.message) ? 'Falta correr no Supabase o salao-descontos.sql.' : ('Erro: ' + u.error.message)); dd.value = String(antes); return; }
+      r.desconto = d; r.valor_base = b; r.valor = v; $('dPreco').innerHTML = (d ? ('<s style="color:var(--suave);font-weight:600;">' + euro(b) + '</s> ') : '') + euro(v);
+      if(r.estado === 'cancelada' || r.data < iso(new Date())){ toast('Desconto guardado ✓'); carregarRes(); return; }
+      var casa = SAL.nome || NEG.nome, corpo = d ? (casa + ': tem ' + d + '% de desconto na sua marcação de ' + (r.servico || '') + ' (' + quando(r.data, r.hora) + '). Preço: ' + euro(b) + ' → ' + euro(v) + '.') : (casa + ': a sua marcação de ' + (r.servico || '') + ' (' + quando(r.data, r.hora) + ') fica pelo preço normal, ' + euro(b) + '.');
+      var ok = await pushCliente(r, d ? ('🎁 Desconto de ' + d + '%') : 'ℹ️ Preço da marcação', corpo); carregarRes();
+      if(ok){ toast('Desconto guardado ✓ · cliente avisado'); return; }
+      var wl = waLink(r, corpo); if(wl && confirm('Desconto guardado ✓\n\nEste cliente não tem notificações ligadas. Quer avisá-lo por WhatsApp?')) window.open(wl, '_blank', 'noopener'); else toast('Desconto guardado ✓'); };
     var df = f.querySelector('#dFaltou'); if(df) df.onchange = async function(){ var u = await sb.from('reservas').update({ faltou:df.checked }).eq('id', r.id); if(u.error){ toast(/faltou|column/i.test(u.error.message) ? 'Falta correr no Supabase o salao-clientes.sql.' : ('Erro: ' + u.error.message)); df.checked = !df.checked; return; } r.faltou = df.checked; toast(df.checked ? 'Marcado como falta' : 'Falta retirada'); carregarRes(); };
     var dp = f.querySelector('#dProf'); if(dp) dp.onchange = async function(){ var v = dp.value || null;
       var a = minDe(r.hora), du = +r.duracao || 30;
@@ -779,6 +792,7 @@
       + (EQ().length ? ('<div class="campo"><label for="nProf">Profissional</label><select id="nProf">' + EQ().map(function(p){ return '<option value="' + esc(p.id) + '"' + (prof === p.id ? ' selected' : '') + '>' + esc(p.nome) + '</option>'; }).join('') + '</select></div>') : '')
       + '<div class="grelha2"><div class="campo"><label for="nDia">Dia</label><input id="nDia" type="date" value="' + esc(dia) + '"></div><div class="campo"><label for="nHora">Hora</label><input id="nHora" type="time" step="300" value="' + esc(hora) + '"></div></div>'
       + '<div class="grelha2"><div class="campo"><label for="nNome">Cliente</label><input id="nNome" maxlength="80" list="nCliLista" placeholder="Nome (ou escolha da lista)" autocomplete="off"><datalist id="nCliLista"></datalist></div><div class="campo"><label for="nTel">Telemóvel <span style="font-weight:400;color:var(--suave);">(opcional)</span></label><input id="nTel" maxlength="20" inputmode="tel"></div></div>'
+      + '<div class="campo"><label for="nDesc">Desconto</label><select id="nDesc">' + opcoesDesc(0) + '</select></div>'
       + '<div class="campo"><label for="nObs">Observações</label><input id="nObs" maxlength="300"></div>'
       + '<button type="button" class="btn-ac" id="nGuardar">Guardar marcação (confirmada)</button><div class="msg" id="nMsg"></div>');
     (async function(){ if(!CLI.length){ var a = await sb.from('clientes').select('*').eq('negocio_id', NEG.id); if(!a.error) CLI = a.data || []; }
@@ -792,7 +806,7 @@
       var pr = $('nProf') ? $('nProf').value : '';
       var choca = RES.some(function(r){ return r.data === d && r.estado !== 'cancelada' && minDe(r.hora) != null && (!pr || !r.profissional || r.profissional === pr) && minDe(r.hora) < a + du && a < minDe(r.hora) + (+r.duracao || 30); });
       if(choca && !confirm((pr ? (nomeProf(pr) + ' já tem') : 'Já há') + ' uma marcação a essa hora. Guardar mesmo assim?')) return;
-      var ins = { negocio_id:NEG.id, data:d, hora:h, nome:nome, telefone:$('nTel').value.trim() || '-', pessoas:1, obs:$('nObs').value.trim() || null, estado:'confirmada', servico:s.nome, duracao:du }; if(pr) ins.profissional = pr;
+      var ins = { negocio_id:NEG.id, data:d, hora:h, nome:nome, telefone:$('nTel').value.trim() || '-', pessoas:1, obs:$('nObs').value.trim() || null, estado:'confirmada', servico:s.nome, duracao:du }; if(pr) ins.profissional = pr; var nd0 = +($('nDesc') ? $('nDesc').value : 0) || 0; if(nd0){ var bb = precoServ(s.nome); ins.desconto = nd0; if(bb != null){ ins.valor_base = bb; ins.valor = comDesc(bb, nd0); } }
       var r = await sb.from('reservas').insert(ins);
       if(r.error){ $('nMsg').textContent = /servico|duracao|column/i.test(r.error.message) ? 'Falta correr no Supabase o ficheiro salao-marcacoes.sql.' : ('Erro: ' + r.error.message); $('nMsg').className = 'msg erro'; return; }
       fecharModal(); dataSel = dDe(d); await carregarRes(); toast('Marcação guardada ✓');
