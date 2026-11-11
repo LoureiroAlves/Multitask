@@ -189,6 +189,7 @@
   <aside class="painel sem-serv" id="painel" aria-label="Pedir marcação">
     <button type="button" class="fechar-folha" id="fecharFolha" aria-label="Fechar">✕</button>
     <h3 id="tituloPainel">Pedir marcação</h3>
+    <button type="button" class="btn-lnk hide" id="btnDesistir" style="align-self:flex-start;padding:0;min-height:28px;border:none;background:none;color:#8A2A2A;font-weight:700;font-size:14px;">✕ Desistir desta marcação</button>
     <div class="esc" id="escServ"><small>Serviço</small><span id="escServNome">Escolha um serviço na lista</span></div>
     <div id="passoProf" class="hide" style="display:flex;flex-direction:column;gap:8px;">
       <div class="rot">Com quem?</div>
@@ -218,7 +219,7 @@
 <footer style="max-width:1180px;margin:0 auto;padding:0 16px 110px;display:flex;justify-content:flex-end;">
   <a href="https://4trevo.com" target="_blank" rel="noopener" aria-label="4Trevo" style="display:flex;align-items:center;gap:2px;opacity:.45;text-decoration:none;color:#1F1C1A;"><svg width="36" height="30" viewBox="22 70 220 182" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g transform="translate(150,160) rotate(60)" fill="none" stroke="currentColor" stroke-linejoin="round"><path d="M0,-4 C-4,-12 -18,-14 -30,-28 C-44,-44 -42,-68 -22,-76 C-4,-82 14,-72 18,-54 C22,-38 12,-18 0,-4Z" stroke-width="6"/><path d="M4,0 C12,-4 14,-18 28,-30 C44,-44 68,-42 76,-22 C82,-4 72,14 54,18 C38,22 18,12 4,0Z" stroke-width="6"/><path d="M0,4 C4,12 18,14 30,28 C44,44 42,68 22,76 C4,82 -14,72 -18,54 C-22,38 -12,18 0,4Z" stroke-width="6"/><path d="M-4,0 C-12,4 -14,18 -28,30 C-44,44 -68,42 -76,22 C-82,4 -72,-14 -54,-18 C-38,-22 -18,-12 -4,0Z" stroke-width="6"/><g stroke-width="1" opacity="0.6"><line x1="2" y1="-2" x2="44" y2="-44"/><line x1="2" y1="2" x2="44" y2="44"/><line x1="-2" y1="2" x2="-44" y2="44"/><line x1="-2" y1="-2" x2="-44" y2="-44"/></g><circle cx="0" cy="0" r="4" stroke-width="2"/><path d="M8,82 C10,100 6,120 0,142" stroke-width="6" stroke-linecap="round"/></g></svg><span style="font:700 15px 'Space Grotesk', Manrope, sans-serif;letter-spacing:1px;">4Trevo</span></a>
 </footer>
-<div class="barra hide" id="barra"><button type="button" class="btn-ac" id="btnBarra" style="min-height:50px;font-size:15px;">Pedir marcação</button></div>
+<div class="barra hide" id="barra" style="gap:8px;"><button type="button" class="btn-ac" id="btnBarra" style="min-height:50px;font-size:15px;flex:1;">Pedir marcação</button><button type="button" class="btn-sec" id="btnDesistirBarra" style="min-height:50px;flex:0 0 auto;padding:0 16px;">Desistir</button></div>
 
 <script>
 (function(){
@@ -389,7 +390,7 @@
   }
   function escolherServ(s){
     if(sel.reag){ sel.reag = null; modoReag(false); }
-    sel.serv = s; sel.hora = null; msg(''); $('painel').classList.remove('sem-serv');
+    sel.serv = s; sel.hora = null; msg(''); $('painel').classList.remove('sem-serv'); $('btnDesistir').classList.remove('hide');
     $('escServNome').innerHTML = '<b>' + esc(s.nome) + '</b> · ' + esc(durTxt(s.dur)) + (precoTxt(s.preco) ? (' · ' + esc(precoTxt(s.preco))) : '');
     $('passoDia').classList.remove('hide'); pintarProfs(); pintarDias(); pintarServicos();
   }
@@ -461,7 +462,7 @@
     rpc('criar_marcacao2', args).catch(function(e){ if(!EQ().length && /PGRST202|Could not find|does not exist/i.test(String(e.message || e))){ delete args.p_prof; return rpc('criar_marcacao', args); } throw e; }).then(function(id){
       var l = guardados(); l.push({ id:id, servico:sel.serv.nome, data:sel.dia, hora:sel.hora }); guardar(l);
       b.disabled = false; msg('');
-      sel = { serv:null, dia:null, hora:null, prof:'' }; $('painel').classList.add('sem-serv'); $('passoProf').classList.add('hide');
+      sel = { serv:null, dia:null, hora:null, prof:'' }; $('painel').classList.add('sem-serv'); $('passoProf').classList.add('hide'); $('btnDesistir').classList.add('hide');
       ['passoDia','passoHora','passoDados'].forEach(function(k){ $(k).classList.add('hide'); });
       $('escServNome').textContent = 'Escolha um serviço na lista'; $('pObs').value = '';
       fecharFolha(); pintarServicos(); pintarMinhas(true);
@@ -527,7 +528,7 @@
       b.disabled = false; msg('');
       sel = { serv:null, dia:null, hora:null, prof:'', reag:null }; modoReag(false);
       ['passoDia','passoHora','passoDados','passoProf'].forEach(function(k){ $(k).classList.add('hide'); });
-      $('escServNome').textContent = 'Escolha um serviço na lista'; $('painel').classList.add('sem-serv');
+      $('escServNome').textContent = 'Escolha um serviço na lista'; $('painel').classList.add('sem-serv'); $('btnDesistir').classList.add('hide');
       fecharFolha(); pintarServicos(); pintarMinhas('reag');
       try{ window.scrollTo({ top:0, behavior:'smooth' }); }catch(e){}
     }).catch(function(e){
@@ -540,7 +541,7 @@
     var s = SERV.filter(function(v){ return v.nome === (r.servico || x.servico); })[0];
     if(!s){ alert('Este serviço já não está disponível online. Contacte o salão para mudar a marcação.'); return; }
     sel = { serv:s, dia:r.data, hora:null, prof:'', reag:{ id:x.id, data:r.data, hora:r.hora } };
-    modoReag(true); msg(''); $('painel').classList.remove('sem-serv');
+    modoReag(true); msg(''); $('painel').classList.remove('sem-serv'); $('btnDesistir').classList.remove('hide');
     $('escServNome').innerHTML = '<b>' + esc(s.nome) + '</b> · ' + esc(durTxt(s.dur)) + '<br><span style="font-size:13px;color:var(--suave);">Marcada para ' + esc(quando(r.data, r.hora)) + ' — escolha o novo dia e hora</span>';
     $('passoProf').classList.add('hide'); $('passoDia').classList.remove('hide'); $('passoDados').classList.add('hide');
     pintarDias(); pintarHoras(); pintarServicos(); abrirFolha();
@@ -595,6 +596,14 @@
   var fundo = null;
   function abrirFolha(){ if(window.matchMedia('(max-width: 860px)').matches){ $('barra').classList.add('hide'); $('painel').classList.add('aberto'); if(!fundo){ fundo = document.createElement('div'); fundo.className = 'fundo-folha'; fundo.onclick = fecharFolha; document.body.appendChild(fundo); } } }
   // a barra de baixo (telemóvel) só aparece para voltar a uma marcação começada e fechada a meio
+  // desistir: limpa a escolha a meio (serviço, dia, hora, reagendamento)
+  function desistir(){
+    sel = { serv:null, dia:null, hora:null, prof:'', reag:null }; modoReag(false); msg('');
+    ['passoDia','passoHora','passoDados','passoProf'].forEach(function(k){ $(k).classList.add('hide'); });
+    $('escServNome').textContent = 'Escolha um serviço na lista'; $('painel').classList.add('sem-serv'); $('btnDesistir').classList.add('hide');
+    fecharFolha(); pintarServicos();
+  }
+  $('btnDesistir').onclick = desistir; $('btnDesistirBarra').onclick = desistir;
   function fecharFolha(){ $('painel').classList.remove('aberto'); if(fundo){ fundo.remove(); fundo = null; }
     var temServ = !!(sel && sel.serv); $('barra').classList.toggle('hide', !temServ);
     if(temServ) $('btnBarra').textContent = (sel.reag ? 'Continuar a reagendar · ' : 'Continuar marcação · ') + sel.serv.nome; }
