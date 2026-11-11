@@ -65,6 +65,7 @@
   .bloco.curto b{ font-size:12px; flex:0 1 auto; }
   .bloco.curto span{ flex:1 1 0; min-width:0; color:var(--suave); }
   .b-confirmada{ background:var(--verde-f); border-left:4px solid var(--verde); }
+  .b-faltou{ opacity:.55; } .b-faltou b{ text-decoration:line-through; }
   .b-pendente{ background:#fff; border:2px dashed var(--ac); }
   .b-proposta{ background:#F3E6EA; border-left:4px solid var(--ac); }
   .mes{ display:grid; grid-template-columns:repeat(7, minmax(110px, 1fr)); }
@@ -106,6 +107,22 @@
   .pag{ padding:20px 24px 40px; max-width:1100px; }
   .pag h2{ margin:0 0 6px; font-size:22px; }
   .sub{ color:var(--suave); font-size:14px; margin:0 0 16px; }
+  .cli-tot{ display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:10px; margin-bottom:14px; }
+  .cli-tot div{ background:#fff; border-radius:12px; padding:12px 14px; display:flex; flex-direction:column; }
+  .cli-tot b{ font-size:22px; } .cli-tot span{ font-size:12px; color:var(--suave); }
+  .cli-barra{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:10px; }
+  .cli-barra input, .cli-barra select{ min-height:40px; border:1.5px solid var(--borda); border-radius:10px; padding:0 12px; font-size:14px; }
+  .cli-tab{ width:100%; border-collapse:collapse; background:#fff; border-radius:12px; overflow:hidden; font-size:14px; }
+  .cli-tab th{ text-align:left; font-size:12px; color:var(--suave); font-weight:800; padding:10px 12px; border-bottom:1px solid var(--linha); background:#FBFAF9; }
+  .cli-tab td{ padding:10px 12px; border-bottom:1px solid var(--linha); }
+  .cli-tab tr.l{ cursor:pointer; } .cli-tab tr.l:hover td{ background:#F7EEF1; }
+  .cli-tab .n{ text-align:right; font-variant-numeric:tabular-nums; }
+  .etq{ display:inline-block; border-radius:999px; padding:1px 8px; font-size:11px; font-weight:800; margin-left:6px; }
+  .etq.novo{ background:#EEF2EE; color:var(--verde); } .etq.reg{ background:#F3E6EA; color:var(--ac); }
+  .hist{ max-height:240px; overflow:auto; border:1px solid var(--linha); border-radius:10px; }
+  .hist div{ display:flex; gap:8px; padding:7px 10px; border-bottom:1px solid var(--linha); font-size:13px; }
+  .hist div:last-child{ border-bottom:none; }
+  @media (max-width: 760px){ .cli-tot{ grid-template-columns:1fr 1fr; } .cli-tab .opc{ display:none; } }
   .eq-linha{ background:#fff; border-radius:12px; padding:14px; margin-bottom:8px; display:flex; flex-direction:column; gap:10px; }
   .eq-topo{ display:flex; gap:8px; align-items:end; flex-wrap:wrap; }
   .eq-cor{ width:14px; height:14px; border-radius:50%; flex:0 0 auto; margin-bottom:14px; }
@@ -148,6 +165,7 @@
     <nav class="tabs" aria-label="Secções">
       <button type="button" class="tab on" data-t="agenda">Agenda</button>
       <button type="button" class="tab" data-t="servicos">Serviços</button>
+      <button type="button" class="tab" data-t="clientes">Clientes</button>
       <button type="button" class="tab" data-t="equipa">Equipa</button>
       <button type="button" class="tab" data-t="pagina">Página</button>
       <button type="button" class="tab" data-t="horario">Horário e regras</button>
@@ -191,6 +209,20 @@
     <div id="servLista"></div>
     <button type="button" class="btn" id="servNovo">+ Novo serviço</button>
     <div class="guardar-barra"><button type="button" class="btn-ac" id="servGuardar">Guardar serviços</button><span class="msg" id="servMsg"></span></div>
+  </section>
+
+  <!-- CLIENTES -->
+  <section id="tClientes" class="pag hide" style="max-width:1200px;">
+    <h2>Clientes</h2>
+    <p class="sub">Cada marcação cria a ficha do cliente (ou junta-a à que já existe, pelo telemóvel). As visitas e o total gasto contam as marcações confirmadas até hoje, pelo preço de cada uma.</p>
+    <div class="cli-tot" id="cliTot"></div>
+    <div class="cli-barra">
+      <input id="cliBusca" type="search" placeholder="Procurar nome ou telemóvel…" style="flex:1;min-width:200px;">
+      <select id="cliOrdem" aria-label="Ordenar"><option value="rec">Visita mais recente</option><option value="vis">Mais visitas</option><option value="gasto">Mais gasto</option><option value="nome">Nome</option><option value="novo">Mais novos</option></select>
+      <button type="button" class="btn" id="cliCsv">⬇️ Clientes (Excel)</button>
+      <button type="button" class="btn" id="cliCsvMes">⬇️ Marcações do mês (Excel)</button>
+    </div>
+    <div id="cliLista"><div style="color:var(--suave);">A carregar…</div></div>
   </section>
 
   <!-- EQUIPA -->
@@ -291,7 +323,7 @@
     $('verPagina').href = '/salao.html?n=' + encodeURIComponent(SLUG);
     document.title = (SAL.nome || NEG.nome) + ' · Gestão · 4 Trevo';
     if(params.get('d')) dataSel = dDe(params.get('d'));
-    var t = (location.hash || '').replace('#', ''); if(['servicos','pagina','horario','equipa'].indexOf(t) >= 0) irPara(t);
+    var t = (location.hash || '').replace('#', ''); if(['servicos','pagina','horario','equipa','clientes'].indexOf(t) >= 0) irPara(t);
     await carregarRes();
     if(params.get('rid')){ var x = RES.filter(function(z){ return z.id === params.get('rid'); })[0]; if(x) abrirDetalhe(x); }
     setInterval(function(){ if(!document.hidden && !document.querySelector('.modal-fundo')) carregarRes(); }, 60000);
@@ -311,8 +343,8 @@
   function irPara(t){
     document.querySelectorAll('.tab').forEach(function(b){ b.classList.toggle('on', b.getAttribute('data-t') === t); });
     $('tAgenda').classList.toggle('hide', t !== 'agenda'); $('tServicos').classList.toggle('hide', t !== 'servicos');
-    $('tPagina').classList.toggle('hide', t !== 'pagina'); $('tHorario').classList.toggle('hide', t !== 'horario'); $('tEquipa').classList.toggle('hide', t !== 'equipa');
-    if(t === 'servicos') pintarServ(); if(t === 'equipa') pintarEquipa(); if(t === 'pagina') pintarPagina(); if(t === 'horario') pintarHorario();
+    $('tPagina').classList.toggle('hide', t !== 'pagina'); $('tHorario').classList.toggle('hide', t !== 'horario'); $('tEquipa').classList.toggle('hide', t !== 'equipa'); $('tClientes').classList.toggle('hide', t !== 'clientes');
+    if(t === 'servicos') pintarServ(); if(t === 'equipa') pintarEquipa(); if(t === 'clientes') carregarClientes(); if(t === 'pagina') pintarPagina(); if(t === 'horario') pintarHorario();
     try{ history.replaceState(null, '', location.pathname + location.search + (t === 'agenda' ? '' : ('#' + t))); }catch(e){}
   }
   document.querySelectorAll('.tab').forEach(function(b){ b.onclick = function(){ irPara(b.getAttribute('data-t')); }; });
@@ -375,6 +407,73 @@
     if(!e){ pintarEquipa(); pintarFiltroProf(); }
   };
 
+  // ---------- clientes (fichas) ----------
+  var CLI = [], CLIRES = [];
+  function telNorm(t){ var d = String(t || '').replace(/\D/g, ''); return /^351\d{9}$/.test(d) ? d.slice(3) : d; }
+  function euro(v){ return (Math.round((+v || 0) * 100) / 100).toLocaleString('pt-PT', { minimumFractionDigits:2, maximumFractionDigits:2 }) + ' €'; }
+  function dataPt(k){ if(!k) return '—'; var d = dDe(String(k).slice(0, 10)); return d.getDate() + ' ' + MESES[d.getMonth()].slice(0, 3) + ' ' + d.getFullYear(); }
+  async function carregarClientes(){
+    var a = await sb.from('clientes').select('*').eq('negocio_id', NEG.id);
+    if(a.error){ $('cliLista').innerHTML = '<div class="msg erro">' + (/clientes|relation|does not exist|schema cache/i.test(a.error.message) ? 'Falta correr no Supabase o ficheiro salao-clientes.sql.' : esc(a.error.message)) + '</div>'; return; }
+    var b = await sb.from('reservas').select('id,data,hora,nome,telefone,estado,servico,valor,faltou,profissional,duracao').eq('negocio_id', NEG.id).not('servico', 'is', null).order('data', { ascending:false }).limit(10000);
+    CLI = a.data || []; CLIRES = b.data || [];
+    pintarClientes();
+  }
+  function statsCli(){
+    var hoje = iso(new Date()), m = {};
+    CLI.forEach(function(c){ m[c.tel_norm] = { c:c, vis:0, gasto:0, ult:'', prox:'', faltas:0, canc:0, serv:{}, hist:[] }; });
+    CLIRES.forEach(function(r){ var k = telNorm(r.telefone); if(!m[k]) return; var x = m[k]; x.hist.push(r);
+      if(r.estado === 'cancelada'){ x.canc++; return; }
+      if(r.faltou){ x.faltas++; return; }
+      if(r.data <= hoje && r.estado === 'confirmada'){ x.vis++; x.gasto += +r.valor || 0; if(r.data > x.ult) x.ult = r.data; x.serv[r.servico] = (x.serv[r.servico] || 0) + 1; }
+      else if(r.data > hoje && (!x.prox || r.data < x.prox)) x.prox = r.data; });
+    return m;
+  }
+  function pintarClientes(){
+    var m = statsCli(), l = Object.keys(m).map(function(k){ return m[k]; }), hoje = iso(new Date()), mes = hoje.slice(0, 7), ano = hoje.slice(0, 4);
+    var fatMes = 0, fatAno = 0; CLIRES.forEach(function(r){ if(r.estado === 'confirmada' && !r.faltou && r.data <= hoje){ if(r.data.slice(0, 7) === mes) fatMes += +r.valor || 0; if(r.data.slice(0, 4) === ano) fatAno += +r.valor || 0; } });
+    $('cliTot').innerHTML = '<div><b>' + l.length + '</b><span>clientes</span></div><div><b>' + CLI.filter(function(c){ return String(c.criado_em || '').slice(0, 7) === mes; }).length + '</b><span>novos este mês</span></div><div><b>' + euro(fatMes) + '</b><span>faturado este mês</span></div><div><b>' + euro(fatAno) + '</b><span>faturado este ano</span></div>';
+    var q = ($('cliBusca').value || '').trim().toLowerCase(), qd = q.replace(/\D/g, '');
+    if(q) l = l.filter(function(x){ return String(x.c.nome || '').toLowerCase().indexOf(q) >= 0 || (qd && x.c.tel_norm.indexOf(qd) >= 0); });
+    var o = $('cliOrdem').value;
+    l.sort(function(a, b){ return o === 'vis' ? b.vis - a.vis : o === 'gasto' ? b.gasto - a.gasto : o === 'nome' ? String(a.c.nome || '').localeCompare(String(b.c.nome || ''), 'pt') : o === 'novo' ? String(b.c.criado_em).localeCompare(String(a.c.criado_em)) : String(b.ult || b.prox).localeCompare(String(a.ult || a.prox)); });
+    if(!l.length){ $('cliLista').innerHTML = '<div style="background:#fff;border-radius:12px;padding:16px;color:var(--suave);">' + (CLI.length ? 'Nenhum cliente encontrado.' : 'Ainda não há clientes. As fichas aparecem aqui a partir da primeira marcação.') + '</div>'; return; }
+    $('cliLista').innerHTML = '<table class="cli-tab"><thead><tr><th>Cliente</th><th>Telemóvel</th><th class="n">Visitas</th><th class="n">Total gasto</th><th>Última visita</th><th class="opc">Próxima</th><th class="n opc">Faltas</th></tr></thead><tbody>'
+      + l.slice(0, 500).map(function(x){ return '<tr class="l" data-t="' + esc(x.c.tel_norm) + '"><td><b>' + esc(x.c.nome || '—') + '</b>' + (x.vis >= 3 ? '<span class="etq reg">Regular</span>' : x.vis <= 1 ? '<span class="etq novo">Novo</span>' : '') + '</td><td>' + esc(x.c.telefone || x.c.tel_norm) + '</td><td class="n">' + x.vis + '</td><td class="n">' + euro(x.gasto) + '</td><td>' + dataPt(x.ult) + '</td><td class="opc">' + (x.prox ? dataPt(x.prox) : '—') + '</td><td class="n opc">' + (x.faltas || '') + '</td></tr>'; }).join('')
+      + '</tbody></table>';
+    $('cliLista').querySelectorAll('tr.l').forEach(function(tr){ tr.onclick = function(){ abrirFicha(m[tr.getAttribute('data-t')]); }; });
+  }
+  $('cliBusca').oninput = pintarClientes; $('cliOrdem').onchange = pintarClientes;
+  function abrirFicha(x){
+    var c = x.c, fav = Object.keys(x.serv).sort(function(a, b){ return x.serv[b] - x.serv[a]; })[0] || '—';
+    var media = x.vis ? x.gasto / x.vis : 0, tel = String(c.telefone || c.tel_norm);
+    var f = modal('<h3>' + esc(c.nome || 'Cliente') + '</h3>'
+      + '<div>📱 <a href="tel:' + esc(tel.replace(/\s/g, '')) + '">' + esc(tel) + '</a>' + (waLink({ telefone:tel }, '') ? (' · <a href="' + esc(waLink({ telefone:tel }, 'Olá ' + (c.nome || '') + '!')) + '" target="_blank" rel="noopener">WhatsApp</a>') : '') + ' · cliente desde ' + dataPt(c.criado_em) + '</div>'
+      + '<div class="nums" style="grid-template-columns:repeat(4,minmax(0,1fr));"><div><b>' + x.vis + '</b><span>visitas</span></div><div><b style="font-size:18px;">' + euro(x.gasto) + '</b><span>total gasto</span></div><div><b style="font-size:18px;">' + euro(media) + '</b><span>por visita</span></div><div><b>' + x.faltas + '</b><span>faltas</span></div></div>'
+      + '<div style="font-size:14px;">Serviço preferido: <b>' + esc(fav) + '</b>' + (x.canc ? (' · ' + x.canc + ' cancelada(s)') : '') + '</div>'
+      + '<div class="grelha2"><div class="campo"><label for="fNome">Nome</label><input id="fNome" maxlength="80" value="' + esc(c.nome || '') + '"></div><div class="campo"><label for="fEmail">Email</label><input id="fEmail" type="email" maxlength="120" value="' + esc(c.email || '') + '"></div></div>'
+      + '<div class="grelha2"><div class="campo"><label for="fNasc">Data de nascimento</label><input id="fNasc" type="date" value="' + esc(c.nascimento || '') + '"></div><div></div></div>'
+      + '<div class="campo"><label for="fNotas">Notas (só o salão vê: alergias, preferências…)</label><textarea id="fNotas" rows="3" maxlength="1000">' + esc(c.notas || '') + '</textarea></div>'
+      + '<button type="button" class="btn-ac" id="fGuardar">Guardar ficha</button><div class="msg" id="fMsg"></div>'
+      + '<div style="font-weight:800;font-size:14px;margin-top:4px;">Histórico</div><div class="hist">' + (x.hist.length ? x.hist.map(function(r){ var e = r.estado === 'cancelada' ? 'Cancelada' : r.faltou ? 'Faltou' : r.estado === 'confirmada' ? (r.data <= iso(new Date()) ? 'Feita' : 'Marcada') : 'Por confirmar';
+          return '<div><span style="min-width:92px;">' + dataPt(r.data) + '</span><span style="min-width:44px;">' + esc(r.hora || '') + '</span><span style="flex:1;">' + esc(r.servico || '') + (nomeProf(r.profissional) ? (' · ' + esc(nomeProf(r.profissional))) : '') + '</span><span style="min-width:70px;text-align:right;">' + (r.valor != null ? euro(r.valor) : '') + '</span><span style="min-width:84px;text-align:right;font-weight:700;color:' + (e === 'Feita' ? 'var(--verde)' : e === 'Faltou' || e === 'Cancelada' ? 'var(--ac)' : 'var(--suave)') + ';">' + e + '</span></div>'; }).join('') : '<div>Sem marcações.</div>') + '</div>');
+    f.querySelector('#fGuardar').onclick = async function(){
+      var u = await sb.from('clientes').update({ nome:$('fNome').value.trim() || null, email:$('fEmail').value.trim() || null, nascimento:$('fNasc').value || null, notas:$('fNotas').value.trim() || null, atualizado_em:new Date().toISOString() }).eq('id', c.id);
+      if(u.error){ $('fMsg').textContent = 'Erro: ' + u.error.message; $('fMsg').className = 'msg erro'; return; }
+      fecharModal(); toast('Ficha guardada ✓'); carregarClientes();
+    };
+  }
+  function csv(nome, linhas){
+    var t = '\ufeff' + linhas.map(function(l){ return l.map(function(v){ v = v == null ? '' : String(v); return /[;"\n]/.test(v) ? ('"' + v.replace(/"/g, '""') + '"') : v; }).join(';'); }).join('\r\n');
+    var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([t], { type:'text/csv;charset=utf-8' })); a.download = nome; a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); }, 2000);
+  }
+  function num(v){ return (Math.round((+v || 0) * 100) / 100).toFixed(2).replace('.', ','); }
+  $('cliCsv').onclick = function(){ var m = statsCli();
+    csv('clientes-' + SLUG + '.csv', [['Nome','Telemóvel','Email','Nascimento','Cliente desde','Visitas','Total gasto (€)','Última visita','Próxima','Faltas','Notas']].concat(Object.keys(m).map(function(k){ var x = m[k], c = x.c; return [c.nome, c.telefone || c.tel_norm, c.email, c.nascimento, String(c.criado_em || '').slice(0, 10), x.vis, num(x.gasto), x.ult, x.prox, x.faltas, c.notas]; }))); };
+  $('cliCsvMes').onclick = function(){ var mes = iso(new Date()).slice(0, 7);
+    var l = CLIRES.filter(function(r){ return r.data.slice(0, 7) === mes && r.estado !== 'cancelada'; }).sort(function(a, b){ return (a.data + a.hora).localeCompare(b.data + b.hora); });
+    csv('marcacoes-' + SLUG + '-' + mes + '.csv', [['Data','Hora','Cliente','Telemóvel','Serviço','Profissional','Valor (€)','Estado']].concat(l.map(function(r){ return [r.data, r.hora, r.nome, r.telefone, r.servico, nomeProf(r.profissional), r.valor != null ? num(r.valor) : '', r.faltou ? 'Faltou' : r.estado === 'confirmada' ? (r.data <= iso(new Date()) ? 'Feita' : 'Marcada') : 'Por confirmar']; }))); };
+
   // ---------- agenda ----------
   function intervalo(){ if(vista === 'dia') return [iso(dataSel), iso(dataSel)];
     if(vista === 'mes'){ var p = new Date(dataSel.getFullYear(), dataSel.getMonth(), 1), u = new Date(dataSel.getFullYear(), dataSel.getMonth() + 1, 0);
@@ -387,7 +486,7 @@
     if(r.error){ toast('Erro a carregar: ' + r.error.message); return; }
     RES = r.data || []; pintarAgenda(); pintarPedidos();
   }
-  function cls(r){ return r.estado === 'confirmada' ? 'b-confirmada' : (r.estado === 'pendente' && r.proposta_hora) ? 'b-proposta' : 'b-pendente'; }
+  function cls(r){ if(r.faltou) return 'b-confirmada b-faltou'; return r.estado === 'confirmada' ? 'b-confirmada' : (r.estado === 'pendente' && r.proposta_hora) ? 'b-proposta' : 'b-pendente'; }
   function pintarAgenda(){
     pintarFiltroProf();
     if(vista === 'mes') return pintarMes();
@@ -558,6 +657,8 @@
       + (tel ? ('<div>📱 <a href="tel:' + esc(tel.replace(/\s/g,'')) + '">' + esc(tel) + '</a>' + (waLink(r, '') ? (' · <a href="' + esc(waLink(r, 'Olá ' + (r.nome || '') + '!')) + '" target="_blank" rel="noopener">WhatsApp</a>') : '') + '</div>') : '')
       + (r.obs ? ('<div style="color:var(--suave);">“' + esc(r.obs) + '”</div>') : '')
       + '<div style="font-size:12px;color:var(--suave);">' + (r.push_marcacao ? '🔔 O cliente recebe as respostas por notificação.' : 'O cliente não tem notificações ligadas (pode avisar por WhatsApp).') + '</div>'
+      + (r.servico ? ('<div class="grelha2"><div class="campo"><label for="dValor">Valor (€)</label><input id="dValor" inputmode="decimal" value="' + esc(r.valor != null ? String(r.valor).replace('.', ',') : '') + '" placeholder="Ex.: 25"></div>'
+          + (r.estado === 'confirmada' && r.data <= iso(new Date()) ? ('<label style="display:flex;align-items:center;gap:8px;font-weight:700;align-self:end;min-height:44px;"><input type="checkbox" id="dFaltou"' + (r.faltou ? ' checked' : '') + ' style="width:20px;height:20px;"> O cliente faltou</label>') : '<div></div>') + '</div>') : '')
       + '<label for="dNota">Nota para o cliente (opcional)</label><textarea id="dNota" rows="2" maxlength="200">' + esc(r.nota || '') + '</textarea>'
       + (r.estado !== 'cancelada' ? (
           (r.estado !== 'confirmada' ? '<button type="button" class="btn-ok" data-d="confirmar">✅ Confirmar</button>' : '')
@@ -567,6 +668,9 @@
     f.querySelectorAll('[data-d]').forEach(function(b){ b.onclick = async function(){ var a = b.getAttribute('data-d'), nota = $('dNota').value;
       if(a === 'recusar' || a === 'desmarcar'){ if(!confirm(a === 'recusar' ? 'Recusar este pedido? O cliente é avisado.' : 'Cancelar esta marcação? O cliente é avisado.')) return; }
       fecharModal(); await responder(r, a, { hora:(a === 'propor' ? ($('dHora') ? $('dHora').value : '') : undefined), nota:nota }); }; });
+    var dv = f.querySelector('#dValor'); if(dv) dv.onchange = async function(){ var t = dv.value.trim().replace(/\s|€/g, '').replace(',', '.'), v = t === '' ? null : Math.round(parseFloat(t) * 100) / 100; if(t !== '' && isNaN(v)){ toast('Valor inválido'); return; }
+      var u = await sb.from('reservas').update({ valor:v }).eq('id', r.id); if(u.error){ toast(/valor|column/i.test(u.error.message) ? 'Falta correr no Supabase o salao-clientes.sql.' : ('Erro: ' + u.error.message)); return; } r.valor = v; toast('Valor guardado ✓'); };
+    var df = f.querySelector('#dFaltou'); if(df) df.onchange = async function(){ var u = await sb.from('reservas').update({ faltou:df.checked }).eq('id', r.id); if(u.error){ toast(/faltou|column/i.test(u.error.message) ? 'Falta correr no Supabase o salao-clientes.sql.' : ('Erro: ' + u.error.message)); df.checked = !df.checked; return; } r.faltou = df.checked; toast(df.checked ? 'Marcado como falta' : 'Falta retirada'); carregarRes(); };
     var dp = f.querySelector('#dProf'); if(dp) dp.onchange = async function(){ var v = dp.value || null;
       var a = minDe(r.hora), du = +r.duracao || 30;
       if(v && RES.some(function(x){ return x.id !== r.id && x.data === r.data && x.estado !== 'cancelada' && (x.profissional === v || !x.profissional) && minDe(x.hora) < a + du && a < minDe(x.hora) + (+x.duracao || 30); }) && !confirm(nomeProf(v) + ' já tem uma marcação a essa hora. Mudar mesmo assim?')){ dp.value = r.profissional || ''; return; }
