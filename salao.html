@@ -278,13 +278,15 @@
     $('passoDia').classList.remove('hide'); pintarDias(); pintarServicos();
   }
   function pintarDias(){
-    var h = new Date(); h.setHours(0,0,0,0); var html = '', primeiro = null;
+    var h = new Date(); h.setHours(0,0,0,0); var html = '', primeiro = null, abertos = {};
     for(var i = 0; i < diasMax(); i++){
       var d = new Date(h); d.setDate(h.getDate() + i); var k = iso(d);
-      var aberto = !!horarioDe(d.getDay()) && !fechadoEm(k);
-      if(aberto && !primeiro) primeiro = k;
+      var hh0 = horarioDe(d.getDay()), aberto = !!hh0 && !fechadoEm(k);
+      if(aberto && i === 0){ var ag = new Date(), dur0 = Math.max(5, +((sel.serv || {}).dur) || 30); if(ag.getHours() * 60 + ag.getMinutes() + antecedencia() + dur0 > minDe(hh0[1])) aberto = false; }
+      if(aberto){ abertos[k] = 1; if(!primeiro) primeiro = k; }
       html += '<button type="button" class="dia' + (sel.dia === k ? ' on' : '') + '" data-d="' + k + '"' + (aberto ? '' : ' disabled') + '><span>' + DIAS_C[d.getDay()] + '</span><b>' + d.getDate() + '</b><span>' + MESES[d.getMonth()] + '</span></button>';
     }
+    if(sel.dia && !abertos[sel.dia]){ sel.dia = null; sel.hora = null; }
     $('dias').innerHTML = html;
     $('dias').querySelectorAll('[data-d]').forEach(function(b){ b.onclick = function(){ sel.dia = b.getAttribute('data-d'); sel.hora = null; pintarDias(); pintarHoras(); }; });
     if(!sel.dia && primeiro){ sel.dia = primeiro; pintarDias(); pintarHoras(); }
@@ -293,10 +295,14 @@
     if(!sel.serv || !sel.dia) return;
     $('passoHora').classList.remove('hide');
     var d = new Date(sel.dia + 'T00:00:00'); $('rotHora').textContent = 'Hora que prefere · ' + DIAS_L[d.getDay()] + ', ' + d.getDate() + ' ' + MESES[d.getMonth()];
-    $('horas').innerHTML = '<div class="nota" style="grid-column:1/-1;">A ver as horas livres…</div>';
+    // enquanto carrega, mantém as horas anteriores (esbatidas) para a folha não saltar no telemóvel
+    var hAnt = $('horas').offsetHeight;
+    if($('horas').querySelector('.hora')){ $('horas').style.opacity = '.45'; $('horas').style.pointerEvents = 'none'; }
+    else $('horas').innerHTML = '<div class="nota" style="grid-column:1/-1;">A ver as horas livres…</div>';
     var dia = sel.dia;
     rpc('marcacoes_ocupadas', { p_negocio:NEG.id, p_dia:dia }).then(function(ocup){
       if(dia !== sel.dia) return;
+      $('horas').style.opacity = ''; $('horas').style.pointerEvents = '';
       var hh = horarioDe(d.getDay()); if(!hh){ $('horas').innerHTML = '<div class="nota">Fechado neste dia.</div>'; return; }
       var ini = minDe(hh[0]), fim = minDe(hh[1]), dur = Math.max(5, +sel.serv.dur || 30), pas = passo();
       var agora = new Date(), minAgora = (dia === iso(agora)) ? (agora.getHours() * 60 + agora.getMinutes() + antecedencia()) : -1;
@@ -310,9 +316,10 @@
         html += '<button type="button" class="hora' + (sel.hora === hs ? ' on' : (cob ? ' cob' : '')) + '" data-h="' + hs + '"' + (ocupado ? ' disabled' : '') + '>' + hs.replace(':', 'h') + '</button>';
       }
  if(s0 != null) html += '<div class="hora-int">⏱️ O seu serviço ocupa das <b>' + hDe(s0).replace(':', 'h') + '</b> às <b>' + hDe(s0 + dur).replace(':', 'h') + '</b> (' + esc(durTxt(dur)) + ').</div>';
+      $('horas').style.opacity = ''; $('horas').style.pointerEvents = ''; $('horas').style.minHeight = livres ? '' : (hAnt ? hAnt + 'px' : '');
       $('horas').innerHTML = livres ? html : '<div class="nota" style="grid-column:1/-1;">Sem horas livres neste dia para este serviço. Escolha outro dia.</div>';
       $('horas').querySelectorAll('[data-h]').forEach(function(b){ b.onclick = function(){ sel.hora = b.getAttribute('data-h'); pintarHoras(); $('passoDados').classList.remove('hide'); $('btnEnviar').textContent = 'Enviar pedido · ' + quando(sel.dia, sel.hora + '–' + hDe(minDe(sel.hora) + Math.max(5, +sel.serv.dur || 30))); }; });
-    }).catch(function(){ $('horas').innerHTML = '<div class="nota" style="grid-column:1/-1;">Não foi possível ver as horas. Tente outra vez.</div>'; });
+    }).catch(function(){ $('horas').style.opacity = ''; $('horas').style.pointerEvents = ''; $('horas').innerHTML = '<div class="nota" style="grid-column:1/-1;">Não foi possível ver as horas. Tente outra vez.</div>'; });
   }
   function guardados(){ try{ return JSON.parse(localStorage.getItem('salao_marc_' + SLUG) || '[]') || []; }catch(e){ return []; } }
   function guardar(l){ try{ localStorage.setItem('salao_marc_' + SLUG, JSON.stringify(l.slice(-20))); }catch(e){} }
