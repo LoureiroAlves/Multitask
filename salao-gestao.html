@@ -336,7 +336,7 @@
   function trabalha(p, wd){ return !Array.isArray(p.dias) || !p.dias.length || p.dias.indexOf(wd) >= 0; }
   var profFiltro = '';
   function pintarFiltroProf(){
-    var l = EQ(), sEl = $('aProf'); sEl.classList.toggle('hide', !l.length || vista === 'dia');
+    var l = EQ(), sEl = $('aProf'); sEl.classList.toggle('hide', !l.length);
     if(profFiltro && !l.some(function(p){ return p.id === profFiltro; })) profFiltro = '';
     sEl.innerHTML = '<option value="">Toda a equipa</option>' + l.map(function(p){ return '<option value="' + esc(p.id) + '"' + (profFiltro === p.id ? ' selected' : '') + '>' + esc(p.nome) + '</option>'; }).join('');
   }
@@ -397,8 +397,8 @@
     var eq = EQ(), cols0 = [];
     if(vista === 'dia' && eq.length){
       var k1 = dias[0], wd1 = dDe(k1).getDay();
-      eq.forEach(function(p){ cols0.push({ dia:k1, prof:p.id, tit:p.nome, sub:trabalha(p, wd1) ? '' : 'Folga', folga:!trabalha(p, wd1) }); });
-      if(RES.some(function(r){ return r.data === k1 && r.estado !== 'cancelada' && (!r.profissional || !nomeProf(r.profissional)); })) cols0.push({ dia:k1, prof:'__sem', tit:'Sem profissional', sub:'' });
+      eq.filter(function(p){ return !profFiltro || p.id === profFiltro; }).forEach(function(p){ cols0.push({ dia:k1, prof:p.id, tit:p.nome, sub:trabalha(p, wd1) ? '' : 'Folga', folga:!trabalha(p, wd1) }); });
+      if(!profFiltro && RES.some(function(r){ return r.data === k1 && r.estado !== 'cancelada' && (!r.profissional || !nomeProf(r.profissional)); })) cols0.push({ dia:k1, prof:'__sem', tit:'Sem profissional', sub:'' });
     } else dias.forEach(function(k){ cols0.push({ dia:k, prof:'' }); });
     var hoje = iso(new Date());
     // horas visíveis: do primeiro abrir ao último fechar da semana (mínimo 9h–19h)
