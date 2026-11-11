@@ -68,6 +68,8 @@
   .horas{ display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:6px; }
   .hora{ border-radius:10px; min-height:44px; border:1.5px solid var(--borda); background:#fff; color:var(--ink); font-weight:700; font-size:14px; }
   .hora.on{ background:var(--ac); border-color:var(--ac); color:#fff; }
+  .hora.cob{ background:#fff; background:color-mix(in srgb, var(--ac) 16%, #fff); border-color:var(--ac); color:var(--ac); }
+  .hora-int{ grid-column:1/-1; background:var(--fundo); border-radius:10px; padding:10px 12px; font-size:14px; }
   .hora:disabled{ border-style:dashed; background:transparent; color:#8A817A; text-decoration:line-through; cursor:default; }
   .campos{ display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:10px; }
   .campo{ display:flex; flex-direction:column; gap:4px; }
@@ -299,15 +301,17 @@
       var ini = minDe(hh[0]), fim = minDe(hh[1]), dur = Math.max(5, +sel.serv.dur || 30), pas = passo();
       var agora = new Date(), minAgora = (dia === iso(agora)) ? (agora.getHours() * 60 + agora.getMinutes() + antecedencia()) : -1;
       var ocupados = (ocup || []).map(function(o){ var a = minDe(o.hora); return a == null ? null : [a, a + (+o.duracao || 30)]; }).filter(Boolean);
-      var html = '', livres = 0;
+      var html = '', livres = 0, s0 = sel.hora ? minDe(sel.hora) : null;
       for(var t = ini; t + dur <= fim; t += pas){
         var ocupado = ocupados.some(function(o){ return o[0] < t + dur && t < o[1]; }) || t < minAgora;
         if(!ocupado) livres++;
         var hs = hDe(t);
-        html += '<button type="button" class="hora' + (sel.hora === hs ? ' on' : '') + '" data-h="' + hs + '"' + (ocupado ? ' disabled' : '') + '>' + hs.replace(':', 'h') + '</button>';
+        var cob = s0 != null && t > s0 && t < s0 + dur;   // horas tapadas pelo serviço escolhido
+        html += '<button type="button" class="hora' + (sel.hora === hs ? ' on' : (cob ? ' cob' : '')) + '" data-h="' + hs + '"' + (ocupado ? ' disabled' : '') + '>' + hs.replace(':', 'h') + '</button>';
       }
+ if(s0 != null) html += '<div class="hora-int">⏱️ O seu serviço ocupa das <b>' + hDe(s0).replace(':', 'h') + '</b> às <b>' + hDe(s0 + dur).replace(':', 'h') + '</b> (' + esc(durTxt(dur)) + ').</div>';
       $('horas').innerHTML = livres ? html : '<div class="nota" style="grid-column:1/-1;">Sem horas livres neste dia para este serviço. Escolha outro dia.</div>';
-      $('horas').querySelectorAll('[data-h]').forEach(function(b){ b.onclick = function(){ sel.hora = b.getAttribute('data-h'); pintarHoras(); $('passoDados').classList.remove('hide'); $('btnEnviar').textContent = 'Enviar pedido · ' + quando(sel.dia, sel.hora); }; });
+      $('horas').querySelectorAll('[data-h]').forEach(function(b){ b.onclick = function(){ sel.hora = b.getAttribute('data-h'); pintarHoras(); $('passoDados').classList.remove('hide'); $('btnEnviar').textContent = 'Enviar pedido · ' + quando(sel.dia, sel.hora + '–' + hDe(minDe(sel.hora) + Math.max(5, +sel.serv.dur || 30))); }; });
     }).catch(function(){ $('horas').innerHTML = '<div class="nota" style="grid-column:1/-1;">Não foi possível ver as horas. Tente outra vez.</div>'; });
   }
   function guardados(){ try{ return JSON.parse(localStorage.getItem('salao_marc_' + SLUG) || '[]') || []; }catch(e){ return []; } }
