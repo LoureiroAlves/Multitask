@@ -193,6 +193,7 @@
       <div class="campo"><label for="pgCor">Cor do salão</label><input id="pgCor" type="color" value="#8E3653" style="height:44px;padding:4px;"></div>
     </div>
     <div class="campo" style="margin-top:12px;"><label for="pgPol">Política de cancelamento / informações</label><textarea id="pgPol" rows="3" maxlength="400" placeholder="Ex.: Pedimos que avise com 24 h de antecedência se não puder vir."></textarea></div>
+    <label style="display:flex;align-items:center;gap:8px;margin-top:12px;font-weight:600;"><input type="checkbox" id="pgHoje" style="width:20px;height:20px;"> Mostrar o horário de hoje no cabeçalho (ex.: "Hoje 09:00–19:00")</label>
     <div class="guardar-barra"><button type="button" class="btn-ac" id="pgGuardar">Guardar página</button><span class="msg" id="pgMsg"></span></div>
     <div class="bloco-sec"><h3>Logótipo</h3><p class="sub" style="margin:0;">Aparece no topo da página do salão. De preferência quadrado.</p><div class="fotos" id="ftLogo"></div></div>
     <div class="bloco-sec"><h3>Fundo do cabeçalho</h3><p class="sub" style="margin:0;">Foto ou vídeo curto por trás do nome do salão, no topo da página. O vídeo passa sem som, em repetição (MP4, até 15 MB). Sem fundo, fica a cor do salão.</p><div class="fotos" id="ftFundo"></div></div>
@@ -617,9 +618,9 @@
       + '<div class="n">' + esc(nome) + '</div><div class="t">Marque aqui o seu horário</div><img class="q" src="' + u + '" alt="QR"><div class="u">' + esc(linkSalao()) + '</div><div class="m">Marcações com 4Trevo</div></div><script>window.onload=function(){setTimeout(function(){window.print();},300);}<\/script></body></html>');
     w.document.close();
   };
-  function pintarPagina(){ pintarFotos(); pintarQR(); $('pgNome').value = SAL.nome || NEG.nome || ''; $('pgFrase').value = SAL.frase || ''; $('pgMorada').value = SAL.morada || ''; $('pgTel').value = SAL.telefone || ''; $('pgWa').value = SAL.whatsapp || ''; $('pgIg').value = SAL.instagram || ''; $('pgCor').value = /^#[0-9a-fA-F]{6}$/.test(SAL.cor || '') ? SAL.cor : '#8E3653'; $('pgPol').value = SAL.politica || ''; }
+  function pintarPagina(){ pintarFotos(); pintarQR(); $('pgNome').value = SAL.nome || NEG.nome || ''; $('pgFrase').value = SAL.frase || ''; $('pgMorada').value = SAL.morada || ''; $('pgTel').value = SAL.telefone || ''; $('pgWa').value = SAL.whatsapp || ''; $('pgIg').value = SAL.instagram || ''; $('pgCor').value = /^#[0-9a-fA-F]{6}$/.test(SAL.cor || '') ? SAL.cor : '#8E3653'; $('pgPol').value = SAL.politica || ''; $('pgHoje').checked = SAL.mostrarHoje !== false; }
   $('pgGuardar').onclick = async function(){
-    var v = { nome:$('pgNome').value.trim(), frase:$('pgFrase').value.trim(), morada:$('pgMorada').value.trim(), telefone:$('pgTel').value.trim(), whatsapp:$('pgWa').value.trim(), instagram:$('pgIg').value.trim(), cor:$('pgCor').value, politica:$('pgPol').value.trim() };
+    var v = { nome:$('pgNome').value.trim(), frase:$('pgFrase').value.trim(), morada:$('pgMorada').value.trim(), telefone:$('pgTel').value.trim(), whatsapp:$('pgWa').value.trim(), instagram:$('pgIg').value.trim(), cor:$('pgCor').value, politica:$('pgPol').value.trim(), mostrarHoje:$('pgHoje').checked };
     $('pgMsg').textContent = 'A guardar…'; $('pgMsg').className = 'msg';
     var e = await guardarCfg(function(c){ c.salao = Object.assign({}, c.salao || {}, v); });
     $('pgMsg').textContent = e ? ('Erro: ' + e.message) : 'Guardado ✓'; $('pgMsg').className = 'msg ' + (e ? 'erro' : 'ok');

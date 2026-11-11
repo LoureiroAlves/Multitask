@@ -44,6 +44,11 @@
   .cat.on{ background:var(--ink); border-color:var(--ink); color:#fff; }
   .wrap{ max-width:1180px; margin:0 auto; padding:10px 16px 24px; display:flex; flex-wrap:wrap; gap:28px; align-items:flex-start; }
   .col-serv{ flex:999 1 560px; min-width:0; display:flex; flex-direction:column; gap:22px; }
+  /* categorias lado a lado no computador (cada uma só ocupa a largura dos seus serviços) */
+  #servicos{ display:flex; flex-wrap:wrap; gap:22px 14px; align-items:flex-start; }
+  #servicos > .vaga, #servicos > .vazio{ flex:1 1 100%; }
+  #servicos > .grupo{ flex:0 1 var(--lg, 100%); max-width:100%; min-width:0; }
+  @media (max-width: 860px){ #servicos > .grupo{ flex:1 1 100%; } }
   .grupo h2{ margin:0 0 10px; font-size:13px; font-weight:800; letter-spacing:1.3px; text-transform:uppercase; color:var(--suave); }
   .grelha{ display:grid; grid-template-columns:repeat(auto-fill, minmax(250px, 1fr)); gap:10px; }
   .serv{ background:#fff; border-radius:14px; padding:14px; display:flex; flex-direction:column; gap:6px; box-shadow:0 1px 2px rgba(31,28,26,.06); border:2px solid transparent; }
@@ -133,7 +138,7 @@
       <div class="grupo"><h2>As minhas marcações</h2></div>
       <div class="minhas" id="minhas"></div>
     </section>
-    <div id="servicos" style="display:flex;flex-direction:column;gap:22px;"><div class="vazio">A carregar…</div></div>
+    <div id="servicos"><div class="vazio">A carregar…</div></div>
     <section class="grupo hide" id="secGaleria"><h2>Trabalhos</h2><div class="galeria" id="galeria"></div></section>
     <div class="nota" id="politica"></div>
   </div>
@@ -220,7 +225,7 @@
     var _at = document.querySelector('meta[name="apple-mobile-web-app-title"]') || document.head.appendChild(Object.assign(document.createElement('meta'), { name:'apple-mobile-web-app-title' })); _at.content = nome.slice(0, 24);
     $('nomeSalao').textContent = nome;
     var hojeH = horarioDe(new Date().getDay());
-    var info = [SAL.frase, SAL.morada, (hojeH ? ('Hoje ' + hojeH[0] + '–' + hojeH[1]) : 'Hoje fechado')].filter(Boolean).map(esc).join(' · ');
+    var info = [SAL.frase, SAL.morada, (SAL.mostrarHoje === false ? '' : (hojeH ? ('Hoje ' + hojeH[0] + '–' + hojeH[1]) : 'Hoje fechado'))].filter(Boolean).map(esc).join(' · ');
     $('infoSalao').innerHTML = info;
     var ac = '';
     if(SAL.telefone) ac += '<a href="tel:' + esc(String(SAL.telefone).replace(/\s/g,'')) + '">Ligar</a>';
@@ -264,7 +269,8 @@
     var vg = Array.isArray(SAL.vagas) ? SAL.vagas.filter(function(v){ return v && v.data >= iso(new Date()) && v.texto; }) : [];
     vg.slice(0, 2).forEach(function(v){ html += '<div class="vaga"><div style="font-size:12px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;">Vaga de última hora</div><b>' + esc(quando(v.data, v.hora)) + '</b><div>' + esc(v.texto) + '</div></div>'; });
     cs.filter(function(c){ return !catSel || c === catSel; }).forEach(function(c){
-      html += '<section class="grupo"><h2>' + esc(c) + '</h2><div class="grelha">';
+      var nS = SERV.filter(function(s){ return (s.cat || 'Serviços').trim() === c; }).length;
+      html += '<section class="grupo" style="--lg:' + (nS * 250 + (nS - 1) * 10) + 'px"><h2>' + esc(c) + '</h2><div class="grelha">';
       SERV.filter(function(s){ return (s.cat || 'Serviços').trim() === c; }).forEach(function(s){
         var on = sel.serv && sel.serv.id === s.id;
         var p = precoTxt(s.preco);
