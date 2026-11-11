@@ -62,6 +62,17 @@
   .b-confirmada{ background:var(--verde-f); border-left:4px solid var(--verde); }
   .b-pendente{ background:#fff; border:2px dashed var(--ac); }
   .b-proposta{ background:#F3E6EA; border-left:4px solid var(--ac); }
+  .mes{ display:grid; grid-template-columns:repeat(7, minmax(110px, 1fr)); }
+  .mes-cab{ padding:10px 12px; font-weight:800; font-size:13px; color:var(--suave); border-bottom:1px solid var(--linha); }
+  .mes-dia{ min-height:118px; border-left:1px solid var(--linha); border-bottom:1px solid var(--linha); padding:6px 8px; display:flex; flex-direction:column; gap:3px; background:#fff; text-align:left; border-top:none; border-right:none; cursor:pointer; font-family:inherit; color:var(--ink); }
+  .mes-dia:hover{ background:#FBF9F7; }
+  .mes-dia.fora{ background:#FAF8F6; color:#B3A9A2; }
+  .mes-dia.fechado{ background:#F4F1EE; }
+  .mes-num{ font-weight:800; font-size:14px; display:flex; align-items:center; gap:6px; }
+  .mes-dia.hoje .mes-num span:first-child{ background:var(--ac); color:#fff; border-radius:999px; min-width:24px; height:24px; display:inline-flex; align-items:center; justify-content:center; }
+  .mes-it{ font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; border-radius:6px; padding:2px 6px; }
+  .mes-it.c{ background:var(--verde-f); } .mes-it.p{ border:1.5px dashed var(--ac); } .mes-it.r{ background:#F3E6EA; }
+  .mes-mais{ font-size:12px; font-weight:800; color:var(--suave); }
   .agora{ position:absolute; left:0; right:0; height:2px; background:#C0392B; z-index:1; pointer-events:none; }
   .lado{ flex:1 1 320px; max-width:400px; display:flex; flex-direction:column; gap:14px; }
   .cartao{ background:#fff; border-radius:16px; padding:18px; display:flex; flex-direction:column; gap:12px; }
@@ -125,7 +136,7 @@
       <button type="button" class="btn" id="aHoje">Hoje</button>
       <button type="button" class="ico" id="aSeg" aria-label="Seguinte">›</button>
       <div class="titulo-dia" id="aTitulo"></div>
-      <div class="vista" role="group" aria-label="Vista"><button type="button" data-v="dia" class="on">Dia</button><button type="button" data-v="semana">Semana</button></div>
+      <div class="vista" role="group" aria-label="Vista"><button type="button" data-v="dia" class="on">Dia</button><button type="button" data-v="semana">Semana</button><button type="button" data-v="mes">Mês</button></div>
       <button type="button" class="btn" id="aAvisos">🔔 Receber avisos</button>
       <button type="button" class="btn-ac" id="aNova">+ Nova marcação</button>
     </div>
@@ -270,7 +281,9 @@
   }
 
   // ---------- agenda ----------
-  function intervalo(){ if(vista === 'dia') return [iso(dataSel), iso(dataSel)]; var s = new Date(dataSel); var wd = (s.getDay() + 6) % 7; s.setDate(s.getDate() - wd); var e = new Date(s); e.setDate(s.getDate() + 6); return [iso(s), iso(e)]; }
+  function intervalo(){ if(vista === 'dia') return [iso(dataSel), iso(dataSel)];
+    if(vista === 'mes'){ var p = new Date(dataSel.getFullYear(), dataSel.getMonth(), 1), u = new Date(dataSel.getFullYear(), dataSel.getMonth() + 1, 0);
+      p.setDate(p.getDate() - ((p.getDay() + 6) % 7)); u.setDate(u.getDate() + (6 - (u.getDay() + 6) % 7)); return [iso(p), iso(u)]; } var s = new Date(dataSel); var wd = (s.getDay() + 6) % 7; s.setDate(s.getDate() - wd); var e = new Date(s); e.setDate(s.getDate() + 6); return [iso(s), iso(e)]; }
   async function carregarRes(){
     var iv = intervalo(), hoje = iso(new Date());
     var de = iv[0] < hoje ? iv[0] : hoje, ate = iv[1];
@@ -281,6 +294,7 @@
   }
   function cls(r){ return r.estado === 'confirmada' ? 'b-confirmada' : (r.estado === 'pendente' && r.proposta_hora) ? 'b-proposta' : 'b-pendente'; }
   function pintarAgenda(){
+    if(vista === 'mes') return pintarMes();
     var iv = intervalo(), dias = [];
     for(var d = dDe(iv[0]); iso(d) <= iv[1]; d.setDate(d.getDate() + 1)) dias.push(iso(d));
     var hoje = iso(new Date());
@@ -347,8 +361,32 @@
     }).join('');
     $('pedidos').querySelectorAll('[data-a]').forEach(function(b){ b.onclick = function(){ var r = RES.filter(function(x){ return x.id === b.getAttribute('data-id'); })[0]; if(!r) return; var a = b.getAttribute('data-a'); if(a === 'propor') abrirDetalhe(r, true); else responder(r, a); }; });
   }
-  $('aAnt').onclick = function(){ dataSel.setDate(dataSel.getDate() - (vista === 'dia' ? 1 : 7)); carregarRes(); };
-  $('aSeg').onclick = function(){ dataSel.setDate(dataSel.getDate() + (vista === 'dia' ? 1 : 7)); carregarRes(); };
+  function mudar(sinal){ if(vista === 'mes'){ dataSel = new Date(dataSel.getFullYear(), dataSel.getMonth() + sinal, 1); } else dataSel.setDate(dataSel.getDate() + sinal * (vista === 'dia' ? 1 : 7)); carregarRes(); }
+  $('aAnt').onclick = function(){ mudar(-1); };
+  $('aSeg').onclick = function(){ mudar(1); };
+  // ---------- vista do mês: cada dia com as suas marcações; tocar num dia abre esse dia ----------
+  function pintarMes(){
+    var iv = intervalo(), hoje = iso(new Date()), mes = dataSel.getMonth();
+    $('aTitulo').textContent = MESES[mes].charAt(0).toUpperCase() + MESES[mes].slice(1) + ' de ' + dataSel.getFullYear();
+    var h = '<div class="mes">' + ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'].map(function(d){ return '<div class="mes-cab">' + d + '</div>'; }).join('');
+    for(var d = dDe(iv[0]); iso(d) <= iv[1]; d.setDate(d.getDate() + 1)){
+      var k = iso(d), fora = d.getMonth() !== mes, fechado = !horarioDe(d.getDay()) || fechadoEm(k);
+      var doDia = RES.filter(function(r){ return r.data === k && r.estado !== 'cancelada'; }).sort(function(a, b){ return String(a.hora).localeCompare(String(b.hora)); });
+      var pend = doDia.filter(function(r){ return r.estado === 'pendente'; }).length;
+      h += '<button type="button" class="mes-dia' + (fora ? ' fora' : '') + (fechado ? ' fechado' : '') + (k === hoje ? ' hoje' : '') + '" data-dia="' + k + '">'
+        + '<div class="mes-num"><span>' + d.getDate() + '</span>' + (pend ? ('<span class="pill" title="Por confirmar">' + pend + '</span>') : '') + (fechado && !fora ? '<span style="font-size:11px;font-weight:600;color:var(--suave);">Fechado</span>' : '') + '</div>';
+      doDia.slice(0, 3).forEach(function(r){ h += '<div class="mes-it ' + (r.estado === 'confirmada' ? 'c' : r.proposta_hora ? 'r' : 'p') + '">' + esc(r.hora) + ' ' + esc(r.nome || '') + '</div>'; });
+      if(doDia.length > 3) h += '<div class="mes-mais">+' + (doDia.length - 3) + ' marcações</div>';
+      h += '</button>';
+    }
+    $('agenda').innerHTML = h + '</div>';
+    $('agenda').querySelectorAll('.mes-dia').forEach(function(b){ b.onclick = function(){ dataSel = dDe(b.getAttribute('data-dia')); vista = 'dia'; document.querySelectorAll('.vista button').forEach(function(x){ x.classList.toggle('on', x.getAttribute('data-v') === 'dia'); }); carregarRes(); }; });
+    var k0 = iso(dataSel), doD = RES.filter(function(r){ return r.data === k0 && r.estado !== 'cancelada'; });
+    $('resTit').textContent = k0 === hoje ? 'Hoje' : quando(k0);
+    $('rMarc').textContent = doD.filter(function(r){ return r.estado === 'confirmada'; }).length;
+    $('rPend').textContent = doD.filter(function(r){ return r.estado === 'pendente'; }).length;
+    $('rLivre').textContent = horasLivres(k0, 60);
+  }
   $('aHoje').onclick = function(){ dataSel = new Date(); dataSel.setHours(0,0,0,0); carregarRes(); };
   document.querySelectorAll('.vista button').forEach(function(b){ b.onclick = function(){ vista = b.getAttribute('data-v'); document.querySelectorAll('.vista button').forEach(function(x){ x.classList.toggle('on', x === b); }); carregarRes(); }; });
   $('aNova').onclick = function(){ novaMarcacao(iso(dataSel), ''); };
