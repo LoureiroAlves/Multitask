@@ -158,7 +158,7 @@
   </div>
   <aside class="painel sem-serv" id="painel" aria-label="Pedir marcação">
     <button type="button" class="fechar-folha" id="fecharFolha" aria-label="Fechar">✕</button>
-    <h3>Pedir marcação</h3>
+    <h3 id="tituloPainel">Pedir marcação</h3>
     <div class="esc" id="escServ"><small>Serviço</small><span id="escServNome">Escolha um serviço na lista</span></div>
     <div id="passoProf" class="hide" style="display:flex;flex-direction:column;gap:8px;">
       <div class="rot">Com quem?</div>
@@ -174,11 +174,11 @@
       <div class="nota">As horas riscadas já estão ocupadas. O salão confirma ou propõe outra hora.</div>
     </div>
     <div id="passoDados" class="hide" style="display:flex;flex-direction:column;gap:10px;">
-      <div class="campos">
+      <div class="campos" id="dadosCli">
         <div class="campo"><label for="pNome">Nome</label><input id="pNome" type="text" autocomplete="name" maxlength="80"></div>
         <div class="campo"><label for="pTel">Telemóvel</label><input id="pTel" type="tel" autocomplete="tel" inputmode="tel" maxlength="20"></div>
       </div>
-      <div class="campo"><label for="pObs">Observações <span style="font-weight:400;color:var(--suave);">(opcional)</span></label><textarea id="pObs" rows="2" maxlength="300"></textarea></div>
+      <div class="campo" id="obsCli"><label for="pObs">Observações <span style="font-weight:400;color:var(--suave);">(opcional)</span></label><textarea id="pObs" rows="2" maxlength="300"></textarea></div>
       <button type="button" class="btn-ac" id="btnEnviar">Enviar pedido</button>
       <div class="nota">O salão confirma ou propõe outra hora. Pode receber a resposta por notificação.</div>
     </div>
@@ -341,7 +341,12 @@
   }
 
   // ---------- pedido ----------
+  function modoReag(on){
+    $('tituloPainel').textContent = on ? 'Reagendar marcação' : 'Pedir marcação';
+    $('dadosCli').classList.toggle('hide', !!on); $('obsCli').classList.toggle('hide', !!on);
+  }
   function escolherServ(s){
+    if(sel.reag){ sel.reag = null; modoReag(false); }
     sel.serv = s; sel.hora = null; msg(''); $('painel').classList.remove('sem-serv');
     $('escServNome').innerHTML = '<b>' + esc(s.nome) + '</b> · ' + esc(durTxt(s.dur)) + (precoTxt(s.preco) ? (' · ' + esc(precoTxt(s.preco))) : '');
     $('passoDia').classList.remove('hide'); pintarProfs(); pintarDias(); pintarServicos();
@@ -376,6 +381,7 @@
       var hh = horarioDe(d.getDay()); if(!hh){ $('horas').innerHTML = '<div class="nota">Fechado neste dia.</div>'; return; }
       var ini = minDe(hh[0]), fim = minDe(hh[1]), dur = Math.max(5, +sel.serv.dur || 30), pas = passo();
       var agora = new Date(), minAgora = (dia === iso(agora)) ? (agora.getHours() * 60 + agora.getMinutes() + antecedencia()) : -1;
+      if(sel.reag && dia === sel.reag.data){ var tirou = false; ocup = (ocup || []).filter(function(o){ if(!tirou && o.hora === sel.reag.hora){ tirou = true; return false; } return true; }); }   // a própria marcação não conta
       var ocupados = (ocup || []).map(function(o){ var a = minDe(o.hora); return a == null ? null : [a, a + (+o.duracao || 30), o.profissional || '']; }).filter(Boolean);
       var cand = comEq ? capazes(d.getDay()).map(function(p){ return p.id; }) : null;
       function livreEm(t){ if(!cand) return !ocupados.some(function(o){ return o[0] < t + dur && t < o[1]; });
@@ -391,12 +397,13 @@
  if(s0 != null) html += '<div class="hora-int">⏱️ O seu serviço ocupa das <b>' + hDe(s0).replace(':', 'h') + '</b> às <b>' + hDe(s0 + dur).replace(':', 'h') + '</b> (' + esc(durTxt(dur)) + ')' + (sel.prof && nomeProf(sel.prof) ? (', com <b>' + esc(nomeProf(sel.prof)) + '</b>') : '') + '.</div>';
       $('horas').style.opacity = ''; $('horas').style.pointerEvents = ''; $('horas').style.minHeight = livres ? '' : (hAnt ? hAnt + 'px' : '');
       $('horas').innerHTML = livres ? html : '<div class="nota" style="grid-column:1/-1;">Sem horas livres neste dia para este serviço. Escolha outro dia.</div>';
-      $('horas').querySelectorAll('[data-h]').forEach(function(b){ b.onclick = function(){ sel.hora = b.getAttribute('data-h'); pintarHoras(); $('passoDados').classList.remove('hide'); $('btnEnviar').textContent = 'Enviar pedido · ' + quando(sel.dia, sel.hora + '–' + hDe(minDe(sel.hora) + Math.max(5, +sel.serv.dur || 30))); }; });
+      $('horas').querySelectorAll('[data-h]').forEach(function(b){ b.onclick = function(){ sel.hora = b.getAttribute('data-h'); pintarHoras(); $('passoDados').classList.remove('hide'); $('btnEnviar').textContent = (sel.reag ? 'Confirmar nova hora · ' : 'Enviar pedido · ') + quando(sel.dia, sel.hora + '–' + hDe(minDe(sel.hora) + Math.max(5, +sel.serv.dur || 30))); }; });
     }).catch(function(){ $('horas').style.opacity = ''; $('horas').style.pointerEvents = ''; $('horas').innerHTML = '<div class="nota" style="grid-column:1/-1;">Não foi possível ver as horas. Tente outra vez.</div>'; });
   }
   function guardados(){ try{ return JSON.parse(localStorage.getItem('salao_marc_' + SLUG) || '[]') || []; }catch(e){ return []; } }
   function guardar(l){ try{ localStorage.setItem('salao_marc_' + SLUG, JSON.stringify(l.slice(-20))); }catch(e){} }
   $('btnEnviar').onclick = function(){
+    if(sel.reag) return enviarReag();
     var nome = $('pNome').value.trim(), tel = $('pTel').value.trim(), obs = $('pObs').value.trim();
     if(!sel.serv || !sel.dia || !sel.hora){ msg('Escolha o serviço, o dia e a hora.', 'erro'); return; }
     if(!nome || tel.replace(/\D/g,'').length < 9){ msg('Escreva o nome e um telemóvel válido.', 'erro'); return; }
@@ -427,7 +434,7 @@
     if(!l.length){ $('secMinhas').classList.add('hide'); return; }
     rpc('reservas_estado', { p_ids:l.map(function(x){ return x.id; }) }).then(function(rows){
       var hoje = iso(new Date());
-      var por = {}; (rows || []).forEach(function(r){ por[r.id] = r; });
+      var por = {}; (rows || []).forEach(function(r){ por[r.id] = r; }); _minhasRows = por;
       var vis = l.filter(function(x){ var r = por[x.id]; return r && r.data >= hoje; });
       if(!vis.length){ $('secMinhas').classList.add('hide'); return; }
       $('secMinhas').classList.remove('hide');
@@ -438,13 +445,43 @@
           + '<div>' + esc(quando(r.data, r.hora)) + '</div>';
         if(prop) h += '<div style="color:var(--ac);font-weight:700;">O salão propõe às ' + esc(r.proposta_hora) + '.</div><div style="display:flex;gap:8px;flex-wrap:wrap;"><button type="button" class="btn-ac" data-ac="sim" data-id="' + esc(x.id) + '">Aceito</button><button type="button" class="btn-sec" data-ac="nao" data-id="' + esc(x.id) + '">Não dá</button></div>';
         if(r.nota) h += '<div class="nota">Nota do salão: ' + esc(r.nota) + '</div>';
-        if(r.estado !== 'cancelada') h += '<div style="display:flex;gap:8px;flex-wrap:wrap;"><button type="button" class="btn-sec" data-ac="push" data-id="' + esc(x.id) + '">🔔 Avisar-me por notificação</button><button type="button" class="btn-sec" data-ac="cancelar" data-id="' + esc(x.id) + '" style="color:#8A2A2A;">Já não vou</button></div>';
+        if(r.estado !== 'cancelada') h += '<div style="display:flex;gap:8px;flex-wrap:wrap;"><button type="button" class="btn-sec" data-ac="push" data-id="' + esc(x.id) + '">🔔 Avisar-me por notificação</button><button type="button" class="btn-sec" data-ac="reag" data-id="' + esc(x.id) + '">📅 Mudar dia/hora</button><button type="button" class="btn-sec" data-ac="cancelar" data-id="' + esc(x.id) + '" style="color:#8A2A2A;">Já não vou</button></div>';
         return h + '</div>';
-      }).join('') + (nova ? '<div class="msg ok">Pedido enviado ✓ O salão vai confirmar. Ligue as notificações para saber a resposta.</div>' : '');
+      }).join('') + (nova ? ('<div class="msg ok">' + (nova === 'reag' ? 'Nova hora enviada ✓ O salão vai confirmar a mudança.' : 'Pedido enviado ✓ O salão vai confirmar. Ligue as notificações para saber a resposta.') + '</div>') : '');
       $('minhas').querySelectorAll('[data-ac]').forEach(function(b){ b.onclick = function(){ acaoMinha(b.getAttribute('data-ac'), b.getAttribute('data-id'), b); }; });
     }).catch(function(){});
   }
+  function enviarReag(){
+    if(!sel.dia || !sel.hora){ msg('Escolha o novo dia e a hora.', 'erro'); return; }
+    var b = $('btnEnviar'); b.disabled = true; msg('A enviar…');
+    var id = sel.reag.id, d = sel.dia, h = sel.hora;
+    rpc('marcacao_reagendar', { p_id:id, p_data:d, p_hora:h }).then(function(){
+      var l = guardados(); l.forEach(function(x){ if(x.id === id){ x.data = d; x.hora = h; } }); guardar(l);
+      b.disabled = false; msg('');
+      sel = { serv:null, dia:null, hora:null, prof:'', reag:null }; modoReag(false);
+      ['passoDia','passoHora','passoDados','passoProf'].forEach(function(k){ $(k).classList.add('hide'); });
+      $('escServNome').textContent = 'Escolha um serviço na lista'; $('painel').classList.add('sem-serv');
+      fecharFolha(); pintarServicos(); pintarMinhas('reag');
+      try{ window.scrollTo({ top:0, behavior:'smooth' }); }catch(e){}
+    }).catch(function(e){
+      b.disabled = false; var t = String(e.message || e);
+      msg(/ocupado/.test(t) ? 'Essa hora acabou de ficar ocupada. Escolha outra.' : /ja_passou|nao_encontrada/.test(t) ? 'Esta marcação já não pode ser mudada. Contacte o salão.' : /function|does not exist|PGRST/i.test(t) ? 'O reagendamento ainda não está ativo neste salão. Contacte o salão.' : 'Não foi possível mudar. Tente outra vez.', 'erro');
+      if(/ocupado/.test(t)){ sel.hora = null; pintarHoras(); }
+    });
+  }
+  function iniciarReag(x, r){
+    var s = SERV.filter(function(v){ return v.nome === (r.servico || x.servico); })[0];
+    if(!s){ alert('Este serviço já não está disponível online. Contacte o salão para mudar a marcação.'); return; }
+    sel = { serv:s, dia:r.data, hora:null, prof:'', reag:{ id:x.id, data:r.data, hora:r.hora } };
+    modoReag(true); msg(''); $('painel').classList.remove('sem-serv');
+    $('escServNome').innerHTML = '<b>' + esc(s.nome) + '</b> · ' + esc(durTxt(s.dur)) + '<br><span style="font-size:13px;color:var(--suave);">Marcada para ' + esc(quando(r.data, r.hora)) + ' — escolha o novo dia e hora</span>';
+    $('passoProf').classList.add('hide'); $('passoDia').classList.remove('hide'); $('passoDados').classList.add('hide');
+    pintarDias(); pintarHoras(); pintarServicos(); abrirFolha();
+    if(!window.matchMedia('(max-width: 860px)').matches){ try{ $('painel').scrollIntoView({ behavior:'smooth', block:'start' }); }catch(e){} }
+  }
+  var _minhasRows = {};
   function acaoMinha(ac, id, b){
+    if(ac === 'reag'){ var x = guardados().filter(function(v){ return v.id === id; })[0], r = _minhasRows[id]; if(x && r) iniciarReag(x, r); return; }
     if(ac === 'push'){ b.disabled = true; b.textContent = 'A ligar…'; obterPush().then(function(ep){ if(!ep) throw new Error('sem_push'); return rpc('marcacao_set_push', { p_id:id, p_endpoint:ep }); }).then(function(){ b.textContent = '🔔 Notificações ligadas'; }).catch(function(){ b.disabled = false; b.textContent = '🔔 Avisar-me por notificação'; alert('Não foi possível ligar as notificações. No iPhone, adicione primeiro esta página ao ecrã principal (Partilhar → "Adicionar ao Ecrã Principal").'); }); return; }
     if(ac === 'cancelar'){ if(!confirm('Cancelar esta marcação? O salão é avisado.')) return; rpc('reserva_cancelar_cliente', { p_id:id }).then(function(){ pintarMinhas(); }); return; }
     if(ac === 'sim' || ac === 'nao'){ rpc('reserva_responder', { p_id:id, p_aceita:(ac === 'sim') }).then(function(){ pintarMinhas(); }).catch(function(){ alert('Não foi possível responder. Tente outra vez.'); }); }
