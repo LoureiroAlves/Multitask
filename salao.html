@@ -66,6 +66,11 @@
   .painel{ flex:1 1 340px; max-width:430px; background:#fff; border-radius:18px; padding:22px; display:flex; flex-direction:column; gap:16px; box-shadow:0 2px 10px rgba(31,28,26,.06); position:sticky; top:16px; }
   .painel h3{ margin:0; font-size:20px; font-weight:800; }
   .rot{ font-size:13px; font-weight:800; }
+  .profs{ display:flex; flex-wrap:wrap; gap:6px; }
+  .prof-b{ border:1.5px solid var(--borda); background:#fff; color:var(--ink); border-radius:999px; padding:9px 14px; font-weight:700; font-size:14px; display:flex; align-items:center; gap:7px; }
+  .prof-b i{ width:24px; height:24px; border-radius:50%; background:var(--fundo); display:inline-flex; align-items:center; justify-content:center; font-style:normal; font-size:12px; font-weight:800; }
+  .prof-b.on{ background:var(--ac); border-color:var(--ac); color:#fff; }
+  .prof-b.on i{ background:rgba(255,255,255,.25); }
   .esc{ background:var(--fundo); border-radius:12px; padding:12px 14px; display:flex; flex-direction:column; gap:2px; }
   .esc small{ font-size:12px; font-weight:700; color:var(--suave); }
   .dias{ display:flex; gap:6px; overflow-x:auto; padding-bottom:4px; scrollbar-width:thin; }
@@ -93,6 +98,7 @@
   .e-pendente{ background:#FFF3DF; color:#8A5A10; } .e-confirmada{ background:var(--verde-f); color:var(--verde); } .e-cancelada{ background:#F4E7E7; color:#8A2A2A; } .e-proposta{ background:#F3E6EA; color:var(--ac); }
   .barra{ display:none; }
   .fechar-folha{ display:none; }
+  @media (min-width: 861px){ .painel.sem-serv{ display:none; } }   /* computador: o quadro só aparece depois de escolher um serviço */
   @media (max-width: 860px){
     .painel{ position:fixed; left:0; right:0; bottom:0; top:auto; max-width:none; max-height:92vh; overflow-y:auto; border-radius:20px 20px 0 0; z-index:20; transform:translateY(105%); transition:transform .3s cubic-bezier(.2,.8,.2,1); padding-bottom:calc(22px + env(safe-area-inset-bottom)); }
     .painel.aberto{ transform:translateY(0); }
@@ -150,10 +156,14 @@
     <section class="grupo hide" id="secGaleria"><h2>Trabalhos</h2><div class="galeria" id="galeria"></div></section>
     <div class="nota" id="politica"></div>
   </div>
-  <aside class="painel" id="painel" aria-label="Pedir marcação">
+  <aside class="painel sem-serv" id="painel" aria-label="Pedir marcação">
     <button type="button" class="fechar-folha" id="fecharFolha" aria-label="Fechar">✕</button>
     <h3>Pedir marcação</h3>
     <div class="esc" id="escServ"><small>Serviço</small><span id="escServNome">Escolha um serviço na lista</span></div>
+    <div id="passoProf" class="hide" style="display:flex;flex-direction:column;gap:8px;">
+      <div class="rot">Com quem?</div>
+      <div class="profs" id="profs"></div>
+    </div>
     <div id="passoDia" class="hide" style="display:flex;flex-direction:column;gap:8px;">
       <div class="rot">Dia</div>
       <div class="dias" id="dias"></div>
@@ -190,7 +200,21 @@
   var SLUG = (params.get('n') || '').toLowerCase().replace(/[^a-z0-9]/g, '');
   var GRUPO = (params.get('g') || '').toLowerCase().replace(/[^a-z0-9]/g, '');   // marca com vários salões (locais)
   var NEG = null, CFG = {}, SAL = {}, SERV = [];
-  var sel = { serv:null, dia:null, hora:null };
+  var sel = { serv:null, dia:null, hora:null, prof:'' };
+  // ---------- equipa (opcional): cada pessoa tem a sua agenda ----------
+  function EQ(){ return (Array.isArray(CFG.equipa) ? CFG.equipa : []).filter(function(p){ return p && p.id && p.nome; }); }
+  function fazServ(p, sid){ return !Array.isArray(p.servicos) || !p.servicos.length || p.servicos.indexOf(sid) >= 0; }
+  function trabalha(p, wd){ return !Array.isArray(p.dias) || !p.dias.length || p.dias.indexOf(wd) >= 0; }
+  function capazes(wd){ return EQ().filter(function(p){ return sel.serv && fazServ(p, sel.serv.id) && (wd == null || trabalha(p, wd)) && (!sel.prof || p.id === sel.prof); }); }
+  function nomeProf(id){ var p = EQ().filter(function(x){ return x.id === id; })[0]; return p ? p.nome : ''; }
+  function pintarProfs(){
+    var l = EQ().filter(function(p){ return sel.serv && fazServ(p, sel.serv.id); });
+    $('passoProf').classList.toggle('hide', l.length < 1);
+    if(sel.prof && !l.some(function(p){ return p.id === sel.prof; })) sel.prof = '';
+    $('profs').innerHTML = '<button type="button" class="prof-b' + (sel.prof ? '' : ' on') + '" data-p="">Sem preferência</button>'
+      + l.map(function(p){ return '<button type="button" class="prof-b' + (sel.prof === p.id ? ' on' : '') + '" data-p="' + esc(p.id) + '"><i>' + esc(p.nome.trim().charAt(0).toUpperCase()) + '</i>' + esc(p.nome) + '</button>'; }).join('');
+    $('profs').querySelectorAll('[data-p]').forEach(function(b){ b.onclick = function(){ sel.prof = b.getAttribute('data-p'); sel.hora = null; pintarProfs(); pintarDias(); pintarHoras(); }; });
+  }
   var DIAS_C = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'], DIAS_L = ['domingo','segunda','terça','quarta','quinta','sexta','sábado'];
   var MESES = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
   function $(id){ return document.getElementById(id); }
@@ -318,15 +342,15 @@
 
   // ---------- pedido ----------
   function escolherServ(s){
-    sel.serv = s; sel.hora = null; msg('');
+    sel.serv = s; sel.hora = null; msg(''); $('painel').classList.remove('sem-serv');
     $('escServNome').innerHTML = '<b>' + esc(s.nome) + '</b> · ' + esc(durTxt(s.dur)) + (precoTxt(s.preco) ? (' · ' + esc(precoTxt(s.preco))) : '');
-    $('passoDia').classList.remove('hide'); pintarDias(); pintarServicos();
+    $('passoDia').classList.remove('hide'); pintarProfs(); pintarDias(); pintarServicos();
   }
   function pintarDias(){
     var h = new Date(); h.setHours(0,0,0,0); var html = '', primeiro = null, abertos = {};
     for(var i = 0; i < diasMax(); i++){
       var d = new Date(h); d.setDate(h.getDate() + i); var k = iso(d);
-      var hh0 = horarioDe(d.getDay()), aberto = !!hh0 && !fechadoEm(k);
+      var hh0 = horarioDe(d.getDay()), aberto = !!hh0 && !fechadoEm(k) && (!EQ().length || !sel.serv || capazes(d.getDay()).length > 0);
       if(aberto && i === 0){ var ag = new Date(), dur0 = Math.max(5, +((sel.serv || {}).dur) || 30); if(ag.getHours() * 60 + ag.getMinutes() + antecedencia() + dur0 > minDe(hh0[1])) aberto = false; }
       if(aberto){ abertos[k] = 1; if(!primeiro) primeiro = k; }
       html += '<button type="button" class="dia' + (sel.dia === k ? ' on' : '') + '" data-d="' + k + '"' + (aberto ? '' : ' disabled') + '><span>' + DIAS_C[d.getDay()] + '</span><b>' + d.getDate() + '</b><span>' + MESES[d.getMonth()] + '</span></button>';
@@ -345,22 +369,26 @@
     if($('horas').querySelector('.hora')){ $('horas').style.opacity = '.45'; $('horas').style.pointerEvents = 'none'; }
     else $('horas').innerHTML = '<div class="nota" style="grid-column:1/-1;">A ver as horas livres…</div>';
     var dia = sel.dia;
-    rpc('marcacoes_ocupadas', { p_negocio:NEG.id, p_dia:dia }).then(function(ocup){
+    var comEq = EQ().length > 0;
+    rpc(comEq ? 'marcacoes_ocupadas2' : 'marcacoes_ocupadas', { p_negocio:NEG.id, p_dia:dia }).then(function(ocup){
       if(dia !== sel.dia) return;
       $('horas').style.opacity = ''; $('horas').style.pointerEvents = '';
       var hh = horarioDe(d.getDay()); if(!hh){ $('horas').innerHTML = '<div class="nota">Fechado neste dia.</div>'; return; }
       var ini = minDe(hh[0]), fim = minDe(hh[1]), dur = Math.max(5, +sel.serv.dur || 30), pas = passo();
       var agora = new Date(), minAgora = (dia === iso(agora)) ? (agora.getHours() * 60 + agora.getMinutes() + antecedencia()) : -1;
-      var ocupados = (ocup || []).map(function(o){ var a = minDe(o.hora); return a == null ? null : [a, a + (+o.duracao || 30)]; }).filter(Boolean);
+      var ocupados = (ocup || []).map(function(o){ var a = minDe(o.hora); return a == null ? null : [a, a + (+o.duracao || 30), o.profissional || '']; }).filter(Boolean);
+      var cand = comEq ? capazes(d.getDay()).map(function(p){ return p.id; }) : null;
+      function livreEm(t){ if(!cand) return !ocupados.some(function(o){ return o[0] < t + dur && t < o[1]; });
+        return cand.some(function(pid){ return !ocupados.some(function(o){ return (!o[2] || o[2] === pid) && o[0] < t + dur && t < o[1]; }); }); }
       var html = '', livres = 0, s0 = sel.hora ? minDe(sel.hora) : null;
       for(var t = ini; t + dur <= fim; t += pas){
-        var ocupado = ocupados.some(function(o){ return o[0] < t + dur && t < o[1]; }) || t < minAgora;
+        var ocupado = !livreEm(t) || t < minAgora;
         if(!ocupado) livres++;
         var hs = hDe(t);
         var cob = s0 != null && t > s0 && t < s0 + dur;   // horas tapadas pelo serviço escolhido
         html += '<button type="button" class="hora' + (sel.hora === hs ? ' on' : (cob ? ' cob' : '')) + '" data-h="' + hs + '"' + (ocupado ? ' disabled' : '') + '>' + hs.replace(':', 'h') + '</button>';
       }
- if(s0 != null) html += '<div class="hora-int">⏱️ O seu serviço ocupa das <b>' + hDe(s0).replace(':', 'h') + '</b> às <b>' + hDe(s0 + dur).replace(':', 'h') + '</b> (' + esc(durTxt(dur)) + ').</div>';
+ if(s0 != null) html += '<div class="hora-int">⏱️ O seu serviço ocupa das <b>' + hDe(s0).replace(':', 'h') + '</b> às <b>' + hDe(s0 + dur).replace(':', 'h') + '</b> (' + esc(durTxt(dur)) + ')' + (sel.prof && nomeProf(sel.prof) ? (', com <b>' + esc(nomeProf(sel.prof)) + '</b>') : '') + '.</div>';
       $('horas').style.opacity = ''; $('horas').style.pointerEvents = ''; $('horas').style.minHeight = livres ? '' : (hAnt ? hAnt + 'px' : '');
       $('horas').innerHTML = livres ? html : '<div class="nota" style="grid-column:1/-1;">Sem horas livres neste dia para este serviço. Escolha outro dia.</div>';
       $('horas').querySelectorAll('[data-h]').forEach(function(b){ b.onclick = function(){ sel.hora = b.getAttribute('data-h'); pintarHoras(); $('passoDados').classList.remove('hide'); $('btnEnviar').textContent = 'Enviar pedido · ' + quando(sel.dia, sel.hora + '–' + hDe(minDe(sel.hora) + Math.max(5, +sel.serv.dur || 30))); }; });
@@ -374,10 +402,12 @@
     if(!nome || tel.replace(/\D/g,'').length < 9){ msg('Escreva o nome e um telemóvel válido.', 'erro'); return; }
     var b = $('btnEnviar'); b.disabled = true; msg('A enviar…');
     try{ localStorage.setItem('salao_cliente', JSON.stringify({ nome:nome, tel:tel })); }catch(e){}
-    rpc('criar_marcacao', { p_negocio:NEG.id, p_data:sel.dia, p_hora:sel.hora, p_nome:nome, p_tel:tel, p_servico:sel.serv.id, p_obs:obs || null }).then(function(id){
+    var args = { p_negocio:NEG.id, p_data:sel.dia, p_hora:sel.hora, p_nome:nome, p_tel:tel, p_servico:sel.serv.id, p_obs:obs || null };
+    if(EQ().length) args.p_prof = sel.prof || null;
+    rpc(EQ().length ? 'criar_marcacao2' : 'criar_marcacao', args).then(function(id){
       var l = guardados(); l.push({ id:id, servico:sel.serv.nome, data:sel.dia, hora:sel.hora }); guardar(l);
       b.disabled = false; msg('');
-      sel = { serv:null, dia:null, hora:null };
+      sel = { serv:null, dia:null, hora:null, prof:'' }; $('painel').classList.add('sem-serv'); $('passoProf').classList.add('hide');
       ['passoDia','passoHora','passoDados'].forEach(function(k){ $(k).classList.add('hide'); });
       $('escServNome').textContent = 'Escolha um serviço na lista'; $('pObs').value = '';
       fecharFolha(); pintarServicos(); pintarMinhas(true);
