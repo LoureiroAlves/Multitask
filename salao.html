@@ -160,6 +160,37 @@
   .local-tx span{ font-size:14px; color:var(--suave); }
   .local-tx i{ font-style:normal; font-weight:800; color:var(--ac); margin-top:6px; }
   .vazio{ background:#fff; border-radius:14px; padding:24px; text-align:center; color:var(--suave); }
+  /* ---------- movimento: nada entra "a seco" ---------- */
+  @keyframes aFade{ from{ opacity:0; } to{ opacity:1; } }
+  @keyframes aFadeOut{ from{ opacity:1; } to{ opacity:0; } }
+  @keyframes aZoom{ from{ opacity:0; transform:scale(.9); } to{ opacity:1; transform:none; } }
+  @keyframes aZoomOut{ from{ opacity:1; transform:none; } to{ opacity:0; transform:scale(.92); } }
+  @keyframes aSobe{ from{ transform:translateY(100%); } to{ transform:none; } }
+  @keyframes aDesce{ from{ transform:none; } to{ transform:translateY(100%); } }
+  @keyframes aAbre{ from{ opacity:0; transform:translateY(-6px); } to{ opacity:1; transform:none; } }
+  @keyframes aPop{ 0%{ transform:scale(.9); } 60%{ transform:scale(1.06); } 100%{ transform:none; } }
+  .sub-fundo{ animation:aFade .2s ease both; }
+  .sub{ animation:aZoom .28s cubic-bezier(.2,.8,.2,1) both; }
+  .sub-fundo.sai{ animation:aFadeOut .2s ease both; }
+  .sub-fundo.sai .sub{ animation:aZoomOut .2s ease both; }
+  .sub-it{ animation:aAbre .3s ease both; }
+  .sub-it:nth-child(3){ animation-delay:.04s; } .sub-it:nth-child(4){ animation-delay:.08s; } .sub-it:nth-child(5){ animation-delay:.12s; } .sub-it:nth-child(n+6){ animation-delay:.16s; }
+  @media (max-width: 860px){ .sub{ animation:aSobe .32s cubic-bezier(.2,.8,.2,1) both; } .sub-fundo.sai .sub{ animation:aDesce .22s ease both; } }
+  .lb{ animation:aFade .2s ease both; } .lb img{ animation:aZoom .28s cubic-bezier(.2,.8,.2,1) both; }
+  .lb.sai{ animation:aFadeOut .2s ease both; } .lb.sai img{ animation:aZoomOut .2s ease both; }
+  .fundo-folha{ animation:aFade .25s ease both; }
+  .painel.entra{ animation:aZoom .3s cubic-bezier(.2,.8,.2,1) both; }
+  .minha.aberta .minha-corpo{ animation:aAbre .25s ease both; }
+  .minha-prop, #minhas .msg{ animation:aAbre .3s ease both; }
+  .cat-grelha.primeira .cat-card, #minhas.primeira .minha{ animation:aZoom .35s cubic-bezier(.2,.8,.2,1) both; }
+  .cat-grelha.primeira .cat-card:nth-child(2){ animation-delay:.05s; } .cat-grelha.primeira .cat-card:nth-child(3){ animation-delay:.1s; } .cat-grelha.primeira .cat-card:nth-child(n+4){ animation-delay:.15s; }
+  .cat-card{ transition:transform .15s ease, border-color .2s ease, box-shadow .2s ease; }
+  .cat-card:hover{ box-shadow:0 6px 18px rgba(31,28,26,.10); }
+  .cat-card:active, .pill:active, .btn-ac:active, .btn-sec:active, .dia:active, .hora:active, .minha-cab:active{ transform:scale(.97); }
+  .pill, .btn-ac, .btn-sec, .dia, .hora{ transition:transform .12s ease, background-color .2s ease, border-color .2s ease, color .2s ease; }
+  .hora.on, .dia.on{ animation:aPop .28s ease both; }
+  #passoDia:not(.hide), #passoHora:not(.hide), #passoDados:not(.hide), .hora-int{ animation:aAbre .28s ease both; }
+  @media (prefers-reduced-motion: reduce){ *, *::before, *::after{ animation:none !important; transition:none !important; } }
 </style>
 </head>
 <body>
@@ -342,7 +373,7 @@
   document.addEventListener('click', function(ev){
     var t = ev.target; if(!t || !t.hasAttribute || !t.hasAttribute('data-lb')) return;
     var d = document.createElement('div'); d.className = 'lb'; d.innerHTML = '<img src="' + esc(t.getAttribute('src')) + '" alt=""><button type="button" aria-label="Fechar">✕</button>';
-    d.onclick = function(){ d.remove(); }; document.body.appendChild(d);
+    d.onclick = function(){ sair(d, 200); }; document.body.appendChild(d);
   });
 
   var catSel = '';
@@ -363,9 +394,12 @@
     f.querySelectorAll('[data-s]').forEach(function(b){ b.onclick = function(){ var s = SERV.filter(function(x){ return x.id === b.getAttribute('data-s'); })[0]; if(!s) return; fecharCategoria(); escolherServ(s); abrirFolha();
       if(!window.matchMedia('(max-width: 860px)').matches){ try{ $('painel').scrollIntoView({ behavior:'smooth', block:'start' }); }catch(e){} } }; });
   }
-  function fecharCategoria(){ var f = $('subMenu'); if(f) f.remove(); }
+  function semMovimento(){ try{ return matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){ return false; } }
+  function sair(el, ms){ if(!el) return; if(semMovimento()){ el.remove(); return; } el.classList.add('sai'); el.id = ''; setTimeout(function(){ el.remove(); }, ms || 200); }
+  function fecharCategoria(){ sair($('subMenu'), 220); }
   document.addEventListener('keydown', function(e){ if(e.key === 'Escape') fecharCategoria(); });
-  function pintarServicos(){
+  var _catsJaVistas = false;
+  function pintarServicos(){ setTimeout(function(){ _catsJaVistas = true; }, 0);
     var cs = cats();
     $('cats').innerHTML = '';
     if(!SERV.length){ $('servicos').innerHTML = '<div class="vazio">Este salão ainda não publicou os serviços.</div>'; return; }
@@ -373,7 +407,7 @@
     var vg = Array.isArray(SAL.vagas) ? SAL.vagas.filter(function(v){ return v && v.data >= iso(new Date()) && v.texto; }) : [];
     vg.slice(0, 2).forEach(function(v){ html += '<div class="vaga"><div style="font-size:12px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;">Vaga de última hora</div><b>' + esc(quando(v.data, v.hora)) + '</b><div>' + esc(v.texto) + '</div></div>'; });
     var catFotos = SAL.catFotos || {};
-    html += '<section class="grupo" style="flex:1 1 100%;"><h2>Serviços</h2><div class="cat-grelha">' + cs.map(function(c){
+    html += '<section class="grupo" style="flex:1 1 100%;"><h2>Serviços</h2><div class="cat-grelha' + (_catsJaVistas ? '' : ' primeira') + '">' + cs.map(function(c){
       var l = servDe(c), foto = urlOk(catFotos[c]) ? catFotos[c] : ((l.filter(function(s){ return urlOk(s.foto); })[0] || {}).foto || '');
       var on = sel.serv && (sel.serv.cat || 'Serviços').trim() === c;
       return '<button type="button" class="cat-card' + (on ? ' sel' : '') + '" data-cat="' + esc(c) + '"><div class="ci"' + (foto ? '' : ' style="background:var(--ac);"') + '>' + (foto ? ('<img src="' + esc(foto) + '" alt="" loading="lazy">') : esc(c.trim().charAt(0).toUpperCase())) + '</div>'
@@ -390,7 +424,9 @@
   }
   function escolherServ(s){
     if(sel.reag){ sel.reag = null; modoReag(false); }
-    sel.serv = s; sel.hora = null; msg(''); $('painel').classList.remove('sem-serv'); $('btnDesistir').classList.remove('hide');
+    var eraVazio = $('painel').classList.contains('sem-serv');
+    sel.serv = s; sel.hora = null; msg(''); $('painel').classList.remove('sem-serv');
+    if(eraVazio){ $('painel').classList.remove('entra'); void $('painel').offsetWidth; $('painel').classList.add('entra'); } $('btnDesistir').classList.remove('hide');
     $('escServNome').innerHTML = '<b>' + esc(s.nome) + '</b> · ' + esc(durTxt(s.dur)) + (precoTxt(s.preco) ? (' · ' + esc(precoTxt(s.preco))) : '');
     $('passoDia').classList.remove('hide'); pintarProfs(); pintarDias(); pintarServicos();
   }
@@ -492,9 +528,10 @@
       vis.sort(function(a, b){ return (por[a.id].data + por[a.id].hora).localeCompare(por[b.id].data + por[b.id].hora); });   // a mais próxima primeiro
       if(!vis.length){ $('secMinhas').classList.add('hide'); return; }
       $('secMinhas').classList.remove('hide');
+      var _primeiraVez = !_minhasHtml;
       var eu = function(v){ return (Math.round(v * 100) / 100).toLocaleString('pt-PT', { minimumFractionDigits:2, maximumFractionDigits:2 }) + ' €'; };
       var pushOn = pushLigado();
-      $('minhas').innerHTML = vis.map(function(x){
+      var _novoHtml = vis.map(function(x){
         var r = por[x.id], prop = r.estado !== 'cancelada' && r.proposta_hora, serv = r.servico || x.servico || 'Marcação';
         var est = prop ? ['proposta', 'Proposta do salão'] : r.estado === 'confirmada' ? ['confirmada', 'Confirmada'] : r.estado === 'cancelada' ? ['cancelada', 'Cancelada'] : ['pendente', 'Por confirmar'];
         // preço: o da marcação; se ainda não vier do servidor, o do serviço
@@ -518,6 +555,8 @@
         }
         return h + '</div></div>';
       }).join('') + (nova ? ('<div class="msg ok">' + (nova === 'canc' ? 'Marcação cancelada ✓ O salão já foi avisado e a hora ficou livre.' : nova === 'reag' ? 'Nova hora enviada ✓ O salão vai confirmar a mudança.' : (pushLigado() ? 'Pedido enviado ✓ O salão vai confirmar — recebe a resposta por notificação.' : 'Pedido enviado ✓ O salão vai confirmar. Abra a marcação e ligue as notificações para saber a resposta.')) + '</div>') : '');
+      if(_novoHtml === _minhasHtml) return;   // nada mudou: não volta a desenhar
+      _minhasHtml = _novoHtml; $('minhas').classList.toggle('primeira', _primeiraVez); $('minhas').innerHTML = _novoHtml;
       $('minhas').querySelectorAll('[data-ac]').forEach(function(b){ b.onclick = function(){ acaoMinha(b.getAttribute('data-ac'), b.getAttribute('data-id'), b); }; });
       $('minhas').querySelectorAll('[data-abrir]').forEach(function(b){ b.onclick = function(){ var id = b.getAttribute('data-abrir'); _minhaAberta = _minhaAberta === id ? '' : id;
         $('minhas').querySelectorAll('.minha').forEach(function(c){ var on = c.getAttribute('data-id') === _minhaAberta; c.classList.toggle('aberta', on); var cb = c.querySelector('.minha-cab'); cb.setAttribute('aria-expanded', on); cb.querySelector('.seta').textContent = on ? '▲ Fechar' : '▼ Ver detalhes e opções'; }); }; });
@@ -552,7 +591,7 @@
     pintarDias(); pintarHoras(); pintarServicos(); abrirFolha();
     if(!window.matchMedia('(max-width: 860px)').matches){ try{ $('painel').scrollIntoView({ behavior:'smooth', block:'start' }); }catch(e){} }
   }
-  var _minhasRows = {}, _minhaAberta = '';
+  var _minhasRows = {}, _minhaAberta = '', _minhasHtml = '';
   // notificações: depois de ligadas uma vez neste telemóvel, ficam ligadas para todas as marcações
   function pushLigado(){ try{ return 'Notification' in window && 'serviceWorker' in navigator && Notification.permission === 'granted'; }catch(e){ return false; } }
   var _pushFeitos = {};
