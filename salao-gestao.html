@@ -83,6 +83,7 @@
   .camp-conta{ display:flex; gap:8px; flex-wrap:wrap; font-size:13px; }
   .camp-conta span{ background:#F4F1EE; border-radius:999px; padding:5px 10px; font-weight:700; }
   .camp-conta span b{ color:var(--ac); }
+  .camp-aviso{ background:#FFF7E8; border:1px solid #F0DDB5; color:#6B4E14; border-radius:10px; padding:10px 12px; font-size:13px; line-height:1.4; }
   .camp-botoes{ display:flex; gap:8px; flex-wrap:wrap; } .camp-botoes button{ flex:1 1 180px; }
   .camp-prev-tit{ font-size:12px; font-weight:800; color:var(--suave); margin:2px 0 6px; text-transform:uppercase; letter-spacing:.04em; }
   .camp-prev{ display:flex; flex-direction:column; gap:12px; }
@@ -316,16 +317,17 @@
   <!-- CAMPANHAS -->
   <section id="tCampanhas" class="pag hide" style="max-width:1000px;">
     <h2>Campanhas</h2>
-    <p class="sub">Envie uma novidade, promoção ou lembrete aos seus clientes, por notificação ou WhatsApp. Só recebem os clientes que aceitaram receber campanhas (e que não estão bloqueados).</p>
+    <p class="sub">Envie uma novidade, promoção ou lembrete aos seus clientes, por notificação, WhatsApp ou email. Só recebem os clientes que aceitaram receber campanhas (e que não estão bloqueados).</p>
     <div class="camp-grelha">
       <div class="camp-form">
         <div class="campo"><label for="cpPub">Para quem</label><select id="cpPub"></select></div>
         <div class="campo hide" id="cpServBx"><label for="cpServ">Serviço</label><select id="cpServ"></select></div>
         <div class="camp-conta" id="cpConta"></div>
-        <div class="campo"><label for="cpTit">Título <span style="font-weight:400;color:var(--suave);">(aparece a negrito na notificação)</span></label><input id="cpTit" maxlength="60" placeholder="Ex.: Novembro com 15% de desconto"></div>
+        <div class="campo"><label for="cpTit">Título <span style="font-weight:400;color:var(--suave);">(a primeira linha da mensagem; a notificação aparece sempre com o nome e o logótipo do salão)</span></label><input id="cpTit" maxlength="60" placeholder="Ex.: Novembro com 15% de desconto"></div>
         <div class="campo"><label for="cpTxt">Mensagem</label><textarea id="cpTxt" rows="4" maxlength="500" placeholder="Olá {nome}! Este mês temos…"></textarea><div style="font-size:12px;color:var(--suave);margin-top:3px;">Escreva <b>{nome}</b> para pôr o primeiro nome de cada cliente. <span id="cpCars"></span></div></div>
         <label class="chk-l"><input type="checkbox" id="cpLink" checked> Juntar o link da página do salão (para marcar)</label>
-        <div class="camp-botoes"><button type="button" class="btn-ac" id="cpPush">🔔 Enviar notificação</button><button type="button" class="btn" id="cpWa">💬 Enviar por WhatsApp</button></div>
+        <div class="camp-botoes"><button type="button" class="btn-ac" id="cpPush">🔔 Enviar notificação</button><button type="button" class="btn" id="cpWa">💬 Enviar por WhatsApp</button><button type="button" class="btn" id="cpMail">✉️ Enviar por email</button></div>
+        <div class="camp-aviso hide" id="cpAviso"></div>
         <div class="msg" id="cpMsg"></div>
       </div>
       <div>
@@ -436,6 +438,7 @@
     aplicarCor(); $('tNome').innerHTML = esc(SAL.nome || NEG.nome) + ' <span>· Gestão</span>';
     $('verPagina').href = (/(^|\.)4trevo\.com$/i.test(location.hostname) ? '/' : '/salao.html?n=') + encodeURIComponent(SLUG);
     document.title = (SAL.nome || NEG.nome) + ' · Gestão · 4 Trevo';
+    if(/^https:\/\//.test(String(SAL.logo || ''))){ try{ var ati = document.querySelector('link[rel="apple-touch-icon"]'); if(ati) ati.href = SAL.logo; }catch(e){} }
     if(params.get('d')) dataSel = dDe(params.get('d'));
     var t = (location.hash || '').replace('#', ''); if(['servicos','pagina','horario','equipa','clientes','relatorios','campanhas'].indexOf(t) >= 0) irPara(t);
     await carregarRes();
@@ -741,23 +744,44 @@
       if(fl === 'um') return x.vis === 1 && !x.prox;
       if(fl === 'serv') return !!x.serv[sv];
       return true; })
-      .map(function(x){ var c = x.c, tn = telNorm(c.telefone), r = ult[c.tel_norm] || (tn.length >= 9 ? ult[tn] : null); return { c:c, x:x, ep:r ? r.push_marcacao : '', tel:tn.length >= 9 ? c.telefone : '' }; });
+      .map(function(x){ var c = x.c, tn = telNorm(c.telefone), r = ult[c.tel_norm] || (tn.length >= 9 ? ult[tn] : null); return { c:c, x:x, ep:r ? r.push_marcacao : '', tel:tn.length >= 9 ? c.telefone : '', email:/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(c.email || '').trim()) ? String(c.email).trim() : '' }; });
   }
   function descPub(){ var o = $('cpPub').selectedOptions[0]; var t = o ? o.textContent : ''; return $('cpPub').value === 'serv' ? ('Fizeram ' + $('cpServ').value) : t; }
   function pintarCampanha(){
     $('cpServBx').classList.toggle('hide', $('cpPub').value !== 'serv');
-    var l = publicoCamp(), np = l.filter(function(d){ return d.ep; }).length, nw = l.filter(function(d){ return d.tel; }).length;
+    var l = publicoCamp(), np = l.filter(function(d){ return d.ep; }).length, nw = l.filter(function(d){ return d.tel; }).length, nm = l.filter(function(d){ return d.email; }).length;
     var tot = CLI.filter(function(c){ return c.aceita_campanhas === true && !c.bloqueado; }).length;
-    $('cpConta').innerHTML = '<span><b>' + l.length + '</b> cliente(s)</span><span>🔔 <b>' + np + '</b> com notificações</span><span>💬 <b>' + nw + '</b> com telemóvel</span>' + (!tot ? '<span style="background:#FBEDED;color:#A33;">Ainda nenhum cliente aceitou campanhas</span>' : '');
+    $('cpConta').innerHTML = '<span><b>' + l.length + '</b> cliente(s)</span><span>🔔 <b>' + np + '</b> com notificações</span><span>💬 <b>' + nw + '</b> com telemóvel</span>' + '<span>✉️ <b>' + nm + '</b> com email</span>';
+    var semAut = CLI.filter(function(c){ return c.aceita_campanhas !== true && !c.bloqueado && (telNorm(c.telefone).length >= 9 || c.email); }).length;
+    $('cpAviso').classList.toggle('hide', !semAut);
+    $('cpAviso').innerHTML = semAut ? ('<b>' + semAut + ' cliente(s) com contacto ainda não aceitaram receber campanhas</b>, por isso não entram aqui. O cliente aceita ao marcar pela página (caixa "Aceito receber novidades"), ou, se ele lhe disse que aceita, marque <b>"Aceita receber campanhas"</b> na ficha dele (separador Clientes).') : '';
     $('cpPush').textContent = '🔔 Enviar notificação' + (np ? (' (' + np + ')') : ''); $('cpPush').disabled = !np;
     $('cpWa').textContent = '💬 Enviar por WhatsApp' + (nw ? (' (' + nw + ')') : ''); $('cpWa').disabled = !nw;
-    var ex = l[0] ? l[0].c : { nome:'Maria' }, tit = $('cpTit').value.trim() || (SAL.nome || NEG.nome), txt = textoPara(ex, $('cpTxt').value) || 'A sua mensagem aparece aqui.';
+    $('cpMail').textContent = '✉️ Enviar por email' + (nm ? (' (' + nm + ')') : ''); $('cpMail').disabled = !nm;
+    var ex = l[0] ? l[0].c : { nome:'Maria' }, tit = SAL.nome || NEG.nome, txt = ($('cpTit').value.trim() ? ($('cpTit').value.trim() + '\n') : '') + (textoPara(ex, $('cpTxt').value) || 'A sua mensagem aparece aqui.');
     var wtxt = textoPara(ex, $('cpTxt').value) + ($('cpLink').checked ? ('\n\n' + linkPublico()) : '');
     $('cpCars').textContent = $('cpTxt').value.length + '/500';
-    $('cpPrev').innerHTML = '<div class="camp-not"><span class="ic"></span><div><b>' + esc(tit) + '</b><p>' + esc(txt) + '</p></div></div>'
+    $('cpPrev').innerHTML = '<div class="camp-not">' + (logoPush() ? ('<img class="ic" src="' + esc(SAL.logo) + '" alt="" style="object-fit:cover;background:#fff;">') : '<span class="ic"></span>') + '<div><b>' + esc(tit) + '</b><p>' + esc(txt) + '</p></div></div>'
       + '<div class="camp-wa"><div>' + (($('cpTxt').value.trim()) ? (($('cpTit').value.trim() ? ('*' + esc($('cpTit').value.trim()) + '*\n') : '') + esc(wtxt)) : 'A sua mensagem aparece aqui.') + '</div></div>'
       + '<div style="font-size:12px;color:var(--suave);">Exemplo com o nome de ' + esc(primeiroNome(ex.nome) || 'um cliente') + '.</div>';
   }
+  $('cpMail').onclick = async function(){
+    if(!validaCamp()) return; var l = publicoCamp().filter(function(d){ return d.email; }); if(!l.length) return;
+    await registarCamp('email', l.length, l.length);
+    var tit = $('cpTit').value.trim() || ('Novidades · ' + (SAL.nome || NEG.nome));
+    var corpo = textoPara({ nome:'' }, $('cpTxt').value) + ($('cpLink').checked ? ('\n\n' + linkPublico()) : '') + '\n\n' + (SAL.nome || NEG.nome) + '\n\n—\nRecebe este email porque aceitou receber novidades de ' + (SAL.nome || NEG.nome) + '. Se não quiser receber mais, responda a este email a dizer.';
+    var grupos = []; for(var i = 0; i < l.length; i += 40) grupos.push(l.slice(i, i + 40));
+    function mailto(g){ return 'mailto:?bcc=' + g.map(function(d){ return encodeURIComponent(d.email); }).join(',') + '&subject=' + encodeURIComponent(tit) + '&body=' + encodeURIComponent(corpo); }
+    var f = modal('<h3>✉️ Enviar por email</h3><div style="font-size:14px;color:var(--suave);">Abre o seu programa de email com a mensagem já escrita e os ' + l.length + ' cliente(s) em <b>Bcc</b> (escondidos — ninguém vê o email dos outros). Só tem de carregar em enviar.</div>'
+      + grupos.map(function(g, i){ return '<a class="btn-ac" style="display:flex;align-items:center;justify-content:center;text-decoration:none;" href="' + esc(mailto(g)) + '">Abrir email' + (grupos.length > 1 ? (' · grupo ' + (i + 1) + ' (' + g.length + ')') : '') + '</a>'; }).join('')
+      + '<div style="font-size:13px;color:var(--suave);">Usa o Gmail no browser, ou o email não abriu? Copie e cole:</div>'
+      + '<div style="display:flex;gap:8px;flex-wrap:wrap;"><button type="button" class="btn" id="mCopE">Copiar os emails</button><button type="button" class="btn" id="mCopT">Copiar a mensagem</button></div><div class="msg" id="mMsg"></div>'
+      + '<div style="font-size:12px;color:var(--suave);">No email não dá para pôr o nome de cada cliente ({nome} fica vazio). Para isso use a notificação ou o WhatsApp.</div>');
+    function copia(t, ok){ (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(function(){ $('mMsg').textContent = ok; $('mMsg').className = 'msg'; }).catch(function(){ prompt('Copie:', t); }); }
+    f.querySelector('#mCopE').onclick = function(){ copia(l.map(function(d){ return d.email; }).join(', '), '✓ Emails copiados — cole no campo Bcc.'); };
+    f.querySelector('#mCopT').onclick = function(){ copia(tit + '\n\n' + corpo, '✓ Mensagem copiada.'); };
+    carregarCampanhas();
+  };
   ['cpPub','cpServ','cpTit','cpTxt','cpLink'].forEach(function(id){ $(id).addEventListener(id === 'cpTit' || id === 'cpTxt' ? 'input' : 'change', pintarCampanha); });
   function validaCamp(){ var m = $('cpMsg'); if(!$('cpTxt').value.trim()){ m.textContent = 'Escreva a mensagem.'; m.className = 'msg erro'; $('cpTxt').focus(); return false; }
     var rec = CAMPH.filter(function(h){ return Date.now() - new Date(h.criado_em).getTime() < 7 * 86400000; })[0];
@@ -767,9 +791,9 @@
   $('cpPush').onclick = async function(){
     if(!validaCamp()) return; var l = publicoCamp().filter(function(d){ return d.ep; }); if(!l.length) return;
     if(!confirm('Enviar esta notificação a ' + l.length + ' cliente(s)?')) return;
-    var bt = this, ok = 0, i = 0, tit = $('cpTit').value.trim() || (SAL.nome || NEG.nome), feitos = {}; bt.disabled = true;
+    var bt = this, ok = 0, i = 0, tit = SAL.nome || NEG.nome, feitos = {}; bt.disabled = true;
     async function um(d){ if(feitos[d.ep]) return; feitos[d.ep] = 1;
-      try{ var res = await sb.functions.invoke('enviar-push', { body:{ negocio:NEG.id, titulo:tit, corpo:textoPara(d.c, $('cpTxt').value), url:location.origin + '/salao.html?n=' + encodeURIComponent(SLUG), endpoints:[d.ep], tag:'camp-' + Date.now() } });
+      try{ var res = await sb.functions.invoke('enviar-push', { body:{ negocio:NEG.id, titulo:tit, corpo:($('cpTit').value.trim() ? ($('cpTit').value.trim() + '\n') : '') + textoPara(d.c, $('cpTxt').value), url:location.origin + '/salao.html?n=' + encodeURIComponent(SLUG), endpoints:[d.ep], tag:'camp-' + Date.now(), icon:logoPush() } });
         if(res && !res.error && res.data && res.data.enviados > 0) ok++; }catch(e){} }
     while(i < l.length){ var lote = l.slice(i, i + 5); i += 5; bt.textContent = 'A enviar… ' + Math.min(i, l.length) + '/' + l.length; await Promise.all(lote.map(um)); }
     await registarCamp('push', l.length, ok);
@@ -803,7 +827,7 @@
     if(!CAMP_OK){ $('cpHist').innerHTML = '<div style="color:var(--suave);font-size:14px;">Para guardar o histórico, falta correr no Supabase o ficheiro 13-salao-campanhas.sql. (As campanhas funcionam na mesma.)</div>'; return; }
     if(!CAMPH.length){ $('cpHist').innerHTML = '<div style="color:var(--suave);font-size:14px;">Ainda não enviou nenhuma campanha.</div>'; return; }
     $('cpHist').innerHTML = CAMPH.map(function(h){ var d = new Date(h.criado_em);
-      return '<div class="camp-h"><span style="font-size:20px;">' + (h.canal === 'whatsapp' ? '💬' : '🔔') + '</span><div class="q"><b>' + esc(h.titulo || h.texto) + '</b><span>' + d.getDate() + ' ' + MESES[d.getMonth()].slice(0, 3) + ' ' + d.getFullYear() + ' · ' + esc(h.publico || '') + ' · ' + (h.canal === 'whatsapp' ? (h.enviados + ' de ' + h.destinatarios + ' enviados') : (h.enviados + ' de ' + h.destinatarios + ' entregues')) + '</span></div>'
+      return '<div class="camp-h"><span style="font-size:20px;">' + (h.canal === 'whatsapp' ? '💬' : h.canal === 'email' ? '✉️' : '🔔') + '</span><div class="q"><b>' + esc(h.titulo || h.texto) + '</b><span>' + d.getDate() + ' ' + MESES[d.getMonth()].slice(0, 3) + ' ' + d.getFullYear() + ' · ' + esc(h.publico || '') + ' · ' + (h.canal === 'whatsapp' ? (h.enviados + ' de ' + h.destinatarios + ' enviados') : h.canal === 'email' ? (h.destinatarios + ' email(s)') : (h.enviados + ' de ' + h.destinatarios + ' entregues')) + '</span></div>'
         + '<button type="button" class="btn" data-c="' + esc(h.id) + '">' + (h.canal === 'whatsapp' ? 'Continuar' : 'Reutilizar') + '</button></div>'; }).join('');
     $('cpHist').querySelectorAll('[data-c]').forEach(function(b){ b.onclick = function(){ var h = CAMPH.filter(function(x){ return x.id === b.getAttribute('data-c'); })[0]; if(!h) return;
       if(h.canal === 'whatsapp'){ var l = CLI.filter(function(c){ return c.aceita_campanhas === true && !c.bloqueado && telNorm(c.telefone).length >= 9; }).map(function(c){ return { c:c, tel:c.telefone }; }); abrirListaWa(h, l, false); return; }
@@ -1234,9 +1258,11 @@
   // ---------- responder ao cliente ----------
   async function pushCliente(r, titulo, corpo){
     if(!r.push_marcacao) return false;
-    try{ var res = await sb.functions.invoke('enviar-push', { body:{ negocio:NEG.id, titulo:titulo, corpo:corpo, url:location.origin + '/salao.html?n=' + encodeURIComponent(SLUG) + '&m=' + encodeURIComponent(r.id), endpoints:[r.push_marcacao], tag:'marc-' + r.id } });
+    try{ var res = await sb.functions.invoke('enviar-push', { body:{ negocio:NEG.id, titulo:titulo, corpo:corpo, url:location.origin + '/salao.html?n=' + encodeURIComponent(SLUG) + '&m=' + encodeURIComponent(r.id), endpoints:[r.push_marcacao], tag:'marc-' + r.id, icon:logoPush() } });
       return !!(res && !res.error && res.data && res.data.enviados > 0); }catch(e){ return false; }
   }
+  // logótipo do salão para as notificações (em vez do trevo)
+  function logoPush(){ return /^https:\/\//.test(String(SAL.logo || '')) ? SAL.logo : undefined; }
   function waLink(r, texto){ var t = String(r.telefone || '').replace(/\D/g, ''); if(t.length === 9) t = '351' + t; return t ? ('https://wa.me/' + t + '?text=' + encodeURIComponent(texto)) : ''; }
   async function responder(r, tipo, o){
     o = o || {}; var casa = SAL.nome || NEG.nome, patch, titulo, corpo;
