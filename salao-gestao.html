@@ -288,6 +288,7 @@
       <div class="campo"><label for="pgTel">Telefone</label><input id="pgTel" maxlength="20"></div>
       <div class="campo"><label for="pgWa">WhatsApp</label><input id="pgWa" maxlength="20"></div>
       <div class="campo"><label for="pgIg">Instagram</label><input id="pgIg" maxlength="60" placeholder="@salao"></div>
+      <div class="campo"><label for="pgFb">Facebook</label><input id="pgFb" maxlength="120" placeholder="nome da página ou link"></div>
       <div class="campo"><label for="pgCor">Cor do salão</label><input id="pgCor" type="color" value="#8E3653" style="height:44px;padding:4px;"></div>
     </div>
     <div class="campo" style="margin-top:12px;"><label for="pgPol">Política de cancelamento / informações</label><textarea id="pgPol" rows="3" maxlength="400" placeholder="Ex.: Pedimos que avise com 24 h de antecedência se não puder vir."></textarea></div>
@@ -1174,9 +1175,9 @@
       + '<div class="n">' + esc(nome) + '</div><div class="t">Marque aqui o seu horário</div><img class="q" src="' + u + '" alt="QR"><div class="u">' + esc(linkSalao()) + '</div><div class="m">Marcações com 4Trevo</div></div><script>window.onload=function(){setTimeout(function(){window.print();},300);}<\/script></body></html>');
     w.document.close();
   };
-  function pintarPagina(){ pintarFotos(); pintarQR(); $('pgNome').value = SAL.nome || NEG.nome || ''; $('pgFrase').value = SAL.frase || ''; $('pgMorada').value = SAL.morada || ''; $('pgTel').value = SAL.telefone || ''; $('pgWa').value = SAL.whatsapp || ''; $('pgIg').value = SAL.instagram || ''; $('pgCor').value = /^#[0-9a-fA-F]{6}$/.test(SAL.cor || '') ? SAL.cor : '#8E3653'; $('pgPol').value = SAL.politica || ''; $('pgHoje').checked = SAL.mostrarHoje !== false; }
+  function pintarPagina(){ pintarFotos(); pintarQR(); $('pgNome').value = SAL.nome || NEG.nome || ''; $('pgFrase').value = SAL.frase || ''; $('pgMorada').value = SAL.morada || ''; $('pgTel').value = SAL.telefone || ''; $('pgWa').value = SAL.whatsapp || ''; $('pgIg').value = SAL.instagram || ''; $('pgFb').value = SAL.facebook || ''; $('pgCor').value = /^#[0-9a-fA-F]{6}$/.test(SAL.cor || '') ? SAL.cor : '#8E3653'; $('pgPol').value = SAL.politica || ''; $('pgHoje').checked = SAL.mostrarHoje !== false; }
   $('pgGuardar').onclick = async function(){
-    var v = { nome:$('pgNome').value.trim(), frase:$('pgFrase').value.trim(), morada:$('pgMorada').value.trim(), telefone:$('pgTel').value.trim(), whatsapp:$('pgWa').value.trim(), instagram:$('pgIg').value.trim(), cor:$('pgCor').value, politica:$('pgPol').value.trim(), mostrarHoje:$('pgHoje').checked };
+    var v = { nome:$('pgNome').value.trim(), frase:$('pgFrase').value.trim(), morada:$('pgMorada').value.trim(), telefone:$('pgTel').value.trim(), whatsapp:$('pgWa').value.trim(), instagram:$('pgIg').value.trim(), facebook:$('pgFb').value.trim(), cor:$('pgCor').value, politica:$('pgPol').value.trim(), mostrarHoje:$('pgHoje').checked };
     $('pgMsg').textContent = 'A guardar…'; $('pgMsg').className = 'msg';
     var e = await guardarCfg(function(c){ c.salao = Object.assign({}, c.salao || {}, v); });
     $('pgMsg').textContent = e ? ('Erro: ' + e.message) : 'Guardado ✓'; $('pgMsg').className = 'msg ' + (e ? 'erro' : 'ok');
