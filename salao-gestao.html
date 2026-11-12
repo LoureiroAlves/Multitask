@@ -738,7 +738,8 @@
   // destinatários do público escolhido: [{ c, x (stats), ep (notificação), tel }]
   function publicoCamp(){
     var m = statsCli(), fl = $('cpPub').value, hoje = iso(new Date()), mesN = hoje.slice(5, 7), sv = $('cpServ').value;
-    var ult = {}; CLIRES.forEach(function(r){ if(!r.push_marcacao) return; var k = chaveCli(r.telefone, r.nome); if(!ult[k] || r.data > ult[k].data) ult[k] = r; });
+    // todos os telemóveis/browsers onde o cliente ligou as notificações (de todas as marcações dele, as mais recentes primeiro)
+    var eps = {}; CLIRES.slice().sort(function(a, b){ return String(b.criado_em || b.data).localeCompare(String(a.criado_em || a.data)); }).forEach(function(r){ if(!r.push_marcacao) return; var k = chaveCli(r.telefone, r.nome); eps[k] = eps[k] || []; if(eps[k].indexOf(r.push_marcacao) < 0) eps[k].push(r.push_marcacao); });
     return Object.keys(m).map(function(k){ return m[k]; }).filter(function(x){ var c = x.c;
       if(c.aceita_campanhas !== true || c.bloqueado) return false;
       if(/^i\d+$/.test(fl)){ var ms = mesesSem(x.ult); return x.vis > 0 && !x.prox && ms != null && ms >= +fl.slice(1); }
@@ -746,7 +747,7 @@
       if(fl === 'um') return x.vis === 1 && !x.prox;
       if(fl === 'serv') return !!x.serv[sv];
       return true; })
-      .map(function(x){ var c = x.c, tn = telNorm(c.telefone), r = ult[c.tel_norm] || (tn.length >= 9 ? ult[tn] : null); return { c:c, x:x, ep:r ? r.push_marcacao : '', tel:tn.length >= 9 ? c.telefone : '', email:/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(c.email || '').trim()) ? String(c.email).trim() : '' }; });
+      .map(function(x){ var c = x.c, tn = telNorm(c.telefone), le = (eps[c.tel_norm] || []).concat(tn.length >= 9 && tn !== c.tel_norm ? (eps[tn] || []) : []).filter(function(v, i, a){ return a.indexOf(v) === i; }).slice(0, 5); return { c:c, x:x, ep:le[0] || '', eps:le, tel:tn.length >= 9 ? c.telefone : '', email:/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(c.email || '').trim()) ? String(c.email).trim() : '' }; });
   }
   function descPub(){ var o = $('cpPub').selectedOptions[0]; var t = o ? o.textContent : ''; return $('cpPub').value === 'serv' ? ('Fizeram ' + $('cpServ').value) : t; }
   function pintarCampanha(){
@@ -794,12 +795,13 @@
     if(!validaCamp()) return; var l = publicoCamp().filter(function(d){ return d.ep; }); if(!l.length) return;
     if(!confirm('Enviar esta notificação a ' + l.length + ' cliente(s)?')) return;
     var bt = this, ok = 0, i = 0, tit = SAL.nome || NEG.nome, feitos = {}; bt.disabled = true;
-    async function um(d){ if(feitos[d.ep]) return; feitos[d.ep] = 1;
-      try{ var res = await sb.functions.invoke('enviar-push', { body:{ negocio:NEG.id, titulo:tit, corpo:($('cpTit').value.trim() ? ($('cpTit').value.trim() + '\n') : '') + textoPara(d.c, $('cpTxt').value), url:location.origin + '/salao.html?n=' + encodeURIComponent(SLUG), endpoints:[d.ep], tag:'camp-' + Date.now(), icon:logoPush() } });
-        if(res && !res.error && res.data && res.data.enviados > 0) ok++; }catch(e){} }
+    var falhas = [];
+    async function um(d){ var lst = d.eps.filter(function(e){ return !feitos[e]; }); if(!lst.length) return; lst.forEach(function(e){ feitos[e] = 1; });
+      try{ var res = await sb.functions.invoke('enviar-push', { body:{ negocio:NEG.id, titulo:tit, corpo:($('cpTit').value.trim() ? ($('cpTit').value.trim() + '\n') : '') + textoPara(d.c, $('cpTxt').value), url:location.origin + '/salao.html?n=' + encodeURIComponent(SLUG), endpoints:lst, tag:'camp-' + Date.now(), icon:logoPush() } });
+        if(res && !res.error && res.data && res.data.enviados > 0) ok++; else falhas.push((d.c.nome || '?') + (res && res.error ? (' (' + (res.error.message || 'erro') + ')') : '')); }catch(e){ falhas.push((d.c.nome || '?') + ' (' + (e.message || e) + ')'); } }
     while(i < l.length){ var lote = l.slice(i, i + 5); i += 5; bt.textContent = 'A enviar… ' + Math.min(i, l.length) + '/' + l.length; await Promise.all(lote.map(um)); }
     await registarCamp('push', l.length, ok);
-    bt.disabled = false; $('cpMsg').textContent = ok ? ('✓ Notificação entregue a ' + ok + ' de ' + l.length + ' cliente(s).' + (ok < l.length ? ' Os outros desligaram as notificações ou mudaram de telemóvel.' : '')) : 'Nenhuma notificação foi entregue (os clientes podem ter desligado as notificações).';
+    bt.disabled = false; $('cpMsg').textContent = ok ? ('✓ Notificação entregue a ' + ok + ' de ' + l.length + ' cliente(s).' + (ok < l.length ? ' Os outros desligaram as notificações ou mudaram de telemóvel.' : '')) : 'Nenhuma notificação foi entregue (os clientes podem ter desligado as notificações ou mudado de telemóvel).' + (falhas.length ? (' Não chegou a: ' + falhas.slice(0, 5).join(', ') + '.') : '');
     $('cpMsg').className = 'msg' + (ok ? '' : ' erro'); toast(ok ? 'Campanha enviada ✓' : 'Nada entregue'); carregarCampanhas();
   };
   $('cpWa').onclick = async function(){
