@@ -44,12 +44,13 @@
   .btn-ok{ min-height:40px; border:none; border-radius:9px; padding:0 12px; background:var(--verde); color:#fff; font-weight:800; }
   .btn-lnk{ min-height:40px; border:none; background:transparent; color:var(--ac); font-weight:700; padding:0 8px; }
   .titulo-dia{ font-size:22px; font-weight:800; flex:1 1 240px; }
-  #aHoje.on-hoje{ background:var(--ink); color:#fff; border-color:var(--ink); }
+  #aHoje{ color:var(--ac); border:1.5px solid var(--ac); font-weight:800; }
+  #aHoje.on-hoje{ background:var(--ac); color:#fff; border-color:var(--ac); }
   .vista{ display:flex; background:#fff; border:1px solid var(--borda); border-radius:10px; padding:3px; }
   .vista button{ border:none; border-radius:8px; padding:8px 14px; background:transparent; font-weight:700; color:var(--ink); }
   .vista button.on{ background:var(--ink); color:#fff; }
   .corpo{ padding:0 24px 28px; display:flex; flex-wrap:wrap; gap:20px; align-items:flex-start; }
-  .agenda{ flex:999 1 640px; min-width:0; background:#fff; border-radius:16px; overflow-x:auto; }
+  .agenda{ flex:999 1 640px; min-width:0; background:#fff; border-radius:16px; overflow-x:auto; border:1.5px solid var(--ac); }
   .ag-cab{ display:grid; border-bottom:1px solid var(--linha); position:sticky; top:0; background:#fff; z-index:2; }
   .ag-cab div{ padding:10px 12px; font-weight:800; font-size:14px; border-left:1px solid var(--linha); }
   .ag-cab div.hoje{ color:var(--ac); }
@@ -82,6 +83,7 @@
   .camp-conta{ display:flex; gap:8px; flex-wrap:wrap; font-size:13px; }
   .camp-conta span{ background:#F4F1EE; border-radius:999px; padding:5px 10px; font-weight:700; }
   .camp-conta span b{ color:var(--ac); }
+  .camp-aviso{ background:#FFF7E8; border:1px solid #F0DDB5; color:#6B4E14; border-radius:10px; padding:10px 12px; font-size:13px; line-height:1.4; }
   .camp-botoes{ display:flex; gap:8px; flex-wrap:wrap; } .camp-botoes button{ flex:1 1 180px; }
   .camp-prev-tit{ font-size:12px; font-weight:800; color:var(--suave); margin:2px 0 6px; text-transform:uppercase; letter-spacing:.04em; }
   .camp-prev{ display:flex; flex-direction:column; gap:12px; }
@@ -98,6 +100,8 @@
   .wa-it a{ background:#25D366; color:#fff; text-decoration:none; font-weight:800; font-size:13px; border-radius:999px; padding:7px 12px; white-space:nowrap; }
   .wa-it.feito a{ background:#fff; color:#1e7a43; border:1.5px solid #9BD3AE; }
   @media (max-width: 860px){ .camp-grelha{ grid-template-columns:1fr; } }
+  .resp-cli{ font-size:13px; font-weight:700; border-radius:8px; padding:6px 8px; margin-top:4px; }
+  .resp-cli.ok{ background:#EEF5EF; color:#2F6B3E; } .resp-cli.nao{ background:#FBEDED; color:#8A2A2A; }
   .b-fantasma{ background:repeating-linear-gradient(135deg, #fff, #fff 6px, #F3E6EA 6px, #F3E6EA 12px); border:1.5px dashed var(--ac); opacity:.85; }
   .b-pendente{ background:#fff; border:2px dashed var(--ac); }
   .b-proposta{ background:#F3E6EA; border-left:4px solid var(--ac); }
@@ -245,7 +249,7 @@
   <section id="tAgenda">
     <div class="barra">
       <button type="button" class="ico" id="aAnt" aria-label="Anterior">‹</button>
-      <button type="button" class="btn" id="aHoje">Hoje</button>
+      <button type="button" class="btn" id="aHoje" title="Voltar a hoje" style="min-width:84px;">Hoje</button>
       <button type="button" class="ico" id="aSeg" aria-label="Seguinte">›</button>
       <div class="titulo-dia" id="aTitulo"></div>
       <select id="aProf" class="hide" aria-label="Profissional" style="min-height:40px;border:1.5px solid var(--borda);border-radius:10px;padding:0 10px;font-weight:700;"></select>
@@ -315,16 +319,17 @@
   <!-- CAMPANHAS -->
   <section id="tCampanhas" class="pag hide" style="max-width:1000px;">
     <h2>Campanhas</h2>
-    <p class="sub">Envie uma novidade, promoção ou lembrete aos seus clientes, por notificação ou WhatsApp. Só recebem os clientes que aceitaram receber campanhas (e que não estão bloqueados).</p>
+    <p class="sub">Envie uma novidade, promoção ou lembrete aos seus clientes, por notificação, WhatsApp ou email. Só recebem os clientes que aceitaram receber campanhas (e que não estão bloqueados).</p>
     <div class="camp-grelha">
       <div class="camp-form">
         <div class="campo"><label for="cpPub">Para quem</label><select id="cpPub"></select></div>
         <div class="campo hide" id="cpServBx"><label for="cpServ">Serviço</label><select id="cpServ"></select></div>
         <div class="camp-conta" id="cpConta"></div>
-        <div class="campo"><label for="cpTit">Título <span style="font-weight:400;color:var(--suave);">(aparece a negrito na notificação)</span></label><input id="cpTit" maxlength="60" placeholder="Ex.: Novembro com 15% de desconto"></div>
+        <div class="campo"><label for="cpTit">Título <span style="font-weight:400;color:var(--suave);">(a negrito na notificação; o nome e o logótipo do salão já aparecem por cima)</span></label><input id="cpTit" maxlength="60" placeholder="Ex.: Novembro com 15% de desconto"></div>
         <div class="campo"><label for="cpTxt">Mensagem</label><textarea id="cpTxt" rows="4" maxlength="500" placeholder="Olá {nome}! Este mês temos…"></textarea><div style="font-size:12px;color:var(--suave);margin-top:3px;">Escreva <b>{nome}</b> para pôr o primeiro nome de cada cliente. <span id="cpCars"></span></div></div>
         <label class="chk-l"><input type="checkbox" id="cpLink" checked> Juntar o link da página do salão (para marcar)</label>
-        <div class="camp-botoes"><button type="button" class="btn-ac" id="cpPush">🔔 Enviar notificação</button><button type="button" class="btn" id="cpWa">💬 Enviar por WhatsApp</button></div>
+        <div class="camp-botoes"><button type="button" class="btn-ac" id="cpPush">🔔 Enviar notificação</button><button type="button" class="btn" id="cpWa">💬 Enviar por WhatsApp</button><button type="button" class="btn" id="cpMail">✉️ Enviar por email</button></div>
+        <div class="camp-aviso hide" id="cpAviso"></div>
         <div class="msg" id="cpMsg"></div>
       </div>
       <div>
@@ -435,6 +440,7 @@
     aplicarCor(); $('tNome').innerHTML = esc(SAL.nome || NEG.nome) + ' <span>· Gestão</span>';
     $('verPagina').href = (/(^|\.)4trevo\.com$/i.test(location.hostname) ? '/' : '/salao.html?n=') + encodeURIComponent(SLUG);
     document.title = (SAL.nome || NEG.nome) + ' · Gestão · 4 Trevo';
+    if(/^https:\/\//.test(String(SAL.logo || ''))){ try{ var ati = document.querySelector('link[rel="apple-touch-icon"]'); if(ati) ati.href = SAL.logo; }catch(e){} }
     if(params.get('d')) dataSel = dDe(params.get('d'));
     var t = (location.hash || '').replace('#', ''); if(['servicos','pagina','horario','equipa','clientes','relatorios','campanhas'].indexOf(t) >= 0) irPara(t);
     await carregarRes();
@@ -732,7 +738,8 @@
   // destinatários do público escolhido: [{ c, x (stats), ep (notificação), tel }]
   function publicoCamp(){
     var m = statsCli(), fl = $('cpPub').value, hoje = iso(new Date()), mesN = hoje.slice(5, 7), sv = $('cpServ').value;
-    var ult = {}; CLIRES.forEach(function(r){ if(!r.push_marcacao) return; var k = chaveCli(r.telefone, r.nome); if(!ult[k] || r.data > ult[k].data) ult[k] = r; });
+    // todos os telemóveis/browsers onde o cliente ligou as notificações (de todas as marcações dele, as mais recentes primeiro)
+    var eps = {}; CLIRES.slice().sort(function(a, b){ return String(b.criado_em || b.data).localeCompare(String(a.criado_em || a.data)); }).forEach(function(r){ if(!r.push_marcacao) return; var k = chaveCli(r.telefone, r.nome); eps[k] = eps[k] || []; if(eps[k].indexOf(r.push_marcacao) < 0) eps[k].push(r.push_marcacao); });
     return Object.keys(m).map(function(k){ return m[k]; }).filter(function(x){ var c = x.c;
       if(c.aceita_campanhas !== true || c.bloqueado) return false;
       if(/^i\d+$/.test(fl)){ var ms = mesesSem(x.ult); return x.vis > 0 && !x.prox && ms != null && ms >= +fl.slice(1); }
@@ -740,23 +747,44 @@
       if(fl === 'um') return x.vis === 1 && !x.prox;
       if(fl === 'serv') return !!x.serv[sv];
       return true; })
-      .map(function(x){ var c = x.c, tn = telNorm(c.telefone), r = ult[c.tel_norm] || (tn.length >= 9 ? ult[tn] : null); return { c:c, x:x, ep:r ? r.push_marcacao : '', tel:tn.length >= 9 ? c.telefone : '' }; });
+      .map(function(x){ var c = x.c, tn = telNorm(c.telefone), le = (eps[c.tel_norm] || []).concat(tn.length >= 9 && tn !== c.tel_norm ? (eps[tn] || []) : []).filter(function(v, i, a){ return a.indexOf(v) === i; }).slice(0, 5); return { c:c, x:x, ep:le[0] || '', eps:le, tel:tn.length >= 9 ? c.telefone : '', email:/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(c.email || '').trim()) ? String(c.email).trim() : '' }; });
   }
   function descPub(){ var o = $('cpPub').selectedOptions[0]; var t = o ? o.textContent : ''; return $('cpPub').value === 'serv' ? ('Fizeram ' + $('cpServ').value) : t; }
   function pintarCampanha(){
     $('cpServBx').classList.toggle('hide', $('cpPub').value !== 'serv');
-    var l = publicoCamp(), np = l.filter(function(d){ return d.ep; }).length, nw = l.filter(function(d){ return d.tel; }).length;
+    var l = publicoCamp(), np = l.filter(function(d){ return d.ep; }).length, nw = l.filter(function(d){ return d.tel; }).length, nm = l.filter(function(d){ return d.email; }).length;
     var tot = CLI.filter(function(c){ return c.aceita_campanhas === true && !c.bloqueado; }).length;
-    $('cpConta').innerHTML = '<span><b>' + l.length + '</b> cliente(s)</span><span>🔔 <b>' + np + '</b> com notificações</span><span>💬 <b>' + nw + '</b> com telemóvel</span>' + (!tot ? '<span style="background:#FBEDED;color:#A33;">Ainda nenhum cliente aceitou campanhas</span>' : '');
+    $('cpConta').innerHTML = '<span><b>' + l.length + '</b> cliente(s)</span><span>🔔 <b>' + np + '</b> com notificações</span><span>💬 <b>' + nw + '</b> com telemóvel</span>' + '<span>✉️ <b>' + nm + '</b> com email</span>';
+    var semAut = CLI.filter(function(c){ return c.aceita_campanhas !== true && !c.bloqueado && (telNorm(c.telefone).length >= 9 || c.email); }).length;
+    $('cpAviso').classList.toggle('hide', !semAut);
+    $('cpAviso').innerHTML = semAut ? ('<b>' + semAut + ' cliente(s) com contacto ainda não aceitaram receber campanhas</b>, por isso não entram aqui. O cliente aceita ao marcar pela página (caixa "Aceito receber novidades"), ou, se ele lhe disse que aceita, marque <b>"Aceita receber campanhas"</b> na ficha dele (separador Clientes).') : '';
     $('cpPush').textContent = '🔔 Enviar notificação' + (np ? (' (' + np + ')') : ''); $('cpPush').disabled = !np;
     $('cpWa').textContent = '💬 Enviar por WhatsApp' + (nw ? (' (' + nw + ')') : ''); $('cpWa').disabled = !nw;
-    var ex = l[0] ? l[0].c : { nome:'Maria' }, tit = $('cpTit').value.trim() || (SAL.nome || NEG.nome), txt = textoPara(ex, $('cpTxt').value) || 'A sua mensagem aparece aqui.';
+    $('cpMail').textContent = '✉️ Enviar por email' + (nm ? (' (' + nm + ')') : ''); $('cpMail').disabled = !nm;
+    var ex = l[0] ? l[0].c : { nome:'Maria' }, tit = $('cpTit').value.trim() || (SAL.nome || NEG.nome), txt = (textoPara(ex, $('cpTxt').value) || 'A sua mensagem aparece aqui.');
     var wtxt = textoPara(ex, $('cpTxt').value) + ($('cpLink').checked ? ('\n\n' + linkPublico()) : '');
     $('cpCars').textContent = $('cpTxt').value.length + '/500';
-    $('cpPrev').innerHTML = '<div class="camp-not"><span class="ic"></span><div><b>' + esc(tit) + '</b><p>' + esc(txt) + '</p></div></div>'
-      + '<div class="camp-wa"><div>' + (($('cpTxt').value.trim()) ? (($('cpTit').value.trim() ? ('*' + esc($('cpTit').value.trim()) + '*\n') : '') + esc(wtxt)) : 'A sua mensagem aparece aqui.') + '</div></div>'
+    $('cpPrev').innerHTML = '<div class="camp-not">' + (logoPush() ? ('<img class="ic" src="' + esc(SAL.logo) + '" alt="" style="object-fit:cover;background:#fff;">') : '<span class="ic"></span>') + '<div><small style="display:block;font-size:11px;color:var(--suave);font-weight:700;text-transform:uppercase;letter-spacing:.03em;">' + esc(SAL.nome || NEG.nome) + '</small><b>' + esc(tit) + '</b><p>' + esc(txt) + '</p></div></div>'
+      + '<div class="camp-wa"><div>' + (($('cpTxt').value.trim()) ? ('*' + esc(SAL.nome || NEG.nome) + '*\n' + ($('cpTit').value.trim() ? ('*' + esc($('cpTit').value.trim()) + '*\n') : '') + esc(wtxt)) : 'A sua mensagem aparece aqui.') + '</div></div>'
       + '<div style="font-size:12px;color:var(--suave);">Exemplo com o nome de ' + esc(primeiroNome(ex.nome) || 'um cliente') + '.</div>';
   }
+  $('cpMail').onclick = async function(){
+    if(!validaCamp()) return; var l = publicoCamp().filter(function(d){ return d.email; }); if(!l.length) return;
+    await registarCamp('email', l.length, l.length);
+    var tit = $('cpTit').value.trim() || ('Novidades · ' + (SAL.nome || NEG.nome));
+    var corpo = textoPara({ nome:'' }, $('cpTxt').value) + ($('cpLink').checked ? ('\n\n' + linkPublico()) : '') + '\n\n' + (SAL.nome || NEG.nome) + '\n\n—\nRecebe este email porque aceitou receber novidades de ' + (SAL.nome || NEG.nome) + '. Se não quiser receber mais, responda a este email a dizer.';
+    var grupos = []; for(var i = 0; i < l.length; i += 40) grupos.push(l.slice(i, i + 40));
+    function mailto(g){ return 'mailto:?bcc=' + g.map(function(d){ return encodeURIComponent(d.email); }).join(',') + '&subject=' + encodeURIComponent(tit) + '&body=' + encodeURIComponent(corpo); }
+    var f = modal('<h3>✉️ Enviar por email</h3><div style="font-size:14px;color:var(--suave);">Abre o seu programa de email com a mensagem já escrita e os ' + l.length + ' cliente(s) em <b>Bcc</b> (escondidos — ninguém vê o email dos outros). Só tem de carregar em enviar.</div>'
+      + grupos.map(function(g, i){ return '<a class="btn-ac" style="display:flex;align-items:center;justify-content:center;text-decoration:none;" href="' + esc(mailto(g)) + '">Abrir email' + (grupos.length > 1 ? (' · grupo ' + (i + 1) + ' (' + g.length + ')') : '') + '</a>'; }).join('')
+      + '<div style="font-size:13px;color:var(--suave);">Usa o Gmail no browser, ou o email não abriu? Copie e cole:</div>'
+      + '<div style="display:flex;gap:8px;flex-wrap:wrap;"><button type="button" class="btn" id="mCopE">Copiar os emails</button><button type="button" class="btn" id="mCopT">Copiar a mensagem</button></div><div class="msg" id="mMsg"></div>'
+      + '<div style="font-size:12px;color:var(--suave);">No email não dá para pôr o nome de cada cliente ({nome} fica vazio). Para isso use a notificação ou o WhatsApp.</div>');
+    function copia(t, ok){ (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(function(){ $('mMsg').textContent = ok; $('mMsg').className = 'msg'; }).catch(function(){ prompt('Copie:', t); }); }
+    f.querySelector('#mCopE').onclick = function(){ copia(l.map(function(d){ return d.email; }).join(', '), '✓ Emails copiados — cole no campo Bcc.'); };
+    f.querySelector('#mCopT').onclick = function(){ copia(tit + '\n\n' + corpo, '✓ Mensagem copiada.'); };
+    carregarCampanhas();
+  };
   ['cpPub','cpServ','cpTit','cpTxt','cpLink'].forEach(function(id){ $(id).addEventListener(id === 'cpTit' || id === 'cpTxt' ? 'input' : 'change', pintarCampanha); });
   function validaCamp(){ var m = $('cpMsg'); if(!$('cpTxt').value.trim()){ m.textContent = 'Escreva a mensagem.'; m.className = 'msg erro'; $('cpTxt').focus(); return false; }
     var rec = CAMPH.filter(function(h){ return Date.now() - new Date(h.criado_em).getTime() < 7 * 86400000; })[0];
@@ -767,12 +795,13 @@
     if(!validaCamp()) return; var l = publicoCamp().filter(function(d){ return d.ep; }); if(!l.length) return;
     if(!confirm('Enviar esta notificação a ' + l.length + ' cliente(s)?')) return;
     var bt = this, ok = 0, i = 0, tit = $('cpTit').value.trim() || (SAL.nome || NEG.nome), feitos = {}; bt.disabled = true;
-    async function um(d){ if(feitos[d.ep]) return; feitos[d.ep] = 1;
-      try{ var res = await sb.functions.invoke('enviar-push', { body:{ negocio:NEG.id, titulo:tit, corpo:textoPara(d.c, $('cpTxt').value), url:location.origin + '/salao.html?n=' + encodeURIComponent(SLUG), endpoints:[d.ep], tag:'camp-' + Date.now() } });
-        if(res && !res.error && res.data && res.data.enviados > 0) ok++; }catch(e){} }
+    var falhas = [];
+    async function um(d){ var lst = d.eps.filter(function(e){ return !feitos[e]; }); if(!lst.length) return; lst.forEach(function(e){ feitos[e] = 1; });
+      try{ var res = await sb.functions.invoke('enviar-push', { body:{ negocio:NEG.id, titulo:tit, corpo:textoPara(d.c, $('cpTxt').value), url:location.origin + '/salao.html?n=' + encodeURIComponent(SLUG), endpoints:lst, tag:'camp-' + Date.now(), icon:logoPush() } });
+        if(res && !res.error && res.data && res.data.enviados > 0) ok++; else falhas.push((d.c.nome || '?') + (res && res.error ? (' (' + (res.error.message || 'erro') + ')') : '')); }catch(e){ falhas.push((d.c.nome || '?') + ' (' + (e.message || e) + ')'); } }
     while(i < l.length){ var lote = l.slice(i, i + 5); i += 5; bt.textContent = 'A enviar… ' + Math.min(i, l.length) + '/' + l.length; await Promise.all(lote.map(um)); }
     await registarCamp('push', l.length, ok);
-    bt.disabled = false; $('cpMsg').textContent = ok ? ('✓ Notificação entregue a ' + ok + ' de ' + l.length + ' cliente(s).' + (ok < l.length ? ' Os outros desligaram as notificações ou mudaram de telemóvel.' : '')) : 'Nenhuma notificação foi entregue (os clientes podem ter desligado as notificações).';
+    bt.disabled = false; $('cpMsg').textContent = ok ? ('✓ Notificação entregue a ' + ok + ' de ' + l.length + ' cliente(s).' + (ok < l.length ? ' Os outros desligaram as notificações ou mudaram de telemóvel.' : '')) : 'Nenhuma notificação foi entregue (os clientes podem ter desligado as notificações ou mudado de telemóvel).' + (falhas.length ? (' Não chegou a: ' + falhas.slice(0, 5).join(', ') + '.') : '');
     $('cpMsg').className = 'msg' + (ok ? '' : ' erro'); toast(ok ? 'Campanha enviada ✓' : 'Nada entregue'); carregarCampanhas();
   };
   $('cpWa').onclick = async function(){
@@ -788,7 +817,7 @@
     var juntaLink = link === true ? $('cpLink').checked : (def ? def.link !== false : h._link !== false);
     if(link === true){ try{ localStorage.setItem('camp_wa_def_' + h.id, JSON.stringify({ link:juntaLink, lista:l.map(function(d){ return d.c.tel_norm; }) })); }catch(e){} }
     else if(def && Array.isArray(def.lista)){ var lt = l.filter(function(d){ return def.lista.indexOf(d.c.tel_norm) >= 0; }); if(lt.length) l = lt; }
-    function txt(c){ return (h.titulo ? ('*' + h.titulo + '*\n') : '') + textoPara(c, h.texto) + (juntaLink ? ('\n\n' + linkPublico()) : ''); }
+    function txt(c){ return '*' + (SAL.nome || NEG.nome) + '*\n' + (h.titulo ? ('*' + h.titulo + '*\n') : '') + textoPara(c, h.texto) + (juntaLink ? ('\n\n' + linkPublico()) : ''); }
     function conta(){ return Object.keys(feito).length; }
     var f = modal('<h3>💬 Enviar por WhatsApp</h3><div style="font-size:14px;color:var(--suave);">O WhatsApp não deixa enviar a várias pessoas de uma vez. Toque em <b>Abrir</b> em cada cliente: a mensagem já vai escrita, só tem de carregar em enviar.</div>'
       + '<div style="font-weight:800;font-size:14px;" id="waConta"></div>'
@@ -802,7 +831,7 @@
     if(!CAMP_OK){ $('cpHist').innerHTML = '<div style="color:var(--suave);font-size:14px;">Para guardar o histórico, falta correr no Supabase o ficheiro 13-salao-campanhas.sql. (As campanhas funcionam na mesma.)</div>'; return; }
     if(!CAMPH.length){ $('cpHist').innerHTML = '<div style="color:var(--suave);font-size:14px;">Ainda não enviou nenhuma campanha.</div>'; return; }
     $('cpHist').innerHTML = CAMPH.map(function(h){ var d = new Date(h.criado_em);
-      return '<div class="camp-h"><span style="font-size:20px;">' + (h.canal === 'whatsapp' ? '💬' : '🔔') + '</span><div class="q"><b>' + esc(h.titulo || h.texto) + '</b><span>' + d.getDate() + ' ' + MESES[d.getMonth()].slice(0, 3) + ' ' + d.getFullYear() + ' · ' + esc(h.publico || '') + ' · ' + (h.canal === 'whatsapp' ? (h.enviados + ' de ' + h.destinatarios + ' enviados') : (h.enviados + ' de ' + h.destinatarios + ' entregues')) + '</span></div>'
+      return '<div class="camp-h"><span style="font-size:20px;">' + (h.canal === 'whatsapp' ? '💬' : h.canal === 'email' ? '✉️' : '🔔') + '</span><div class="q"><b>' + esc(h.titulo || h.texto) + '</b><span>' + d.getDate() + ' ' + MESES[d.getMonth()].slice(0, 3) + ' ' + d.getFullYear() + ' · ' + esc(h.publico || '') + ' · ' + (h.canal === 'whatsapp' ? (h.enviados + ' de ' + h.destinatarios + ' enviados') : h.canal === 'email' ? (h.destinatarios + ' email(s)') : (h.enviados + ' de ' + h.destinatarios + ' entregues')) + '</span></div>'
         + '<button type="button" class="btn" data-c="' + esc(h.id) + '">' + (h.canal === 'whatsapp' ? 'Continuar' : 'Reutilizar') + '</button></div>'; }).join('');
     $('cpHist').querySelectorAll('[data-c]').forEach(function(b){ b.onclick = function(){ var h = CAMPH.filter(function(x){ return x.id === b.getAttribute('data-c'); })[0]; if(!h) return;
       if(h.canal === 'whatsapp'){ var l = CLI.filter(function(c){ return c.aceita_campanhas === true && !c.bloqueado && telNorm(c.telefone).length >= 9; }).map(function(c){ return { c:c, tel:c.telefone }; }); abrirListaWa(h, l, false); return; }
@@ -1072,6 +1101,12 @@
     $('rPend').textContent = doD.filter(function(r){ return r.estado === 'pendente'; }).length;
     try{ $('rLivre').textContent = horasLivres(k0, 60); }catch(e){ $('rLivre').textContent = '—'; }
     $('aHoje').classList.toggle('on-hoje', k0 === hoje);
+    // entre as setas: o dia (ou a semana / o mês) que está a ver
+    var dS = dDe(k0), lab;
+    if(vista === 'mes') lab = MESES[dS.getMonth()].charAt(0).toUpperCase() + MESES[dS.getMonth()].slice(1, 3) + ' ' + dS.getFullYear();
+    else if(vista === 'semana'){ var iv = intervalo(), a = dDe(iv[0]), b = dDe(iv[1]); lab = a.getDate() + '–' + b.getDate() + ' ' + MESES[b.getMonth()].slice(0, 3); }
+    else lab = DIAS_C[dS.getDay()] + ' ' + dS.getDate();
+    $('aHoje').textContent = lab;
   }
   function pintarAgenda(){
     pintarResumo();
@@ -1116,10 +1151,14 @@
       var k = c.dia, dd = dDe(k), hh = horarioDe(dd.getDay()), fechado = !hh || fechadoEm(k) || c.folga;
       h += '<div class="ag-col' + (fechado ? ' fechado' : '') + '" data-dia="' + k + '" data-prof="' + esc(c.prof === '__sem' ? '' : c.prof) + '" style="height:' + alt + 'px;">';
       if(k === hoje){ var n = new Date(), nm = n.getHours() * 60 + n.getMinutes(); if(nm >= ini && nm <= fim) h += '<div class="agora" style="top:' + ((nm - ini) * PX) + 'px;"></div>'; }
-      ausDia(k).filter(function(b){ return c.prof === '__sem' ? false : c.prof ? ausPara(b, c.prof) : (!b.prof || !profFiltro || b.prof === profFiltro); }).forEach(function(b){
+      var ausCol = ausDia(k).filter(function(b){ return c.prof === '__sem' ? false : c.prof ? ausPara(b, c.prof) : (!b.prof || !profFiltro || b.prof === profFiltro); });
+      // vista sem colunas por pessoa: cada pessoa ausente tem a sua faixa (lado a lado, pela ordem da equipa), para nenhuma tapar a outra
+      var faixas = []; ausCol.forEach(function(b){ if(!c.prof && b.prof && faixas.indexOf(b.prof) < 0) faixas.push(b.prof); });
+      faixas.sort(function(x, y){ return EQ().findIndex(function(p){ return p.id === x; }) - EQ().findIndex(function(p){ return p.id === y; }); });
+      ausCol.forEach(function(b){
         var a0 = Math.max(ini, b.ini), a1 = Math.min(fim, b.fim); if(a1 <= a0) return;
         var lab = (b.a.motivo || 'Ausência') + (!c.prof && b.prof ? (' · ' + (nomeProf(b.prof) || '')) : (!b.prof && EQ().length ? ' · salão' : ''));
-        h += '<div class="aus" data-aus="' + esc(b.a.id) + '" title="' + esc(lab + ' · ' + ausQuando(b.a) + ' — tocar para mudar') + '" style="top:' + ((a0 - ini) * PX + 1) + 'px;height:' + Math.max(18, (a1 - a0) * PX - 2) + 'px;' + (!c.prof && b.prof ? ('left:auto;right:2px;width:20px;padding:3px 0;text-align:center;z-index:2;border:none;border-right:3px solid ' + corProf(b.prof) + ';') : '') + '">' + (!c.prof && b.prof ? '' : esc(lab)) + '</div>';
+        h += '<div class="aus" data-aus="' + esc(b.a.id) + '" title="' + esc(lab + ' · ' + ausQuando(b.a) + ' — tocar para mudar') + '" style="top:' + ((a0 - ini) * PX + 1) + 'px;height:' + Math.max(18, (a1 - a0) * PX - 2) + 'px;' + (!c.prof && b.prof ? ('left:auto;right:' + (2 + faixas.indexOf(b.prof) * 22) + 'px;width:20px;padding:3px 0;text-align:center;z-index:2;border:none;border-right:3px solid ' + corProf(b.prof) + ';color:' + corProf(b.prof) + ';font-weight:800;') : '') + '">' + (!c.prof && b.prof ? esc((nomeProf(b.prof) || '?').charAt(0).toUpperCase()) : esc(lab)) + '</div>';
       });
       var fant = RES.filter(function(r){ return r.proposta_hora && r.estado !== 'cancelada' && (r.proposta_data || r.data) === k && minDe(r.proposta_hora) != null; })
         .map(function(r){ return Object.assign({}, r, { id:r.id, _fantasma:true, data:k, hora:r.proposta_hora }); });
@@ -1176,7 +1215,8 @@
     var ped = RES.filter(function(r){ return r.estado === 'pendente' && !r.proposta_hora && r.data >= hoje; });
     var alt = RES.filter(function(r){ return r.estado !== 'cancelada' && (r.alt_hora) && r.data >= hoje; });
     var esp = RES.filter(function(r){ return r.estado !== 'cancelada' && r.proposta_hora && r.data >= hoje; });
-    var todos = ped.concat(alt.filter(function(r){ return ped.indexOf(r) < 0; })).concat(esp.filter(function(r){ return ped.indexOf(r) < 0; }));
+    var rec = RES.filter(function(r){ return r.estado === 'confirmada' && r.resposta_cliente === 'recusou' && !r.proposta_hora && r.data >= hoje; });
+    var todos = rec.concat(ped).concat(alt.filter(function(r){ return ped.indexOf(r) < 0; })).concat(esp.filter(function(r){ return ped.indexOf(r) < 0; }));
     $('nPed').textContent = todos.length;
     if(!todos.length){ $('pedidos').innerHTML = '<div style="color:var(--suave);font-size:14px;">Nada por responder. 👌</div>'; return; }
     $('pedidos').innerHTML = todos.map(function(r){
@@ -1186,12 +1226,15 @@
         + (r.alt_hora ? ('<div style="font-size:13px;color:var(--ac);font-weight:700;">Pede para mudar para as ' + esc(r.alt_hora) + '</div>') : '')
         + (r.obs ? ('<div style="font-size:12px;color:var(--suave);">“' + esc(r.obs) + '”</div>') : '')
         + (r.proposta_hora ? ('<div style="font-size:13px;color:var(--ac);font-weight:700;">🕘 Proposta: ' + esc(propTxt(r)) + ' · à espera do cliente</div>') : '')
+        + (!r.proposta_hora && r.resposta_cliente === 'aceitou' ? '<div class="resp-cli ok">✅ O cliente aceitou esta nova hora — dê o OK para ficar na agenda</div>' : '')
+        + (!r.proposta_hora && r.resposta_cliente === 'recusou' ? ('<div class="resp-cli nao">❌ O cliente não aceitou a proposta' + (r.estado === 'confirmada' ? ' — por agora mantém-se esta hora' : ' — o pedido continua à espera') + '. Escolha o que fazer.</div>') : '')
         + '</div><div class="pedido-acoes">'
         + (r.proposta_hora ? ('<button type="button" class="btn" data-a="ver" data-id="' + esc(r.id) + '">Ver</button><button type="button" class="btn-lnk" data-a="semprop" data-id="' + esc(r.id) + '">Retirar proposta</button>') : r.alt_hora ? ('<button type="button" class="btn-ok" data-a="altok" data-id="' + esc(r.id) + '">Aceitar mudança</button><button type="button" class="btn" data-a="altnao" data-id="' + esc(r.id) + '">Manter</button>')
-                     : ('<button type="button" class="btn-ok" data-a="confirmar" data-id="' + esc(r.id) + '">Confirmar</button><button type="button" class="btn" data-a="propor" data-id="' + esc(r.id) + '">Propor outra hora</button><button type="button" class="btn-lnk" data-a="recusar" data-id="' + esc(r.id) + '">Recusar</button>'))
+                     : (r.estado === 'confirmada' && r.resposta_cliente === 'recusou') ? ('<button type="button" class="btn-ok" data-a="manter" data-id="' + esc(r.id) + '">Manter esta hora</button><button type="button" class="btn" data-a="propor" data-id="' + esc(r.id) + '">Propor outra hora</button><button type="button" class="btn-lnk" data-a="desmarcar" data-id="' + esc(r.id) + '">Cancelar marcação</button>')
+                     : ('<button type="button" class="btn-ok" data-a="confirmar" data-id="' + esc(r.id) + '">' + (r.resposta_cliente === 'aceitou' ? 'OK, confirmar' : 'Confirmar') + '</button><button type="button" class="btn" data-a="propor" data-id="' + esc(r.id) + '">Propor outra hora</button><button type="button" class="btn-lnk" data-a="recusar" data-id="' + esc(r.id) + '">Recusar</button>'))
         + '</div></div>';
     }).join('');
-    $('pedidos').querySelectorAll('[data-a]').forEach(function(b){ b.onclick = function(){ var r = RES.filter(function(x){ return x.id === b.getAttribute('data-id'); })[0]; if(!r) return; var a = b.getAttribute('data-a'); if(a === 'propor' || a === 'ver') abrirDetalhe(r, true); else responder(r, a); }; });
+    $('pedidos').querySelectorAll('[data-a]').forEach(function(b){ b.onclick = function(){ var r = RES.filter(function(x){ return x.id === b.getAttribute('data-id'); })[0]; if(!r) return; var a = b.getAttribute('data-a'); if(a === 'propor' || a === 'ver') abrirDetalhe(r, true); else if(a === 'desmarcar' && !confirm('Cancelar esta marcação? O cliente é avisado.')) return; else responder(r, a); }; });
   }
   function mudar(sinal){ if(vista === 'mes'){ dataSel = new Date(dataSel.getFullYear(), dataSel.getMonth() + sinal, 1); } else dataSel.setDate(dataSel.getDate() + sinal * (vista === 'dia' ? 1 : 7)); carregarRes(); }
   $('aAnt').onclick = function(){ mudar(-1); };
@@ -1221,29 +1264,38 @@
   $('aNova').onclick = function(){ novaMarcacao(iso(dataSel), ''); };
 
   // ---------- responder ao cliente ----------
+  // o nome do salão já aparece na notificação (com o logótipo): não se repete no texto
+  function semCasa(t){ var c = SAL.nome || NEG.nome || ''; t = String(t || ''); if(c && t.indexOf(c + ': ') === 0){ t = t.slice(c.length + 2); t = t.charAt(0).toUpperCase() + t.slice(1); } return t; }
+  // no WhatsApp o nome vai à frente (o cliente pode não ter o número do salão guardado)
+  function comCasa(t){ var c = SAL.nome || NEG.nome || ''; t = String(t || ''); return (c && t.indexOf(c) !== 0) ? (c + ': ' + t) : t; }
   async function pushCliente(r, titulo, corpo){
     if(!r.push_marcacao) return false;
-    try{ var res = await sb.functions.invoke('enviar-push', { body:{ negocio:NEG.id, titulo:titulo, corpo:corpo, url:location.origin + '/salao.html?n=' + encodeURIComponent(SLUG) + '&m=' + encodeURIComponent(r.id), endpoints:[r.push_marcacao], tag:'marc-' + r.id } });
+    corpo = semCasa(corpo);
+    try{ var res = await sb.functions.invoke('enviar-push', { body:{ negocio:NEG.id, titulo:titulo, corpo:corpo, url:location.origin + '/salao.html?n=' + encodeURIComponent(SLUG) + '&m=' + encodeURIComponent(r.id), endpoints:[r.push_marcacao], tag:'marc-' + r.id, icon:logoPush() } });
       return !!(res && !res.error && res.data && res.data.enviados > 0); }catch(e){ return false; }
   }
+  // logótipo do salão para as notificações (em vez do trevo)
+  function logoPush(){ return /^https:\/\//.test(String(SAL.logo || '')) ? SAL.logo : undefined; }
   function waLink(r, texto){ var t = String(r.telefone || '').replace(/\D/g, ''); if(t.length === 9) t = '351' + t; return t ? ('https://wa.me/' + t + '?text=' + encodeURIComponent(texto)) : ''; }
   async function responder(r, tipo, o){
     o = o || {}; var casa = SAL.nome || NEG.nome, patch, titulo, corpo;
     if(tipo === 'confirmar'){ patch = { estado:'confirmada', proposta_hora:null, proposta_data:null }; titulo = '✅ Marcação confirmada'; corpo = casa + ': ' + quando(r.data, r.hora) + ' · ' + (r.servico || '') + '. Até já!'; }
-    else if(tipo === 'recusar'){ patch = { estado:'cancelada', proposta_hora:null, proposta_data:null }; titulo = '❌ Sem disponibilidade'; corpo = casa + ' não tem vaga para ' + quando(r.data, r.hora) + '. Pedimos desculpa — escolha outra hora na nossa página.'; }
-    else if(tipo === 'propor'){ if(!o.hora) return; patch = { estado:'pendente', proposta_hora:o.hora }; titulo = '🕘 ' + casa + ' propõe outra hora'; corpo = 'Para ' + quando(r.data) + ' conseguimos às ' + o.hora + '. Toque para aceitar ou recusar.'; }
+    else if(tipo === 'recusar'){ patch = { estado:'cancelada', proposta_hora:null, proposta_data:null }; titulo = '❌ Sem disponibilidade'; corpo = 'Não temos vaga para ' + quando(r.data, r.hora) + '. Pedimos desculpa — escolha outra hora na nossa página.'; }
+    else if(tipo === 'propor'){ if(!o.hora) return; patch = { estado:'pendente', proposta_hora:o.hora }; titulo = '🕘 Proposta de outra hora'; corpo = 'Para ' + quando(r.data) + ' conseguimos às ' + o.hora + '. Toque para aceitar ou recusar.'; }
     else if(tipo === 'altok'){ patch = { estado:'confirmada', hora:r.alt_hora || r.hora, alt_hora:null, alt_pessoas:null, proposta_hora:null }; titulo = '✅ Alteração aceite'; corpo = casa + ': ' + quando(r.data, r.alt_hora || r.hora) + '. Até já!'; }
     else if(tipo === 'altnao'){ patch = { alt_hora:null, alt_pessoas:null }; titulo = '❌ Não foi possível mudar'; corpo = casa + ': mantém-se ' + quando(r.data, r.hora) + '.'; }
     else if(tipo === 'semprop'){ patch = { proposta_hora:null, proposta_data:null }; titulo = '↩️ Proposta retirada'; corpo = casa + ': a proposta de mudança foi retirada. A sua marcação mantém-se ' + quando(r.data, r.hora) + '.'; }
-    else if(tipo === 'desmarcar'){ patch = { estado:'cancelada', proposta_hora:null, proposta_data:null }; titulo = '🚫 Marcação cancelada'; corpo = casa + ' cancelou a marcação de ' + quando(r.data, r.hora) + '.'; }
+    else if(tipo === 'manter'){ patch = { estado:'confirmada' }; titulo = '✅ Marcação mantida'; corpo = casa + ': fica como estava, ' + quando(r.data, r.hora) + ' · ' + (r.servico || '') + '. Até já!'; }
+    else if(tipo === 'desmarcar'){ patch = { estado:'cancelada', proposta_hora:null, proposta_data:null }; titulo = '🚫 Marcação cancelada'; corpo = 'A sua marcação de ' + quando(r.data, r.hora) + ' foi cancelada pelo salão.'; }
     else return;
     if(o.nota !== undefined){ patch.nota = (o.nota || '').trim() || null; if(patch.nota) corpo += ' Nota: ' + patch.nota; }
+    if('resposta_cliente' in r) patch.resposta_cliente = null;   // o salão já tratou da resposta do cliente
     var u = await sb.from('reservas').update(patch).eq('id', r.id);
     if(u.error){ toast('Erro: ' + u.error.message); return; }
     await carregarRes();
     var ok = await pushCliente(Object.assign({}, r, patch), titulo, corpo);
     if(ok){ toast('✓ Cliente avisado por notificação'); return; }
-    var wl = waLink(r, corpo);
+    var wl = waLink(r, comCasa(corpo));
     if(wl && confirm('Guardado ✓\n\nEste cliente não tem notificações ligadas. Quer avisá-lo por WhatsApp?')) window.open(wl, '_blank', 'noopener');
     else toast('Guardado ✓');
   }
@@ -1254,6 +1306,7 @@
     var choca = RES.some(function(x){ return x.id !== r.id && x.data === d && x.estado !== 'cancelada' && minDe(x.hora) != null && (!pr || !x.profissional || x.profissional === pr) && minDe(x.hora) < a + du && a < minDe(x.hora) + (+x.duracao || 30); });
     if(choca && !confirm((pr && nomeProf(pr) ? (nomeProf(pr) + ' já tem') : 'Já há') + ' uma marcação nesse dia a essa hora. Mudar mesmo assim?')) return;
     var patch = { data:d, hora:h, reagendada_de:r.data + ' ' + r.hora, proposta_hora:null, proposta_data:null, lembrete_em:null, lembrete_vespera_em:null };
+    if('resposta_cliente' in r) patch.resposta_cliente = null;
     if((nota || '').trim()) patch.nota = nota.trim();
     var u = await sb.from('reservas').update(patch).eq('id', r.id);
     if(u.error && /reagendada_de|column/i.test(u.error.message)){ delete patch.reagendada_de; u = await sb.from('reservas').update(patch).eq('id', r.id); }
@@ -1262,7 +1315,7 @@
     var casa = SAL.nome || NEG.nome, corpo = casa + ': a sua marcação de ' + (r.servico || '') + ' passou de ' + quando(r.data, r.hora) + ' para ' + quando(d, h) + '.' + ((nota || '').trim() ? (' Nota: ' + nota.trim()) : '');
     var ok = await pushCliente(Object.assign({}, r, patch), '📅 Marcação mudada', corpo);
     if(ok){ toast('✓ Reagendada · cliente avisado por notificação'); return; }
-    var wl = waLink(r, corpo);
+    var wl = waLink(r, comCasa(corpo));
     if(wl && confirm('Reagendada ✓\n\nEste cliente não tem notificações ligadas. Quer avisá-lo por WhatsApp?')) window.open(wl, '_blank', 'noopener');
     else toast('Reagendada ✓');
   }
@@ -1276,13 +1329,14 @@
       return ok && (c1 || c2); });
     if(choca && !confirm((pr && nomeProf(pr) ? (nomeProf(pr) + ' já tem') : 'Já há') + ' uma marcação nesse dia a essa hora. Propor mesmo assim?')) return;
     var patch = { proposta_data:d, proposta_hora:h }; if((nota || '').trim()) patch.nota = nota.trim();
+    if('resposta_cliente' in r) patch.resposta_cliente = null;
     var u = await sb.from('reservas').update(patch).eq('id', r.id);
     if(u.error){ toast(/proposta_data|column/i.test(u.error.message) ? 'Falta correr no Supabase o salao-propostas.sql.' : ('Erro: ' + u.error.message)); return; }
     await carregarRes();
-    var casa = SAL.nome || NEG.nome, corpo = casa + ' propõe mudar a sua marcação de ' + (r.servico || '') + ' (' + quando(r.data, r.hora) + ') para ' + quando(d, h) + '. Toque para aceitar ou recusar.' + ((nota || '').trim() ? (' Nota: ' + nota.trim()) : '');
+    var casa = SAL.nome || NEG.nome, corpo = 'Propomos mudar a sua marcação de ' + (r.servico || '') + ' (' + quando(r.data, r.hora) + ') para ' + quando(d, h) + '. Toque para aceitar ou recusar.' + ((nota || '').trim() ? (' Nota: ' + nota.trim()) : '');
     var ok = await pushCliente(Object.assign({}, r, patch), '🕘 Proposta de nova hora', corpo);
     if(ok){ toast('✓ Proposta enviada · à espera da resposta do cliente'); return; }
-    var wl = waLink(r, corpo + ' Responda aqui: ' + location.origin + '/salao.html?n=' + encodeURIComponent(SLUG) + '&m=' + encodeURIComponent(r.id));
+    var wl = waLink(r, comCasa(corpo) + ' Responda aqui: ' + location.origin + '/salao.html?n=' + encodeURIComponent(SLUG) + '&m=' + encodeURIComponent(r.id));
     if(wl && confirm('Proposta guardada ✓\n\nEste cliente não tem notificações ligadas. Quer enviar-lhe a proposta por WhatsApp?')) window.open(wl, '_blank', 'noopener');
     else toast('Proposta guardada ✓');
   }
@@ -1330,7 +1384,7 @@
       var casa = SAL.nome || NEG.nome, corpo = d ? (casa + ': tem ' + d + '% de desconto na sua marcação de ' + (r.servico || '') + ' (' + quando(r.data, r.hora) + '). Preço: ' + euro(b) + ' → ' + euro(v) + '.') : (casa + ': a sua marcação de ' + (r.servico || '') + ' (' + quando(r.data, r.hora) + ') fica pelo preço normal, ' + euro(b) + '.');
       var ok = await pushCliente(r, d ? ('🎁 Desconto de ' + d + '%') : 'ℹ️ Preço da marcação', corpo); carregarRes();
       if(ok){ toast('Desconto guardado ✓ · cliente avisado'); return; }
-      var wl = waLink(r, corpo); if(wl && confirm('Desconto guardado ✓\n\nEste cliente não tem notificações ligadas. Quer avisá-lo por WhatsApp?')) window.open(wl, '_blank', 'noopener'); else toast('Desconto guardado ✓'); };
+      var wl = waLink(r, comCasa(corpo)); if(wl && confirm('Desconto guardado ✓\n\nEste cliente não tem notificações ligadas. Quer avisá-lo por WhatsApp?')) window.open(wl, '_blank', 'noopener'); else toast('Desconto guardado ✓'); };
     var df = f.querySelector('#dFaltou'); if(df) df.onchange = async function(){ var u = await sb.from('reservas').update({ faltou:df.checked }).eq('id', r.id); if(u.error){ toast(/faltou|column/i.test(u.error.message) ? 'Falta correr no Supabase o salao-clientes.sql.' : ('Erro: ' + u.error.message)); df.checked = !df.checked; return; } r.faltou = df.checked; toast(df.checked ? 'Marcado como falta' : 'Falta retirada'); carregarRes(); };
     var dp = f.querySelector('#dProf'); if(dp) dp.onchange = async function(){ var v = dp.value || null;
       var a = minDe(r.hora), du = +r.duracao || 30;
