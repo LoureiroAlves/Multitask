@@ -66,6 +66,37 @@
   .bloco.curto span{ flex:1 1 0; min-width:0; color:var(--suave); }
   .b-confirmada{ background:var(--verde-f); border-left:4px solid var(--verde); }
   .b-faltou{ opacity:.55; } .b-faltou b{ text-decoration:line-through; }
+  .aus{ position:absolute; left:3px; right:3px; border-radius:8px; z-index:0; overflow:hidden; cursor:pointer; padding:4px 8px; font-size:12px; font-weight:700; color:#6B625C; border:1px dashed #C9C0B8; background:repeating-linear-gradient(135deg, #F4F1EE, #F4F1EE 7px, #E9E4DF 7px, #E9E4DF 14px); white-space:nowrap; text-overflow:ellipsis; }
+  .aus:hover{ border-color:#8A817A; }
+  .ag-col .bloco{ z-index:1; }
+  .mes-it.a{ background:#EEEAE6; color:#6B625C; }
+  .aus-lista{ display:flex; flex-direction:column; gap:8px; }
+  .aus-it{ display:flex; gap:10px; align-items:center; border:1px solid var(--linha); border-radius:12px; padding:10px 12px; cursor:pointer; background:#fff; text-align:left; font:inherit; color:inherit; }
+  .aus-it:hover{ border-color:var(--ac); }
+  .aus-it .q{ flex:1; min-width:0; } .aus-it .q b{ display:block; } .aus-it .q span{ font-size:13px; color:var(--suave); }
+  .dias-sem{ display:flex; gap:6px; flex-wrap:wrap; } .dias-sem label{ display:flex; align-items:center; gap:4px; border:1.5px solid var(--borda); border-radius:999px; padding:6px 10px; font-size:13px; font-weight:700; cursor:pointer; }
+  .camp-grelha{ display:grid; grid-template-columns:minmax(0,1.3fr) minmax(0,1fr); gap:18px; align-items:start; }
+  .camp-form{ background:#fff; border-radius:12px; padding:16px; display:flex; flex-direction:column; gap:12px; }
+  .camp-form select, .camp-form input:not([type=checkbox]), .camp-form textarea{ border:1.5px solid var(--borda); border-radius:10px; padding:10px 12px; font-size:15px; font-family:inherit; background:#fff; }
+  .camp-conta{ display:flex; gap:8px; flex-wrap:wrap; font-size:13px; }
+  .camp-conta span{ background:#F4F1EE; border-radius:999px; padding:5px 10px; font-weight:700; }
+  .camp-conta span b{ color:var(--ac); }
+  .camp-botoes{ display:flex; gap:8px; flex-wrap:wrap; } .camp-botoes button{ flex:1 1 180px; }
+  .camp-prev-tit{ font-size:12px; font-weight:800; color:var(--suave); margin:2px 0 6px; text-transform:uppercase; letter-spacing:.04em; }
+  .camp-prev{ display:flex; flex-direction:column; gap:12px; }
+  .camp-not{ background:rgba(255,255,255,.92); border-radius:16px; padding:12px 14px; box-shadow:0 4px 16px rgba(0,0,0,.08); display:flex; gap:10px; font-size:13px; }
+  .camp-not .ic{ width:34px; height:34px; border-radius:8px; background:var(--ac); flex:0 0 auto; }
+  .camp-not b{ display:block; font-size:14px; } .camp-not p{ margin:2px 0 0; color:#3a3330; white-space:pre-wrap; word-break:break-word; }
+  .camp-wa{ background:#E6DDD4; border-radius:14px; padding:12px; }
+  .camp-wa div{ background:#DCF8C6; border-radius:10px 10px 2px 10px; padding:8px 10px; font-size:14px; white-space:pre-wrap; word-break:break-word; margin-left:18%; box-shadow:0 1px 1px rgba(0,0,0,.08); }
+  .camp-h{ display:flex; gap:10px; align-items:center; border-bottom:1px solid var(--linha); padding:10px 0; font-size:14px; }
+  .camp-h:last-child{ border-bottom:none; } .camp-h .q{ flex:1; min-width:0; } .camp-h .q b{ display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; } .camp-h .q span{ color:var(--suave); font-size:13px; }
+  .wa-lista{ display:flex; flex-direction:column; gap:6px; max-height:52vh; overflow:auto; }
+  .wa-it{ display:flex; gap:10px; align-items:center; border:1px solid var(--linha); border-radius:10px; padding:8px 10px; }
+  .wa-it.feito{ background:#F2F7F2; } .wa-it .q{ flex:1; min-width:0; } .wa-it .q span{ display:block; font-size:12px; color:var(--suave); }
+  .wa-it a{ background:#25D366; color:#fff; text-decoration:none; font-weight:800; font-size:13px; border-radius:999px; padding:7px 12px; white-space:nowrap; }
+  .wa-it.feito a{ background:#fff; color:#1e7a43; border:1.5px solid #9BD3AE; }
+  @media (max-width: 860px){ .camp-grelha{ grid-template-columns:1fr; } }
   .b-fantasma{ background:repeating-linear-gradient(135deg, #fff, #fff 6px, #F3E6EA 6px, #F3E6EA 12px); border:1.5px dashed var(--ac); opacity:.85; }
   .b-pendente{ background:#fff; border:2px dashed var(--ac); }
   .b-proposta{ background:#F3E6EA; border-left:4px solid var(--ac); }
@@ -198,6 +229,7 @@
       <button type="button" class="tab on" data-t="agenda">Agenda</button>
       <button type="button" class="tab" data-t="servicos">Serviços</button>
       <button type="button" class="tab" data-t="clientes">Clientes</button>
+      <button type="button" class="tab" data-t="campanhas">Campanhas</button>
       <button type="button" class="tab" data-t="relatorios">Relatórios</button>
       <button type="button" class="tab" data-t="equipa">Equipa</button>
       <button type="button" class="tab" data-t="pagina">Página</button>
@@ -217,6 +249,7 @@
       <div class="titulo-dia" id="aTitulo"></div>
       <select id="aProf" class="hide" aria-label="Profissional" style="min-height:40px;border:1.5px solid var(--borda);border-radius:10px;padding:0 10px;font-weight:700;"></select>
       <div class="vista" role="group" aria-label="Vista"><button type="button" data-v="dia" class="on">Dia</button><button type="button" data-v="semana">Semana</button><button type="button" data-v="mes">Mês</button></div>
+      <button type="button" class="btn" id="aAus" title="Férias, folgas e pausas da equipa">🌴 Ausências</button>
       <button type="button" class="btn" id="aAvisos">🔔 Receber avisos</button>
       <button type="button" class="btn-ac" id="aNova">+ Nova marcação</button>
     </div>
@@ -276,6 +309,29 @@
       <button type="button" class="btn" id="cliImp">⬆️ Importar clientes</button><input type="file" id="cliImpF" accept=".csv,text/csv,text/plain" class="hide">
     </div>
     <div id="cliLista"><div style="color:var(--suave);">A carregar…</div></div>
+  </section>
+
+  <!-- CAMPANHAS -->
+  <section id="tCampanhas" class="pag hide" style="max-width:1000px;">
+    <h2>Campanhas</h2>
+    <p class="sub">Envie uma novidade, promoção ou lembrete aos seus clientes, por notificação ou WhatsApp. Só recebem os clientes que aceitaram receber campanhas (e que não estão bloqueados).</p>
+    <div class="camp-grelha">
+      <div class="camp-form">
+        <div class="campo"><label for="cpPub">Para quem</label><select id="cpPub"></select></div>
+        <div class="campo hide" id="cpServBx"><label for="cpServ">Serviço</label><select id="cpServ"></select></div>
+        <div class="camp-conta" id="cpConta"></div>
+        <div class="campo"><label for="cpTit">Título <span style="font-weight:400;color:var(--suave);">(aparece a negrito na notificação)</span></label><input id="cpTit" maxlength="60" placeholder="Ex.: Novembro com 15% de desconto"></div>
+        <div class="campo"><label for="cpTxt">Mensagem</label><textarea id="cpTxt" rows="4" maxlength="500" placeholder="Olá {nome}! Este mês temos…"></textarea><div style="font-size:12px;color:var(--suave);margin-top:3px;">Escreva <b>{nome}</b> para pôr o primeiro nome de cada cliente. <span id="cpCars"></span></div></div>
+        <label class="chk-l"><input type="checkbox" id="cpLink" checked> Juntar o link da página do salão (para marcar)</label>
+        <div class="camp-botoes"><button type="button" class="btn-ac" id="cpPush">🔔 Enviar notificação</button><button type="button" class="btn" id="cpWa">💬 Enviar por WhatsApp</button></div>
+        <div class="msg" id="cpMsg"></div>
+      </div>
+      <div>
+        <div class="camp-prev-tit">Pré-visualização</div>
+        <div class="camp-prev" id="cpPrev"></div>
+      </div>
+    </div>
+    <div class="bloco-sec"><h3>Campanhas enviadas</h3><div id="cpHist"><div style="color:var(--suave);">A carregar…</div></div></div>
   </section>
 
   <!-- EQUIPA -->
@@ -379,7 +435,7 @@
     $('verPagina').href = (/(^|\.)4trevo\.com$/i.test(location.hostname) ? '/' : '/salao.html?n=') + encodeURIComponent(SLUG);
     document.title = (SAL.nome || NEG.nome) + ' · Gestão · 4 Trevo';
     if(params.get('d')) dataSel = dDe(params.get('d'));
-    var t = (location.hash || '').replace('#', ''); if(['servicos','pagina','horario','equipa','clientes','relatorios'].indexOf(t) >= 0) irPara(t);
+    var t = (location.hash || '').replace('#', ''); if(['servicos','pagina','horario','equipa','clientes','relatorios','campanhas'].indexOf(t) >= 0) irPara(t);
     await carregarRes();
     if(params.get('rid')){ var x = RES.filter(function(z){ return z.id === params.get('rid'); })[0]; if(x) abrirDetalhe(x); }
     // atualizar sozinho: quando chega uma notificação, quando se volta à página e de 30 em 30 s
@@ -404,8 +460,8 @@
   function irPara(t){
     document.querySelectorAll('.tab').forEach(function(b){ b.classList.toggle('on', b.getAttribute('data-t') === t); });
     $('tAgenda').classList.toggle('hide', t !== 'agenda'); $('tServicos').classList.toggle('hide', t !== 'servicos');
-    $('tPagina').classList.toggle('hide', t !== 'pagina'); $('tHorario').classList.toggle('hide', t !== 'horario'); $('tEquipa').classList.toggle('hide', t !== 'equipa'); $('tClientes').classList.toggle('hide', t !== 'clientes'); $('tRelatorios').classList.toggle('hide', t !== 'relatorios');
-    if(t === 'servicos'){ EQSV = null; pintarServ(); } if(t === 'equipa') pintarEquipa(); if(t === 'clientes') carregarClientes(); if(t === 'relatorios') carregarRelatorios(); if(t === 'pagina') pintarPagina(); if(t === 'horario') pintarHorario();
+    $('tPagina').classList.toggle('hide', t !== 'pagina'); $('tHorario').classList.toggle('hide', t !== 'horario'); $('tEquipa').classList.toggle('hide', t !== 'equipa'); $('tClientes').classList.toggle('hide', t !== 'clientes'); $('tRelatorios').classList.toggle('hide', t !== 'relatorios'); $('tCampanhas').classList.toggle('hide', t !== 'campanhas');
+    if(t === 'servicos'){ EQSV = null; pintarServ(); } if(t === 'equipa') pintarEquipa(); if(t === 'clientes') carregarClientes(); if(t === 'relatorios') carregarRelatorios(); if(t === 'campanhas') carregarCampanhas(); if(t === 'pagina') pintarPagina(); if(t === 'horario') pintarHorario();
     try{ history.replaceState(null, '', location.pathname + location.search + (t === 'agenda' ? '' : ('#' + t))); }catch(e){}
   }
   document.querySelectorAll('.tab').forEach(function(b){ b.onclick = function(){ irPara(b.getAttribute('data-t')); }; });
@@ -653,6 +709,105 @@
     var l = CLIRES.filter(function(r){ return r.data.slice(0, 7) === mes && r.estado !== 'cancelada'; }).sort(function(a, b){ return (a.data + a.hora).localeCompare(b.data + b.hora); });
     csv('marcacoes-' + SLUG + '-' + mes + '.csv', [['Data','Hora','Cliente','Telemóvel','Serviço','Profissional','Preço (€)','Desconto (%)','Valor (€)','Estado']].concat(l.map(function(r){ return [r.data, r.hora, r.nome, r.telefone, r.servico, nomeProf(r.profissional), baseDe(r) != null ? num(baseDe(r)) : '', +r.desconto || 0, r.valor != null ? num(r.valor) : '', r.faltou ? 'Faltou' : r.estado === 'confirmada' ? (r.data <= iso(new Date()) ? 'Feita' : 'Marcada') : 'Por confirmar']; }))); };
 
+  // ---------- campanhas: só para quem aceitou (aceita_campanhas) e não está bloqueado ----------
+  var CAMPH = [], CAMP_OK = true;
+  function linkPublico(){ return (/(^|\.)4trevo\.com$/i.test(location.hostname) ? (location.origin + '/') : (location.origin + '/salao.html?n=')) + encodeURIComponent(SLUG); }
+  function primeiroNome(n){ return String(n || '').trim().split(/\s+/)[0] || ''; }
+  function textoPara(c, txt){ var nm = primeiroNome(c && c.nome); return String(txt || '').replace(/\{nome\}/gi, nm).replace(/(Olá|Ola|Oi)\s*!/i, '$1!').replace(/\s+([,!?.])/g, '$1').trim(); }
+  async function carregarCampanhas(){
+    var a = await sb.from('clientes').select('*').eq('negocio_id', NEG.id);
+    if(a.error){ $('cpConta').innerHTML = '<span>' + esc(/clientes|relation|does not exist|schema cache/i.test(a.error.message) ? 'Falta correr no Supabase o salao-clientes.sql.' : a.error.message) + '</span>'; return; }
+    var b = await sb.from('reservas').select('*').eq('negocio_id', NEG.id).not('servico', 'is', null).order('data', { ascending:false }).limit(10000);
+    CLI = a.data || []; CLIRES = b.data || [];
+    var ps = $('cpPub'), v = ps.value;
+    ps.innerHTML = '<option value="">Todos os que aceitam campanhas</option><option value="i2">Sem vir há 2+ meses</option><option value="i3">Sem vir há 3+ meses</option><option value="i6">Sem vir há 6+ meses</option><option value="aniv">Fazem anos este mês</option><option value="um">Vieram só uma vez</option><option value="serv">Já fizeram um serviço…</option>';
+    if(v) ps.value = v;
+    $('cpServ').innerHTML = SERV.map(function(x){ return '<option value="' + esc(x.nome) + '">' + esc(x.nome) + '</option>'; }).join('');
+    if(!('aceita_campanhas' in (CLI[0] || { aceita_campanhas:0 }))){ $('cpMsg').textContent = AVISO_SQL11; $('cpMsg').className = 'msg erro'; }
+    var h = await sb.from('salao_campanhas').select('*').eq('negocio_id', NEG.id).order('criado_em', { ascending:false }).limit(50);
+    CAMP_OK = !h.error; CAMPH = h.error ? [] : (h.data || []);
+    pintarCampanha(); pintarHistCamp();
+  }
+  // destinatários do público escolhido: [{ c, x (stats), ep (notificação), tel }]
+  function publicoCamp(){
+    var m = statsCli(), fl = $('cpPub').value, hoje = iso(new Date()), mesN = hoje.slice(5, 7), sv = $('cpServ').value;
+    var ult = {}; CLIRES.forEach(function(r){ if(!r.push_marcacao) return; var k = chaveCli(r.telefone, r.nome); if(!ult[k] || r.data > ult[k].data) ult[k] = r; });
+    return Object.keys(m).map(function(k){ return m[k]; }).filter(function(x){ var c = x.c;
+      if(c.aceita_campanhas !== true || c.bloqueado) return false;
+      if(/^i\d+$/.test(fl)){ var ms = mesesSem(x.ult); return x.vis > 0 && !x.prox && ms != null && ms >= +fl.slice(1); }
+      if(fl === 'aniv') return String(c.nascimento || '').slice(5, 7) === mesN;
+      if(fl === 'um') return x.vis === 1 && !x.prox;
+      if(fl === 'serv') return !!x.serv[sv];
+      return true; })
+      .map(function(x){ var c = x.c, tn = telNorm(c.telefone), r = ult[c.tel_norm] || (tn.length >= 9 ? ult[tn] : null); return { c:c, x:x, ep:r ? r.push_marcacao : '', tel:tn.length >= 9 ? c.telefone : '' }; });
+  }
+  function descPub(){ var o = $('cpPub').selectedOptions[0]; var t = o ? o.textContent : ''; return $('cpPub').value === 'serv' ? ('Fizeram ' + $('cpServ').value) : t; }
+  function pintarCampanha(){
+    $('cpServBx').classList.toggle('hide', $('cpPub').value !== 'serv');
+    var l = publicoCamp(), np = l.filter(function(d){ return d.ep; }).length, nw = l.filter(function(d){ return d.tel; }).length;
+    var tot = CLI.filter(function(c){ return c.aceita_campanhas === true && !c.bloqueado; }).length;
+    $('cpConta').innerHTML = '<span><b>' + l.length + '</b> cliente(s)</span><span>🔔 <b>' + np + '</b> com notificações</span><span>💬 <b>' + nw + '</b> com telemóvel</span>' + (!tot ? '<span style="background:#FBEDED;color:#A33;">Ainda nenhum cliente aceitou campanhas</span>' : '');
+    $('cpPush').textContent = '🔔 Enviar notificação' + (np ? (' (' + np + ')') : ''); $('cpPush').disabled = !np;
+    $('cpWa').textContent = '💬 Enviar por WhatsApp' + (nw ? (' (' + nw + ')') : ''); $('cpWa').disabled = !nw;
+    var ex = l[0] ? l[0].c : { nome:'Maria' }, tit = $('cpTit').value.trim() || (SAL.nome || NEG.nome), txt = textoPara(ex, $('cpTxt').value) || 'A sua mensagem aparece aqui.';
+    var wtxt = textoPara(ex, $('cpTxt').value) + ($('cpLink').checked ? ('\n\n' + linkPublico()) : '');
+    $('cpCars').textContent = $('cpTxt').value.length + '/500';
+    $('cpPrev').innerHTML = '<div class="camp-not"><span class="ic"></span><div><b>' + esc(tit) + '</b><p>' + esc(txt) + '</p></div></div>'
+      + '<div class="camp-wa"><div>' + (($('cpTxt').value.trim()) ? (($('cpTit').value.trim() ? ('*' + esc($('cpTit').value.trim()) + '*\n') : '') + esc(wtxt)) : 'A sua mensagem aparece aqui.') + '</div></div>'
+      + '<div style="font-size:12px;color:var(--suave);">Exemplo com o nome de ' + esc(primeiroNome(ex.nome) || 'um cliente') + '.</div>';
+  }
+  ['cpPub','cpServ','cpTit','cpTxt','cpLink'].forEach(function(id){ $(id).addEventListener(id === 'cpTit' || id === 'cpTxt' ? 'input' : 'change', pintarCampanha); });
+  function validaCamp(){ var m = $('cpMsg'); if(!$('cpTxt').value.trim()){ m.textContent = 'Escreva a mensagem.'; m.className = 'msg erro'; $('cpTxt').focus(); return false; }
+    var rec = CAMPH.filter(function(h){ return Date.now() - new Date(h.criado_em).getTime() < 7 * 86400000; })[0];
+    if(rec && !confirm('Já enviou uma campanha há ' + Math.max(1, Math.round((Date.now() - new Date(rec.criado_em).getTime()) / 86400000)) + ' dia(s). Mensagens a mais fazem os clientes desligar as notificações. Enviar mesmo assim?')) return false;
+    m.textContent = ''; return true; }
+  async function registarCamp(canal, dest, env){ if(!CAMP_OK) return null; var r = await sb.from('salao_campanhas').insert({ negocio_id:NEG.id, titulo:$('cpTit').value.trim() || null, texto:$('cpTxt').value.trim(), publico:descPub(), canal:canal, destinatarios:dest, enviados:env }).select().single(); return r.error ? null : r.data; }
+  $('cpPush').onclick = async function(){
+    if(!validaCamp()) return; var l = publicoCamp().filter(function(d){ return d.ep; }); if(!l.length) return;
+    if(!confirm('Enviar esta notificação a ' + l.length + ' cliente(s)?')) return;
+    var bt = this, ok = 0, i = 0, tit = $('cpTit').value.trim() || (SAL.nome || NEG.nome), feitos = {}; bt.disabled = true;
+    async function um(d){ if(feitos[d.ep]) return; feitos[d.ep] = 1;
+      try{ var res = await sb.functions.invoke('enviar-push', { body:{ negocio:NEG.id, titulo:tit, corpo:textoPara(d.c, $('cpTxt').value), url:location.origin + '/salao.html?n=' + encodeURIComponent(SLUG), endpoints:[d.ep], tag:'camp-' + Date.now() } });
+        if(res && !res.error && res.data && res.data.enviados > 0) ok++; }catch(e){} }
+    while(i < l.length){ var lote = l.slice(i, i + 5); i += 5; bt.textContent = 'A enviar… ' + Math.min(i, l.length) + '/' + l.length; await Promise.all(lote.map(um)); }
+    await registarCamp('push', l.length, ok);
+    bt.disabled = false; $('cpMsg').textContent = ok ? ('✓ Notificação entregue a ' + ok + ' de ' + l.length + ' cliente(s).' + (ok < l.length ? ' Os outros desligaram as notificações ou mudaram de telemóvel.' : '')) : 'Nenhuma notificação foi entregue (os clientes podem ter desligado as notificações).';
+    $('cpMsg').className = 'msg' + (ok ? '' : ' erro'); toast(ok ? 'Campanha enviada ✓' : 'Nada entregue'); carregarCampanhas();
+  };
+  $('cpWa').onclick = async function(){
+    if(!validaCamp()) return; var l = publicoCamp().filter(function(d){ return d.tel; }); if(!l.length) return;
+    var h = await registarCamp('whatsapp', l.length, 0);
+    abrirListaWa({ id:(h && h.id && !Array.isArray(h)) ? h.id : ('tmp' + Date.now()), titulo:$('cpTit').value.trim(), texto:$('cpTxt').value.trim(), canal:'whatsapp', publico:descPub(), _link:$('cpLink').checked }, l, true);
+    carregarCampanhas();
+  };
+  // WhatsApp não envia sozinho: abre uma lista, cada botão abre a conversa já escrita
+  function abrirListaWa(h, l, link){
+    var chave = 'camp_wa_' + h.id, feito = {}; try{ feito = JSON.parse(localStorage.getItem(chave) || '{}') || {}; }catch(e){}
+    var def = null; try{ def = JSON.parse(localStorage.getItem('camp_wa_def_' + h.id) || 'null'); }catch(e){}
+    var juntaLink = link === true ? $('cpLink').checked : (def ? def.link !== false : h._link !== false);
+    if(link === true){ try{ localStorage.setItem('camp_wa_def_' + h.id, JSON.stringify({ link:juntaLink, lista:l.map(function(d){ return d.c.tel_norm; }) })); }catch(e){} }
+    else if(def && Array.isArray(def.lista)){ var lt = l.filter(function(d){ return def.lista.indexOf(d.c.tel_norm) >= 0; }); if(lt.length) l = lt; }
+    function txt(c){ return (h.titulo ? ('*' + h.titulo + '*\n') : '') + textoPara(c, h.texto) + (juntaLink ? ('\n\n' + linkPublico()) : ''); }
+    function conta(){ return Object.keys(feito).length; }
+    var f = modal('<h3>💬 Enviar por WhatsApp</h3><div style="font-size:14px;color:var(--suave);">O WhatsApp não deixa enviar a várias pessoas de uma vez. Toque em <b>Abrir</b> em cada cliente: a mensagem já vai escrita, só tem de carregar em enviar.</div>'
+      + '<div style="font-weight:800;font-size:14px;" id="waConta"></div>'
+      + '<div class="wa-lista">' + l.map(function(d){ return '<div class="wa-it' + (feito[d.c.tel_norm] ? ' feito' : '') + '" data-t="' + esc(d.c.tel_norm) + '"><div class="q"><b>' + esc(d.c.nome || '—') + '</b><span>' + esc(d.tel) + '</span></div><a href="' + esc(waLink({ telefone:d.tel }, txt(d.c))) + '" target="_blank" rel="noopener">' + (feito[d.c.tel_norm] ? '✓ Enviado' : 'Abrir') + '</a></div>'; }).join('') + '</div>');
+    function pc(){ f.querySelector('#waConta').textContent = conta() + ' de ' + l.length + ' enviados'; } pc();
+    f.querySelectorAll('.wa-it a').forEach(function(a){ a.addEventListener('click', function(){ var it = a.closest('.wa-it'), t = it.getAttribute('data-t'); feito[t] = 1; it.classList.add('feito'); a.textContent = '✓ Enviado'; pc();
+      try{ localStorage.setItem(chave, JSON.stringify(feito)); }catch(e){}
+      if(h.id && !/^tmp/.test(h.id) && CAMP_OK) sb.from('salao_campanhas').update({ enviados:conta() }).eq('id', h.id).then(function(){}); }); });
+  }
+  function pintarHistCamp(){
+    if(!CAMP_OK){ $('cpHist').innerHTML = '<div style="color:var(--suave);font-size:14px;">Para guardar o histórico, falta correr no Supabase o ficheiro 13-salao-campanhas.sql. (As campanhas funcionam na mesma.)</div>'; return; }
+    if(!CAMPH.length){ $('cpHist').innerHTML = '<div style="color:var(--suave);font-size:14px;">Ainda não enviou nenhuma campanha.</div>'; return; }
+    $('cpHist').innerHTML = CAMPH.map(function(h){ var d = new Date(h.criado_em);
+      return '<div class="camp-h"><span style="font-size:20px;">' + (h.canal === 'whatsapp' ? '💬' : '🔔') + '</span><div class="q"><b>' + esc(h.titulo || h.texto) + '</b><span>' + d.getDate() + ' ' + MESES[d.getMonth()].slice(0, 3) + ' ' + d.getFullYear() + ' · ' + esc(h.publico || '') + ' · ' + (h.canal === 'whatsapp' ? (h.enviados + ' de ' + h.destinatarios + ' enviados') : (h.enviados + ' de ' + h.destinatarios + ' entregues')) + '</span></div>'
+        + '<button type="button" class="btn" data-c="' + esc(h.id) + '">' + (h.canal === 'whatsapp' ? 'Continuar' : 'Reutilizar') + '</button></div>'; }).join('');
+    $('cpHist').querySelectorAll('[data-c]').forEach(function(b){ b.onclick = function(){ var h = CAMPH.filter(function(x){ return x.id === b.getAttribute('data-c'); })[0]; if(!h) return;
+      if(h.canal === 'whatsapp'){ var l = CLI.filter(function(c){ return c.aceita_campanhas === true && !c.bloqueado && telNorm(c.telefone).length >= 9; }).map(function(c){ return { c:c, tel:c.telefone }; }); abrirListaWa(h, l, false); return; }
+      $('cpTit').value = h.titulo || ''; $('cpTxt').value = h.texto || ''; pintarCampanha(); window.scrollTo({ top:0, behavior:'smooth' }); toast('Mensagem copiada para cima — escolha para quem e envie'); }; });
+  }
+
   // ---------- relatórios (só leitura: usa as marcações e as fichas que já existem) ----------
   var RELRES = null, RELCLI = null, relMetrica = 'n';
   function valorDe(r){ if(+r.valor > 0) return +r.valor; var b = +r.valor_base > 0 ? +r.valor_base : precoServ(r.servico); return b == null ? 0 : comDesc(b, r.desconto); }
@@ -675,6 +830,7 @@
     if(b.error){ $('relCorpo').innerHTML = '<div class="msg erro">Erro: ' + esc(b.error.message) + '</div>'; return; }
     RELRES = b.data || [];
     var a = await sb.from('clientes').select('*').eq('negocio_id', NEG.id); RELCLI = a.error ? null : (a.data || []);
+    await carregarAus();
     var ps = $('relProf'); ps.classList.toggle('hide', !EQ().length);
     ps.innerHTML = '<option value="">Toda a equipa</option>' + EQ().map(function(p){ return '<option value="' + esc(p.id) + '">' + esc(p.nome) + '</option>'; }).join('');
     pintarRelatorios();
@@ -735,7 +891,7 @@
     // profissionais: horas disponíveis (dias em que o salão abre e a pessoa trabalha) vs. horas marcadas
     var eq = EQ(), pessoas = eq.length ? eq.filter(function(p){ return !pf || p.id === pf; }) : [{ id:'', nome:SAL.nome || NEG.nome || 'Salão' }];
     var linhasP = pessoas.map(function(p){
-      var disp = 0; dias.forEach(function(k){ var dd = dDe(k), h = horarioDe(dd.getDay()); if(!h || fechadoEm(k)) return; if(p.id && !trabalha(p, dd.getDay())) return; disp += minDe(h[1]) - minDe(h[0]); });
+      var disp = 0; dias.forEach(function(k){ var dd = dDe(k), h = horarioDe(dd.getDay()); if(!h || fechadoEm(k)) return; if(p.id && !trabalha(p, dd.getDay())) return; disp += Math.max(0, minDe(h[1]) - minDe(h[0]) - minAusentes(k, p.id, minDe(h[0]), minDe(h[1]))); });
       var mine = ativas.filter(function(r){ return eq.length ? r.profissional === p.id : true; });
       var marcMin = mine.filter(function(r){ return !r.faltou; }).reduce(function(s, r){ return s + (+r.duracao || 30); }, 0);
       var fe = mine.filter(function(r){ return r.estado === 'confirmada' && !r.faltou && r.data <= hoje; }), eur = fe.reduce(function(s, r){ return s + valorDe(r); }, 0);
@@ -771,7 +927,7 @@
       + '</div></div>';
     h += '<div class="rel-card"><h3>' + (eq.length ? 'Por profissional' : 'Ocupação do salão') + '</h3><div class="rel-tab-w"><table class="cli-tab"><thead><tr><th>' + (eq.length ? 'Profissional' : '') + '</th><th class="n">Marcações</th><th class="n">Feitas</th><th class="n">Faturado</th><th class="n">Horas marcadas</th><th class="n">Horas disponíveis</th><th class="n">Ocupação</th><th class="n">€ por hora</th></tr></thead><tbody>'
       + linhasP.map(function(l){ return '<tr><td><b>' + esc(l.nome) + '</b></td><td class="n">' + l.n + '</td><td class="n">' + l.feitas + '</td><td class="n">' + euro(l.eur) + '</td><td class="n">' + horasTxt(l.marc) + '</td><td class="n">' + horasTxt(l.disp) + '</td><td class="n"><span class="rel-ocup"><i style="width:' + Math.min(100, l.ocup) + '%"></i></span> ' + l.ocup.toLocaleString('pt-PT') + '%</td><td class="n">' + euro(l.porHora) + '</td></tr>'; }).join('')
-      + '</tbody></table></div><div style="font-size:12px;color:var(--suave);margin-top:6px;">Horas disponíveis: dias do período em que o salão abre (e a pessoa trabalha), pelo horário do salão. Ocupação = horas marcadas ÷ horas disponíveis.</div></div>';
+      + '</tbody></table></div><div style="font-size:12px;color:var(--suave);margin-top:6px;">Horas disponíveis: dias do período em que o salão abre (e a pessoa trabalha), pelo horário do salão, sem as ausências (férias, folgas, pausas). Ocupação = horas marcadas ÷ horas disponíveis.</div></div>';
     if(eq.length > 1 && !pf){
       var nomesS = topServ.map(function(s){ return s.r; });
       h += '<div class="rel-card"><h3>Serviços por profissional</h3><div class="rel-tab-w"><table class="cli-tab"><thead><tr><th>Serviço</th>' + eq.map(function(p){ return '<th class="n">' + esc(p.nome) + '</th>'; }).join('') + '<th class="n">Total</th></tr></thead><tbody>'
@@ -817,13 +973,89 @@
   function intervalo(){ if(vista === 'dia') return [iso(dataSel), iso(dataSel)];
     if(vista === 'mes'){ var p = new Date(dataSel.getFullYear(), dataSel.getMonth(), 1), u = new Date(dataSel.getFullYear(), dataSel.getMonth() + 1, 0);
       p.setDate(p.getDate() - ((p.getDay() + 6) % 7)); u.setDate(u.getDate() + (6 - (u.getDay() + 6) % 7)); return [iso(p), iso(u)]; } var s = new Date(dataSel); var wd = (s.getDay() + 6) % 7; s.setDate(s.getDate() - wd); var e = new Date(s); e.setDate(s.getDate() + 6); return [iso(s), iso(e)]; }
+  // ---------- ausências (férias, folgas, pausas): tabela salao_ausencias ----------
+  var AUS = [], AUS_OK = true, MOTIVOS = ['Férias', 'Folga', 'Almoço', 'Pausa', 'Formação', 'Doença', 'Consulta', 'Outro'];
+  async function carregarAus(){
+    var a = await sb.from('salao_ausencias').select('*').eq('negocio_id', NEG.id).order('de');
+    if(a.error){ AUS = []; AUS_OK = !/salao_ausencias|relation|does not exist|schema cache/i.test(a.error.message); return; }
+    AUS_OK = true; AUS = a.data || [];
+  }
+  // blocos de ausência de um dia (mesmas regras do servidor)
+  function ausDia(k){ var wd = dDe(k).getDay();
+    return AUS.filter(function(a){ return a.de <= k && (!a.ate || a.ate >= k) && (!a.dias || !a.dias.length || a.dias.indexOf(wd) >= 0); })
+      .map(function(a){ var i = minDe(String(a.hora_ini || '').slice(0, 5)), f = minDe(String(a.hora_fim || '').slice(0, 5)); return { a:a, ini:i == null ? 0 : i, fim:(f == null || f === 0) ? 1440 : f, prof:a.profissional || '', todo:i == null }; }); }
+  function ausPara(b, prof){ return !b.prof || !prof || b.prof === prof; }
+  function ausNome(a){ return a.profissional ? (nomeProf(a.profissional) || 'Pessoa que já saiu') : 'Salão todo'; }
+  function ausQuando(a){
+    var hrs = a.hora_ini ? (String(a.hora_ini).slice(0, 5) + '–' + String(a.hora_fim || '').slice(0, 5)) : 'dia todo';
+    if(a.dias && a.dias.length) return 'Todas as semanas · ' + [1,2,3,4,5,6,0].filter(function(d){ return a.dias.indexOf(d) >= 0; }).map(function(d){ return DIAS_C[d]; }).join(', ') + ' · ' + hrs + (a.ate ? (' · até ' + dataPt(a.ate)) : '');
+    return (a.ate && a.ate !== a.de ? (dataPt(a.de) + ' a ' + dataPt(a.ate)) : dataPt(a.de)) + ' · ' + hrs; }
+  // minutos de ausência de uma pessoa (ou do salão) dentro de [ini, fim) nesse dia
+  function minAusentes(k, prof, ini, fim){ var bl = ausDia(k).filter(function(b){ return prof ? ausPara(b, prof) : !b.prof; }).map(function(b){ return [Math.max(ini, b.ini), Math.min(fim, b.fim)]; }).filter(function(x){ return x[1] > x[0]; }).sort(function(x, y){ return x[0] - y[0]; });
+    var t = 0, cur = null; bl.forEach(function(x){ if(!cur || x[0] > cur[1]){ if(cur) t += cur[1] - cur[0]; cur = x.slice(); } else cur[1] = Math.max(cur[1], x[1]); }); if(cur) t += cur[1] - cur[0]; return t; }
+  function abrirAusencias(){
+    if(!AUS_OK){ toast('Falta correr no Supabase o ficheiro 12-salao-ausencias.sql.'); return; }
+    var hoje = iso(new Date()), l = AUS.filter(function(a){ return !a.ate || a.ate >= hoje; }), antigas = AUS.length - l.length;
+    var f = modal('<h3>🌴 Ausências</h3><div style="font-size:14px;color:var(--suave);">Férias, folgas, pausas para almoço… Nessas horas os clientes não conseguem marcar (com a pessoa ausente ou, se for o salão todo, com ninguém). O motivo só o salão vê.</div>'
+      + '<div class="aus-lista">' + (l.length ? l.map(function(a){ return '<button type="button" class="aus-it" data-id="' + esc(a.id) + '"><span style="width:10px;height:10px;border-radius:50%;flex:0 0 auto;background:' + (a.profissional ? corProf(a.profissional) : '#8A817A') + ';"></span><span class="q"><b>' + esc(ausNome(a)) + ' · ' + esc(a.motivo || 'Ausência') + '</b><span>' + esc(ausQuando(a)) + '</span></span><span style="color:var(--suave);">›</span></button>'; }).join('') : '<div style="color:var(--suave);font-size:14px;">Nenhuma ausência marcada.</div>') + '</div>'
+      + (antigas ? ('<div style="font-size:12px;color:var(--suave);">' + antigas + ' ausência(s) já passada(s) não aparecem aqui.</div>') : '')
+      + '<button type="button" class="btn-ac" id="ausNova">+ Nova ausência</button>');
+    f.querySelector('#ausNova').onclick = function(){ editarAusencia(null); };
+    f.querySelectorAll('.aus-it').forEach(function(b){ b.onclick = function(){ editarAusencia(AUS.filter(function(a){ return a.id === b.getAttribute('data-id'); })[0]); }; });
+  }
+  function editarAusencia(a, pre){
+    if(!AUS_OK){ toast('Falta correr no Supabase o ficheiro 12-salao-ausencias.sql.'); return; }
+    pre = pre || {}; var novo = !a; a = a || { profissional:pre.prof || '', de:pre.dia || iso(dataSel), ate:pre.dia || iso(dataSel), hora_ini:pre.hora || null, hora_fim:pre.hora ? hDe(Math.min(1439, minDe(pre.hora) + 60)) : null, dias:null, motivo:'' };
+    var fixa = !!(a.dias && a.dias.length), diaTodo = !a.hora_ini;
+    var f = modal('<h3>' + (novo ? 'Nova ausência' : 'Ausência') + '</h3>'
+      + '<div class="campo"><label for="uQuem">Quem</label><select id="uQuem"><option value="">Salão todo</option>' + EQ().map(function(p){ return '<option value="' + esc(p.id) + '"' + (a.profissional === p.id ? ' selected' : '') + '>' + esc(p.nome) + '</option>'; }).join('') + '</select></div>'
+      + '<div class="campo"><label for="uMot">Motivo <span style="font-weight:400;color:var(--suave);">(só o salão vê)</span></label><input id="uMot" list="uMotL" maxlength="60" value="' + esc(a.motivo || '') + '" placeholder="Férias, folga, almoço…"><datalist id="uMotL">' + MOTIVOS.map(function(m){ return '<option value="' + m + '">'; }).join('') + '</datalist></div>'
+      + '<div class="vista" role="group" style="align-self:flex-start;"><button type="button" data-k="dias" class="' + (fixa ? '' : 'on') + '">Dias</button><button type="button" data-k="fixa" class="' + (fixa ? 'on' : '') + '">Todas as semanas</button></div>'
+      + '<div id="uDiasBx" class="grelha2"><div class="campo"><label for="uDe">De</label><input id="uDe" type="date" value="' + esc(a.de || '') + '"></div><div class="campo"><label for="uAte">Até</label><input id="uAte" type="date" value="' + esc(a.ate || a.de || '') + '"></div></div>'
+      + '<div id="uFixaBx" class="campo"><label>Dias da semana</label><div class="dias-sem">' + [1,2,3,4,5,6,0].map(function(d){ return '<label><input type="checkbox" value="' + d + '"' + (fixa && a.dias.indexOf(d) >= 0 ? ' checked' : '') + '> ' + DIAS_C[d] + '</label>'; }).join('') + '</div>'
+      + '<div class="grelha2" style="margin-top:6px;"><div class="campo"><label for="uFixDe">A partir de</label><input id="uFixDe" type="date" value="' + esc(a.de || iso(new Date())) + '"></div><div class="campo"><label for="uFixAte">Até <span style="font-weight:400;color:var(--suave);">(vazio = sempre)</span></label><input id="uFixAte" type="date" value="' + esc(fixa ? (a.ate || '') : '') + '"></div></div></div>'
+      + '<label class="chk-l"><input type="checkbox" id="uTodo"' + (diaTodo ? ' checked' : '') + '> Dia todo</label>'
+      + '<div id="uHorasBx" class="grelha2"><div class="campo"><label for="uIni">Das</label><input id="uIni" type="time" step="300" value="' + esc(String(a.hora_ini || '13:00').slice(0, 5)) + '"></div><div class="campo"><label for="uFim">Às</label><input id="uFim" type="time" step="300" value="' + esc(String(a.hora_fim || '14:00').slice(0, 5)) + '"></div></div>'
+      + '<div class="msg" id="uMsg"></div><button type="button" class="btn-ac" id="uGuardar">Guardar ausência</button>'
+      + (novo ? '' : '<div style="display:flex;justify-content:space-between;gap:8px;"><button type="button" class="btn" id="uVoltar">← Todas as ausências</button><button type="button" class="btn-perigo" id="uApagar">Apagar</button></div>'));
+    var modo = fixa ? 'fixa' : 'dias';
+    function vis(){ f.querySelector('#uDiasBx').style.display = modo === 'dias' ? '' : 'none'; f.querySelector('#uFixaBx').style.display = modo === 'fixa' ? '' : 'none'; f.querySelector('#uHorasBx').style.display = f.querySelector('#uTodo').checked ? 'none' : ''; f.querySelectorAll('.vista button').forEach(function(b){ b.classList.toggle('on', b.getAttribute('data-k') === modo); }); }
+    f.querySelectorAll('.vista button').forEach(function(b){ b.onclick = function(){ modo = b.getAttribute('data-k'); if(modo === 'fixa' && f.querySelector('#uTodo').checked && novo){ f.querySelector('#uTodo').checked = false; } vis(); }; });
+    f.querySelector('#uTodo').onchange = vis; vis();
+    f.querySelector('#uDe').onchange = function(){ var t = f.querySelector('#uAte'); if(!t.value || t.value < this.value) t.value = this.value; };
+    var bv = f.querySelector('#uVoltar'); if(bv) bv.onclick = abrirAusencias;
+    var ba = f.querySelector('#uApagar'); if(ba) ba.onclick = async function(){ if(!confirm('Apagar esta ausência? Essas horas voltam a ficar livres para os clientes.')) return;
+      var d = await sb.from('salao_ausencias').delete().eq('id', a.id); if(d.error){ $('uMsg').textContent = 'Erro: ' + d.error.message; $('uMsg').className = 'msg erro'; return; }
+      await carregarAus(); pintarAgenda(); toast('Ausência apagada'); abrirAusencias(); };
+    f.querySelector('#uGuardar').onclick = async function(){
+      var m = $('uMsg'); function erro(t){ m.textContent = t; m.className = 'msg erro'; }
+      var todo = f.querySelector('#uTodo').checked, hi = todo ? null : f.querySelector('#uIni').value, hf = todo ? null : f.querySelector('#uFim').value;
+      if(!todo && (!hi || !hf || minDe(hf) <= minDe(hi))) return erro('A hora de fim tem de ser depois da hora de início.');
+      var reg = { negocio_id:NEG.id, profissional:f.querySelector('#uQuem').value || null, motivo:f.querySelector('#uMot').value.trim() || null, hora_ini:hi, hora_fim:hf };
+      if(modo === 'dias'){ var de = f.querySelector('#uDe').value, ate = f.querySelector('#uAte').value || de; if(!de) return erro('Escolha o dia.'); if(ate < de) return erro('O "até" tem de ser depois do "de".'); reg.de = de; reg.ate = ate; reg.dias = null; }
+      else { var ds = Array.prototype.slice.call(f.querySelectorAll('.dias-sem input:checked')).map(function(x){ return +x.value; }); if(!ds.length) return erro('Escolha pelo menos um dia da semana.');
+        reg.de = f.querySelector('#uFixDe').value || iso(new Date()); reg.ate = f.querySelector('#uFixAte').value || null; if(reg.ate && reg.ate < reg.de) return erro('O "até" tem de ser depois do "a partir de".'); reg.dias = ds; }
+      // marcações que já existem nesse período (não mudam sozinhas)
+      var tmp = AUS; AUS = [Object.assign({ id:'_novo' }, reg)];
+      var choques = RES.filter(function(r){ if(r.estado === 'cancelada' || r.data < iso(new Date()) || minDe(r.hora) == null) return false; var a0 = minDe(r.hora), a1 = a0 + (+r.duracao || 30);
+        return ausDia(r.data).some(function(b){ return (!b.prof || !r.profissional || b.prof === r.profissional) && b.ini < a1 && a0 < b.fim; }); });
+      AUS = tmp;
+      if(choques.length && !confirm('Atenção: já há ' + choques.length + ' marcação(ões) nesse período:\n\n' + choques.slice(0, 8).map(function(r){ return '• ' + quando(r.data, r.hora) + ' · ' + (r.nome || '') + (nomeProf(r.profissional) ? (' · ' + nomeProf(r.profissional)) : ''); }).join('\n') + (choques.length > 8 ? '\n…' : '') + '\n\nEssas marcações ficam como estão (mude-as na agenda se for preciso). Guardar a ausência?')) return;
+      this.disabled = true;
+      var r = novo ? await sb.from('salao_ausencias').insert(reg) : await sb.from('salao_ausencias').update(reg).eq('id', a.id);
+      this.disabled = false;
+      if(r.error) return erro(/salao_ausencias|relation|does not exist|schema cache/i.test(r.error.message) ? 'Falta correr no Supabase o ficheiro 12-salao-ausencias.sql.' : ('Erro: ' + r.error.message));
+      await carregarAus(); pintarAgenda(); toast('Ausência guardada ✓'); abrirAusencias();
+    };
+  }
+  $('aAus').onclick = abrirAusencias;
   async function carregarRes(){
     var iv = intervalo(), hoje = iso(new Date());
     var de = iv[0] < hoje ? iv[0] : hoje, ate = iv[1];
     var futuro = new Date(); futuro.setDate(futuro.getDate() + 120); if(iso(futuro) > ate) ate = iso(futuro);
     var r = await sb.from('reservas').select('*').eq('negocio_id', NEG.id).gte('data', de).lte('data', ate).order('data').order('hora');
     if(r.error){ toast('Erro a carregar: ' + r.error.message); return; }
-    RES = r.data || []; pintarAgenda(); pintarPedidos();
+    RES = r.data || []; await carregarAus(); pintarAgenda(); pintarPedidos();
   }
   var DESCONTOS = [0, 5, 10, 15, 20, 25, 30, 40, 50];
   function precoServ(nome){ var sv = SERV.filter(function(x){ return x.nome === nome; })[0]; var m = /(\d+(?:[.,]\d{1,2})?)/.exec(String((sv && sv.preco) || '')); return m ? parseFloat(m[1].replace(',', '.')) : null; }
@@ -841,7 +1073,7 @@
     var eq = EQ(), cols0 = [];
     if(vista === 'dia' && eq.length){
       var k1 = dias[0], wd1 = dDe(k1).getDay();
-      eq.filter(function(p){ return !profFiltro || p.id === profFiltro; }).forEach(function(p){ cols0.push({ dia:k1, prof:p.id, tit:p.nome, sub:trabalha(p, wd1) ? '' : 'Folga', folga:!trabalha(p, wd1) }); });
+      eq.filter(function(p){ return !profFiltro || p.id === profFiltro; }).forEach(function(p){ var hz = horarioDe(wd1), ausT = hz ? ausDia(k1).filter(function(b){ return b.prof && b.prof === p.id && b.ini <= minDe(hz[0]) && b.fim >= minDe(hz[1]); })[0] : null; cols0.push({ dia:k1, prof:p.id, tit:p.nome, sub:!trabalha(p, wd1) ? 'Folga' : ausT ? ('🌴 ' + (ausT.a.motivo || 'Ausente')) : '', folga:!trabalha(p, wd1) }); });
       if(!profFiltro && RES.some(function(r){ return r.data === k1 && r.estado !== 'cancelada' && (!r.profissional || !nomeProf(r.profissional)); })) cols0.push({ dia:k1, prof:'__sem', tit:'Sem profissional', sub:'' });
     } else dias.forEach(function(k){ cols0.push({ dia:k, prof:'' }); });
     var hoje = iso(new Date());
@@ -863,6 +1095,11 @@
       var k = c.dia, dd = dDe(k), hh = horarioDe(dd.getDay()), fechado = !hh || fechadoEm(k) || c.folga;
       h += '<div class="ag-col' + (fechado ? ' fechado' : '') + '" data-dia="' + k + '" data-prof="' + esc(c.prof === '__sem' ? '' : c.prof) + '" style="height:' + alt + 'px;">';
       if(k === hoje){ var n = new Date(), nm = n.getHours() * 60 + n.getMinutes(); if(nm >= ini && nm <= fim) h += '<div class="agora" style="top:' + ((nm - ini) * PX) + 'px;"></div>'; }
+      ausDia(k).filter(function(b){ return c.prof === '__sem' ? false : c.prof ? ausPara(b, c.prof) : (!b.prof || !profFiltro || b.prof === profFiltro); }).forEach(function(b){
+        var a0 = Math.max(ini, b.ini), a1 = Math.min(fim, b.fim); if(a1 <= a0) return;
+        var lab = '🌴 ' + (b.a.motivo || 'Ausência') + (!c.prof && b.prof ? (' · ' + (nomeProf(b.prof) || '')) : (!b.prof && EQ().length ? ' · salão' : ''));
+        h += '<div class="aus" data-aus="' + esc(b.a.id) + '" title="' + esc(lab + ' · ' + ausQuando(b.a) + ' — tocar para mudar') + '" style="top:' + ((a0 - ini) * PX + 1) + 'px;height:' + Math.max(18, (a1 - a0) * PX - 2) + 'px;' + (!c.prof && b.prof ? ('left:auto;right:2px;width:20px;padding:3px 0;text-align:center;z-index:2;border:none;border-right:3px solid ' + corProf(b.prof) + ';') : '') + '">' + (!c.prof && b.prof ? '🌴' : esc(lab)) + '</div>';
+      });
       var fant = RES.filter(function(r){ return r.proposta_hora && r.estado !== 'cancelada' && (r.proposta_data || r.data) === k && minDe(r.proposta_hora) != null; })
         .map(function(r){ return Object.assign({}, r, { id:r.id, _fantasma:true, data:k, hora:r.proposta_hora }); });
       var lst = RES.concat(fant).filter(function(r){ if(r.data !== k || r.estado === 'cancelada' || minDe(r.hora) == null) return false;
@@ -901,7 +1138,9 @@
     h += '</div>';
     $('agenda').innerHTML = h;
     $('agenda').querySelectorAll('.bloco').forEach(function(b){ b.onclick = function(ev){ ev.stopPropagation(); var r = RES.filter(function(x){ return x.id === b.getAttribute('data-id'); })[0]; if(r) abrirDetalhe(r); }; });
+    $('agenda').querySelectorAll('.aus').forEach(function(d){ d.onclick = function(ev){ ev.stopPropagation(); var a = AUS.filter(function(x){ return x.id === d.getAttribute('data-aus'); })[0]; if(a) editarAusencia(a); }; });
     $('agenda').querySelectorAll('.ag-col:not(.fechado)').forEach(function(c){ c.onclick = function(ev){
+      if(ev.target !== c) return;
       var y = ev.offsetY, m = ini + Math.floor(y / PX / passo()) * passo(); novaMarcacao(c.getAttribute('data-dia'), hDe(m), c.getAttribute('data-prof') || profFiltro); }; });
     // resumo do dia escolhido
     var k0 = iso(dataSel), doDia = RES.filter(function(r){ return r.data === k0 && r.estado !== 'cancelada'; });
@@ -912,7 +1151,8 @@
   }
   function horasLivres(k, dur){
     var hh = horarioDe(dDe(k).getDay()); if(!hh || fechadoEm(k)) return 0;
-    var oc = RES.filter(function(r){ return r.data === k && r.estado !== 'cancelada'; }).map(function(r){ var a = minDe(r.hora); return [a, a + (+r.duracao || 30)]; });
+    var oc = RES.filter(function(r){ return r.data === k && r.estado !== 'cancelada'; }).map(function(r){ var a = minDe(r.hora); return [a, a + (+r.duracao || 30)]; })
+      .concat(ausDia(k).filter(function(b){ return !b.prof; }).map(function(b){ return [b.ini, b.fim]; }));
     var n = 0; for(var t = minDe(hh[0]); t + dur <= minDe(hh[1]); t += 60){ if(!oc.some(function(o){ return o[0] < t + dur && t < o[1]; })) n++; } return n;
   }
   function pintarPedidos(){
@@ -951,8 +1191,10 @@
       var pend = doDia.filter(function(r){ return r.estado === 'pendente'; }).length;
       h += '<button type="button" class="mes-dia' + (fora ? ' fora' : '') + (fechado ? ' fechado' : '') + (k === hoje ? ' hoje' : '') + '" data-dia="' + k + '">'
         + '<div class="mes-num"><span>' + d.getDate() + '</span>' + (pend ? ('<span class="pill" title="Por confirmar">' + pend + '</span>') : '') + (fechado && !fora ? '<span style="font-size:11px;font-weight:600;color:var(--suave);">Fechado</span>' : '') + '</div>';
-      doDia.slice(0, 3).forEach(function(r){ h += '<div class="mes-it ' + (r.estado === 'confirmada' ? 'c' : r.proposta_hora ? 'r' : 'p') + '">' + esc(r.hora) + ' ' + esc(r.nome || '') + '</div>'; });
-      if(doDia.length > 3) h += '<div class="mes-mais">+' + (doDia.length - 3) + ' marcações</div>';
+      var ausM = fora ? [] : ausDia(k).filter(function(b){ return !b.prof || !profFiltro || b.prof === profFiltro; }).filter(function(b){ return b.todo || !(b.a.dias && b.a.dias.length); });
+      ausM.slice(0, 2).forEach(function(b){ h += '<div class="mes-it a">🌴 ' + esc(b.prof ? (nomeProf(b.prof) || '') : (b.a.motivo || 'Salão')) + '</div>'; });
+      doDia.slice(0, 3 - Math.min(2, ausM.length)).forEach(function(r){ h += '<div class="mes-it ' + (r.estado === 'confirmada' ? 'c' : r.proposta_hora ? 'r' : 'p') + '">' + esc(r.hora) + ' ' + esc(r.nome || '') + '</div>'; });
+      if(doDia.length > 3 - Math.min(2, ausM.length)) h += '<div class="mes-mais">+' + (doDia.length - (3 - Math.min(2, ausM.length))) + ' marcações</div>';
       h += '</button>';
     }
     $('agenda').innerHTML = h + '</div>';
@@ -1109,6 +1351,8 @@
       var pr = $('nProf') ? $('nProf').value : '';
       var choca = RES.some(function(r){ return r.data === d && r.estado !== 'cancelada' && minDe(r.hora) != null && (!pr || !r.profissional || r.profissional === pr) && minDe(r.hora) < a + du && a < minDe(r.hora) + (+r.duracao || 30); });
       if(choca && !confirm((pr ? (nomeProf(pr) + ' já tem') : 'Já há') + ' uma marcação a essa hora. Guardar mesmo assim?')) return;
+      var ausC = ausDia(d).filter(function(b){ return ausPara(b, pr) && b.ini < a + du && a < b.fim; })[0];
+      if(ausC && !confirm('🌴 ' + (ausC.prof ? (nomeProf(ausC.prof) || 'Esta pessoa') + ' está ausente' : 'O salão está fechado') + ' a essa hora (' + (ausC.a.motivo || 'ausência') + '). Guardar mesmo assim?')) return;
       var ins = { negocio_id:NEG.id, data:d, hora:h, nome:nome, telefone:$('nTel').value.trim() || '-', pessoas:1, obs:$('nObs').value.trim() || null, estado:'confirmada', servico:s.nome, duracao:du }; if(pr) ins.profissional = pr; var nd0 = +($('nDesc') ? $('nDesc').value : 0) || 0; if(nd0){ var bb = precoServ(s.nome); ins.desconto = nd0; if(bb != null){ ins.valor_base = bb; ins.valor = comDesc(bb, nd0); } }
       var r = await sb.from('reservas').insert(ins);
       if(r.error){ $('nMsg').textContent = /servico|duracao|column/i.test(r.error.message) ? 'Falta correr no Supabase o ficheiro salao-marcacoes.sql.' : ('Erro: ' + r.error.message); $('nMsg').className = 'msg erro'; return; }
