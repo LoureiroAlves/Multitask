@@ -1123,10 +1123,14 @@
       var k = c.dia, dd = dDe(k), hh = horarioDe(dd.getDay()), fechado = !hh || fechadoEm(k) || c.folga;
       h += '<div class="ag-col' + (fechado ? ' fechado' : '') + '" data-dia="' + k + '" data-prof="' + esc(c.prof === '__sem' ? '' : c.prof) + '" style="height:' + alt + 'px;">';
       if(k === hoje){ var n = new Date(), nm = n.getHours() * 60 + n.getMinutes(); if(nm >= ini && nm <= fim) h += '<div class="agora" style="top:' + ((nm - ini) * PX) + 'px;"></div>'; }
-      ausDia(k).filter(function(b){ return c.prof === '__sem' ? false : c.prof ? ausPara(b, c.prof) : (!b.prof || !profFiltro || b.prof === profFiltro); }).forEach(function(b){
+      var ausCol = ausDia(k).filter(function(b){ return c.prof === '__sem' ? false : c.prof ? ausPara(b, c.prof) : (!b.prof || !profFiltro || b.prof === profFiltro); });
+      // vista sem colunas por pessoa: cada pessoa ausente tem a sua faixa (lado a lado, pela ordem da equipa), para nenhuma tapar a outra
+      var faixas = []; ausCol.forEach(function(b){ if(!c.prof && b.prof && faixas.indexOf(b.prof) < 0) faixas.push(b.prof); });
+      faixas.sort(function(x, y){ return EQ().findIndex(function(p){ return p.id === x; }) - EQ().findIndex(function(p){ return p.id === y; }); });
+      ausCol.forEach(function(b){
         var a0 = Math.max(ini, b.ini), a1 = Math.min(fim, b.fim); if(a1 <= a0) return;
         var lab = (b.a.motivo || 'Ausência') + (!c.prof && b.prof ? (' · ' + (nomeProf(b.prof) || '')) : (!b.prof && EQ().length ? ' · salão' : ''));
-        h += '<div class="aus" data-aus="' + esc(b.a.id) + '" title="' + esc(lab + ' · ' + ausQuando(b.a) + ' — tocar para mudar') + '" style="top:' + ((a0 - ini) * PX + 1) + 'px;height:' + Math.max(18, (a1 - a0) * PX - 2) + 'px;' + (!c.prof && b.prof ? ('left:auto;right:2px;width:20px;padding:3px 0;text-align:center;z-index:2;border:none;border-right:3px solid ' + corProf(b.prof) + ';') : '') + '">' + (!c.prof && b.prof ? '' : esc(lab)) + '</div>';
+        h += '<div class="aus" data-aus="' + esc(b.a.id) + '" title="' + esc(lab + ' · ' + ausQuando(b.a) + ' — tocar para mudar') + '" style="top:' + ((a0 - ini) * PX + 1) + 'px;height:' + Math.max(18, (a1 - a0) * PX - 2) + 'px;' + (!c.prof && b.prof ? ('left:auto;right:' + (2 + faixas.indexOf(b.prof) * 22) + 'px;width:20px;padding:3px 0;text-align:center;z-index:2;border:none;border-right:3px solid ' + corProf(b.prof) + ';color:' + corProf(b.prof) + ';font-weight:800;') : '') + '">' + (!c.prof && b.prof ? esc((nomeProf(b.prof) || '?').charAt(0).toUpperCase()) : esc(lab)) + '</div>';
       });
       var fant = RES.filter(function(r){ return r.proposta_hora && r.estado !== 'cancelada' && (r.proposta_data || r.data) === k && minDe(r.proposta_hora) != null; })
         .map(function(r){ return Object.assign({}, r, { id:r.id, _fantasma:true, data:k, hora:r.proposta_hora }); });
