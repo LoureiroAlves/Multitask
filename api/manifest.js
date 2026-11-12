@@ -1,7 +1,7 @@
 // 4 Trevo (Multitask) — ficha da app instalável de cada negócio que não é da àMesa (ex.: salões).
 // /api/manifest?n=<slug>        → app do cliente (abre salao.html?n=<slug>)
 // /api/manifest?n=<slug>&g=1    → app da gestão (abre salao-gestao.html?n=<slug>)
-// Nome = nome do negócio; ícone = trevo de 4 folhas. Lê só dados públicos, com a chave pública do Supabase.
+// Nome = nome do negócio; ícone = logótipo do salão (ou o trevo de 4 folhas, se não tiver). Lê só dados públicos, com a chave pública do Supabase.
 
 const SUPA_URL = 'https://zewiijcrkyxjkhudlplk.supabase.co';
 const SUPA_KEY = 'sb_publishable_6LP7x2v5c-c9DQkQslnUmA_g13SEjp3';
@@ -10,7 +10,7 @@ module.exports = async (req, res) => {
   const url = new URL(req.url, 'https://amesadigital.pt');
   const slug = String(url.searchParams.get('n') || '').toLowerCase().replace(/[^a-z0-9]/g, '');
   const gestao = url.searchParams.get('g') === '1';
-  let nome = '', cor = '#2E7D52';
+  let nome = '', cor = '#2E7D52', logo = '';
   if (slug) {
     try {
       const r = await fetch(SUPA_URL + '/rest/v1/negocios?slug=eq.' + slug + '&select=nome,config&limit=1', {
@@ -22,6 +22,9 @@ module.exports = async (req, res) => {
         const s = (n.config && n.config.salao) || {};
         nome = String(s.nome || n.nome || '').slice(0, 60);
         if (/^#[0-9a-fA-F]{6}$/.test(s.cor || '')) cor = s.cor;
+        if (/^https:\/\//.test(String(s.logo || ''))) logo = String(s.logo);
+        // versão quadrada (logótipo inteiro, sem cortes), feita pela gestão do salão
+        if (logo && /^https:\/\//.test(String(s.logoQ || '')) && s.logoQde === s.logo) logo = String(s.logoQ);
       }
     } catch (e) { /* sem ligação: segue com o nome da marca */ }
   }
@@ -37,7 +40,11 @@ module.exports = async (req, res) => {
     display: 'standalone',
     background_color: '#F6F4F2',
     theme_color: cor,
-    icons: [
+    // com logótipo: a app no telemóvel fica com o logótipo do salão; sem logótipo, o trevo
+    icons: logo ? [
+      { src: logo, sizes: '192x192', purpose: 'any' },
+      { src: logo, sizes: '512x512', purpose: 'any' },
+    ] : [
       { src: '/icon-trevo-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
       { src: '/icon-trevo-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
       { src: '/icon-trevo-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },

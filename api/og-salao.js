@@ -31,7 +31,7 @@ module.exports = async (req, res) => {
         const s = (n.config && n.config.salao) || {};
         nome = s.nome || n.nome || '';
         frase = s.frase || '';
-        logo = ok(s.logo) ? s.logo : '';
+        logo = ok(s.logo) ? ((ok(s.logoQ) && s.logoQde === s.logo) ? s.logoQ : s.logo) : '';
         const capas = Array.isArray(s.capas) ? s.capas.filter(ok) : [];
         foto = (s.fundo && s.fundo.tipo !== 'video' && ok(s.fundo.url)) ? s.fundo.url : (capas[0] || '');
       }
