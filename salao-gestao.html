@@ -718,6 +718,7 @@
 
   // ---------- campanhas: só para quem aceitou (aceita_campanhas) e não está bloqueado ----------
   var CAMPH = [], CAMP_OK = true;
+  function linkCampanha(){ var l = linkPublico(); return l + (l.indexOf('?') >= 0 ? '&' : '?') + 'c=' + Date.now().toString(36).slice(-5); }
   function linkPublico(){ return (/(^|\.)4trevo\.com$/i.test(location.hostname) ? (location.origin + '/') : (location.origin + '/salao.html?n=')) + encodeURIComponent(SLUG); }
   function primeiroNome(n){ return String(n || '').trim().split(/\s+/)[0] || ''; }
   function textoPara(c, txt){ var nm = primeiroNome(c && c.nome); return String(txt || '').replace(/\{nome\}/gi, nm).replace(/(Olá|Ola|Oi)\s*!/i, '$1!').replace(/\s+([,!?.])/g, '$1').trim(); }
@@ -761,7 +762,7 @@
     $('cpPush').textContent = '🔔 Enviar notificação' + (np ? (' (' + np + ')') : ''); $('cpPush').disabled = !np;
     $('cpWa').textContent = '💬 Enviar por WhatsApp' + (nw ? (' (' + nw + ')') : ''); $('cpWa').disabled = !nw;
     $('cpMail').textContent = '✉️ Enviar por email' + (nm ? (' (' + nm + ')') : ''); $('cpMail').disabled = !nm;
-    var ex = l[0] ? l[0].c : { nome:'Maria' }, tit = $('cpTit').value.trim() || (SAL.nome || NEG.nome), txt = (textoPara(ex, $('cpTxt').value) || 'A sua mensagem aparece aqui.');
+    var ex = l[0] ? l[0].c : { nome:'Maria' }, tit = $('cpTit').value.trim() || '📣 Novidade', txt = (textoPara(ex, $('cpTxt').value) || 'A sua mensagem aparece aqui.');
     var wtxt = textoPara(ex, $('cpTxt').value) + ($('cpLink').checked ? ('\n\n' + linkPublico()) : '');
     $('cpCars').textContent = $('cpTxt').value.length + '/500';
     $('cpPrev').innerHTML = '<div class="camp-not">' + (logoPush() ? ('<img class="ic" src="' + esc(SAL.logo) + '" alt="" style="object-fit:cover;background:#fff;">') : '<span class="ic"></span>') + '<div><small style="display:block;font-size:11px;color:var(--suave);font-weight:700;text-transform:uppercase;letter-spacing:.03em;">' + esc(SAL.nome || NEG.nome) + '</small><b>' + esc(tit) + '</b><p>' + esc(txt) + '</p></div></div>'
@@ -794,7 +795,7 @@
   $('cpPush').onclick = async function(){
     if(!validaCamp()) return; var l = publicoCamp().filter(function(d){ return d.ep; }); if(!l.length) return;
     if(!confirm('Enviar esta notificação a ' + l.length + ' cliente(s)?')) return;
-    var bt = this, ok = 0, i = 0, tit = $('cpTit').value.trim() || (SAL.nome || NEG.nome), feitos = {}; bt.disabled = true;
+    var bt = this, ok = 0, i = 0, tit = $('cpTit').value.trim() || '📣 Novidade', feitos = {}; bt.disabled = true;
     var falhas = [];
     async function um(d){ var lst = d.eps.filter(function(e){ return !feitos[e]; }); if(!lst.length) return; lst.forEach(function(e){ feitos[e] = 1; });
       try{ var res = await sb.functions.invoke('enviar-push', { body:{ negocio:NEG.id, titulo:tit, corpo:textoPara(d.c, $('cpTxt').value), url:location.origin + '/salao.html?n=' + encodeURIComponent(SLUG), endpoints:lst, tag:'camp-' + Date.now(), icon:logoPush() } });
@@ -817,7 +818,8 @@
     var juntaLink = link === true ? $('cpLink').checked : (def ? def.link !== false : h._link !== false);
     if(link === true){ try{ localStorage.setItem('camp_wa_def_' + h.id, JSON.stringify({ link:juntaLink, lista:l.map(function(d){ return d.c.tel_norm; }) })); }catch(e){} }
     else if(def && Array.isArray(def.lista)){ var lt = l.filter(function(d){ return def.lista.indexOf(d.c.tel_norm) >= 0; }); if(lt.length) l = lt; }
-    function txt(c){ return '*' + (SAL.nome || NEG.nome) + '*\n' + (h.titulo ? ('*' + h.titulo + '*\n') : '') + textoPara(c, h.texto) + (juntaLink ? ('\n\n' + linkPublico()) : ''); }
+    var lk = linkCampanha();   // link novo em cada envio: o WhatsApp vai buscar a pré-visualização do salão (não a guardada)
+    function txt(c){ return '*' + (SAL.nome || NEG.nome) + '*\n' + (h.titulo ? ('*' + h.titulo + '*\n') : '') + textoPara(c, h.texto) + (juntaLink ? ('\n\n' + lk) : ''); }
     function conta(){ return Object.keys(feito).length; }
     var f = modal('<h3>💬 Enviar por WhatsApp</h3><div style="font-size:14px;color:var(--suave);">O WhatsApp não deixa enviar a várias pessoas de uma vez. Toque em <b>Abrir</b> em cada cliente: a mensagem já vai escrita, só tem de carregar em enviar.</div>'
       + '<div style="font-weight:800;font-size:14px;" id="waConta"></div>'

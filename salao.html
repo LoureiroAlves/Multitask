@@ -335,7 +335,7 @@
   }
   // nos domínios 4trevo, a barra mostra só 4trevo.com/nomedonegocio (sem "salao.html?n=")
   function enderecoCurto(){ try{ if(!/(^|\.)4trevo\.com$/i.test(location.hostname) || !SLUG) return;
-    var q = new URLSearchParams(location.search); q.delete('n'); var r = q.toString();
+    var q = new URLSearchParams(location.search); q.delete('n'); q.delete('c'); var r = q.toString();
     var novo = '/' + SLUG + (r ? ('?' + r) : '') + location.hash;
     if(novo !== location.pathname + location.search + location.hash) history.replaceState(history.state, '', novo); }catch(e){} }
   function carregar(){
