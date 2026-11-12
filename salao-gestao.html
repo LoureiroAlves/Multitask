@@ -120,6 +120,13 @@
   .cli-tab .n{ text-align:right; font-variant-numeric:tabular-nums; }
   .etq{ display:inline-block; border-radius:999px; padding:1px 8px; font-size:11px; font-weight:800; margin-left:6px; }
   .etq.novo{ background:#EEF2EE; color:var(--verde); } .etq.reg{ background:#F3E6EA; color:var(--ac); }
+  .etq.blq{ background:#3a2a2a; color:#fff; } .etq.camp{ background:#EAF0F7; color:#2B5C8A; } .etq.inat{ background:#F4EFE6; color:#8A6420; }
+  .cli-sec{ font-weight:800; font-size:14px; margin-top:4px; }
+  .chk-l{ display:flex; gap:8px; align-items:flex-start; font-size:14px; font-weight:600; cursor:pointer; line-height:1.35; }
+  .chk-l input{ width:18px; height:18px; flex:0 0 auto; margin:1px 0 0; }
+  .caixa-blq{ border:1.5px solid var(--linha); border-radius:12px; padding:10px 12px; display:flex; flex-direction:column; gap:8px; }
+  .caixa-blq.on{ border-color:#3a2a2a; background:#FAF6F6; }
+  .btn-perigo{ background:none; border:1.5px solid #E2C4C4; color:#A33; border-radius:10px; padding:10px 14px; font-weight:700; cursor:pointer; font-family:inherit; }
   .hist{ max-height:240px; overflow:auto; border:1px solid var(--linha); border-radius:10px; }
   .hist div{ display:flex; gap:8px; padding:7px 10px; border-bottom:1px solid var(--linha); font-size:13px; }
   .hist div:last-child{ border-bottom:none; }
@@ -165,6 +172,7 @@
   .msg{ font-size:14px; font-weight:700; } .msg.ok{ color:var(--verde); } .msg.erro{ color:#A3262A; }
   .modal-fundo{ position:fixed; inset:0; background:rgba(0,0,0,.45); display:flex; align-items:center; justify-content:center; z-index:50; padding:16px; }
   .modal{ background:#fff; border-radius:16px; padding:20px; width:100%; max-width:460px; max-height:92vh; overflow-y:auto; display:flex; flex-direction:column; gap:12px; position:relative; }
+  .modal > *{ flex-shrink:0; }   /* conteúdo comprido: a janela faz scroll em vez de espremer botões e listas */
   .modal h3{ margin:0; font-size:19px; }
   .fechar{ position:absolute; right:12px; top:12px; width:40px; height:40px; border:none; border-radius:10px; background:#F6F4F2; font-size:18px; }
   .login{ max-width:380px; margin:60px auto; background:#fff; border-radius:16px; padding:24px; display:flex; flex-direction:column; gap:10px; }
@@ -255,15 +263,17 @@
   <!-- CLIENTES -->
   <section id="tClientes" class="pag hide" style="max-width:1200px;">
     <h2>Clientes</h2>
-    <p class="sub">Cada marcação cria a ficha do cliente (ou junta-a à que já existe, pelo telemóvel ou, se não houver contacto, pelo nome). As visitas e o total gasto contam as marcações confirmadas até hoje, pelo preço de cada uma.</p>
+    <p class="sub">Cada marcação cria a ficha do cliente (ou junta-a à que já existe, pelo telemóvel ou, se não houver contacto, pelo nome). As visitas e o total gasto contam as marcações confirmadas até hoje, pelo preço de cada uma. Use o filtro para ver quem deixou de vir, quem aceita campanhas ou quem está bloqueado.</p>
     <div class="cli-tot" id="cliTot"></div>
     <div class="cli-barra">
       <input id="cliBusca" type="search" placeholder="Procurar nome ou telemóvel…" style="flex:1;min-width:200px;">
       <select id="cliOrdem" aria-label="Ordenar"><option value="rec">Visita mais recente</option><option value="vis">Mais visitas</option><option value="gasto">Mais gasto</option><option value="nome">Nome</option><option value="novo">Mais novos</option></select>
       <label style="display:flex;align-items:center;gap:6px;font-size:14px;font-weight:600;background:#fff;border:1.5px solid var(--borda);border-radius:10px;padding:0 12px;min-height:40px;" title="Soma das marcações futuras já confirmadas"><input type="checkbox" id="cliPrev" style="width:18px;height:18px;"> Mostrar valor previsto</label>
+      <select id="cliFiltro" aria-label="Mostrar"><option value="">Todos os clientes</option><option value="i2">Sem vir há 2+ meses</option><option value="i3">Sem vir há 3+ meses</option><option value="i6">Sem vir há 6+ meses</option><option value="i12">Sem vir há 1+ ano</option><option value="camp">Aceitam campanhas</option><option value="aniv">Fazem anos este mês</option><option value="blq">Bloqueados</option></select>
       <button type="button" class="btn-ac" id="cliNovo">+ Novo cliente</button>
       <button type="button" class="btn" id="cliCsv">⬇️ Clientes (Excel)</button>
       <button type="button" class="btn" id="cliCsvMes">⬇️ Marcações do mês (Excel)</button>
+      <button type="button" class="btn" id="cliImp">⬆️ Importar clientes</button><input type="file" id="cliImpF" accept=".csv,text/csv,text/plain" class="hide">
     </div>
     <div id="cliLista"><div style="color:var(--suave);">A carregar…</div></div>
   </section>
@@ -469,6 +479,10 @@
   function telNorm(t){ var d = String(t || '').replace(/\D/g, ''); return /^351\d{9}$/.test(d) ? d.slice(3) : d; }
   function euro(v){ return (Math.round((+v || 0) * 100) / 100).toLocaleString('pt-PT', { minimumFractionDigits:2, maximumFractionDigits:2 }) + ' €'; }
   function dataPt(k){ if(!k) return '—'; var d = dDe(String(k).slice(0, 10)); return d.getDate() + ' ' + MESES[d.getMonth()].slice(0, 3) + ' ' + d.getFullYear(); }
+  var GENEROS = [['','—'],['F','Feminino'],['M','Masculino'],['O','Outro']];
+  function semColuna(e){ return e && /nif|genero|aceita_campanhas|campanhas_em|bloqueado|column/i.test(e.message || ''); }
+  var AVISO_SQL11 = 'Falta correr no Supabase o ficheiro 11-salao-clientes-extra.sql.';
+  function mesesSem(ult){ if(!ult) return null; var a = dDe(ult), h = new Date(); return (h.getFullYear() - a.getFullYear()) * 12 + (h.getMonth() - a.getMonth()) - (h.getDate() < a.getDate() ? 1 : 0); }
   async function carregarClientes(){
     var a = await sb.from('clientes').select('*').eq('negocio_id', NEG.id);
     if(a.error){ $('cliLista').innerHTML = '<div class="msg erro">' + (/clientes|relation|does not exist|schema cache/i.test(a.error.message) ? 'Falta correr no Supabase o ficheiro salao-clientes.sql.' : esc(a.error.message)) + '</div>'; return; }
@@ -498,11 +512,16 @@
       + (prevOn ? ('<div style="border:1.5px dashed var(--borda);"><b>' + euro(prevMes) + '</b><span>previsto até ao fim do mês</span></div><div style="border:1.5px dashed var(--borda);"><b>' + euro(prevTot) + '</b><span>previsto (todas as marcações futuras)</span></div>') : '');
     var q = ($('cliBusca').value || '').trim().toLowerCase(), qd = q.replace(/\D/g, '');
     if(q) l = l.filter(function(x){ return String(x.c.nome || '').toLowerCase().indexOf(q) >= 0 || (qd && telNorm(x.c.telefone).indexOf(qd) >= 0); });
+    var fl = $('cliFiltro').value, mesN = hoje.slice(5, 7);
+    if(/^i\d+$/.test(fl)){ var nM = +fl.slice(1); l = l.filter(function(x){ var ms = mesesSem(x.ult); return x.vis > 0 && !x.prox && ms != null && ms >= nM && !x.c.bloqueado; }); }
+    else if(fl === 'camp') l = l.filter(function(x){ return x.c.aceita_campanhas === true && !x.c.bloqueado; });
+    else if(fl === 'aniv') l = l.filter(function(x){ return String(x.c.nascimento || '').slice(5, 7) === mesN; });
+    else if(fl === 'blq') l = l.filter(function(x){ return x.c.bloqueado === true; });
     var o = $('cliOrdem').value;
     l.sort(function(a, b){ return o === 'vis' ? b.vis - a.vis : o === 'gasto' ? b.gasto - a.gasto : o === 'nome' ? String(a.c.nome || '').localeCompare(String(b.c.nome || ''), 'pt') : o === 'novo' ? String(b.c.criado_em).localeCompare(String(a.c.criado_em)) : String(b.ult || b.prox).localeCompare(String(a.ult || a.prox)); });
-    if(!l.length){ $('cliLista').innerHTML = '<div style="background:#fff;border-radius:12px;padding:16px;color:var(--suave);">' + (CLI.length ? 'Nenhum cliente encontrado.' : 'Ainda não há clientes. As fichas aparecem aqui a partir da primeira marcação.') + '</div>'; return; }
+    if(!l.length){ $('cliLista').innerHTML = '<div style="background:#fff;border-radius:12px;padding:16px;color:var(--suave);">' + (CLI.length ? (fl ? 'Nenhum cliente neste filtro.' : 'Nenhum cliente encontrado.') : 'Ainda não há clientes. As fichas aparecem aqui a partir da primeira marcação.') + '</div>'; return; }
     $('cliLista').innerHTML = '<table class="cli-tab"><thead><tr><th>Cliente</th><th>Telemóvel</th><th class="n">Visitas</th><th class="n">Total gasto</th>' + (prevOn ? '<th class="n opc">Previsto</th>' : '') + '<th>Última visita</th><th class="opc">Próxima</th><th class="n opc">Faltas</th></tr></thead><tbody>'
-      + l.slice(0, 500).map(function(x){ return '<tr class="l" data-t="' + esc(x.c.tel_norm) + '"><td><b>' + esc(x.c.nome || '—') + '</b>' + (x.vis >= 3 ? '<span class="etq reg">Regular</span>' : x.vis <= 1 ? '<span class="etq novo">Novo</span>' : '') + '</td><td>' + (x.c.telefone ? esc(x.c.telefone) : '<span style="color:var(--suave);">sem contacto</span>') + '</td><td class="n">' + x.vis + '</td><td class="n">' + euro(x.gasto) + '</td>' + (prevOn ? ('<td class="n opc" style="color:var(--suave);">' + (x.prev ? euro(x.prev) : '—') + '</td>') : '') + '<td>' + dataPt(x.ult) + '</td><td class="opc">' + (x.prox ? dataPt(x.prox) : '—') + '</td><td class="n opc">' + (x.faltas || '') + '</td></tr>'; }).join('')
+      + l.slice(0, 500).map(function(x){ return '<tr class="l" data-t="' + esc(x.c.tel_norm) + '"><td><b>' + esc(x.c.nome || '—') + '</b>' + (x.c.bloqueado ? '<span class="etq blq">Bloqueado</span>' : x.vis >= 3 ? '<span class="etq reg">Regular</span>' : x.vis <= 1 ? '<span class="etq novo">Novo</span>' : '') + (!x.c.bloqueado && !x.prox && x.vis > 0 && mesesSem(x.ult) >= 3 ? '<span class="etq inat">' + mesesSem(x.ult) + ' meses sem vir</span>' : '') + (x.c.aceita_campanhas ? '<span class="etq camp" title="Aceita receber campanhas">📣</span>' : '') + '</td><td>' + (x.c.telefone ? esc(x.c.telefone) : '<span style="color:var(--suave);">sem contacto</span>') + '</td><td class="n">' + x.vis + '</td><td class="n">' + euro(x.gasto) + '</td>' + (prevOn ? ('<td class="n opc" style="color:var(--suave);">' + (x.prev ? euro(x.prev) : '—') + '</td>') : '') + '<td>' + dataPt(x.ult) + '</td><td class="opc">' + (x.prox ? dataPt(x.prox) : '—') + '</td><td class="n opc">' + (x.faltas || '') + '</td></tr>'; }).join('')
       + '</tbody></table>';
     $('cliLista').querySelectorAll('tr.l').forEach(function(tr){ tr.onclick = function(){ abrirFicha(m[tr.getAttribute('data-t')]); }; });
   }
@@ -510,7 +529,9 @@
     var f = modal('<h3>Novo cliente</h3><div style="font-size:14px;color:var(--suave);">Só o nome é obrigatório. O contacto é opcional.</div>'
       + '<div class="campo"><label for="kNome">Nome</label><input id="kNome" maxlength="80"></div>'
       + '<div class="grelha2"><div class="campo"><label for="kTel">Telemóvel (opcional)</label><input id="kTel" inputmode="tel" maxlength="20"></div><div class="campo"><label for="kEmail">Email (opcional)</label><input id="kEmail" type="email" maxlength="120"></div></div>'
-      + '<div class="grelha2"><div class="campo"><label for="kNasc">Data de nascimento (opcional)</label><input id="kNasc" type="date"></div><div></div></div>'
+      + '<div class="grelha2"><div class="campo"><label for="kNasc">Data de nascimento (opcional)</label><input id="kNasc" type="date"></div><div class="campo"><label for="kGen">Género (opcional)</label><select id="kGen">' + GENEROS.map(function(g){ return '<option value="' + g[0] + '">' + g[1] + '</option>'; }).join('') + '</select></div></div>'
+      + '<div class="grelha2"><div class="campo"><label for="kNif">NIF (opcional)</label><input id="kNif" inputmode="numeric" maxlength="9"></div><div></div></div>'
+      + '<label class="chk-l"><input type="checkbox" id="kCamp"> O cliente aceita receber campanhas (promoções e novidades)</label>'
       + '<div class="campo"><label for="kNotas">Notas (opcional)</label><textarea id="kNotas" rows="2" maxlength="1000"></textarea></div>'
       + '<button type="button" class="btn-ac" id="kGuardar">Guardar cliente</button><div class="msg" id="kMsg"></div>');
     f.querySelector('#kNome').focus();
@@ -520,35 +541,60 @@
       if(tel && t.length < 9){ $('kMsg').textContent = 'O telemóvel tem de ter pelo menos 9 números (ou deixe vazio).'; $('kMsg').className = 'msg erro'; return; }
       var ch = chaveCli(tel, nome);
       if(CLI.some(function(c){ return c.tel_norm === ch; })){ $('kMsg').textContent = t.length >= 9 ? 'Já existe um cliente com este telemóvel.' : 'Já existe um cliente sem contacto com este nome. Acrescente o apelido ou o telemóvel.'; $('kMsg').className = 'msg erro'; return; }
-      var r = await sb.from('clientes').insert({ negocio_id:NEG.id, tel_norm:ch, nome:nome, telefone:tel || null, email:$('kEmail').value.trim() || null, nascimento:$('kNasc').value || null, notas:$('kNotas').value.trim() || null });
+      var nif = $('kNif').value.replace(/\D/g, ''); if(nif && nif.length !== 9){ $('kMsg').textContent = 'O NIF tem 9 números (ou deixe vazio).'; $('kMsg').className = 'msg erro'; return; }
+      var reg = { negocio_id:NEG.id, tel_norm:ch, nome:nome, telefone:tel || null, email:$('kEmail').value.trim() || null, nascimento:$('kNasc').value || null, notas:$('kNotas').value.trim() || null };
+      var ext = { nif:nif || null, genero:$('kGen').value || null, aceita_campanhas:$('kCamp').checked, campanhas_em:$('kCamp').checked ? new Date().toISOString() : null };
+      var r = await sb.from('clientes').insert(Object.assign({}, reg, ext));
+      if(r.error && semColuna(r.error)){ if(ext.nif || ext.genero || ext.aceita_campanhas){ $('kMsg').textContent = AVISO_SQL11; $('kMsg').className = 'msg erro'; return; } r = await sb.from('clientes').insert(reg); }
       if(r.error){ $('kMsg').textContent = 'Erro: ' + r.error.message; $('kMsg').className = 'msg erro'; return; }
       fecharModal(); toast('Cliente criado ✓'); carregarClientes();
     };
   };
-  $('cliBusca').oninput = pintarClientes; $('cliOrdem').onchange = pintarClientes;
+  $('cliBusca').oninput = pintarClientes; $('cliOrdem').onchange = pintarClientes; $('cliFiltro').onchange = pintarClientes;
   $('cliPrev').onchange = async function(){ var on = this.checked; var e = await guardarCfg(function(c){ c.salao = Object.assign({}, c.salao || {}, { mostrarPrevisto:on }); }); if(e){ toast('Erro: ' + e.message); this.checked = !on; return; } pintarClientes(); };
   function abrirFicha(x){
     var c = x.c, fav = Object.keys(x.serv).sort(function(a, b){ return x.serv[b] - x.serv[a]; })[0] || '—';
-    var media = x.vis ? x.gasto / x.vis : 0, tel = String(c.telefone || '');
-    var f = modal('<h3>' + esc(c.nome || 'Cliente') + '</h3>'
+    var media = x.vis ? x.gasto / x.vis : 0, tel = String(c.telefone || ''), hojeF = iso(new Date());
+    var agoraH = new Date().toTimeString().slice(0, 5);
+    var prox = x.hist.filter(function(r){ return (r.data > hojeF || (r.data === hojeF && String(r.hora || '') >= agoraH)) && r.estado !== 'cancelada' && !r.faltou; }).sort(function(a, b){ return (a.data + a.hora).localeCompare(b.data + b.hora); });
+    var passadas = x.hist.filter(function(r){ return prox.indexOf(r) < 0; }).sort(function(a, b){ return (b.data + b.hora).localeCompare(a.data + a.hora); });
+    var temExtra = ('bloqueado' in c);
+    function linhaHist(r){ var e = r.estado === 'cancelada' ? 'Cancelada' : r.faltou ? 'Faltou' : r.estado === 'confirmada' ? (prox.indexOf(r) < 0 ? 'Feita' : 'Marcada') : 'Por confirmar';
+      return '<div><span style="min-width:92px;">' + dataPt(r.data) + '</span><span style="min-width:44px;">' + esc(r.hora || '') + '</span><span style="flex:1;">' + esc(r.servico || '') + (nomeProf(r.profissional) ? (' · ' + esc(nomeProf(r.profissional))) : '') + '</span><span style="min-width:70px;text-align:right;">' + (r.valor != null ? (euro(r.valor) + ((+r.desconto) ? (' <span style="color:var(--ac);font-size:11px;">−' + r.desconto + '%</span>') : '')) : '') + '</span><span style="min-width:84px;text-align:right;font-weight:700;color:' + (e === 'Feita' ? 'var(--verde)' : e === 'Faltou' || e === 'Cancelada' ? 'var(--ac)' : 'var(--suave)') + ';">' + e + '</span></div>'; }
+    var f = modal('<h3>' + esc(c.nome || 'Cliente') + (c.bloqueado ? ' <span class="etq blq" style="vertical-align:middle;">Bloqueado</span>' : '') + '</h3>'
       + '<div>' + (tel ? ('📱 <a href="tel:' + esc(tel.replace(/\s/g, '')) + '">' + esc(tel) + '</a>' + (waLink({ telefone:tel }, '') ? (' · <a href="' + esc(waLink({ telefone:tel }, 'Olá ' + (c.nome || '') + '!')) + '" target="_blank" rel="noopener">WhatsApp</a>') : '')) : '<span style="color:var(--suave);">Sem contacto</span>') + ' · cliente desde ' + dataPt(c.criado_em) + '</div>'
       + '<div class="nums" style="grid-template-columns:repeat(4,minmax(0,1fr));"><div><b>' + x.vis + '</b><span>visitas</span></div><div><b style="font-size:18px;">' + euro(x.gasto) + '</b><span>total gasto</span></div><div><b style="font-size:18px;">' + euro(media) + '</b><span>por visita</span></div><div><b>' + x.faltas + '</b><span>faltas</span></div></div>'
       + (SAL.mostrarPrevisto === true && x.prev ? ('<div style="font-size:14px;">Previsto (marcações futuras confirmadas): <b>' + euro(x.prev) + '</b></div>') : '')
       + '<div style="font-size:14px;">Serviço preferido: <b>' + esc(fav) + '</b>' + (x.canc ? (' · ' + x.canc + ' cancelada(s)') : '') + '</div>'
       + '<div class="grelha2"><div class="campo"><label for="fNome">Nome</label><input id="fNome" maxlength="80" value="' + esc(c.nome || '') + '"></div><div class="campo"><label for="fEmail">Email</label><input id="fEmail" type="email" maxlength="120" value="' + esc(c.email || '') + '"></div></div>'
       + '<div class="grelha2"><div class="campo"><label for="fTel">Telemóvel (opcional)</label><input id="fTel" inputmode="tel" maxlength="20" value="' + esc(c.telefone || '') + '"></div><div class="campo"><label for="fNasc">Data de nascimento</label><input id="fNasc" type="date" value="' + esc(c.nascimento || '') + '"></div></div>'
+      + '<div class="grelha2"><div class="campo"><label for="fNif">NIF</label><input id="fNif" inputmode="numeric" maxlength="9" value="' + esc(c.nif || '') + '"></div><div class="campo"><label for="fGen">Género</label><select id="fGen">' + GENEROS.map(function(g){ return '<option value="' + g[0] + '"' + ((c.genero || '') === g[0] ? ' selected' : '') + '>' + g[1] + '</option>'; }).join('') + '</select></div></div>'
+      + '<label class="chk-l"><input type="checkbox" id="fCamp"' + (c.aceita_campanhas ? ' checked' : '') + '> <span>Aceita receber campanhas (promoções e novidades)' + (c.aceita_campanhas && c.campanhas_em ? (' <span style="font-weight:400;color:var(--suave);">· desde ' + dataPt(c.campanhas_em) + '</span>') : '') + '</span></label>'
       + '<div class="campo"><label for="fNotas">Notas (só o salão vê: alergias, preferências…)</label><textarea id="fNotas" rows="3" maxlength="1000">' + esc(c.notas || '') + '</textarea></div>'
+      + '<div class="caixa-blq' + (c.bloqueado ? ' on' : '') + '" id="fBlqCx"><label class="chk-l"><input type="checkbox" id="fBlq"' + (c.bloqueado ? ' checked' : '') + '> <span>🚫 Bloquear cliente <span style="font-weight:400;color:var(--suave);">— deixa de conseguir marcar pela página (o salão continua a poder marcar-lhe aqui)</span></span></label>'
+      + '<input id="fBlqMot" maxlength="200" placeholder="Motivo (só o salão vê) — ex.: faltou 3 vezes" value="' + esc(c.bloqueado_motivo || '') + '" style="border:1.5px solid var(--borda);border-radius:10px;padding:10px;font-size:14px;' + (c.bloqueado ? '' : 'display:none;') + '"></div>'
       + '<button type="button" class="btn-ac" id="fGuardar">Guardar ficha</button><div class="msg" id="fMsg"></div>'
-      + '<div style="font-weight:800;font-size:14px;margin-top:4px;">Histórico</div><div class="hist">' + (x.hist.length ? x.hist.map(function(r){ var e = r.estado === 'cancelada' ? 'Cancelada' : r.faltou ? 'Faltou' : r.estado === 'confirmada' ? (r.data <= iso(new Date()) ? 'Feita' : 'Marcada') : 'Por confirmar';
-          return '<div><span style="min-width:92px;">' + dataPt(r.data) + '</span><span style="min-width:44px;">' + esc(r.hora || '') + '</span><span style="flex:1;">' + esc(r.servico || '') + (nomeProf(r.profissional) ? (' · ' + esc(nomeProf(r.profissional))) : '') + '</span><span style="min-width:70px;text-align:right;">' + (r.valor != null ? (euro(r.valor) + ((+r.desconto) ? (' <span style="color:var(--ac);font-size:11px;">−' + r.desconto + '%</span>') : '')) : '') + '</span><span style="min-width:84px;text-align:right;font-weight:700;color:' + (e === 'Feita' ? 'var(--verde)' : e === 'Faltou' || e === 'Cancelada' ? 'var(--ac)' : 'var(--suave)') + ';">' + e + '</span></div>'; }).join('') : '<div>Sem marcações.</div>') + '</div>');
+      + '<div class="cli-sec">Próximas marcações</div><div class="hist">' + (prox.length ? prox.map(linhaHist).join('') : '<div style="color:var(--suave);">Nenhuma marcada.</div>') + '</div>'
+      + '<div class="cli-sec">Histórico</div><div class="hist">' + (passadas.length ? passadas.map(linhaHist).join('') : '<div>Sem marcações.</div>') + '</div>'
+      + '<div style="display:flex;justify-content:flex-end;margin-top:6px;"><button type="button" class="btn-perigo" id="fApagar">Apagar ficha</button></div>');
+    var fb = f.querySelector('#fBlq'); fb.onchange = function(){ f.querySelector('#fBlqMot').style.display = fb.checked ? '' : 'none'; f.querySelector('#fBlqCx').classList.toggle('on', fb.checked); };
+    f.querySelector('#fApagar').onclick = async function(){
+      if(!confirm('Apagar a ficha de ' + (c.nome || 'este cliente') + '?\n\nAs marcações não são apagadas. Se o cliente voltar a marcar, a ficha é criada de novo (sem as notas).')) return;
+      var d = await sb.from('clientes').delete().eq('id', c.id);
+      if(d.error){ $('fMsg').textContent = 'Erro: ' + d.error.message; $('fMsg').className = 'msg erro'; return; }
+      fecharModal(); toast('Ficha apagada'); carregarClientes(); };
     f.querySelector('#fGuardar').onclick = async function(){
       var nt = $('fTel').value.trim(), nk = telNorm(nt);
       if(nt && nk.length < 9){ $('fMsg').textContent = 'O telemóvel tem de ter pelo menos 9 números (ou deixe vazio).'; $('fMsg').className = 'msg erro'; return; }
+      var nif = $('fNif').value.replace(/\D/g, ''); if(nif && nif.length !== 9){ $('fMsg').textContent = 'O NIF tem 9 números (ou deixe vazio).'; $('fMsg').className = 'msg erro'; return; }
       var up = { nome:$('fNome').value.trim() || null, telefone:nt || null, email:$('fEmail').value.trim() || null, nascimento:$('fNasc').value || null, notas:$('fNotas').value.trim() || null, atualizado_em:new Date().toISOString() };
+      var camp = $('fCamp').checked, blq = $('fBlq').checked;
+      if(temExtra){ up.nif = nif || null; up.genero = $('fGen').value || null; up.aceita_campanhas = camp; if(camp && !c.aceita_campanhas) up.campanhas_em = new Date().toISOString(); up.bloqueado = blq; up.bloqueado_motivo = blq ? ($('fBlqMot').value.trim() || null) : null; }
+      else if(nif || $('fGen').value || camp || blq){ $('fMsg').textContent = AVISO_SQL11; $('fMsg').className = 'msg erro'; return; }
       if(nk.length >= 9 && /^n:/.test(c.tel_norm) && !CLI.some(function(o){ return o.id !== c.id && o.tel_norm === nk; })) up.tel_norm = nk;   // passa a ser identificado pelo telemóvel
       var u = await sb.from('clientes').update(up).eq('id', c.id);
       if(u.error){ $('fMsg').textContent = 'Erro: ' + u.error.message; $('fMsg').className = 'msg erro'; return; }
-      fecharModal(); toast('Ficha guardada ✓'); carregarClientes();
+      fecharModal(); toast(temExtra && blq !== !!c.bloqueado ? (blq ? 'Cliente bloqueado' : 'Cliente desbloqueado') : 'Ficha guardada ✓'); carregarClientes();
     };
   }
   function csv(nome, linhas){
@@ -557,7 +603,52 @@
   }
   function num(v){ return (Math.round((+v || 0) * 100) / 100).toFixed(2).replace('.', ','); }
   $('cliCsv').onclick = function(){ var m = statsCli();
-    csv('clientes-' + SLUG + '.csv', [['Nome','Telemóvel','Email','Nascimento','Cliente desde','Visitas','Total gasto (€)','Previsto (€)','Última visita','Próxima','Faltas','Notas']].concat(Object.keys(m).map(function(k){ var x = m[k], c = x.c; return [c.nome, c.telefone || c.tel_norm, c.email, c.nascimento, String(c.criado_em || '').slice(0, 10), x.vis, num(x.gasto), num(x.prev), x.ult, x.prox, x.faltas, c.notas]; }))); };
+    csv('clientes-' + SLUG + '.csv', [['Nome','Telemóvel','Email','Nascimento','NIF','Género','Aceita campanhas','Bloqueado','Cliente desde','Visitas','Total gasto (€)','Previsto (€)','Última visita','Próxima','Faltas','Notas']].concat(Object.keys(m).map(function(k){ var x = m[k], c = x.c; return [c.nome, c.telefone || (/^n:/.test(c.tel_norm) ? '' : c.tel_norm), c.email, c.nascimento, c.nif, ({ F:'Feminino', M:'Masculino', O:'Outro' })[c.genero] || '', c.aceita_campanhas ? 'Sim' : 'Não', c.bloqueado ? 'Sim' : 'Não', String(c.criado_em || '').slice(0, 10), x.vis, num(x.gasto), num(x.prev), x.ult, x.prox, x.faltas, c.notas]; }))); };
+  // ---------- importar clientes (CSV do Excel ou de outro programa) ----------
+  function lerCsv(t){
+    t = t.replace(/^﻿/, ''); var pl = t.split(/\r?\n/)[0] || '';
+    var sep = (pl.split(';').length >= pl.split(',').length && pl.indexOf(';') >= 0) ? ';' : (pl.indexOf('\t') >= 0 ? '\t' : ',');
+    var L = [], lin = [], v = '', aspas = false;
+    for(var i = 0; i < t.length; i++){ var ch = t[i];
+      if(aspas){ if(ch === '"'){ if(t[i + 1] === '"'){ v += '"'; i++; } else aspas = false; } else v += ch; continue; }
+      if(ch === '"') aspas = true; else if(ch === sep){ lin.push(v); v = ''; } else if(ch === '\n' || ch === '\r'){ if(ch === '\r' && t[i + 1] === '\n') i++; lin.push(v); v = ''; if(lin.some(function(x){ return x.trim(); })) L.push(lin); lin = []; } else v += ch; }
+    lin.push(v); if(lin.some(function(x){ return x.trim(); })) L.push(lin);
+    return L;
+  }
+  function dataImp(v){ v = String(v || '').trim(); var m;
+    if((m = v.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/))) return m[1] + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[3]).slice(-2);
+    if((m = v.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4})/))) return m[3] + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[1]).slice(-2);
+    return null; }
+  $('cliImp').onclick = function(){ $('cliImpF').value = ''; $('cliImpF').click(); };
+  $('cliImpF').onchange = async function(){
+    var fic = this.files && this.files[0]; if(!fic) return;
+    var buf = await fic.arrayBuffer(), t = new TextDecoder('utf-8').decode(buf);
+    if(t.indexOf('�') >= 0){ try{ t = new TextDecoder('windows-1252').decode(buf); }catch(e){} }   // Excel em português grava muitas vezes assim
+    var L = lerCsv(t); if(!L.length){ toast('O ficheiro está vazio.'); return; }
+    var cab = L[0].map(function(h){ return String(h || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim(); });
+    function col(re){ for(var i = 0; i < cab.length; i++) if(re.test(cab[i])) return i; return -1; }
+    var ix = { nome:col(/^nome|name|cliente/), tel:col(/telem|telef|^tel|phone|contacto|celular/), email:col(/mail/), nasc:col(/nasc|aniver|birth/), nif:col(/^nif|contribuinte/), gen:col(/genero|sexo|gender/), notas:col(/nota|obs/) };
+    var temCab = ix.nome >= 0 || ix.tel >= 0;
+    if(!temCab) ix = { nome:0, tel:1, email:2, nasc:3, nif:-1, gen:-1, notas:-1 };   // sem cabeçalho: Nome; Telemóvel; Email; Nascimento
+    var linhas = temCab ? L.slice(1) : L, existe = {}, novos = [], rep = 0, semNome = 0, extra = false;
+    CLI.forEach(function(c){ existe[c.tel_norm] = 1; var tn = telNorm(c.telefone); if(tn.length >= 9) existe[tn] = 1; });
+    linhas.forEach(function(r){ function g(i){ return i >= 0 ? String(r[i] || '').trim() : ''; }
+      var nome = g(ix.nome), tel = g(ix.tel); if(!nome){ semNome++; return; }
+      if(telNorm(tel).length < 9) tel = '';
+      var ch = chaveCli(tel, nome); if(!ch || existe[ch]){ rep++; return; } existe[ch] = 1;
+      var nif = g(ix.nif).replace(/\D/g, ''), gn = g(ix.gen).toLowerCase(), gen = /^f/.test(gn) ? 'F' : /^m/.test(gn) ? 'M' : gn ? 'O' : null;
+      var o = { negocio_id:NEG.id, tel_norm:ch, nome:nome.slice(0, 80), telefone:tel || null, email:(g(ix.email) || '').slice(0, 120) || null, nascimento:dataImp(g(ix.nasc)), notas:(g(ix.notas) || '').slice(0, 1000) || null };
+      if(nif.length === 9){ o.nif = nif; extra = true; } if(gen){ o.genero = gen; extra = true; }
+      novos.push(o); });
+    if(!novos.length){ toast('Nenhum cliente novo para importar' + (rep ? (' (' + rep + ' já existiam)') : '') + '.'); return; }
+    if(!confirm('Importar ' + novos.length + ' cliente(s) novo(s)?' + (rep ? ('\n' + rep + ' já existiam e ficam como estão.') : '') + (semNome ? ('\n' + semNome + ' linha(s) sem nome foram ignoradas.') : '') + '\n\nOs clientes importados não ficam a aceitar campanhas: isso só o próprio cliente pode dizer.')) return;
+    toast('A importar…'); var ok = 0;
+    for(var i = 0; i < novos.length; i += 500){
+      var lote = novos.slice(i, i + 500), r = await sb.from('clientes').upsert(lote, { onConflict:'negocio_id,tel_norm', ignoreDuplicates:true });
+      if(r.error && extra && semColuna(r.error)){ lote = lote.map(function(o){ o = Object.assign({}, o); delete o.nif; delete o.genero; return o; }); r = await sb.from('clientes').upsert(lote, { onConflict:'negocio_id,tel_norm', ignoreDuplicates:true }); }
+      if(r.error){ toast('Erro ao importar: ' + r.error.message); break; } ok += lote.length; }
+    if(ok) toast(ok + ' cliente(s) importado(s) ✓'); carregarClientes();
+  };
   $('cliCsvMes').onclick = function(){ var mes = iso(new Date()).slice(0, 7);
     var l = CLIRES.filter(function(r){ return r.data.slice(0, 7) === mes && r.estado !== 'cancelada'; }).sort(function(a, b){ return (a.data + a.hora).localeCompare(b.data + b.hora); });
     csv('marcacoes-' + SLUG + '-' + mes + '.csv', [['Data','Hora','Cliente','Telemóvel','Serviço','Profissional','Preço (€)','Desconto (%)','Valor (€)','Estado']].concat(l.map(function(r){ return [r.data, r.hora, r.nome, r.telefone, r.servico, nomeProf(r.profissional), baseDe(r) != null ? num(baseDe(r)) : '', +r.desconto || 0, r.valor != null ? num(r.valor) : '', r.faltou ? 'Faltou' : r.estado === 'confirmada' ? (r.data <= iso(new Date()) ? 'Feita' : 'Marcada') : 'Por confirmar']; }))); };
@@ -1009,7 +1100,7 @@
       + '<button type="button" class="btn-ac" id="nGuardar">Guardar marcação (confirmada)</button><div class="msg" id="nMsg"></div>');
     (async function(){ if(!CLI.length){ var a = await sb.from('clientes').select('*').eq('negocio_id', NEG.id); if(!a.error) CLI = a.data || []; }
       var dl = f.querySelector('#nCliLista'); if(dl) dl.innerHTML = CLI.slice().sort(function(a, b){ return String(a.nome || '').localeCompare(String(b.nome || ''), 'pt'); }).map(function(c){ return '<option value="' + esc(c.nome || '') + '">' + esc(c.telefone || 'sem contacto') + '</option>'; }).join('');
-      var ni = f.querySelector('#nNome'); if(ni) ni.addEventListener('change', function(){ var c = CLI.filter(function(x){ return nomeNorm(x.nome) === nomeNorm(ni.value); })[0]; if(c && c.telefone && !$('nTel').value) $('nTel').value = c.telefone; });
+      var ni = f.querySelector('#nNome'); if(ni) ni.addEventListener('change', function(){ var c = CLI.filter(function(x){ return nomeNorm(x.nome) === nomeNorm(ni.value); })[0]; if(c && c.telefone && !$('nTel').value) $('nTel').value = c.telefone; $('nMsg').textContent = (c && c.bloqueado) ? ('⚠️ Cliente bloqueado' + (c.bloqueado_motivo ? (': ' + c.bloqueado_motivo) : '') + '. Pode marcar na mesma.') : ''; $('nMsg').className = 'msg' + ((c && c.bloqueado) ? ' erro' : ''); });
     })();
     f.querySelector('#nGuardar').onclick = async function(){
       var s = SERV.filter(function(x){ return x.id === $('nServ').value; })[0], d = $('nDia').value, h = $('nHora').value, nome = $('nNome').value.trim();

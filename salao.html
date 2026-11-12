@@ -94,6 +94,8 @@
   .campos{ display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:10px; }
   .campo{ display:flex; flex-direction:column; gap:4px; }
   .campo label{ font-size:13px; font-weight:700; }
+  .consent{ display:flex; gap:10px; align-items:flex-start; font-size:14px; color:var(--suave); cursor:pointer; line-height:1.35; }
+  .consent input{ width:20px; height:20px; flex:0 0 auto; margin:0; accent-color:var(--ac); }
   .campo input, .campo textarea{ border:1.5px solid var(--borda); border-radius:10px; padding:12px; font-size:16px; background:#fff; color:var(--ink); }
   .nota{ font-size:12px; color:var(--suave); }
   .msg{ font-size:14px; font-weight:700; }
@@ -247,6 +249,7 @@
         <div class="campo"><label for="pTel">Telemóvel</label><input id="pTel" type="tel" autocomplete="tel" inputmode="tel" maxlength="20"></div>
       </div>
       <div class="campo" id="obsCli"><label for="pObs">Observações <span style="font-weight:400;color:var(--suave);">(opcional)</span></label><textarea id="pObs" rows="2" maxlength="300"></textarea></div>
+      <label class="consent" id="consentCli"><input type="checkbox" id="pCampanhas"> <span>Aceito receber novidades e promoções deste salão</span></label>
       <button type="button" class="btn-ac" id="btnEnviar">Enviar pedido</button>
       <div class="nota">O salão confirma ou propõe outra hora. Pode receber a resposta por notificação.</div>
     </div>
@@ -438,7 +441,7 @@
   // ---------- pedido ----------
   function modoReag(on){
     $('tituloPainel').textContent = on ? 'Reagendar marcação' : 'Pedir marcação';
-    $('dadosCli').classList.toggle('hide', !!on); $('obsCli').classList.toggle('hide', !!on);
+    $('dadosCli').classList.toggle('hide', !!on); $('obsCli').classList.toggle('hide', !!on); $('consentCli').style.display = on ? 'none' : '';
   }
   function escolherServ(s){
     if(sel.reag){ sel.reag = null; modoReag(false); }
@@ -515,6 +518,7 @@
     args.p_prof = sel.prof || null;
     rpc('criar_marcacao2', args).catch(function(e){ if(!EQ().length && /PGRST202|Could not find|does not exist/i.test(String(e.message || e))){ delete args.p_prof; return rpc('criar_marcacao', args); } throw e; }).then(function(id){
       var l = guardados(); l.push({ id:id, servico:sel.serv.nome, data:sel.dia, hora:sel.hora }); guardar(l);
+      if($('pCampanhas').checked){ rpc('marcacao_consentimento', { p_id:id, p_aceita:true }).catch(function(){}); try{ localStorage.setItem('salao_campanhas_' + SLUG, '1'); }catch(e){} }
       b.disabled = false; msg('');
       sel = { serv:null, dia:null, hora:null, prof:'' }; $('painel').classList.add('sem-serv'); $('passoProf').classList.add('hide'); $('btnDesistir').classList.add('hide');
       ['passoDia','passoHora','passoDados'].forEach(function(k){ $(k).classList.add('hide'); });
@@ -523,11 +527,12 @@
       try{ window.scrollTo({ top:0, behavior:'smooth' }); }catch(e){}
     }).catch(function(e){
       b.disabled = false; var t = String(e.message || e);
-      msg(/ocupado/.test(t) ? 'Essa hora acabou de ficar ocupada. Escolha outra.' : /faltam_dados/.test(t) ? 'Escreva o nome e um telemóvel válido.' : /servico_invalido/.test(t) ? 'Este serviço já não está disponível.' : /function|does not exist|PGRST/i.test(t) ? 'As marcações ainda não estão ativas neste salão.' : 'Não foi possível enviar. Tente outra vez.', 'erro');
+      msg(/bloqueado/.test(t) ? 'Não é possível marcar online. Por favor contacte o salão.' : /ocupado/.test(t) ? 'Essa hora acabou de ficar ocupada. Escolha outra.' : /faltam_dados/.test(t) ? 'Escreva o nome e um telemóvel válido.' : /servico_invalido/.test(t) ? 'Este serviço já não está disponível.' : /function|does not exist|PGRST/i.test(t) ? 'As marcações ainda não estão ativas neste salão.' : 'Não foi possível enviar. Tente outra vez.', 'erro');
       if(/ocupado/.test(t)){ sel.hora = null; pintarHoras(); }
     });
   };
   (function(){ try{ var c = JSON.parse(localStorage.getItem('salao_cliente') || 'null'); if(c){ $('pNome').value = c.nome || ''; $('pTel').value = c.tel || ''; } }catch(e){} })();
+  (function(){ try{ if(localStorage.getItem('salao_campanhas_' + SLUG) === '1') $('consentCli').classList.add('hide'); }catch(e){} })();   // já aceitou: não volta a perguntar
 
   // ---------- as minhas marcações ----------
   function pintarMinhas(nova){
