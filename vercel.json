@@ -2,7 +2,7 @@
   "cleanUrls": false,
   "trailingSlash": false,
   "redirects": [
-    { "source": "/:pagina(painel|editar|reservas|estatisticas|cardapio|calendario|registo|receitas|receitas-admin|compras|menu-pdf|video|nova-password|salao|salao-gestao)", "destination": "/:pagina.html", "permanent": false }
+    { "source": "/:pagina(painel|editar|reservas|estatisticas|cardapio|calendario|registo|receitas|receitas-admin|compras|menu-pdf|video|nova-password|salao|salao-gestao|salao-password)", "destination": "/:pagina.html", "permanent": false }
   ],
   "rewrites": [
     { "source": "/", "destination": "/index.html" },
