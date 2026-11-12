@@ -762,7 +762,7 @@
     var wtxt = textoPara(ex, $('cpTxt').value) + ($('cpLink').checked ? ('\n\n' + linkPublico()) : '');
     $('cpCars').textContent = $('cpTxt').value.length + '/500';
     $('cpPrev').innerHTML = '<div class="camp-not">' + (logoPush() ? ('<img class="ic" src="' + esc(SAL.logo) + '" alt="" style="object-fit:cover;background:#fff;">') : '<span class="ic"></span>') + '<div><b>' + esc(tit) + '</b><p>' + esc(txt) + '</p></div></div>'
-      + '<div class="camp-wa"><div>' + (($('cpTxt').value.trim()) ? (($('cpTit').value.trim() ? ('*' + esc($('cpTit').value.trim()) + '*\n') : '') + esc(wtxt)) : 'A sua mensagem aparece aqui.') + '</div></div>'
+      + '<div class="camp-wa"><div>' + (($('cpTxt').value.trim()) ? ('*' + esc(SAL.nome || NEG.nome) + '*\n' + ($('cpTit').value.trim() ? ('*' + esc($('cpTit').value.trim()) + '*\n') : '') + esc(wtxt)) : 'A sua mensagem aparece aqui.') + '</div></div>'
       + '<div style="font-size:12px;color:var(--suave);">Exemplo com o nome de ' + esc(primeiroNome(ex.nome) || 'um cliente') + '.</div>';
   }
   $('cpMail').onclick = async function(){
@@ -813,7 +813,7 @@
     var juntaLink = link === true ? $('cpLink').checked : (def ? def.link !== false : h._link !== false);
     if(link === true){ try{ localStorage.setItem('camp_wa_def_' + h.id, JSON.stringify({ link:juntaLink, lista:l.map(function(d){ return d.c.tel_norm; }) })); }catch(e){} }
     else if(def && Array.isArray(def.lista)){ var lt = l.filter(function(d){ return def.lista.indexOf(d.c.tel_norm) >= 0; }); if(lt.length) l = lt; }
-    function txt(c){ return (h.titulo ? ('*' + h.titulo + '*\n') : '') + textoPara(c, h.texto) + (juntaLink ? ('\n\n' + linkPublico()) : ''); }
+    function txt(c){ return '*' + (SAL.nome || NEG.nome) + '*\n' + (h.titulo ? ('*' + h.titulo + '*\n') : '') + textoPara(c, h.texto) + (juntaLink ? ('\n\n' + linkPublico()) : ''); }
     function conta(){ return Object.keys(feito).length; }
     var f = modal('<h3>💬 Enviar por WhatsApp</h3><div style="font-size:14px;color:var(--suave);">O WhatsApp não deixa enviar a várias pessoas de uma vez. Toque em <b>Abrir</b> em cada cliente: a mensagem já vai escrita, só tem de carregar em enviar.</div>'
       + '<div style="font-weight:800;font-size:14px;" id="waConta"></div>'
