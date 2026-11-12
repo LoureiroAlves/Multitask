@@ -50,9 +50,9 @@ function logoSalao(url){
   var m = /[?&]n=([a-z0-9]+)/i.exec(String(url || '')); if (!m) return Promise.resolve(null);
   var slug = m[1].toLowerCase(); if (slug in _logos) return Promise.resolve(_logos[slug]);
   var K = 'sb_publishable_6LP7x2v5c-c9DQkQslnUmA_g13SEjp3';
-  var pedido = fetch('https://zewiijcrkyxjkhudlplk.supabase.co/rest/v1/negocios?slug=eq.' + slug + '&select=config->salao->logo', { headers: { apikey: K, Authorization: 'Bearer ' + K } })
+  var pedido = fetch('https://zewiijcrkyxjkhudlplk.supabase.co/rest/v1/negocios?slug=eq.' + slug + '&select=logo:config->salao->logo,logoQ:config->salao->logoQ,logoQde:config->salao->logoQde', { headers: { apikey: K, Authorization: 'Bearer ' + K } })
     .then(function(r){ return r.ok ? r.json() : []; })
-    .then(function(a){ var lg = a && a[0] && a[0].logo; lg = (typeof lg === 'string' && /^https:\/\//.test(lg)) ? lg : null; _logos[slug] = lg; return lg; })
+    .then(function(a){ var x = (a && a[0]) || {}, lg = (x.logoQ && x.logoQde === x.logo) ? x.logoQ : x.logo; lg = (typeof lg === 'string' && /^https:\/\//.test(lg)) ? lg : null; _logos[slug] = lg; return lg; })
     .catch(function(){ return null; });
   var limite = new Promise(function(ok){ setTimeout(function(){ ok(null); }, 2500); });
   return Promise.race([pedido, limite]);

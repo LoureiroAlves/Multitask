@@ -325,7 +325,7 @@
         <div class="campo"><label for="cpPub">Para quem</label><select id="cpPub"></select></div>
         <div class="campo hide" id="cpServBx"><label for="cpServ">Serviço</label><select id="cpServ"></select></div>
         <div class="camp-conta" id="cpConta"></div>
-        <div class="campo"><label for="cpTit">Título <span style="font-weight:400;color:var(--suave);">(a primeira linha da mensagem; a notificação aparece sempre com o nome e o logótipo do salão)</span></label><input id="cpTit" maxlength="60" placeholder="Ex.: Novembro com 15% de desconto"></div>
+        <div class="campo"><label for="cpTit">Título <span style="font-weight:400;color:var(--suave);">(a negrito na notificação; o nome e o logótipo do salão já aparecem por cima)</span></label><input id="cpTit" maxlength="60" placeholder="Ex.: Novembro com 15% de desconto"></div>
         <div class="campo"><label for="cpTxt">Mensagem</label><textarea id="cpTxt" rows="4" maxlength="500" placeholder="Olá {nome}! Este mês temos…"></textarea><div style="font-size:12px;color:var(--suave);margin-top:3px;">Escreva <b>{nome}</b> para pôr o primeiro nome de cada cliente. <span id="cpCars"></span></div></div>
         <label class="chk-l"><input type="checkbox" id="cpLink" checked> Juntar o link da página do salão (para marcar)</label>
         <div class="camp-botoes"><button type="button" class="btn-ac" id="cpPush">🔔 Enviar notificação</button><button type="button" class="btn" id="cpWa">💬 Enviar por WhatsApp</button><button type="button" class="btn" id="cpMail">✉️ Enviar por email</button></div>
@@ -440,7 +440,7 @@
     aplicarCor(); $('tNome').innerHTML = esc(SAL.nome || NEG.nome) + ' <span>· Gestão</span>';
     $('verPagina').href = (/(^|\.)4trevo\.com$/i.test(location.hostname) ? '/' : '/salao.html?n=') + encodeURIComponent(SLUG);
     document.title = (SAL.nome || NEG.nome) + ' · Gestão · 4 Trevo';
-    if(/^https:\/\//.test(String(SAL.logo || ''))){ try{ var ati = document.querySelector('link[rel="apple-touch-icon"]'); if(ati) ati.href = SAL.logo; }catch(e){} }
+    if(/^https:\/\//.test(String(SAL.logo || ''))){ try{ var ati = document.querySelector('link[rel="apple-touch-icon"]'); if(ati) ati.href = (SAL.logoQ && SAL.logoQde === SAL.logo) ? SAL.logoQ : SAL.logo; }catch(e){} setTimeout(garantirLogoQ, 1500); }
     if(params.get('d')) dataSel = dDe(params.get('d'));
     var t = (location.hash || '').replace('#', ''); if(['servicos','pagina','horario','equipa','clientes','relatorios','campanhas'].indexOf(t) >= 0) irPara(t);
     await carregarRes();
@@ -761,10 +761,10 @@
     $('cpPush').textContent = '🔔 Enviar notificação' + (np ? (' (' + np + ')') : ''); $('cpPush').disabled = !np;
     $('cpWa').textContent = '💬 Enviar por WhatsApp' + (nw ? (' (' + nw + ')') : ''); $('cpWa').disabled = !nw;
     $('cpMail').textContent = '✉️ Enviar por email' + (nm ? (' (' + nm + ')') : ''); $('cpMail').disabled = !nm;
-    var ex = l[0] ? l[0].c : { nome:'Maria' }, tit = SAL.nome || NEG.nome, txt = ($('cpTit').value.trim() ? ($('cpTit').value.trim() + '\n') : '') + (textoPara(ex, $('cpTxt').value) || 'A sua mensagem aparece aqui.');
+    var ex = l[0] ? l[0].c : { nome:'Maria' }, tit = $('cpTit').value.trim() || (SAL.nome || NEG.nome), txt = (textoPara(ex, $('cpTxt').value) || 'A sua mensagem aparece aqui.');
     var wtxt = textoPara(ex, $('cpTxt').value) + ($('cpLink').checked ? ('\n\n' + linkPublico()) : '');
     $('cpCars').textContent = $('cpTxt').value.length + '/500';
-    $('cpPrev').innerHTML = '<div class="camp-not">' + (logoPush() ? ('<img class="ic" src="' + esc(SAL.logo) + '" alt="" style="object-fit:cover;background:#fff;">') : '<span class="ic"></span>') + '<div><b>' + esc(tit) + '</b><p>' + esc(txt) + '</p></div></div>'
+    $('cpPrev').innerHTML = '<div class="camp-not">' + (logoPush() ? ('<img class="ic" src="' + esc(SAL.logo) + '" alt="" style="object-fit:cover;background:#fff;">') : '<span class="ic"></span>') + '<div><small style="display:block;font-size:11px;color:var(--suave);font-weight:700;text-transform:uppercase;letter-spacing:.03em;">' + esc(SAL.nome || NEG.nome) + '</small><b>' + esc(tit) + '</b><p>' + esc(txt) + '</p></div></div>'
       + '<div class="camp-wa"><div>' + (($('cpTxt').value.trim()) ? ('*' + esc(SAL.nome || NEG.nome) + '*\n' + ($('cpTit').value.trim() ? ('*' + esc($('cpTit').value.trim()) + '*\n') : '') + esc(wtxt)) : 'A sua mensagem aparece aqui.') + '</div></div>'
       + '<div style="font-size:12px;color:var(--suave);">Exemplo com o nome de ' + esc(primeiroNome(ex.nome) || 'um cliente') + '.</div>';
   }
@@ -794,10 +794,10 @@
   $('cpPush').onclick = async function(){
     if(!validaCamp()) return; var l = publicoCamp().filter(function(d){ return d.ep; }); if(!l.length) return;
     if(!confirm('Enviar esta notificação a ' + l.length + ' cliente(s)?')) return;
-    var bt = this, ok = 0, i = 0, tit = SAL.nome || NEG.nome, feitos = {}; bt.disabled = true;
+    var bt = this, ok = 0, i = 0, tit = $('cpTit').value.trim() || (SAL.nome || NEG.nome), feitos = {}; bt.disabled = true;
     var falhas = [];
     async function um(d){ var lst = d.eps.filter(function(e){ return !feitos[e]; }); if(!lst.length) return; lst.forEach(function(e){ feitos[e] = 1; });
-      try{ var res = await sb.functions.invoke('enviar-push', { body:{ negocio:NEG.id, titulo:tit, corpo:($('cpTit').value.trim() ? ($('cpTit').value.trim() + '\n') : '') + textoPara(d.c, $('cpTxt').value), url:location.origin + '/salao.html?n=' + encodeURIComponent(SLUG), endpoints:lst, tag:'camp-' + Date.now(), icon:logoPush() } });
+      try{ var res = await sb.functions.invoke('enviar-push', { body:{ negocio:NEG.id, titulo:tit, corpo:textoPara(d.c, $('cpTxt').value), url:location.origin + '/salao.html?n=' + encodeURIComponent(SLUG), endpoints:lst, tag:'camp-' + Date.now(), icon:logoPush() } });
         if(res && !res.error && res.data && res.data.enviados > 0) ok++; else falhas.push((d.c.nome || '?') + (res && res.error ? (' (' + (res.error.message || 'erro') + ')') : '')); }catch(e){ falhas.push((d.c.nome || '?') + ' (' + (e.message || e) + ')'); } }
     while(i < l.length){ var lote = l.slice(i, i + 5); i += 5; bt.textContent = 'A enviar… ' + Math.min(i, l.length) + '/' + l.length; await Promise.all(lote.map(um)); }
     await registarCamp('push', l.length, ok);
@@ -1264,24 +1264,29 @@
   $('aNova').onclick = function(){ novaMarcacao(iso(dataSel), ''); };
 
   // ---------- responder ao cliente ----------
+  // o nome do salão já aparece na notificação (com o logótipo): não se repete no texto
+  function semCasa(t){ var c = SAL.nome || NEG.nome || ''; t = String(t || ''); if(c && t.indexOf(c + ': ') === 0){ t = t.slice(c.length + 2); t = t.charAt(0).toUpperCase() + t.slice(1); } return t; }
+  // no WhatsApp o nome vai à frente (o cliente pode não ter o número do salão guardado)
+  function comCasa(t){ var c = SAL.nome || NEG.nome || ''; t = String(t || ''); return (c && t.indexOf(c) !== 0) ? (c + ': ' + t) : t; }
   async function pushCliente(r, titulo, corpo){
     if(!r.push_marcacao) return false;
+    corpo = semCasa(corpo);
     try{ var res = await sb.functions.invoke('enviar-push', { body:{ negocio:NEG.id, titulo:titulo, corpo:corpo, url:location.origin + '/salao.html?n=' + encodeURIComponent(SLUG) + '&m=' + encodeURIComponent(r.id), endpoints:[r.push_marcacao], tag:'marc-' + r.id, icon:logoPush() } });
       return !!(res && !res.error && res.data && res.data.enviados > 0); }catch(e){ return false; }
   }
   // logótipo do salão para as notificações (em vez do trevo)
-  function logoPush(){ return /^https:\/\//.test(String(SAL.logo || '')) ? SAL.logo : undefined; }
+  function logoPush(){ var q = SAL.logoQ && SAL.logoQde === SAL.logo ? SAL.logoQ : SAL.logo; return /^https:\/\//.test(String(q || '')) ? q : undefined; }
   function waLink(r, texto){ var t = String(r.telefone || '').replace(/\D/g, ''); if(t.length === 9) t = '351' + t; return t ? ('https://wa.me/' + t + '?text=' + encodeURIComponent(texto)) : ''; }
   async function responder(r, tipo, o){
     o = o || {}; var casa = SAL.nome || NEG.nome, patch, titulo, corpo;
     if(tipo === 'confirmar'){ patch = { estado:'confirmada', proposta_hora:null, proposta_data:null }; titulo = '✅ Marcação confirmada'; corpo = casa + ': ' + quando(r.data, r.hora) + ' · ' + (r.servico || '') + '. Até já!'; }
-    else if(tipo === 'recusar'){ patch = { estado:'cancelada', proposta_hora:null, proposta_data:null }; titulo = '❌ Sem disponibilidade'; corpo = casa + ' não tem vaga para ' + quando(r.data, r.hora) + '. Pedimos desculpa — escolha outra hora na nossa página.'; }
-    else if(tipo === 'propor'){ if(!o.hora) return; patch = { estado:'pendente', proposta_hora:o.hora }; titulo = '🕘 ' + casa + ' propõe outra hora'; corpo = 'Para ' + quando(r.data) + ' conseguimos às ' + o.hora + '. Toque para aceitar ou recusar.'; }
+    else if(tipo === 'recusar'){ patch = { estado:'cancelada', proposta_hora:null, proposta_data:null }; titulo = '❌ Sem disponibilidade'; corpo = 'Não temos vaga para ' + quando(r.data, r.hora) + '. Pedimos desculpa — escolha outra hora na nossa página.'; }
+    else if(tipo === 'propor'){ if(!o.hora) return; patch = { estado:'pendente', proposta_hora:o.hora }; titulo = '🕘 Proposta de outra hora'; corpo = 'Para ' + quando(r.data) + ' conseguimos às ' + o.hora + '. Toque para aceitar ou recusar.'; }
     else if(tipo === 'altok'){ patch = { estado:'confirmada', hora:r.alt_hora || r.hora, alt_hora:null, alt_pessoas:null, proposta_hora:null }; titulo = '✅ Alteração aceite'; corpo = casa + ': ' + quando(r.data, r.alt_hora || r.hora) + '. Até já!'; }
     else if(tipo === 'altnao'){ patch = { alt_hora:null, alt_pessoas:null }; titulo = '❌ Não foi possível mudar'; corpo = casa + ': mantém-se ' + quando(r.data, r.hora) + '.'; }
     else if(tipo === 'semprop'){ patch = { proposta_hora:null, proposta_data:null }; titulo = '↩️ Proposta retirada'; corpo = casa + ': a proposta de mudança foi retirada. A sua marcação mantém-se ' + quando(r.data, r.hora) + '.'; }
     else if(tipo === 'manter'){ patch = { estado:'confirmada' }; titulo = '✅ Marcação mantida'; corpo = casa + ': fica como estava, ' + quando(r.data, r.hora) + ' · ' + (r.servico || '') + '. Até já!'; }
-    else if(tipo === 'desmarcar'){ patch = { estado:'cancelada', proposta_hora:null, proposta_data:null }; titulo = '🚫 Marcação cancelada'; corpo = casa + ' cancelou a marcação de ' + quando(r.data, r.hora) + '.'; }
+    else if(tipo === 'desmarcar'){ patch = { estado:'cancelada', proposta_hora:null, proposta_data:null }; titulo = '🚫 Marcação cancelada'; corpo = 'A sua marcação de ' + quando(r.data, r.hora) + ' foi cancelada pelo salão.'; }
     else return;
     if(o.nota !== undefined){ patch.nota = (o.nota || '').trim() || null; if(patch.nota) corpo += ' Nota: ' + patch.nota; }
     if('resposta_cliente' in r) patch.resposta_cliente = null;   // o salão já tratou da resposta do cliente
@@ -1290,7 +1295,7 @@
     await carregarRes();
     var ok = await pushCliente(Object.assign({}, r, patch), titulo, corpo);
     if(ok){ toast('✓ Cliente avisado por notificação'); return; }
-    var wl = waLink(r, corpo);
+    var wl = waLink(r, comCasa(corpo));
     if(wl && confirm('Guardado ✓\n\nEste cliente não tem notificações ligadas. Quer avisá-lo por WhatsApp?')) window.open(wl, '_blank', 'noopener');
     else toast('Guardado ✓');
   }
@@ -1310,7 +1315,7 @@
     var casa = SAL.nome || NEG.nome, corpo = casa + ': a sua marcação de ' + (r.servico || '') + ' passou de ' + quando(r.data, r.hora) + ' para ' + quando(d, h) + '.' + ((nota || '').trim() ? (' Nota: ' + nota.trim()) : '');
     var ok = await pushCliente(Object.assign({}, r, patch), '📅 Marcação mudada', corpo);
     if(ok){ toast('✓ Reagendada · cliente avisado por notificação'); return; }
-    var wl = waLink(r, corpo);
+    var wl = waLink(r, comCasa(corpo));
     if(wl && confirm('Reagendada ✓\n\nEste cliente não tem notificações ligadas. Quer avisá-lo por WhatsApp?')) window.open(wl, '_blank', 'noopener');
     else toast('Reagendada ✓');
   }
@@ -1328,10 +1333,10 @@
     var u = await sb.from('reservas').update(patch).eq('id', r.id);
     if(u.error){ toast(/proposta_data|column/i.test(u.error.message) ? 'Falta correr no Supabase o salao-propostas.sql.' : ('Erro: ' + u.error.message)); return; }
     await carregarRes();
-    var casa = SAL.nome || NEG.nome, corpo = casa + ' propõe mudar a sua marcação de ' + (r.servico || '') + ' (' + quando(r.data, r.hora) + ') para ' + quando(d, h) + '. Toque para aceitar ou recusar.' + ((nota || '').trim() ? (' Nota: ' + nota.trim()) : '');
+    var casa = SAL.nome || NEG.nome, corpo = 'Propomos mudar a sua marcação de ' + (r.servico || '') + ' (' + quando(r.data, r.hora) + ') para ' + quando(d, h) + '. Toque para aceitar ou recusar.' + ((nota || '').trim() ? (' Nota: ' + nota.trim()) : '');
     var ok = await pushCliente(Object.assign({}, r, patch), '🕘 Proposta de nova hora', corpo);
     if(ok){ toast('✓ Proposta enviada · à espera da resposta do cliente'); return; }
-    var wl = waLink(r, corpo + ' Responda aqui: ' + location.origin + '/salao.html?n=' + encodeURIComponent(SLUG) + '&m=' + encodeURIComponent(r.id));
+    var wl = waLink(r, comCasa(corpo) + ' Responda aqui: ' + location.origin + '/salao.html?n=' + encodeURIComponent(SLUG) + '&m=' + encodeURIComponent(r.id));
     if(wl && confirm('Proposta guardada ✓\n\nEste cliente não tem notificações ligadas. Quer enviar-lhe a proposta por WhatsApp?')) window.open(wl, '_blank', 'noopener');
     else toast('Proposta guardada ✓');
   }
@@ -1379,7 +1384,7 @@
       var casa = SAL.nome || NEG.nome, corpo = d ? (casa + ': tem ' + d + '% de desconto na sua marcação de ' + (r.servico || '') + ' (' + quando(r.data, r.hora) + '). Preço: ' + euro(b) + ' → ' + euro(v) + '.') : (casa + ': a sua marcação de ' + (r.servico || '') + ' (' + quando(r.data, r.hora) + ') fica pelo preço normal, ' + euro(b) + '.');
       var ok = await pushCliente(r, d ? ('🎁 Desconto de ' + d + '%') : 'ℹ️ Preço da marcação', corpo); carregarRes();
       if(ok){ toast('Desconto guardado ✓ · cliente avisado'); return; }
-      var wl = waLink(r, corpo); if(wl && confirm('Desconto guardado ✓\n\nEste cliente não tem notificações ligadas. Quer avisá-lo por WhatsApp?')) window.open(wl, '_blank', 'noopener'); else toast('Desconto guardado ✓'); };
+      var wl = waLink(r, comCasa(corpo)); if(wl && confirm('Desconto guardado ✓\n\nEste cliente não tem notificações ligadas. Quer avisá-lo por WhatsApp?')) window.open(wl, '_blank', 'noopener'); else toast('Desconto guardado ✓'); };
     var df = f.querySelector('#dFaltou'); if(df) df.onchange = async function(){ var u = await sb.from('reservas').update({ faltou:df.checked }).eq('id', r.id); if(u.error){ toast(/faltou|column/i.test(u.error.message) ? 'Falta correr no Supabase o salao-clientes.sql.' : ('Erro: ' + u.error.message)); df.checked = !df.checked; return; } r.faltou = df.checked; toast(df.checked ? 'Marcado como falta' : 'Falta retirada'); carregarRes(); };
     var dp = f.querySelector('#dProf'); if(dp) dp.onchange = async function(){ var v = dp.value || null;
       var a = minDe(r.hora), du = +r.duracao || 30;
@@ -1529,12 +1534,29 @@
       var cb = _ftCb; _ftCb = null; cb(url, 'img');
     }catch(e){ alert('Não foi possível carregar a foto: ' + (e.message || e)); }
   };
+  // versão quadrada do logótipo: o logótipo inteiro, reduzido, no meio de um quadrado branco (nunca cortado nem esticado)
+  async function gerarLogoQ(url){
+    var bl = await fetch(url, { cache:'no-store' }).then(function(r){ if(!r.ok) throw new Error('logo'); return r.blob(); });
+    var bmp = await createImageBitmap(bl), N = 512, pad = Math.round(N * 0.12), k = Math.min((N - pad * 2) / bmp.width, (N - pad * 2) / bmp.height);
+    var w = Math.round(bmp.width * k), h = Math.round(bmp.height * k), c = document.createElement('canvas'); c.width = N; c.height = N;
+    var g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, N, N); g.imageSmoothingQuality = 'high'; g.drawImage(bmp, Math.round((N - w) / 2), Math.round((N - h) / 2), w, h);
+    var blob = await new Promise(function(ok){ c.toBlob(ok, 'image/png'); });
+    var caminho = SLUG + '/salao/logoq-' + Date.now().toString(36) + '.png';
+    var up = await sb.storage.from('imagens').upload(caminho, blob, { contentType:'image/png', cacheControl:'31536000', upsert:false });
+    if(up.error) throw up.error;
+    return sb.storage.from('imagens').getPublicUrl(caminho).data.publicUrl;
+  }
+  async function garantirLogoQ(){   // feito uma vez por logótipo (e refeito se o logótipo mudar)
+    if(!/^https:\/\//.test(String(SAL.logo || '')) || (SAL.logoQ && SAL.logoQde === SAL.logo)) return;
+    try{ var q = await gerarLogoQ(SAL.logo), antigo = SAL.logoQ, de = SAL.logo;
+      var e = await guardarCfg(function(c){ c.salao = Object.assign({}, c.salao || {}, { logoQ:q, logoQde:de }); }); if(!e && antigo && antigo !== q) apagarFicheiro(antigo); }catch(e){}
+  }
   function apagarFicheiro(url){ try{ var m = String(url || '').split('/storage/v1/object/public/imagens/')[1]; if(m && m.indexOf(SLUG + '/') === 0) sb.storage.from('imagens').remove([decodeURIComponent(m.split('?')[0])]); }catch(e){} }
   function pintarFotos(){
     var lg = SAL.logo;
     $('ftLogo').innerHTML = (lg ? ('<div class="foto logo"><img src="' + esc(lg) + '" alt="Logótipo"><div class="foto-ops"><button type="button" data-x aria-label="Tirar">✕</button></div></div>') : '') + '<button type="button" class="foto-add" data-add>' + (lg ? 'Mudar logótipo' : '+ Logótipo') + '</button>';
-    $('ftLogo').querySelector('[data-add]').onclick = function(){ escolherFoto({ max:600, png:true, nome:'logo' }, async function(url){ var antigo = SAL.logo; var e = await guardarCfg(function(c){ c.salao = Object.assign({}, c.salao || {}, { logo:url }); }); if(e) return alert('Erro: ' + e.message); apagarFicheiro(antigo); pintarFotos(); toast('Logótipo guardado ✓'); }); };
-    var lx = $('ftLogo').querySelector('[data-x]'); if(lx) lx.onclick = async function(){ if(!confirm('Tirar o logótipo?')) return; var antigo = SAL.logo; var e = await guardarCfg(function(c){ c.salao = Object.assign({}, c.salao || {}); delete c.salao.logo; }); if(!e){ apagarFicheiro(antigo); pintarFotos(); } };
+    $('ftLogo').querySelector('[data-add]').onclick = function(){ escolherFoto({ max:600, png:true, nome:'logo' }, async function(url){ var antigo = SAL.logo; var e = await guardarCfg(function(c){ c.salao = Object.assign({}, c.salao || {}, { logo:url }); }); if(e) return alert('Erro: ' + e.message); apagarFicheiro(antigo); pintarFotos(); pintarQR(); toast('Logótipo guardado ✓'); garantirLogoQ(); }); };
+    var lx = $('ftLogo').querySelector('[data-x]'); if(lx) lx.onclick = async function(){ if(!confirm('Tirar o logótipo?')) return; var antigo = SAL.logo; var antigoQ = SAL.logoQ; var e = await guardarCfg(function(c){ c.salao = Object.assign({}, c.salao || {}); delete c.salao.logo; delete c.salao.logoQ; delete c.salao.logoQde; }); if(!e){ apagarFicheiro(antigo); if(antigoQ) apagarFicheiro(antigoQ); pintarFotos(); } };
     var fu = SAL.fundo && SAL.fundo.url ? SAL.fundo : null;
     $('ftFundo').innerHTML = (fu ? ('<div class="foto fundo">' + (fu.tipo === 'video' ? ('<video src="' + esc(fu.url) + '" muted loop autoplay playsinline></video>') : ('<img src="' + esc(fu.url) + '" alt="">')) + '<div class="foto-ops"><button type="button" data-x aria-label="Tirar">✕</button></div></div>') : '')
       + '<button type="button" class="foto-add" data-add>' + (fu ? 'Mudar fundo' : '+ Foto ou vídeo') + '</button>';
@@ -1555,12 +1577,47 @@
   // ---------- QR code (um por salão) ----------
   // na versão de testes (teste.amesadigital.pt / teste.4trevo.com) o QR abre a página de testes
   function linkSalao(){ return (/(^|\.)teste\./.test(location.hostname) ? 'https://teste.4trevo.com' : 'https://4trevo.com') + '/' + encodeURIComponent(SLUG); }
+  // cor do QR: a cor do salão; se for clara, escurece-a mantendo o tom (o leitor precisa de contraste)
+  function corQR(){ var c = /^#[0-9a-fA-F]{6}$/.test(SAL.cor || '') ? SAL.cor : '#8E3653', r = parseInt(c.slice(1, 3), 16) / 255, g = parseInt(c.slice(3, 5), 16) / 255, b = parseInt(c.slice(5, 7), 16) / 255;
+    var mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, h = 0, sa = 0, d = mx - mn;
+    if(d){ sa = l > 0.5 ? d / (2 - mx - mn) : d / (mx + mn); h = mx === r ? (g - b) / d + (g < b ? 6 : 0) : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; h /= 6; }
+    function hsl(h, s, l){ function f(p, q, t){ if(t < 0) t += 1; if(t > 1) t -= 1; return t < 1/6 ? p + (q - p) * 6 * t : t < 1/2 ? q : t < 2/3 ? p + (q - p) * (2/3 - t) * 6 : p; }
+      var q = l < 0.5 ? l * (1 + s) : l + s - l * s, p = 2 * l - q; return [f(p, q, h + 1/3), f(p, q, h), f(p, q, h - 1/3)]; }
+    function lum(v){ return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2]; }
+    var v = [r, g, b]; if(sa > 0.15) sa = Math.max(sa, 0.55);
+    while(lum(v) > 0.36 && l > 0.05){ l -= 0.03; v = hsl(h, sa, l); }
+    return '#' + v.map(function(x){ return ('0' + Math.round(x * 255).toString(16)).slice(-2); }).join(''); }
+  var _qrCanvas = null;
   function pintarQR(){
-    var box = $('qrBox'); box.innerHTML = ''; $('qrUrl').textContent = linkSalao();
+    var box = $('qrBox'); box.innerHTML = ''; $('qrUrl').textContent = linkSalao(); _qrCanvas = null;
     if(typeof QRCode !== 'function'){ box.textContent = 'Sem ligação para gerar o QR.'; return; }
-    new QRCode(box, { text:linkSalao(), width:180, height:180, correctLevel:QRCode.CorrectLevel.M });
+    var tmp = document.createElement('div'), T = 600, cor = corQR(), nome = String(SAL.nome || NEG.nome || '').trim();
+    new QRCode(tmp, { text:linkSalao(), width:T, height:T, colorDark:cor, colorLight:'#ffffff', correctLevel:QRCode.CorrectLevel.H });
+    var q = tmp.querySelector('canvas'); if(!q){ box.textContent = 'Não foi possível gerar o QR.'; return; }
+    // folha final: margem branca, moldura na cor do salão e o nome no meio (o nível H aguenta o centro tapado)
+    var M = 52, W = T + M * 2, c = document.createElement('canvas'); c.width = W; c.height = W; var g = c.getContext('2d');
+    function redondo(x, y, w, h, r){ g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
+    g.fillStyle = cor; redondo(0, 0, W, W, 44); g.fill();                    // moldura na cor do salão
+    g.fillStyle = '#fff'; redondo(18, 18, W - 36, W - 36, 30); g.fill();        // fundo branco (o leitor precisa da margem clara)
+    g.drawImage(q, M, M, T, T);
+    if(nome){
+      var maxW = T * 0.42, linhas = [], pal = nome.split(/\s+/), fs = 44;
+      g.font = '800 ' + fs + 'px Manrope, system-ui, sans-serif';
+      // até 2 linhas; se não couber, a letra diminui
+      for(; fs >= 18; fs -= 2){ g.font = '800 ' + fs + 'px Manrope, system-ui, sans-serif'; linhas = []; var cur = '';
+        pal.forEach(function(w){ var t = cur ? (cur + ' ' + w) : w; if(g.measureText(t).width <= maxW || !cur) cur = t; else { linhas.push(cur); cur = w; } }); if(cur) linhas.push(cur);
+        if(linhas.length <= 2 && linhas.every(function(l){ return g.measureText(l).width <= maxW; })) break; }
+      if(linhas.length > 2){ linhas = [linhas[0], linhas.slice(1).join(' ')]; while(g.measureText(linhas[1] + '…').width > maxW && linhas[1].length > 3) linhas[1] = linhas[1].slice(0, -1); linhas[1] += '…'; }
+      var lh = fs * 1.15, bw = Math.min(T * 0.5, Math.max.apply(null, linhas.map(function(l){ return g.measureText(l).width; })) + 40), bh = lh * linhas.length + 30;
+      var bx = (W - bw) / 2, by = (W - bh) / 2;
+      g.fillStyle = '#fff'; redondo(bx, by, bw, bh, 18); g.fill(); g.lineWidth = 6; g.strokeStyle = cor; redondo(bx, by, bw, bh, 18); g.stroke();
+      g.fillStyle = cor; g.textAlign = 'center'; g.textBaseline = 'middle';
+      linhas.forEach(function(l, k){ g.fillText(l, W / 2, by + 15 + lh * (k + 0.5)); });
+    }
+    _qrCanvas = c; c.style.width = '220px'; c.style.height = '220px'; c.style.display = 'block'; box.appendChild(c);
+    box.style.padding = '0'; box.style.border = 'none'; box.style.background = 'transparent';
   }
-  function qrDataUrl(){ var c = $('qrBox').querySelector('canvas'); var i = $('qrBox').querySelector('img'); return c ? c.toDataURL('image/png') : (i ? i.src : ''); }
+  function qrDataUrl(){ return _qrCanvas ? _qrCanvas.toDataURL('image/png') : ''; }
   $('qrPng').onclick = function(){ var u = qrDataUrl(); if(!u) return; var a = document.createElement('a'); a.href = u; a.download = 'qr-' + SLUG + '.png'; a.click(); };
   $('qrCartao').onclick = function(){
     var u = qrDataUrl(); if(!u) return; var nome = SAL.nome || NEG.nome || '', cor = /^#[0-9a-fA-F]{6}$/.test(SAL.cor || '') ? SAL.cor : '#8E3653';
