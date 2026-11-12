@@ -703,7 +703,7 @@
           (_setor === 'beleza'
             ? ('<a class="link" href="' + SITE_4T + '/salao-gestao.html?n=' + n.slug + '#servicos" target="_blank">💅 Serviços e página ↗</a>' +
                '<a class="link" href="' + SITE_4T + '/salao-gestao.html?n=' + n.slug + '" target="_blank">📅 Agenda do salão ↗</a>' +
-               '<a class="link" href="' + SITE_4T + '/salao.html?n=' + n.slug + '" target="_blank">Ver página ↗</a>')
+               '<a class="link" href="' + SITE_4T + '/' + n.slug + '" target="_blank">Ver página ↗</a>')
             : ('<a class="link" href="' + SITE + '/editar.html?n=' + n.slug + '" target="_blank">Abrir editor ↗</a>' +
                '<a class="link" href="' + SITE + '/calendario.html?n=' + n.slug + '" target="_blank">📅 Gestão (reservas, extras…) ↗</a>' +
                '<a class="link" href="' + SITE + '/' + n.slug + '" target="_blank">Ver menu ↗</a>')) +
@@ -735,7 +735,7 @@
     const msg = _sal ? ('Olá! Aqui estão os acessos de gestão de ' + (n.nome || n.slug) + ':\n'
       + '📅 Agenda, serviços e página: ' + SITE_4T + '/salao-gestao.html?n=' + n.slug + '\n'
       + 'Entra com o teu email' + (n.dono_email ? (' (' + n.dono_email + ')') : '') + ' e a password que recebeste.\n'
-      + '🔗 Página para os clientes marcarem: ' + SITE_4T + '/salao.html?n=' + n.slug)
+      + '🔗 Página para os clientes marcarem: ' + SITE_4T + '/' + n.slug)
       : 'Olá! Aqui estão os teus acessos àMesa para o ' + (n.nome || n.slug) + ':\n'
       + '📊 Gestão do negócio: ' + SITE + '/calendario.html?n=' + n.slug + '\n'
       + 'Entra com o teu email' + (n.dono_email ? (' (' + n.dono_email + ')') : '') + ' e a password que recebeste.\n'
@@ -1109,7 +1109,7 @@
   }
   let qrUrlAtual = '', qrLogoImg = null;
   function abrirQR(n){
-    qrUrlAtual = ((n.config && n.config.setor) === 'beleza') ? (SITE_4T + '/salao.html?n=' + n.slug) : (SITE + '/' + n.slug);   // salão: página do salão
+    qrUrlAtual = ((n.config && n.config.setor) === 'beleza') ? (SITE_4T + '/' + n.slug) : (SITE + '/' + n.slug);   // salão: página do salão
     qrNomeFich = 'qr-' + n.slug;
     qrLogoImg = null;
     $('qrNome').textContent = n.nome;

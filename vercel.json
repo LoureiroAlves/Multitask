@@ -2,15 +2,41 @@
   "cleanUrls": false,
   "trailingSlash": false,
   "redirects": [
-    { "source": "/:pagina(painel|editar|reservas|estatisticas|cardapio|calendario|registo|receitas|receitas-admin|compras|menu-pdf|video|nova-password|salao|salao-gestao|salao-password)", "destination": "/:pagina.html", "permanent": false }
+    {
+      "source": "/:pagina(painel|editar|reservas|estatisticas|cardapio|calendario|registo|receitas|receitas-admin|compras|menu-pdf|video|nova-password|salao|salao-gestao|salao-password)",
+      "destination": "/:pagina.html",
+      "permanent": false
+    }
   ],
   "rewrites": [
-    { "source": "/", "destination": "/index.html" },
+    {
+      "source": "/",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/((?!(?:salao|salao-gestao|salao-password|painel|editar|reservas|estatisticas|cardapio|index|api)$)(?!.*\\.)[^/]+)",
+      "has": [
+        {
+          "type": "host",
+          "value": "(?:.+\\.)?4trevo\\.com"
+        }
+      ],
+      "destination": "/salao.html"
+    },
     {
       "source": "/((?!(?:editar|painel|reservas|estatisticas|cardapio|index|api)$)(?!.*\\.)[^/]+)",
-      "has": [{ "type": "header", "key": "user-agent", "value": "(?i).*(facebookexternalhit|facebot|whatsapp|telegrambot|twitterbot|slackbot|linkedinbot|discordbot|pinterest|skypeuripreview).*" }],
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "(?i).*(facebookexternalhit|facebot|whatsapp|telegrambot|twitterbot|slackbot|linkedinbot|discordbot|pinterest|skypeuripreview).*"
+        }
+      ],
       "destination": "/api/og?slug=$1"
     },
-    { "source": "/((?!(?:editar|painel|reservas|estatisticas|cardapio|index)$)(?!.*\\.)[^/]+)", "destination": "/cardapio.html?n=$1" }
+    {
+      "source": "/((?!(?:editar|painel|reservas|estatisticas|cardapio|index)$)(?!.*\\.)[^/]+)",
+      "destination": "/cardapio.html?n=$1"
+    }
   ]
 }

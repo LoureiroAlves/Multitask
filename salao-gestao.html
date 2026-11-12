@@ -365,7 +365,7 @@
     if(CFG.setor !== 'beleza'){ location.replace('/calendario.html?n=' + encodeURIComponent(SLUG)); return; }
     $('vLogin').classList.add('hide'); $('vApp').classList.remove('hide');
     aplicarCor(); $('tNome').innerHTML = esc(SAL.nome || NEG.nome) + ' <span>· Gestão</span>';
-    $('verPagina').href = '/salao.html?n=' + encodeURIComponent(SLUG);
+    $('verPagina').href = (/(^|\.)4trevo\.com$/i.test(location.hostname) ? '/' : '/salao.html?n=') + encodeURIComponent(SLUG);
     document.title = (SAL.nome || NEG.nome) + ' · Gestão · 4 Trevo';
     if(params.get('d')) dataSel = dDe(params.get('d'));
     var t = (location.hash || '').replace('#', ''); if(['servicos','pagina','horario','equipa','clientes','relatorios'].indexOf(t) >= 0) irPara(t);
@@ -1158,7 +1158,7 @@
   }
   // ---------- QR code (um por salão) ----------
   // na versão de testes (teste.amesadigital.pt / teste.4trevo.com) o QR abre a página de testes
-  function linkSalao(){ return (/(^|\.)teste\./.test(location.hostname) ? 'https://teste.4trevo.com' : 'https://4trevo.com') + '/salao.html?n=' + encodeURIComponent(SLUG); }
+  function linkSalao(){ return (/(^|\.)teste\./.test(location.hostname) ? 'https://teste.4trevo.com' : 'https://4trevo.com') + '/' + encodeURIComponent(SLUG); }
   function pintarQR(){
     var box = $('qrBox'); box.innerHTML = ''; $('qrUrl').textContent = linkSalao();
     if(typeof QRCode !== 'function'){ box.textContent = 'Sem ligação para gerar o QR.'; return; }

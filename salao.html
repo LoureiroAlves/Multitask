@@ -11,7 +11,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <script>
   // 4 Trevo: app instalável com o nome e o ícone do próprio negócio (não da àMesa)
-  (function(){ var s = (new URLSearchParams(location.search).get('n') || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  (function(){ var s = (new URLSearchParams(location.search).get('n') || (/\.html$/i.test(location.pathname) ? '' : (location.pathname.split('/').filter(Boolean).pop() || '')) || '').toLowerCase().replace(/[^a-z0-9]/g, '');
     var l = document.createElement('link'); l.rel = 'manifest'; l.href = '/api/manifest?n=' + encodeURIComponent(s); document.head.appendChild(l); })();
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -259,7 +259,9 @@
   var VAPID_PUB = 'BOXUnQlON7ETx2-D9E9A3nPONd4xdujOUp2UFFpMGe_0V00njcbxAL-4ETDVpHG7s68Jz1tARbDJ83X75-2irg4';
   var HDR = { apikey:SUPA_KEY, Authorization:'Bearer ' + SUPA_KEY, 'Content-Type':'application/json' };
   var params = new URLSearchParams(location.search);
-  var SLUG = (params.get('n') || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  // endereço curto: 4trevo.com/nomedonegocio (o vercel.json abre esta página); o antigo salao.html?n=… continua a funcionar
+  var DO_CAMINHO = /\.html$/i.test(location.pathname) ? '' : (location.pathname.split('/').filter(Boolean).pop() || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  var SLUG = (params.get('n') || DO_CAMINHO || '').toLowerCase().replace(/[^a-z0-9]/g, '');
   var GRUPO = (params.get('g') || '').toLowerCase().replace(/[^a-z0-9]/g, '');   // marca com vários salões (locais)
   var NEG = null, CFG = {}, SAL = {}, SERV = [];
   var sel = { serv:null, dia:null, hora:null, prof:'' };
@@ -307,25 +309,31 @@
         var ls = (rows || []).filter(function(n){ return n && n.ativo !== false && n.config && n.config.setor === 'beleza'; })
           .sort(function(a, b){ return (+(a.config.grupo.ordem) || 0) - (+(b.config.grupo.ordem) || 0) || String(a.nome).localeCompare(String(b.nome), 'pt'); });
         if(!ls.length){ $('servicos').innerHTML = '<div class="vazio">Não encontrámos esta marca.</div>'; return; }
-        if(ls.length === 1){ location.replace('salao.html?n=' + encodeURIComponent(ls[0].slug)); return; }
+        if(ls.length === 1){ location.replace('/salao.html?n=' + encodeURIComponent(ls[0].slug)); return; }
         var g = ls[0].config.grupo || {}; NEG = { nome:g.nome || ls[0].nome }; CFG = ls[0].config; SAL = Object.assign({}, CFG.salao || {}, { nome:g.nome || '', frase:'', morada:'', telefone:'', whatsapp:'', mostrarHoje:false }); SERV = [];
         pintarTopo(); $('capas').className = 'capas hide'; $('secGaleria').classList.add('hide'); $('politica').textContent = '';
         document.title = (g.nome || 'Marcações') + ' · Marcações';
         $('servicos').innerHTML = '<section class="grupo" style="flex:1 1 100%;"><h2>Escolha o local</h2><div class="locais">' + ls.map(function(n){
           var s = n.config.salao || {}, foto = (Array.isArray(s.capas) && urlOk(s.capas[0])) ? s.capas[0] : (s.fundo && s.fundo.tipo !== 'video' && urlOk(s.fundo.url) ? s.fundo.url : '');
-          return '<a class="local" href="salao.html?n=' + encodeURIComponent(n.slug) + '&g=' + encodeURIComponent(GRUPO) + '">' + (foto ? '<img src="' + esc(foto) + '" alt="" loading="lazy">' : '')
+          return '<a class="local" href="/salao.html?n=' + encodeURIComponent(n.slug) + '&g=' + encodeURIComponent(GRUPO) + '">' + (foto ? '<img src="' + esc(foto) + '" alt="" loading="lazy">' : '')
             + '<div class="local-tx"><b>' + esc(s.nome || n.nome) + '</b>' + (s.morada ? '<span>' + esc(s.morada) + '</span>' : '') + (s.telefone ? '<span>' + esc(s.telefone) + '</span>' : '') + '<i>Marcar aqui →</i></div></a>';
         }).join('') + '</div></section>';
       }).catch(function(){ $('servicos').innerHTML = '<div class="vazio">Sem ligação. Tente outra vez daqui a pouco.</div>'; });
   }
+  // nos domínios 4trevo, a barra mostra só 4trevo.com/nomedonegocio (sem "salao.html?n=")
+  function enderecoCurto(){ try{ if(!/(^|\.)4trevo\.com$/i.test(location.hostname) || !SLUG) return;
+    var q = new URLSearchParams(location.search); q.delete('n'); var r = q.toString();
+    var novo = '/' + SLUG + (r ? ('?' + r) : '') + location.hash;
+    if(novo !== location.pathname + location.search + location.hash) history.replaceState(history.state, '', novo); }catch(e){} }
   function carregar(){
     if(!SLUG && GRUPO){ carregarGrupo(); return; }
     if(!SLUG){ $('servicos').innerHTML = '<div class="vazio">Falta o endereço do salão.</div>'; return; }
     fetch(SUPA_URL + '/rest/v1/negocios?slug=eq.' + encodeURIComponent(SLUG) + '&apagado_em=is.null&select=id,nome,ativo,config', { headers:HDR })
       .then(function(r){ return r.json(); }).then(function(rows){
         NEG = (rows || [])[0];
-        if(!NEG){ $('servicos').innerHTML = '<div class="vazio">Não encontrámos este salão.</div>'; return; }
+        if(!NEG){ if(DO_CAMINHO && !params.get('n') && !GRUPO){ GRUPO = SLUG; SLUG = ''; carregarGrupo(); return; } $('servicos').innerHTML = '<div class="vazio">Não encontrámos este salão.</div>'; return; }
         CFG = NEG.config || {};
+        if(CFG.setor === 'beleza') enderecoCurto();
         if(CFG.setor !== 'beleza'){ location.replace('/cardapio.html?n=' + encodeURIComponent(SLUG)); return; }
         SAL = CFG.salao || {}; SERV = (Array.isArray(CFG.servicos) ? CFG.servicos : []).filter(function(s){ return s && s.id && s.nome && !s.oculto; });
         if(NEG.ativo === false){ $('servicos').innerHTML = '<div class="vazio">Este salão não está disponível de momento.</div>'; }
