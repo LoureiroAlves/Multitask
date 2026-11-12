@@ -5,10 +5,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Gestão do salão</title>
 <meta name="robots" content="noindex">
-<link rel="icon" href="/icon-192.png">
+<link rel="icon" type="image/png" href="/trevo-64.png">
+<link rel="apple-touch-icon" href="/apple-icon-trevo-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<script>
+  // 4 Trevo: app instalável com o nome e o ícone do próprio negócio (não da àMesa)
+  (function(){ var s = (new URLSearchParams(location.search).get('n') || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    var l = document.createElement('link'); l.rel = 'manifest'; l.href = '/api/manifest?n=' + encodeURIComponent(s) + '&g=1'; document.head.appendChild(l); })();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
   /* Multitask — Gestão de um salão (Beleza e bem-estar): agenda, serviços, página e horário. Pensada para o computador da receção. */
   :root{ --ac:#8E3653; --ink:#1F1C1A; --suave:#6B625C; --linha:#E6E0DA; --borda:#DDD6D0; --fundo:#F1EEEB; --verde:#3F5A47; --verde-f:#E3ECE5; --hora:64px; }
@@ -51,9 +60,71 @@
   .bloco{ position:absolute; left:5px; right:5px; border-radius:9px; padding:5px 9px; overflow:hidden; display:flex; flex-direction:column; gap:1px; cursor:pointer; border:none; text-align:left; font-size:12px; color:var(--ink); }
   .bloco b, .bloco span{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
   .bloco b{ font-size:13px; }
+  /* marcações curtas (até ~40 min): tudo numa linha para não cortar o texto */
+  .bloco.curto{ flex-direction:row; align-items:center; gap:5px; padding:0 8px; }
+  .bloco.curto b{ font-size:12px; flex:0 1 auto; }
+  .bloco.curto span{ flex:1 1 0; min-width:0; color:var(--suave); }
   .b-confirmada{ background:var(--verde-f); border-left:4px solid var(--verde); }
+  .b-faltou{ opacity:.55; } .b-faltou b{ text-decoration:line-through; }
+  .aus{ position:absolute; left:3px; right:3px; border-radius:8px; z-index:0; overflow:hidden; cursor:pointer; padding:4px 8px; font-size:12px; font-weight:700; color:#6B625C; border:1px dashed #C9C0B8; background:repeating-linear-gradient(135deg, #F4F1EE, #F4F1EE 7px, #E9E4DF 7px, #E9E4DF 14px); white-space:nowrap; text-overflow:ellipsis; }
+  .aus:hover{ border-color:#8A817A; }
+  .ag-col .bloco{ z-index:1; }
+  .mes-it.a{ background:#EEEAE6; color:#6B625C; }
+  .aus-lista{ display:flex; flex-direction:column; gap:8px; }
+  .aus-it{ display:flex; gap:10px; align-items:center; border:1px solid var(--linha); border-radius:12px; padding:10px 12px; cursor:pointer; background:#fff; text-align:left; font:inherit; color:inherit; }
+  .aus-it:hover{ border-color:var(--ac); }
+  .aus-it .q{ flex:1; min-width:0; } .aus-it .q b{ display:block; } .aus-it .q span{ font-size:13px; color:var(--suave); }
+  .dias-sem{ display:flex; gap:6px; flex-wrap:wrap; } .dias-sem label{ display:flex; align-items:center; gap:4px; border:1.5px solid var(--borda); border-radius:999px; padding:6px 10px; font-size:13px; font-weight:700; cursor:pointer; }
+  .camp-grelha{ display:grid; grid-template-columns:minmax(0,1.3fr) minmax(0,1fr); gap:18px; align-items:start; }
+  .camp-form{ background:#fff; border-radius:12px; padding:16px; display:flex; flex-direction:column; gap:12px; }
+  .camp-form select, .camp-form input:not([type=checkbox]), .camp-form textarea{ border:1.5px solid var(--borda); border-radius:10px; padding:10px 12px; font-size:15px; font-family:inherit; background:#fff; }
+  .camp-conta{ display:flex; gap:8px; flex-wrap:wrap; font-size:13px; }
+  .camp-conta span{ background:#F4F1EE; border-radius:999px; padding:5px 10px; font-weight:700; }
+  .camp-conta span b{ color:var(--ac); }
+  .camp-botoes{ display:flex; gap:8px; flex-wrap:wrap; } .camp-botoes button{ flex:1 1 180px; }
+  .camp-prev-tit{ font-size:12px; font-weight:800; color:var(--suave); margin:2px 0 6px; text-transform:uppercase; letter-spacing:.04em; }
+  .camp-prev{ display:flex; flex-direction:column; gap:12px; }
+  .camp-not{ background:rgba(255,255,255,.92); border-radius:16px; padding:12px 14px; box-shadow:0 4px 16px rgba(0,0,0,.08); display:flex; gap:10px; font-size:13px; }
+  .camp-not .ic{ width:34px; height:34px; border-radius:8px; background:var(--ac); flex:0 0 auto; }
+  .camp-not b{ display:block; font-size:14px; } .camp-not p{ margin:2px 0 0; color:#3a3330; white-space:pre-wrap; word-break:break-word; }
+  .camp-wa{ background:#E6DDD4; border-radius:14px; padding:12px; }
+  .camp-wa div{ background:#DCF8C6; border-radius:10px 10px 2px 10px; padding:8px 10px; font-size:14px; white-space:pre-wrap; word-break:break-word; margin-left:18%; box-shadow:0 1px 1px rgba(0,0,0,.08); }
+  .camp-h{ display:flex; gap:10px; align-items:center; border-bottom:1px solid var(--linha); padding:10px 0; font-size:14px; }
+  .camp-h:last-child{ border-bottom:none; } .camp-h .q{ flex:1; min-width:0; } .camp-h .q b{ display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; } .camp-h .q span{ color:var(--suave); font-size:13px; }
+  .wa-lista{ display:flex; flex-direction:column; gap:6px; max-height:52vh; overflow:auto; }
+  .wa-it{ display:flex; gap:10px; align-items:center; border:1px solid var(--linha); border-radius:10px; padding:8px 10px; }
+  .wa-it.feito{ background:#F2F7F2; } .wa-it .q{ flex:1; min-width:0; } .wa-it .q span{ display:block; font-size:12px; color:var(--suave); }
+  .wa-it a{ background:#25D366; color:#fff; text-decoration:none; font-weight:800; font-size:13px; border-radius:999px; padding:7px 12px; white-space:nowrap; }
+  .wa-it.feito a{ background:#fff; color:#1e7a43; border:1.5px solid #9BD3AE; }
+  @media (max-width: 860px){ .camp-grelha{ grid-template-columns:1fr; } }
+  .b-fantasma{ background:repeating-linear-gradient(135deg, #fff, #fff 6px, #F3E6EA 6px, #F3E6EA 12px); border:1.5px dashed var(--ac); opacity:.85; }
   .b-pendente{ background:#fff; border:2px dashed var(--ac); }
   .b-proposta{ background:#F3E6EA; border-left:4px solid var(--ac); }
+  .mes{ display:grid; grid-template-columns:repeat(7, minmax(110px, 1fr)); }
+  .mes-cab{ padding:10px 12px; font-weight:800; font-size:13px; color:var(--suave); border-bottom:1px solid var(--linha); }
+  .mes-dia{ min-height:118px; border-left:1px solid var(--linha); border-bottom:1px solid var(--linha); padding:6px 8px; display:flex; flex-direction:column; gap:3px; background:#fff; text-align:left; border-top:none; border-right:none; cursor:pointer; font-family:inherit; color:var(--ink); }
+  .mes-dia:hover{ background:#FBF9F7; }
+  .mes-dia.fora{ background:#FAF8F6; color:#B3A9A2; }
+  .mes-dia.fechado{ background:#F4F1EE; }
+  .mes-num{ font-weight:800; font-size:14px; display:flex; align-items:center; gap:6px; }
+  .mes-dia.hoje .mes-num span:first-child{ background:var(--ac); color:#fff; border-radius:999px; min-width:24px; height:24px; display:inline-flex; align-items:center; justify-content:center; }
+  .mes-it{ font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; border-radius:6px; padding:2px 6px; }
+  .mes-it.c{ background:var(--verde-f); } .mes-it.p{ border:1.5px dashed var(--ac); } .mes-it.r{ background:#F3E6EA; }
+  .mes-mais{ font-size:12px; font-weight:800; color:var(--suave); }
+  .fotos{ display:flex; flex-wrap:wrap; gap:10px; margin:8px 0; }
+  .foto{ position:relative; width:150px; height:100px; border-radius:10px; overflow:hidden; background:#E6E0DA; }
+  .foto img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .foto.logo{ width:100px; height:100px; background:#fff; border:1px solid var(--linha); }
+  .foto.logo img{ object-fit:contain; }
+  .foto-ops{ position:absolute; right:4px; top:4px; display:flex; gap:4px; }
+  .foto-ops button{ width:30px; height:30px; border:none; border-radius:8px; background:rgba(0,0,0,.6); color:#fff; font-size:14px; }
+  .foto.fundo{ width:320px; height:120px; }
+  .foto video{ width:100%; height:100%; object-fit:cover; display:block; }
+  .foto-add{ width:150px; height:100px; border:2px dashed var(--borda); border-radius:10px; background:#fff; color:var(--suave); font-weight:700; display:flex; align-items:center; justify-content:center; text-align:center; padding:6px; }
+  .bloco-sec{ background:#fff; border-radius:12px; padding:16px; margin-top:16px; }
+  .bloco-sec h3{ margin:0 0 4px; font-size:16px; }
+  .serv-foto{ display:flex; align-items:center; gap:8px; }
+  .serv-foto img{ width:64px; height:44px; object-fit:cover; border-radius:8px; }
   .agora{ position:absolute; left:0; right:0; height:2px; background:#C0392B; z-index:1; pointer-events:none; }
   .lado{ flex:1 1 320px; max-width:400px; display:flex; flex-direction:column; gap:14px; }
   .cartao{ background:#fff; border-radius:16px; padding:18px; display:flex; flex-direction:column; gap:12px; }
@@ -68,6 +139,60 @@
   .pag{ padding:20px 24px 40px; max-width:1100px; }
   .pag h2{ margin:0 0 6px; font-size:22px; }
   .sub{ color:var(--suave); font-size:14px; margin:0 0 16px; }
+  .cli-tot{ display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:10px; margin-bottom:14px; }
+  .cli-tot div{ background:#fff; border-radius:12px; padding:12px 14px; display:flex; flex-direction:column; }
+  .cli-tot b{ font-size:22px; } .cli-tot span{ font-size:12px; color:var(--suave); }
+  .cli-barra{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:10px; }
+  .cli-barra input, .cli-barra select{ min-height:40px; border:1.5px solid var(--borda); border-radius:10px; padding:0 12px; font-size:14px; }
+  .cli-tab{ width:100%; border-collapse:collapse; background:#fff; border-radius:12px; overflow:hidden; font-size:14px; }
+  .cli-tab th{ text-align:left; font-size:12px; color:var(--suave); font-weight:800; padding:10px 12px; border-bottom:1px solid var(--linha); background:#FBFAF9; }
+  .cli-tab td{ padding:10px 12px; border-bottom:1px solid var(--linha); }
+  .cli-tab tr.l{ cursor:pointer; } .cli-tab tr.l:hover td{ background:#F7EEF1; }
+  .cli-tab .n{ text-align:right; font-variant-numeric:tabular-nums; }
+  .etq{ display:inline-block; border-radius:999px; padding:1px 8px; font-size:11px; font-weight:800; margin-left:6px; }
+  .etq.novo{ background:#EEF2EE; color:var(--verde); } .etq.reg{ background:#F3E6EA; color:var(--ac); }
+  .etq.blq{ background:#3a2a2a; color:#fff; } .etq.camp{ background:#EAF0F7; color:#2B5C8A; } .etq.inat{ background:#F4EFE6; color:#8A6420; }
+  .cli-sec{ font-weight:800; font-size:14px; margin-top:4px; }
+  .chk-l{ display:flex; gap:8px; align-items:flex-start; font-size:14px; font-weight:600; cursor:pointer; line-height:1.35; }
+  .chk-l input{ width:18px; height:18px; flex:0 0 auto; margin:1px 0 0; }
+  .caixa-blq{ border:1.5px solid var(--linha); border-radius:12px; padding:10px 12px; display:flex; flex-direction:column; gap:8px; }
+  .caixa-blq.on{ border-color:#3a2a2a; background:#FAF6F6; }
+  .btn-perigo{ background:none; border:1.5px solid #E2C4C4; color:#A33; border-radius:10px; padding:10px 14px; font-weight:700; cursor:pointer; font-family:inherit; }
+  .hist{ max-height:240px; overflow:auto; border:1px solid var(--linha); border-radius:10px; }
+  .hist div{ display:flex; gap:8px; padding:7px 10px; border-bottom:1px solid var(--linha); font-size:13px; }
+  .hist div:last-child{ border-bottom:none; }
+  @media (max-width: 760px){ .cli-tot{ grid-template-columns:1fr 1fr; } .cli-tab .opc{ display:none; } }
+  .rel-barra-top{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:14px; }
+  .rel-barra-top select, .rel-barra-top input{ min-height:40px; border:1.5px solid var(--borda); border-radius:10px; padding:0 10px; font-size:14px; font-weight:600; background:#fff; }
+  .rel-kpis{ display:grid; grid-template-columns:repeat(auto-fill, minmax(170px, 1fr)); gap:10px; margin-bottom:14px; }
+  .rel-kpis div{ background:#fff; border-radius:12px; padding:12px 14px; display:flex; flex-direction:column; gap:2px; }
+  .rel-kpis b{ font-size:22px; font-variant-numeric:tabular-nums; } .rel-kpis span{ font-size:12px; color:var(--suave); }
+  .rel-kpis .prev{ border:1.5px dashed var(--borda); }
+  .rel-card{ background:#fff; border-radius:12px; padding:14px 16px; margin-bottom:14px; min-width:0; }
+  .rel-card h3{ margin:0 0 10px; font-size:16px; }
+  .rel-cab{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:8px; } .rel-cab h3{ margin:0; flex:1; }
+  .rel-grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(340px, 1fr)); gap:14px; margin-bottom:14px; } .rel-grid .rel-card{ margin-bottom:0; }
+  .rel-svg{ width:100%; height:auto; display:block; }
+  .rel-barra{ fill:var(--ac); } .rel-bar:hover .rel-barra{ opacity:.8; }
+  .rel-grelha{ stroke:#EFEAE5; stroke-width:1; } .rel-base{ stroke:var(--borda); stroke-width:1; }
+  .rel-eixo{ font-size:12px; fill:var(--suave); font-family:Manrope, sans-serif; }
+  .rel-li{ display:grid; grid-template-columns:minmax(0, 1.4fr) minmax(0, 1fr) auto; gap:10px; align-items:center; padding:5px 0; font-size:14px; }
+  .rel-li-n{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; } .rel-li-v{ font-weight:700; font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .rel-li-b{ height:10px; background:#F3EFEB; border-radius:999px; overflow:hidden; } .rel-li-b i{ display:block; height:100%; background:var(--ac); border-radius:999px; }
+  .rel-mini{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px; }
+  .rel-mini div{ background:#F6F4F2; border-radius:10px; padding:10px; display:flex; flex-direction:column; } .rel-mini b{ font-size:18px; } .rel-mini span{ font-size:12px; color:var(--suave); }
+  .rel-ocup{ display:inline-block; width:50px; height:8px; background:#F3EFEB; border-radius:999px; overflow:hidden; vertical-align:middle; } .rel-ocup i{ display:block; height:100%; background:var(--ac); }
+  .rel-tab-w{ overflow-x:auto; }
+  .rel-aniv{ display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:8px; } .rel-aniv div{ background:#F6F4F2; border-radius:10px; padding:8px 10px; display:flex; flex-direction:column; } .rel-aniv span{ font-size:12px; color:var(--suave); }
+  .rel-dica{ position:fixed; z-index:60; background:var(--ink); color:#fff; font-size:13px; font-weight:700; padding:6px 10px; border-radius:8px; pointer-events:none; white-space:nowrap; }
+  .eq-linha{ background:#fff; border-radius:12px; padding:14px; margin-bottom:8px; display:flex; flex-direction:column; gap:10px; }
+  .eq-topo{ display:flex; gap:8px; align-items:end; flex-wrap:wrap; }
+  .eq-cor{ width:14px; height:14px; border-radius:50%; flex:0 0 auto; margin-bottom:14px; }
+  .eq-chips{ display:flex; flex-wrap:wrap; gap:6px; }
+  .eq-chips label{ display:flex; align-items:center; gap:5px; border:1.5px solid var(--borda); border-radius:999px; padding:6px 11px; font-size:13px; font-weight:600; cursor:pointer; background:#fff; }
+  .eq-chips label:has(input:checked){ border-color:var(--ac); background:#F7EEF1; }
+  .eq-rot{ font-size:12px; font-weight:800; color:var(--suave); text-transform:uppercase; letter-spacing:1px; }
+  .bloco .prof{ font-weight:800; }
   .serv-linha{ background:#fff; border-radius:12px; padding:12px; display:grid; grid-template-columns:minmax(0,2fr) minmax(0,1.2fr) 90px 100px auto; gap:8px; align-items:end; margin-bottom:8px; }
   .serv-linha .desc{ grid-column:1 / -1; }
   .serv-linha .op{ display:flex; gap:6px; align-items:center; flex-wrap:wrap; grid-column:1 / -1; }
@@ -78,6 +203,7 @@
   .msg{ font-size:14px; font-weight:700; } .msg.ok{ color:var(--verde); } .msg.erro{ color:#A3262A; }
   .modal-fundo{ position:fixed; inset:0; background:rgba(0,0,0,.45); display:flex; align-items:center; justify-content:center; z-index:50; padding:16px; }
   .modal{ background:#fff; border-radius:16px; padding:20px; width:100%; max-width:460px; max-height:92vh; overflow-y:auto; display:flex; flex-direction:column; gap:12px; position:relative; }
+  .modal > *{ flex-shrink:0; }   /* conteúdo comprido: a janela faz scroll em vez de espremer botões e listas */
   .modal h3{ margin:0; font-size:19px; }
   .fechar{ position:absolute; right:12px; top:12px; width:40px; height:40px; border:none; border-radius:10px; background:#F6F4F2; font-size:18px; }
   .login{ max-width:380px; margin:60px auto; background:#fff; border-radius:16px; padding:24px; display:flex; flex-direction:column; gap:10px; }
@@ -92,7 +218,7 @@
   <label for="lEmail">Email</label><input id="lEmail" type="email" autocomplete="username">
   <label for="lPass">Password</label><input id="lPass" type="password" autocomplete="current-password">
   <button type="button" class="btn-ac" id="lEntrar">Entrar</button>
-  <a href="/nova-password.html" style="color:var(--ac);font-size:14px;">Esqueci-me da password</a>
+  <a href="salao-password.html" id="lEsqueci" style="color:var(--ac);font-size:14px;">Esqueci-me da password</a>
   <div class="msg" id="lMsg"></div>
 </div>
 
@@ -102,11 +228,16 @@
     <nav class="tabs" aria-label="Secções">
       <button type="button" class="tab on" data-t="agenda">Agenda</button>
       <button type="button" class="tab" data-t="servicos">Serviços</button>
+      <button type="button" class="tab" data-t="clientes">Clientes</button>
+      <button type="button" class="tab" data-t="campanhas">Campanhas</button>
+      <button type="button" class="tab" data-t="relatorios">Relatórios</button>
+      <button type="button" class="tab" data-t="equipa">Equipa</button>
       <button type="button" class="tab" data-t="pagina">Página</button>
       <button type="button" class="tab" data-t="horario">Horário e regras</button>
     </nav>
     <a class="sair" id="verPagina" target="_blank" rel="noopener" style="text-decoration:none;">Ver página ↗</a>
     <button type="button" class="sair" id="bSair">Sair</button>
+    <span aria-label="4Trevo" style="display:flex;align-items:center;gap:2px;opacity:.55;"><svg width="32" height="27" viewBox="22 70 220 182" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g transform="translate(150,160) rotate(60)" fill="none" stroke="#FFFFFF" stroke-linejoin="round"><path d="M0,-4 C-4,-12 -18,-14 -30,-28 C-44,-44 -42,-68 -22,-76 C-4,-82 14,-72 18,-54 C22,-38 12,-18 0,-4Z" stroke-width="6"/><path d="M4,0 C12,-4 14,-18 28,-30 C44,-44 68,-42 76,-22 C82,-4 72,14 54,18 C38,22 18,12 4,0Z" stroke-width="6"/><path d="M0,4 C4,12 18,14 30,28 C44,44 42,68 22,76 C4,82 -14,72 -18,54 C-22,38 -12,18 0,4Z" stroke-width="6"/><path d="M-4,0 C-12,4 -14,18 -28,30 C-44,44 -68,42 -76,22 C-82,4 -72,-14 -54,-18 C-38,-22 -18,-12 -4,0Z" stroke-width="6"/><g stroke-width="1" opacity="0.6"><line x1="2" y1="-2" x2="44" y2="-44"/><line x1="2" y1="2" x2="44" y2="44"/><line x1="-2" y1="2" x2="-44" y2="44"/><line x1="-2" y1="-2" x2="-44" y2="-44"/></g><circle cx="0" cy="0" r="4" stroke-width="2"/><path d="M8,82 C10,100 6,120 0,142" stroke-width="6" stroke-linecap="round"/></g></svg><span style="font:700 14px 'Space Grotesk', Manrope, sans-serif;letter-spacing:1px;">4Trevo</span></span>
   </div></header>
 
   <!-- AGENDA -->
@@ -116,7 +247,9 @@
       <button type="button" class="btn" id="aHoje">Hoje</button>
       <button type="button" class="ico" id="aSeg" aria-label="Seguinte">›</button>
       <div class="titulo-dia" id="aTitulo"></div>
-      <div class="vista" role="group" aria-label="Vista"><button type="button" data-v="dia" class="on">Dia</button><button type="button" data-v="semana">Semana</button></div>
+      <select id="aProf" class="hide" aria-label="Profissional" style="min-height:40px;border:1.5px solid var(--borda);border-radius:10px;padding:0 10px;font-weight:700;"></select>
+      <div class="vista" role="group" aria-label="Vista"><button type="button" data-v="dia" class="on">Dia</button><button type="button" data-v="semana">Semana</button><button type="button" data-v="mes">Mês</button></div>
+      <button type="button" class="btn" id="aAus" title="Férias, folgas e pausas da equipa">🌴 Ausências</button>
       <button type="button" class="btn" id="aAvisos">🔔 Receber avisos</button>
       <button type="button" class="btn-ac" id="aNova">+ Nova marcação</button>
     </div>
@@ -142,6 +275,72 @@
     <div id="servLista"></div>
     <button type="button" class="btn" id="servNovo">+ Novo serviço</button>
     <div class="guardar-barra"><button type="button" class="btn-ac" id="servGuardar">Guardar serviços</button><span class="msg" id="servMsg"></span></div>
+    <div class="bloco-sec"><h3>Fotos das categorias</h3><p class="sub" style="margin:0 0 6px;">Na página do cliente, cada categoria aparece numa janela com esta foto (sem preços). Ao abrir, o cliente vê os serviços, os preços e "Marcar". Sem foto, usa a foto do primeiro serviço da categoria.</p><div id="catFotos"></div></div>
+  </section>
+
+  <!-- RELATÓRIOS -->
+  <section id="tRelatorios" class="pag hide" style="max-width:1200px;">
+    <h2>Relatórios</h2>
+    <p class="sub">Como está a correr o salão no período escolhido. "Feitas" e "faturado" contam as marcações confirmadas até hoje (sem faltas), com o preço e o desconto de cada uma.</p>
+    <div class="rel-barra-top">
+      <select id="relPer" aria-label="Período"><option value="mes">Este mês</option><option value="mesant">Mês passado</option><option value="30">Últimos 30 dias</option><option value="90">Últimos 90 dias</option><option value="ano">Este ano</option><option value="pers">Escolher datas…</option></select>
+      <span id="relDatas" class="hide" style="display:flex;gap:6px;align-items:center;"><input type="date" id="relDe" aria-label="De"> a <input type="date" id="relAte" aria-label="Até"></span>
+      <select id="relProf" class="hide" aria-label="Profissional"></select>
+      <span style="flex:1;"></span>
+      <button type="button" class="btn" id="relCsv">⬇️ Excel</button>
+    </div>
+    <div id="relCorpo"></div>
+    <div class="rel-dica hide" id="relDica" role="tooltip"></div>
+  </section>
+
+  <!-- CLIENTES -->
+  <section id="tClientes" class="pag hide" style="max-width:1200px;">
+    <h2>Clientes</h2>
+    <p class="sub">Cada marcação cria a ficha do cliente (ou junta-a à que já existe, pelo telemóvel ou, se não houver contacto, pelo nome). As visitas e o total gasto contam as marcações confirmadas até hoje, pelo preço de cada uma. Use o filtro para ver quem deixou de vir, quem aceita campanhas ou quem está bloqueado.</p>
+    <div class="cli-tot" id="cliTot"></div>
+    <div class="cli-barra">
+      <input id="cliBusca" type="search" placeholder="Procurar nome ou telemóvel…" style="flex:1;min-width:200px;">
+      <select id="cliOrdem" aria-label="Ordenar"><option value="rec">Visita mais recente</option><option value="vis">Mais visitas</option><option value="gasto">Mais gasto</option><option value="nome">Nome</option><option value="novo">Mais novos</option></select>
+      <label style="display:flex;align-items:center;gap:6px;font-size:14px;font-weight:600;background:#fff;border:1.5px solid var(--borda);border-radius:10px;padding:0 12px;min-height:40px;" title="Soma das marcações futuras já confirmadas"><input type="checkbox" id="cliPrev" style="width:18px;height:18px;"> Mostrar valor previsto</label>
+      <select id="cliFiltro" aria-label="Mostrar"><option value="">Todos os clientes</option><option value="i2">Sem vir há 2+ meses</option><option value="i3">Sem vir há 3+ meses</option><option value="i6">Sem vir há 6+ meses</option><option value="i12">Sem vir há 1+ ano</option><option value="camp">Aceitam campanhas</option><option value="aniv">Fazem anos este mês</option><option value="blq">Bloqueados</option></select>
+      <button type="button" class="btn-ac" id="cliNovo">+ Novo cliente</button>
+      <button type="button" class="btn" id="cliCsv">⬇️ Clientes (Excel)</button>
+      <button type="button" class="btn" id="cliCsvMes">⬇️ Marcações do mês (Excel)</button>
+      <button type="button" class="btn" id="cliImp">⬆️ Importar clientes</button><input type="file" id="cliImpF" accept=".csv,text/csv,text/plain" class="hide">
+    </div>
+    <div id="cliLista"><div style="color:var(--suave);">A carregar…</div></div>
+  </section>
+
+  <!-- CAMPANHAS -->
+  <section id="tCampanhas" class="pag hide" style="max-width:1000px;">
+    <h2>Campanhas</h2>
+    <p class="sub">Envie uma novidade, promoção ou lembrete aos seus clientes, por notificação ou WhatsApp. Só recebem os clientes que aceitaram receber campanhas (e que não estão bloqueados).</p>
+    <div class="camp-grelha">
+      <div class="camp-form">
+        <div class="campo"><label for="cpPub">Para quem</label><select id="cpPub"></select></div>
+        <div class="campo hide" id="cpServBx"><label for="cpServ">Serviço</label><select id="cpServ"></select></div>
+        <div class="camp-conta" id="cpConta"></div>
+        <div class="campo"><label for="cpTit">Título <span style="font-weight:400;color:var(--suave);">(aparece a negrito na notificação)</span></label><input id="cpTit" maxlength="60" placeholder="Ex.: Novembro com 15% de desconto"></div>
+        <div class="campo"><label for="cpTxt">Mensagem</label><textarea id="cpTxt" rows="4" maxlength="500" placeholder="Olá {nome}! Este mês temos…"></textarea><div style="font-size:12px;color:var(--suave);margin-top:3px;">Escreva <b>{nome}</b> para pôr o primeiro nome de cada cliente. <span id="cpCars"></span></div></div>
+        <label class="chk-l"><input type="checkbox" id="cpLink" checked> Juntar o link da página do salão (para marcar)</label>
+        <div class="camp-botoes"><button type="button" class="btn-ac" id="cpPush">🔔 Enviar notificação</button><button type="button" class="btn" id="cpWa">💬 Enviar por WhatsApp</button></div>
+        <div class="msg" id="cpMsg"></div>
+      </div>
+      <div>
+        <div class="camp-prev-tit">Pré-visualização</div>
+        <div class="camp-prev" id="cpPrev"></div>
+      </div>
+    </div>
+    <div class="bloco-sec"><h3>Campanhas enviadas</h3><div id="cpHist"><div style="color:var(--suave);">A carregar…</div></div></div>
+  </section>
+
+  <!-- EQUIPA -->
+  <section id="tEquipa" class="pag hide">
+    <h2>Equipa</h2>
+    <p class="sub">Quem faz os serviços. Cada pessoa tem a sua agenda: duas pessoas podem atender à mesma hora. Marque com um visto os serviços que cada pessoa faz. O cliente não escolhe a pessoa: cada marcação vai automaticamente para quem faz esse serviço e está livre (primeiro quem tem menos marcações nesse dia). Na agenda pode sempre mudar a pessoa de uma marcação.</p>
+    <div id="eqLista"></div>
+    <button type="button" class="btn" id="eqNovo">+ Acrescentar pessoa</button>
+    <div class="guardar-barra"><button type="button" class="btn-ac" id="eqGuardar">Guardar equipa</button><span class="msg" id="eqMsg"></span></div>
   </section>
 
   <!-- PÁGINA -->
@@ -155,10 +354,20 @@
       <div class="campo"><label for="pgTel">Telefone</label><input id="pgTel" maxlength="20"></div>
       <div class="campo"><label for="pgWa">WhatsApp</label><input id="pgWa" maxlength="20"></div>
       <div class="campo"><label for="pgIg">Instagram</label><input id="pgIg" maxlength="60" placeholder="@salao"></div>
+      <div class="campo"><label for="pgFb">Facebook</label><input id="pgFb" maxlength="120" placeholder="nome da página ou link"></div>
       <div class="campo"><label for="pgCor">Cor do salão</label><input id="pgCor" type="color" value="#8E3653" style="height:44px;padding:4px;"></div>
     </div>
     <div class="campo" style="margin-top:12px;"><label for="pgPol">Política de cancelamento / informações</label><textarea id="pgPol" rows="3" maxlength="400" placeholder="Ex.: Pedimos que avise com 24 h de antecedência se não puder vir."></textarea></div>
+    <label style="display:flex;align-items:center;gap:8px;margin-top:12px;font-weight:600;"><input type="checkbox" id="pgHoje" style="width:20px;height:20px;"> Mostrar o horário de hoje no cabeçalho (ex.: "Hoje 09:00–19:00")</label>
     <div class="guardar-barra"><button type="button" class="btn-ac" id="pgGuardar">Guardar página</button><span class="msg" id="pgMsg"></span></div>
+    <div class="bloco-sec"><h3>Logótipo</h3><p class="sub" style="margin:0;">Aparece no topo da página do salão. De preferência quadrado.</p><div class="fotos" id="ftLogo"></div></div>
+    <div class="bloco-sec"><h3>Fundo do cabeçalho</h3><p class="sub" style="margin:0;">Foto ou vídeo curto por trás do nome do salão, no topo da página. O vídeo passa sem som, em repetição (MP4, até 15 MB). Sem fundo, fica a cor do salão.</p><div class="fotos" id="ftFundo"></div></div>
+    <div class="bloco-sec"><h3>Fotos de capa</h3><p class="sub" style="margin:0;">Até 5 fotos do espaço, no topo da página. A primeira é a principal.</p><div class="fotos" id="ftCapas"></div></div>
+    <div class="bloco-sec"><h3>Galeria de trabalhos</h3><p class="sub" style="margin:0;">Até 12 fotos de resultados (unhas, maquilhagem, sobrancelhas…).</p><div class="fotos" id="ftGaleria"></div></div>
+    <div class="bloco-sec"><h3>QR code do salão</h3><p class="sub" style="margin:0 0 10px;">Para imprimir e pôr no balcão, na montra ou nos cartões. Abre a página de marcações deste salão.</p>
+      <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:center;"><div id="qrBox" style="background:#fff;padding:10px;border:1px solid var(--linha);border-radius:10px;"></div>
+      <div style="display:flex;flex-direction:column;gap:8px;"><div id="qrUrl" style="font-size:13px;color:var(--suave);word-break:break-all;"></div><button type="button" class="btn" id="qrPng">⬇️ Descarregar QR (imagem)</button><button type="button" class="btn" id="qrCartao">🖨️ Imprimir cartão</button></div></div></div>
+    <input type="file" id="ftInput" accept="image/*" class="hide">
   </section>
 
   <!-- HORÁRIO -->
@@ -208,6 +417,8 @@
   function fechadoEm(k){ return (SAL.fechos || []).some(function(x){ return x && x.de && k >= x.de && k <= (x.ate || x.de); }); }
 
   // ---------- entrar ----------
+  // "Esqueci-me da password": página própria do 4Trevo (não a da àMesa), com o salão e o email já preenchidos
+  (function(){ var a = $('lEsqueci'); if(!a) return; a.onclick = function(ev){ ev.preventDefault(); var e = ($('lEmail') && $('lEmail').value || '').trim(); location.href = 'salao-password.html?n=' + encodeURIComponent(SLUG || '') + (e ? ('&email=' + encodeURIComponent(e)) : ''); }; })();
   async function iniciar(){
     if(!SLUG){ document.body.innerHTML = '<p style="padding:24px;">Falta o endereço do salão (?n=…).</p>'; return; }
     var s = (await sb.auth.getSession()).data.session;
@@ -221,13 +432,18 @@
     if(CFG.setor !== 'beleza'){ location.replace('/calendario.html?n=' + encodeURIComponent(SLUG)); return; }
     $('vLogin').classList.add('hide'); $('vApp').classList.remove('hide');
     aplicarCor(); $('tNome').innerHTML = esc(SAL.nome || NEG.nome) + ' <span>· Gestão</span>';
-    $('verPagina').href = '/salao.html?n=' + encodeURIComponent(SLUG);
-    document.title = (SAL.nome || NEG.nome) + ' · Gestão';
+    $('verPagina').href = (/(^|\.)4trevo\.com$/i.test(location.hostname) ? '/' : '/salao.html?n=') + encodeURIComponent(SLUG);
+    document.title = (SAL.nome || NEG.nome) + ' · Gestão · 4 Trevo';
     if(params.get('d')) dataSel = dDe(params.get('d'));
-    var t = (location.hash || '').replace('#', ''); if(['servicos','pagina','horario'].indexOf(t) >= 0) irPara(t);
+    var t = (location.hash || '').replace('#', ''); if(['servicos','pagina','horario','equipa','clientes','relatorios','campanhas'].indexOf(t) >= 0) irPara(t);
     await carregarRes();
     if(params.get('rid')){ var x = RES.filter(function(z){ return z.id === params.get('rid'); })[0]; if(x) abrirDetalhe(x); }
-    setInterval(function(){ if(!document.hidden && !document.querySelector('.modal-fundo')) carregarRes(); }, 60000);
+    // atualizar sozinho: quando chega uma notificação, quando se volta à página e de 30 em 30 s
+    var _ultAt = 0; function atualizar(forcar){ if(document.querySelector('.modal-fundo') && !forcar) return; if(Date.now() - _ultAt < 1500) return; _ultAt = Date.now(); carregarRes(); if(!$('tClientes').classList.contains('hide')) carregarClientes(); }
+    if('serviceWorker' in navigator){ try{ navigator.serviceWorker.addEventListener('message', function(e){ if(e.data && (e.data.tipo === 'push' || e.data.tipo === 'abrir')){ atualizar(true); if(e.data.tipo === 'push') toast('🔔 Novidade — agenda atualizada'); } }); }catch(e){} }
+    document.addEventListener('visibilitychange', function(){ if(!document.hidden) atualizar(); });
+    window.addEventListener('focus', function(){ atualizar(); });
+    setInterval(function(){ if(!document.hidden) atualizar(); }, 30000);
   }
   $('lEntrar').onclick = async function(){
     var e = $('lEmail').value.trim(), p = $('lPass').value; if(!e || !p) return;
@@ -244,8 +460,8 @@
   function irPara(t){
     document.querySelectorAll('.tab').forEach(function(b){ b.classList.toggle('on', b.getAttribute('data-t') === t); });
     $('tAgenda').classList.toggle('hide', t !== 'agenda'); $('tServicos').classList.toggle('hide', t !== 'servicos');
-    $('tPagina').classList.toggle('hide', t !== 'pagina'); $('tHorario').classList.toggle('hide', t !== 'horario');
-    if(t === 'servicos') pintarServ(); if(t === 'pagina') pintarPagina(); if(t === 'horario') pintarHorario();
+    $('tPagina').classList.toggle('hide', t !== 'pagina'); $('tHorario').classList.toggle('hide', t !== 'horario'); $('tEquipa').classList.toggle('hide', t !== 'equipa'); $('tClientes').classList.toggle('hide', t !== 'clientes'); $('tRelatorios').classList.toggle('hide', t !== 'relatorios'); $('tCampanhas').classList.toggle('hide', t !== 'campanhas');
+    if(t === 'servicos'){ EQSV = null; pintarServ(); } if(t === 'equipa') pintarEquipa(); if(t === 'clientes') carregarClientes(); if(t === 'relatorios') carregarRelatorios(); if(t === 'campanhas') carregarCampanhas(); if(t === 'pagina') pintarPagina(); if(t === 'horario') pintarHorario();
     try{ history.replaceState(null, '', location.pathname + location.search + (t === 'agenda' ? '' : ('#' + t))); }catch(e){}
   }
   document.querySelectorAll('.tab').forEach(function(b){ b.onclick = function(){ irPara(b.getAttribute('data-t')); }; });
@@ -260,44 +476,661 @@
     return r.error;
   }
 
+  // ---------- equipa ----------
+  var CORES_EQ = ['#8E3653','#2F6F8F','#3F7A4A','#B5651D','#6A4C93','#C0396B','#2E8B83','#7A6A2E'];
+  function EQ(){ return (Array.isArray(CFG.equipa) ? CFG.equipa : []).filter(function(p){ return p && p.id && p.nome; }); }
+  function corProf(id){ var l = EQ(), i = l.findIndex(function(p){ return p.id === id; }); return i < 0 ? '#8A817A' : CORES_EQ[i % CORES_EQ.length]; }
+  function nomeProf(id){ var p = EQ().filter(function(x){ return x.id === id; })[0]; return p ? p.nome : ''; }
+  function fazServ(p, sid){ return !Array.isArray(p.servicos) || !p.servicos.length || p.servicos.indexOf(sid) >= 0; }
+  function trabalha(p, wd){ return !Array.isArray(p.dias) || !p.dias.length || p.dias.indexOf(wd) >= 0; }
+  var profFiltro = '';
+  function pintarFiltroProf(){
+    var l = EQ(), sEl = $('aProf'); sEl.classList.toggle('hide', !l.length);
+    if(profFiltro && !l.some(function(p){ return p.id === profFiltro; })) profFiltro = '';
+    sEl.innerHTML = '<option value="">Toda a equipa</option>' + l.map(function(p){ return '<option value="' + esc(p.id) + '"' + (profFiltro === p.id ? ' selected' : '') + '>' + esc(p.nome) + '</option>'; }).join('');
+  }
+  $('aProf').onchange = function(){ profFiltro = this.value; pintarAgenda(); };
+  var EQED = [];
+  function pintarEquipa(){
+    EQED = JSON.parse(JSON.stringify(EQ())); desenharEquipa();
+  }
+  function desenharEquipa(){
+    var DS = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'], ordemD = [1,2,3,4,5,6,0];
+    var serv = SERV.filter(function(x){ return x && x.nome; });
+    $('eqLista').innerHTML = EQED.length ? EQED.map(function(p, i){
+      var todos = !Array.isArray(p.servicos) || !p.servicos.length;
+      return '<div class="eq-linha" data-i="' + i + '"><div class="eq-topo"><span class="eq-cor" style="background:' + CORES_EQ[i % CORES_EQ.length] + ';"></span>'
+        + '<div class="campo" style="flex:1;min-width:200px;"><label>Nome</label><input data-k="nome" maxlength="40" value="' + esc(p.nome || '') + '" placeholder="Ex.: Ana"></div>'
+        + '<button type="button" class="btn-lnk" data-op="apagar">Retirar</button></div>'
+        + '<div><div class="eq-rot">Dias em que trabalha</div><div class="eq-chips">' + ordemD.map(function(d){ var on = !Array.isArray(p.dias) || !p.dias.length || p.dias.indexOf(d) >= 0; return '<label><input type="checkbox" data-dia="' + d + '"' + (on ? ' checked' : '') + '> ' + DS[d] + '</label>'; }).join('') + '</div></div>'
+        + '<div><div class="eq-rot">Serviços que faz <span style="text-transform:none;letter-spacing:0;font-weight:600;">(marque com um visto)</span></div><div class="eq-chips">'
+        + serv.map(function(x){ return '<label><input type="checkbox" data-sv="' + esc(x.id) + '"' + (todos || p.servicos.indexOf(x.id) >= 0 ? ' checked' : '') + '> ' + esc(x.nome) + '</label>'; }).join('')
+        + '</div>' + (!todos && !p.servicos.length ? '<div style="color:#A33;font-weight:700;font-size:13px;margin-top:4px;">⚠️ Marque pelo menos um serviço</div>' : '') + '</div></div>';
+    }).join('') : '<div style="background:#fff;border-radius:12px;padding:16px;color:var(--suave);margin-bottom:10px;">Ainda não há equipa: o salão usa uma agenda só. Carregue em "+ Acrescentar pessoa" se mais de uma pessoa atende ao mesmo tempo.</div>';
+    $('eqLista').querySelectorAll('.eq-linha').forEach(function(l){
+      var i = +l.getAttribute('data-i'), p = EQED[i];
+      l.querySelector('[data-k="nome"]').oninput = function(){ p.nome = this.value; };
+      l.querySelectorAll('[data-dia]').forEach(function(c){ c.onchange = function(){ var ds = []; l.querySelectorAll('[data-dia]').forEach(function(x){ if(x.checked) ds.push(+x.getAttribute('data-dia')); }); p.dias = ds.length === 7 ? [] : ds.sort(); }; });
+      l.querySelectorAll('[data-sv]').forEach(function(c){ c.onchange = function(){ var sv = []; l.querySelectorAll('[data-sv]').forEach(function(x){ if(x.checked) sv.push(x.getAttribute('data-sv')); }); p.servicos = sv; p._explicito = true; if(!sv.length) desenharEquipa(); }; });
+      l.querySelector('[data-op="apagar"]').onclick = function(){ if(!confirm('Retirar ' + (p.nome || 'esta pessoa') + ' da equipa? As marcações já feitas ficam na agenda.')) return; EQED.splice(i, 1); desenharEquipa(); };
+    });
+  }
+  $('eqNovo').onclick = function(){ EQED.push({ id:'p_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), nome:'', servicos:[], dias:[], _explicito:true }); desenharEquipa(); var ins = $('eqLista').querySelectorAll('input[data-k="nome"]'); if(ins.length) ins[ins.length - 1].focus(); };
+  $('eqGuardar').onclick = async function(){
+    var todosIds = SERV.filter(function(x){ return x && x.nome && x.id; }).map(function(x){ return x.id; });
+    var limpo = EQED.filter(function(p){ return String(p.nome || '').trim(); }).map(function(p){ var sv = Array.isArray(p.servicos) ? p.servicos : []; if(!sv.length && !p._explicito) sv = todosIds.slice();   // "todos" antigo → lista com vistos
+      return { id:p.id, nome:String(p.nome).trim().slice(0, 40), servicos:sv, dias:Array.isArray(p.dias) ? p.dias : [] }; });
+    var semServ = limpo.filter(function(p){ return !p.servicos.length; });
+    if(semServ.length){ $('eqMsg').textContent = 'Marque pelo menos um serviço para: ' + semServ.map(function(p){ return p.nome; }).join(', '); $('eqMsg').className = 'msg erro'; return; }
+    $('eqMsg').textContent = 'A guardar…'; $('eqMsg').className = 'msg';
+    var e = await guardarCfg(function(c){ if(limpo.length) c.equipa = limpo; else delete c.equipa; });
+    $('eqMsg').textContent = e ? ('Erro: ' + e.message) : 'Guardado ✓'; $('eqMsg').className = 'msg ' + (e ? 'erro' : 'ok');
+    if(!e){ pintarEquipa(); pintarFiltroProf(); }
+  };
+
+  // ---------- clientes (fichas) ----------
+  var CLI = [], CLIRES = [];
+  function nomeNorm(n){ return String(n || '').replace(/\s+/g, ' ').trim().toLowerCase(); }
+  function chaveCli(tel, nome){ var t = telNorm(tel); return t.length >= 9 ? t : (nomeNorm(nome) ? ('n:' + nomeNorm(nome)) : ''); }
+  function telNorm(t){ var d = String(t || '').replace(/\D/g, ''); return /^351\d{9}$/.test(d) ? d.slice(3) : d; }
+  function euro(v){ return (Math.round((+v || 0) * 100) / 100).toLocaleString('pt-PT', { minimumFractionDigits:2, maximumFractionDigits:2 }) + ' €'; }
+  function dataPt(k){ if(!k) return '—'; var d = dDe(String(k).slice(0, 10)); return d.getDate() + ' ' + MESES[d.getMonth()].slice(0, 3) + ' ' + d.getFullYear(); }
+  var GENEROS = [['','—'],['F','Feminino'],['M','Masculino'],['O','Outro']];
+  function semColuna(e){ return e && /nif|genero|aceita_campanhas|campanhas_em|bloqueado|column/i.test(e.message || ''); }
+  var AVISO_SQL11 = 'Falta correr no Supabase o ficheiro 11-salao-clientes-extra.sql.';
+  function mesesSem(ult){ if(!ult) return null; var a = dDe(ult), h = new Date(); return (h.getFullYear() - a.getFullYear()) * 12 + (h.getMonth() - a.getMonth()) - (h.getDate() < a.getDate() ? 1 : 0); }
+  async function carregarClientes(){
+    var a = await sb.from('clientes').select('*').eq('negocio_id', NEG.id);
+    if(a.error){ $('cliLista').innerHTML = '<div class="msg erro">' + (/clientes|relation|does not exist|schema cache/i.test(a.error.message) ? 'Falta correr no Supabase o ficheiro salao-clientes.sql.' : esc(a.error.message)) + '</div>'; return; }
+    var b = await sb.from('reservas').select('*').eq('negocio_id', NEG.id).not('servico', 'is', null).order('data', { ascending:false }).limit(10000);
+    CLI = a.data || []; CLIRES = b.data || [];
+    pintarClientes();
+  }
+  function statsCli(){
+    var hoje = iso(new Date()), m = {};
+    var ali = {};
+    CLI.forEach(function(c){ m[c.tel_norm] = { c:c, vis:0, gasto:0, prev:0, ult:'', prox:'', faltas:0, canc:0, serv:{}, hist:[] }; ali[c.tel_norm] = c.tel_norm; });
+    CLI.forEach(function(c){ var t = telNorm(c.telefone); if(t.length >= 9 && !ali[t]) ali[t] = c.tel_norm; var nn = 'n:' + nomeNorm(c.nome); if(nomeNorm(c.nome) && !ali[nn]) ali[nn] = c.tel_norm; });
+    CLIRES.forEach(function(r){ var k = ali[chaveCli(r.telefone, r.nome)]; if(!k || !m[k]) return; var x = m[k]; x.hist.push(r);
+      if(r.estado === 'cancelada'){ x.canc++; return; }
+      if(r.faltou){ x.faltas++; return; }
+      if(r.data <= hoje && r.estado === 'confirmada'){ x.vis++; x.gasto += +r.valor || 0; if(r.data > x.ult) x.ult = r.data; x.serv[r.servico] = (x.serv[r.servico] || 0) + 1; }
+      else if(r.data > hoje){ if(!x.prox || r.data < x.prox) x.prox = r.data; if(r.estado === 'confirmada') x.prev += +r.valor || 0; } });
+    return m;
+  }
+  function pintarClientes(){
+    var m = statsCli(), l = Object.keys(m).map(function(k){ return m[k]; }), hoje = iso(new Date()), mes = hoje.slice(0, 7), ano = hoje.slice(0, 4);
+    var fatMes = 0, fatAno = 0; CLIRES.forEach(function(r){ if(r.estado === 'confirmada' && !r.faltou && r.data <= hoje){ if(r.data.slice(0, 7) === mes) fatMes += +r.valor || 0; if(r.data.slice(0, 4) === ano) fatAno += +r.valor || 0; } });
+    var prevOn = SAL.mostrarPrevisto === true; $('cliPrev').checked = prevOn;
+    var prevMes = 0, prevTot = 0; CLIRES.forEach(function(r){ if(r.estado === 'confirmada' && !r.faltou && r.data > hoje){ prevTot += +r.valor || 0; if(r.data.slice(0, 7) === mes) prevMes += +r.valor || 0; } });
+    $('cliTot').style.gridTemplateColumns = prevOn ? 'repeat(6, minmax(0,1fr))' : '';
+    $('cliTot').innerHTML = '<div><b>' + l.length + '</b><span>clientes</span></div><div><b>' + CLI.filter(function(c){ return String(c.criado_em || '').slice(0, 7) === mes; }).length + '</b><span>novos este mês</span></div><div><b>' + euro(fatMes) + '</b><span>faturado este mês</span></div><div><b>' + euro(fatAno) + '</b><span>faturado este ano</span></div>'
+      + (prevOn ? ('<div style="border:1.5px dashed var(--borda);"><b>' + euro(prevMes) + '</b><span>previsto até ao fim do mês</span></div><div style="border:1.5px dashed var(--borda);"><b>' + euro(prevTot) + '</b><span>previsto (todas as marcações futuras)</span></div>') : '');
+    var q = ($('cliBusca').value || '').trim().toLowerCase(), qd = q.replace(/\D/g, '');
+    if(q) l = l.filter(function(x){ return String(x.c.nome || '').toLowerCase().indexOf(q) >= 0 || (qd && telNorm(x.c.telefone).indexOf(qd) >= 0); });
+    var fl = $('cliFiltro').value, mesN = hoje.slice(5, 7);
+    if(/^i\d+$/.test(fl)){ var nM = +fl.slice(1); l = l.filter(function(x){ var ms = mesesSem(x.ult); return x.vis > 0 && !x.prox && ms != null && ms >= nM && !x.c.bloqueado; }); }
+    else if(fl === 'camp') l = l.filter(function(x){ return x.c.aceita_campanhas === true && !x.c.bloqueado; });
+    else if(fl === 'aniv') l = l.filter(function(x){ return String(x.c.nascimento || '').slice(5, 7) === mesN; });
+    else if(fl === 'blq') l = l.filter(function(x){ return x.c.bloqueado === true; });
+    var o = $('cliOrdem').value;
+    l.sort(function(a, b){ return o === 'vis' ? b.vis - a.vis : o === 'gasto' ? b.gasto - a.gasto : o === 'nome' ? String(a.c.nome || '').localeCompare(String(b.c.nome || ''), 'pt') : o === 'novo' ? String(b.c.criado_em).localeCompare(String(a.c.criado_em)) : String(b.ult || b.prox).localeCompare(String(a.ult || a.prox)); });
+    if(!l.length){ $('cliLista').innerHTML = '<div style="background:#fff;border-radius:12px;padding:16px;color:var(--suave);">' + (CLI.length ? (fl ? 'Nenhum cliente neste filtro.' : 'Nenhum cliente encontrado.') : 'Ainda não há clientes. As fichas aparecem aqui a partir da primeira marcação.') + '</div>'; return; }
+    $('cliLista').innerHTML = '<table class="cli-tab"><thead><tr><th>Cliente</th><th>Telemóvel</th><th class="n">Visitas</th><th class="n">Total gasto</th>' + (prevOn ? '<th class="n opc">Previsto</th>' : '') + '<th>Última visita</th><th class="opc">Próxima</th><th class="n opc">Faltas</th></tr></thead><tbody>'
+      + l.slice(0, 500).map(function(x){ return '<tr class="l" data-t="' + esc(x.c.tel_norm) + '"><td><b>' + esc(x.c.nome || '—') + '</b>' + (x.c.bloqueado ? '<span class="etq blq">Bloqueado</span>' : x.vis >= 3 ? '<span class="etq reg">Regular</span>' : x.vis <= 1 ? '<span class="etq novo">Novo</span>' : '') + (!x.c.bloqueado && !x.prox && x.vis > 0 && mesesSem(x.ult) >= 3 ? '<span class="etq inat">' + mesesSem(x.ult) + ' meses sem vir</span>' : '') + (x.c.aceita_campanhas ? '<span class="etq camp" title="Aceita receber campanhas">📣</span>' : '') + '</td><td>' + (x.c.telefone ? esc(x.c.telefone) : '<span style="color:var(--suave);">sem contacto</span>') + '</td><td class="n">' + x.vis + '</td><td class="n">' + euro(x.gasto) + '</td>' + (prevOn ? ('<td class="n opc" style="color:var(--suave);">' + (x.prev ? euro(x.prev) : '—') + '</td>') : '') + '<td>' + dataPt(x.ult) + '</td><td class="opc">' + (x.prox ? dataPt(x.prox) : '—') + '</td><td class="n opc">' + (x.faltas || '') + '</td></tr>'; }).join('')
+      + '</tbody></table>';
+    $('cliLista').querySelectorAll('tr.l').forEach(function(tr){ tr.onclick = function(){ abrirFicha(m[tr.getAttribute('data-t')]); }; });
+  }
+  $('cliNovo').onclick = function(){
+    var f = modal('<h3>Novo cliente</h3><div style="font-size:14px;color:var(--suave);">Só o nome é obrigatório. O contacto é opcional.</div>'
+      + '<div class="campo"><label for="kNome">Nome</label><input id="kNome" maxlength="80"></div>'
+      + '<div class="grelha2"><div class="campo"><label for="kTel">Telemóvel (opcional)</label><input id="kTel" inputmode="tel" maxlength="20"></div><div class="campo"><label for="kEmail">Email (opcional)</label><input id="kEmail" type="email" maxlength="120"></div></div>'
+      + '<div class="grelha2"><div class="campo"><label for="kNasc">Data de nascimento (opcional)</label><input id="kNasc" type="date"></div><div class="campo"><label for="kGen">Género (opcional)</label><select id="kGen">' + GENEROS.map(function(g){ return '<option value="' + g[0] + '">' + g[1] + '</option>'; }).join('') + '</select></div></div>'
+      + '<div class="grelha2"><div class="campo"><label for="kNif">NIF (opcional)</label><input id="kNif" inputmode="numeric" maxlength="9"></div><div></div></div>'
+      + '<label class="chk-l"><input type="checkbox" id="kCamp"> O cliente aceita receber campanhas (promoções e novidades)</label>'
+      + '<div class="campo"><label for="kNotas">Notas (opcional)</label><textarea id="kNotas" rows="2" maxlength="1000"></textarea></div>'
+      + '<button type="button" class="btn-ac" id="kGuardar">Guardar cliente</button><div class="msg" id="kMsg"></div>');
+    f.querySelector('#kNome').focus();
+    f.querySelector('#kGuardar').onclick = async function(){
+      var nome = $('kNome').value.trim(), tel = $('kTel').value.trim(), t = telNorm(tel);
+      if(!nome){ $('kMsg').textContent = 'Escreva o nome.'; $('kMsg').className = 'msg erro'; return; }
+      if(tel && t.length < 9){ $('kMsg').textContent = 'O telemóvel tem de ter pelo menos 9 números (ou deixe vazio).'; $('kMsg').className = 'msg erro'; return; }
+      var ch = chaveCli(tel, nome);
+      if(CLI.some(function(c){ return c.tel_norm === ch; })){ $('kMsg').textContent = t.length >= 9 ? 'Já existe um cliente com este telemóvel.' : 'Já existe um cliente sem contacto com este nome. Acrescente o apelido ou o telemóvel.'; $('kMsg').className = 'msg erro'; return; }
+      var nif = $('kNif').value.replace(/\D/g, ''); if(nif && nif.length !== 9){ $('kMsg').textContent = 'O NIF tem 9 números (ou deixe vazio).'; $('kMsg').className = 'msg erro'; return; }
+      var reg = { negocio_id:NEG.id, tel_norm:ch, nome:nome, telefone:tel || null, email:$('kEmail').value.trim() || null, nascimento:$('kNasc').value || null, notas:$('kNotas').value.trim() || null };
+      var ext = { nif:nif || null, genero:$('kGen').value || null, aceita_campanhas:$('kCamp').checked, campanhas_em:$('kCamp').checked ? new Date().toISOString() : null };
+      var r = await sb.from('clientes').insert(Object.assign({}, reg, ext));
+      if(r.error && semColuna(r.error)){ if(ext.nif || ext.genero || ext.aceita_campanhas){ $('kMsg').textContent = AVISO_SQL11; $('kMsg').className = 'msg erro'; return; } r = await sb.from('clientes').insert(reg); }
+      if(r.error){ $('kMsg').textContent = 'Erro: ' + r.error.message; $('kMsg').className = 'msg erro'; return; }
+      fecharModal(); toast('Cliente criado ✓'); carregarClientes();
+    };
+  };
+  $('cliBusca').oninput = pintarClientes; $('cliOrdem').onchange = pintarClientes; $('cliFiltro').onchange = pintarClientes;
+  $('cliPrev').onchange = async function(){ var on = this.checked; var e = await guardarCfg(function(c){ c.salao = Object.assign({}, c.salao || {}, { mostrarPrevisto:on }); }); if(e){ toast('Erro: ' + e.message); this.checked = !on; return; } pintarClientes(); };
+  function abrirFicha(x){
+    var c = x.c, fav = Object.keys(x.serv).sort(function(a, b){ return x.serv[b] - x.serv[a]; })[0] || '—';
+    var media = x.vis ? x.gasto / x.vis : 0, tel = String(c.telefone || ''), hojeF = iso(new Date());
+    var agoraH = new Date().toTimeString().slice(0, 5);
+    var prox = x.hist.filter(function(r){ return (r.data > hojeF || (r.data === hojeF && String(r.hora || '') >= agoraH)) && r.estado !== 'cancelada' && !r.faltou; }).sort(function(a, b){ return (a.data + a.hora).localeCompare(b.data + b.hora); });
+    var passadas = x.hist.filter(function(r){ return prox.indexOf(r) < 0; }).sort(function(a, b){ return (b.data + b.hora).localeCompare(a.data + a.hora); });
+    var temExtra = ('bloqueado' in c);
+    function linhaHist(r){ var e = r.estado === 'cancelada' ? 'Cancelada' : r.faltou ? 'Faltou' : r.estado === 'confirmada' ? (prox.indexOf(r) < 0 ? 'Feita' : 'Marcada') : 'Por confirmar';
+      return '<div><span style="min-width:92px;">' + dataPt(r.data) + '</span><span style="min-width:44px;">' + esc(r.hora || '') + '</span><span style="flex:1;">' + esc(r.servico || '') + (nomeProf(r.profissional) ? (' · ' + esc(nomeProf(r.profissional))) : '') + '</span><span style="min-width:70px;text-align:right;">' + (r.valor != null ? (euro(r.valor) + ((+r.desconto) ? (' <span style="color:var(--ac);font-size:11px;">−' + r.desconto + '%</span>') : '')) : '') + '</span><span style="min-width:84px;text-align:right;font-weight:700;color:' + (e === 'Feita' ? 'var(--verde)' : e === 'Faltou' || e === 'Cancelada' ? 'var(--ac)' : 'var(--suave)') + ';">' + e + '</span></div>'; }
+    var f = modal('<h3>' + esc(c.nome || 'Cliente') + (c.bloqueado ? ' <span class="etq blq" style="vertical-align:middle;">Bloqueado</span>' : '') + '</h3>'
+      + '<div>' + (tel ? ('📱 <a href="tel:' + esc(tel.replace(/\s/g, '')) + '">' + esc(tel) + '</a>' + (waLink({ telefone:tel }, '') ? (' · <a href="' + esc(waLink({ telefone:tel }, 'Olá ' + (c.nome || '') + '!')) + '" target="_blank" rel="noopener">WhatsApp</a>') : '')) : '<span style="color:var(--suave);">Sem contacto</span>') + ' · cliente desde ' + dataPt(c.criado_em) + '</div>'
+      + '<div class="nums" style="grid-template-columns:repeat(4,minmax(0,1fr));"><div><b>' + x.vis + '</b><span>visitas</span></div><div><b style="font-size:18px;">' + euro(x.gasto) + '</b><span>total gasto</span></div><div><b style="font-size:18px;">' + euro(media) + '</b><span>por visita</span></div><div><b>' + x.faltas + '</b><span>faltas</span></div></div>'
+      + (SAL.mostrarPrevisto === true && x.prev ? ('<div style="font-size:14px;">Previsto (marcações futuras confirmadas): <b>' + euro(x.prev) + '</b></div>') : '')
+      + '<div style="font-size:14px;">Serviço preferido: <b>' + esc(fav) + '</b>' + (x.canc ? (' · ' + x.canc + ' cancelada(s)') : '') + '</div>'
+      + '<div class="grelha2"><div class="campo"><label for="fNome">Nome</label><input id="fNome" maxlength="80" value="' + esc(c.nome || '') + '"></div><div class="campo"><label for="fEmail">Email</label><input id="fEmail" type="email" maxlength="120" value="' + esc(c.email || '') + '"></div></div>'
+      + '<div class="grelha2"><div class="campo"><label for="fTel">Telemóvel (opcional)</label><input id="fTel" inputmode="tel" maxlength="20" value="' + esc(c.telefone || '') + '"></div><div class="campo"><label for="fNasc">Data de nascimento</label><input id="fNasc" type="date" value="' + esc(c.nascimento || '') + '"></div></div>'
+      + '<div class="grelha2"><div class="campo"><label for="fNif">NIF</label><input id="fNif" inputmode="numeric" maxlength="9" value="' + esc(c.nif || '') + '"></div><div class="campo"><label for="fGen">Género</label><select id="fGen">' + GENEROS.map(function(g){ return '<option value="' + g[0] + '"' + ((c.genero || '') === g[0] ? ' selected' : '') + '>' + g[1] + '</option>'; }).join('') + '</select></div></div>'
+      + '<label class="chk-l"><input type="checkbox" id="fCamp"' + (c.aceita_campanhas ? ' checked' : '') + '> <span>Aceita receber campanhas (promoções e novidades)' + (c.aceita_campanhas && c.campanhas_em ? (' <span style="font-weight:400;color:var(--suave);">· desde ' + dataPt(c.campanhas_em) + '</span>') : '') + '</span></label>'
+      + '<div class="campo"><label for="fNotas">Notas (só o salão vê: alergias, preferências…)</label><textarea id="fNotas" rows="3" maxlength="1000">' + esc(c.notas || '') + '</textarea></div>'
+      + '<div class="caixa-blq' + (c.bloqueado ? ' on' : '') + '" id="fBlqCx"><label class="chk-l"><input type="checkbox" id="fBlq"' + (c.bloqueado ? ' checked' : '') + '> <span>🚫 Bloquear cliente <span style="font-weight:400;color:var(--suave);">— deixa de conseguir marcar pela página (o salão continua a poder marcar-lhe aqui)</span></span></label>'
+      + '<input id="fBlqMot" maxlength="200" placeholder="Motivo (só o salão vê) — ex.: faltou 3 vezes" value="' + esc(c.bloqueado_motivo || '') + '" style="border:1.5px solid var(--borda);border-radius:10px;padding:10px;font-size:14px;' + (c.bloqueado ? '' : 'display:none;') + '"></div>'
+      + '<button type="button" class="btn-ac" id="fGuardar">Guardar ficha</button><div class="msg" id="fMsg"></div>'
+      + '<div class="cli-sec">Próximas marcações</div><div class="hist">' + (prox.length ? prox.map(linhaHist).join('') : '<div style="color:var(--suave);">Nenhuma marcada.</div>') + '</div>'
+      + '<div class="cli-sec">Histórico</div><div class="hist">' + (passadas.length ? passadas.map(linhaHist).join('') : '<div>Sem marcações.</div>') + '</div>'
+      + '<div style="display:flex;justify-content:flex-end;margin-top:6px;"><button type="button" class="btn-perigo" id="fApagar">Apagar ficha</button></div>');
+    var fb = f.querySelector('#fBlq'); fb.onchange = function(){ f.querySelector('#fBlqMot').style.display = fb.checked ? '' : 'none'; f.querySelector('#fBlqCx').classList.toggle('on', fb.checked); };
+    f.querySelector('#fApagar').onclick = async function(){
+      if(!confirm('Apagar a ficha de ' + (c.nome || 'este cliente') + '?\n\nAs marcações não são apagadas. Se o cliente voltar a marcar, a ficha é criada de novo (sem as notas).')) return;
+      var d = await sb.from('clientes').delete().eq('id', c.id);
+      if(d.error){ $('fMsg').textContent = 'Erro: ' + d.error.message; $('fMsg').className = 'msg erro'; return; }
+      fecharModal(); toast('Ficha apagada'); carregarClientes(); };
+    f.querySelector('#fGuardar').onclick = async function(){
+      var nt = $('fTel').value.trim(), nk = telNorm(nt);
+      if(nt && nk.length < 9){ $('fMsg').textContent = 'O telemóvel tem de ter pelo menos 9 números (ou deixe vazio).'; $('fMsg').className = 'msg erro'; return; }
+      var nif = $('fNif').value.replace(/\D/g, ''); if(nif && nif.length !== 9){ $('fMsg').textContent = 'O NIF tem 9 números (ou deixe vazio).'; $('fMsg').className = 'msg erro'; return; }
+      var up = { nome:$('fNome').value.trim() || null, telefone:nt || null, email:$('fEmail').value.trim() || null, nascimento:$('fNasc').value || null, notas:$('fNotas').value.trim() || null, atualizado_em:new Date().toISOString() };
+      var camp = $('fCamp').checked, blq = $('fBlq').checked;
+      if(temExtra){ up.nif = nif || null; up.genero = $('fGen').value || null; up.aceita_campanhas = camp; if(camp && !c.aceita_campanhas) up.campanhas_em = new Date().toISOString(); up.bloqueado = blq; up.bloqueado_motivo = blq ? ($('fBlqMot').value.trim() || null) : null; }
+      else if(nif || $('fGen').value || camp || blq){ $('fMsg').textContent = AVISO_SQL11; $('fMsg').className = 'msg erro'; return; }
+      if(nk.length >= 9 && /^n:/.test(c.tel_norm) && !CLI.some(function(o){ return o.id !== c.id && o.tel_norm === nk; })) up.tel_norm = nk;   // passa a ser identificado pelo telemóvel
+      var u = await sb.from('clientes').update(up).eq('id', c.id);
+      if(u.error){ $('fMsg').textContent = 'Erro: ' + u.error.message; $('fMsg').className = 'msg erro'; return; }
+      fecharModal(); toast(temExtra && blq !== !!c.bloqueado ? (blq ? 'Cliente bloqueado' : 'Cliente desbloqueado') : 'Ficha guardada ✓'); carregarClientes();
+    };
+  }
+  function csv(nome, linhas){
+    var t = '\ufeff' + linhas.map(function(l){ return l.map(function(v){ v = v == null ? '' : String(v); return /[;"\n]/.test(v) ? ('"' + v.replace(/"/g, '""') + '"') : v; }).join(';'); }).join('\r\n');
+    var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([t], { type:'text/csv;charset=utf-8' })); a.download = nome; a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); }, 2000);
+  }
+  function num(v){ return (Math.round((+v || 0) * 100) / 100).toFixed(2).replace('.', ','); }
+  $('cliCsv').onclick = function(){ var m = statsCli();
+    csv('clientes-' + SLUG + '.csv', [['Nome','Telemóvel','Email','Nascimento','NIF','Género','Aceita campanhas','Bloqueado','Cliente desde','Visitas','Total gasto (€)','Previsto (€)','Última visita','Próxima','Faltas','Notas']].concat(Object.keys(m).map(function(k){ var x = m[k], c = x.c; return [c.nome, c.telefone || (/^n:/.test(c.tel_norm) ? '' : c.tel_norm), c.email, c.nascimento, c.nif, ({ F:'Feminino', M:'Masculino', O:'Outro' })[c.genero] || '', c.aceita_campanhas ? 'Sim' : 'Não', c.bloqueado ? 'Sim' : 'Não', String(c.criado_em || '').slice(0, 10), x.vis, num(x.gasto), num(x.prev), x.ult, x.prox, x.faltas, c.notas]; }))); };
+  // ---------- importar clientes (CSV do Excel ou de outro programa) ----------
+  function lerCsv(t){
+    t = t.replace(/^﻿/, ''); var pl = t.split(/\r?\n/)[0] || '';
+    var sep = (pl.split(';').length >= pl.split(',').length && pl.indexOf(';') >= 0) ? ';' : (pl.indexOf('\t') >= 0 ? '\t' : ',');
+    var L = [], lin = [], v = '', aspas = false;
+    for(var i = 0; i < t.length; i++){ var ch = t[i];
+      if(aspas){ if(ch === '"'){ if(t[i + 1] === '"'){ v += '"'; i++; } else aspas = false; } else v += ch; continue; }
+      if(ch === '"') aspas = true; else if(ch === sep){ lin.push(v); v = ''; } else if(ch === '\n' || ch === '\r'){ if(ch === '\r' && t[i + 1] === '\n') i++; lin.push(v); v = ''; if(lin.some(function(x){ return x.trim(); })) L.push(lin); lin = []; } else v += ch; }
+    lin.push(v); if(lin.some(function(x){ return x.trim(); })) L.push(lin);
+    return L;
+  }
+  function dataImp(v){ v = String(v || '').trim(); var m;
+    if((m = v.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/))) return m[1] + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[3]).slice(-2);
+    if((m = v.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4})/))) return m[3] + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[1]).slice(-2);
+    return null; }
+  $('cliImp').onclick = function(){ $('cliImpF').value = ''; $('cliImpF').click(); };
+  $('cliImpF').onchange = async function(){
+    var fic = this.files && this.files[0]; if(!fic) return;
+    var buf = await fic.arrayBuffer(), t = new TextDecoder('utf-8').decode(buf);
+    if(t.indexOf('�') >= 0){ try{ t = new TextDecoder('windows-1252').decode(buf); }catch(e){} }   // Excel em português grava muitas vezes assim
+    var L = lerCsv(t); if(!L.length){ toast('O ficheiro está vazio.'); return; }
+    var cab = L[0].map(function(h){ return String(h || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim(); });
+    function col(re){ for(var i = 0; i < cab.length; i++) if(re.test(cab[i])) return i; return -1; }
+    var ix = { nome:col(/^nome|name|cliente/), tel:col(/telem|telef|^tel|phone|contacto|celular/), email:col(/mail/), nasc:col(/nasc|aniver|birth/), nif:col(/^nif|contribuinte/), gen:col(/genero|sexo|gender/), notas:col(/nota|obs/) };
+    var temCab = ix.nome >= 0 || ix.tel >= 0;
+    if(!temCab) ix = { nome:0, tel:1, email:2, nasc:3, nif:-1, gen:-1, notas:-1 };   // sem cabeçalho: Nome; Telemóvel; Email; Nascimento
+    var linhas = temCab ? L.slice(1) : L, existe = {}, novos = [], rep = 0, semNome = 0, extra = false;
+    CLI.forEach(function(c){ existe[c.tel_norm] = 1; var tn = telNorm(c.telefone); if(tn.length >= 9) existe[tn] = 1; });
+    linhas.forEach(function(r){ function g(i){ return i >= 0 ? String(r[i] || '').trim() : ''; }
+      var nome = g(ix.nome), tel = g(ix.tel); if(!nome){ semNome++; return; }
+      if(telNorm(tel).length < 9) tel = '';
+      var ch = chaveCli(tel, nome); if(!ch || existe[ch]){ rep++; return; } existe[ch] = 1;
+      var nif = g(ix.nif).replace(/\D/g, ''), gn = g(ix.gen).toLowerCase(), gen = /^f/.test(gn) ? 'F' : /^m/.test(gn) ? 'M' : gn ? 'O' : null;
+      var o = { negocio_id:NEG.id, tel_norm:ch, nome:nome.slice(0, 80), telefone:tel || null, email:(g(ix.email) || '').slice(0, 120) || null, nascimento:dataImp(g(ix.nasc)), notas:(g(ix.notas) || '').slice(0, 1000) || null };
+      if(nif.length === 9){ o.nif = nif; extra = true; } if(gen){ o.genero = gen; extra = true; }
+      novos.push(o); });
+    if(!novos.length){ toast('Nenhum cliente novo para importar' + (rep ? (' (' + rep + ' já existiam)') : '') + '.'); return; }
+    if(!confirm('Importar ' + novos.length + ' cliente(s) novo(s)?' + (rep ? ('\n' + rep + ' já existiam e ficam como estão.') : '') + (semNome ? ('\n' + semNome + ' linha(s) sem nome foram ignoradas.') : '') + '\n\nOs clientes importados não ficam a aceitar campanhas: isso só o próprio cliente pode dizer.')) return;
+    toast('A importar…'); var ok = 0;
+    for(var i = 0; i < novos.length; i += 500){
+      var lote = novos.slice(i, i + 500), r = await sb.from('clientes').upsert(lote, { onConflict:'negocio_id,tel_norm', ignoreDuplicates:true });
+      if(r.error && extra && semColuna(r.error)){ lote = lote.map(function(o){ o = Object.assign({}, o); delete o.nif; delete o.genero; return o; }); r = await sb.from('clientes').upsert(lote, { onConflict:'negocio_id,tel_norm', ignoreDuplicates:true }); }
+      if(r.error){ toast('Erro ao importar: ' + r.error.message); break; } ok += lote.length; }
+    if(ok) toast(ok + ' cliente(s) importado(s) ✓'); carregarClientes();
+  };
+  $('cliCsvMes').onclick = function(){ var mes = iso(new Date()).slice(0, 7);
+    var l = CLIRES.filter(function(r){ return r.data.slice(0, 7) === mes && r.estado !== 'cancelada'; }).sort(function(a, b){ return (a.data + a.hora).localeCompare(b.data + b.hora); });
+    csv('marcacoes-' + SLUG + '-' + mes + '.csv', [['Data','Hora','Cliente','Telemóvel','Serviço','Profissional','Preço (€)','Desconto (%)','Valor (€)','Estado']].concat(l.map(function(r){ return [r.data, r.hora, r.nome, r.telefone, r.servico, nomeProf(r.profissional), baseDe(r) != null ? num(baseDe(r)) : '', +r.desconto || 0, r.valor != null ? num(r.valor) : '', r.faltou ? 'Faltou' : r.estado === 'confirmada' ? (r.data <= iso(new Date()) ? 'Feita' : 'Marcada') : 'Por confirmar']; }))); };
+
+  // ---------- campanhas: só para quem aceitou (aceita_campanhas) e não está bloqueado ----------
+  var CAMPH = [], CAMP_OK = true;
+  function linkPublico(){ return (/(^|\.)4trevo\.com$/i.test(location.hostname) ? (location.origin + '/') : (location.origin + '/salao.html?n=')) + encodeURIComponent(SLUG); }
+  function primeiroNome(n){ return String(n || '').trim().split(/\s+/)[0] || ''; }
+  function textoPara(c, txt){ var nm = primeiroNome(c && c.nome); return String(txt || '').replace(/\{nome\}/gi, nm).replace(/(Olá|Ola|Oi)\s*!/i, '$1!').replace(/\s+([,!?.])/g, '$1').trim(); }
+  async function carregarCampanhas(){
+    var a = await sb.from('clientes').select('*').eq('negocio_id', NEG.id);
+    if(a.error){ $('cpConta').innerHTML = '<span>' + esc(/clientes|relation|does not exist|schema cache/i.test(a.error.message) ? 'Falta correr no Supabase o salao-clientes.sql.' : a.error.message) + '</span>'; return; }
+    var b = await sb.from('reservas').select('*').eq('negocio_id', NEG.id).not('servico', 'is', null).order('data', { ascending:false }).limit(10000);
+    CLI = a.data || []; CLIRES = b.data || [];
+    var ps = $('cpPub'), v = ps.value;
+    ps.innerHTML = '<option value="">Todos os que aceitam campanhas</option><option value="i2">Sem vir há 2+ meses</option><option value="i3">Sem vir há 3+ meses</option><option value="i6">Sem vir há 6+ meses</option><option value="aniv">Fazem anos este mês</option><option value="um">Vieram só uma vez</option><option value="serv">Já fizeram um serviço…</option>';
+    if(v) ps.value = v;
+    $('cpServ').innerHTML = SERV.map(function(x){ return '<option value="' + esc(x.nome) + '">' + esc(x.nome) + '</option>'; }).join('');
+    if(!('aceita_campanhas' in (CLI[0] || { aceita_campanhas:0 }))){ $('cpMsg').textContent = AVISO_SQL11; $('cpMsg').className = 'msg erro'; }
+    var h = await sb.from('salao_campanhas').select('*').eq('negocio_id', NEG.id).order('criado_em', { ascending:false }).limit(50);
+    CAMP_OK = !h.error; CAMPH = h.error ? [] : (h.data || []);
+    pintarCampanha(); pintarHistCamp();
+  }
+  // destinatários do público escolhido: [{ c, x (stats), ep (notificação), tel }]
+  function publicoCamp(){
+    var m = statsCli(), fl = $('cpPub').value, hoje = iso(new Date()), mesN = hoje.slice(5, 7), sv = $('cpServ').value;
+    var ult = {}; CLIRES.forEach(function(r){ if(!r.push_marcacao) return; var k = chaveCli(r.telefone, r.nome); if(!ult[k] || r.data > ult[k].data) ult[k] = r; });
+    return Object.keys(m).map(function(k){ return m[k]; }).filter(function(x){ var c = x.c;
+      if(c.aceita_campanhas !== true || c.bloqueado) return false;
+      if(/^i\d+$/.test(fl)){ var ms = mesesSem(x.ult); return x.vis > 0 && !x.prox && ms != null && ms >= +fl.slice(1); }
+      if(fl === 'aniv') return String(c.nascimento || '').slice(5, 7) === mesN;
+      if(fl === 'um') return x.vis === 1 && !x.prox;
+      if(fl === 'serv') return !!x.serv[sv];
+      return true; })
+      .map(function(x){ var c = x.c, tn = telNorm(c.telefone), r = ult[c.tel_norm] || (tn.length >= 9 ? ult[tn] : null); return { c:c, x:x, ep:r ? r.push_marcacao : '', tel:tn.length >= 9 ? c.telefone : '' }; });
+  }
+  function descPub(){ var o = $('cpPub').selectedOptions[0]; var t = o ? o.textContent : ''; return $('cpPub').value === 'serv' ? ('Fizeram ' + $('cpServ').value) : t; }
+  function pintarCampanha(){
+    $('cpServBx').classList.toggle('hide', $('cpPub').value !== 'serv');
+    var l = publicoCamp(), np = l.filter(function(d){ return d.ep; }).length, nw = l.filter(function(d){ return d.tel; }).length;
+    var tot = CLI.filter(function(c){ return c.aceita_campanhas === true && !c.bloqueado; }).length;
+    $('cpConta').innerHTML = '<span><b>' + l.length + '</b> cliente(s)</span><span>🔔 <b>' + np + '</b> com notificações</span><span>💬 <b>' + nw + '</b> com telemóvel</span>' + (!tot ? '<span style="background:#FBEDED;color:#A33;">Ainda nenhum cliente aceitou campanhas</span>' : '');
+    $('cpPush').textContent = '🔔 Enviar notificação' + (np ? (' (' + np + ')') : ''); $('cpPush').disabled = !np;
+    $('cpWa').textContent = '💬 Enviar por WhatsApp' + (nw ? (' (' + nw + ')') : ''); $('cpWa').disabled = !nw;
+    var ex = l[0] ? l[0].c : { nome:'Maria' }, tit = $('cpTit').value.trim() || (SAL.nome || NEG.nome), txt = textoPara(ex, $('cpTxt').value) || 'A sua mensagem aparece aqui.';
+    var wtxt = textoPara(ex, $('cpTxt').value) + ($('cpLink').checked ? ('\n\n' + linkPublico()) : '');
+    $('cpCars').textContent = $('cpTxt').value.length + '/500';
+    $('cpPrev').innerHTML = '<div class="camp-not"><span class="ic"></span><div><b>' + esc(tit) + '</b><p>' + esc(txt) + '</p></div></div>'
+      + '<div class="camp-wa"><div>' + (($('cpTxt').value.trim()) ? (($('cpTit').value.trim() ? ('*' + esc($('cpTit').value.trim()) + '*\n') : '') + esc(wtxt)) : 'A sua mensagem aparece aqui.') + '</div></div>'
+      + '<div style="font-size:12px;color:var(--suave);">Exemplo com o nome de ' + esc(primeiroNome(ex.nome) || 'um cliente') + '.</div>';
+  }
+  ['cpPub','cpServ','cpTit','cpTxt','cpLink'].forEach(function(id){ $(id).addEventListener(id === 'cpTit' || id === 'cpTxt' ? 'input' : 'change', pintarCampanha); });
+  function validaCamp(){ var m = $('cpMsg'); if(!$('cpTxt').value.trim()){ m.textContent = 'Escreva a mensagem.'; m.className = 'msg erro'; $('cpTxt').focus(); return false; }
+    var rec = CAMPH.filter(function(h){ return Date.now() - new Date(h.criado_em).getTime() < 7 * 86400000; })[0];
+    if(rec && !confirm('Já enviou uma campanha há ' + Math.max(1, Math.round((Date.now() - new Date(rec.criado_em).getTime()) / 86400000)) + ' dia(s). Mensagens a mais fazem os clientes desligar as notificações. Enviar mesmo assim?')) return false;
+    m.textContent = ''; return true; }
+  async function registarCamp(canal, dest, env){ if(!CAMP_OK) return null; var r = await sb.from('salao_campanhas').insert({ negocio_id:NEG.id, titulo:$('cpTit').value.trim() || null, texto:$('cpTxt').value.trim(), publico:descPub(), canal:canal, destinatarios:dest, enviados:env }).select().single(); return r.error ? null : r.data; }
+  $('cpPush').onclick = async function(){
+    if(!validaCamp()) return; var l = publicoCamp().filter(function(d){ return d.ep; }); if(!l.length) return;
+    if(!confirm('Enviar esta notificação a ' + l.length + ' cliente(s)?')) return;
+    var bt = this, ok = 0, i = 0, tit = $('cpTit').value.trim() || (SAL.nome || NEG.nome), feitos = {}; bt.disabled = true;
+    async function um(d){ if(feitos[d.ep]) return; feitos[d.ep] = 1;
+      try{ var res = await sb.functions.invoke('enviar-push', { body:{ negocio:NEG.id, titulo:tit, corpo:textoPara(d.c, $('cpTxt').value), url:location.origin + '/salao.html?n=' + encodeURIComponent(SLUG), endpoints:[d.ep], tag:'camp-' + Date.now() } });
+        if(res && !res.error && res.data && res.data.enviados > 0) ok++; }catch(e){} }
+    while(i < l.length){ var lote = l.slice(i, i + 5); i += 5; bt.textContent = 'A enviar… ' + Math.min(i, l.length) + '/' + l.length; await Promise.all(lote.map(um)); }
+    await registarCamp('push', l.length, ok);
+    bt.disabled = false; $('cpMsg').textContent = ok ? ('✓ Notificação entregue a ' + ok + ' de ' + l.length + ' cliente(s).' + (ok < l.length ? ' Os outros desligaram as notificações ou mudaram de telemóvel.' : '')) : 'Nenhuma notificação foi entregue (os clientes podem ter desligado as notificações).';
+    $('cpMsg').className = 'msg' + (ok ? '' : ' erro'); toast(ok ? 'Campanha enviada ✓' : 'Nada entregue'); carregarCampanhas();
+  };
+  $('cpWa').onclick = async function(){
+    if(!validaCamp()) return; var l = publicoCamp().filter(function(d){ return d.tel; }); if(!l.length) return;
+    var h = await registarCamp('whatsapp', l.length, 0);
+    abrirListaWa({ id:(h && h.id && !Array.isArray(h)) ? h.id : ('tmp' + Date.now()), titulo:$('cpTit').value.trim(), texto:$('cpTxt').value.trim(), canal:'whatsapp', publico:descPub(), _link:$('cpLink').checked }, l, true);
+    carregarCampanhas();
+  };
+  // WhatsApp não envia sozinho: abre uma lista, cada botão abre a conversa já escrita
+  function abrirListaWa(h, l, link){
+    var chave = 'camp_wa_' + h.id, feito = {}; try{ feito = JSON.parse(localStorage.getItem(chave) || '{}') || {}; }catch(e){}
+    var def = null; try{ def = JSON.parse(localStorage.getItem('camp_wa_def_' + h.id) || 'null'); }catch(e){}
+    var juntaLink = link === true ? $('cpLink').checked : (def ? def.link !== false : h._link !== false);
+    if(link === true){ try{ localStorage.setItem('camp_wa_def_' + h.id, JSON.stringify({ link:juntaLink, lista:l.map(function(d){ return d.c.tel_norm; }) })); }catch(e){} }
+    else if(def && Array.isArray(def.lista)){ var lt = l.filter(function(d){ return def.lista.indexOf(d.c.tel_norm) >= 0; }); if(lt.length) l = lt; }
+    function txt(c){ return (h.titulo ? ('*' + h.titulo + '*\n') : '') + textoPara(c, h.texto) + (juntaLink ? ('\n\n' + linkPublico()) : ''); }
+    function conta(){ return Object.keys(feito).length; }
+    var f = modal('<h3>💬 Enviar por WhatsApp</h3><div style="font-size:14px;color:var(--suave);">O WhatsApp não deixa enviar a várias pessoas de uma vez. Toque em <b>Abrir</b> em cada cliente: a mensagem já vai escrita, só tem de carregar em enviar.</div>'
+      + '<div style="font-weight:800;font-size:14px;" id="waConta"></div>'
+      + '<div class="wa-lista">' + l.map(function(d){ return '<div class="wa-it' + (feito[d.c.tel_norm] ? ' feito' : '') + '" data-t="' + esc(d.c.tel_norm) + '"><div class="q"><b>' + esc(d.c.nome || '—') + '</b><span>' + esc(d.tel) + '</span></div><a href="' + esc(waLink({ telefone:d.tel }, txt(d.c))) + '" target="_blank" rel="noopener">' + (feito[d.c.tel_norm] ? '✓ Enviado' : 'Abrir') + '</a></div>'; }).join('') + '</div>');
+    function pc(){ f.querySelector('#waConta').textContent = conta() + ' de ' + l.length + ' enviados'; } pc();
+    f.querySelectorAll('.wa-it a').forEach(function(a){ a.addEventListener('click', function(){ var it = a.closest('.wa-it'), t = it.getAttribute('data-t'); feito[t] = 1; it.classList.add('feito'); a.textContent = '✓ Enviado'; pc();
+      try{ localStorage.setItem(chave, JSON.stringify(feito)); }catch(e){}
+      if(h.id && !/^tmp/.test(h.id) && CAMP_OK) sb.from('salao_campanhas').update({ enviados:conta() }).eq('id', h.id).then(function(){}); }); });
+  }
+  function pintarHistCamp(){
+    if(!CAMP_OK){ $('cpHist').innerHTML = '<div style="color:var(--suave);font-size:14px;">Para guardar o histórico, falta correr no Supabase o ficheiro 13-salao-campanhas.sql. (As campanhas funcionam na mesma.)</div>'; return; }
+    if(!CAMPH.length){ $('cpHist').innerHTML = '<div style="color:var(--suave);font-size:14px;">Ainda não enviou nenhuma campanha.</div>'; return; }
+    $('cpHist').innerHTML = CAMPH.map(function(h){ var d = new Date(h.criado_em);
+      return '<div class="camp-h"><span style="font-size:20px;">' + (h.canal === 'whatsapp' ? '💬' : '🔔') + '</span><div class="q"><b>' + esc(h.titulo || h.texto) + '</b><span>' + d.getDate() + ' ' + MESES[d.getMonth()].slice(0, 3) + ' ' + d.getFullYear() + ' · ' + esc(h.publico || '') + ' · ' + (h.canal === 'whatsapp' ? (h.enviados + ' de ' + h.destinatarios + ' enviados') : (h.enviados + ' de ' + h.destinatarios + ' entregues')) + '</span></div>'
+        + '<button type="button" class="btn" data-c="' + esc(h.id) + '">' + (h.canal === 'whatsapp' ? 'Continuar' : 'Reutilizar') + '</button></div>'; }).join('');
+    $('cpHist').querySelectorAll('[data-c]').forEach(function(b){ b.onclick = function(){ var h = CAMPH.filter(function(x){ return x.id === b.getAttribute('data-c'); })[0]; if(!h) return;
+      if(h.canal === 'whatsapp'){ var l = CLI.filter(function(c){ return c.aceita_campanhas === true && !c.bloqueado && telNorm(c.telefone).length >= 9; }).map(function(c){ return { c:c, tel:c.telefone }; }); abrirListaWa(h, l, false); return; }
+      $('cpTit').value = h.titulo || ''; $('cpTxt').value = h.texto || ''; pintarCampanha(); window.scrollTo({ top:0, behavior:'smooth' }); toast('Mensagem copiada para cima — escolha para quem e envie'); }; });
+  }
+
+  // ---------- relatórios (só leitura: usa as marcações e as fichas que já existem) ----------
+  var RELRES = null, RELCLI = null, relMetrica = 'n';
+  function valorDe(r){ if(+r.valor > 0) return +r.valor; var b = +r.valor_base > 0 ? +r.valor_base : precoServ(r.servico); return b == null ? 0 : comDesc(b, r.desconto); }
+  function pct(a, b){ return b ? Math.round(a * 1000 / b) / 10 : 0; }
+  function pctTxt(a, b){ return b ? (pct(a, b).toLocaleString('pt-PT') + '%') : '—'; }
+  function horasTxt(min){ var h = Math.floor(min / 60), m = Math.round(min % 60); return h + ' h' + (m ? (' ' + String(m).padStart(2, '0')) : ''); }
+  function periodoRel(){
+    var v = $('relPer').value, h = new Date(); h.setHours(0,0,0,0); var de, ate;
+    if(v === 'mes'){ de = new Date(h.getFullYear(), h.getMonth(), 1); ate = new Date(h.getFullYear(), h.getMonth() + 1, 0); }
+    else if(v === 'mesant'){ de = new Date(h.getFullYear(), h.getMonth() - 1, 1); ate = new Date(h.getFullYear(), h.getMonth(), 0); }
+    else if(v === '30'){ ate = new Date(h); de = new Date(h); de.setDate(de.getDate() - 29); }
+    else if(v === '90'){ ate = new Date(h); de = new Date(h); de.setDate(de.getDate() - 89); }
+    else if(v === 'ano'){ de = new Date(h.getFullYear(), 0, 1); ate = new Date(h.getFullYear(), 11, 31); }
+    else { var a = $('relDe').value, b = $('relAte').value; de = a ? dDe(a) : new Date(h.getFullYear(), h.getMonth(), 1); ate = b ? dDe(b) : new Date(h); if(ate < de){ var t = de; de = ate; ate = t; } }
+    return [iso(de), iso(ate)];
+  }
+  async function carregarRelatorios(){
+    $('relCorpo').innerHTML = '<div style="color:var(--suave);">A carregar…</div>';
+    var b = await sb.from('reservas').select('*').eq('negocio_id', NEG.id).not('servico', 'is', null).order('data', { ascending:true }).limit(20000);
+    if(b.error){ $('relCorpo').innerHTML = '<div class="msg erro">Erro: ' + esc(b.error.message) + '</div>'; return; }
+    RELRES = b.data || [];
+    var a = await sb.from('clientes').select('*').eq('negocio_id', NEG.id); RELCLI = a.error ? null : (a.data || []);
+    await carregarAus();
+    var ps = $('relProf'); ps.classList.toggle('hide', !EQ().length);
+    ps.innerHTML = '<option value="">Toda a equipa</option>' + EQ().map(function(p){ return '<option value="' + esc(p.id) + '">' + esc(p.nome) + '</option>'; }).join('');
+    pintarRelatorios();
+  }
+  // gráfico de barras simples (uma série, cor do salão), com dica ao passar o rato
+  function barras(pontos, opc){
+    opc = opc || {}; var W = opc.w || 900, H = opc.h || 200, padB = 26, padT = 14, padL = 4, n = pontos.length || 1;
+    var max = Math.max.apply(null, pontos.map(function(p){ return p.v; }).concat([0])) || 1;
+    var bw = (W - padL) / n, gap = Math.min(6, bw * 0.25), cada = Math.max(1, Math.ceil(n / (opc.rotulos || 12)));
+    var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" class="rel-svg" role="img" aria-label="' + esc(opc.titulo || 'Gráfico') + '">';
+    [0.5, 1].forEach(function(f){ var y = padT + (H - padT - padB) * (1 - f); s += '<line x1="0" x2="' + W + '" y1="' + y + '" y2="' + y + '" class="rel-grelha"/><text x="' + (W - 2) + '" y="' + (y - 3) + '" text-anchor="end" class="rel-eixo">' + esc(opc.fmt ? opc.fmt(max * f) : Math.round(max * f)) + '</text>'; });
+    pontos.forEach(function(p, i){
+      var x = padL + i * bw + gap / 2, hh = (H - padT - padB) * (p.v / max), y = H - padB - hh, w = Math.max(1, bw - gap);
+      s += '<g class="rel-bar" data-dica="' + esc(p.dica || (p.r + ': ' + p.v)) + '"><rect x="' + (padL + i * bw) + '" y="' + padT + '" width="' + bw + '" height="' + (H - padT - padB) + '" fill="transparent"/>'
+        + (p.v > 0 ? ('<path d="M' + x + ',' + (H - padB) + ' V' + (y + Math.min(4, hh)) + ' Q' + x + ',' + y + ' ' + (x + Math.min(4, w / 2)) + ',' + y + ' H' + (x + w - Math.min(4, w / 2)) + ' Q' + (x + w) + ',' + y + ' ' + (x + w) + ',' + (y + Math.min(4, hh)) + ' V' + (H - padB) + ' Z" class="rel-barra"/>') : '')
+        + '</g>';
+      if(i % cada === 0) s += '<text x="' + (padL + i * bw + bw / 2) + '" y="' + (H - 8) + '" text-anchor="middle" class="rel-eixo">' + esc(p.r) + '</text>';
+    });
+    s += '<line x1="0" x2="' + W + '" y1="' + (H - padB) + '" y2="' + (H - padB) + '" class="rel-base"/></svg>';
+    return s;
+  }
+  function listaBarras(itens, fmt){
+    var max = Math.max.apply(null, itens.map(function(i){ return i.v; }).concat([0])) || 1;
+    return itens.length ? itens.map(function(i){ return '<div class="rel-li"><span class="rel-li-n">' + esc(i.r) + '</span><span class="rel-li-b"><i style="width:' + Math.max(2, i.v * 100 / max) + '%"></i></span><span class="rel-li-v">' + esc(fmt ? fmt(i) : i.v) + '</span></div>'; }).join('') : '<div style="color:var(--suave);font-size:14px;">Sem dados neste período.</div>';
+  }
+  var _relUlt = null;
+  function pintarRelatorios(){
+    if(!RELRES) return;
+    var per = periodoRel(), de = per[0], ate = per[1], hoje = iso(new Date()), pf = $('relProf').value;
+    $('relDatas').classList.toggle('hide', $('relPer').value !== 'pers');
+    var R = RELRES.filter(function(r){ return r.data >= de && r.data <= ate && (!pf || r.profissional === pf); });
+    var canc = R.filter(function(r){ return r.estado === 'cancelada'; }), ativas = R.filter(function(r){ return r.estado !== 'cancelada'; });
+    var faltas = ativas.filter(function(r){ return r.faltou; });
+    var feitas = ativas.filter(function(r){ return r.estado === 'confirmada' && !r.faltou && r.data <= hoje; });
+    var futuras = ativas.filter(function(r){ return r.estado === 'confirmada' && !r.faltou && r.data > hoje; });
+    var pend = ativas.filter(function(r){ return r.estado === 'pendente'; });
+    var fat = feitas.reduce(function(s, r){ return s + valorDe(r); }, 0), prev = futuras.reduce(function(s, r){ return s + valorDe(r); }, 0);
+    // clientes: primeira visita feita de sempre (para saber quem é novo e quem volta)
+    var primeira = {}; RELRES.forEach(function(r){ if(r.estado === 'confirmada' && !r.faltou && r.data <= hoje){ var k = chaveCli(r.telefone, r.nome); if(k && (!primeira[k] || r.data < primeira[k])) primeira[k] = r.data; } });
+    var atend = {}; feitas.forEach(function(r){ var k = chaveCli(r.telefone, r.nome); if(k) atend[k] = (atend[k] || 0) + 1; });
+    var kAt = Object.keys(atend), novos = kAt.filter(function(k){ return primeira[k] >= de; }).length, recorr = kAt.length - novos;
+    var gastoCli = {}; feitas.forEach(function(r){ var k = chaveCli(r.telefone, r.nome); if(k) gastoCli[k] = (gastoCli[k] || 0) + valorDe(r); });
+    // série por dia (ou por mês quando o período é longo)
+    var dias = []; for(var d = dDe(de); iso(d) <= ate; d.setDate(d.getDate() + 1)) dias.push(iso(d));
+    var porMes = dias.length > 92, chaves = porMes ? Array.from(new Set(dias.map(function(k){ return k.slice(0, 7); }))) : dias;
+    var serie = chaves.map(function(k){ var lst = ativas.filter(function(r){ return porMes ? r.data.slice(0, 7) === k : r.data === k; });
+      var v = relMetrica === 'eur' ? lst.filter(function(r){ return r.estado === 'confirmada' && !r.faltou; }).reduce(function(s, r){ return s + valorDe(r); }, 0) : lst.length;
+      var rot = porMes ? MESES[+k.slice(5, 7) - 1].slice(0, 3) : String(+k.slice(8, 10));
+      var nome = porMes ? (MESES[+k.slice(5, 7) - 1] + ' ' + k.slice(0, 4)) : (DIAS_C[dDe(k).getDay()] + ' ' + dataPt(k));
+      return { r:rot, v:Math.round(v * 100) / 100, dica:nome + ': ' + (relMetrica === 'eur' ? euro(v) : (v + (v === 1 ? ' marcação' : ' marcações'))) }; });
+    // serviços
+    var sv = {}; ativas.forEach(function(r){ var k = r.servico || '—'; sv[k] = sv[k] || { r:k, v:0, e:0 }; sv[k].v++; if(r.estado === 'confirmada' && !r.faltou && r.data <= hoje) sv[k].e += valorDe(r); });
+    var topServ = Object.keys(sv).map(function(k){ return sv[k]; }).sort(function(a, b){ return b.v - a.v; });
+    // dia da semana e hora
+    var wd = [0,0,0,0,0,0,0], hr = {}; ativas.forEach(function(r){ wd[dDe(r.data).getDay()]++; var hh = parseInt(String(r.hora || '').slice(0, 2), 10); if(!isNaN(hh)) hr[hh] = (hr[hh] || 0) + 1; });
+    var ordemD = [1,2,3,4,5,6,0], hs = Object.keys(hr).map(Number).sort(function(a, b){ return a - b; });
+    var diaTop = ativas.length ? ordemD.reduce(function(a, b){ return wd[b] > wd[a] ? b : a; }, 1) : null, horaTop = hs.length ? hs.reduce(function(a, b){ return hr[b] > hr[a] ? b : a; }) : null;
+    // profissionais: horas disponíveis (dias em que o salão abre e a pessoa trabalha) vs. horas marcadas
+    var eq = EQ(), pessoas = eq.length ? eq.filter(function(p){ return !pf || p.id === pf; }) : [{ id:'', nome:SAL.nome || NEG.nome || 'Salão' }];
+    var linhasP = pessoas.map(function(p){
+      var disp = 0; dias.forEach(function(k){ var dd = dDe(k), h = horarioDe(dd.getDay()); if(!h || fechadoEm(k)) return; if(p.id && !trabalha(p, dd.getDay())) return; disp += Math.max(0, minDe(h[1]) - minDe(h[0]) - minAusentes(k, p.id, minDe(h[0]), minDe(h[1]))); });
+      var mine = ativas.filter(function(r){ return eq.length ? r.profissional === p.id : true; });
+      var marcMin = mine.filter(function(r){ return !r.faltou; }).reduce(function(s, r){ return s + (+r.duracao || 30); }, 0);
+      var fe = mine.filter(function(r){ return r.estado === 'confirmada' && !r.faltou && r.data <= hoje; }), eur = fe.reduce(function(s, r){ return s + valorDe(r); }, 0);
+      return { nome:p.nome, n:mine.length, feitas:fe.length, eur:eur, marc:marcMin, disp:disp, livre:Math.max(0, disp - marcMin), ocup:pct(marcMin, disp), porHora:marcMin ? eur / (fe.reduce(function(s, r){ return s + (+r.duracao || 30); }, 0) / 60 || 1) : 0 };
+    });
+    // cancelamentos e faltas por mês
+    var meses = Array.from(new Set(dias.map(function(k){ return k.slice(0, 7); })));
+    var cfMes = meses.map(function(m){ var l = R.filter(function(r){ return r.data.slice(0, 7) === m; }); var c = l.filter(function(r){ return r.estado === 'cancelada'; }).length, f = l.filter(function(r){ return r.faltou; }).length; return { m:m, total:l.length, c:c, f:f }; });
+    // aniversários no período
+    var anivs = (RELCLI || []).filter(function(c){ if(!c.nascimento) return false; var md = String(c.nascimento).slice(5, 10); return dias.some(function(k){ return k.slice(5, 10) === md; }); })
+      .sort(function(a, b){ return String(a.nascimento).slice(5, 10).localeCompare(String(b.nascimento).slice(5, 10)); });
+
+    var larg = Math.max(300, ($('relCorpo').clientWidth || 900) - 34), largP = Math.min(440, larg);   // o gráfico tem o tamanho real do ecrã (letras legíveis no telemóvel)
+    var h = '<div class="rel-kpis">'
+      + '<div><b>' + ativas.length + '</b><span>marcações</span></div>'
+      + '<div><b>' + feitas.length + '</b><span>feitas</span></div>'
+      + '<div><b>' + euro(fat) + '</b><span>faturado</span></div>'
+      + '<div><b>' + euro(feitas.length ? fat / feitas.length : 0) + '</b><span>valor médio por marcação</span></div>'
+      + '<div><b>' + kAt.length + '</b><span>clientes atendidos</span></div>'
+      + '<div><b>' + novos + '</b><span>clientes novos</span></div>'
+      + '<div><b>' + pctTxt(canc.length, R.length) + '</b><span>cancelamentos (' + canc.length + ')</span></div>'
+      + '<div><b>' + pctTxt(faltas.length, feitas.length + faltas.length) + '</b><span>faltas (' + faltas.length + ')</span></div>'
+      + (futuras.length || pend.length ? ('<div class="prev"><b>' + euro(prev) + '</b><span>previsto (' + futuras.length + ' confirmadas por fazer' + (pend.length ? (', ' + pend.length + ' por confirmar') : '') + ')</span></div>') : '')
+      + '</div>';
+    h += '<div class="rel-card"><div class="rel-cab"><h3>' + (porMes ? 'Por mês' : 'Por dia') + '</h3><div class="vista" role="group" aria-label="Medida"><button type="button" data-m="n" class="' + (relMetrica === 'n' ? 'on' : '') + '">Marcações</button><button type="button" data-m="eur" class="' + (relMetrica === 'eur' ? 'on' : '') + '">Valor (€)</button></div></div>'
+      + barras(serie, { w:larg, h:larg < 600 ? 170 : 220, titulo:'Marcações ' + (porMes ? 'por mês' : 'por dia'), rotulos:porMes ? 12 : (larg < 600 ? 8 : 16), fmt:relMetrica === 'eur' ? function(v){ return Math.round(v) + ' €'; } : null }) + '</div>';
+    h += '<div class="rel-grid">'
+      + '<div class="rel-card"><h3>Serviços mais marcados</h3>' + listaBarras(topServ.slice(0, 10), function(i){ return i.v + ' · ' + euro(i.e); }) + '</div>'
+      + '<div class="rel-card"><h3>Dias e horas mais procurados</h3>'
+        + '<div class="rel-mini"><div><b>' + (diaTop == null ? '—' : DIAS_L[diaTop]) + '</b><span>dia mais movimentado</span></div><div><b>' + (horaTop == null ? '—' : (String(horaTop).padStart(2, '0') + 'h–' + String(horaTop + 1).padStart(2, '0') + 'h')) + '</b><span>horário mais procurado</span></div></div>'
+        + barras(ordemD.map(function(k){ return { r:DIAS_C[k], v:wd[k], dica:DIAS_L[k] + ': ' + wd[k] }; }), { w:largP, h:150, titulo:'Marcações por dia da semana', rotulos:7 })
+        + (hs.length ? barras(hs.map(function(x){ return { r:x + 'h', v:hr[x], dica:String(x).padStart(2, '0') + 'h: ' + hr[x] }; }), { w:largP, h:150, titulo:'Marcações por hora', rotulos:largP < 400 ? 6 : 12 }) : '')
+      + '</div></div>';
+    h += '<div class="rel-card"><h3>' + (eq.length ? 'Por profissional' : 'Ocupação do salão') + '</h3><div class="rel-tab-w"><table class="cli-tab"><thead><tr><th>' + (eq.length ? 'Profissional' : '') + '</th><th class="n">Marcações</th><th class="n">Feitas</th><th class="n">Faturado</th><th class="n">Horas marcadas</th><th class="n">Horas disponíveis</th><th class="n">Ocupação</th><th class="n">€ por hora</th></tr></thead><tbody>'
+      + linhasP.map(function(l){ return '<tr><td><b>' + esc(l.nome) + '</b></td><td class="n">' + l.n + '</td><td class="n">' + l.feitas + '</td><td class="n">' + euro(l.eur) + '</td><td class="n">' + horasTxt(l.marc) + '</td><td class="n">' + horasTxt(l.disp) + '</td><td class="n"><span class="rel-ocup"><i style="width:' + Math.min(100, l.ocup) + '%"></i></span> ' + l.ocup.toLocaleString('pt-PT') + '%</td><td class="n">' + euro(l.porHora) + '</td></tr>'; }).join('')
+      + '</tbody></table></div><div style="font-size:12px;color:var(--suave);margin-top:6px;">Horas disponíveis: dias do período em que o salão abre (e a pessoa trabalha), pelo horário do salão, sem as ausências (férias, folgas, pausas). Ocupação = horas marcadas ÷ horas disponíveis.</div></div>';
+    if(eq.length > 1 && !pf){
+      var nomesS = topServ.map(function(s){ return s.r; });
+      h += '<div class="rel-card"><h3>Serviços por profissional</h3><div class="rel-tab-w"><table class="cli-tab"><thead><tr><th>Serviço</th>' + eq.map(function(p){ return '<th class="n">' + esc(p.nome) + '</th>'; }).join('') + '<th class="n">Total</th></tr></thead><tbody>'
+        + nomesS.map(function(sn){ var tot = 0; return '<tr><td>' + esc(sn) + '</td>' + eq.map(function(p){ var c = ativas.filter(function(r){ return r.servico === sn && r.profissional === p.id; }).length; tot += c; return '<td class="n">' + (c || '') + '</td>'; }).join('') + '<td class="n"><b>' + sv[sn].v + '</b></td></tr>'; }).join('')
+        + '</tbody></table></div></div>';
+    }
+    h += '<div class="rel-grid">'
+      + '<div class="rel-card"><h3>Clientes</h3><div class="rel-mini rel-mini4">'
+        + '<div><b>' + kAt.length + '</b><span>atendidos</span></div><div><b>' + novos + '</b><span>novos</span></div><div><b>' + recorr + '</b><span>que voltaram</span></div><div><b>' + pctTxt(recorr, kAt.length) + '</b><span>taxa de retenção</span></div>'
+        + '<div><b>' + (kAt.length ? (Math.round(feitas.length * 10 / kAt.length) / 10).toLocaleString('pt-PT') : '—') + '</b><span>visitas por cliente</span></div><div><b>' + euro(kAt.length ? fat / kAt.length : 0) + '</b><span>gasto médio por cliente</span></div>'
+        + '</div></div>'
+      + '<div class="rel-card"><h3>Cancelamentos e faltas' + (meses.length > 1 ? ' por mês' : '') + '</h3><table class="cli-tab"><thead><tr><th>Mês</th><th class="n">Pedidos</th><th class="n">Canceladas</th><th class="n">Faltas</th></tr></thead><tbody>'
+        + cfMes.map(function(x){ return '<tr><td>' + MESES[+x.m.slice(5, 7) - 1] + ' ' + x.m.slice(0, 4) + '</td><td class="n">' + x.total + '</td><td class="n">' + x.c + ' <span style="color:var(--suave);">(' + pctTxt(x.c, x.total) + ')</span></td><td class="n">' + x.f + '</td></tr>'; }).join('') + '</tbody></table></div>'
+      + '</div>';
+    h += '<div class="rel-card"><h3>🎂 Aniversários no período</h3>' + (RELCLI == null ? '<div style="color:var(--suave);font-size:14px;">Precisa das fichas de cliente (salao-clientes.sql).</div>' : anivs.length ? ('<div class="rel-aniv">' + anivs.map(function(c){ var md = String(c.nascimento).slice(5, 10); return '<div><b>' + esc(c.nome || '—') + '</b><span>' + (+md.slice(3, 5)) + ' ' + MESES[+md.slice(0, 2) - 1].slice(0, 3) + (c.telefone ? (' · ' + esc(c.telefone)) : '') + '</span></div>'; }).join('') + '</div>') : '<div style="color:var(--suave);font-size:14px;">Nenhum cliente faz anos neste período (ou ainda não tem a data de nascimento na ficha).</div>') + '</div>';
+    $('relCorpo').innerHTML = h;
+    $('relCorpo').querySelectorAll('[data-m]').forEach(function(b){ b.onclick = function(){ relMetrica = b.getAttribute('data-m'); pintarRelatorios(); }; });
+    // dica ao passar o rato / tocar nas barras
+    var dica = $('relDica');
+    $('relCorpo').querySelectorAll('.rel-bar').forEach(function(g){
+      function mostra(ev){ dica.textContent = g.getAttribute('data-dica'); dica.classList.remove('hide'); var x = (ev.touches ? ev.touches[0].clientX : ev.clientX), y = (ev.touches ? ev.touches[0].clientY : ev.clientY); dica.style.left = Math.min(window.innerWidth - dica.offsetWidth - 8, x + 12) + 'px'; dica.style.top = (y - 36) + 'px'; }
+      g.addEventListener('mousemove', mostra); g.addEventListener('touchstart', mostra, { passive:true });
+      g.addEventListener('mouseleave', function(){ dica.classList.add('hide'); });
+    });
+    _relUlt = { de:de, ate:ate, ativas:ativas, feitas:feitas, fat:fat, prev:prev, canc:canc, faltas:faltas, kAt:kAt, novos:novos, recorr:recorr, topServ:topServ, linhasP:linhasP, cfMes:cfMes, wd:wd, hr:hr, R:R };
+  }
+  var _relRz = null; window.addEventListener('resize', function(){ if($('tRelatorios').classList.contains('hide')) return; clearTimeout(_relRz); _relRz = setTimeout(pintarRelatorios, 200); });
+  $('relPer').onchange = pintarRelatorios; $('relDe').onchange = pintarRelatorios; $('relAte').onchange = pintarRelatorios; $('relProf').onchange = pintarRelatorios;
+  $('relCsv').onclick = function(){
+    var u = _relUlt; if(!u) return; var L = [];
+    L.push(['Relatório', SAL.nome || NEG.nome, 'de ' + u.de + ' a ' + u.ate]); L.push([]);
+    L.push(['Resumo']); L.push(['Marcações', u.ativas.length]); L.push(['Feitas', u.feitas.length]); L.push(['Faturado (€)', num(u.fat)]); L.push(['Previsto (€)', num(u.prev)]);
+    L.push(['Canceladas', u.canc.length]); L.push(['Faltas', u.faltas.length]); L.push(['Clientes atendidos', u.kAt.length]); L.push(['Clientes novos', u.novos]); L.push(['Clientes que voltaram', u.recorr]); L.push([]);
+    L.push(['Serviço', 'Marcações', 'Faturado (€)']); u.topServ.forEach(function(s){ L.push([s.r, s.v, num(s.e)]); }); L.push([]);
+    L.push(['Profissional', 'Marcações', 'Feitas', 'Faturado (€)', 'Horas marcadas', 'Horas disponíveis', 'Ocupação (%)', '€ por hora']); u.linhasP.forEach(function(l){ L.push([l.nome, l.n, l.feitas, num(l.eur), (l.marc / 60).toFixed(1).replace('.', ','), (l.disp / 60).toFixed(1).replace('.', ','), String(l.ocup).replace('.', ','), num(l.porHora)]); }); L.push([]);
+    L.push(['Mês', 'Marcações', 'Canceladas', 'Faltas']); u.cfMes.forEach(function(x){ L.push([x.m, x.total, x.c, x.f]); }); L.push([]);
+    L.push(['Data', 'Hora', 'Cliente', 'Telemóvel', 'Serviço', 'Profissional', 'Valor (€)', 'Estado']);
+    u.R.slice().sort(function(a, b){ return (a.data + a.hora).localeCompare(b.data + b.hora); }).forEach(function(r){ L.push([r.data, r.hora, r.nome, r.telefone, r.servico, nomeProf(r.profissional), num(valorDe(r)), r.estado === 'cancelada' ? 'Cancelada' : r.faltou ? 'Faltou' : r.estado === 'confirmada' ? (r.data <= iso(new Date()) ? 'Feita' : 'Marcada') : 'Por confirmar']); });
+    csv('relatorio-' + SLUG + '-' + u.de + '-a-' + u.ate + '.csv', L);
+  };
+
   // ---------- agenda ----------
-  function intervalo(){ if(vista === 'dia') return [iso(dataSel), iso(dataSel)]; var s = new Date(dataSel); var wd = (s.getDay() + 6) % 7; s.setDate(s.getDate() - wd); var e = new Date(s); e.setDate(s.getDate() + 6); return [iso(s), iso(e)]; }
+  function intervalo(){ if(vista === 'dia') return [iso(dataSel), iso(dataSel)];
+    if(vista === 'mes'){ var p = new Date(dataSel.getFullYear(), dataSel.getMonth(), 1), u = new Date(dataSel.getFullYear(), dataSel.getMonth() + 1, 0);
+      p.setDate(p.getDate() - ((p.getDay() + 6) % 7)); u.setDate(u.getDate() + (6 - (u.getDay() + 6) % 7)); return [iso(p), iso(u)]; } var s = new Date(dataSel); var wd = (s.getDay() + 6) % 7; s.setDate(s.getDate() - wd); var e = new Date(s); e.setDate(s.getDate() + 6); return [iso(s), iso(e)]; }
+  // ---------- ausências (férias, folgas, pausas): tabela salao_ausencias ----------
+  var AUS = [], AUS_OK = true, MOTIVOS = ['Férias', 'Folga', 'Almoço', 'Pausa', 'Formação', 'Doença', 'Consulta', 'Outro'];
+  async function carregarAus(){
+    var a = await sb.from('salao_ausencias').select('*').eq('negocio_id', NEG.id).order('de');
+    if(a.error){ AUS = []; AUS_OK = !/salao_ausencias|relation|does not exist|schema cache/i.test(a.error.message); return; }
+    AUS_OK = true; AUS = a.data || [];
+  }
+  // blocos de ausência de um dia (mesmas regras do servidor)
+  function ausDia(k){ var wd = dDe(k).getDay();
+    return AUS.filter(function(a){ return a.de <= k && (!a.ate || a.ate >= k) && (!a.dias || !a.dias.length || a.dias.indexOf(wd) >= 0); })
+      .map(function(a){ var i = minDe(String(a.hora_ini || '').slice(0, 5)), f = minDe(String(a.hora_fim || '').slice(0, 5)); return { a:a, ini:i == null ? 0 : i, fim:(f == null || f === 0) ? 1440 : f, prof:a.profissional || '', todo:i == null }; }); }
+  function ausPara(b, prof){ return !b.prof || !prof || b.prof === prof; }
+  function ausNome(a){ return a.profissional ? (nomeProf(a.profissional) || 'Pessoa que já saiu') : 'Salão todo'; }
+  function ausQuando(a){
+    var hrs = a.hora_ini ? (String(a.hora_ini).slice(0, 5) + '–' + String(a.hora_fim || '').slice(0, 5)) : 'dia todo';
+    if(a.dias && a.dias.length) return 'Todas as semanas · ' + [1,2,3,4,5,6,0].filter(function(d){ return a.dias.indexOf(d) >= 0; }).map(function(d){ return DIAS_C[d]; }).join(', ') + ' · ' + hrs + (a.ate ? (' · até ' + dataPt(a.ate)) : '');
+    return (a.ate && a.ate !== a.de ? (dataPt(a.de) + ' a ' + dataPt(a.ate)) : dataPt(a.de)) + ' · ' + hrs; }
+  // minutos de ausência de uma pessoa (ou do salão) dentro de [ini, fim) nesse dia
+  function minAusentes(k, prof, ini, fim){ var bl = ausDia(k).filter(function(b){ return prof ? ausPara(b, prof) : !b.prof; }).map(function(b){ return [Math.max(ini, b.ini), Math.min(fim, b.fim)]; }).filter(function(x){ return x[1] > x[0]; }).sort(function(x, y){ return x[0] - y[0]; });
+    var t = 0, cur = null; bl.forEach(function(x){ if(!cur || x[0] > cur[1]){ if(cur) t += cur[1] - cur[0]; cur = x.slice(); } else cur[1] = Math.max(cur[1], x[1]); }); if(cur) t += cur[1] - cur[0]; return t; }
+  function abrirAusencias(){
+    if(!AUS_OK){ toast('Falta correr no Supabase o ficheiro 12-salao-ausencias.sql.'); return; }
+    var hoje = iso(new Date()), l = AUS.filter(function(a){ return !a.ate || a.ate >= hoje; }), antigas = AUS.length - l.length;
+    var f = modal('<h3>🌴 Ausências</h3><div style="font-size:14px;color:var(--suave);">Férias, folgas, pausas para almoço… Nessas horas os clientes não conseguem marcar (com a pessoa ausente ou, se for o salão todo, com ninguém). O motivo só o salão vê.</div>'
+      + '<div class="aus-lista">' + (l.length ? l.map(function(a){ return '<button type="button" class="aus-it" data-id="' + esc(a.id) + '"><span style="width:10px;height:10px;border-radius:50%;flex:0 0 auto;background:' + (a.profissional ? corProf(a.profissional) : '#8A817A') + ';"></span><span class="q"><b>' + esc(ausNome(a)) + ' · ' + esc(a.motivo || 'Ausência') + '</b><span>' + esc(ausQuando(a)) + '</span></span><span style="color:var(--suave);">›</span></button>'; }).join('') : '<div style="color:var(--suave);font-size:14px;">Nenhuma ausência marcada.</div>') + '</div>'
+      + (antigas ? ('<div style="font-size:12px;color:var(--suave);">' + antigas + ' ausência(s) já passada(s) não aparecem aqui.</div>') : '')
+      + '<button type="button" class="btn-ac" id="ausNova">+ Nova ausência</button>');
+    f.querySelector('#ausNova').onclick = function(){ editarAusencia(null); };
+    f.querySelectorAll('.aus-it').forEach(function(b){ b.onclick = function(){ editarAusencia(AUS.filter(function(a){ return a.id === b.getAttribute('data-id'); })[0]); }; });
+  }
+  function editarAusencia(a, pre){
+    if(!AUS_OK){ toast('Falta correr no Supabase o ficheiro 12-salao-ausencias.sql.'); return; }
+    pre = pre || {}; var novo = !a; a = a || { profissional:pre.prof || '', de:pre.dia || iso(dataSel), ate:pre.dia || iso(dataSel), hora_ini:pre.hora || null, hora_fim:pre.hora ? hDe(Math.min(1439, minDe(pre.hora) + 60)) : null, dias:null, motivo:'' };
+    var fixa = !!(a.dias && a.dias.length), diaTodo = !a.hora_ini;
+    var f = modal('<h3>' + (novo ? 'Nova ausência' : 'Ausência') + '</h3>'
+      + '<div class="campo"><label for="uQuem">Quem</label><select id="uQuem"><option value="">Salão todo</option>' + EQ().map(function(p){ return '<option value="' + esc(p.id) + '"' + (a.profissional === p.id ? ' selected' : '') + '>' + esc(p.nome) + '</option>'; }).join('') + '</select></div>'
+      + '<div class="campo"><label for="uMot">Motivo <span style="font-weight:400;color:var(--suave);">(só o salão vê)</span></label><input id="uMot" list="uMotL" maxlength="60" value="' + esc(a.motivo || '') + '" placeholder="Férias, folga, almoço…"><datalist id="uMotL">' + MOTIVOS.map(function(m){ return '<option value="' + m + '">'; }).join('') + '</datalist></div>'
+      + '<div class="vista" role="group" style="align-self:flex-start;"><button type="button" data-k="dias" class="' + (fixa ? '' : 'on') + '">Dias</button><button type="button" data-k="fixa" class="' + (fixa ? 'on' : '') + '">Todas as semanas</button></div>'
+      + '<div id="uDiasBx" class="grelha2"><div class="campo"><label for="uDe">De</label><input id="uDe" type="date" value="' + esc(a.de || '') + '"></div><div class="campo"><label for="uAte">Até</label><input id="uAte" type="date" value="' + esc(a.ate || a.de || '') + '"></div></div>'
+      + '<div id="uFixaBx" class="campo"><label>Dias da semana</label><div class="dias-sem">' + [1,2,3,4,5,6,0].map(function(d){ return '<label><input type="checkbox" value="' + d + '"' + (fixa && a.dias.indexOf(d) >= 0 ? ' checked' : '') + '> ' + DIAS_C[d] + '</label>'; }).join('') + '</div>'
+      + '<div class="grelha2" style="margin-top:6px;"><div class="campo"><label for="uFixDe">A partir de</label><input id="uFixDe" type="date" value="' + esc(a.de || iso(new Date())) + '"></div><div class="campo"><label for="uFixAte">Até <span style="font-weight:400;color:var(--suave);">(vazio = sempre)</span></label><input id="uFixAte" type="date" value="' + esc(fixa ? (a.ate || '') : '') + '"></div></div></div>'
+      + '<label class="chk-l"><input type="checkbox" id="uTodo"' + (diaTodo ? ' checked' : '') + '> Dia todo</label>'
+      + '<div id="uHorasBx" class="grelha2"><div class="campo"><label for="uIni">Das</label><input id="uIni" type="time" step="300" value="' + esc(String(a.hora_ini || '13:00').slice(0, 5)) + '"></div><div class="campo"><label for="uFim">Às</label><input id="uFim" type="time" step="300" value="' + esc(String(a.hora_fim || '14:00').slice(0, 5)) + '"></div></div>'
+      + '<div class="msg" id="uMsg"></div><button type="button" class="btn-ac" id="uGuardar">Guardar ausência</button>'
+      + (novo ? '' : '<div style="display:flex;justify-content:space-between;gap:8px;"><button type="button" class="btn" id="uVoltar">← Todas as ausências</button><button type="button" class="btn-perigo" id="uApagar">Apagar</button></div>'));
+    var modo = fixa ? 'fixa' : 'dias';
+    function vis(){ f.querySelector('#uDiasBx').style.display = modo === 'dias' ? '' : 'none'; f.querySelector('#uFixaBx').style.display = modo === 'fixa' ? '' : 'none'; f.querySelector('#uHorasBx').style.display = f.querySelector('#uTodo').checked ? 'none' : ''; f.querySelectorAll('.vista button').forEach(function(b){ b.classList.toggle('on', b.getAttribute('data-k') === modo); }); }
+    f.querySelectorAll('.vista button').forEach(function(b){ b.onclick = function(){ modo = b.getAttribute('data-k'); if(modo === 'fixa' && f.querySelector('#uTodo').checked && novo){ f.querySelector('#uTodo').checked = false; } vis(); }; });
+    f.querySelector('#uTodo').onchange = vis; vis();
+    f.querySelector('#uDe').onchange = function(){ var t = f.querySelector('#uAte'); if(!t.value || t.value < this.value) t.value = this.value; };
+    var bv = f.querySelector('#uVoltar'); if(bv) bv.onclick = abrirAusencias;
+    var ba = f.querySelector('#uApagar'); if(ba) ba.onclick = async function(){ if(!confirm('Apagar esta ausência? Essas horas voltam a ficar livres para os clientes.')) return;
+      var d = await sb.from('salao_ausencias').delete().eq('id', a.id); if(d.error){ $('uMsg').textContent = 'Erro: ' + d.error.message; $('uMsg').className = 'msg erro'; return; }
+      await carregarAus(); pintarAgenda(); toast('Ausência apagada'); abrirAusencias(); };
+    f.querySelector('#uGuardar').onclick = async function(){
+      var m = $('uMsg'); function erro(t){ m.textContent = t; m.className = 'msg erro'; }
+      var todo = f.querySelector('#uTodo').checked, hi = todo ? null : f.querySelector('#uIni').value, hf = todo ? null : f.querySelector('#uFim').value;
+      if(!todo && (!hi || !hf || minDe(hf) <= minDe(hi))) return erro('A hora de fim tem de ser depois da hora de início.');
+      var reg = { negocio_id:NEG.id, profissional:f.querySelector('#uQuem').value || null, motivo:f.querySelector('#uMot').value.trim() || null, hora_ini:hi, hora_fim:hf };
+      if(modo === 'dias'){ var de = f.querySelector('#uDe').value, ate = f.querySelector('#uAte').value || de; if(!de) return erro('Escolha o dia.'); if(ate < de) return erro('O "até" tem de ser depois do "de".'); reg.de = de; reg.ate = ate; reg.dias = null; }
+      else { var ds = Array.prototype.slice.call(f.querySelectorAll('.dias-sem input:checked')).map(function(x){ return +x.value; }); if(!ds.length) return erro('Escolha pelo menos um dia da semana.');
+        reg.de = f.querySelector('#uFixDe').value || iso(new Date()); reg.ate = f.querySelector('#uFixAte').value || null; if(reg.ate && reg.ate < reg.de) return erro('O "até" tem de ser depois do "a partir de".'); reg.dias = ds; }
+      // marcações que já existem nesse período (não mudam sozinhas)
+      var tmp = AUS; AUS = [Object.assign({ id:'_novo' }, reg)];
+      var choques = RES.filter(function(r){ if(r.estado === 'cancelada' || r.data < iso(new Date()) || minDe(r.hora) == null) return false; var a0 = minDe(r.hora), a1 = a0 + (+r.duracao || 30);
+        return ausDia(r.data).some(function(b){ return (!b.prof || !r.profissional || b.prof === r.profissional) && b.ini < a1 && a0 < b.fim; }); });
+      AUS = tmp;
+      if(choques.length && !confirm('Atenção: já há ' + choques.length + ' marcação(ões) nesse período:\n\n' + choques.slice(0, 8).map(function(r){ return '• ' + quando(r.data, r.hora) + ' · ' + (r.nome || '') + (nomeProf(r.profissional) ? (' · ' + nomeProf(r.profissional)) : ''); }).join('\n') + (choques.length > 8 ? '\n…' : '') + '\n\nEssas marcações ficam como estão (mude-as na agenda se for preciso). Guardar a ausência?')) return;
+      this.disabled = true;
+      var r = novo ? await sb.from('salao_ausencias').insert(reg) : await sb.from('salao_ausencias').update(reg).eq('id', a.id);
+      this.disabled = false;
+      if(r.error) return erro(/salao_ausencias|relation|does not exist|schema cache/i.test(r.error.message) ? 'Falta correr no Supabase o ficheiro 12-salao-ausencias.sql.' : ('Erro: ' + r.error.message));
+      await carregarAus(); pintarAgenda(); toast('Ausência guardada ✓'); abrirAusencias();
+    };
+  }
+  $('aAus').onclick = abrirAusencias;
   async function carregarRes(){
     var iv = intervalo(), hoje = iso(new Date());
     var de = iv[0] < hoje ? iv[0] : hoje, ate = iv[1];
     var futuro = new Date(); futuro.setDate(futuro.getDate() + 120); if(iso(futuro) > ate) ate = iso(futuro);
     var r = await sb.from('reservas').select('*').eq('negocio_id', NEG.id).gte('data', de).lte('data', ate).order('data').order('hora');
     if(r.error){ toast('Erro a carregar: ' + r.error.message); return; }
-    RES = r.data || []; pintarAgenda(); pintarPedidos();
+    RES = r.data || []; await carregarAus(); pintarAgenda(); pintarPedidos();
   }
-  function cls(r){ return r.estado === 'confirmada' ? 'b-confirmada' : (r.estado === 'pendente' && r.proposta_hora) ? 'b-proposta' : 'b-pendente'; }
+  var DESCONTOS = [0, 5, 10, 15, 20, 25, 30, 40, 50];
+  function precoServ(nome){ var sv = SERV.filter(function(x){ return x.nome === nome; })[0]; var m = /(\d+(?:[.,]\d{1,2})?)/.exec(String((sv && sv.preco) || '')); return m ? parseFloat(m[1].replace(',', '.')) : null; }
+  function baseDe(r){ return +r.valor_base > 0 ? +r.valor_base : (+r.valor > 0 && !(+r.desconto) ? +r.valor : precoServ(r.servico)); }
+  function comDesc(b, d){ return b == null ? null : Math.round(b * (100 - (+d || 0))) / 100; }
+  function opcoesDesc(sel){ return DESCONTOS.map(function(d){ return '<option value="' + d + '"' + ((+sel || 0) === d ? ' selected' : '') + '>' + (d ? ('−' + d + '%') : 'Sem desconto') + '</option>'; }).join(''); }
+  function propTxt(r){ return r.proposta_hora ? quando(r.proposta_data || r.data, r.proposta_hora) : ''; }
+  function cls(r){ if(r._fantasma) return 'b-fantasma'; if(r.faltou) return 'b-confirmada b-faltou'; return r.estado === 'confirmada' ? 'b-confirmada' : (r.estado === 'pendente' && r.proposta_hora) ? 'b-proposta' : 'b-pendente'; }
   function pintarAgenda(){
+    pintarFiltroProf();
+    if(vista === 'mes') return pintarMes();
     var iv = intervalo(), dias = [];
     for(var d = dDe(iv[0]); iso(d) <= iv[1]; d.setDate(d.getDate() + 1)) dias.push(iso(d));
+    // colunas: na vista Dia com equipa, uma coluna por pessoa; senão, uma por dia
+    var eq = EQ(), cols0 = [];
+    if(vista === 'dia' && eq.length){
+      var k1 = dias[0], wd1 = dDe(k1).getDay();
+      eq.filter(function(p){ return !profFiltro || p.id === profFiltro; }).forEach(function(p){ var hz = horarioDe(wd1), ausT = hz ? ausDia(k1).filter(function(b){ return b.prof && b.prof === p.id && b.ini <= minDe(hz[0]) && b.fim >= minDe(hz[1]); })[0] : null; cols0.push({ dia:k1, prof:p.id, tit:p.nome, sub:!trabalha(p, wd1) ? 'Folga' : ausT ? ('🌴 ' + (ausT.a.motivo || 'Ausente')) : '', folga:!trabalha(p, wd1) }); });
+      if(!profFiltro && RES.some(function(r){ return r.data === k1 && r.estado !== 'cancelada' && (!r.profissional || !nomeProf(r.profissional)); })) cols0.push({ dia:k1, prof:'__sem', tit:'Sem profissional', sub:'' });
+    } else dias.forEach(function(k){ cols0.push({ dia:k, prof:'' }); });
     var hoje = iso(new Date());
     // horas visíveis: do primeiro abrir ao último fechar da semana (mínimo 9h–19h)
     var ini = 9 * 60, fim = 19 * 60;
     for(var w = 0; w < 7; w++){ var h = horarioDe(w); if(h){ ini = Math.min(ini, minDe(h[0])); fim = Math.max(fim, minDe(h[1])); } }
     ini = Math.floor(ini / 60) * 60; fim = Math.ceil(fim / 60) * 60;
     var PX = 64 / 60, alt = (fim - ini) * PX;
-    var cols = '64px repeat(' + dias.length + ', minmax(' + (vista === 'dia' ? 300 : 120) + 'px, 1fr))';
+    var cols = '64px repeat(' + cols0.length + ', minmax(' + (vista === 'dia' ? (cols0.length > 1 ? 200 : 300) : 120) + 'px, 1fr))';
     $('aTitulo').textContent = vista === 'dia' ? (DIAS_L[dataSel.getDay()] + ', ' + dataSel.getDate() + ' de ' + MESES[dataSel.getMonth()]) : ('Semana de ' + dDe(iv[0]).getDate() + ' de ' + MESES[dDe(iv[0]).getMonth()]);
     var h = '<div class="ag-cab" style="grid-template-columns:' + cols + ';"><div style="border:none;"></div>';
-    dias.forEach(function(k){ var dd = dDe(k); h += '<div class="' + (k === hoje ? 'hoje' : '') + '">' + DIAS_C[dd.getDay()] + ' ' + dd.getDate() + '<small>' + (horarioDe(dd.getDay()) && !fechadoEm(k) ? (horarioDe(dd.getDay()).join('–')) : 'Fechado') + '</small></div>'; });
+    cols0.forEach(function(c){ var k = c.dia, dd = dDe(k);
+      if(c.prof) h += '<div><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:' + (c.prof === '__sem' ? '#8A817A' : corProf(c.prof)) + ';margin-right:6px;"></span>' + esc(c.tit) + '<small>' + esc(c.sub || (horarioDe(dd.getDay()) && !fechadoEm(k) ? horarioDe(dd.getDay()).join('–') : 'Fechado')) + '</small></div>';
+      else h += '<div class="' + (k === hoje ? 'hoje' : '') + '">' + DIAS_C[dd.getDay()] + ' ' + dd.getDate() + '<small>' + (horarioDe(dd.getDay()) && !fechadoEm(k) ? (horarioDe(dd.getDay()).join('–')) : 'Fechado') + '</small></div>'; });
     h += '</div><div class="ag-grid" style="grid-template-columns:' + cols + ';"><div class="ag-horas">';
     for(var t = ini; t < fim; t += 60) h += '<div>' + (t / 60) + 'h</div>';
     h += '</div>';
-    dias.forEach(function(k){
-      var dd = dDe(k), hh = horarioDe(dd.getDay()), fechado = !hh || fechadoEm(k);
-      h += '<div class="ag-col' + (fechado ? ' fechado' : '') + '" data-dia="' + k + '" style="height:' + alt + 'px;">';
+    cols0.forEach(function(c){
+      var k = c.dia, dd = dDe(k), hh = horarioDe(dd.getDay()), fechado = !hh || fechadoEm(k) || c.folga;
+      h += '<div class="ag-col' + (fechado ? ' fechado' : '') + '" data-dia="' + k + '" data-prof="' + esc(c.prof === '__sem' ? '' : c.prof) + '" style="height:' + alt + 'px;">';
       if(k === hoje){ var n = new Date(), nm = n.getHours() * 60 + n.getMinutes(); if(nm >= ini && nm <= fim) h += '<div class="agora" style="top:' + ((nm - ini) * PX) + 'px;"></div>'; }
-      RES.filter(function(r){ return r.data === k && r.estado !== 'cancelada' && minDe(r.hora) != null; }).forEach(function(r){
+      ausDia(k).filter(function(b){ return c.prof === '__sem' ? false : c.prof ? ausPara(b, c.prof) : (!b.prof || !profFiltro || b.prof === profFiltro); }).forEach(function(b){
+        var a0 = Math.max(ini, b.ini), a1 = Math.min(fim, b.fim); if(a1 <= a0) return;
+        var lab = '🌴 ' + (b.a.motivo || 'Ausência') + (!c.prof && b.prof ? (' · ' + (nomeProf(b.prof) || '')) : (!b.prof && EQ().length ? ' · salão' : ''));
+        h += '<div class="aus" data-aus="' + esc(b.a.id) + '" title="' + esc(lab + ' · ' + ausQuando(b.a) + ' — tocar para mudar') + '" style="top:' + ((a0 - ini) * PX + 1) + 'px;height:' + Math.max(18, (a1 - a0) * PX - 2) + 'px;' + (!c.prof && b.prof ? ('left:auto;right:2px;width:20px;padding:3px 0;text-align:center;z-index:2;border:none;border-right:3px solid ' + corProf(b.prof) + ';') : '') + '">' + (!c.prof && b.prof ? '🌴' : esc(lab)) + '</div>';
+      });
+      var fant = RES.filter(function(r){ return r.proposta_hora && r.estado !== 'cancelada' && (r.proposta_data || r.data) === k && minDe(r.proposta_hora) != null; })
+        .map(function(r){ return Object.assign({}, r, { id:r.id, _fantasma:true, data:k, hora:r.proposta_hora }); });
+      var lst = RES.concat(fant).filter(function(r){ if(r.data !== k || r.estado === 'cancelada' || minDe(r.hora) == null) return false;
+        if(c.prof === '__sem') return !r.profissional || !nomeProf(r.profissional);
+        if(c.prof) return r.profissional === c.prof;
+        return !profFiltro || r.profissional === profFiltro || !r.profissional; });
+      // marcações à mesma hora ficam lado a lado (nenhuma fica escondida por baixo de outra)
+      lst.sort(function(x, y){ return minDe(x.hora) - minDe(y.hora) || (+y.duracao || 30) - (+x.duracao || 30); });
+      var lanes = {}, grupoFim = -1, grupo = [], fimLane = [];
+      function fechaGrupo(){ var n = fimLane.length || 1; grupo.forEach(function(id){ lanes[id].n = n; }); grupo = []; fimLane = []; }
+      lst.forEach(function(r){ var a0 = minDe(r.hora), f0 = a0 + (+r.duracao || 30);
+        if(a0 >= grupoFim) fechaGrupo();
+        var l = fimLane.findIndex(function(f){ return f <= a0; }); if(l < 0){ l = fimLane.length; fimLane.push(f0); } else fimLane[l] = f0;
+        var kk = r._fantasma ? (r.id + '_p') : r.id; lanes[kk] = { l:l, n:1 }; grupo.push(kk); grupoFim = Math.max(grupoFim, f0); });
+      fechaGrupo();
+      lst.forEach(function(r){
         var a = minDe(r.hora), du = +r.duracao || 30;
+        var ln = lanes[r._fantasma ? (r.id + '_p') : r.id], pos = 'left:calc(' + (ln.l * 100 / ln.n) + '% + 3px);right:auto;width:calc(' + (100 / ln.n) + '% - 6px);';
         var top = (a - ini) * PX, hg = Math.max(22, du * PX - 3);
-        h += '<button type="button" class="bloco ' + cls(r) + '" data-id="' + esc(r.id) + '" style="top:' + (top + 1) + 'px;height:' + hg + 'px;">'
-          + '<b>' + esc(r.nome || '') + '</b>'
+        if(r._fantasma){ h += '<button type="button" class="bloco curto b-fantasma" data-id="' + esc(r.id) + '" title="' + esc('Proposta enviada a ' + (r.nome || '') + ' — à espera da resposta') + '" style="' + pos + 'top:' + (top + 1) + 'px;height:' + hg + 'px;"><b>🕘 ' + esc(r.nome || '') + '</b><span>proposta</span></button>'; return; }
+        var dica = r.hora + '–' + hDe(a + du) + ' · ' + (r.nome || '') + ' · ' + (r.servico || '') + (nomeProf(r.profissional) ? (' · ' + nomeProf(r.profissional)) : '') + (r.estado === 'pendente' ? (r.proposta_hora ? (' · Proposta: ' + r.proposta_hora) : ' · Por confirmar') : '');
+        if(hg < 46){   // curta: uma linha só
+          h += '<button type="button" class="bloco curto ' + cls(r) + '" data-id="' + esc(r.id) + '" title="' + esc(dica) + '" style="' + pos + 'top:' + (top + 1) + 'px;height:' + hg + 'px;">'
+            + '<b>' + (ln.n > 1 && vista !== 'dia' ? '' : (esc(r.hora) + ' ')) + esc(r.nome || '') + '</b><span>' + esc(r.servico || '') + (!c.prof && nomeProf(r.profissional) ? (' · ' + esc(nomeProf(r.profissional))) : '') + '</span></button>';
+          return;
+        }
+        h += '<button type="button" class="bloco ' + cls(r) + '" data-id="' + esc(r.id) + '" title="' + esc(dica) + '" style="' + pos + 'top:' + (top + 1) + 'px;height:' + hg + 'px;">'
+          + '<b>' + (hg < 78 && !c.prof && nomeProf(r.profissional) ? ('<i style="font-style:normal;color:' + corProf(r.profissional) + ';">●</i> ') : '') + esc(r.nome || '') + '</b>'
           + '<span>' + esc(r.hora) + '–' + hDe(a + du) + ' · ' + esc(r.servico || ((r.pessoas || 1) + ' pessoa(s)')) + '</span>'
-          + (r.estado === 'pendente' ? ('<span style="font-weight:800;color:var(--ac);">' + (r.proposta_hora ? ('Proposta: ' + esc(r.proposta_hora)) : 'Por confirmar') + '</span>') : '')
+          + (hg >= 78 && !c.prof && r.profissional && nomeProf(r.profissional) ? ('<span class="prof" style="color:' + corProf(r.profissional) + ';">● ' + esc(nomeProf(r.profissional)) + '</span>') : '')
+          + (r.estado === 'pendente' && hg >= (!c.prof && nomeProf(r.profissional) ? 94 : 78) ? ('<span style="font-weight:800;color:var(--ac);">' + (r.proposta_hora ? ('Proposta: ' + esc(propTxt(r))) : 'Por confirmar') + '</span>') : '')
           + '</button>';
       });
       h += '</div>';
@@ -305,8 +1138,10 @@
     h += '</div>';
     $('agenda').innerHTML = h;
     $('agenda').querySelectorAll('.bloco').forEach(function(b){ b.onclick = function(ev){ ev.stopPropagation(); var r = RES.filter(function(x){ return x.id === b.getAttribute('data-id'); })[0]; if(r) abrirDetalhe(r); }; });
+    $('agenda').querySelectorAll('.aus').forEach(function(d){ d.onclick = function(ev){ ev.stopPropagation(); var a = AUS.filter(function(x){ return x.id === d.getAttribute('data-aus'); })[0]; if(a) editarAusencia(a); }; });
     $('agenda').querySelectorAll('.ag-col:not(.fechado)').forEach(function(c){ c.onclick = function(ev){
-      var y = ev.offsetY, m = ini + Math.floor(y / PX / passo()) * passo(); novaMarcacao(c.getAttribute('data-dia'), hDe(m)); }; });
+      if(ev.target !== c) return;
+      var y = ev.offsetY, m = ini + Math.floor(y / PX / passo()) * passo(); novaMarcacao(c.getAttribute('data-dia'), hDe(m), c.getAttribute('data-prof') || profFiltro); }; });
     // resumo do dia escolhido
     var k0 = iso(dataSel), doDia = RES.filter(function(r){ return r.data === k0 && r.estado !== 'cancelada'; });
     $('resTit').textContent = k0 === hoje ? 'Hoje' : quando(k0);
@@ -316,30 +1151,60 @@
   }
   function horasLivres(k, dur){
     var hh = horarioDe(dDe(k).getDay()); if(!hh || fechadoEm(k)) return 0;
-    var oc = RES.filter(function(r){ return r.data === k && r.estado !== 'cancelada'; }).map(function(r){ var a = minDe(r.hora); return [a, a + (+r.duracao || 30)]; });
+    var oc = RES.filter(function(r){ return r.data === k && r.estado !== 'cancelada'; }).map(function(r){ var a = minDe(r.hora); return [a, a + (+r.duracao || 30)]; })
+      .concat(ausDia(k).filter(function(b){ return !b.prof; }).map(function(b){ return [b.ini, b.fim]; }));
     var n = 0; for(var t = minDe(hh[0]); t + dur <= minDe(hh[1]); t += 60){ if(!oc.some(function(o){ return o[0] < t + dur && t < o[1]; })) n++; } return n;
   }
   function pintarPedidos(){
     var hoje = iso(new Date());
     var ped = RES.filter(function(r){ return r.estado === 'pendente' && !r.proposta_hora && r.data >= hoje; });
     var alt = RES.filter(function(r){ return r.estado !== 'cancelada' && (r.alt_hora) && r.data >= hoje; });
-    var todos = ped.concat(alt.filter(function(r){ return ped.indexOf(r) < 0; }));
+    var esp = RES.filter(function(r){ return r.estado !== 'cancelada' && r.proposta_hora && r.data >= hoje; });
+    var todos = ped.concat(alt.filter(function(r){ return ped.indexOf(r) < 0; })).concat(esp.filter(function(r){ return ped.indexOf(r) < 0; }));
     $('nPed').textContent = todos.length;
     if(!todos.length){ $('pedidos').innerHTML = '<div style="color:var(--suave);font-size:14px;">Nada por responder. 👌</div>'; return; }
     $('pedidos').innerHTML = todos.map(function(r){
-      return '<div class="pedido"><div><b>' + esc(r.nome || '') + '</b><div style="font-size:13px;">' + esc(r.servico || '') + (r.duracao ? (' · ' + r.duracao + ' min') : '') + '</div>'
+      return '<div class="pedido"><div><b>' + esc(r.nome || '') + '</b><div style="font-size:13px;">' + esc(r.servico || '') + (r.duracao ? (' · ' + r.duracao + ' min') : '') + (nomeProf(r.profissional) ? (' · com ' + esc(nomeProf(r.profissional))) : '') + '</div>'
         + '<div style="font-size:13px;font-weight:700;">' + esc(quando(r.data, r.hora)) + '</div>'
+        + (r.reagendada_de ? ('<div style="font-size:12px;color:var(--ac);font-weight:700;">🔁 Reagendada · antes: ' + esc(quando(String(r.reagendada_de).slice(0, 10), String(r.reagendada_de).slice(11))) + '</div>') : '')
         + (r.alt_hora ? ('<div style="font-size:13px;color:var(--ac);font-weight:700;">Pede para mudar para as ' + esc(r.alt_hora) + '</div>') : '')
         + (r.obs ? ('<div style="font-size:12px;color:var(--suave);">“' + esc(r.obs) + '”</div>') : '')
+        + (r.proposta_hora ? ('<div style="font-size:13px;color:var(--ac);font-weight:700;">🕘 Proposta: ' + esc(propTxt(r)) + ' · à espera do cliente</div>') : '')
         + '</div><div class="pedido-acoes">'
-        + (r.alt_hora ? ('<button type="button" class="btn-ok" data-a="altok" data-id="' + esc(r.id) + '">Aceitar mudança</button><button type="button" class="btn" data-a="altnao" data-id="' + esc(r.id) + '">Manter</button>')
+        + (r.proposta_hora ? ('<button type="button" class="btn" data-a="ver" data-id="' + esc(r.id) + '">Ver</button><button type="button" class="btn-lnk" data-a="semprop" data-id="' + esc(r.id) + '">Retirar proposta</button>') : r.alt_hora ? ('<button type="button" class="btn-ok" data-a="altok" data-id="' + esc(r.id) + '">Aceitar mudança</button><button type="button" class="btn" data-a="altnao" data-id="' + esc(r.id) + '">Manter</button>')
                      : ('<button type="button" class="btn-ok" data-a="confirmar" data-id="' + esc(r.id) + '">Confirmar</button><button type="button" class="btn" data-a="propor" data-id="' + esc(r.id) + '">Propor outra hora</button><button type="button" class="btn-lnk" data-a="recusar" data-id="' + esc(r.id) + '">Recusar</button>'))
         + '</div></div>';
     }).join('');
-    $('pedidos').querySelectorAll('[data-a]').forEach(function(b){ b.onclick = function(){ var r = RES.filter(function(x){ return x.id === b.getAttribute('data-id'); })[0]; if(!r) return; var a = b.getAttribute('data-a'); if(a === 'propor') abrirDetalhe(r, true); else responder(r, a); }; });
+    $('pedidos').querySelectorAll('[data-a]').forEach(function(b){ b.onclick = function(){ var r = RES.filter(function(x){ return x.id === b.getAttribute('data-id'); })[0]; if(!r) return; var a = b.getAttribute('data-a'); if(a === 'propor' || a === 'ver') abrirDetalhe(r, true); else responder(r, a); }; });
   }
-  $('aAnt').onclick = function(){ dataSel.setDate(dataSel.getDate() - (vista === 'dia' ? 1 : 7)); carregarRes(); };
-  $('aSeg').onclick = function(){ dataSel.setDate(dataSel.getDate() + (vista === 'dia' ? 1 : 7)); carregarRes(); };
+  function mudar(sinal){ if(vista === 'mes'){ dataSel = new Date(dataSel.getFullYear(), dataSel.getMonth() + sinal, 1); } else dataSel.setDate(dataSel.getDate() + sinal * (vista === 'dia' ? 1 : 7)); carregarRes(); }
+  $('aAnt').onclick = function(){ mudar(-1); };
+  $('aSeg').onclick = function(){ mudar(1); };
+  // ---------- vista do mês: cada dia com as suas marcações; tocar num dia abre esse dia ----------
+  function pintarMes(){
+    var iv = intervalo(), hoje = iso(new Date()), mes = dataSel.getMonth();
+    $('aTitulo').textContent = MESES[mes].charAt(0).toUpperCase() + MESES[mes].slice(1) + ' de ' + dataSel.getFullYear();
+    var h = '<div class="mes">' + ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'].map(function(d){ return '<div class="mes-cab">' + d + '</div>'; }).join('');
+    for(var d = dDe(iv[0]); iso(d) <= iv[1]; d.setDate(d.getDate() + 1)){
+      var k = iso(d), fora = d.getMonth() !== mes, fechado = !horarioDe(d.getDay()) || fechadoEm(k);
+      var doDia = RES.filter(function(r){ return r.data === k && r.estado !== 'cancelada' && (!profFiltro || !r.profissional || r.profissional === profFiltro); }).sort(function(a, b){ return String(a.hora).localeCompare(String(b.hora)); });
+      var pend = doDia.filter(function(r){ return r.estado === 'pendente'; }).length;
+      h += '<button type="button" class="mes-dia' + (fora ? ' fora' : '') + (fechado ? ' fechado' : '') + (k === hoje ? ' hoje' : '') + '" data-dia="' + k + '">'
+        + '<div class="mes-num"><span>' + d.getDate() + '</span>' + (pend ? ('<span class="pill" title="Por confirmar">' + pend + '</span>') : '') + (fechado && !fora ? '<span style="font-size:11px;font-weight:600;color:var(--suave);">Fechado</span>' : '') + '</div>';
+      var ausM = fora ? [] : ausDia(k).filter(function(b){ return !b.prof || !profFiltro || b.prof === profFiltro; }).filter(function(b){ return b.todo || !(b.a.dias && b.a.dias.length); });
+      ausM.slice(0, 2).forEach(function(b){ h += '<div class="mes-it a">🌴 ' + esc(b.prof ? (nomeProf(b.prof) || '') : (b.a.motivo || 'Salão')) + '</div>'; });
+      doDia.slice(0, 3 - Math.min(2, ausM.length)).forEach(function(r){ h += '<div class="mes-it ' + (r.estado === 'confirmada' ? 'c' : r.proposta_hora ? 'r' : 'p') + '">' + esc(r.hora) + ' ' + esc(r.nome || '') + '</div>'; });
+      if(doDia.length > 3 - Math.min(2, ausM.length)) h += '<div class="mes-mais">+' + (doDia.length - (3 - Math.min(2, ausM.length))) + ' marcações</div>';
+      h += '</button>';
+    }
+    $('agenda').innerHTML = h + '</div>';
+    $('agenda').querySelectorAll('.mes-dia').forEach(function(b){ b.onclick = function(){ dataSel = dDe(b.getAttribute('data-dia')); vista = 'dia'; document.querySelectorAll('.vista button').forEach(function(x){ x.classList.toggle('on', x.getAttribute('data-v') === 'dia'); }); carregarRes(); }; });
+    var k0 = iso(dataSel), doD = RES.filter(function(r){ return r.data === k0 && r.estado !== 'cancelada'; });
+    $('resTit').textContent = k0 === hoje ? 'Hoje' : quando(k0);
+    $('rMarc').textContent = doD.filter(function(r){ return r.estado === 'confirmada'; }).length;
+    $('rPend').textContent = doD.filter(function(r){ return r.estado === 'pendente'; }).length;
+    $('rLivre').textContent = horasLivres(k0, 60);
+  }
   $('aHoje').onclick = function(){ dataSel = new Date(); dataSel.setHours(0,0,0,0); carregarRes(); };
   document.querySelectorAll('.vista button').forEach(function(b){ b.onclick = function(){ vista = b.getAttribute('data-v'); document.querySelectorAll('.vista button').forEach(function(x){ x.classList.toggle('on', x === b); }); carregarRes(); }; });
   $('aNova').onclick = function(){ novaMarcacao(iso(dataSel), ''); };
@@ -353,12 +1218,13 @@
   function waLink(r, texto){ var t = String(r.telefone || '').replace(/\D/g, ''); if(t.length === 9) t = '351' + t; return t ? ('https://wa.me/' + t + '?text=' + encodeURIComponent(texto)) : ''; }
   async function responder(r, tipo, o){
     o = o || {}; var casa = SAL.nome || NEG.nome, patch, titulo, corpo;
-    if(tipo === 'confirmar'){ patch = { estado:'confirmada', proposta_hora:null }; titulo = '✅ Marcação confirmada'; corpo = casa + ': ' + quando(r.data, r.hora) + ' · ' + (r.servico || '') + '. Até já!'; }
-    else if(tipo === 'recusar'){ patch = { estado:'cancelada', proposta_hora:null }; titulo = '❌ Sem disponibilidade'; corpo = casa + ' não tem vaga para ' + quando(r.data, r.hora) + '. Pedimos desculpa — escolha outra hora na nossa página.'; }
+    if(tipo === 'confirmar'){ patch = { estado:'confirmada', proposta_hora:null, proposta_data:null }; titulo = '✅ Marcação confirmada'; corpo = casa + ': ' + quando(r.data, r.hora) + ' · ' + (r.servico || '') + '. Até já!'; }
+    else if(tipo === 'recusar'){ patch = { estado:'cancelada', proposta_hora:null, proposta_data:null }; titulo = '❌ Sem disponibilidade'; corpo = casa + ' não tem vaga para ' + quando(r.data, r.hora) + '. Pedimos desculpa — escolha outra hora na nossa página.'; }
     else if(tipo === 'propor'){ if(!o.hora) return; patch = { estado:'pendente', proposta_hora:o.hora }; titulo = '🕘 ' + casa + ' propõe outra hora'; corpo = 'Para ' + quando(r.data) + ' conseguimos às ' + o.hora + '. Toque para aceitar ou recusar.'; }
     else if(tipo === 'altok'){ patch = { estado:'confirmada', hora:r.alt_hora || r.hora, alt_hora:null, alt_pessoas:null, proposta_hora:null }; titulo = '✅ Alteração aceite'; corpo = casa + ': ' + quando(r.data, r.alt_hora || r.hora) + '. Até já!'; }
     else if(tipo === 'altnao'){ patch = { alt_hora:null, alt_pessoas:null }; titulo = '❌ Não foi possível mudar'; corpo = casa + ': mantém-se ' + quando(r.data, r.hora) + '.'; }
-    else if(tipo === 'desmarcar'){ patch = { estado:'cancelada' }; titulo = '🚫 Marcação cancelada'; corpo = casa + ' cancelou a marcação de ' + quando(r.data, r.hora) + '.'; }
+    else if(tipo === 'semprop'){ patch = { proposta_hora:null, proposta_data:null }; titulo = '↩️ Proposta retirada'; corpo = casa + ': a proposta de mudança foi retirada. A sua marcação mantém-se ' + quando(r.data, r.hora) + '.'; }
+    else if(tipo === 'desmarcar'){ patch = { estado:'cancelada', proposta_hora:null, proposta_data:null }; titulo = '🚫 Marcação cancelada'; corpo = casa + ' cancelou a marcação de ' + quando(r.data, r.hora) + '.'; }
     else return;
     if(o.nota !== undefined){ patch.nota = (o.nota || '').trim() || null; if(patch.nota) corpo += ' Nota: ' + patch.nota; }
     var u = await sb.from('reservas').update(patch).eq('id', r.id);
@@ -371,46 +1237,124 @@
     else toast('Guardado ✓');
   }
 
+  // o salão muda o dia/hora de uma marcação (o cliente é avisado)
+  async function reagendarSalao(r, d, h, nota){
+    var a = minDe(h), du = +r.duracao || 30, pr = r.profissional || '';
+    var choca = RES.some(function(x){ return x.id !== r.id && x.data === d && x.estado !== 'cancelada' && minDe(x.hora) != null && (!pr || !x.profissional || x.profissional === pr) && minDe(x.hora) < a + du && a < minDe(x.hora) + (+x.duracao || 30); });
+    if(choca && !confirm((pr && nomeProf(pr) ? (nomeProf(pr) + ' já tem') : 'Já há') + ' uma marcação nesse dia a essa hora. Mudar mesmo assim?')) return;
+    var patch = { data:d, hora:h, reagendada_de:r.data + ' ' + r.hora, proposta_hora:null, proposta_data:null, lembrete_em:null, lembrete_vespera_em:null };
+    if((nota || '').trim()) patch.nota = nota.trim();
+    var u = await sb.from('reservas').update(patch).eq('id', r.id);
+    if(u.error && /reagendada_de|column/i.test(u.error.message)){ delete patch.reagendada_de; u = await sb.from('reservas').update(patch).eq('id', r.id); }
+    if(u.error){ toast('Erro: ' + u.error.message); return; }
+    dataSel = dDe(d); await carregarRes();
+    var casa = SAL.nome || NEG.nome, corpo = casa + ': a sua marcação de ' + (r.servico || '') + ' passou de ' + quando(r.data, r.hora) + ' para ' + quando(d, h) + '.' + ((nota || '').trim() ? (' Nota: ' + nota.trim()) : '');
+    var ok = await pushCliente(Object.assign({}, r, patch), '📅 Marcação mudada', corpo);
+    if(ok){ toast('✓ Reagendada · cliente avisado por notificação'); return; }
+    var wl = waLink(r, corpo);
+    if(wl && confirm('Reagendada ✓\n\nEste cliente não tem notificações ligadas. Quer avisá-lo por WhatsApp?')) window.open(wl, '_blank', 'noopener');
+    else toast('Reagendada ✓');
+  }
+
+  // o salão PROPÕE um novo dia/hora: o cliente aceita ou recusa (a hora fica guardada até ele responder)
+  async function proporSalao(r, d, h, nota){
+    var a = minDe(h), du = +r.duracao || 30, pr = r.profissional || '';
+    var choca = RES.some(function(x){ if(x.id === r.id || x.estado === 'cancelada') return false; var ok = (!pr || !x.profissional || x.profissional === pr);
+      var c1 = x.data === d && minDe(x.hora) != null && minDe(x.hora) < a + du && a < minDe(x.hora) + (+x.duracao || 30);
+      var c2 = x.proposta_hora && (x.proposta_data || x.data) === d && minDe(x.proposta_hora) < a + du && a < minDe(x.proposta_hora) + (+x.duracao || 30);
+      return ok && (c1 || c2); });
+    if(choca && !confirm((pr && nomeProf(pr) ? (nomeProf(pr) + ' já tem') : 'Já há') + ' uma marcação nesse dia a essa hora. Propor mesmo assim?')) return;
+    var patch = { proposta_data:d, proposta_hora:h }; if((nota || '').trim()) patch.nota = nota.trim();
+    var u = await sb.from('reservas').update(patch).eq('id', r.id);
+    if(u.error){ toast(/proposta_data|column/i.test(u.error.message) ? 'Falta correr no Supabase o salao-propostas.sql.' : ('Erro: ' + u.error.message)); return; }
+    await carregarRes();
+    var casa = SAL.nome || NEG.nome, corpo = casa + ' propõe mudar a sua marcação de ' + (r.servico || '') + ' (' + quando(r.data, r.hora) + ') para ' + quando(d, h) + '. Toque para aceitar ou recusar.' + ((nota || '').trim() ? (' Nota: ' + nota.trim()) : '');
+    var ok = await pushCliente(Object.assign({}, r, patch), '🕘 Proposta de nova hora', corpo);
+    if(ok){ toast('✓ Proposta enviada · à espera da resposta do cliente'); return; }
+    var wl = waLink(r, corpo + ' Responda aqui: ' + location.origin + '/salao.html?n=' + encodeURIComponent(SLUG) + '&m=' + encodeURIComponent(r.id));
+    if(wl && confirm('Proposta guardada ✓\n\nEste cliente não tem notificações ligadas. Quer enviar-lhe a proposta por WhatsApp?')) window.open(wl, '_blank', 'noopener');
+    else toast('Proposta guardada ✓');
+  }
+
   // ---------- janelas ----------
   function modal(html){ fecharModal(); var f = document.createElement('div'); f.className = 'modal-fundo'; f.innerHTML = '<div class="modal" role="dialog" aria-modal="true"><button type="button" class="fechar" aria-label="Fechar">✕</button>' + html + '</div>'; document.body.appendChild(f); f.querySelector('.fechar').onclick = fecharModal; f.addEventListener('click', function(e){ if(e.target === f) fecharModal(); }); return f; }
   function fecharModal(){ var f = document.querySelector('.modal-fundo'); if(f) f.remove(); }
   document.addEventListener('keydown', function(e){ if(e.key === 'Escape') fecharModal(); });
   function abrirDetalhe(r, propor){
-    var est = r.estado === 'confirmada' ? 'Confirmada' : r.estado === 'cancelada' ? 'Cancelada' : r.proposta_hora ? ('Proposta enviada: ' + r.proposta_hora) : 'Por confirmar';
+    var est = r.estado === 'confirmada' ? 'Confirmada' : r.estado === 'cancelada' ? 'Cancelada' : 'Por confirmar';
     var tel = String(r.telefone || '');
     var f = modal('<h3>' + esc(r.nome || 'Marcação') + '</h3>'
       + '<div><b>' + esc(r.servico || '') + '</b>' + (r.duracao ? (' · ' + r.duracao + ' min') : '') + '</div>'
       + '<div>' + esc(quando(r.data, r.hora)) + ' · <span style="font-weight:800;">' + esc(est) + '</span></div>'
+      + (r.proposta_hora && r.estado !== 'cancelada' ? ('<div style="background:#F3E6EA;border-radius:10px;padding:10px 12px;font-size:14px;"><b>🕘 Proposta enviada: ' + esc(propTxt(r)) + '</b><br>À espera da resposta do cliente. A hora fica guardada para ele.<br><button type="button" class="btn-lnk" data-d="semprop" style="padding:0;min-height:30px;">Retirar proposta</button></div>') : '')
+      + (r.reagendada_de ? ('<div style="font-size:13px;color:var(--ac);font-weight:700;">🔁 Reagendada · antes: ' + esc(quando(String(r.reagendada_de).slice(0, 10), String(r.reagendada_de).slice(11))) + '</div>') : '')
+      + (EQ().length ? ('<div class="campo"><label for="dProf">Profissional</label><select id="dProf"><option value="">— Sem profissional —</option>' + EQ().map(function(p){ return '<option value="' + esc(p.id) + '"' + (r.profissional === p.id ? ' selected' : '') + '>' + esc(p.nome) + '</option>'; }).join('') + '</select></div>') : '')
       + (tel ? ('<div>📱 <a href="tel:' + esc(tel.replace(/\s/g,'')) + '">' + esc(tel) + '</a>' + (waLink(r, '') ? (' · <a href="' + esc(waLink(r, 'Olá ' + (r.nome || '') + '!')) + '" target="_blank" rel="noopener">WhatsApp</a>') : '') + '</div>') : '')
       + (r.obs ? ('<div style="color:var(--suave);">“' + esc(r.obs) + '”</div>') : '')
       + '<div style="font-size:12px;color:var(--suave);">' + (r.push_marcacao ? '🔔 O cliente recebe as respostas por notificação.' : 'O cliente não tem notificações ligadas (pode avisar por WhatsApp).') + '</div>'
+      + (r.servico ? ('<div class="grelha2"><div class="campo"><label for="dDesc">Preço · desconto</label><div style="display:flex;gap:8px;align-items:center;"><span style="font-weight:800;white-space:nowrap;" id="dPreco">' + (baseDe(r) != null ? (((+r.desconto) ? ('<s style="color:var(--suave);font-weight:600;">' + euro(baseDe(r)) + '</s> ') : '') + euro(comDesc(baseDe(r), r.desconto))) : '—') + '</span><select id="dDesc" style="flex:1;min-height:40px;border:1.5px solid var(--borda);border-radius:10px;padding:0 8px;">' + opcoesDesc(r.desconto) + '</select></div></div>'
+          + (r.estado === 'confirmada' && r.data <= iso(new Date()) ? ('<label style="display:flex;align-items:center;gap:8px;font-weight:700;align-self:end;min-height:44px;"><input type="checkbox" id="dFaltou"' + (r.faltou ? ' checked' : '') + ' style="width:20px;height:20px;"> O cliente faltou</label>') : '<div></div>') + '</div>') : '')
       + '<label for="dNota">Nota para o cliente (opcional)</label><textarea id="dNota" rows="2" maxlength="200">' + esc(r.nota || '') + '</textarea>'
       + (r.estado !== 'cancelada' ? (
           (r.estado !== 'confirmada' ? '<button type="button" class="btn-ok" data-d="confirmar">✅ Confirmar</button>' : '')
-          + '<div style="display:flex;gap:8px;align-items:end;"><div class="campo" style="flex:1;"><label for="dHora">Propor outra hora</label><input id="dHora" type="time" step="300" value="' + esc(r.proposta_hora || r.hora || '') + '"></div><button type="button" class="btn" data-d="propor">Enviar proposta</button></div>'
+          + '<div style="border:1px solid var(--linha);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px;"><b style="font-size:14px;">📅 Mudar dia/hora</b>'
+          + '<div style="display:flex;gap:8px;align-items:end;flex-wrap:wrap;"><div class="campo" style="flex:1;min-width:130px;"><label for="dRDia">Novo dia</label><input id="dRDia" type="date" value="' + esc(r.proposta_data || r.data) + '"></div><div class="campo" style="flex:1;min-width:110px;"><label for="dRHora">Nova hora</label><input id="dRHora" type="time" step="300" value="' + esc(r.proposta_hora || r.hora || '') + '"></div></div>'
+          + '<label style="display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;"><input type="checkbox" id="dJa" style="width:18px;height:18px;"> O cliente já concordou (por telefone, ao balcão…) — mudar já</label>'
+          + '<button type="button" class="btn" data-d="mudar">Enviar proposta ao cliente</button>'
+          + '<div style="font-size:12px;color:var(--suave);">Sem a caixa marcada, o cliente recebe uma pergunta e tem de aceitar. A marcação só muda quando ele aceitar.</div></div>'
           + (r.estado !== 'confirmada' ? '<button type="button" class="btn-lnk" data-d="recusar">❌ Sem disponibilidade (recusar)</button>' : '<button type="button" class="btn-lnk" data-d="desmarcar">🚫 Cancelar esta marcação</button>')
         ) : ''));
     f.querySelectorAll('[data-d]').forEach(function(b){ b.onclick = async function(){ var a = b.getAttribute('data-d'), nota = $('dNota').value;
+      if(a === 'mudar'){ var nd = $('dRDia').value, nh = $('dRHora').value; if(!nd || !nh){ toast('Escolha o dia e a hora.'); return; } if(nd === r.data && nh === r.hora){ toast('É o mesmo dia e hora.'); return; }
+        var ja = $('dJa').checked; fecharModal(); if(ja) await reagendarSalao(r, nd, nh, nota); else await proporSalao(r, nd, nh, nota); return; }
       if(a === 'recusar' || a === 'desmarcar'){ if(!confirm(a === 'recusar' ? 'Recusar este pedido? O cliente é avisado.' : 'Cancelar esta marcação? O cliente é avisado.')) return; }
       fecharModal(); await responder(r, a, { hora:(a === 'propor' ? ($('dHora') ? $('dHora').value : '') : undefined), nota:nota }); }; });
+    var dj = f.querySelector('#dJa'); if(dj) dj.onchange = function(){ var bt = f.querySelector('[data-d="mudar"]'); if(bt) bt.textContent = dj.checked ? 'Mudar já e avisar o cliente' : 'Enviar proposta ao cliente'; };
+    var dd = f.querySelector('#dDesc'); if(dd) dd.onchange = async function(){ var d = +dd.value || 0, b = baseDe(r), antes = +r.desconto || 0;
+      if(b == null){ toast('Este serviço não tem preço definido.'); dd.value = String(antes); return; }
+      var v = comDesc(b, d), u = await sb.from('reservas').update({ desconto:d, valor_base:b, valor:v }).eq('id', r.id);
+      if(u.error){ toast(/desconto|valor_base|column/i.test(u.error.message) ? 'Falta correr no Supabase o salao-descontos.sql.' : ('Erro: ' + u.error.message)); dd.value = String(antes); return; }
+      r.desconto = d; r.valor_base = b; r.valor = v; $('dPreco').innerHTML = (d ? ('<s style="color:var(--suave);font-weight:600;">' + euro(b) + '</s> ') : '') + euro(v);
+      if(r.estado === 'cancelada' || r.data < iso(new Date())){ toast('Desconto guardado ✓'); carregarRes(); return; }
+      var casa = SAL.nome || NEG.nome, corpo = d ? (casa + ': tem ' + d + '% de desconto na sua marcação de ' + (r.servico || '') + ' (' + quando(r.data, r.hora) + '). Preço: ' + euro(b) + ' → ' + euro(v) + '.') : (casa + ': a sua marcação de ' + (r.servico || '') + ' (' + quando(r.data, r.hora) + ') fica pelo preço normal, ' + euro(b) + '.');
+      var ok = await pushCliente(r, d ? ('🎁 Desconto de ' + d + '%') : 'ℹ️ Preço da marcação', corpo); carregarRes();
+      if(ok){ toast('Desconto guardado ✓ · cliente avisado'); return; }
+      var wl = waLink(r, corpo); if(wl && confirm('Desconto guardado ✓\n\nEste cliente não tem notificações ligadas. Quer avisá-lo por WhatsApp?')) window.open(wl, '_blank', 'noopener'); else toast('Desconto guardado ✓'); };
+    var df = f.querySelector('#dFaltou'); if(df) df.onchange = async function(){ var u = await sb.from('reservas').update({ faltou:df.checked }).eq('id', r.id); if(u.error){ toast(/faltou|column/i.test(u.error.message) ? 'Falta correr no Supabase o salao-clientes.sql.' : ('Erro: ' + u.error.message)); df.checked = !df.checked; return; } r.faltou = df.checked; toast(df.checked ? 'Marcado como falta' : 'Falta retirada'); carregarRes(); };
+    var dp = f.querySelector('#dProf'); if(dp) dp.onchange = async function(){ var v = dp.value || null;
+      var a = minDe(r.hora), du = +r.duracao || 30;
+      if(v && RES.some(function(x){ return x.id !== r.id && x.data === r.data && x.estado !== 'cancelada' && (x.profissional === v || !x.profissional) && minDe(x.hora) < a + du && a < minDe(x.hora) + (+x.duracao || 30); }) && !confirm(nomeProf(v) + ' já tem uma marcação a essa hora. Mudar mesmo assim?')){ dp.value = r.profissional || ''; return; }
+      var u = await sb.from('reservas').update({ profissional:v }).eq('id', r.id); if(u.error){ toast('Erro: ' + u.error.message); return; } r.profissional = v; carregarRes();
+      var okp = v ? await pushCliente(r, '👤 Mudança de profissional', (SAL.nome || NEG.nome) + ': a sua marcação de ' + quando(r.data, r.hora) + ' passa a ser com ' + nomeProf(v) + '.') : false;
+      toast(okp ? 'Profissional mudado ✓ · cliente avisado' : 'Profissional mudado ✓'); };
     if(propor){ var hi = f.querySelector('#dHora'); if(hi) hi.focus(); }
   }
-  function novaMarcacao(dia, hora){
+  function novaMarcacao(dia, hora, prof){
     var vis = SERV.filter(function(s){ return s && s.nome; });
     if(!vis.length){ toast('Crie primeiro os serviços no separador Serviços.'); irPara('servicos'); return; }
     var f = modal('<h3>Nova marcação</h3>'
       + '<div class="campo"><label for="nServ">Serviço</label><select id="nServ">' + vis.map(function(s){ return '<option value="' + esc(s.id) + '">' + esc(s.nome) + ' · ' + (+s.dur || 30) + ' min</option>'; }).join('') + '</select></div>'
+      + (EQ().length ? ('<div class="campo"><label for="nProf">Profissional</label><select id="nProf">' + EQ().map(function(p){ return '<option value="' + esc(p.id) + '"' + (prof === p.id ? ' selected' : '') + '>' + esc(p.nome) + '</option>'; }).join('') + '</select></div>') : '')
       + '<div class="grelha2"><div class="campo"><label for="nDia">Dia</label><input id="nDia" type="date" value="' + esc(dia) + '"></div><div class="campo"><label for="nHora">Hora</label><input id="nHora" type="time" step="300" value="' + esc(hora) + '"></div></div>'
-      + '<div class="grelha2"><div class="campo"><label for="nNome">Nome do cliente</label><input id="nNome" maxlength="80"></div><div class="campo"><label for="nTel">Telemóvel</label><input id="nTel" maxlength="20" inputmode="tel"></div></div>'
+      + '<div class="grelha2"><div class="campo"><label for="nNome">Cliente</label><input id="nNome" maxlength="80" list="nCliLista" placeholder="Nome (ou escolha da lista)" autocomplete="off"><datalist id="nCliLista"></datalist></div><div class="campo"><label for="nTel">Telemóvel <span style="font-weight:400;color:var(--suave);">(opcional)</span></label><input id="nTel" maxlength="20" inputmode="tel"></div></div>'
+      + '<div class="campo"><label for="nDesc">Desconto</label><select id="nDesc">' + opcoesDesc(0) + '</select></div>'
       + '<div class="campo"><label for="nObs">Observações</label><input id="nObs" maxlength="300"></div>'
       + '<button type="button" class="btn-ac" id="nGuardar">Guardar marcação (confirmada)</button><div class="msg" id="nMsg"></div>');
+    (async function(){ if(!CLI.length){ var a = await sb.from('clientes').select('*').eq('negocio_id', NEG.id); if(!a.error) CLI = a.data || []; }
+      var dl = f.querySelector('#nCliLista'); if(dl) dl.innerHTML = CLI.slice().sort(function(a, b){ return String(a.nome || '').localeCompare(String(b.nome || ''), 'pt'); }).map(function(c){ return '<option value="' + esc(c.nome || '') + '">' + esc(c.telefone || 'sem contacto') + '</option>'; }).join('');
+      var ni = f.querySelector('#nNome'); if(ni) ni.addEventListener('change', function(){ var c = CLI.filter(function(x){ return nomeNorm(x.nome) === nomeNorm(ni.value); })[0]; if(c && c.telefone && !$('nTel').value) $('nTel').value = c.telefone; $('nMsg').textContent = (c && c.bloqueado) ? ('⚠️ Cliente bloqueado' + (c.bloqueado_motivo ? (': ' + c.bloqueado_motivo) : '') + '. Pode marcar na mesma.') : ''; $('nMsg').className = 'msg' + ((c && c.bloqueado) ? ' erro' : ''); });
+    })();
     f.querySelector('#nGuardar').onclick = async function(){
       var s = SERV.filter(function(x){ return x.id === $('nServ').value; })[0], d = $('nDia').value, h = $('nHora').value, nome = $('nNome').value.trim();
       if(!s || !d || !h || !nome){ $('nMsg').textContent = 'Preencha o serviço, o dia, a hora e o nome.'; $('nMsg').className = 'msg erro'; return; }
       var a = minDe(h), du = +s.dur || 30;
-      var choca = RES.some(function(r){ return r.data === d && r.estado !== 'cancelada' && minDe(r.hora) != null && minDe(r.hora) < a + du && a < minDe(r.hora) + (+r.duracao || 30); });
-      if(choca && !confirm('Já há uma marcação a essa hora. Guardar mesmo assim?')) return;
-      var r = await sb.from('reservas').insert({ negocio_id:NEG.id, data:d, hora:h, nome:nome, telefone:$('nTel').value.trim() || '-', pessoas:1, obs:$('nObs').value.trim() || null, estado:'confirmada', servico:s.nome, duracao:du });
+      var pr = $('nProf') ? $('nProf').value : '';
+      var choca = RES.some(function(r){ return r.data === d && r.estado !== 'cancelada' && minDe(r.hora) != null && (!pr || !r.profissional || r.profissional === pr) && minDe(r.hora) < a + du && a < minDe(r.hora) + (+r.duracao || 30); });
+      if(choca && !confirm((pr ? (nomeProf(pr) + ' já tem') : 'Já há') + ' uma marcação a essa hora. Guardar mesmo assim?')) return;
+      var ausC = ausDia(d).filter(function(b){ return ausPara(b, pr) && b.ini < a + du && a < b.fim; })[0];
+      if(ausC && !confirm('🌴 ' + (ausC.prof ? (nomeProf(ausC.prof) || 'Esta pessoa') + ' está ausente' : 'O salão está fechado') + ' a essa hora (' + (ausC.a.motivo || 'ausência') + '). Guardar mesmo assim?')) return;
+      var ins = { negocio_id:NEG.id, data:d, hora:h, nome:nome, telefone:$('nTel').value.trim() || '-', pessoas:1, obs:$('nObs').value.trim() || null, estado:'confirmada', servico:s.nome, duracao:du }; if(pr) ins.profissional = pr; var nd0 = +($('nDesc') ? $('nDesc').value : 0) || 0; if(nd0){ var bb = precoServ(s.nome); ins.desconto = nd0; if(bb != null){ ins.valor_base = bb; ins.valor = comDesc(bb, nd0); } }
+      var r = await sb.from('reservas').insert(ins);
       if(r.error){ $('nMsg').textContent = /servico|duracao|column/i.test(r.error.message) ? 'Falta correr no Supabase o ficheiro salao-marcacoes.sql.' : ('Erro: ' + r.error.message); $('nMsg').className = 'msg erro'; return; }
       fecharModal(); dataSel = dDe(d); await carregarRes(); toast('Marcação guardada ✓');
     };
@@ -432,7 +1376,8 @@
   };
 
   // ---------- serviços ----------
-  function pintarServ(){
+  var EQSV = null;   // equipa a ser editada a partir dos serviços ("Quem faz")
+  function pintarServ(){ setTimeout(pintarCatFotos, 0); if(!EQSV) EQSV = JSON.parse(JSON.stringify(EQ()));
     if(!SERV.length) $('servLista').innerHTML = '<div style="background:#fff;border-radius:12px;padding:16px;color:var(--suave);margin-bottom:10px;">Ainda não há serviços. Carregue em "+ Novo serviço".</div>';
     else $('servLista').innerHTML = SERV.map(function(s, i){
       return '<div class="serv-linha" data-i="' + i + '">'
@@ -442,6 +1387,9 @@
         + '<div class="campo"><label>Preço</label><input data-k="preco" value="' + esc(s.preco || '') + '" maxlength="24" placeholder="Ex.: 25"></div>'
         + '<div></div>'
         + '<div class="campo desc"><label>Descrição curta</label><input data-k="desc" value="' + esc(s.desc || '') + '" maxlength="160"></div>'
+        + '<div class="serv-foto" style="grid-column:1/-1;">' + (s.foto ? ('<img src="' + esc(s.foto) + '" alt=""><button type="button" class="btn-lnk" data-op="semfoto">Tirar foto</button>') : '') + '<button type="button" class="btn" data-op="foto">📷 ' + (s.foto ? 'Mudar foto' : 'Foto do serviço (opcional)') + '</button></div>'
+        + (EQSV.length ? ('<div style="grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px;align-items:center;"><span class="eq-rot" style="margin-right:4px;">Quem faz</span><span class="eq-chips">' + EQSV.map(function(p){ return '<label><input type="checkbox" data-faz="' + esc(p.id) + '"' + (fazServ(p, s.id) ? ' checked' : '') + '> ' + esc(p.nome) + '</label>'; }).join('') + '</span>'
+            + (EQSV.some(function(p){ return fazServ(p, s.id); }) ? '' : '<span style="color:#A33;font-weight:700;font-size:13px;">⚠️ Ninguém faz este serviço — os clientes não o conseguem marcar</span>') + '</div>') : '')
         + '<div class="op"><label style="font-weight:600;"><input type="checkbox" data-k="online"' + (s.online === false ? '' : ' checked') + '> Aceita pedidos online</label>'
         + '<label style="font-weight:600;"><input type="checkbox" data-k="oculto"' + (s.oculto ? ' checked' : '') + '> Escondido</label>'
         + '<span style="flex:1;"></span><button type="button" class="btn" data-op="sobe" aria-label="Subir">↑</button><button type="button" class="btn" data-op="desce" aria-label="Descer">↓</button><button type="button" class="btn-lnk" data-op="apagar">Apagar</button></div>'
@@ -450,26 +1398,121 @@
     $('servLista').querySelectorAll('.serv-linha').forEach(function(l){
       var i = +l.getAttribute('data-i');
       l.querySelectorAll('[data-k]').forEach(function(inp){ inp.addEventListener('input', function(){ var k = inp.getAttribute('data-k'); SERV[i][k] = inp.type === 'checkbox' ? inp.checked : (k === 'dur' ? (parseInt(inp.value, 10) || 30) : inp.value); }); inp.addEventListener('change', function(){ if(inp.type === 'checkbox'){ SERV[i][inp.getAttribute('data-k')] = inp.checked; } }); });
+      l.querySelectorAll('[data-faz]').forEach(function(c){ c.onchange = function(){ var p = EQSV.filter(function(x){ return x.id === c.getAttribute('data-faz'); })[0], sid = SERV[i].id; if(!p || !sid) return;
+        var todos = SERV.filter(function(x){ return x && x.nome && x.id; }).map(function(x){ return x.id; });
+        if(!Array.isArray(p.servicos) || !p.servicos.length) p.servicos = todos.slice();   // "todos" antigo → lista com vistos
+        if(c.checked){ if(p.servicos.indexOf(sid) < 0) p.servicos.push(sid); }
+        else { if(p.servicos.length <= 1){ c.checked = true; alert(p.nome + ' tem de fazer pelo menos um serviço.'); return; } p.servicos = p.servicos.filter(function(t){ return t !== sid; }); }
+        pintarServ(); $('servMsg').textContent = 'Por guardar…'; $('servMsg').className = 'msg'; }; });
       l.querySelectorAll('[data-op]').forEach(function(b){ b.onclick = function(){ var op = b.getAttribute('data-op');
+        if(op === 'foto'){ escolherFoto({ max:1200 }, function(url){ SERV[i].foto = url; guardarServ('Foto guardada ✓'); }); return; }
+        if(op === 'semfoto'){ apagarFicheiro(SERV[i].foto); delete SERV[i].foto; guardarServ('Foto retirada ✓'); return; }
         if(op === 'apagar'){ if(!confirm('Apagar o serviço "' + (SERV[i].nome || '') + '"? (As marcações já feitas não mudam.)')) return; SERV.splice(i, 1); }
         if(op === 'sobe' && i > 0){ var t = SERV[i - 1]; SERV[i - 1] = SERV[i]; SERV[i] = t; }
         if(op === 'desce' && i < SERV.length - 1){ var t2 = SERV[i + 1]; SERV[i + 1] = SERV[i]; SERV[i] = t2; }
         pintarServ(); }; });
     });
   }
+  function pintarCatFotos(){
+    var cf = SAL.catFotos || {}, cs = []; SERV.forEach(function(x){ var k = (x.cat || 'Serviços').trim(); if(x.nome && cs.indexOf(k) < 0) cs.push(k); });
+    $('catFotos').innerHTML = cs.length ? '<div class="fotos">' + cs.map(function(c, i){ return '<div style="display:flex;flex-direction:column;gap:6px;width:150px;">' + (cf[c] ? ('<div class="foto"><img src="' + esc(cf[c]) + '" alt=""><div class="foto-ops"><button type="button" data-cx="' + i + '" aria-label="Tirar">✕</button></div></div>') : '<button type="button" class="foto-add" data-ca="' + i + '">+ Foto</button>') + '<b style="font-size:13px;">' + esc(c) + '</b>' + (cf[c] ? ('<button type="button" class="btn-lnk" data-ca="' + i + '" style="padding:0;min-height:24px;text-align:left;">Mudar foto</button>') : '') + '</div>'; }).join('') + '</div>' : '<div style="color:var(--suave);font-size:14px;">Crie primeiro os serviços com categoria.</div>';
+    $('catFotos').querySelectorAll('[data-ca]').forEach(function(b){ b.onclick = function(){ var c = cs[+b.getAttribute('data-ca')]; escolherFoto({ max:1400, nome:'categoria' }, async function(url){ var antigo = (SAL.catFotos || {})[c]; var e = await guardarCfg(function(cfg){ cfg.salao = Object.assign({}, cfg.salao || {}); cfg.salao.catFotos = Object.assign({}, cfg.salao.catFotos || {}); cfg.salao.catFotos[c] = url; }); if(e) return alert('Erro: ' + e.message); apagarFicheiro(antigo); pintarCatFotos(); toast('Foto da categoria guardada ✓'); }); }; });
+    $('catFotos').querySelectorAll('[data-cx]').forEach(function(b){ b.onclick = async function(){ var c = cs[+b.getAttribute('data-cx')]; if(!confirm('Tirar a foto de "' + c + '"?')) return; var antigo = (SAL.catFotos || {})[c]; var e = await guardarCfg(function(cfg){ cfg.salao = Object.assign({}, cfg.salao || {}); cfg.salao.catFotos = Object.assign({}, cfg.salao.catFotos || {}); delete cfg.salao.catFotos[c]; }); if(!e){ apagarFicheiro(antigo); pintarCatFotos(); } }; });
+  }
   $('servNovo').onclick = function(){ var ult = SERV[SERV.length - 1]; SERV.push({ id:novoId(), nome:'', cat:(ult && ult.cat) || '', dur:30, preco:'', desc:'', online:true }); pintarServ(); var ins = $('servLista').querySelectorAll('input[data-k="nome"]'); if(ins.length) ins[ins.length - 1].focus(); };
-  $('servGuardar').onclick = async function(){
-    var limpo = SERV.filter(function(s){ return s && String(s.nome || '').trim(); }).map(function(s){ var o = { id:s.id || novoId(), nome:String(s.nome).trim().slice(0, 80), cat:String(s.cat || '').trim().slice(0, 40), dur:Math.max(5, Math.min(600, parseInt(s.dur, 10) || 30)), preco:String(s.preco || '').trim().slice(0, 24), desc:String(s.desc || '').trim().slice(0, 160) }; if(s.online === false) o.online = false; if(s.oculto) o.oculto = true; return o; });
+  $('servGuardar').onclick = function(){ guardarServ('Guardado ✓'); };
+  async function guardarServ(okTxt){
+    var limpo = SERV.filter(function(s){ return s && String(s.nome || '').trim(); }).map(function(s){ var o = { id:s.id || novoId(), nome:String(s.nome).trim().slice(0, 80), cat:String(s.cat || '').trim().slice(0, 40), dur:Math.max(5, Math.min(600, parseInt(s.dur, 10) || 30)), preco:String(s.preco || '').trim().slice(0, 24), desc:String(s.desc || '').trim().slice(0, 160) }; if(s.foto) o.foto = String(s.foto); if(s.online === false) o.online = false; if(s.oculto) o.oculto = true; return o; });
     $('servMsg').textContent = 'A guardar…'; $('servMsg').className = 'msg';
-    var e = await guardarCfg(function(c){ c.servicos = limpo; });
-    $('servMsg').textContent = e ? ('Erro: ' + e.message) : 'Guardado ✓'; $('servMsg').className = 'msg ' + (e ? 'erro' : 'ok');
-    if(!e) pintarServ();
-  };
+    var ids = limpo.map(function(x){ return x.id; });
+    var eqNova = EQSV && EQSV.length ? EQSV.map(function(p){ return { id:p.id, nome:p.nome, dias:Array.isArray(p.dias) ? p.dias : [], servicos:(Array.isArray(p.servicos) ? p.servicos : []).filter(function(t){ return ids.indexOf(t) >= 0; }) }; }) : null;
+    var e = await guardarCfg(function(c){ c.servicos = limpo; if(eqNova) c.equipa = eqNova; });
+    var semNinguem = eqNova ? limpo.filter(function(x){ return !x.oculto && x.online !== false && !eqNova.some(function(p){ return fazServ(p, x.id); }); }) : [];
+    $('servMsg').textContent = e ? ('Erro: ' + e.message) : ((okTxt || 'Guardado ✓') + (semNinguem.length ? (' · ⚠️ ' + semNinguem.length + ' serviço(s) sem ninguém da equipa') : '')); $('servMsg').className = 'msg ' + (e ? 'erro' : (semNinguem.length ? 'erro' : 'ok'));
+    if(!e){ EQSV = null; pintarServ(); }
+  }
 
   // ---------- página ----------
-  function pintarPagina(){ $('pgNome').value = SAL.nome || NEG.nome || ''; $('pgFrase').value = SAL.frase || ''; $('pgMorada').value = SAL.morada || ''; $('pgTel').value = SAL.telefone || ''; $('pgWa').value = SAL.whatsapp || ''; $('pgIg').value = SAL.instagram || ''; $('pgCor').value = /^#[0-9a-fA-F]{6}$/.test(SAL.cor || '') ? SAL.cor : '#8E3653'; $('pgPol').value = SAL.politica || ''; }
+  // ---------- fotos (Storage "imagens/<slug>/salao/…": cada salão só mexe na sua pasta) ----------
+  var _ftCb = null, _ftOpt = {};
+  function escolherFoto(opt, cb){ _ftOpt = opt || {}; _ftCb = cb; $('ftInput').accept = _ftOpt.video ? 'image/*,video/mp4,video/webm,video/quicktime' : 'image/*'; $('ftInput').value = ''; $('ftInput').click(); }
+  async function subirOriginal(f, nome){   // vídeo ou GIF animado: vai tal como está (não passa pela compressão)
+    var ext = (f.name.split('.').pop() || '').toLowerCase().replace(/[^a-z0-9]/g, '') || 'bin';
+    var caminho = SLUG + '/salao/' + nome + '-' + Date.now().toString(36) + '.' + ext;
+    var up = await sb.storage.from('imagens').upload(caminho, f, { contentType:f.type || undefined, cacheControl:'31536000', upsert:false });
+    if(up.error) throw up.error;
+    return sb.storage.from('imagens').getPublicUrl(caminho).data.publicUrl;
+  }
+  $('ftInput').onchange = async function(){
+    var f = this.files && this.files[0]; if(!f || !_ftCb) return;
+    var eVideo = /^video\//.test(f.type || ''), eGif = f.type === 'image/gif';
+    if(eVideo && !_ftOpt.video){ alert('Aqui só pode pôr fotos.'); return; }
+    if(eVideo && f.size > 15 * 1024 * 1024){ alert('O vídeo tem ' + (f.size / 1048576).toFixed(1) + ' MB. O máximo são 15 MB — encurte-o ou exporte em menor qualidade.'); return; }
+    if(eGif && f.size > 8 * 1024 * 1024){ alert('O GIF é demasiado grande (máximo 8 MB).'); return; }
+    toast(eVideo ? 'A carregar o vídeo… (pode demorar um pouco)' : 'A carregar a foto…');
+    if(eVideo || eGif){
+      try{ var u0 = await subirOriginal(f, _ftOpt.nome || 'ficheiro'); var cb0 = _ftCb; _ftCb = null; cb0(u0, eVideo ? 'video' : 'img'); }
+      catch(e){ alert('Não foi possível carregar o ficheiro: ' + (e.message || e)); }
+      return;
+    }
+    try{
+      var bmp = await createImageBitmap(f);
+      var max = _ftOpt.max || 1600, k = Math.min(1, max / Math.max(bmp.width, bmp.height));
+      var c = document.createElement('canvas'); c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
+      var g = c.getContext('2d'); if(!_ftOpt.png){ g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); } g.drawImage(bmp, 0, 0, c.width, c.height);
+      var tipo = _ftOpt.png ? 'image/png' : 'image/jpeg';
+      var blob = await new Promise(function(ok){ c.toBlob(ok, tipo, 0.84); });
+      var caminho = SLUG + '/salao/' + (_ftOpt.nome || 'foto') + '-' + Date.now().toString(36) + (_ftOpt.png ? '.png' : '.jpg');
+      var up = await sb.storage.from('imagens').upload(caminho, blob, { contentType:tipo, cacheControl:'31536000', upsert:false });
+      if(up.error) throw up.error;
+      var url = sb.storage.from('imagens').getPublicUrl(caminho).data.publicUrl;
+      var cb = _ftCb; _ftCb = null; cb(url, 'img');
+    }catch(e){ alert('Não foi possível carregar a foto: ' + (e.message || e)); }
+  };
+  function apagarFicheiro(url){ try{ var m = String(url || '').split('/storage/v1/object/public/imagens/')[1]; if(m && m.indexOf(SLUG + '/') === 0) sb.storage.from('imagens').remove([decodeURIComponent(m.split('?')[0])]); }catch(e){} }
+  function pintarFotos(){
+    var lg = SAL.logo;
+    $('ftLogo').innerHTML = (lg ? ('<div class="foto logo"><img src="' + esc(lg) + '" alt="Logótipo"><div class="foto-ops"><button type="button" data-x aria-label="Tirar">✕</button></div></div>') : '') + '<button type="button" class="foto-add" data-add>' + (lg ? 'Mudar logótipo' : '+ Logótipo') + '</button>';
+    $('ftLogo').querySelector('[data-add]').onclick = function(){ escolherFoto({ max:600, png:true, nome:'logo' }, async function(url){ var antigo = SAL.logo; var e = await guardarCfg(function(c){ c.salao = Object.assign({}, c.salao || {}, { logo:url }); }); if(e) return alert('Erro: ' + e.message); apagarFicheiro(antigo); pintarFotos(); toast('Logótipo guardado ✓'); }); };
+    var lx = $('ftLogo').querySelector('[data-x]'); if(lx) lx.onclick = async function(){ if(!confirm('Tirar o logótipo?')) return; var antigo = SAL.logo; var e = await guardarCfg(function(c){ c.salao = Object.assign({}, c.salao || {}); delete c.salao.logo; }); if(!e){ apagarFicheiro(antigo); pintarFotos(); } };
+    var fu = SAL.fundo && SAL.fundo.url ? SAL.fundo : null;
+    $('ftFundo').innerHTML = (fu ? ('<div class="foto fundo">' + (fu.tipo === 'video' ? ('<video src="' + esc(fu.url) + '" muted loop autoplay playsinline></video>') : ('<img src="' + esc(fu.url) + '" alt="">')) + '<div class="foto-ops"><button type="button" data-x aria-label="Tirar">✕</button></div></div>') : '')
+      + '<button type="button" class="foto-add" data-add>' + (fu ? 'Mudar fundo' : '+ Foto ou vídeo') + '</button>';
+    $('ftFundo').querySelector('[data-add]').onclick = function(){ escolherFoto({ max:2000, nome:'fundo', video:true }, async function(url, tipo){ var antigo = fu && fu.url; var e = await guardarCfg(function(c){ c.salao = Object.assign({}, c.salao || {}, { fundo:{ url:url, tipo:tipo || 'img' } }); }); if(e) return alert('Erro: ' + e.message); apagarFicheiro(antigo); pintarFotos(); toast('Fundo guardado ✓'); }); };
+    var fx = $('ftFundo').querySelector('[data-x]'); if(fx) fx.onclick = async function(){ if(!confirm('Tirar o fundo do cabeçalho?')) return; var antigo = fu.url; var e = await guardarCfg(function(c){ c.salao = Object.assign({}, c.salao || {}); delete c.salao.fundo; }); if(!e){ apagarFicheiro(antigo); pintarFotos(); } };
+    lista('ftCapas', 'capas', 5, 'capa', 1800);
+    lista('ftGaleria', 'galeria', 12, 'galeria', 1400);
+  }
+  function lista(box, chave, maxN, nome, maxPx){
+    var arr = Array.isArray(SAL[chave]) ? SAL[chave] : [];
+    $(box).innerHTML = arr.map(function(u, i){ return '<div class="foto"><img src="' + esc(u) + '" alt=""><div class="foto-ops">' + (i ? '<button type="button" data-esq="' + i + '" aria-label="Mover para a esquerda">←</button>' : '') + '<button type="button" data-x="' + i + '" aria-label="Tirar">✕</button></div></div>'; }).join('')
+      + (arr.length < maxN ? '<button type="button" class="foto-add" data-add>+ Acrescentar foto</button>' : '');
+    async function grava(nova){ var e = await guardarCfg(function(c){ var o = {}; o[chave] = nova; c.salao = Object.assign({}, c.salao || {}, o); }); if(e) alert('Erro: ' + e.message); pintarFotos(); return !e; }
+    var add = $(box).querySelector('[data-add]'); if(add) add.onclick = function(){ escolherFoto({ max:maxPx, nome:nome }, function(url){ grava(arr.concat([url])).then(function(ok){ if(ok) toast('Foto guardada ✓'); }); }); };
+    $(box).querySelectorAll('[data-x]').forEach(function(b){ b.onclick = function(){ if(!confirm('Tirar esta foto?')) return; var i = +b.getAttribute('data-x'); var antigo = arr[i]; grava(arr.filter(function(_, j){ return j !== i; })).then(function(ok){ if(ok) apagarFicheiro(antigo); }); }; });
+    $(box).querySelectorAll('[data-esq]').forEach(function(b){ b.onclick = function(){ var i = +b.getAttribute('data-esq'), n = arr.slice(), t = n[i - 1]; n[i - 1] = n[i]; n[i] = t; grava(n); }; });
+  }
+  // ---------- QR code (um por salão) ----------
+  // na versão de testes (teste.amesadigital.pt / teste.4trevo.com) o QR abre a página de testes
+  function linkSalao(){ return (/(^|\.)teste\./.test(location.hostname) ? 'https://teste.4trevo.com' : 'https://4trevo.com') + '/' + encodeURIComponent(SLUG); }
+  function pintarQR(){
+    var box = $('qrBox'); box.innerHTML = ''; $('qrUrl').textContent = linkSalao();
+    if(typeof QRCode !== 'function'){ box.textContent = 'Sem ligação para gerar o QR.'; return; }
+    new QRCode(box, { text:linkSalao(), width:180, height:180, correctLevel:QRCode.CorrectLevel.M });
+  }
+  function qrDataUrl(){ var c = $('qrBox').querySelector('canvas'); var i = $('qrBox').querySelector('img'); return c ? c.toDataURL('image/png') : (i ? i.src : ''); }
+  $('qrPng').onclick = function(){ var u = qrDataUrl(); if(!u) return; var a = document.createElement('a'); a.href = u; a.download = 'qr-' + SLUG + '.png'; a.click(); };
+  $('qrCartao').onclick = function(){
+    var u = qrDataUrl(); if(!u) return; var nome = SAL.nome || NEG.nome || '', cor = /^#[0-9a-fA-F]{6}$/.test(SAL.cor || '') ? SAL.cor : '#8E3653';
+    var w = window.open('', '_blank'); if(!w) return;
+    w.document.write('<!doctype html><html lang="pt"><head><meta charset="utf-8"><title>QR · ' + esc(nome) + '</title><style>body{margin:0;font-family:Manrope,Arial,sans-serif;display:flex;justify-content:center;padding:30px}.c{width:9cm;border:1.5px solid #ddd;border-radius:16px;padding:22px;text-align:center}.n{font-size:22px;font-weight:800;color:' + cor + ';margin-bottom:4px}.t{font-size:15px;margin-bottom:14px}img.q{width:5.5cm;height:5.5cm}.u{font-size:11px;color:#777;margin-top:10px;word-break:break-all}.m{margin-top:12px;font-size:12px;color:#555}@media print{body{padding:0}}</style></head><body><div class="c">'
+      + (SAL.logo ? '<img src="' + esc(SAL.logo) + '" alt="" style="max-width:3cm;max-height:2cm;margin-bottom:8px">' : '')
+      + '<div class="n">' + esc(nome) + '</div><div class="t">Marque aqui o seu horário</div><img class="q" src="' + u + '" alt="QR"><div class="u">' + esc(linkSalao()) + '</div><div class="m">Marcações com 4Trevo</div></div><script>window.onload=function(){setTimeout(function(){window.print();},300);}<\/script></body></html>');
+    w.document.close();
+  };
+  function pintarPagina(){ pintarFotos(); pintarQR(); $('pgNome').value = SAL.nome || NEG.nome || ''; $('pgFrase').value = SAL.frase || ''; $('pgMorada').value = SAL.morada || ''; $('pgTel').value = SAL.telefone || ''; $('pgWa').value = SAL.whatsapp || ''; $('pgIg').value = SAL.instagram || ''; $('pgFb').value = SAL.facebook || ''; $('pgCor').value = /^#[0-9a-fA-F]{6}$/.test(SAL.cor || '') ? SAL.cor : '#8E3653'; $('pgPol').value = SAL.politica || ''; $('pgHoje').checked = SAL.mostrarHoje !== false; }
   $('pgGuardar').onclick = async function(){
-    var v = { nome:$('pgNome').value.trim(), frase:$('pgFrase').value.trim(), morada:$('pgMorada').value.trim(), telefone:$('pgTel').value.trim(), whatsapp:$('pgWa').value.trim(), instagram:$('pgIg').value.trim(), cor:$('pgCor').value, politica:$('pgPol').value.trim() };
+    var v = { nome:$('pgNome').value.trim(), frase:$('pgFrase').value.trim(), morada:$('pgMorada').value.trim(), telefone:$('pgTel').value.trim(), whatsapp:$('pgWa').value.trim(), instagram:$('pgIg').value.trim(), facebook:$('pgFb').value.trim(), cor:$('pgCor').value, politica:$('pgPol').value.trim(), mostrarHoje:$('pgHoje').checked };
     $('pgMsg').textContent = 'A guardar…'; $('pgMsg').className = 'msg';
     var e = await guardarCfg(function(c){ c.salao = Object.assign({}, c.salao || {}, v); });
     $('pgMsg').textContent = e ? ('Erro: ' + e.message) : 'Guardado ✓'; $('pgMsg').className = 'msg ' + (e ? 'erro' : 'ok');
