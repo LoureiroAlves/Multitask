@@ -100,6 +100,8 @@
   .wa-it a{ background:#25D366; color:#fff; text-decoration:none; font-weight:800; font-size:13px; border-radius:999px; padding:7px 12px; white-space:nowrap; }
   .wa-it.feito a{ background:#fff; color:#1e7a43; border:1.5px solid #9BD3AE; }
   @media (max-width: 860px){ .camp-grelha{ grid-template-columns:1fr; } }
+  .resp-cli{ font-size:13px; font-weight:700; border-radius:8px; padding:6px 8px; margin-top:4px; }
+  .resp-cli.ok{ background:#EEF5EF; color:#2F6B3E; } .resp-cli.nao{ background:#FBEDED; color:#8A2A2A; }
   .b-fantasma{ background:repeating-linear-gradient(135deg, #fff, #fff 6px, #F3E6EA 6px, #F3E6EA 12px); border:1.5px dashed var(--ac); opacity:.85; }
   .b-pendente{ background:#fff; border:2px dashed var(--ac); }
   .b-proposta{ background:#F3E6EA; border-left:4px solid var(--ac); }
@@ -1211,7 +1213,8 @@
     var ped = RES.filter(function(r){ return r.estado === 'pendente' && !r.proposta_hora && r.data >= hoje; });
     var alt = RES.filter(function(r){ return r.estado !== 'cancelada' && (r.alt_hora) && r.data >= hoje; });
     var esp = RES.filter(function(r){ return r.estado !== 'cancelada' && r.proposta_hora && r.data >= hoje; });
-    var todos = ped.concat(alt.filter(function(r){ return ped.indexOf(r) < 0; })).concat(esp.filter(function(r){ return ped.indexOf(r) < 0; }));
+    var rec = RES.filter(function(r){ return r.estado === 'confirmada' && r.resposta_cliente === 'recusou' && !r.proposta_hora && r.data >= hoje; });
+    var todos = rec.concat(ped).concat(alt.filter(function(r){ return ped.indexOf(r) < 0; })).concat(esp.filter(function(r){ return ped.indexOf(r) < 0; }));
     $('nPed').textContent = todos.length;
     if(!todos.length){ $('pedidos').innerHTML = '<div style="color:var(--suave);font-size:14px;">Nada por responder. 👌</div>'; return; }
     $('pedidos').innerHTML = todos.map(function(r){
@@ -1221,12 +1224,15 @@
         + (r.alt_hora ? ('<div style="font-size:13px;color:var(--ac);font-weight:700;">Pede para mudar para as ' + esc(r.alt_hora) + '</div>') : '')
         + (r.obs ? ('<div style="font-size:12px;color:var(--suave);">“' + esc(r.obs) + '”</div>') : '')
         + (r.proposta_hora ? ('<div style="font-size:13px;color:var(--ac);font-weight:700;">🕘 Proposta: ' + esc(propTxt(r)) + ' · à espera do cliente</div>') : '')
+        + (!r.proposta_hora && r.resposta_cliente === 'aceitou' ? '<div class="resp-cli ok">✅ O cliente aceitou esta nova hora — dê o OK para ficar na agenda</div>' : '')
+        + (!r.proposta_hora && r.resposta_cliente === 'recusou' ? ('<div class="resp-cli nao">❌ O cliente não aceitou a proposta' + (r.estado === 'confirmada' ? ' — por agora mantém-se esta hora' : ' — o pedido continua à espera') + '. Escolha o que fazer.</div>') : '')
         + '</div><div class="pedido-acoes">'
         + (r.proposta_hora ? ('<button type="button" class="btn" data-a="ver" data-id="' + esc(r.id) + '">Ver</button><button type="button" class="btn-lnk" data-a="semprop" data-id="' + esc(r.id) + '">Retirar proposta</button>') : r.alt_hora ? ('<button type="button" class="btn-ok" data-a="altok" data-id="' + esc(r.id) + '">Aceitar mudança</button><button type="button" class="btn" data-a="altnao" data-id="' + esc(r.id) + '">Manter</button>')
-                     : ('<button type="button" class="btn-ok" data-a="confirmar" data-id="' + esc(r.id) + '">Confirmar</button><button type="button" class="btn" data-a="propor" data-id="' + esc(r.id) + '">Propor outra hora</button><button type="button" class="btn-lnk" data-a="recusar" data-id="' + esc(r.id) + '">Recusar</button>'))
+                     : (r.estado === 'confirmada' && r.resposta_cliente === 'recusou') ? ('<button type="button" class="btn-ok" data-a="manter" data-id="' + esc(r.id) + '">Manter esta hora</button><button type="button" class="btn" data-a="propor" data-id="' + esc(r.id) + '">Propor outra hora</button><button type="button" class="btn-lnk" data-a="desmarcar" data-id="' + esc(r.id) + '">Cancelar marcação</button>')
+                     : ('<button type="button" class="btn-ok" data-a="confirmar" data-id="' + esc(r.id) + '">' + (r.resposta_cliente === 'aceitou' ? 'OK, confirmar' : 'Confirmar') + '</button><button type="button" class="btn" data-a="propor" data-id="' + esc(r.id) + '">Propor outra hora</button><button type="button" class="btn-lnk" data-a="recusar" data-id="' + esc(r.id) + '">Recusar</button>'))
         + '</div></div>';
     }).join('');
-    $('pedidos').querySelectorAll('[data-a]').forEach(function(b){ b.onclick = function(){ var r = RES.filter(function(x){ return x.id === b.getAttribute('data-id'); })[0]; if(!r) return; var a = b.getAttribute('data-a'); if(a === 'propor' || a === 'ver') abrirDetalhe(r, true); else responder(r, a); }; });
+    $('pedidos').querySelectorAll('[data-a]').forEach(function(b){ b.onclick = function(){ var r = RES.filter(function(x){ return x.id === b.getAttribute('data-id'); })[0]; if(!r) return; var a = b.getAttribute('data-a'); if(a === 'propor' || a === 'ver') abrirDetalhe(r, true); else if(a === 'desmarcar' && !confirm('Cancelar esta marcação? O cliente é avisado.')) return; else responder(r, a); }; });
   }
   function mudar(sinal){ if(vista === 'mes'){ dataSel = new Date(dataSel.getFullYear(), dataSel.getMonth() + sinal, 1); } else dataSel.setDate(dataSel.getDate() + sinal * (vista === 'dia' ? 1 : 7)); carregarRes(); }
   $('aAnt').onclick = function(){ mudar(-1); };
@@ -1272,9 +1278,11 @@
     else if(tipo === 'altok'){ patch = { estado:'confirmada', hora:r.alt_hora || r.hora, alt_hora:null, alt_pessoas:null, proposta_hora:null }; titulo = '✅ Alteração aceite'; corpo = casa + ': ' + quando(r.data, r.alt_hora || r.hora) + '. Até já!'; }
     else if(tipo === 'altnao'){ patch = { alt_hora:null, alt_pessoas:null }; titulo = '❌ Não foi possível mudar'; corpo = casa + ': mantém-se ' + quando(r.data, r.hora) + '.'; }
     else if(tipo === 'semprop'){ patch = { proposta_hora:null, proposta_data:null }; titulo = '↩️ Proposta retirada'; corpo = casa + ': a proposta de mudança foi retirada. A sua marcação mantém-se ' + quando(r.data, r.hora) + '.'; }
+    else if(tipo === 'manter'){ patch = { estado:'confirmada' }; titulo = '✅ Marcação mantida'; corpo = casa + ': fica como estava, ' + quando(r.data, r.hora) + ' · ' + (r.servico || '') + '. Até já!'; }
     else if(tipo === 'desmarcar'){ patch = { estado:'cancelada', proposta_hora:null, proposta_data:null }; titulo = '🚫 Marcação cancelada'; corpo = casa + ' cancelou a marcação de ' + quando(r.data, r.hora) + '.'; }
     else return;
     if(o.nota !== undefined){ patch.nota = (o.nota || '').trim() || null; if(patch.nota) corpo += ' Nota: ' + patch.nota; }
+    if('resposta_cliente' in r) patch.resposta_cliente = null;   // o salão já tratou da resposta do cliente
     var u = await sb.from('reservas').update(patch).eq('id', r.id);
     if(u.error){ toast('Erro: ' + u.error.message); return; }
     await carregarRes();
@@ -1291,6 +1299,7 @@
     var choca = RES.some(function(x){ return x.id !== r.id && x.data === d && x.estado !== 'cancelada' && minDe(x.hora) != null && (!pr || !x.profissional || x.profissional === pr) && minDe(x.hora) < a + du && a < minDe(x.hora) + (+x.duracao || 30); });
     if(choca && !confirm((pr && nomeProf(pr) ? (nomeProf(pr) + ' já tem') : 'Já há') + ' uma marcação nesse dia a essa hora. Mudar mesmo assim?')) return;
     var patch = { data:d, hora:h, reagendada_de:r.data + ' ' + r.hora, proposta_hora:null, proposta_data:null, lembrete_em:null, lembrete_vespera_em:null };
+    if('resposta_cliente' in r) patch.resposta_cliente = null;
     if((nota || '').trim()) patch.nota = nota.trim();
     var u = await sb.from('reservas').update(patch).eq('id', r.id);
     if(u.error && /reagendada_de|column/i.test(u.error.message)){ delete patch.reagendada_de; u = await sb.from('reservas').update(patch).eq('id', r.id); }
@@ -1313,6 +1322,7 @@
       return ok && (c1 || c2); });
     if(choca && !confirm((pr && nomeProf(pr) ? (nomeProf(pr) + ' já tem') : 'Já há') + ' uma marcação nesse dia a essa hora. Propor mesmo assim?')) return;
     var patch = { proposta_data:d, proposta_hora:h }; if((nota || '').trim()) patch.nota = nota.trim();
+    if('resposta_cliente' in r) patch.resposta_cliente = null;
     var u = await sb.from('reservas').update(patch).eq('id', r.id);
     if(u.error){ toast(/proposta_data|column/i.test(u.error.message) ? 'Falta correr no Supabase o salao-propostas.sql.' : ('Erro: ' + u.error.message)); return; }
     await carregarRes();
