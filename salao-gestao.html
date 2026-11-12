@@ -156,7 +156,7 @@
   <label for="lEmail">Email</label><input id="lEmail" type="email" autocomplete="username">
   <label for="lPass">Password</label><input id="lPass" type="password" autocomplete="current-password">
   <button type="button" class="btn-ac" id="lEntrar">Entrar</button>
-  <a href="/nova-password.html" style="color:var(--ac);font-size:14px;">Esqueci-me da password</a>
+  <a href="salao-password.html" id="lEsqueci" style="color:var(--ac);font-size:14px;">Esqueci-me da password</a>
   <div class="msg" id="lMsg"></div>
 </div>
 
@@ -311,6 +311,8 @@
   function fechadoEm(k){ return (SAL.fechos || []).some(function(x){ return x && x.de && k >= x.de && k <= (x.ate || x.de); }); }
 
   // ---------- entrar ----------
+  // "Esqueci-me da password": página própria do 4Trevo (não a da àMesa), com o salão e o email já preenchidos
+  (function(){ var a = $('lEsqueci'); if(!a) return; a.onclick = function(ev){ ev.preventDefault(); var e = ($('lEmail') && $('lEmail').value || '').trim(); location.href = 'salao-password.html?n=' + encodeURIComponent(SLUG || '') + (e ? ('&email=' + encodeURIComponent(e)) : ''); }; })();
   async function iniciar(){
     if(!SLUG){ document.body.innerHTML = '<p style="padding:24px;">Falta o endereço do salão (?n=…).</p>'; return; }
     var s = (await sb.auth.getSession()).data.session;
