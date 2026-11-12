@@ -44,6 +44,7 @@
   .btn-ok{ min-height:40px; border:none; border-radius:9px; padding:0 12px; background:var(--verde); color:#fff; font-weight:800; }
   .btn-lnk{ min-height:40px; border:none; background:transparent; color:var(--ac); font-weight:700; padding:0 8px; }
   .titulo-dia{ font-size:22px; font-weight:800; flex:1 1 240px; }
+  #aHoje.on-hoje{ background:var(--ink); color:#fff; border-color:var(--ink); }
   .vista{ display:flex; background:#fff; border:1px solid var(--borda); border-radius:10px; padding:3px; }
   .vista button{ border:none; border-radius:8px; padding:8px 14px; background:transparent; font-weight:700; color:var(--ink); }
   .vista button.on{ background:var(--ink); color:#fff; }
@@ -249,7 +250,7 @@
       <div class="titulo-dia" id="aTitulo"></div>
       <select id="aProf" class="hide" aria-label="Profissional" style="min-height:40px;border:1.5px solid var(--borda);border-radius:10px;padding:0 10px;font-weight:700;"></select>
       <div class="vista" role="group" aria-label="Vista"><button type="button" data-v="dia" class="on">Dia</button><button type="button" data-v="semana">Semana</button><button type="button" data-v="mes">Mês</button></div>
-      <button type="button" class="btn" id="aAus" title="Férias, folgas e pausas da equipa">🌴 Ausências</button>
+      <button type="button" class="btn" id="aAus" title="Férias, folgas e pausas da equipa">Ausências equipa</button>
       <button type="button" class="btn" id="aAvisos">🔔 Receber avisos</button>
       <button type="button" class="btn-ac" id="aNova">+ Nova marcação</button>
     </div>
@@ -996,7 +997,7 @@
   function abrirAusencias(){
     if(!AUS_OK){ toast('Falta correr no Supabase o ficheiro 12-salao-ausencias.sql.'); return; }
     var hoje = iso(new Date()), l = AUS.filter(function(a){ return !a.ate || a.ate >= hoje; }), antigas = AUS.length - l.length;
-    var f = modal('<h3>🌴 Ausências</h3><div style="font-size:14px;color:var(--suave);">Férias, folgas, pausas para almoço… Nessas horas os clientes não conseguem marcar (com a pessoa ausente ou, se for o salão todo, com ninguém). O motivo só o salão vê.</div>'
+    var f = modal('<h3>Ausências equipa</h3><div style="font-size:14px;color:var(--suave);">Férias, folgas, pausas para almoço… Nessas horas os clientes não conseguem marcar (com a pessoa ausente ou, se for o salão todo, com ninguém). O motivo só o salão vê.</div>'
       + '<div class="aus-lista">' + (l.length ? l.map(function(a){ return '<button type="button" class="aus-it" data-id="' + esc(a.id) + '"><span style="width:10px;height:10px;border-radius:50%;flex:0 0 auto;background:' + (a.profissional ? corProf(a.profissional) : '#8A817A') + ';"></span><span class="q"><b>' + esc(ausNome(a)) + ' · ' + esc(a.motivo || 'Ausência') + '</b><span>' + esc(ausQuando(a)) + '</span></span><span style="color:var(--suave);">›</span></button>'; }).join('') : '<div style="color:var(--suave);font-size:14px;">Nenhuma ausência marcada.</div>') + '</div>'
       + (antigas ? ('<div style="font-size:12px;color:var(--suave);">' + antigas + ' ausência(s) já passada(s) não aparecem aqui.</div>') : '')
       + '<button type="button" class="btn-ac" id="ausNova">+ Nova ausência</button>');
@@ -1064,8 +1065,17 @@
   function opcoesDesc(sel){ return DESCONTOS.map(function(d){ return '<option value="' + d + '"' + ((+sel || 0) === d ? ' selected' : '') + '>' + (d ? ('−' + d + '%') : 'Sem desconto') + '</option>'; }).join(''); }
   function propTxt(r){ return r.proposta_hora ? quando(r.proposta_data || r.data, r.proposta_hora) : ''; }
   function cls(r){ if(r._fantasma) return 'b-fantasma'; if(r.faltou) return 'b-confirmada b-faltou'; return r.estado === 'confirmada' ? 'b-confirmada' : (r.estado === 'pendente' && r.proposta_hora) ? 'b-proposta' : 'b-pendente'; }
+  function pintarResumo(){
+    var hoje = iso(new Date()), k0 = iso(dataSel), doD = RES.filter(function(r){ return r.data === k0 && r.estado !== 'cancelada'; });
+    $('resTit').textContent = k0 === hoje ? ('Hoje · ' + quando(k0)) : quando(k0);
+    $('rMarc').textContent = doD.filter(function(r){ return r.estado === 'confirmada'; }).length;
+    $('rPend').textContent = doD.filter(function(r){ return r.estado === 'pendente'; }).length;
+    try{ $('rLivre').textContent = horasLivres(k0, 60); }catch(e){ $('rLivre').textContent = '—'; }
+    $('aHoje').classList.toggle('on-hoje', k0 === hoje);
+  }
   function pintarAgenda(){
-    pintarFiltroProf();
+    pintarResumo();
+    try{ pintarFiltroProf(); }catch(e){}
     if(vista === 'mes') return pintarMes();
     var iv = intervalo(), dias = [];
     for(var d = dDe(iv[0]); iso(d) <= iv[1]; d.setDate(d.getDate() + 1)) dias.push(iso(d));
@@ -1073,16 +1083,27 @@
     var eq = EQ(), cols0 = [];
     if(vista === 'dia' && eq.length){
       var k1 = dias[0], wd1 = dDe(k1).getDay();
-      eq.filter(function(p){ return !profFiltro || p.id === profFiltro; }).forEach(function(p){ var hz = horarioDe(wd1), ausT = hz ? ausDia(k1).filter(function(b){ return b.prof && b.prof === p.id && b.ini <= minDe(hz[0]) && b.fim >= minDe(hz[1]); })[0] : null; cols0.push({ dia:k1, prof:p.id, tit:p.nome, sub:!trabalha(p, wd1) ? 'Folga' : ausT ? ('🌴 ' + (ausT.a.motivo || 'Ausente')) : '', folga:!trabalha(p, wd1) }); });
+      eq.filter(function(p){ return !profFiltro || p.id === profFiltro; }).forEach(function(p){ var hz = horarioDe(wd1), ausT = hz ? ausDia(k1).filter(function(b){ return b.prof && b.prof === p.id && b.ini <= minDe(hz[0]) && b.fim >= minDe(hz[1]); })[0] : null; cols0.push({ dia:k1, prof:p.id, tit:p.nome, sub:!trabalha(p, wd1) ? 'Folga' : ausT ? ('' + (ausT.a.motivo || 'Ausente')) : '', folga:!trabalha(p, wd1) }); });
       if(!profFiltro && RES.some(function(r){ return r.data === k1 && r.estado !== 'cancelada' && (!r.profissional || !nomeProf(r.profissional)); })) cols0.push({ dia:k1, prof:'__sem', tit:'Sem profissional', sub:'' });
     } else dias.forEach(function(k){ cols0.push({ dia:k, prof:'' }); });
     var hoje = iso(new Date());
     // horas visíveis: do primeiro abrir ao último fechar da semana (mínimo 9h–19h)
     var ini = 9 * 60, fim = 19 * 60;
     for(var w = 0; w < 7; w++){ var h = horarioDe(w); if(h){ ini = Math.min(ini, minDe(h[0])); fim = Math.max(fim, minDe(h[1])); } }
-    ini = Math.floor(ini / 60) * 60; fim = Math.ceil(fim / 60) * 60;
+    // marcações fora do horário (ex.: às 8h ou às 20h) também têm de se ver: a grelha alarga-se até elas
+    RES.forEach(function(r){ if(r.estado === 'cancelada' || dias.indexOf(r.data) < 0) return; var a = minDe(r.hora); if(a == null) return; ini = Math.min(ini, a); fim = Math.max(fim, a + (+r.duracao || 30)); });
+    RES.forEach(function(r){ if(!r.proposta_hora || r.estado === 'cancelada' || dias.indexOf(r.proposta_data || r.data) < 0) return; var a = minDe(r.proposta_hora); if(a == null) return; ini = Math.min(ini, a); fim = Math.max(fim, a + (+r.duracao || 30)); });
+    ini = Math.max(0, Math.floor(ini / 60) * 60); fim = Math.min(24 * 60, Math.ceil(fim / 60) * 60);
     var PX = 64 / 60, alt = (fim - ini) * PX;
-    var cols = '64px repeat(' + cols0.length + ', minmax(' + (vista === 'dia' ? (cols0.length > 1 ? 200 : 300) : 120) + 'px, 1fr))';
+    // quantas marcações ao mesmo tempo (no máximo) em cada coluna: se forem muitas, a coluna alarga e a agenda passa a deslizar para o lado
+    function maxJuntas(c){ var k = c.dia;
+      var l = RES.filter(function(r){ return r.estado !== 'cancelada' && r.data === k && minDe(r.hora) != null; }).map(function(r){ return [minDe(r.hora), +r.duracao || 30, r.profissional]; })
+        .concat(RES.filter(function(r){ return r.proposta_hora && r.estado !== 'cancelada' && (r.proposta_data || r.data) === k && minDe(r.proposta_hora) != null; }).map(function(r){ return [minDe(r.proposta_hora), +r.duracao || 30, r.profissional]; }))
+        .filter(function(x){ var pr = x[2]; if(c.prof === '__sem') return !pr || !nomeProf(pr); if(c.prof) return pr === c.prof; return !profFiltro || pr === profFiltro || !pr; });
+      var ev = []; l.forEach(function(x){ ev.push([x[0], 1]); ev.push([x[0] + x[1], -1]); });
+      ev.sort(function(a, b){ return a[0] - b[0] || a[1] - b[1]; }); var cur = 0, mx = 1; ev.forEach(function(e){ cur += e[1]; if(cur > mx) mx = cur; }); return mx; }
+    var base = vista === 'dia' ? (cols0.length > 1 ? 200 : 300) : 120, porMarc = vista === 'dia' ? 120 : 84;
+    var cols = '64px ' + cols0.map(function(c){ var n = maxJuntas(c); return 'minmax(' + Math.max(base, n > 1 ? n * porMarc : 0) + 'px, 1fr)'; }).join(' ');
     $('aTitulo').textContent = vista === 'dia' ? (DIAS_L[dataSel.getDay()] + ', ' + dataSel.getDate() + ' de ' + MESES[dataSel.getMonth()]) : ('Semana de ' + dDe(iv[0]).getDate() + ' de ' + MESES[dDe(iv[0]).getMonth()]);
     var h = '<div class="ag-cab" style="grid-template-columns:' + cols + ';"><div style="border:none;"></div>';
     cols0.forEach(function(c){ var k = c.dia, dd = dDe(k);
@@ -1097,8 +1118,8 @@
       if(k === hoje){ var n = new Date(), nm = n.getHours() * 60 + n.getMinutes(); if(nm >= ini && nm <= fim) h += '<div class="agora" style="top:' + ((nm - ini) * PX) + 'px;"></div>'; }
       ausDia(k).filter(function(b){ return c.prof === '__sem' ? false : c.prof ? ausPara(b, c.prof) : (!b.prof || !profFiltro || b.prof === profFiltro); }).forEach(function(b){
         var a0 = Math.max(ini, b.ini), a1 = Math.min(fim, b.fim); if(a1 <= a0) return;
-        var lab = '🌴 ' + (b.a.motivo || 'Ausência') + (!c.prof && b.prof ? (' · ' + (nomeProf(b.prof) || '')) : (!b.prof && EQ().length ? ' · salão' : ''));
-        h += '<div class="aus" data-aus="' + esc(b.a.id) + '" title="' + esc(lab + ' · ' + ausQuando(b.a) + ' — tocar para mudar') + '" style="top:' + ((a0 - ini) * PX + 1) + 'px;height:' + Math.max(18, (a1 - a0) * PX - 2) + 'px;' + (!c.prof && b.prof ? ('left:auto;right:2px;width:20px;padding:3px 0;text-align:center;z-index:2;border:none;border-right:3px solid ' + corProf(b.prof) + ';') : '') + '">' + (!c.prof && b.prof ? '🌴' : esc(lab)) + '</div>';
+        var lab = (b.a.motivo || 'Ausência') + (!c.prof && b.prof ? (' · ' + (nomeProf(b.prof) || '')) : (!b.prof && EQ().length ? ' · salão' : ''));
+        h += '<div class="aus" data-aus="' + esc(b.a.id) + '" title="' + esc(lab + ' · ' + ausQuando(b.a) + ' — tocar para mudar') + '" style="top:' + ((a0 - ini) * PX + 1) + 'px;height:' + Math.max(18, (a1 - a0) * PX - 2) + 'px;' + (!c.prof && b.prof ? ('left:auto;right:2px;width:20px;padding:3px 0;text-align:center;z-index:2;border:none;border-right:3px solid ' + corProf(b.prof) + ';') : '') + '">' + (!c.prof && b.prof ? '' : esc(lab)) + '</div>';
       });
       var fant = RES.filter(function(r){ return r.proposta_hora && r.estado !== 'cancelada' && (r.proposta_data || r.data) === k && minDe(r.proposta_hora) != null; })
         .map(function(r){ return Object.assign({}, r, { id:r.id, _fantasma:true, data:k, hora:r.proposta_hora }); });
@@ -1143,11 +1164,6 @@
       if(ev.target !== c) return;
       var y = ev.offsetY, m = ini + Math.floor(y / PX / passo()) * passo(); novaMarcacao(c.getAttribute('data-dia'), hDe(m), c.getAttribute('data-prof') || profFiltro); }; });
     // resumo do dia escolhido
-    var k0 = iso(dataSel), doDia = RES.filter(function(r){ return r.data === k0 && r.estado !== 'cancelada'; });
-    $('resTit').textContent = k0 === hoje ? 'Hoje' : quando(k0);
-    $('rMarc').textContent = doDia.filter(function(r){ return r.estado === 'confirmada'; }).length;
-    $('rPend').textContent = doDia.filter(function(r){ return r.estado === 'pendente'; }).length;
-    $('rLivre').textContent = horasLivres(k0, 60);
   }
   function horasLivres(k, dur){
     var hh = horarioDe(dDe(k).getDay()); if(!hh || fechadoEm(k)) return 0;
@@ -1192,18 +1208,13 @@
       h += '<button type="button" class="mes-dia' + (fora ? ' fora' : '') + (fechado ? ' fechado' : '') + (k === hoje ? ' hoje' : '') + '" data-dia="' + k + '">'
         + '<div class="mes-num"><span>' + d.getDate() + '</span>' + (pend ? ('<span class="pill" title="Por confirmar">' + pend + '</span>') : '') + (fechado && !fora ? '<span style="font-size:11px;font-weight:600;color:var(--suave);">Fechado</span>' : '') + '</div>';
       var ausM = fora ? [] : ausDia(k).filter(function(b){ return !b.prof || !profFiltro || b.prof === profFiltro; }).filter(function(b){ return b.todo || !(b.a.dias && b.a.dias.length); });
-      ausM.slice(0, 2).forEach(function(b){ h += '<div class="mes-it a">🌴 ' + esc(b.prof ? (nomeProf(b.prof) || '') : (b.a.motivo || 'Salão')) + '</div>'; });
+      ausM.slice(0, 2).forEach(function(b){ h += '<div class="mes-it a">' + esc(b.prof ? ((nomeProf(b.prof) || '') + ' ausente') : (b.a.motivo || 'Salão fechado')) + '</div>'; });
       doDia.slice(0, 3 - Math.min(2, ausM.length)).forEach(function(r){ h += '<div class="mes-it ' + (r.estado === 'confirmada' ? 'c' : r.proposta_hora ? 'r' : 'p') + '">' + esc(r.hora) + ' ' + esc(r.nome || '') + '</div>'; });
       if(doDia.length > 3 - Math.min(2, ausM.length)) h += '<div class="mes-mais">+' + (doDia.length - (3 - Math.min(2, ausM.length))) + ' marcações</div>';
       h += '</button>';
     }
     $('agenda').innerHTML = h + '</div>';
     $('agenda').querySelectorAll('.mes-dia').forEach(function(b){ b.onclick = function(){ dataSel = dDe(b.getAttribute('data-dia')); vista = 'dia'; document.querySelectorAll('.vista button').forEach(function(x){ x.classList.toggle('on', x.getAttribute('data-v') === 'dia'); }); carregarRes(); }; });
-    var k0 = iso(dataSel), doD = RES.filter(function(r){ return r.data === k0 && r.estado !== 'cancelada'; });
-    $('resTit').textContent = k0 === hoje ? 'Hoje' : quando(k0);
-    $('rMarc').textContent = doD.filter(function(r){ return r.estado === 'confirmada'; }).length;
-    $('rPend').textContent = doD.filter(function(r){ return r.estado === 'pendente'; }).length;
-    $('rLivre').textContent = horasLivres(k0, 60);
   }
   $('aHoje').onclick = function(){ dataSel = new Date(); dataSel.setHours(0,0,0,0); carregarRes(); };
   document.querySelectorAll('.vista button').forEach(function(b){ b.onclick = function(){ vista = b.getAttribute('data-v'); document.querySelectorAll('.vista button').forEach(function(x){ x.classList.toggle('on', x === b); }); carregarRes(); }; });
@@ -1352,7 +1363,7 @@
       var choca = RES.some(function(r){ return r.data === d && r.estado !== 'cancelada' && minDe(r.hora) != null && (!pr || !r.profissional || r.profissional === pr) && minDe(r.hora) < a + du && a < minDe(r.hora) + (+r.duracao || 30); });
       if(choca && !confirm((pr ? (nomeProf(pr) + ' já tem') : 'Já há') + ' uma marcação a essa hora. Guardar mesmo assim?')) return;
       var ausC = ausDia(d).filter(function(b){ return ausPara(b, pr) && b.ini < a + du && a < b.fim; })[0];
-      if(ausC && !confirm('🌴 ' + (ausC.prof ? (nomeProf(ausC.prof) || 'Esta pessoa') + ' está ausente' : 'O salão está fechado') + ' a essa hora (' + (ausC.a.motivo || 'ausência') + '). Guardar mesmo assim?')) return;
+      if(ausC && !confirm('' + (ausC.prof ? (nomeProf(ausC.prof) || 'Esta pessoa') + ' está ausente' : 'O salão está fechado') + ' a essa hora (' + (ausC.a.motivo || 'ausência') + '). Guardar mesmo assim?')) return;
       var ins = { negocio_id:NEG.id, data:d, hora:h, nome:nome, telefone:$('nTel').value.trim() || '-', pessoas:1, obs:$('nObs').value.trim() || null, estado:'confirmada', servico:s.nome, duracao:du }; if(pr) ins.profissional = pr; var nd0 = +($('nDesc') ? $('nDesc').value : 0) || 0; if(nd0){ var bb = precoServ(s.nome); ins.desconto = nd0; if(bb != null){ ins.valor_base = bb; ins.valor = comDesc(bb, nd0); } }
       var r = await sb.from('reservas').insert(ins);
       if(r.error){ $('nMsg').textContent = /servico|duracao|column/i.test(r.error.message) ? 'Falta correr no Supabase o ficheiro salao-marcacoes.sql.' : ('Erro: ' + r.error.message); $('nMsg').className = 'msg erro'; return; }
