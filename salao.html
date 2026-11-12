@@ -179,7 +179,7 @@
   .lb{ animation:aFade .2s ease both; } .lb img{ animation:aZoom .28s cubic-bezier(.2,.8,.2,1) both; }
   .lb.sai{ animation:aFadeOut .2s ease both; } .lb.sai img{ animation:aZoomOut .2s ease both; }
   .fundo-folha{ animation:aFade .25s ease both; }
-  .painel.entra{ animation:aZoom .3s cubic-bezier(.2,.8,.2,1) both; }
+  @media (min-width: 861px){ .painel.entra{ animation:aZoom .3s cubic-bezier(.2,.8,.2,1); } }   /* só no computador: no telemóvel a folha já desliza (e a animação não pode prender a posição) */
   .minha.aberta .minha-corpo{ animation:aAbre .25s ease both; }
   .minha-prop, #minhas .msg{ animation:aAbre .3s ease both; }
   .cat-grelha.primeira .cat-card, #minhas.primeira .minha{ animation:aZoom .35s cubic-bezier(.2,.8,.2,1) both; }
@@ -650,7 +650,7 @@
     fecharFolha(); pintarServicos();
   }
   $('btnDesistir').onclick = desistir; $('btnDesistirBarra').onclick = desistir;
-  function fecharFolha(){ $('painel').classList.remove('aberto'); if(fundo){ fundo.remove(); fundo = null; }
+  function fecharFolha(){ $('painel').classList.remove('aberto', 'entra'); if(fundo){ fundo.remove(); fundo = null; }
     var temServ = !!(sel && sel.serv); $('barra').classList.toggle('hide', !temServ);
     if(temServ) $('btnBarra').textContent = (sel.reag ? 'Continuar a reagendar · ' : 'Continuar marcação · ') + sel.serv.nome; }
   $('fecharFolha').onclick = fecharFolha;
