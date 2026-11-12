@@ -806,7 +806,7 @@
   }
   // Lista completa de tipos (muito leve: só o texto) — barra de filtros sempre completa.
   function _carregarTipos(){
-    var url = SUPA_URL + '/rest/v1/negocios?apagado_em=is.null&slug=neq.' + encodeURIComponent(AMESA_SLUG) + '&select=tipo:config->>tipo,oculto:config->>oculto';
+    var url = SUPA_URL + '/rest/v1/negocios?apagado_em=is.null&slug=neq.' + encodeURIComponent(AMESA_SLUG) + '&or=(config->>setor.is.null,config->>setor.eq.restauracao)&select=tipo:config->>tipo,oculto:config->>oculto';   // só restauração (Multitask: outros tipos de negócio têm a sua montra)
     return fetch(url, _hdr).then(function(r){ return r.ok ? r.json() : []; }).then(function(rows){
       var set = [];
       // negócios ocultos não entram (senão aparecia um filtro sem nenhum restaurante)
@@ -815,7 +815,7 @@
     }).catch(function(){ TIPOS_ALL = []; });
   }
   function _urlPagina(sel){
-    return SUPA_URL + '/rest/v1/negocios?order=nome.asc&slug=neq.' + encodeURIComponent(AMESA_SLUG) + '&select=' + sel + '&limit=' + PAGINA + '&offset=' + _offset;
+    return SUPA_URL + '/rest/v1/negocios?order=nome.asc&slug=neq.' + encodeURIComponent(AMESA_SLUG) + '&or=(config->>setor.is.null,config->>setor.eq.restauracao)&select=' + sel + '&limit=' + PAGINA + '&offset=' + _offset;
   }
   // Pede a próxima página de restaurantes e junta-a à lista.
   function _pedirPagina(){

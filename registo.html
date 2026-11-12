@@ -380,7 +380,7 @@
   (async function carregaExemplos(){
     var box = $('exs');
     try{
-      var r = await api('/rest/v1/negocios?select=slug,nome,desc:config->>exemploDesc,tipo:config->>tipo,montra:config->>montraFoto,fotos:config->header->fotos&config->>exemplo=eq.true&ativo=eq.true&apagado_em=is.null&order=nome');
+      var r = await api('/rest/v1/negocios?select=slug,nome,desc:config->>exemploDesc,tipo:config->>tipo,montra:config->>montraFoto,fotos:config->header->fotos&or=(config->>setor.is.null,config->>setor.eq.restauracao)&config->>exemplo=eq.true&ativo=eq.true&apagado_em=is.null&order=nome');
       if(!r.ok) throw new Error(r.status);
       exemplos = await r.json();
       // enquanto nenhum negócio estiver marcado como exemplo no painel, mostra o exemplo1
