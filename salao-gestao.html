@@ -762,7 +762,7 @@
     var h = await sb.from('salao_campanhas').select('*').eq('negocio_id', NEG.id).order('criado_em', { ascending:false }).limit(50);
     CAMP_OK = !h.error; CAMPH = h.error ? [] : (h.data || []);
     if(!$('cpBanAte').value) $('cpBanAte').value = iso(new Date(Date.now() + 14 * 86400000));
-    pintarCampanha(); pintarHistCamp(); pintarCatBanner(); pintarFotosBanner(); pintarPromoAtual(); desenharBanner();
+    pintarCampanha(); pintarHistCamp(); pintarCatBanner(); pintarFotosBanner(); pintarPromoAtual(); desenharBanner(); garantirPromoLarga();
   }
   // destinatários do público escolhido: [{ c, x (stats), ep (notificação), tel }]
   function publicoCamp(){
@@ -840,7 +840,7 @@
     return out; }
   var _banN = 0;
   // desenha o banner num canvas de W×H (telemóvel: 1200×630; computador: 2000×560, mais estendido)
-  function pintarBannerEm(c, W, H, foto, logo){
+  function pintarBannerEm(c, W, H, foto, logo, txtO){
     var g = c.getContext('2d'), cor = corOk(SAL.cor) ? SAL.cor : '#8E3653', k = H / 630, largo = W / H > 2.5;
     function redondo(x, y, w, h, r){ g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
     function px(v){ return Math.round(v * k); }
@@ -865,7 +865,7 @@
       g.fillStyle = 'rgba(255,255,255,.92)'; g.font = '700 ' + px(26) + 'px Manrope, system-ui, sans-serif'; g.textBaseline = 'middle';
       var nm = linhasTexto(g, SAL.nome || NEG.nome || '', txtW - L - px(24), 1)[0] || ''; g.fillText(nm, txtX + L + px(22), y + L / 2); y += L + px(36); }
     else { g.fillStyle = 'rgba(255,255,255,.92)'; g.font = '700 ' + px(28) + 'px Manrope, system-ui, sans-serif'; g.textBaseline = 'top'; g.fillText(SAL.nome || NEG.nome || '', txtX, y); y += px(64); }
-    var tit = $('cpTit').value.trim() || 'Novidade', txt = textoPara({ nome:'' }, $('cpTxt').value);
+    var tit = txtO ? (txtO.tit || 'Novidade') : ($('cpTit').value.trim() || 'Novidade'), txt = txtO ? (txtO.txt || '') : textoPara({ nome:'' }, $('cpTxt').value);
     g.fillStyle = '#fff'; g.textBaseline = 'top';
     var fs = px(largo ? 72 : 66); for(; fs >= px(40); fs -= px(4)){ g.font = '800 ' + fs + 'px Manrope, system-ui, sans-serif'; if(linhasTexto(g, tit, txtW, 3).length <= (largo ? 1 : 2)) break; }
     linhasTexto(g, tit, txtW, 2).forEach(function(l){ g.fillText(l, txtX, y); y += fs * 1.12; }); y += px(12);
@@ -893,11 +893,21 @@
       var up = await sb.storage.from('imagens').upload(caminho, blob, { contentType:'image/jpeg', cacheControl:'31536000', upsert:false }); if(up.error) throw up.error; return sb.storage.from('imagens').getPublicUrl(caminho).data.publicUrl; }
     var url, urlL; try{ url = await sobe($('cpBanPrev'), 'banner'); urlL = await sobe($('cpBanPrevL'), 'banner-largo'); }catch(er){ toast('Não foi possível guardar o banner: ' + (er.message || er)); return null; }
     var antigo = SAL.promo && SAL.promo.img, antigoL = SAL.promo && SAL.promo.imgLargo;
-    var promo = { id:Date.now().toString(36), img:url, imgLargo:urlL, titulo:$('cpTit').value.trim() || 'Novidade', texto:textoPara({ nome:'' }, $('cpTxt').value), ate:$('cpBanAte').value || iso(new Date(Date.now() + 14 * 86400000)), cat:$('cpBanCat').value || null, criado:new Date().toISOString() };
+    var promo = { id:Date.now().toString(36), img:url, imgLargo:urlL, titulo:$('cpTit').value.trim() || 'Novidade', texto:textoPara({ nome:'' }, $('cpTxt').value), ate:$('cpBanAte').value || iso(new Date(Date.now() + 14 * 86400000)), cat:$('cpBanCat').value || null, foto:BAN.foto || null, criado:new Date().toISOString() };
     var e = await guardarCfg(function(c){ c.salao = Object.assign({}, c.salao || {}, { promo:promo }); });
     if(e){ toast('Erro ao pôr o banner na página: ' + e.message); return url; }
     if(antigo && antigo !== url) apagarFicheiro(antigo); if(antigoL && antigoL !== urlL) apagarFicheiro(antigoL);
     BAN.ultimo = { chave:chave, url:url }; pintarPromoAtual(); return url;
+  }
+  async function garantirPromoLarga(){
+    var p = SAL.promo; if(!p || !p.img || p.imgLargo || String(p.ate || '') < iso(new Date())) return;
+    try{ if(document.fonts && document.fonts.ready) await document.fonts.ready; }catch(e){}
+    var foto = await carregarImg(p.foto || (p.cat ? fotoCat(p.cat) : '')), logo = await carregarImg(logoPush() || '');
+    var cv = document.createElement('canvas'); cv.width = 2000; cv.height = 560; pintarBannerEm(cv, 2000, 560, foto, logo, { tit:p.titulo, txt:p.texto });
+    try{ var blob = await new Promise(function(ok){ cv.toBlob(ok, 'image/jpeg', 0.88); }), caminho = SLUG + '/promo/banner-largo-' + Date.now().toString(36) + '.jpg';
+      var up = await sb.storage.from('imagens').upload(caminho, blob, { contentType:'image/jpeg', cacheControl:'31536000', upsert:false }); if(up.error) return;
+      var u = sb.storage.from('imagens').getPublicUrl(caminho).data.publicUrl;
+      await guardarCfg(function(c){ c.salao = Object.assign({}, c.salao || {}); if(c.salao.promo && c.salao.promo.id === p.id) c.salao.promo = Object.assign({}, c.salao.promo, { imgLargo:u }); }); }catch(e){}
   }
   function pintarPromoAtual(){
     var p = SAL.promo, ativa = p && p.img && String(p.ate || '') >= iso(new Date());

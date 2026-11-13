@@ -385,12 +385,12 @@
     var _at = document.querySelector('meta[name="apple-mobile-web-app-title"]') || document.head.appendChild(Object.assign(document.createElement('meta'), { name:'apple-mobile-web-app-title' })); _at.content = nome.slice(0, 24);
     $('nomeSalao').textContent = nome;
     var hojeH = horarioDe(new Date().getDay());
-    var info = [SAL.frase, SAL.morada, (SAL.mostrarHoje === false ? '' : (hojeH ? ('Hoje ' + hojeH[0] + '–' + hojeH[1]) : 'Hoje fechado'))].filter(Boolean).map(esc).join(' · ');
+    var info = [SAL.frase, (SAL.mostrarHoje === false ? '' : (hojeH ? ('Hoje ' + hojeH[0] + '–' + hojeH[1]) : 'Hoje fechado'))].filter(Boolean).map(esc).join(' · ');
     $('infoSalao').innerHTML = info;
     var ac = '';
     if(SAL.telefone) ac += '<a href="tel:' + esc(String(SAL.telefone).replace(/\s/g,'')) + '">Ligar</a>';
     var rd = '';
-    if(SAL.mostrarMapa !== false && linkMapa()) rd += '<a class="rede" href="' + esc(linkMapa()) + '" target="_blank" rel="noopener" aria-label="Como chegar (Google Maps)" title="Como chegar"><svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg></a>';
+    if(SAL.mostrarMapa !== false && linkMapa()) rd += '<a class="rede" style="background:#fff;border-color:#fff;" href="' + esc(linkMapa()) + '" target="_blank" rel="noopener" aria-label="Como chegar (Google Maps)" title="' + esc(SAL.morada || 'Como chegar') + '"><svg viewBox="0 0 24 24" style="fill:#E53935;"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg></a>';
     if(SAL.facebook){ var fb = String(SAL.facebook).trim(); if(!/^https?:\/\//i.test(fb)) fb = 'https://facebook.com/' + fb.replace(/^@/, '').replace(/^(www\.)?facebook\.com\//i, ''); rd += '<a class="rede" href="' + esc(fb) + '" target="_blank" rel="noopener" aria-label="Facebook">' + ICO_FB + '</a>'; }
     if(SAL.instagram){ var ig = String(SAL.instagram).replace(/^@/, '').replace(/^https?:\/\/(www\.)?instagram\.com\//, '').replace(/\/.*$/, ''); rd += '<a class="rede" href="https://instagram.com/' + esc(ig) + '" target="_blank" rel="noopener" aria-label="Instagram">' + ICO_IG + '</a>'; }
     if(SAL.whatsapp){ var w = String(SAL.whatsapp).replace(/\D/g,'').replace(/^00/, ''); if(w.length === 9) w = '351' + w; rd += '<a class="rede" href="https://wa.me/' + esc(w) + '" target="_blank" rel="noopener" aria-label="WhatsApp">' + ICO_WA + '</a>'; }
