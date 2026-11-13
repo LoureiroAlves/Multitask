@@ -357,7 +357,7 @@
       <div>
         <div class="camp-prev-tit">Pré-visualização</div>
         <div class="camp-prev" id="cpPrev"></div>
-        <div id="cpBanPrevBx" class="hide"><div class="camp-prev-tit" style="margin-top:14px;">Banner</div><canvas id="cpBanPrev" width="1200" height="630" style="width:100%;height:auto;border-radius:12px;display:block;box-shadow:0 4px 16px rgba(0,0,0,.1);"></canvas></div>
+        <div id="cpBanPrevBx" class="hide"><div class="camp-prev-tit" style="margin-top:14px;">Banner · telemóvel, notificação e WhatsApp</div><canvas id="cpBanPrev" width="1200" height="630" style="width:100%;height:auto;border-radius:12px;display:block;box-shadow:0 4px 16px rgba(0,0,0,.1);"></canvas><div class="camp-prev-tit" style="margin-top:12px;">Banner · computador</div><canvas id="cpBanPrevL" width="2000" height="560" style="width:100%;height:auto;border-radius:12px;display:block;box-shadow:0 4px 16px rgba(0,0,0,.1);"></canvas></div>
         <div id="cpPromoAtual" class="hide"></div>
       </div>
     </div>
@@ -382,7 +382,7 @@
       <div class="campo"><label for="pgFrase">Frase curta</label><input id="pgFrase" maxlength="90" placeholder="Ex.: Unhas, massagens e depilação"></div>
       <div class="campo"><label for="pgMorada">Morada</label><input id="pgMorada" maxlength="120"></div>
       <div class="campo"><label for="pgMapa">Link do Google Maps <span style="font-weight:400;color:var(--suave);">(opcional — dá o pino exato)</span></label><input id="pgMapa" maxlength="500" placeholder="Cole aqui o link do salão no Google Maps"><div style="font-size:12px;color:var(--suave);margin-top:3px;">No Google Maps, procure o salão → Partilhar → Copiar link. Sem link, o mapa usa a morada.</div></div>
-      <label class="chk-l" style="margin:2px 0 6px;"><input type="checkbox" id="pgMapaOn"> Mostrar o mapa "Como chegar" na página</label>
+      <label class="chk-l" style="margin:2px 0 6px;"><input type="checkbox" id="pgMapaOn"> Mostrar o pino do mapa no cabeçalho (abre o Google Maps)</label>
       <div class="campo"><label for="pgTel">Telefone</label><input id="pgTel" maxlength="20"></div>
       <div class="campo"><label for="pgWa">WhatsApp</label><input id="pgWa" maxlength="20"></div>
       <div class="campo"><label for="pgIg">Instagram</label><input id="pgIg" maxlength="60" placeholder="@salao"></div>
@@ -839,40 +839,49 @@
     if(out.length > maxL){ out = out.slice(0, maxL); var u = out[maxL - 1]; while(g.measureText(u + '…').width > maxW && u.length > 1) u = u.slice(0, -1); out[maxL - 1] = u + '…'; }
     return out; }
   var _banN = 0;
-  async function desenharBanner(){
-    var on = $('cpBan').checked; $('cpBanOp').classList.toggle('hide', !on); $('cpBanPrevBx').classList.toggle('hide', !on); if(!on) return;
-    var n = ++_banN, c = $('cpBanPrev'), g = c.getContext('2d'), W = 1200, H = 630, cor = corOk(SAL.cor) ? SAL.cor : '#8E3653';
-    try{ if(document.fonts && document.fonts.ready) await document.fonts.ready; }catch(e){}
-    var foto = await carregarImg(BAN.foto), logo = await carregarImg(logoPush() || ''); if(n !== _banN) return;
+  // desenha o banner num canvas de W×H (telemóvel: 1200×630; computador: 2000×560, mais estendido)
+  function pintarBannerEm(c, W, H, foto, logo){
+    var g = c.getContext('2d'), cor = corOk(SAL.cor) ? SAL.cor : '#8E3653', k = H / 630, largo = W / H > 2.5;
     function redondo(x, y, w, h, r){ g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
+    function px(v){ return Math.round(v * k); }
     g.clearRect(0, 0, W, H);
-    var txtX = 70, txtW = W - 140;
+    var txtX = largo ? px(90) : 70, txtW = W - txtX * 2;
     if(foto){
       // foto à direita (preenche sem esticar), texto à esquerda sobre a cor do salão
-      var fx = W * 0.46, px = fx - 140, fw = W - px, k = Math.max(fw / foto.width, H / foto.height), sw = fw / k, sh = H / k;
-      g.drawImage(foto, (foto.width - sw) / 2, (foto.height - sh) / 2, sw, sh, px, 0, fw, H);   // a foto começa por baixo da passagem de cor
-      var gr = g.createLinearGradient(fx - 120, 0, fx + 160, 0); gr.addColorStop(0, cor); gr.addColorStop(1, cor + '00');
-      g.fillStyle = cor; g.fillRect(0, 0, fx - 119, H); g.fillStyle = gr; g.fillRect(fx - 120, 0, 280, H);
-      txtW = fx - 110;
+      var fx = W * (largo ? 0.52 : 0.46), p0 = fx - px(140), fw = W - p0, kk = Math.max(fw / foto.width, H / foto.height), sw = fw / kk, sh = H / kk;
+      g.drawImage(foto, (foto.width - sw) / 2, (foto.height - sh) / 2, sw, sh, p0, 0, fw, H);
+      var gr = g.createLinearGradient(fx - px(120), 0, fx + px(160), 0); gr.addColorStop(0, cor); gr.addColorStop(1, cor + '00');
+      g.fillStyle = cor; g.fillRect(0, 0, fx - px(119), H); g.fillStyle = gr; g.fillRect(fx - px(120), 0, px(280), H);
+      txtW = fx - px(110) - txtX;
     } else {
       g.fillStyle = cor; g.fillRect(0, 0, W, H);
-      g.fillStyle = 'rgba(255,255,255,.08)'; g.beginPath(); g.arc(W - 120, 90, 260, 0, 7); g.fill(); g.beginPath(); g.arc(W - 40, H + 40, 200, 0, 7); g.fill();
+      g.fillStyle = 'rgba(255,255,255,.08)'; g.beginPath(); g.arc(W - px(120), px(90), px(260), 0, 7); g.fill(); g.beginPath(); g.arc(W - px(40), H + px(40), px(200), 0, 7); g.fill();
+      if(largo){ g.beginPath(); g.arc(W * 0.62, H + px(60), px(170), 0, 7); g.fill(); }
+      txtW = Math.min(txtW, largo ? W * 0.62 : txtW);
     }
-    var y = 64;
-    if(logo){ var L = 96, kl = Math.min((L - 16) / logo.width, (L - 16) / logo.height); g.fillStyle = '#fff'; redondo(txtX, y, L, L, 18); g.fill();
+    var y = px(56);
+    if(logo){ var L = px(92), kl = Math.min((L - px(16)) / logo.width, (L - px(16)) / logo.height); g.fillStyle = '#fff'; redondo(txtX, y, L, L, px(18)); g.fill();
       g.drawImage(logo, txtX + (L - logo.width * kl) / 2, y + (L - logo.height * kl) / 2, logo.width * kl, logo.height * kl);
-      g.fillStyle = 'rgba(255,255,255,.92)'; g.font = '700 26px Manrope, system-ui, sans-serif'; g.textBaseline = 'middle';
-      var nm = linhasTexto(g, SAL.nome || NEG.nome || '', txtW - L - 24, 1)[0] || ''; g.fillText(nm, txtX + L + 22, y + L / 2); y += L + 46; }
-    else { g.fillStyle = 'rgba(255,255,255,.92)'; g.font = '700 28px Manrope, system-ui, sans-serif'; g.textBaseline = 'top'; g.fillText(SAL.nome || NEG.nome || '', txtX, y); y += 70; }
+      g.fillStyle = 'rgba(255,255,255,.92)'; g.font = '700 ' + px(26) + 'px Manrope, system-ui, sans-serif'; g.textBaseline = 'middle';
+      var nm = linhasTexto(g, SAL.nome || NEG.nome || '', txtW - L - px(24), 1)[0] || ''; g.fillText(nm, txtX + L + px(22), y + L / 2); y += L + px(36); }
+    else { g.fillStyle = 'rgba(255,255,255,.92)'; g.font = '700 ' + px(28) + 'px Manrope, system-ui, sans-serif'; g.textBaseline = 'top'; g.fillText(SAL.nome || NEG.nome || '', txtX, y); y += px(64); }
     var tit = $('cpTit').value.trim() || 'Novidade', txt = textoPara({ nome:'' }, $('cpTxt').value);
     g.fillStyle = '#fff'; g.textBaseline = 'top';
-    var fs = 66; for(; fs >= 40; fs -= 4){ g.font = '800 ' + fs + 'px Manrope, system-ui, sans-serif'; if(linhasTexto(g, tit, txtW, 3).length <= 2) break; }
-    linhasTexto(g, tit, txtW, 2).forEach(function(l){ g.fillText(l, txtX, y); y += fs * 1.12; }); y += 14;
-    g.font = '500 30px Manrope, system-ui, sans-serif'; g.fillStyle = 'rgba(255,255,255,.92)';
-    var maxL = Math.max(1, Math.floor((H - 130 - y) / 40)); linhasTexto(g, txt, txtW, Math.min(4, maxL)).forEach(function(l){ g.fillText(l, txtX, y); y += 40; });
+    var fs = px(largo ? 72 : 66); for(; fs >= px(40); fs -= px(4)){ g.font = '800 ' + fs + 'px Manrope, system-ui, sans-serif'; if(linhasTexto(g, tit, txtW, 3).length <= (largo ? 1 : 2)) break; }
+    linhasTexto(g, tit, txtW, 2).forEach(function(l){ g.fillText(l, txtX, y); y += fs * 1.12; }); y += px(12);
+    g.font = '500 ' + px(30) + 'px Manrope, system-ui, sans-serif'; g.fillStyle = 'rgba(255,255,255,.92)';
+    var maxL = Math.max(1, Math.floor((H - px(130) - y) / px(40))); linhasTexto(g, txt, txtW, Math.min(largo ? 2 : 4, maxL)).forEach(function(l){ g.fillText(l, txtX, y); y += px(40); });
     // botão "Marcar"
-    g.font = '800 28px Manrope, system-ui, sans-serif'; var bt = 'Marcar  →', bw = g.measureText(bt).width + 56, by = H - 64 - 62;
-    g.fillStyle = '#fff'; redondo(txtX, by, bw, 62, 31); g.fill(); g.fillStyle = cor; g.textBaseline = 'middle'; g.fillText(bt, txtX + 28, by + 32);
+    g.font = '800 ' + px(28) + 'px Manrope, system-ui, sans-serif'; var bt = 'Marcar  →', bw = g.measureText(bt).width + px(56), bh = px(62), by = H - px(56) - bh;
+    g.fillStyle = '#fff'; redondo(txtX, by, bw, bh, bh / 2); g.fill(); g.fillStyle = cor; g.textBaseline = 'middle'; g.fillText(bt, txtX + px(28), by + bh / 2 + 1);
+  }
+    async function desenharBanner(){
+    var on = $('cpBan').checked; $('cpBanOp').classList.toggle('hide', !on); $('cpBanPrevBx').classList.toggle('hide', !on); if(!on) return;
+    var n = ++_banN;
+    try{ if(document.fonts && document.fonts.ready) await document.fonts.ready; }catch(e){}
+    var foto = await carregarImg(BAN.foto), logo = await carregarImg(logoPush() || ''); if(n !== _banN) return;
+    pintarBannerEm($('cpBanPrev'), 1200, 630, foto, logo);
+    pintarBannerEm($('cpBanPrevL'), 2000, 560, foto, logo);
   }
   // guarda o banner (uma vez por conteúdo) e põe-no na página do salão até à data escolhida
   async function publicarBanner(){
@@ -880,15 +889,14 @@
     await desenharBanner();
     var chave = [$('cpTit').value.trim(), $('cpTxt').value.trim(), BAN.foto, $('cpBanAte').value, SAL.cor, logoPush(), $('cpBanCat').value].join('|');
     if(BAN.ultimo && BAN.ultimo.chave === chave) return BAN.ultimo.url;
-    var blob = await new Promise(function(ok){ $('cpBanPrev').toBlob(ok, 'image/jpeg', 0.88); });
-    var caminho = SLUG + '/promo/banner-' + Date.now().toString(36) + '.jpg';
-    var up = await sb.storage.from('imagens').upload(caminho, blob, { contentType:'image/jpeg', cacheControl:'31536000', upsert:false });
-    if(up.error){ toast('Não foi possível guardar o banner: ' + up.error.message); return null; }
-    var url = sb.storage.from('imagens').getPublicUrl(caminho).data.publicUrl, antigo = SAL.promo && SAL.promo.img;
-    var promo = { id:Date.now().toString(36), img:url, titulo:$('cpTit').value.trim() || 'Novidade', texto:textoPara({ nome:'' }, $('cpTxt').value), ate:$('cpBanAte').value || iso(new Date(Date.now() + 14 * 86400000)), cat:$('cpBanCat').value || null, criado:new Date().toISOString() };
+    async function sobe(cv, nome){ var blob = await new Promise(function(ok){ cv.toBlob(ok, 'image/jpeg', 0.88); }); var caminho = SLUG + '/promo/' + nome + '-' + Date.now().toString(36) + '.jpg';
+      var up = await sb.storage.from('imagens').upload(caminho, blob, { contentType:'image/jpeg', cacheControl:'31536000', upsert:false }); if(up.error) throw up.error; return sb.storage.from('imagens').getPublicUrl(caminho).data.publicUrl; }
+    var url, urlL; try{ url = await sobe($('cpBanPrev'), 'banner'); urlL = await sobe($('cpBanPrevL'), 'banner-largo'); }catch(er){ toast('Não foi possível guardar o banner: ' + (er.message || er)); return null; }
+    var antigo = SAL.promo && SAL.promo.img, antigoL = SAL.promo && SAL.promo.imgLargo;
+    var promo = { id:Date.now().toString(36), img:url, imgLargo:urlL, titulo:$('cpTit').value.trim() || 'Novidade', texto:textoPara({ nome:'' }, $('cpTxt').value), ate:$('cpBanAte').value || iso(new Date(Date.now() + 14 * 86400000)), cat:$('cpBanCat').value || null, criado:new Date().toISOString() };
     var e = await guardarCfg(function(c){ c.salao = Object.assign({}, c.salao || {}, { promo:promo }); });
     if(e){ toast('Erro ao pôr o banner na página: ' + e.message); return url; }
-    if(antigo && antigo !== url) apagarFicheiro(antigo);
+    if(antigo && antigo !== url) apagarFicheiro(antigo); if(antigoL && antigoL !== urlL) apagarFicheiro(antigoL);
     BAN.ultimo = { chave:chave, url:url }; pintarPromoAtual(); return url;
   }
   function pintarPromoAtual(){
@@ -896,7 +904,7 @@
     $('cpPromoAtual').classList.toggle('hide', !ativa); if(!ativa){ $('cpPromoAtual').innerHTML = ''; return; }
     $('cpPromoAtual').innerHTML = '<div class="promo-atual"><img src="' + esc(p.img) + '" alt=""><div style="flex:1;"><b>Na página do salão agora</b><div style="color:var(--suave);">até ' + dataPt(p.ate) + '</div></div><button type="button" class="btn-lnk" id="cpPromoTirar">Retirar</button></div>';
     $('cpPromoTirar').onclick = async function(){ if(!confirm('Tirar este banner da página do salão?')) return; var antigo = p.img;
-      var e = await guardarCfg(function(c){ c.salao = Object.assign({}, c.salao || {}); delete c.salao.promo; }); if(e){ toast('Erro: ' + e.message); return; } apagarFicheiro(antigo); BAN.ultimo = null; pintarPromoAtual(); toast('Banner retirado da página'); };
+      var antigoL = p.imgLargo; var e = await guardarCfg(function(c){ c.salao = Object.assign({}, c.salao || {}); delete c.salao.promo; }); if(e){ toast('Erro: ' + e.message); return; } apagarFicheiro(antigo); if(antigoL) apagarFicheiro(antigoL); BAN.ultimo = null; pintarPromoAtual(); toast('Banner retirado da página'); };
   }
   $('cpBan').addEventListener('change', desenharBanner);
   $('cpBanCat').addEventListener('change', function(){ var c = this.value; if(c){ var f = fotoCat(c); if(f) BAN.foto = f; } pintarFotosBanner(); desenharBanner(); });

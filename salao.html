@@ -169,6 +169,7 @@
   /* banner da promoção (feito pelo salão nas Campanhas) */
   .promo-ban{ display:block; width:100%; max-width:640px; padding:0; border:none; border-radius:16px; overflow:hidden; cursor:pointer; background:none; box-shadow:0 6px 18px rgba(31,28,26,.14); animation:aZoom .4s ease both; }
   .promo-ban img{ display:block; width:100%; height:auto; }
+  @media (min-width: 861px){ .promo-ban.largo{ max-width:none; } .promo-pop .cx.largo{ max-width:min(1000px, 94vw); } }
   .promo-pop{ position:fixed; inset:0; z-index:120; background:rgba(0,0,0,.6); display:flex; align-items:center; justify-content:center; padding:16px; animation:aFade .25s ease both; }
   .promo-pop .cx{ position:relative; width:100%; max-width:560px; background:#fff; border-radius:18px; overflow:hidden; box-shadow:0 20px 50px rgba(0,0,0,.35); animation:aZoom .35s cubic-bezier(.2,.8,.2,1) both; }
   .promo-pop img{ display:block; width:100%; height:auto; }
@@ -389,6 +390,7 @@
     var ac = '';
     if(SAL.telefone) ac += '<a href="tel:' + esc(String(SAL.telefone).replace(/\s/g,'')) + '">Ligar</a>';
     var rd = '';
+    if(SAL.mostrarMapa !== false && linkMapa()) rd += '<a class="rede" href="' + esc(linkMapa()) + '" target="_blank" rel="noopener" aria-label="Como chegar (Google Maps)" title="Como chegar"><svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg></a>';
     if(SAL.facebook){ var fb = String(SAL.facebook).trim(); if(!/^https?:\/\//i.test(fb)) fb = 'https://facebook.com/' + fb.replace(/^@/, '').replace(/^(www\.)?facebook\.com\//i, ''); rd += '<a class="rede" href="' + esc(fb) + '" target="_blank" rel="noopener" aria-label="Facebook">' + ICO_FB + '</a>'; }
     if(SAL.instagram){ var ig = String(SAL.instagram).replace(/^@/, '').replace(/^https?:\/\/(www\.)?instagram\.com\//, '').replace(/\/.*$/, ''); rd += '<a class="rede" href="https://instagram.com/' + esc(ig) + '" target="_blank" rel="noopener" aria-label="Instagram">' + ICO_IG + '</a>'; }
     if(SAL.whatsapp){ var w = String(SAL.whatsapp).replace(/\D/g,'').replace(/^00/, ''); if(w.length === 9) w = '351' + w; rd += '<a class="rede" href="https://wa.me/' + esc(w) + '" target="_blank" rel="noopener" aria-label="WhatsApp">' + ICO_WA + '</a>'; }
@@ -422,14 +424,16 @@
   function promoAtiva(){ var p = SAL.promo; return (!GRUPO_LISTA && p && urlOk(p.img) && String(p.ate || '') >= iso(new Date())) ? p : null; }
   function pintarPromo(){
     var p = promoAtiva(); $('secPromo').classList.toggle('hide', !p); if(!p) return;
-    $('promoBan').innerHTML = '<img src="' + esc(p.img) + '" alt="' + esc((p.titulo || '') + '. ' + (p.texto || '')) + '">';
+    $('promoBan').innerHTML = imgPromo(p); $('promoBan').classList.toggle('largo', urlOk(p.imgLargo));
     $('promoBan').onclick = function(){ abrirPromo(); };
     if(params.get('promo') && !_promoAberta){ _promoAberta = true; setTimeout(abrirPromo, 350); }
   }
+  // no computador usa a versão estendida do banner (se existir); no telemóvel a normal
+  function imgPromo(p){ var alt = esc((p.titulo || '') + '. ' + (p.texto || '')); return '<picture>' + (urlOk(p.imgLargo) ? ('<source media="(min-width: 861px)" srcset="' + esc(p.imgLargo) + '">') : '') + '<img src="' + esc(p.img) + '" alt="' + alt + '"></picture>'; }
   function abrirPromo(){
     var p = promoAtiva(); if(!p) return;
     var d = document.createElement('div'); d.className = 'promo-pop';
-    d.innerHTML = '<div class="cx" role="dialog" aria-modal="true" aria-label="' + esc(p.titulo || 'Promoção') + '"><img src="' + esc(p.img) + '" alt="' + esc((p.titulo || '') + '. ' + (p.texto || '')) + '"><button type="button" class="x" aria-label="Fechar">✕</button>'
+    d.innerHTML = '<div class="cx' + (urlOk(p.imgLargo) ? ' largo' : '') + '" role="dialog" aria-modal="true" aria-label="' + esc(p.titulo || 'Promoção') + '">' + imgPromo(p) + '<button type="button" class="x" aria-label="Fechar">✕</button>'
       + '<div class="ac"><button type="button" class="btn-ac" data-m>Marcar</button></div></div>';
     function fechar(){ d.remove(); }
     d.addEventListener('click', function(e){ if(e.target === d) fechar(); });
@@ -440,7 +444,7 @@
   // mapa: o link do Google Maps colado pelo salão (pino exato) ou, sem link, direções para a morada
   function linkMapa(){ var l = String(SAL.mapaLink || '').trim(); if(/^https?:\/\//i.test(l)) return l; var m = String(SAL.morada || '').trim(); return m ? ('https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(m)) : ''; }
   function pintarMapa(){
-    var u = linkMapa(), on = SAL.mostrarMapa !== false && !!u && !GRUPO_LISTA;
+    var u = linkMapa(), on = false;   // o mapa passou para o cabeçalho (pino); o cartão em baixo fica desligado
     $('secMapa').classList.toggle('hide', !on); if(!on){ $('mapaBloco').innerHTML = ''; return; }
     var art = '<svg viewBox="0 0 360 170" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">'
       + '<rect width="360" height="170" fill="#e9e9dd"/><path d="M244 -5 L365 -5 L365 66 L300 84 L250 44 Z" fill="#bcd9ea"/>'
