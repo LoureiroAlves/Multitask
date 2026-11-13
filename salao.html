@@ -85,6 +85,10 @@
   .prof-b{ border:1.5px solid var(--borda); background:#fff; color:var(--ink); border-radius:999px; padding:9px 14px; font-weight:700; font-size:14px; display:flex; align-items:center; gap:7px; }
   .prof-b i{ width:24px; height:24px; border-radius:50%; background:var(--fundo); display:inline-flex; align-items:center; justify-content:center; font-style:normal; font-size:12px; font-weight:800; }
   .prof-b.on{ background:var(--ac); border-color:var(--ac); color:#fff; }
+  .prof-so{ display:flex; align-items:center; gap:8px; font-size:15px; }
+  .prof-so i{ width:28px; height:28px; border-radius:50%; background:var(--ac); color:#fff; display:inline-flex; align-items:center; justify-content:center; font-style:normal; font-weight:800; font-size:13px; }
+  .prof-aviso{ background:#FFF4E5; border:1px solid #F0D5A8; border-radius:12px; padding:12px; display:flex; flex-direction:column; gap:6px; font-size:14px; color:#6B4E14; }
+  .prof-aviso .btn-ac{ min-height:40px; padding:0 14px; }
   .prof-b.on i{ background:rgba(255,255,255,.25); }
   .esc{ background:var(--fundo); border-radius:12px; padding:12px 14px; display:flex; flex-direction:column; gap:2px; }
   .esc small{ font-size:12px; font-weight:700; color:var(--suave); }
@@ -310,16 +314,21 @@
   function trabalha(p, wd){ return !Array.isArray(p.dias) || !p.dias.length || p.dias.indexOf(wd) >= 0; }
   function capazes(wd){ return EQ().filter(function(p){ return sel.serv && fazServ(p, sel.serv.id) && (wd == null || trabalha(p, wd)) && (!sel.prof || p.id === sel.prof); }); }
   function nomeProf(id){ var p = EQ().filter(function(x){ return x.id === id; })[0]; return p ? p.nome : ''; }
+  // "Com quem?": o cliente escolhe a pessoa (ou indiferente). Se só uma pessoa faz o serviço, fica logo com ela.
+  function pessoasServ(){ return EQ().filter(function(p){ return sel.serv && fazServ(p, sel.serv.id); }); }
   function pintarProfs(){
-    // o cliente não escolhe a pessoa: o salão atribui automaticamente quem faz o serviço e está livre
-    sel.prof = ''; $('passoProf').classList.add('hide'); return;
-    var l = EQ().filter(function(p){ return sel.serv && fazServ(p, sel.serv.id); });
-    $('passoProf').classList.toggle('hide', l.length < 1);
+    var l = pessoasServ();
+    if(sel.reag || !l.length){ sel.prof = ''; $('passoProf').classList.add('hide'); return; }
+    if(l.length === 1){   // só uma pessoa faz este serviço: não há escolha a fazer
+      sel.prof = l[0].id; $('passoProf').classList.remove('hide');
+      $('profs').innerHTML = '<div class="prof-so"><i>' + esc(l[0].nome.trim().charAt(0).toUpperCase()) + '</i>Com <b>' + esc(l[0].nome) + '</b></div>'; return; }
+    $('passoProf').classList.remove('hide');
     if(sel.prof && !l.some(function(p){ return p.id === sel.prof; })) sel.prof = '';
-    $('profs').innerHTML = '<button type="button" class="prof-b' + (sel.prof ? '' : ' on') + '" data-p="">Sem preferência</button>'
+    $('profs').innerHTML = '<button type="button" class="prof-b' + (sel.prof ? '' : ' on') + '" data-p="">Indiferente</button>'
       + l.map(function(p){ return '<button type="button" class="prof-b' + (sel.prof === p.id ? ' on' : '') + '" data-p="' + esc(p.id) + '"><i>' + esc(p.nome.trim().charAt(0).toUpperCase()) + '</i>' + esc(p.nome) + '</button>'; }).join('');
-    $('profs').querySelectorAll('[data-p]').forEach(function(b){ b.onclick = function(){ sel.prof = b.getAttribute('data-p'); sel.hora = null; pintarProfs(); pintarDias(); pintarHoras(); }; });
+    $('profs').querySelectorAll('[data-p]').forEach(function(b){ b.onclick = function(){ escolherProf(b.getAttribute('data-p')); }; });
   }
+  function escolherProf(id){ sel.prof = id || ''; sel.hora = null; $('passoDados').classList.add('hide'); pintarProfs(); pintarDias(); pintarHoras(); }
   var DIAS_C = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'], DIAS_L = ['domingo','segunda','terça','quarta','quinta','sexta','sábado'];
   var MESES = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
   function $(id){ return document.getElementById(id); }
@@ -571,19 +580,32 @@
       if(sel.reag && dia === sel.reag.data){ var tirou = false; ocup = (ocup || []).filter(function(o){ if(!tirou && o.hora === sel.reag.hora){ tirou = true; return false; } return true; }); }   // a própria marcação não conta
       var ocupados = (ocup || []).map(function(o){ var a = minDe(o.hora); return a == null ? null : [a, a + (+o.duracao || 30), o.profissional || '']; }).filter(Boolean);
       var cand = comEq ? capazes(d.getDay()).map(function(p){ return p.id; }) : null;
+      // para comparar: as horas livres com qualquer pessoa que faça o serviço (quando o cliente escolheu uma)
+      var todos = (comEq && sel.prof && pessoasServ().length > 1) ? pessoasServ().filter(function(p){ return trabalha(p, d.getDay()); }).map(function(p){ return p.id; }) : null;
+      function livreCom(lista, t){ return lista.some(function(pid){ return !ocupados.some(function(o){ return (!o[2] || o[2] === pid) && o[0] < t + dur && t < o[1]; }); }); }
+      var outrosLivres = 0;
       function livreEm(t){ if(!cand) return !ocupados.some(function(o){ return o[0] < t + dur && t < o[1]; });
         return cand.some(function(pid){ return !ocupados.some(function(o){ return (!o[2] || o[2] === pid) && o[0] < t + dur && t < o[1]; }); }); }
       var html = '', livres = 0, s0 = sel.hora ? minDe(sel.hora) : null;
       for(var t = ini; t + dur <= fim; t += pas){
         var ocupado = !livreEm(t) || t < minAgora;
         if(!ocupado) livres++;
+        if(todos && t >= minAgora && livreCom(todos, t)) outrosLivres++;
         var hs = hDe(t);
         var cob = s0 != null && t > s0 && t < s0 + dur;   // horas tapadas pelo serviço escolhido
         html += '<button type="button" class="hora' + (sel.hora === hs ? ' on' : (cob ? ' cob' : '')) + '" data-h="' + hs + '"' + (ocupado ? ' disabled' : '') + '>' + hs.replace(':', 'h') + '</button>';
       }
  if(s0 != null) html += '<div class="hora-int">⏱️ O seu serviço ocupa das <b>' + hDe(s0).replace(':', 'h') + '</b> às <b>' + hDe(s0 + dur).replace(':', 'h') + '</b> (' + esc(durTxt(dur)) + ')' + (sel.prof && nomeProf(sel.prof) ? (', com <b>' + esc(nomeProf(sel.prof)) + '</b>') : '') + '.</div>';
       $('horas').style.opacity = ''; $('horas').style.pointerEvents = ''; $('horas').style.minHeight = livres ? '' : (hAnt ? hAnt + 'px' : '');
-      $('horas').innerHTML = livres ? html : '<div class="nota" style="grid-column:1/-1;">Sem horas livres neste dia para este serviço. Escolha outro dia.</div>';
+      var nP = sel.prof ? nomeProf(sel.prof) : '';
+      if(!livres && todos && outrosLivres){   // a pessoa escolhida está ocupada, mas há outras livres
+        $('horas').innerHTML = '<div class="prof-aviso" style="grid-column:1/-1;"><b>' + esc(nP) + ' não tem horas livres neste dia.</b><span>Pode ver as horas com outra pessoa ou escolher outro dia.</span><div><button type="button" class="btn-ac" data-outra>Ver com outra pessoa</button></div></div>';
+      } else if(!livres){
+        $('horas').innerHTML = '<div class="nota" style="grid-column:1/-1;">' + (nP && pessoasServ().length > 1 ? (esc(nP) + ' não tem horas livres neste dia. Escolha outro dia.') : 'Sem horas livres neste dia para este serviço. Escolha outro dia.') + '</div>';
+      } else {
+        $('horas').innerHTML = html + (todos && outrosLivres > livres ? ('<div class="nota" style="grid-column:1/-1;">Só aparecem as horas livres de <b>' + esc(nP) + '</b>. <button type="button" class="lnk-off" data-outra>Ver as horas de toda a equipa</button></div>') : '');
+      }
+      $('horas').querySelectorAll('[data-outra]').forEach(function(b){ b.onclick = function(){ escolherProf(''); }; });
       $('horas').querySelectorAll('[data-h]').forEach(function(b){ b.onclick = function(){ sel.hora = b.getAttribute('data-h'); pintarHoras(); $('passoDados').classList.remove('hide'); $('btnEnviar').textContent = (sel.reag ? 'Confirmar nova hora · ' : 'Enviar pedido · ') + quando(sel.dia, sel.hora + '–' + hDe(minDe(sel.hora) + Math.max(5, +sel.serv.dur || 30))); }; });
     }).catch(function(){ $('horas').style.opacity = ''; $('horas').style.pointerEvents = ''; $('horas').innerHTML = '<div class="nota" style="grid-column:1/-1;">Não foi possível ver as horas. Tente outra vez.</div>'; });
   }
