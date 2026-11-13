@@ -148,6 +148,8 @@
   .cat-card{ background:#fff; border:1.5px solid var(--borda); border-radius:16px; overflow:hidden; display:flex; flex-direction:column; text-align:left; padding:0; color:var(--ink); }
   .cat-card:hover, .cat-card.sel{ border-color:var(--ac); }
   .cat-card .ci{ height:150px; background:var(--linha); display:flex; align-items:center; justify-content:center; font-size:44px; font-weight:800; color:#fff; }
+  .cat-card .ci{ position:relative; }
+  .cat-promo{ position:absolute; top:10px; right:10px; background:var(--ac); color:#fff; font-size:15px; font-weight:800; border-radius:999px; padding:5px 11px; box-shadow:0 2px 8px rgba(0,0,0,.2); }
   .cat-card .ci img{ width:100%; height:100%; object-fit:cover; display:block; }
   .cat-card .ct{ padding:14px; display:flex; flex-direction:column; gap:4px; }
   .cat-card .ct b{ font-size:17px; } .cat-card .ct span{ font-size:13px; color:var(--suave); }
@@ -167,6 +169,8 @@
   @media (max-width: 560px){ .cat-grelha{ grid-template-columns:1fr 1fr; gap:10px; } .cat-card .ci{ height:110px; } .cat-card .ct{ padding:11px; } .cat-card .ct b{ font-size:15px; } .cat-card .ct i{ font-size:13px; } }
   @media (max-width: 860px){ .sub-fundo{ align-items:flex-end; padding:0; } .sub{ border-radius:20px 20px 0 0; max-height:85vh; } }
   /* banner da promoção (feito pelo salão nas Campanhas) */
+  .tag-desc{ display:inline-block; background:var(--ac); color:#fff; border-radius:999px; padding:1px 7px; font-size:11px; font-weight:800; font-style:normal; }
+  .sub-it .tx .tag-desc, #escServNome .tag-desc{ color:#fff; font-size:11px; white-space:nowrap; }
   .promo-ban{ display:block; width:100%; max-width:640px; padding:0; border:none; border-radius:16px; overflow:hidden; cursor:pointer; background:none; box-shadow:0 6px 18px rgba(31,28,26,.14); animation:aZoom .4s ease both; }
   .promo-ban img{ display:block; width:100%; height:auto; }
   @media (min-width: 861px){ .promo-ban.largo{ max-width:none; } .promo-pop .cx.largo{ max-width:min(1000px, 94vw); } }
@@ -425,11 +429,12 @@
   function pintarPromo(){
     var p = promoAtiva(); $('secPromo').classList.toggle('hide', !p); if(!p) return;
     $('promoBan').innerHTML = imgPromo(p); $('promoBan').classList.toggle('largo', urlOk(p.imgLargo));
-    $('promoBan').onclick = function(){ abrirPromo(); };
+    $('promoBan').onclick = function(){ irPromo(p); };   // tocar no banner abre logo a categoria da promoção
     if(params.get('promo') && !_promoAberta){ _promoAberta = true; setTimeout(abrirPromo, 350); }
   }
   // no computador usa a versão estendida do banner (se existir); no telemóvel a normal
   function imgPromo(p){ var alt = esc((p.titulo || '') + '. ' + (p.texto || '')); return '<picture>' + (urlOk(p.imgLargo) ? ('<source media="(min-width: 861px)" srcset="' + esc(p.imgLargo) + '">') : '') + '<img src="' + esc(p.img) + '" alt="' + alt + '"></picture>'; }
+  function irPromo(p){ if(p && p.cat && servDe(String(p.cat).trim()).length){ abrirCategoria(String(p.cat).trim()); return; } try{ $('servicos').scrollIntoView({ behavior:'smooth', block:'start' }); }catch(e){} }
   function abrirPromo(){
     var p = promoAtiva(); if(!p) return;
     var d = document.createElement('div'); d.className = 'promo-pop';
@@ -438,7 +443,8 @@
     function fechar(){ d.remove(); }
     d.addEventListener('click', function(e){ if(e.target === d) fechar(); });
     d.querySelector('.x').onclick = fechar;
-    d.querySelector('[data-m]').onclick = function(){ fechar(); if(p.cat && servDe(p.cat).length){ abrirCategoria(p.cat); return; } try{ $('servicos').scrollIntoView({ behavior:'smooth', block:'start' }); }catch(e){} };   // promoção de uma categoria: abre logo essa categoria
+    d.querySelector('[data-m]').onclick = function(){ fechar(); irPromo(p); };
+    d.querySelector('picture').style.cursor = 'pointer'; d.querySelector('picture').onclick = function(){ fechar(); irPromo(p); };   // tocar na imagem também   // promoção de uma categoria: abre logo essa categoria
     document.body.appendChild(d);
   }
   // mapa: o link do Google Maps colado pelo salão (pino exato) ou, sem link, direções para a morada
@@ -467,6 +473,13 @@
 
   var catSel = '';
   function cats(){ var c = []; SERV.forEach(function(s){ var k = (s.cat || 'Serviços').trim(); if(c.indexOf(k) < 0) c.push(k); }); return c; }
+  // desconto da promoção ativa para este serviço (o servidor aplica-o sozinho ao marcar)
+  function descServ(sv){ var p = promoAtiva(); if(!p || !(+p.desconto > 0) || !sv) return 0; if(p.cat && (sv.cat || 'Serviços').trim() !== String(p.cat).trim()) return 0; return Math.min(90, +p.desconto); }
+  function precoNum(v){ var m = /(\d+)(?:[.,](\d{1,2}))?/.exec(String(v || '')); return m ? parseFloat(m[1] + '.' + (m[2] || '0')) : null; }
+  function euroTxt(v){ return (Math.round(v * 100) / 100).toLocaleString('pt-PT', { minimumFractionDigits:2, maximumFractionDigits:2 }) + ' €'; }
+  // preço para mostrar: com a promoção, o preço normal riscado e o novo
+  function precoHtml(sv){ var t = precoTxt(sv.preco), d = descServ(sv), n = precoNum(sv.preco); if(!t) return ''; if(!d || n == null) return esc(t);
+    return '<s style="opacity:.6;">' + esc(t) + '</s> <b style="color:var(--ac);">' + esc(euroTxt(n * (100 - d) / 100)) + '</b> <span class="tag-desc">−' + d + '%</span>'; }
   function servDe(c){ return SERV.filter(function(s){ return (s.cat || 'Serviços').trim() === c; }); }
   function abrirCategoria(c){
     var l = servDe(c); fecharCategoria();
@@ -474,7 +487,7 @@
     f.innerHTML = '<div class="sub" role="dialog" aria-modal="true" aria-label="' + esc(c) + '"><div class="sub-cab"><h3>' + esc(c) + '</h3><button type="button" aria-label="Fechar">✕</button></div>'
       + l.map(function(s){ var p = precoTxt(s.preco);
           return '<div class="sub-it">' + (urlOk(s.foto) ? ('<img src="' + esc(s.foto) + '" alt="" loading="lazy" data-lb>') : '')
-            + '<div class="tx"><b>' + esc(s.nome) + '</b>' + (s.desc ? ('<span>' + esc(s.desc) + '</span>') : '') + '<em>' + esc(durTxt(s.dur)) + (p ? (' · ' + esc(p)) : '') + '</em></div>'
+            + '<div class="tx"><b>' + esc(s.nome) + '</b>' + (s.desc ? ('<span>' + esc(s.desc) + '</span>') : '') + '<em>' + esc(durTxt(s.dur)) + (p ? (' · ' + precoHtml(s)) : '') + '</em></div>'
             + (s.online === false ? '<span class="nota" style="max-width:110px;text-align:right;">Marcação por telefone</span>' : ('<button type="button" class="pill" data-s="' + esc(s.id) + '">Marcar</button>')) + '</div>'; }).join('')
       + '</div>';
     document.body.appendChild(f);
@@ -499,7 +512,7 @@
     html += '<section class="grupo" style="flex:1 1 100%;"><h2>Serviços</h2><div class="cat-grelha' + (_catsJaVistas ? '' : ' primeira') + '">' + cs.map(function(c){
       var l = servDe(c), foto = urlOk(catFotos[c]) ? catFotos[c] : ((l.filter(function(s){ return urlOk(s.foto); })[0] || {}).foto || '');
       var on = sel.serv && (sel.serv.cat || 'Serviços').trim() === c;
-      return '<button type="button" class="cat-card' + (on ? ' sel' : '') + '" data-cat="' + esc(c) + '"><div class="ci"' + (foto ? '' : ' style="background:var(--ac);"') + '>' + (foto ? ('<img src="' + esc(foto) + '" alt="" loading="lazy">') : esc(c.trim().charAt(0).toUpperCase())) + '</div>'
+      return '<button type="button" class="cat-card' + (on ? ' sel' : '') + '" data-cat="' + esc(c) + '"><div class="ci"' + (foto ? '' : ' style="background:var(--ac);"') + '>' + (foto ? ('<img src="' + esc(foto) + '" alt="" loading="lazy">') : esc(c.trim().charAt(0).toUpperCase())) + (l.some(function(x){ return descServ(x); }) ? ('<span class="cat-promo">−' + Math.max.apply(null, l.map(descServ)) + '%</span>') : '') + '</div>'
         + '<div class="ct"><b>' + esc(c) + '</b><span>' + l.length + (l.length === 1 ? ' serviço' : ' serviços') + '</span><i>' + (on ? ('✓ ' + esc(sel.serv.nome)) : 'Ver serviços e preços →') + '</i></div></button>';
     }).join('') + '</div></section>';
     $('servicos').innerHTML = html;
@@ -516,7 +529,8 @@
     var eraVazio = $('painel').classList.contains('sem-serv');
     sel.serv = s; sel.hora = null; msg(''); $('painel').classList.remove('sem-serv');
     if(eraVazio){ $('painel').classList.remove('entra'); void $('painel').offsetWidth; $('painel').classList.add('entra'); } $('btnDesistir').classList.remove('hide');
-    $('escServNome').innerHTML = '<b>' + esc(s.nome) + '</b> · ' + esc(durTxt(s.dur)) + (precoTxt(s.preco) ? (' · ' + esc(precoTxt(s.preco))) : '');
+    $('escServNome').innerHTML = '<b>' + esc(s.nome) + '</b> · ' + esc(durTxt(s.dur)) + (precoTxt(s.preco) ? (' · ' + precoHtml(s)) : '')
+      + (descServ(s) ? ('<br><span style="font-size:13px;color:var(--ac);font-weight:700;">🎁 Promoção: −' + descServ(s) + '% em marcações até ' + esc(quando(promoAtiva().ate)) + '</span>') : '');
     $('passoDia').classList.remove('hide'); pintarProfs(); pintarDias(); pintarServicos();
   }
   function pintarDias(){
