@@ -747,7 +747,7 @@
   };
   $('cliCsvMes').onclick = function(){ var mes = iso(new Date()).slice(0, 7);
     var l = CLIRES.filter(function(r){ return r.data.slice(0, 7) === mes && r.estado !== 'cancelada'; }).sort(function(a, b){ return (a.data + a.hora).localeCompare(b.data + b.hora); });
-    csv('marcacoes-' + SLUG + '-' + mes + '.csv', [['Data','Hora','Cliente','Telemóvel','Serviço','Profissional','Preço (€)','Desconto (%)','Valor (€)','Estado']].concat(l.map(function(r){ return [r.data, r.hora, r.nome, r.telefone, r.servico, nomeProf(r.profissional), baseDe(r) != null ? num(baseDe(r)) : '', +r.desconto || 0, r.valor != null ? num(r.valor) : '', r.faltou ? 'Faltou' : r.estado === 'confirmada' ? (r.data <= iso(new Date()) ? 'Feita' : 'Marcada') : 'Por confirmar']; }))); };
+    csv('marcacoes-' + SLUG + '-' + mes + '.csv', [['Data','Hora','Cliente','Telemóvel','Serviço','Profissional','Preço (€)','Desconto (%)','Valor (€)','Promoção','Estado']].concat(l.map(function(r){ return [r.data, r.hora, r.nome, r.telefone, r.servico, nomeProf(r.profissional), baseDe(r) != null ? num(baseDe(r)) : '', +r.desconto || 0, r.valor != null ? num(r.valor) : '', r.promo ? nomePromo(r.promo) : '', r.faltou ? 'Faltou' : r.estado === 'confirmada' ? (r.data <= iso(new Date()) ? 'Feita' : 'Marcada') : 'Por confirmar']; }))); };
 
   // ---------- campanhas: só para quem aceitou (aceita_campanhas) e não está bloqueado ----------
   var CAMPH = [], CAMP_OK = true;
@@ -949,7 +949,10 @@
     var rec = CAMPH.filter(function(h){ return Date.now() - new Date(h.criado_em).getTime() < 7 * 86400000; })[0];
     if(rec && !confirm('Já enviou uma campanha há ' + Math.max(1, Math.round((Date.now() - new Date(rec.criado_em).getTime()) / 86400000)) + ' dia(s). Mensagens a mais fazem os clientes desligar as notificações. Enviar mesmo assim?')) return false;
     m.textContent = ''; return true; }
-  async function registarCamp(canal, dest, env){ if(!CAMP_OK) return null; var r = await sb.from('salao_campanhas').insert({ negocio_id:NEG.id, titulo:$('cpTit').value.trim() || null, texto:$('cpTxt').value.trim(), publico:descPub(), canal:canal, destinatarios:dest, enviados:env }).select().single(); return r.error ? null : r.data; }
+  async function registarCamp(canal, dest, env){ if(!CAMP_OK) return null; var reg = { negocio_id:NEG.id, titulo:$('cpTit').value.trim() || null, texto:$('cpTxt').value.trim(), publico:descPub(), canal:canal, destinatarios:dest, enviados:env };
+    var pr = ($('cpBan').checked && SAL.promo && SAL.promo.id) ? SAL.promo : null; var ext = pr ? { promo_id:pr.id, desconto:pr.desconto || null } : {};
+    var r = await sb.from('salao_campanhas').insert(Object.assign({}, reg, ext)).select().single();
+    if(r.error && pr && /promo_id|desconto|column/i.test(r.error.message || '')) r = await sb.from('salao_campanhas').insert(reg).select().single(); return r.error ? null : r.data; }
   $('cpPush').onclick = async function(){
     if(!validaCamp()) return; var l = publicoCamp().filter(function(d){ return d.ep; }); if(!l.length) return;
     if(!confirm('Enviar esta notificação a ' + l.length + ' cliente(s)?')) return;
@@ -1002,6 +1005,11 @@
 
   // ---------- relatórios (só leitura: usa as marcações e as fichas que já existem) ----------
   var RELRES = null, RELCLI = null, relMetrica = 'n';
+  var PROMOS = {};   // id da promoção → { titulo, desconto } (das campanhas e da promoção atual)
+  function nomePromo(id){ var p = PROMOS[id] || ((SAL.promo && SAL.promo.id === id) ? SAL.promo : null); return p ? ((p.titulo || 'Promoção') + (p.desconto ? (' −' + p.desconto + '%') : '')) : 'Promoção'; }
+  async function carregarPromos(){ var h = await sb.from('salao_campanhas').select('titulo,promo_id,desconto,criado_em').eq('negocio_id', NEG.id).not('promo_id', 'is', null).order('criado_em');
+    if(!h.error) (h.data || []).forEach(function(c){ PROMOS[c.promo_id] = { titulo:c.titulo, desconto:c.desconto, criado:c.criado_em }; });
+    if(SAL.promo && SAL.promo.id) PROMOS[SAL.promo.id] = Object.assign({}, PROMOS[SAL.promo.id] || {}, { titulo:SAL.promo.titulo, desconto:SAL.promo.desconto }); }
   function valorDe(r){ if(+r.valor > 0) return +r.valor; var b = +r.valor_base > 0 ? +r.valor_base : precoServ(r.servico); return b == null ? 0 : comDesc(b, r.desconto); }
   function pct(a, b){ return b ? Math.round(a * 1000 / b) / 10 : 0; }
   function pctTxt(a, b){ return b ? (pct(a, b).toLocaleString('pt-PT') + '%') : '—'; }
@@ -1022,7 +1030,7 @@
     if(b.error){ $('relCorpo').innerHTML = '<div class="msg erro">Erro: ' + esc(b.error.message) + '</div>'; return; }
     RELRES = b.data || [];
     var a = await sb.from('clientes').select('*').eq('negocio_id', NEG.id); RELCLI = a.error ? null : (a.data || []);
-    await carregarAus();
+    await carregarAus(); await carregarPromos();
     var ps = $('relProf'); ps.classList.toggle('hide', !EQ().length);
     ps.innerHTML = '<option value="">Toda a equipa</option>' + EQ().map(function(p){ return '<option value="' + esc(p.id) + '">' + esc(p.nome) + '</option>'; }).join('');
     pintarRelatorios();
@@ -1065,6 +1073,14 @@
     var atend = {}; feitas.forEach(function(r){ var k = chaveCli(r.telefone, r.nome); if(k) atend[k] = (atend[k] || 0) + 1; });
     var kAt = Object.keys(atend), novos = kAt.filter(function(k){ return primeira[k] >= de; }).length, recorr = kAt.length - novos;
     var gastoCli = {}; feitas.forEach(function(r){ var k = chaveCli(r.telefone, r.nome); if(k) gastoCli[k] = (gastoCli[k] || 0) + valorDe(r); });
+    // descontos: quanto se deixou de faturar com descontos (preço normal − preço cobrado), nas marcações feitas
+    function descontoDe(r){ var b = baseDe(r), v = valorDe(r); return (+r.desconto && b != null) ? Math.max(0, b - v) : 0; }
+    var descTot = { n:0, eur:0 }; feitas.forEach(function(r){ var x = descontoDe(r); if(x > 0){ descTot.n++; descTot.eur += x; } });
+    // promoções: marcações, clientes, faturado e desconto de cada uma
+    var promL = {}; ativas.forEach(function(r){ if(!r.promo) return; var x = promL[r.promo] = promL[r.promo] || { id:r.promo, n:0, feitas:0, cli:{}, fat:0, prev:0, desc:0, faltas:0 };
+      x.n++; var k = chaveCli(r.telefone, r.nome); if(k) x.cli[k] = 1; if(r.faltou){ x.faltas++; return; }
+      if(r.estado === 'confirmada' && r.data <= hoje){ x.feitas++; x.fat += valorDe(r); x.desc += descontoDe(r); } else x.prev += valorDe(r); });
+    var promos = Object.keys(promL).map(function(k){ return promL[k]; }).sort(function(a, b){ return b.n - a.n; });
     // série por dia (ou por mês quando o período é longo)
     var dias = []; for(var d = dDe(de); iso(d) <= ate; d.setDate(d.getDate() + 1)) dias.push(iso(d));
     var porMes = dias.length > 92, chaves = porMes ? Array.from(new Set(dias.map(function(k){ return k.slice(0, 7); }))) : dias;
@@ -1106,6 +1122,7 @@
       + '<div><b>' + novos + '</b><span>clientes novos</span></div>'
       + '<div><b>' + pctTxt(canc.length, R.length) + '</b><span>cancelamentos (' + canc.length + ')</span></div>'
       + '<div><b>' + pctTxt(faltas.length, feitas.length + faltas.length) + '</b><span>faltas (' + faltas.length + ')</span></div>'
+      + (descTot.n ? ('<div><b>' + euro(descTot.eur) + '</b><span>descontos dados (' + descTot.n + ' marcações)</span></div>') : '')
       + (futuras.length || pend.length ? ('<div class="prev"><b>' + euro(prev) + '</b><span>previsto (' + futuras.length + ' confirmadas por fazer' + (pend.length ? (', ' + pend.length + ' por confirmar') : '') + ')</span></div>') : '')
       + '</div>';
     h += '<div class="rel-card"><div class="rel-cab"><h3>' + (porMes ? 'Por mês' : 'Por dia') + '</h3><div class="vista" role="group" aria-label="Medida"><button type="button" data-m="n" class="' + (relMetrica === 'n' ? 'on' : '') + '">Marcações</button><button type="button" data-m="eur" class="' + (relMetrica === 'eur' ? 'on' : '') + '">Valor (€)</button></div></div>'
@@ -1134,6 +1151,11 @@
       + '<div class="rel-card"><h3>Cancelamentos e faltas' + (meses.length > 1 ? ' por mês' : '') + '</h3><table class="cli-tab"><thead><tr><th>Mês</th><th class="n">Pedidos</th><th class="n">Canceladas</th><th class="n">Faltas</th></tr></thead><tbody>'
         + cfMes.map(function(x){ return '<tr><td>' + MESES[+x.m.slice(5, 7) - 1] + ' ' + x.m.slice(0, 4) + '</td><td class="n">' + x.total + '</td><td class="n">' + x.c + ' <span style="color:var(--suave);">(' + pctTxt(x.c, x.total) + ')</span></td><td class="n">' + x.f + '</td></tr>'; }).join('') + '</tbody></table></div>'
       + '</div>';
+    h += '<div class="rel-card"><h3>🎁 Promoções</h3>' + (promos.length ? ('<div class="rel-tab-w"><table class="cli-tab"><thead><tr><th>Promoção</th><th class="n">Marcações</th><th class="n">Clientes</th><th class="n">Feitas</th><th class="n">Faturado</th><th class="n">Previsto</th><th class="n">Desconto dado</th></tr></thead><tbody>'
+      + promos.map(function(x){ return '<tr><td><b>' + esc(nomePromo(x.id)) + '</b></td><td class="n">' + x.n + '</td><td class="n">' + Object.keys(x.cli).length + '</td><td class="n">' + x.feitas + '</td><td class="n">' + euro(x.fat) + '</td><td class="n" style="color:var(--suave);">' + (x.prev ? euro(x.prev) : '—') + '</td><td class="n">' + euro(x.desc) + '</td></tr>'; }).join('')
+      + (promos.length > 1 ? ('<tr><td><b>Total</b></td><td class="n"><b>' + promos.reduce(function(s, x){ return s + x.n; }, 0) + '</b></td><td></td><td class="n"><b>' + promos.reduce(function(s, x){ return s + x.feitas; }, 0) + '</b></td><td class="n"><b>' + euro(promos.reduce(function(s, x){ return s + x.fat; }, 0)) + '</b></td><td></td><td class="n"><b>' + euro(promos.reduce(function(s, x){ return s + x.desc; }, 0)) + '</b></td></tr>') : '')
+      + '</tbody></table></div><div style="font-size:12px;color:var(--suave);margin-top:6px;">Marcações feitas pelos clientes com o desconto de uma promoção, no período escolhido. Faturado = já com o desconto. Desconto dado = o que se deixou de cobrar.</div>')
+      : '<div style="color:var(--suave);font-size:14px;">Nenhuma marcação com promoção neste período. As promoções com desconto criam-se nas Campanhas.</div>') + '</div>';
     h += '<div class="rel-card"><h3>🎂 Aniversários no período</h3>' + (RELCLI == null ? '<div style="color:var(--suave);font-size:14px;">Precisa das fichas de cliente (salao-clientes.sql).</div>' : anivs.length ? ('<div class="rel-aniv">' + anivs.map(function(c){ var md = String(c.nascimento).slice(5, 10); return '<div><b>' + esc(c.nome || '—') + '</b><span>' + (+md.slice(3, 5)) + ' ' + MESES[+md.slice(0, 2) - 1].slice(0, 3) + (c.telefone ? (' · ' + esc(c.telefone)) : '') + '</span></div>'; }).join('') + '</div>') : '<div style="color:var(--suave);font-size:14px;">Nenhum cliente faz anos neste período (ou ainda não tem a data de nascimento na ficha).</div>') + '</div>';
     $('relCorpo').innerHTML = h;
     $('relCorpo').querySelectorAll('[data-m]').forEach(function(b){ b.onclick = function(){ relMetrica = b.getAttribute('data-m'); pintarRelatorios(); }; });
@@ -1144,7 +1166,7 @@
       g.addEventListener('mousemove', mostra); g.addEventListener('touchstart', mostra, { passive:true });
       g.addEventListener('mouseleave', function(){ dica.classList.add('hide'); });
     });
-    _relUlt = { de:de, ate:ate, ativas:ativas, feitas:feitas, fat:fat, prev:prev, canc:canc, faltas:faltas, kAt:kAt, novos:novos, recorr:recorr, topServ:topServ, linhasP:linhasP, cfMes:cfMes, wd:wd, hr:hr, R:R };
+    _relUlt = { promos:promos, descTot:descTot, de:de, ate:ate, ativas:ativas, feitas:feitas, fat:fat, prev:prev, canc:canc, faltas:faltas, kAt:kAt, novos:novos, recorr:recorr, topServ:topServ, linhasP:linhasP, cfMes:cfMes, wd:wd, hr:hr, R:R };
   }
   var _relRz = null; window.addEventListener('resize', function(){ if($('tRelatorios').classList.contains('hide')) return; clearTimeout(_relRz); _relRz = setTimeout(pintarRelatorios, 200); });
   $('relPer').onchange = pintarRelatorios; $('relDe').onchange = pintarRelatorios; $('relAte').onchange = pintarRelatorios; $('relProf').onchange = pintarRelatorios;
@@ -1152,12 +1174,13 @@
     var u = _relUlt; if(!u) return; var L = [];
     L.push(['Relatório', SAL.nome || NEG.nome, 'de ' + u.de + ' a ' + u.ate]); L.push([]);
     L.push(['Resumo']); L.push(['Marcações', u.ativas.length]); L.push(['Feitas', u.feitas.length]); L.push(['Faturado (€)', num(u.fat)]); L.push(['Previsto (€)', num(u.prev)]);
-    L.push(['Canceladas', u.canc.length]); L.push(['Faltas', u.faltas.length]); L.push(['Clientes atendidos', u.kAt.length]); L.push(['Clientes novos', u.novos]); L.push(['Clientes que voltaram', u.recorr]); L.push([]);
+    L.push(['Canceladas', u.canc.length]); L.push(['Faltas', u.faltas.length]); L.push(['Clientes atendidos', u.kAt.length]); L.push(['Clientes novos', u.novos]); L.push(['Clientes que voltaram', u.recorr]); L.push(['Descontos dados (€)', num(u.descTot.eur)]); L.push([]);
+    if(u.promos.length){ L.push(['Promoção', 'Marcações', 'Clientes', 'Feitas', 'Faturado (€)', 'Previsto (€)', 'Desconto dado (€)']); u.promos.forEach(function(x){ L.push([nomePromo(x.id), x.n, Object.keys(x.cli).length, x.feitas, num(x.fat), num(x.prev), num(x.desc)]); }); L.push([]); }
     L.push(['Serviço', 'Marcações', 'Faturado (€)']); u.topServ.forEach(function(s){ L.push([s.r, s.v, num(s.e)]); }); L.push([]);
     L.push(['Profissional', 'Marcações', 'Feitas', 'Faturado (€)', 'Horas marcadas', 'Horas disponíveis', 'Ocupação (%)', '€ por hora']); u.linhasP.forEach(function(l){ L.push([l.nome, l.n, l.feitas, num(l.eur), (l.marc / 60).toFixed(1).replace('.', ','), (l.disp / 60).toFixed(1).replace('.', ','), String(l.ocup).replace('.', ','), num(l.porHora)]); }); L.push([]);
     L.push(['Mês', 'Marcações', 'Canceladas', 'Faltas']); u.cfMes.forEach(function(x){ L.push([x.m, x.total, x.c, x.f]); }); L.push([]);
-    L.push(['Data', 'Hora', 'Cliente', 'Telemóvel', 'Serviço', 'Profissional', 'Valor (€)', 'Estado']);
-    u.R.slice().sort(function(a, b){ return (a.data + a.hora).localeCompare(b.data + b.hora); }).forEach(function(r){ L.push([r.data, r.hora, r.nome, r.telefone, r.servico, nomeProf(r.profissional), num(valorDe(r)), r.estado === 'cancelada' ? 'Cancelada' : r.faltou ? 'Faltou' : r.estado === 'confirmada' ? (r.data <= iso(new Date()) ? 'Feita' : 'Marcada') : 'Por confirmar']); });
+    L.push(['Data', 'Hora', 'Cliente', 'Telemóvel', 'Serviço', 'Profissional', 'Preço (€)', 'Desconto (%)', 'Valor (€)', 'Promoção', 'Estado']);
+    u.R.slice().sort(function(a, b){ return (a.data + a.hora).localeCompare(b.data + b.hora); }).forEach(function(r){ L.push([r.data, r.hora, r.nome, r.telefone, r.servico, nomeProf(r.profissional), baseDe(r) != null ? num(baseDe(r)) : '', +r.desconto || 0, num(valorDe(r)), r.promo ? nomePromo(r.promo) : '', r.estado === 'cancelada' ? 'Cancelada' : r.faltou ? 'Faltou' : r.estado === 'confirmada' ? (r.data <= iso(new Date()) ? 'Feita' : 'Marcada') : 'Por confirmar']); });
     csv('relatorio-' + SLUG + '-' + u.de + '-a-' + u.ate + '.csv', L);
   };
 
@@ -1247,13 +1270,13 @@
     var futuro = new Date(); futuro.setDate(futuro.getDate() + 120); if(iso(futuro) > ate) ate = iso(futuro);
     var r = await sb.from('reservas').select('*').eq('negocio_id', NEG.id).gte('data', de).lte('data', ate).order('data').order('hora');
     if(r.error){ toast('Erro a carregar: ' + r.error.message); return; }
-    RES = r.data || []; await carregarAus(); pintarAgenda(); pintarPedidos();
+    RES = r.data || []; await carregarAus(); if(!Object.keys(PROMOS).length && RES.some(function(x){ return x.promo; })) await carregarPromos(); pintarAgenda(); pintarPedidos();
   }
   var DESCONTOS = [0, 5, 10, 15, 20, 25, 30, 40, 50];
   function precoServ(nome){ var sv = SERV.filter(function(x){ return x.nome === nome; })[0]; var m = /(\d+(?:[.,]\d{1,2})?)/.exec(String((sv && sv.preco) || '')); return m ? parseFloat(m[1].replace(',', '.')) : null; }
   function baseDe(r){ return +r.valor_base > 0 ? +r.valor_base : (+r.valor > 0 && !(+r.desconto) ? +r.valor : precoServ(r.servico)); }
   function comDesc(b, d){ return b == null ? null : Math.round(b * (100 - (+d || 0))) / 100; }
-  function opcoesDesc(sel){ return DESCONTOS.map(function(d){ return '<option value="' + d + '"' + ((+sel || 0) === d ? ' selected' : '') + '>' + (d ? ('−' + d + '%') : 'Sem desconto') + '</option>'; }).join(''); }
+  function opcoesDesc(sel){ var l = DESCONTOS.slice(); if((+sel || 0) && l.indexOf(+sel) < 0){ l.push(+sel); l.sort(function(a, b){ return a - b; }); } return l.map(function(d){ return '<option value="' + d + '"' + ((+sel || 0) === d ? ' selected' : '') + '>' + (d ? ('−' + d + '%') : 'Sem desconto') + '</option>'; }).join(''); }
   function propTxt(r){ return r.proposta_hora ? quando(r.proposta_data || r.data, r.proposta_hora) : ''; }
   function cls(r){ if(r._fantasma) return 'b-fantasma'; if(r.faltou) return 'b-confirmada b-faltou'; return r.estado === 'confirmada' ? 'b-confirmada' : (r.estado === 'pendente' && r.proposta_hora) ? 'b-proposta' : 'b-pendente'; }
   function pintarResumo(){
@@ -1519,7 +1542,7 @@
       + (tel ? ('<div>📱 <a href="tel:' + esc(tel.replace(/\s/g,'')) + '">' + esc(tel) + '</a>' + (waLink(r, '') ? (' · <a href="' + esc(waLink(r, 'Olá ' + (r.nome || '') + '!')) + '" target="_blank" rel="noopener">WhatsApp</a>') : '') + '</div>') : '')
       + (r.obs ? ('<div style="color:var(--suave);">“' + esc(r.obs) + '”</div>') : '')
       + '<div style="font-size:12px;color:var(--suave);">' + (r.push_marcacao ? '🔔 O cliente recebe as respostas por notificação.' : 'O cliente não tem notificações ligadas (pode avisar por WhatsApp).') + '</div>'
-      + (r.servico ? ('<div class="grelha2"><div class="campo"><label for="dDesc">Preço · desconto</label><div style="display:flex;gap:8px;align-items:center;"><span style="font-weight:800;white-space:nowrap;" id="dPreco">' + (baseDe(r) != null ? (((+r.desconto) ? ('<s style="color:var(--suave);font-weight:600;">' + euro(baseDe(r)) + '</s> ') : '') + euro(comDesc(baseDe(r), r.desconto))) : '—') + '</span><select id="dDesc" style="flex:1;min-height:40px;border:1.5px solid var(--borda);border-radius:10px;padding:0 8px;">' + opcoesDesc(r.desconto) + '</select></div></div>'
+      + (r.servico ? ('<div class="grelha2"><div class="campo"><label for="dDesc">Preço · desconto' + (r.promo ? (' <span class="etq camp" title="Desconto da promoção">🎁 ' + esc(nomePromo(r.promo)) + '</span>') : '') + '</label><div style="display:flex;gap:8px;align-items:center;"><span style="font-weight:800;white-space:nowrap;" id="dPreco">' + (baseDe(r) != null ? (((+r.desconto) ? ('<s style="color:var(--suave);font-weight:600;">' + euro(baseDe(r)) + '</s> ') : '') + euro(comDesc(baseDe(r), r.desconto))) : '—') + '</span><select id="dDesc" style="flex:1;min-height:40px;border:1.5px solid var(--borda);border-radius:10px;padding:0 8px;">' + opcoesDesc(r.desconto) + '</select></div></div>'
           + (r.estado === 'confirmada' && r.data <= iso(new Date()) ? ('<label style="display:flex;align-items:center;gap:8px;font-weight:700;align-self:end;min-height:44px;"><input type="checkbox" id="dFaltou"' + (r.faltou ? ' checked' : '') + ' style="width:20px;height:20px;"> O cliente faltou</label>') : '<div></div>') + '</div>') : '')
       + '<label for="dNota">Nota para o cliente (opcional)</label><textarea id="dNota" rows="2" maxlength="200">' + esc(r.nota || '') + '</textarea>'
       + (r.estado !== 'cancelada' ? (
