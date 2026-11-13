@@ -666,8 +666,8 @@
       var eu = function(v){ return (Math.round(v * 100) / 100).toLocaleString('pt-PT', { minimumFractionDigits:2, maximumFractionDigits:2 }) + ' €'; };
       var pushOn = pushLigado();
       var _novoHtml = vis.map(function(x){
-        var r = por[x.id], prop = r.estado !== 'cancelada' && r.proposta_hora, serv = r.servico || x.servico || 'Marcação';
-        var est = prop ? ['proposta', 'Proposta do salão'] : r.estado === 'confirmada' ? ['confirmada', 'Confirmada'] : r.estado === 'cancelada' ? ['cancelada', 'Cancelada'] : ['pendente', 'Por confirmar'];
+        var r = por[x.id], prop = r.estado !== 'cancelada' && r.proposta_hora, propP = r.estado !== 'cancelada' && r.proposta_prof, serv = r.servico || x.servico || 'Marcação';
+        var est = (prop || propP) ? ['proposta', 'Proposta do salão'] : r.estado === 'confirmada' ? ['confirmada', 'Confirmada'] : r.estado === 'cancelada' ? ['cancelada', 'Cancelada'] : ['pendente', 'Por confirmar'];
         var respTxt = (!prop && r.estado !== 'cancelada' && r.resposta_cliente === 'aceitou' && r.estado !== 'confirmada') ? '✅ Aceitou a nova hora. O salão vai confirmar.' : (!prop && r.estado !== 'cancelada' && r.resposta_cliente === 'recusou') ? '↩️ Não aceitou a proposta do salão. O salão vai responder-lhe.' : '';
         // preço: o da marcação; se ainda não vier do servidor, o do serviço
         var base = +r.valor_base > 0 ? +r.valor_base : null, val = +r.valor > 0 ? +r.valor : null;
@@ -679,6 +679,7 @@
           + '<span class="q">' + esc(quando(r.data, r.hora)) + '</span><span class="p">' + preco + '</span>'
           + '<span class="seta">' + (aberta ? '▲ Fechar' : '▼ Ver detalhes e opções') + '</span></button>';
         if(prop) h += '<div class="minha-prop"><b style="color:var(--ac);">🕘 O salão propõe mudar para ' + esc(quando(r.proposta_data || r.data, r.proposta_hora)) + '.</b><span style="font-size:13px;">' + (r.estado === 'confirmada' ? 'Se não aceitar, a marcação mantém-se como está e o salão é avisado.' : 'Se não aceitar, o salão é avisado e responde-lhe.') + '</span><div style="display:flex;gap:8px;flex-wrap:wrap;"><button type="button" class="btn-ac" data-ac="sim" data-id="' + esc(x.id) + '">Aceito a nova hora</button><button type="button" class="btn-sec" data-ac="nao" data-id="' + esc(x.id) + '">Não dá</button></div></div>';
+        if(propP) h += '<div class="minha-prop"><b style="color:var(--ac);">👤 O salão propõe que seja com ' + esc(nomeProf(r.proposta_prof) || 'outra pessoa') + (nomeProf(r.profissional) ? (' em vez de ' + esc(nomeProf(r.profissional))) : '') + '.</b><span style="font-size:13px;">O dia e a hora não mudam. Se não aceitar, o salão é avisado.</span><div style="display:flex;gap:8px;flex-wrap:wrap;"><button type="button" class="btn-ac" data-ac="psim" data-id="' + esc(x.id) + '">Aceito</button><button type="button" class="btn-sec" data-ac="pnao" data-id="' + esc(x.id) + '">Prefiro manter</button></div></div>';
         if(respTxt) h += '<div class="minha-prop" style="font-size:13px;font-weight:700;">' + respTxt + '</div>';
         h += '<div class="minha-corpo">';
         if(r.profissional && nomeProf(r.profissional)) h += '<div>👤 Com <b>' + esc(nomeProf(r.profissional)) + '</b></div>';
@@ -751,6 +752,12 @@
     if(ac === 'cancelar'){ if(!confirm('Cancelar esta marcação? O salão é avisado.')) return;
       rpc('marcacao_cancelar', { p_id:id }).catch(function(e){ if(/PGRST202|Could not find|does not exist/i.test(String(e.message || e))) return rpc('reserva_cancelar_cliente', { p_id:id }); throw e; })
         .then(function(){ _minhaAberta = ''; pintarMinhas('canc'); }).catch(function(){ alert('Não foi possível cancelar. Tente outra vez ou contacte o salão.'); }); return; }
+    if(ac === 'psim' || ac === 'pnao'){
+      if(ac === 'pnao' && !confirm('Manter a pessoa que tinha? O salão é avisado.')) return;
+      rpc('marcacao_responder_prof', { p_id:id, p_aceita:(ac === 'psim') }).then(function(){ _minhasHtml = ''; pintarMinhas(); })
+        .catch(function(e){ alert(/ocupado/.test(String(e.message || e)) ? 'Essa pessoa já não está livre a essa hora. Fale com o salão.' : 'Não foi possível responder. Tente outra vez.'); });
+      return;
+    }
     if(ac === 'sim' || ac === 'nao'){
       var rr = _minhasRows[id] || {};
       if(ac === 'nao' && !confirm(rr.estado === 'confirmada' ? 'Recusar a mudança? A sua marcação mantém-se como estava e o salão é avisado.' : 'Recusar a proposta? O salão é avisado e vai responder-lhe.')) return;
