@@ -102,6 +102,8 @@
   @media (max-width: 860px){ .camp-grelha{ grid-template-columns:1fr; } }
   .resp-cli{ font-size:13px; font-weight:700; border-radius:8px; padding:6px 8px; margin-top:4px; }
   .resp-cli.ok{ background:#EEF5EF; color:#2F6B3E; } .resp-cli.nao{ background:#FBEDED; color:#8A2A2A; }
+  .qr-cor{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; font-size:14px; font-weight:700; }
+  .qr-cor input[type=color]{ width:44px; height:36px; padding:2px; border:1.5px solid var(--borda); border-radius:8px; background:#fff; cursor:pointer; }
   .b-fantasma{ background:repeating-linear-gradient(135deg, #fff, #fff 6px, #F3E6EA 6px, #F3E6EA 12px); border:1.5px dashed var(--ac); opacity:.85; }
   .b-pendente{ background:#fff; border:2px dashed var(--ac); }
   .b-proposta{ background:#F3E6EA; border-left:4px solid var(--ac); }
@@ -372,7 +374,7 @@
     <div class="bloco-sec"><h3>Galeria de trabalhos</h3><p class="sub" style="margin:0;">Até 12 fotos de resultados (unhas, maquilhagem, sobrancelhas…).</p><div class="fotos" id="ftGaleria"></div></div>
     <div class="bloco-sec"><h3>QR code do salão</h3><p class="sub" style="margin:0 0 10px;">Para imprimir e pôr no balcão, na montra ou nos cartões. Abre a página de marcações deste salão.</p>
       <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:center;"><div id="qrBox" style="background:#fff;padding:10px;border:1px solid var(--linha);border-radius:10px;"></div>
-      <div style="display:flex;flex-direction:column;gap:8px;"><div id="qrUrl" style="font-size:13px;color:var(--suave);word-break:break-all;"></div><button type="button" class="btn" id="qrPng">⬇️ Descarregar QR (imagem)</button><button type="button" class="btn" id="qrCartao">🖨️ Imprimir cartão</button></div></div></div>
+      <div style="display:flex;flex-direction:column;gap:8px;"><div id="qrUrl" style="font-size:13px;color:var(--suave);word-break:break-all;"></div><div class="qr-cor"><label for="qrCorIn">Cor do QR</label><input type="color" id="qrCorIn" aria-label="Cor do QR"><button type="button" class="btn-lnk" id="qrCorSalao">Usar a cor do salão</button></div><div id="qrCorNota" style="font-size:12px;color:var(--suave);max-width:260px;"></div><button type="button" class="btn" id="qrPng">⬇️ Descarregar QR (imagem)</button><button type="button" class="btn" id="qrCartao">🖨️ Imprimir cartão</button></div></div></div>
     <input type="file" id="ftInput" accept="image/*" class="hide">
   </section>
 
@@ -1580,7 +1582,8 @@
   // na versão de testes (teste.amesadigital.pt / teste.4trevo.com) o QR abre a página de testes
   function linkSalao(){ return (/(^|\.)teste\./.test(location.hostname) ? 'https://teste.4trevo.com' : 'https://4trevo.com') + '/' + encodeURIComponent(SLUG); }
   // cor do QR: a cor do salão; se for clara, escurece-a mantendo o tom (o leitor precisa de contraste)
-  function corQR(){ var c = /^#[0-9a-fA-F]{6}$/.test(SAL.cor || '') ? SAL.cor : '#8E3653', r = parseInt(c.slice(1, 3), 16) / 255, g = parseInt(c.slice(3, 5), 16) / 255, b = parseInt(c.slice(5, 7), 16) / 255;
+  function corBaseQR(){ return /^#[0-9a-fA-F]{6}$/.test(SAL.corQR || '') ? SAL.corQR : (/^#[0-9a-fA-F]{6}$/.test(SAL.cor || '') ? SAL.cor : '#8E3653'); }
+  function corQR(){ var c = corBaseQR(), r = parseInt(c.slice(1, 3), 16) / 255, g = parseInt(c.slice(3, 5), 16) / 255, b = parseInt(c.slice(5, 7), 16) / 255;
     var mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, h = 0, sa = 0, d = mx - mn;
     if(d){ sa = l > 0.5 ? d / (2 - mx - mn) : d / (mx + mn); h = mx === r ? (g - b) / d + (g < b ? 6 : 0) : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; h /= 6; }
     function hsl(h, s, l){ function f(p, q, t){ if(t < 0) t += 1; if(t > 1) t -= 1; return t < 1/6 ? p + (q - p) * 6 * t : t < 1/2 ? q : t < 2/3 ? p + (q - p) * (2/3 - t) * 6 : p; }
@@ -1594,6 +1597,8 @@
     var box = $('qrBox'); box.innerHTML = ''; $('qrUrl').textContent = linkSalao(); _qrCanvas = null;
     if(typeof QRCode !== 'function'){ box.textContent = 'Sem ligação para gerar o QR.'; return; }
     var tmp = document.createElement('div'), T = 600, cor = corQR(), nome = String(SAL.nome || NEG.nome || '').trim();
+    $('qrCorIn').value = corBaseQR().toLowerCase(); $('qrCorSalao').classList.toggle('hide', !SAL.corQR);
+    $('qrCorNota').textContent = cor.toLowerCase() !== corBaseQR().toLowerCase() ? 'Esta cor é clara: o QR usa um tom mais escuro dela, para os telemóveis o lerem bem.' : '';
     new QRCode(tmp, { text:linkSalao(), width:T, height:T, colorDark:cor, colorLight:'#ffffff', correctLevel:QRCode.CorrectLevel.H });
     var q = tmp.querySelector('canvas'); if(!q){ box.textContent = 'Não foi possível gerar o QR.'; return; }
     // folha final: margem branca, moldura na cor do salão e o nome no meio (o nível H aguenta o centro tapado)
@@ -1619,6 +1624,9 @@
     _qrCanvas = c; c.style.width = '220px'; c.style.height = '220px'; c.style.display = 'block'; box.appendChild(c);
     box.style.padding = '0'; box.style.border = 'none'; box.style.background = 'transparent';
   }
+  var _qrCorT = null;
+  $('qrCorIn').addEventListener('input', function(){ SAL.corQR = this.value; pintarQR(); clearTimeout(_qrCorT); var v = this.value; _qrCorT = setTimeout(async function(){ var e = await guardarCfg(function(c){ c.salao = Object.assign({}, c.salao || {}, { corQR:v }); }); toast(e ? ('Erro: ' + e.message) : 'Cor do QR guardada ✓'); }, 700); });
+  $('qrCorSalao').onclick = async function(){ delete SAL.corQR; pintarQR(); var e = await guardarCfg(function(c){ c.salao = Object.assign({}, c.salao || {}); delete c.salao.corQR; }); toast(e ? ('Erro: ' + e.message) : 'O QR voltou à cor do salão ✓'); };
   function qrDataUrl(){ return _qrCanvas ? _qrCanvas.toDataURL('image/png') : ''; }
   $('qrPng').onclick = function(){ var u = qrDataUrl(); if(!u) return; var a = document.createElement('a'); a.href = u; a.download = 'qr-' + SLUG + '.png'; a.click(); };
   $('qrCartao').onclick = function(){
