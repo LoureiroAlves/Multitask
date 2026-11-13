@@ -64,6 +64,16 @@ self.addEventListener('notificationclick', function(event){
   var url = (event.notification.data && event.notification.data.url) || '/';
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(wins){
+      // 4 Trevo (salões): se a página do salão já está aberta (mesmo com o endereço curto), leva-a ao aviso (…&m=id)
+      var ms = /\/salao\.html\?n=([a-z0-9]+)/i.exec(url);
+      if (ms) {
+        for (var j = 0; j < wins.length; j++) {
+          var w0 = wins[j], u0 = String(w0.url || '');
+          if (u0.indexOf('salao-gestao') < 0 && (u0.indexOf('n=' + ms[1]) >= 0 || /\/[a-z0-9]+(\?|$)/i.test(u0) && u0.indexOf('/' + ms[1]) >= 0) && 'navigate' in w0) {
+            return w0.navigate(url).then(function(c){ return c && c.focus ? c.focus() : null; }).catch(function(){ return self.clients.openWindow(url); });
+          }
+        }
+      }
       for (var i = 0; i < wins.length; i++) {
         var w = wins[i];
         try { if (w.url.indexOf(url.split('?')[0]) === 0 && 'focus' in w) { try { w.postMessage({ tipo: 'abrir', url: url }); } catch (e2) {} return w.focus(); } } catch (e) {}

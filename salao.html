@@ -697,8 +697,25 @@
       $('minhas').querySelectorAll('[data-ac]').forEach(function(b){ b.onclick = function(){ acaoMinha(b.getAttribute('data-ac'), b.getAttribute('data-id'), b); }; });
       $('minhas').querySelectorAll('[data-abrir]').forEach(function(b){ b.onclick = function(){ var id = b.getAttribute('data-abrir'); _minhaAberta = _minhaAberta === id ? '' : id;
         $('minhas').querySelectorAll('.minha').forEach(function(c){ var on = c.getAttribute('data-id') === _minhaAberta; c.classList.toggle('aberta', on); var cb = c.querySelector('.minha-cab'); cb.setAttribute('aria-expanded', on); cb.querySelector('.seta').textContent = on ? '▲ Fechar' : '▼ Ver detalhes e opções'; }); }; });
+      abrirPropostaPendente(por);
       if(pushOn) ligarPushTodas(vis.filter(function(x){ return por[x.id].estado !== 'cancelada'; }).map(function(x){ return x.id; }));
     }).catch(function(){});
+  }
+  // vindo da notificação/link (…&m=id): se o salão fez uma proposta, mostra-a logo numa janela para responder
+  var _propMostrada = {};
+  function abrirPropostaPendente(por){
+    var id = params.get('m'), r = id && por[id]; if(!r || r.estado === 'cancelada' || _propMostrada[id]) return;
+    if(!r.proposta_hora && !r.proposta_prof) return; _propMostrada[id] = 1;
+    var txt = r.proposta_prof ? ('O salão propõe que a sua marcação de <b>' + esc(r.servico || '') + '</b> (' + esc(quando(r.data, r.hora)) + ') seja com <b>' + esc(nomeProf(r.proposta_prof) || 'outra pessoa') + '</b>' + (nomeProf(r.profissional) ? (' em vez de ' + esc(nomeProf(r.profissional))) : '') + '. O dia e a hora não mudam.')
+      : ('O salão propõe mudar a sua marcação de <b>' + esc(r.servico || '') + '</b> para <b>' + esc(quando(r.proposta_data || r.data, r.proposta_hora)) + '</b> (em vez de ' + esc(quando(r.data, r.hora)) + ').');
+    var d = document.createElement('div'); d.className = 'promo-pop';
+    d.innerHTML = '<div class="cx" role="dialog" aria-modal="true" aria-label="Proposta do salão" style="padding:18px;display:flex;flex-direction:column;gap:12px;"><button type="button" class="x" aria-label="Fechar" style="background:#eee;color:#333;">✕</button>'
+      + '<h3 style="margin:0;font-size:19px;">' + (r.proposta_prof ? '👤 Proposta de outra pessoa' : '🕘 Proposta de nova hora') + '</h3><div style="font-size:15px;line-height:1.45;">' + txt + '</div>'
+      + '<div style="display:flex;gap:8px;"><button type="button" class="btn-ac" data-r="sim" style="flex:1;">Aceito</button><button type="button" class="btn-sec" data-r="nao" style="flex:1;">' + (r.proposta_prof ? 'Prefiro manter' : 'Não dá') + '</button></div></div>';
+    function fechar(){ d.remove(); }
+    d.querySelector('.x').onclick = fechar; d.addEventListener('click', function(e){ if(e.target === d) fechar(); });
+    d.querySelectorAll('[data-r]').forEach(function(b){ b.onclick = function(){ fechar(); acaoMinha(r.proposta_prof ? (b.getAttribute('data-r') === 'sim' ? 'psim' : 'pnao') : b.getAttribute('data-r'), id, b); }; });
+    document.body.appendChild(d);
   }
   function enviarReag(){
     if(!sel.dia || !sel.hora){ msg('Escolha o novo dia e a hora.', 'erro'); return; }
