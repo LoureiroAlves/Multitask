@@ -85,6 +85,8 @@
   .camp-conta span b{ color:var(--ac); }
   .camp-ban{ border:1.5px solid var(--linha); border-radius:12px; padding:10px 12px; display:flex; flex-direction:column; gap:10px; }
   #cpBanCat{ border:1.5px solid var(--borda); border-radius:10px; padding:10px 12px; font-size:15px; font-family:inherit; background:#fff; }
+  .promo-desc{ background:#F6F1F8; border-radius:10px; padding:10px; display:flex; flex-direction:column; gap:4px; }
+  #cpDesc{ width:58px; border:1.5px solid var(--borda); border-radius:8px; padding:4px 6px; font-size:15px; font-weight:800; font-family:inherit; text-align:center; }
   .ban-fotos{ display:flex; gap:6px; flex-wrap:wrap; }
   .ban-fotos button{ width:58px; height:58px; border-radius:8px; border:2px solid transparent; padding:0; overflow:hidden; background:#F4F1EE; cursor:pointer; font-size:11px; font-weight:700; color:var(--suave); font-family:inherit; }
   .ban-fotos button img{ width:100%; height:100%; object-fit:cover; display:block; }
@@ -348,6 +350,10 @@
             <div class="campo"><label for="cpBanCat">Categoria da promoção <span style="font-weight:400;color:var(--suave);">(põe a foto da categoria e o "Marcar" abre-a)</span></label><select id="cpBanCat"></select></div>
             <div class="campo"><label>Foto do banner <span style="font-weight:400;color:var(--suave);">(opcional)</span></label><div class="ban-fotos" id="cpBanFotos"></div></div>
             <div class="campo"><label for="cpBanAte">Mostrar na página até</label><input type="date" id="cpBanAte"></div>
+            <div class="promo-desc">
+              <label class="chk-l"><input type="checkbox" id="cpDescOn"> <span>Aplicar <b>desconto de <input type="number" id="cpDesc" min="1" max="90" step="1" inputmode="numeric">%</b> nas marcações feitas pelos clientes na página até ao fim da promoção <span id="cpDescAlvo" style="font-weight:400;color:var(--suave);"></span></span></label>
+              <div id="cpDescNota" style="font-size:12px;color:var(--suave);"></div>
+            </div>
           </div>
         </div>
         <div class="camp-botoes"><button type="button" class="btn-ac" id="cpPush">🔔 Enviar notificação</button><button type="button" class="btn" id="cpWa">💬 Enviar por WhatsApp</button><button type="button" class="btn" id="cpMail">✉️ Enviar por email</button></div>
@@ -762,7 +768,7 @@
     var h = await sb.from('salao_campanhas').select('*').eq('negocio_id', NEG.id).order('criado_em', { ascending:false }).limit(50);
     CAMP_OK = !h.error; CAMPH = h.error ? [] : (h.data || []);
     if(!$('cpBanAte').value) $('cpBanAte').value = iso(new Date(Date.now() + 14 * 86400000));
-    pintarCampanha(); pintarHistCamp(); pintarCatBanner(); pintarFotosBanner(); pintarPromoAtual(); desenharBanner(); garantirPromoLarga();
+    pintarCampanha(); pintarHistCamp(); pintarCatBanner(); pintarFotosBanner(); pintarDesc(); pintarPromoAtual(); desenharBanner(); garantirPromoLarga();
   }
   // destinatários do público escolhido: [{ c, x (stats), ep (notificação), tel }]
   function publicoCamp(){
@@ -817,6 +823,16 @@
   };
   // ---------- banner da promoção (feito sozinho a partir da campanha) ----------
   var BAN = { foto:'', ultimo:null };
+  // desconto escrito na campanha (ex.: "20%", "25 %", "-17%"): o primeiro número com % à frente
+  function descDetetado(){ var m = /(\d{1,2})\s*%/.exec($('cpTit').value + ' ' + $('cpTxt').value); var d = m ? parseInt(m[1], 10) : 0; return (d > 0 && d <= 90) ? d : 0; }
+  var _descMexido = false;
+  function pintarDesc(){
+    var d = descDetetado();
+    if(!_descMexido){ if(d){ $('cpDesc').value = d; $('cpDescOn').checked = true; } else { $('cpDescOn').checked = false; } }
+    var c = $('cpBanCat').value; $('cpDescAlvo').textContent = c ? ('— só nos serviços de "' + c + '"') : '— em todos os serviços';
+    $('cpDescNota').textContent = d ? ('Encontrei "' + d + '%" na mensagem.') : 'Escreva o desconto na mensagem (ex.: 20%) ou ponha-o aqui.';
+  }
+  function descEscolhido(){ var d = parseInt($('cpDesc').value, 10); return ($('cpBan').checked && $('cpDescOn').checked && d > 0 && d <= 90) ? d : 0; }
   function catsServ(){ var l = []; SERV.forEach(function(x){ var c = (x.cat || 'Serviços').trim(); if(!x.oculto && l.indexOf(c) < 0) l.push(c); }); return l; }
   // foto da categoria: a escolhida para a categoria ou, sem ela, a do primeiro serviço com foto (como na página do cliente)
   function fotoCat(c){ var cf = SAL.catFotos || {}; if(/^https:\/\//.test(String(cf[c] || ''))) return cf[c]; var sv = SERV.filter(function(x){ return (x.cat || 'Serviços').trim() === c && /^https:\/\//.test(String(x.foto || '')); })[0]; return sv ? sv.foto : ''; }
@@ -852,7 +868,7 @@
       g.drawImage(foto, (foto.width - sw) / 2, (foto.height - sh) / 2, sw, sh, p0, 0, fw, H);
       var gr = g.createLinearGradient(fx - px(120), 0, fx + px(160), 0); gr.addColorStop(0, cor); gr.addColorStop(1, cor + '00');
       g.fillStyle = cor; g.fillRect(0, 0, fx - px(119), H); g.fillStyle = gr; g.fillRect(fx - px(120), 0, px(280), H);
-      txtW = fx - px(110) - txtX;
+      txtW = fx - px(50) - txtX;
     } else {
       g.fillStyle = cor; g.fillRect(0, 0, W, H);
       g.fillStyle = 'rgba(255,255,255,.08)'; g.beginPath(); g.arc(W - px(120), px(90), px(260), 0, 7); g.fill(); g.beginPath(); g.arc(W - px(40), H + px(40), px(200), 0, 7); g.fill();
@@ -860,6 +876,7 @@
       txtW = Math.min(txtW, largo ? W * 0.62 : txtW);
     }
     var y = px(56);
+    logo = null;   // o banner leva só o nome do salão (sem o logótipo)
     if(logo){ var L = px(92), kl = Math.min((L - px(16)) / logo.width, (L - px(16)) / logo.height); g.fillStyle = '#fff'; redondo(txtX, y, L, L, px(18)); g.fill();
       g.drawImage(logo, txtX + (L - logo.width * kl) / 2, y + (L - logo.height * kl) / 2, logo.width * kl, logo.height * kl);
       g.fillStyle = 'rgba(255,255,255,.92)'; g.font = '700 ' + px(26) + 'px Manrope, system-ui, sans-serif'; g.textBaseline = 'middle';
@@ -871,6 +888,10 @@
     linhasTexto(g, tit, txtW, 2).forEach(function(l){ g.fillText(l, txtX, y); y += fs * 1.12; }); y += px(12);
     g.font = '500 ' + px(30) + 'px Manrope, system-ui, sans-serif'; g.fillStyle = 'rgba(255,255,255,.92)';
     var maxL = Math.max(1, Math.floor((H - px(130) - y) / px(40))); linhasTexto(g, txt, txtW, Math.min(largo ? 2 : 4, maxL)).forEach(function(l){ g.fillText(l, txtX, y); y += px(40); });
+    // selo do desconto (canto de cima, à direita)
+    var dS = txtO ? (+txtO.desc || 0) : descEscolhido();
+    if(dS){ var R = px(largo ? 92 : 96), cx = W - R - px(40), cy = R + px(36); g.fillStyle = '#fff'; g.beginPath(); g.arc(cx, cy, R, 0, 7); g.fill();
+      g.fillStyle = cor; g.textAlign = 'center'; g.textBaseline = 'middle'; var fz = px(60); do{ g.font = '800 ' + fz + 'px Manrope, system-ui, sans-serif'; fz -= px(2); }while(g.measureText('−' + dS + '%').width > R * 1.55 && fz > px(24)); g.fillText('−' + dS + '%', cx, cy + px(2)); g.textAlign = 'left'; }
     // botão "Marcar"
     g.font = '800 ' + px(28) + 'px Manrope, system-ui, sans-serif'; var bt = 'Marcar  →', bw = g.measureText(bt).width + px(56), bh = px(62), by = H - px(56) - bh;
     g.fillStyle = '#fff'; redondo(txtX, by, bw, bh, bh / 2); g.fill(); g.fillStyle = cor; g.textBaseline = 'middle'; g.fillText(bt, txtX + px(28), by + bh / 2 + 1);
@@ -887,13 +908,13 @@
   async function publicarBanner(){
     if(!$('cpBan').checked) return null;
     await desenharBanner();
-    var chave = [$('cpTit').value.trim(), $('cpTxt').value.trim(), BAN.foto, $('cpBanAte').value, SAL.cor, logoPush(), $('cpBanCat').value].join('|');
+    var chave = [$('cpTit').value.trim(), $('cpTxt').value.trim(), BAN.foto, $('cpBanAte').value, SAL.cor, logoPush(), $('cpBanCat').value, descEscolhido()].join('|');
     if(BAN.ultimo && BAN.ultimo.chave === chave) return BAN.ultimo.url;
     async function sobe(cv, nome){ var blob = await new Promise(function(ok){ cv.toBlob(ok, 'image/jpeg', 0.88); }); var caminho = SLUG + '/promo/' + nome + '-' + Date.now().toString(36) + '.jpg';
       var up = await sb.storage.from('imagens').upload(caminho, blob, { contentType:'image/jpeg', cacheControl:'31536000', upsert:false }); if(up.error) throw up.error; return sb.storage.from('imagens').getPublicUrl(caminho).data.publicUrl; }
     var url, urlL; try{ url = await sobe($('cpBanPrev'), 'banner'); urlL = await sobe($('cpBanPrevL'), 'banner-largo'); }catch(er){ toast('Não foi possível guardar o banner: ' + (er.message || er)); return null; }
     var antigo = SAL.promo && SAL.promo.img, antigoL = SAL.promo && SAL.promo.imgLargo;
-    var promo = { id:Date.now().toString(36), img:url, imgLargo:urlL, titulo:$('cpTit').value.trim() || 'Novidade', texto:textoPara({ nome:'' }, $('cpTxt').value), ate:$('cpBanAte').value || iso(new Date(Date.now() + 14 * 86400000)), cat:$('cpBanCat').value || null, foto:BAN.foto || null, criado:new Date().toISOString() };
+    var promo = { id:Date.now().toString(36), img:url, imgLargo:urlL, titulo:$('cpTit').value.trim() || 'Novidade', texto:textoPara({ nome:'' }, $('cpTxt').value), ate:$('cpBanAte').value || iso(new Date(Date.now() + 14 * 86400000)), cat:$('cpBanCat').value || null, foto:BAN.foto || null, desconto:descEscolhido() || null, criado:new Date().toISOString() };
     var e = await guardarCfg(function(c){ c.salao = Object.assign({}, c.salao || {}, { promo:promo }); });
     if(e){ toast('Erro ao pôr o banner na página: ' + e.message); return url; }
     if(antigo && antigo !== url) apagarFicheiro(antigo); if(antigoL && antigoL !== urlL) apagarFicheiro(antigoL);
@@ -903,7 +924,7 @@
     var p = SAL.promo; if(!p || !p.img || p.imgLargo || String(p.ate || '') < iso(new Date())) return;
     try{ if(document.fonts && document.fonts.ready) await document.fonts.ready; }catch(e){}
     var foto = await carregarImg(p.foto || (p.cat ? fotoCat(p.cat) : '')), logo = await carregarImg(logoPush() || '');
-    var cv = document.createElement('canvas'); cv.width = 2000; cv.height = 560; pintarBannerEm(cv, 2000, 560, foto, logo, { tit:p.titulo, txt:p.texto });
+    var cv = document.createElement('canvas'); cv.width = 2000; cv.height = 560; pintarBannerEm(cv, 2000, 560, foto, logo, { tit:p.titulo, txt:p.texto, desc:p.desconto });
     try{ var blob = await new Promise(function(ok){ cv.toBlob(ok, 'image/jpeg', 0.88); }), caminho = SLUG + '/promo/banner-largo-' + Date.now().toString(36) + '.jpg';
       var up = await sb.storage.from('imagens').upload(caminho, blob, { contentType:'image/jpeg', cacheControl:'31536000', upsert:false }); if(up.error) return;
       var u = sb.storage.from('imagens').getPublicUrl(caminho).data.publicUrl;
@@ -912,12 +933,15 @@
   function pintarPromoAtual(){
     var p = SAL.promo, ativa = p && p.img && String(p.ate || '') >= iso(new Date());
     $('cpPromoAtual').classList.toggle('hide', !ativa); if(!ativa){ $('cpPromoAtual').innerHTML = ''; return; }
-    $('cpPromoAtual').innerHTML = '<div class="promo-atual"><img src="' + esc(p.img) + '" alt=""><div style="flex:1;"><b>Na página do salão agora</b><div style="color:var(--suave);">até ' + dataPt(p.ate) + '</div></div><button type="button" class="btn-lnk" id="cpPromoTirar">Retirar</button></div>';
+    $('cpPromoAtual').innerHTML = '<div class="promo-atual"><img src="' + esc(p.img) + '" alt=""><div style="flex:1;"><b>Na página do salão agora</b><div style="color:var(--suave);">até ' + dataPt(p.ate) + (p.desconto ? (' · −' + p.desconto + '% nas marcações' + (p.cat ? (' de ' + esc(p.cat)) : '')) : '') + '</div></div><button type="button" class="btn-lnk" id="cpPromoTirar">Retirar</button></div>';
     $('cpPromoTirar').onclick = async function(){ if(!confirm('Tirar este banner da página do salão?')) return; var antigo = p.img;
       var antigoL = p.imgLargo; var e = await guardarCfg(function(c){ c.salao = Object.assign({}, c.salao || {}); delete c.salao.promo; }); if(e){ toast('Erro: ' + e.message); return; } apagarFicheiro(antigo); if(antigoL) apagarFicheiro(antigoL); BAN.ultimo = null; pintarPromoAtual(); toast('Banner retirado da página'); };
   }
   $('cpBan').addEventListener('change', desenharBanner);
-  $('cpBanCat').addEventListener('change', function(){ var c = this.value; if(c){ var f = fotoCat(c); if(f) BAN.foto = f; } pintarFotosBanner(); desenharBanner(); });
+  $('cpTit').addEventListener('input', pintarDesc); $('cpTxt').addEventListener('input', pintarDesc);
+  $('cpDesc').addEventListener('input', function(){ _descMexido = true; if(+this.value > 0) $('cpDescOn').checked = true; desenharBanner(); });
+  $('cpDescOn').addEventListener('change', function(){ _descMexido = true; desenharBanner(); });
+  $('cpBanCat').addEventListener('change', function(){ pintarDesc(); var c = this.value; if(c){ var f = fotoCat(c); if(f) BAN.foto = f; } pintarFotosBanner(); desenharBanner(); });
   $('cpTit').addEventListener('input', function(){ clearTimeout(BAN.t); BAN.t = setTimeout(desenharBanner, 250); });
   $('cpTxt').addEventListener('input', function(){ clearTimeout(BAN.t); BAN.t = setTimeout(desenharBanner, 250); });
   ['cpPub','cpServ','cpTit','cpTxt','cpLink'].forEach(function(id){ $(id).addEventListener(id === 'cpTit' || id === 'cpTxt' ? 'input' : 'change', pintarCampanha); });
