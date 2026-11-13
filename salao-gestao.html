@@ -102,6 +102,9 @@
   @media (max-width: 860px){ .camp-grelha{ grid-template-columns:1fr; } }
   .resp-cli{ font-size:13px; font-weight:700; border-radius:8px; padding:6px 8px; margin-top:4px; }
   .resp-cli.ok{ background:#EEF5EF; color:#2F6B3E; } .resp-cli.nao{ background:#FBEDED; color:#8A2A2A; }
+  .qr-txt{ display:flex; flex-direction:column; gap:4px; font-size:14px; font-weight:700; }
+  .qr-txt input{ border:1.5px solid var(--borda); border-radius:8px; padding:8px 10px; font-size:14px; font-family:inherit; max-width:260px; }
+  .qr-txt .btn-lnk{ align-self:flex-start; min-height:0; font-size:13px; }
   .qr-cores{ display:flex; flex-direction:column; gap:6px; }
   .qr-cor{ display:flex; align-items:center; gap:8px; font-size:14px; font-weight:700; }
   .qr-cor input[type=color]{ width:44px; height:36px; padding:2px; border:1.5px solid var(--borda); border-radius:8px; background:#fff; cursor:pointer; }
@@ -375,7 +378,8 @@
     <div class="bloco-sec"><h3>Galeria de trabalhos</h3><p class="sub" style="margin:0;">Até 12 fotos de resultados (unhas, maquilhagem, sobrancelhas…).</p><div class="fotos" id="ftGaleria"></div></div>
     <div class="bloco-sec"><h3>QR code do salão</h3><p class="sub" style="margin:0 0 10px;">Para imprimir e pôr no balcão, na montra ou nos cartões. Abre a página de marcações deste salão.</p>
       <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:center;"><div id="qrBox" style="background:#fff;padding:10px;border:1px solid var(--linha);border-radius:10px;"></div>
-      <div style="display:flex;flex-direction:column;gap:8px;"><div id="qrUrl" style="font-size:13px;color:var(--suave);word-break:break-all;"></div><div class="qr-cores"><div class="qr-cor"><input type="color" id="qrCorIn" aria-label="Cor do QR"><label for="qrCorIn">Quadradinhos</label></div><div class="qr-cor"><input type="color" id="qrCorMold" aria-label="Cor do contorno"><label for="qrCorMold">Contorno</label></div><div class="qr-cor"><input type="color" id="qrCorNome" aria-label="Cor do nome"><label for="qrCorNome">Nome no meio</label></div></div><button type="button" class="btn-lnk" id="qrCorSalao" style="align-self:flex-start;padding:0;">Voltar às cores do salão</button><div id="qrCorNota" style="font-size:12px;color:var(--suave);max-width:260px;"></div><button type="button" class="btn" id="qrPng">⬇️ Descarregar QR (imagem)</button><button type="button" class="btn" id="qrCartao">🖨️ Imprimir cartão</button></div></div></div>
+      <div style="display:flex;flex-direction:column;gap:8px;"><div id="qrUrl" style="font-size:13px;color:var(--suave);word-break:break-all;"></div><div class="qr-txt"><label for="qrTexto">Texto no meio</label><input id="qrTexto" maxlength="30" placeholder="Vazio = sem texto"><button type="button" class="btn-lnk" id="qrTextoNome" style="padding:0;">Usar o nome do salão</button></div>
+      <div class="qr-cores"><div class="qr-cor"><input type="color" id="qrCorIn" aria-label="Cor do QR"><label for="qrCorIn">Quadradinhos</label></div><div class="qr-cor"><input type="color" id="qrCorMold" aria-label="Cor do contorno"><label for="qrCorMold">Contorno</label></div><div class="qr-cor"><input type="color" id="qrCorNome" aria-label="Cor do nome"><label for="qrCorNome">Texto no meio</label></div></div><button type="button" class="btn-lnk" id="qrCorSalao" style="align-self:flex-start;padding:0;">Voltar às cores do salão</button><div id="qrCorNota" style="font-size:12px;color:var(--suave);max-width:260px;"></div><button type="button" class="btn" id="qrPng">⬇️ Descarregar QR (imagem)</button><button type="button" class="btn" id="qrCartao">🖨️ Imprimir cartão</button></div></div></div>
     <input type="file" id="ftInput" accept="image/*" class="hide">
   </section>
 
@@ -1583,6 +1587,8 @@
   // na versão de testes (teste.amesadigital.pt / teste.4trevo.com) o QR abre a página de testes
   function linkSalao(){ return (/(^|\.)teste\./.test(location.hostname) ? 'https://teste.4trevo.com' : 'https://4trevo.com') + '/' + encodeURIComponent(SLUG); }
   // cor do QR: a cor do salão; se for clara, escurece-a mantendo o tom (o leitor precisa de contraste)
+  // texto no meio do QR: o que o salão escrever (vazio = sem texto); se nunca escreveu, o nome do salão
+  function textoQR(){ return (typeof SAL.qrTexto === 'string') ? SAL.qrTexto.trim() : String(SAL.nome || NEG.nome || '').trim(); }
   function corOk(c){ return /^#[0-9a-fA-F]{6}$/.test(c || ''); }
   function corBaseQR(){ return corOk(SAL.corQR) ? SAL.corQR : (corOk(SAL.cor) ? SAL.cor : '#8E3653'); }
   function corBaseMold(){ return corOk(SAL.corQRmold) ? SAL.corQRmold : corBaseQR(); }
@@ -1600,10 +1606,11 @@
   function pintarQR(){
     var box = $('qrBox'); box.innerHTML = ''; $('qrUrl').textContent = linkSalao(); _qrCanvas = null;
     if(typeof QRCode !== 'function'){ box.textContent = 'Sem ligação para gerar o QR.'; return; }
-    var tmp = document.createElement('div'), T = 600, cor = corQR(), corM = corBaseMold(), corN = corQR(corBaseNome()), nome = String(SAL.nome || NEG.nome || '').trim();
+    var tmp = document.createElement('div'), T = 600, cor = corQR(), corM = corBaseMold(), corN = corQR(corBaseNome()), nome = textoQR();
+    if(document.activeElement !== $('qrTexto')) $('qrTexto').value = nome; $('qrTextoNome').classList.toggle('hide', SAL.qrTexto === undefined || SAL.qrTexto === null);
     $('qrCorIn').value = corBaseQR().toLowerCase(); $('qrCorMold').value = corBaseMold().toLowerCase(); $('qrCorNome').value = corBaseNome().toLowerCase();
     $('qrCorSalao').classList.toggle('hide', !(SAL.corQR || SAL.corQRmold || SAL.corQRnome));
-    $('qrCorNota').textContent = (cor.toLowerCase() !== corBaseQR().toLowerCase() || corN.toLowerCase() !== corBaseNome().toLowerCase()) ? 'Uma das cores é clara: no QR (ou no nome) usa-se um tom mais escuro dela, para se ler bem.' : '';
+    $('qrCorNota').textContent = (cor.toLowerCase() !== corBaseQR().toLowerCase() || corN.toLowerCase() !== corBaseNome().toLowerCase()) ? 'Uma das cores é clara: no QR (ou no texto) usa-se um tom mais escuro dela, para se ler bem.' : '';
     new QRCode(tmp, { text:linkSalao(), width:T, height:T, colorDark:cor, colorLight:'#ffffff', correctLevel:QRCode.CorrectLevel.H });
     var q = tmp.querySelector('canvas'); if(!q){ box.textContent = 'Não foi possível gerar o QR.'; return; }
     // folha final: margem branca, moldura na cor do salão e o nome no meio (o nível H aguenta o centro tapado)
@@ -1634,6 +1641,10 @@
     $(p[0]).addEventListener('input', function(){ SAL[p[1]] = this.value; pintarQR(); clearTimeout(_qrCorT);
       _qrCorT = setTimeout(async function(){ var v = { corQR:SAL.corQR, corQRmold:SAL.corQRmold, corQRnome:SAL.corQRnome }; Object.keys(v).forEach(function(k){ if(!corOk(v[k])) delete v[k]; });
         var e = await guardarCfg(function(c){ c.salao = Object.assign({}, c.salao || {}, v); }); toast(e ? ('Erro: ' + e.message) : 'Cores do QR guardadas ✓'); }, 700); }); });
+  var _qrTxtT = null;
+  $('qrTexto').addEventListener('input', function(){ SAL.qrTexto = this.value; pintarQR(); clearTimeout(_qrTxtT); var v = this.value.trim();
+    _qrTxtT = setTimeout(async function(){ var e = await guardarCfg(function(c){ c.salao = Object.assign({}, c.salao || {}, { qrTexto:v }); }); toast(e ? ('Erro: ' + e.message) : (v ? 'Texto do QR guardado ✓' : 'QR sem texto no meio ✓')); }, 800); });
+  $('qrTextoNome').onclick = async function(){ delete SAL.qrTexto; pintarQR(); var e = await guardarCfg(function(c){ c.salao = Object.assign({}, c.salao || {}); delete c.salao.qrTexto; }); toast(e ? ('Erro: ' + e.message) : 'O QR voltou a ter o nome do salão ✓'); };
   $('qrCorSalao').onclick = async function(){ delete SAL.corQR; delete SAL.corQRmold; delete SAL.corQRnome; pintarQR();
     var e = await guardarCfg(function(c){ c.salao = Object.assign({}, c.salao || {}); delete c.salao.corQR; delete c.salao.corQRmold; delete c.salao.corQRnome; }); toast(e ? ('Erro: ' + e.message) : 'O QR voltou às cores do salão ✓'); };
   function qrDataUrl(){ return _qrCanvas ? _qrCanvas.toDataURL('image/png') : ''; }
