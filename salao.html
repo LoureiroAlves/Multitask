@@ -117,6 +117,9 @@
   .minhas{ display:flex; flex-direction:column; gap:10px; }
   .minha{ background:#fff; border:1.5px solid var(--borda); border-radius:14px; display:flex; flex-direction:column; overflow:hidden; }
   .minha.aberta{ border-color:var(--ac); }
+  /* a próxima marcação: contorno e faixa na cor do salão */
+  .minha.proxima{ border:2.5px solid var(--ac); box-shadow:0 0 0 4px color-mix(in srgb, var(--ac) 16%, transparent), 0 6px 18px rgba(31,28,26,.10); }
+  .prox-faixa{ background:var(--ac); color:#fff; font-size:13px; font-weight:800; padding:6px 14px; letter-spacing:.2px; }
   .minha-cab{ display:grid; grid-template-columns:1fr auto; gap:4px 10px; align-items:center; padding:12px 14px; background:none; border:none; text-align:left; width:100%; color:var(--ink); }
   .minha-cab b{ font-size:15px; } .minha-cab .q{ font-size:14px; color:var(--ink); } .minha-cab .p{ font-size:14px; font-weight:800; text-align:right; }
   .minha-cab .seta{ grid-column:1/-1; font-size:12px; color:var(--suave); }
@@ -658,13 +661,19 @@
       var mudou = false, agoraMs = Date.now();
       l.forEach(function(x){ var r = por[x.id]; if(r && r.estado === 'cancelada' && !x.cancVisto){ x.cancVisto = agoraMs; mudou = true; } if(r && r.estado !== 'cancelada' && x.cancVisto){ delete x.cancVisto; mudou = true; } });
       if(mudou) guardar(l);
-      var vis = l.filter(function(x){ var r = por[x.id]; return r && r.data >= hoje && !(r.estado === 'cancelada' && iso(new Date(x.cancVisto || agoraMs)) < hoje); });
+      // passou a hora do fim da marcação → sai da lista (as canceladas saem no dia seguinte a serem vistas)
+      function acabou(r){ var a = minDe(r.hora); if(a == null) return r.data < hoje; var f = new Date(r.data + 'T00:00:00'); f.setMinutes(a + (+r.duracao || 30)); return f.getTime() < agoraMs; }
+      var vis = l.filter(function(x){ var r = por[x.id]; if(!r || r.data < hoje) return false; if(r.estado === 'cancelada') return iso(new Date(x.cancVisto || agoraMs)) >= hoje; return !acabou(r); });
       vis.sort(function(a, b){ return (por[a.id].data + por[a.id].hora).localeCompare(por[b.id].data + por[b.id].hora); });   // a mais próxima primeiro
       if(!vis.length){ $('secMinhas').classList.add('hide'); return; }
       $('secMinhas').classList.remove('hide');
       var _primeiraVez = !_minhasHtml;
       var eu = function(v){ return (Math.round(v * 100) / 100).toLocaleString('pt-PT', { minimumFractionDigits:2, maximumFractionDigits:2 }) + ' €'; };
       var pushOn = pushLigado();
+      var proxId = (vis.filter(function(x){ return por[x.id].estado !== 'cancelada'; })[0] || {}).id;
+      function quandoFalta(r){ var hj = new Date(); hj.setHours(0,0,0,0); var d = new Date(r.data + 'T00:00:00'), n = Math.round((d - hj) / 86400000), hh = String(r.hora || '').replace(':', 'h');
+        if(n <= 0){ var a = minDe(r.hora), ag = new Date(), m = a == null ? null : a - (ag.getHours() * 60 + ag.getMinutes()); return m != null && m <= 0 ? 'A decorrer agora' : m != null && m < 60 ? ('Daqui a ' + m + ' min') : ('Hoje às ' + hh); }
+        return n === 1 ? ('Amanhã às ' + hh) : ('Daqui a ' + n + ' dias'); }
       var _novoHtml = vis.map(function(x){
         var r = por[x.id], prop = r.estado !== 'cancelada' && r.proposta_hora, propP = r.estado !== 'cancelada' && r.proposta_prof, serv = r.servico || x.servico || 'Marcação';
         var est = (prop || propP) ? ['proposta', 'Proposta do salão'] : r.estado === 'confirmada' ? ['confirmada', 'Confirmada'] : r.estado === 'cancelada' ? ['cancelada', 'Cancelada'] : ['pendente', 'Por confirmar'];
@@ -674,7 +683,8 @@
         if(val == null){ var sv = SERV.filter(function(v){ return v.nome === serv; })[0], pm = /(\d+(?:[.,]\d{1,2})?)/.exec(String((sv && sv.preco) || '')); if(pm) val = parseFloat(pm[1].replace(',', '.')); }
         var preco = val == null || r.estado === 'cancelada' ? '' : ((+r.desconto && base != null) ? ('<s style="color:var(--suave);font-weight:600;font-size:12px;">' + eu(base) + '</s> ' + eu(val)) : eu(val));
         var aberta = _minhaAberta === x.id;
-        var h = '<div class="minha' + (aberta ? ' aberta' : '') + '" data-id="' + esc(x.id) + '"' + (r.estado === 'cancelada' ? ' style="opacity:.7;"' : '') + '><button type="button" class="minha-cab" data-abrir="' + esc(x.id) + '" aria-expanded="' + aberta + '">'
+        var eProx = x.id === proxId;
+        var h = '<div class="minha' + (aberta ? ' aberta' : '') + (eProx ? ' proxima' : '') + '" data-id="' + esc(x.id) + '"' + (r.estado === 'cancelada' ? ' style="opacity:.7;"' : '') + '>' + (eProx ? ('<div class="prox-faixa">⭐ A seguir · ' + esc(quandoFalta(r)) + '</div>') : '') + '<button type="button" class="minha-cab" data-abrir="' + esc(x.id) + '" aria-expanded="' + aberta + '">'
           + '<b>' + esc(serv) + '</b><span class="estado e-' + est[0] + '">' + est[1] + '</span>'
           + '<span class="q">' + esc(quando(r.data, r.hora)) + '</span><span class="p">' + preco + '</span>'
           + '<span class="seta">' + (aberta ? '▲ Fechar' : '▼ Ver detalhes e opções') + '</span></button>';
