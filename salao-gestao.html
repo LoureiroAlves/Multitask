@@ -483,7 +483,7 @@
     if('serviceWorker' in navigator){ try{ navigator.serviceWorker.addEventListener('message', function(e){ if(e.data && (e.data.tipo === 'push' || e.data.tipo === 'abrir')){ atualizar(true); if(e.data.tipo === 'push') toast('🔔 Novidade — agenda atualizada'); } }); }catch(e){} }
     document.addEventListener('visibilitychange', function(){ if(!document.hidden) atualizar(); });
     window.addEventListener('focus', function(){ atualizar(); });
-    setInterval(function(){ if(!document.hidden) atualizar(); }, 30000);
+    setInterval(function(){ if(!document.hidden) atualizar(); }, 15000);
   }
   $('lEntrar').onclick = async function(){
     var e = $('lEmail').value.trim(), p = $('lPass').value; if(!e || !p) return;

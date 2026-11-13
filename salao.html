@@ -702,10 +702,18 @@
     }).catch(function(){});
   }
   // vindo da notificação/link (…&m=id): se o salão fez uma proposta, mostra-a logo numa janela para responder
-  var _propMostrada = {};
+  var _mDone = false;
+  // também com a página já aberta: assim que chega uma proposta nova (notificação ou atualização automática), abre a janela
+  function chaveProp(r){ return r.id + '|' + (r.proposta_data || '') + '|' + (r.proposta_hora || '') + '|' + (r.proposta_prof || ''); }
+  function propVistas(){ try{ return JSON.parse(localStorage.getItem('salao_prop_vistas_' + SLUG) || '{}') || {}; }catch(e){ return {}; } }
   function abrirPropostaPendente(por){
-    var id = params.get('m'), r = id && por[id]; if(!r || r.estado === 'cancelada' || _propMostrada[id]) return;
-    if(!r.proposta_hora && !r.proposta_prof) return; _propMostrada[id] = 1;
+    if(document.querySelector('.promo-pop')) return;   // já há uma janela aberta
+    var vistas = propVistas(), m = params.get('m');
+    var ids = Object.keys(por).filter(function(k){ var x = por[k]; return x && x.estado !== 'cancelada' && (x.proposta_hora || x.proposta_prof) && x.data >= iso(new Date()); });
+    ids.sort(function(a, b){ return (a === m ? -1 : 0) - (b === m ? -1 : 0); });
+    var id = ids.filter(function(k){ return !vistas[chaveProp(por[k])] || k === m && !_mDone; })[0], r = id && por[id]; if(!r) return;
+    if(id === m) _mDone = true;
+    vistas[chaveProp(r)] = 1; try{ localStorage.setItem('salao_prop_vistas_' + SLUG, JSON.stringify(vistas)); }catch(e){}
     var txt = r.proposta_prof ? ('O salão propõe que a sua marcação de <b>' + esc(r.servico || '') + '</b> (' + esc(quando(r.data, r.hora)) + ') seja com <b>' + esc(nomeProf(r.proposta_prof) || 'outra pessoa') + '</b>' + (nomeProf(r.profissional) ? (' em vez de ' + esc(nomeProf(r.profissional))) : '') + '. O dia e a hora não mudam.')
       : ('O salão propõe mudar a sua marcação de <b>' + esc(r.servico || '') + '</b> para <b>' + esc(quando(r.proposta_data || r.data, r.proposta_hora)) + '</b> (em vez de ' + esc(quando(r.data, r.hora)) + ').');
     var d = document.createElement('div'); d.className = 'promo-pop';
@@ -791,7 +799,7 @@
   if('serviceWorker' in navigator){ try{ navigator.serviceWorker.addEventListener('message', function(e){ if(e.data && (e.data.tipo === 'push' || e.data.tipo === 'abrir')) atualizarMinhas(); }); }catch(e){} }
   document.addEventListener('visibilitychange', function(){ if(!document.hidden) atualizarMinhas(); });
   window.addEventListener('focus', atualizarMinhas);
-  setInterval(function(){ if(!document.hidden && guardados().length) atualizarMinhas(); }, 30000);
+  setInterval(function(){ if(!document.hidden && guardados().length) atualizarMinhas(); }, 15000);
 
   // ---------- notificações (o mesmo service worker da àMesa) ----------
   function b64(s){ var p = '='.repeat((4 - s.length % 4) % 4), b = (s + p).replace(/-/g, '+').replace(/_/g, '/'), r = atob(b), o = new Uint8Array(r.length); for(var i = 0; i < r.length; i++) o[i] = r.charCodeAt(i); return o; }
