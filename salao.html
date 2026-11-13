@@ -166,6 +166,15 @@
   .pill{ border:none; border-radius:999px; background:var(--ac); color:#fff; font-weight:800; font-size:14px; padding:10px 18px; min-height:42px; flex:0 0 auto; }
   @media (max-width: 560px){ .cat-grelha{ grid-template-columns:1fr 1fr; gap:10px; } .cat-card .ci{ height:110px; } .cat-card .ct{ padding:11px; } .cat-card .ct b{ font-size:15px; } .cat-card .ct i{ font-size:13px; } }
   @media (max-width: 860px){ .sub-fundo{ align-items:flex-end; padding:0; } .sub{ border-radius:20px 20px 0 0; max-height:85vh; } }
+  /* banner da promoção (feito pelo salão nas Campanhas) */
+  .promo-ban{ display:block; width:100%; max-width:640px; padding:0; border:none; border-radius:16px; overflow:hidden; cursor:pointer; background:none; box-shadow:0 6px 18px rgba(31,28,26,.14); animation:aZoom .4s ease both; }
+  .promo-ban img{ display:block; width:100%; height:auto; }
+  .promo-pop{ position:fixed; inset:0; z-index:120; background:rgba(0,0,0,.6); display:flex; align-items:center; justify-content:center; padding:16px; animation:aFade .25s ease both; }
+  .promo-pop .cx{ position:relative; width:100%; max-width:560px; background:#fff; border-radius:18px; overflow:hidden; box-shadow:0 20px 50px rgba(0,0,0,.35); animation:aZoom .35s cubic-bezier(.2,.8,.2,1) both; }
+  .promo-pop img{ display:block; width:100%; height:auto; }
+  .promo-pop .ac{ display:flex; gap:8px; padding:12px; }
+  .promo-pop .ac button{ flex:1; min-height:46px; border-radius:12px; font-weight:800; font-size:15px; font-family:inherit; cursor:pointer; }
+  .promo-pop .x{ position:absolute; top:10px; right:10px; width:40px; height:40px; border-radius:50%; border:none; background:rgba(0,0,0,.45); color:#fff; font-size:18px; display:flex; align-items:center; justify-content:center; cursor:pointer; }
   .lb{ position:fixed; inset:0; background:rgba(0,0,0,.9); z-index:100; display:flex; align-items:center; justify-content:center; padding:16px; }
   .lb img{ max-width:100%; max-height:100%; border-radius:8px; }
   .lb button{ position:absolute; top:12px; right:12px; width:44px; height:44px; border:none; border-radius:50%; background:rgba(255,255,255,.15); color:#fff; font-size:20px; }
@@ -231,6 +240,7 @@
       <div class="grupo"><h2>As minhas marcações</h2></div>
       <div class="minhas" id="minhas"></div>
     </section>
+    <section class="grupo hide" id="secPromo"><h2>Promoção</h2><button type="button" class="promo-ban" id="promoBan"></button></section>
     <div id="servicos"><div class="vazio">A carregar…</div></div>
     <section class="grupo hide" id="secGaleria"><h2>Trabalhos</h2><div class="galeria" id="galeria"></div></section>
     <section class="grupo hide" id="secMapa"><h2>Onde estamos</h2><div id="mapaBloco"></div></section>
@@ -346,7 +356,7 @@
   }
   // nos domínios 4trevo, a barra mostra só 4trevo.com/nomedonegocio (sem "salao.html?n=")
   function enderecoCurto(){ try{ if(!/(^|\.)4trevo\.com$/i.test(location.hostname) || !SLUG) return;
-    var q = new URLSearchParams(location.search); q.delete('n'); q.delete('c'); var r = q.toString();
+    var q = new URLSearchParams(location.search); q.delete('n'); q.delete('c'); q.delete('promo'); var r = q.toString();
     var novo = '/' + SLUG + (r ? ('?' + r) : '') + location.hash;
     if(novo !== location.pathname + location.search + location.hash) history.replaceState(history.state, '', novo); }catch(e){} }
   function carregar(){
@@ -405,6 +415,27 @@
     $('secGaleria').classList.toggle('hide', !gl.length);
     $('galeria').innerHTML = gl.map(function(u){ return '<img src="' + esc(u) + '" alt="Trabalho do salão" loading="lazy" data-lb>'; }).join('');
     try{ pintarMapa(); }catch(e){}
+    try{ pintarPromo(); }catch(e){}
+  }
+  // promoção: banner na página até à data escolhida; vindo da notificação/link (promo=1) abre logo em grande
+  var _promoAberta = false;
+  function promoAtiva(){ var p = SAL.promo; return (!GRUPO_LISTA && p && urlOk(p.img) && String(p.ate || '') >= iso(new Date())) ? p : null; }
+  function pintarPromo(){
+    var p = promoAtiva(); $('secPromo').classList.toggle('hide', !p); if(!p) return;
+    $('promoBan').innerHTML = '<img src="' + esc(p.img) + '" alt="' + esc((p.titulo || '') + '. ' + (p.texto || '')) + '">';
+    $('promoBan').onclick = function(){ abrirPromo(); };
+    if(params.get('promo') && !_promoAberta){ _promoAberta = true; setTimeout(abrirPromo, 350); }
+  }
+  function abrirPromo(){
+    var p = promoAtiva(); if(!p) return;
+    var d = document.createElement('div'); d.className = 'promo-pop';
+    d.innerHTML = '<div class="cx" role="dialog" aria-modal="true" aria-label="' + esc(p.titulo || 'Promoção') + '"><img src="' + esc(p.img) + '" alt="' + esc((p.titulo || '') + '. ' + (p.texto || '')) + '"><button type="button" class="x" aria-label="Fechar">✕</button>'
+      + '<div class="ac"><button type="button" class="btn-ac" data-m>Marcar</button></div></div>';
+    function fechar(){ d.remove(); }
+    d.addEventListener('click', function(e){ if(e.target === d) fechar(); });
+    d.querySelector('.x').onclick = fechar;
+    d.querySelector('[data-m]').onclick = function(){ fechar(); if(p.cat && servDe(p.cat).length){ abrirCategoria(p.cat); return; } try{ $('servicos').scrollIntoView({ behavior:'smooth', block:'start' }); }catch(e){} };   // promoção de uma categoria: abre logo essa categoria
+    document.body.appendChild(d);
   }
   // mapa: o link do Google Maps colado pelo salão (pino exato) ou, sem link, direções para a morada
   function linkMapa(){ var l = String(SAL.mapaLink || '').trim(); if(/^https?:\/\//i.test(l)) return l; var m = String(SAL.morada || '').trim(); return m ? ('https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(m)) : ''; }
