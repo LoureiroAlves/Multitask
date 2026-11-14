@@ -172,6 +172,15 @@
   .cli-tab .n{ text-align:right; font-variant-numeric:tabular-nums; }
   .etq{ display:inline-block; border-radius:999px; padding:1px 8px; font-size:11px; font-weight:800; margin-left:6px; }
   .etq.novo{ background:#EEF2EE; color:var(--verde); } .etq.reg{ background:#F3E6EA; color:var(--ac); }
+  .etq.fid{ background:#FBEFD6; color:#8A5A10; } .etq.fidp{ background:var(--ac); color:#fff; }
+  .fid-cfg{ background:#fff; border:1.5px solid var(--borda); border-radius:14px; padding:14px 16px; margin:0 0 14px; display:flex; flex-direction:column; gap:12px; }
+  .fid-cfg.on{ border-color:var(--ac); }
+  .fid-modos{ display:flex; gap:8px; flex-wrap:wrap; }
+  .fid-modos label{ flex:1 1 200px; border:1.5px solid var(--borda); border-radius:12px; padding:10px 12px; display:flex; gap:8px; align-items:flex-start; cursor:pointer; font-size:14px; }
+  .fid-modos label.on{ border-color:var(--ac); background:color-mix(in srgb, var(--ac) 7%, #fff); }
+  .fid-modos small{ display:block; color:var(--suave); font-weight:400; margin-top:2px; }
+  .fid-campos{ display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end; }
+  .fid-campos .campo{ flex:0 1 190px; }
   .etq.blq{ background:#3a2a2a; color:#fff; } .etq.camp{ background:#EAF0F7; color:#2B5C8A; } .etq.inat{ background:#F4EFE6; color:#8A6420; }
   .cli-sec{ font-weight:800; font-size:14px; margin-top:4px; }
   .chk-l{ display:flex; gap:8px; align-items:flex-start; font-size:14px; font-weight:600; cursor:pointer; line-height:1.35; }
@@ -318,6 +327,7 @@
   <section id="tClientes" class="pag hide" style="max-width:1200px;">
     <h2>Clientes</h2>
     <p class="sub">Cada marcação cria a ficha do cliente (ou junta-a à que já existe, pelo telemóvel ou, se não houver contacto, pelo nome). As visitas e o total gasto contam as marcações confirmadas até hoje, pelo preço de cada uma. Use o filtro para ver quem deixou de vir, quem aceita campanhas ou quem está bloqueado.</p>
+    <div class="fid-cfg" id="fidCfg"></div>
     <div class="cli-tot" id="cliTot"></div>
     <div class="cli-barra">
       <input id="cliBusca" type="search" placeholder="Procurar nome ou telemóvel…" style="flex:1;min-width:200px;">
@@ -584,19 +594,54 @@
     if(a.error){ $('cliLista').innerHTML = '<div class="msg erro">' + (/clientes|relation|does not exist|schema cache/i.test(a.error.message) ? 'Falta correr no Supabase o ficheiro salao-clientes.sql.' : esc(a.error.message)) + '</div>'; return; }
     var b = await sb.from('reservas').select('*').eq('negocio_id', NEG.id).not('servico', 'is', null).order('data', { ascending:false }).limit(10000);
     CLI = a.data || []; CLIRES = b.data || [];
-    pintarClientes();
+    pintarFidCfg(); pintarClientes();
   }
   function statsCli(){
     var hoje = iso(new Date()), m = {};
     var ali = {};
-    CLI.forEach(function(c){ m[c.tel_norm] = { c:c, vis:0, gasto:0, prev:0, ult:'', prox:'', faltas:0, canc:0, serv:{}, hist:[] }; ali[c.tel_norm] = c.tel_norm; });
+    CLI.forEach(function(c){ m[c.tel_norm] = { c:c, vis:0, gasto:0, prev:0, ult:'', prox:'', faltas:0, canc:0, serv:{}, hist:[], fv:0, fs:0, fu:{}, fpend:{} }; ali[c.tel_norm] = c.tel_norm; });
     CLI.forEach(function(c){ var t = telNorm(c.telefone); if(t.length >= 9 && !ali[t]) ali[t] = c.tel_norm; var nn = 'n:' + nomeNorm(c.nome); if(nomeNorm(c.nome) && !ali[nn]) ali[nn] = c.tel_norm; });
     CLIRES.forEach(function(r){ var k = ali[chaveCli(r.telefone, r.nome)]; if(!k || !m[k]) return; var x = m[k]; x.hist.push(r);
+      if(r.fidel && r.estado !== 'cancelada' && !r.faltou){ x.fu[r.fidel] = (x.fu[r.fidel] || 0) + 1; if(r.data >= hoje) x.fpend[r.fidel] = 1; }
       if(r.estado === 'cancelada'){ x.canc++; return; }
       if(r.faltou){ x.faltas++; return; }
-      if(r.data <= hoje && r.estado === 'confirmada'){ x.vis++; x.gasto += +r.valor || 0; if(r.data > x.ult) x.ult = r.data; x.serv[r.servico] = (x.serv[r.servico] || 0) + 1; }
+      if(r.data <= hoje && r.estado === 'confirmada'){ x.vis++; x.gasto += +r.valor || 0; x.fs += +r.valor || 0; if(!r.fidel) x.fv++; if(r.data > x.ult) x.ult = r.data; x.serv[r.servico] = (x.serv[r.servico] || 0) + 1; }
       else if(r.data > hoje){ if(!x.prox || r.data < x.prox) x.prox = r.data; if(r.estado === 'confirmada') x.prev += +r.valor || 0; } });
     return m;
+  }
+  // ---------- fidelização (cartão de cliente): a clínica liga/desliga ----------
+  function fidCfgG(){ var f = SAL.fidel; if(!f || !f.ativo) return null; var pt = f.modo === 'pontos';
+    return { modo:pt ? 'pontos' : 'carimbos', pontos:pt, alvo:pt ? Math.max(1, +f.pontos || 100) : Math.max(2, Math.min(50, +f.visitas || 10)), desc:Math.max(1, Math.min(100, +f.desconto || 10)), porEuro:Math.max(0.01, +f.porEuro || 1) }; }
+  // as mesmas contas do servidor (19-salao-fidelizacao.sql)
+  function fidelDe(x){ var c = fidCfgG(); if(!c || !x) return null; var usados = x.fu[c.modo] || 0;
+    var atual = c.pontos ? Math.max(0, Math.floor(x.fs * c.porEuro + 1e-6) - usados * c.alvo) : Math.max(0, x.fv - usados * c.alvo);
+    return { c:c, atual:atual, premio:atual >= c.alvo, pendente:!!x.fpend[c.modo] }; }
+  function pintarFidCfg(){
+    var f = SAL.fidel || {}, on = !!f.ativo, pt = f.modo === 'pontos';
+    $('fidCfg').className = 'fid-cfg' + (on ? ' on' : '');
+    $('fidCfg').innerHTML = '<label class="chk-l" style="font-size:15px;"><input type="checkbox" id="fdOn"' + (on ? ' checked' : '') + '> <span><b>⭐ Fidelização — cartão de cliente</b> <span style="font-weight:400;color:var(--suave);">' + (on ? '· ligada: os clientes veem o cartão na página e o prémio entra sozinho na marcação seguinte' : '· desligada') + '</span></span></label>'
+      + '<div id="fdCorpo" class="' + (on ? '' : 'hide') + '" style="display:flex;flex-direction:column;gap:12px;">'
+      + '<div class="fid-modos"><label class="' + (pt ? '' : 'on') + '"><input type="radio" name="fdModo" value="carimbos"' + (pt ? '' : ' checked') + '> <span><b>Cartão de carimbos</b><small>Cada visita feita = 1 carimbo.</small></span></label>'
+      + '<label class="' + (pt ? 'on' : '') + '"><input type="radio" name="fdModo" value="pontos"' + (pt ? ' checked' : '') + '> <span><b>Pontos por euro</b><small>Quem gasta mais junta mais depressa.</small></span></label></div>'
+      + '<div class="fid-campos">'
+      + '<div class="campo fd-c' + (pt ? ' hide' : '') + '"><label for="fdVis">Prémio ao fim de (visitas)</label><input id="fdVis" type="number" min="2" max="50" value="' + (+f.visitas || 10) + '"></div>'
+      + '<div class="campo fd-p' + (pt ? '' : ' hide') + '"><label for="fdPe">Pontos por cada €</label><input id="fdPe" type="number" min="0.1" step="0.1" value="' + (+f.porEuro || 1) + '"></div>'
+      + '<div class="campo fd-p' + (pt ? '' : ' hide') + '"><label for="fdPts">Prémio ao juntar (pontos)</label><input id="fdPts" type="number" min="1" value="' + (+f.pontos || 200) + '"></div>'
+      + '<div class="campo"><label for="fdDesc">Prémio: desconto de (%)</label><input id="fdDesc" type="number" min="1" max="100" value="' + (+f.desconto || 20) + '"></div>'
+      + '<button type="button" class="btn-ac" id="fdGuardar">Guardar</button><span class="msg" id="fdMsg"></span></div>'
+      + '<div style="font-size:13px;color:var(--suave);" id="fdTxt"></div></div>';
+    function txt(){ var p = document.querySelector('[name="fdModo"]:checked').value === 'pontos', d = +$('fdDesc').value || 0;
+      $('fdTxt').innerHTML = 'Os clientes veem: <b>' + (p ? ('Ganha ' + (+$('fdPe').value || 1).toLocaleString('pt-PT') + ' ponto(s) por cada € gasto. Ao juntar ' + (+$('fdPts').value || 0) + ' pontos, a marcação seguinte tem ' + d + '% de desconto.') : ('A cada ' + (+$('fdVis').value || 0) + ' visitas, a seguinte tem ' + d + '% de desconto.')) + '</b><br>Conta só visitas feitas (confirmadas, já passadas e sem falta). Se a marcação já tiver desconto de uma promoção, o prémio fica para a seguinte. Se a marcação com o prémio for cancelada ou o cliente faltar, o prémio volta para ele. Nas marcações feitas aqui na Gestão, use o botão "Usar prémio" no detalhe da marcação.'; }
+    document.querySelectorAll('[name="fdModo"]').forEach(function(r){ r.onchange = function(){ var p = r.value === 'pontos';
+      document.querySelectorAll('.fid-modos label').forEach(function(l){ l.classList.toggle('on', l.querySelector('input').checked); });
+      document.querySelectorAll('.fd-c').forEach(function(e){ e.classList.toggle('hide', p); }); document.querySelectorAll('.fd-p').forEach(function(e){ e.classList.toggle('hide', !p); }); txt(); }; });
+    ['fdVis','fdPe','fdPts','fdDesc'].forEach(function(k){ $(k).oninput = txt; }); txt();
+    function valores(){ return { ativo:$('fdOn').checked, modo:document.querySelector('[name="fdModo"]:checked').value, visitas:Math.max(2, Math.min(50, parseInt($('fdVis').value, 10) || 10)), porEuro:Math.max(0.01, parseFloat($('fdPe').value) || 1), pontos:Math.max(1, parseInt($('fdPts').value, 10) || 100), desconto:Math.max(1, Math.min(100, parseInt($('fdDesc').value, 10) || 10)) }; }
+    async function gravar(v, msgOk){ var e = await guardarCfg(function(c){ c.salao = Object.assign({}, c.salao || {}, { fidel:v }); });
+      if(e){ toast('Erro: ' + e.message); return false; } toast(msgOk); pintarFidCfg(); pintarClientes(); return true; }
+    $('fdOn').onchange = function(){ var on = this.checked; $('fdCorpo').classList.toggle('hide', !on); $('fidCfg').classList.toggle('on', on);
+      gravar(Object.assign({}, SAL.fidel || { modo:'carimbos', visitas:10, porEuro:1, pontos:200, desconto:20 }, { ativo:on }), on ? 'Fidelização ligada ✓' : 'Fidelização desligada'); };
+    $('fdGuardar').onclick = function(){ gravar(valores(), 'Fidelização guardada ✓'); };
   }
   function pintarClientes(){
     var m = statsCli(), l = Object.keys(m).map(function(k){ return m[k]; }), hoje = iso(new Date()), mes = hoje.slice(0, 7), ano = hoje.slice(0, 4);
@@ -617,7 +662,7 @@
     l.sort(function(a, b){ return o === 'vis' ? b.vis - a.vis : o === 'gasto' ? b.gasto - a.gasto : o === 'nome' ? String(a.c.nome || '').localeCompare(String(b.c.nome || ''), 'pt') : o === 'novo' ? String(b.c.criado_em).localeCompare(String(a.c.criado_em)) : String(b.ult || b.prox).localeCompare(String(a.ult || a.prox)); });
     if(!l.length){ $('cliLista').innerHTML = '<div style="background:#fff;border-radius:12px;padding:16px;color:var(--suave);">' + (CLI.length ? (fl ? 'Nenhum cliente neste filtro.' : 'Nenhum cliente encontrado.') : 'Ainda não há clientes. As fichas aparecem aqui a partir da primeira marcação.') + '</div>'; return; }
     $('cliLista').innerHTML = '<table class="cli-tab"><thead><tr><th>Cliente</th><th>Telemóvel</th><th class="n">Visitas</th><th class="n">Total gasto</th>' + (prevOn ? '<th class="n opc">Previsto</th>' : '') + '<th>Última visita</th><th class="opc">Próxima</th><th class="n opc">Faltas</th></tr></thead><tbody>'
-      + l.slice(0, 500).map(function(x){ return '<tr class="l" data-t="' + esc(x.c.tel_norm) + '"><td><b>' + esc(x.c.nome || '—') + '</b>' + (x.c.bloqueado ? '<span class="etq blq">Bloqueado</span>' : x.vis >= 3 ? '<span class="etq reg">Regular</span>' : x.vis <= 1 ? '<span class="etq novo">Novo</span>' : '') + (!x.c.bloqueado && !x.prox && x.vis > 0 && mesesSem(x.ult) >= 3 ? '<span class="etq inat">' + mesesSem(x.ult) + ' meses sem vir</span>' : '') + (x.c.aceita_campanhas ? '<span class="etq camp" title="Aceita receber campanhas">📣</span>' : '') + '</td><td>' + (x.c.telefone ? esc(x.c.telefone) : '<span style="color:var(--suave);">sem contacto</span>') + '</td><td class="n">' + x.vis + '</td><td class="n">' + euro(x.gasto) + '</td>' + (prevOn ? ('<td class="n opc" style="color:var(--suave);">' + (x.prev ? euro(x.prev) : '—') + '</td>') : '') + '<td>' + dataPt(x.ult) + '</td><td class="opc">' + (x.prox ? dataPt(x.prox) : '—') + '</td><td class="n opc">' + (x.faltas || '') + '</td></tr>'; }).join('')
+      + l.slice(0, 500).map(function(x){ return '<tr class="l" data-t="' + esc(x.c.tel_norm) + '"><td><b>' + esc(x.c.nome || '—') + '</b>' + (x.c.bloqueado ? '<span class="etq blq">Bloqueado</span>' : x.vis >= 3 ? '<span class="etq reg">Regular</span>' : x.vis <= 1 ? '<span class="etq novo">Novo</span>' : '') + (!x.c.bloqueado && !x.prox && x.vis > 0 && mesesSem(x.ult) >= 3 ? '<span class="etq inat">' + mesesSem(x.ult) + ' meses sem vir</span>' : '') + (x.c.aceita_campanhas ? '<span class="etq camp" title="Aceita receber campanhas">📣</span>' : '') + (function(fd){ return !fd ? '' : fd.pendente ? '<span class="etq fid" title="Prémio já guardado numa marcação">⭐ prémio marcado</span>' : fd.premio ? '<span class="etq fidp" title="Tem direito ao prémio do cartão">🎁 Prémio −' + fd.c.desc + '%</span>' : (fd.atual > 0 ? ('<span class="etq fid" title="Cartão de cliente">⭐ ' + fd.atual + '/' + fd.c.alvo + (fd.c.pontos ? ' pts' : '') + '</span>') : ''); })(fidelDe(x)) + '</td><td>' + (x.c.telefone ? esc(x.c.telefone) : '<span style="color:var(--suave);">sem contacto</span>') + '</td><td class="n">' + x.vis + '</td><td class="n">' + euro(x.gasto) + '</td>' + (prevOn ? ('<td class="n opc" style="color:var(--suave);">' + (x.prev ? euro(x.prev) : '—') + '</td>') : '') + '<td>' + dataPt(x.ult) + '</td><td class="opc">' + (x.prox ? dataPt(x.prox) : '—') + '</td><td class="n opc">' + (x.faltas || '') + '</td></tr>'; }).join('')
       + '</tbody></table>';
     $('cliLista').querySelectorAll('tr.l').forEach(function(tr){ tr.onclick = function(){ abrirFicha(m[tr.getAttribute('data-t')]); }; });
   }
@@ -661,6 +706,8 @@
       + '<div>' + (tel ? ('📱 <a href="tel:' + esc(tel.replace(/\s/g, '')) + '">' + esc(tel) + '</a>' + (waLink({ telefone:tel }, '') ? (' · <a href="' + esc(waLink({ telefone:tel }, 'Olá ' + (c.nome || '') + '!')) + '" target="_blank" rel="noopener">WhatsApp</a>') : '')) : '<span style="color:var(--suave);">Sem contacto</span>') + ' · cliente desde ' + dataPt(c.criado_em) + '</div>'
       + '<div class="nums" style="grid-template-columns:repeat(4,minmax(0,1fr));"><div><b>' + x.vis + '</b><span>visitas</span></div><div><b style="font-size:18px;">' + euro(x.gasto) + '</b><span>total gasto</span></div><div><b style="font-size:18px;">' + euro(media) + '</b><span>por visita</span></div><div><b>' + x.faltas + '</b><span>faltas</span></div></div>'
       + (SAL.mostrarPrevisto === true && x.prev ? ('<div style="font-size:14px;">Previsto (marcações futuras confirmadas): <b>' + euro(x.prev) + '</b></div>') : '')
+      + (function(fd){ return !fd ? '' : '<div style="font-size:14px;background:#FBEFD6;border-radius:10px;padding:8px 12px;">⭐ <b>Cartão de cliente:</b> ' + (fd.c.pontos ? (fd.atual + ' de ' + fd.c.alvo + ' pontos') : (Math.min(fd.atual, fd.c.alvo) + ' de ' + fd.c.alvo + ' visitas'))
+          + (fd.pendente ? ' · <b>prémio já guardado numa marcação</b>' : fd.premio ? (' · <b style="color:var(--ac);">🎁 tem direito a −' + fd.c.desc + '% na próxima marcação</b>') : '') + '</div>'; })(fidelDe(x))
       + '<div style="font-size:14px;">Serviço preferido: <b>' + esc(fav) + '</b>' + (x.canc ? (' · ' + x.canc + ' cancelada(s)') : '') + '</div>'
       + '<div class="grelha2"><div class="campo"><label for="fNome">Nome</label><input id="fNome" maxlength="80" value="' + esc(c.nome || '') + '"></div><div class="campo"><label for="fEmail">Email</label><input id="fEmail" type="email" maxlength="120" value="' + esc(c.email || '') + '"></div></div>'
       + '<div class="grelha2"><div class="campo"><label for="fTel">Telemóvel (opcional)</label><input id="fTel" inputmode="tel" maxlength="20" value="' + esc(c.telefone || '') + '"></div><div class="campo"><label for="fNasc">Data de nascimento</label><input id="fNasc" type="date" value="' + esc(c.nascimento || '') + '"></div></div>'
@@ -1547,6 +1594,19 @@
   function modal(html){ fecharModal(); var f = document.createElement('div'); f.className = 'modal-fundo'; f.innerHTML = '<div class="modal" role="dialog" aria-modal="true"><button type="button" class="fechar" aria-label="Fechar">✕</button>' + html + '</div>'; document.body.appendChild(f); f.querySelector('.fechar').onclick = fecharModal; f.addEventListener('click', function(e){ if(e.target === f) fecharModal(); }); return f; }
   function fecharModal(){ var f = document.querySelector('.modal-fundo'); if(f) f.remove(); }
   document.addEventListener('keydown', function(e){ if(e.key === 'Escape') fecharModal(); });
+  // detalhe: se o cliente tem direito ao prémio do cartão, o salão pode usá-lo nesta marcação
+  function fidelDetalhe(r, f){
+    var c = fidCfgG(), cx = f.querySelector('#dFid'); if(!c || !cx || r.fidel || (+r.desconto) || r.estado === 'cancelada' || !r.servico || !(r.telefone || r.nome)) return;
+    sb.rpc('fidel_cliente', { p_negocio:NEG.id, p_tel:r.telefone || null, p_nome:r.nome || null }).then(function(res){
+      var e = res && res.data; if(res.error || !e || !e.ativo || !e.premio || e.pendente || !document.body.contains(cx)) return;
+      cx.innerHTML = '<button type="button" class="btn" id="dFidUsar" style="margin:4px 0;">⭐ Usar prémio do cartão de cliente (−' + e.desconto + '%)</button>';
+      cx.querySelector('#dFidUsar').onclick = async function(){ var b = baseDe(r), d = +e.desconto;
+        if(b == null){ toast('Este serviço não tem preço definido.'); return; }
+        var u = await sb.from('reservas').update({ desconto:d, valor_base:b, valor:comDesc(b, d), fidel:e.modo }).eq('id', r.id);
+        if(u.error){ toast(/fidel|column/i.test(u.error.message) ? 'Falta correr no Supabase o 19-salao-fidelizacao.sql.' : ('Erro: ' + u.error.message)); return; }
+        fecharModal(); toast('Prémio aplicado ✓ (−' + d + '%)'); carregarRes(); };
+    }).catch(function(){});
+  }
   function abrirDetalhe(r, propor){
     var est = r.estado === 'confirmada' ? 'Confirmada' : r.estado === 'cancelada' ? 'Cancelada' : 'Por confirmar';
     var tel = String(r.telefone || '');
@@ -1564,7 +1624,7 @@
       + (tel ? ('<div>📱 <a href="tel:' + esc(tel.replace(/\s/g,'')) + '">' + esc(tel) + '</a>' + (waLink(r, '') ? (' · <a href="' + esc(waLink(r, 'Olá ' + (r.nome || '') + '!')) + '" target="_blank" rel="noopener">WhatsApp</a>') : '') + '</div>') : '')
       + (r.obs ? ('<div style="color:var(--suave);">“' + esc(r.obs) + '”</div>') : '')
       + '<div style="font-size:12px;color:var(--suave);">' + (r.push_marcacao ? '🔔 O cliente recebe as respostas por notificação.' : 'O cliente não tem notificações ligadas (pode avisar por WhatsApp).') + '</div>'
-      + (r.servico ? ('<div style="display:flex;flex-direction:column;gap:10px;"><div class="campo"><label for="dDesc">Preço · desconto</label>' + (r.promo ? ('<div style="font-size:13px;font-weight:700;color:#2B5C8A;">🎁 ' + esc(nomePromo(r.promo)) + '</div>') : '') + '<div style="display:flex;gap:8px;align-items:center;"><span style="font-weight:800;white-space:nowrap;" id="dPreco">' + (baseDe(r) != null ? (((+r.desconto) ? ('<s style="color:var(--suave);font-weight:600;">' + euro(baseDe(r)) + '</s> ') : '') + euro(comDesc(baseDe(r), r.desconto))) : '—') + '</span><select id="dDesc" style="flex:0 1 180px;min-height:40px;border:1.5px solid var(--borda);border-radius:10px;padding:0 8px;">' + opcoesDesc(r.desconto) + '</select></div></div>'
+      + (r.servico ? ('<div style="display:flex;flex-direction:column;gap:10px;"><div class="campo"><label for="dDesc">Preço · desconto</label>' + (r.promo ? ('<div style="font-size:13px;font-weight:700;color:#2B5C8A;">🎁 ' + esc(nomePromo(r.promo)) + '</div>') : '') + (r.fidel ? ('<div style="font-size:13px;font-weight:700;color:#8A5A10;">⭐ Prémio do cartão de cliente</div>') : '') + '<div id="dFid"></div>' + '<div style="display:flex;gap:8px;align-items:center;"><span style="font-weight:800;white-space:nowrap;" id="dPreco">' + (baseDe(r) != null ? (((+r.desconto) ? ('<s style="color:var(--suave);font-weight:600;">' + euro(baseDe(r)) + '</s> ') : '') + euro(comDesc(baseDe(r), r.desconto))) : '—') + '</span><select id="dDesc" style="flex:0 1 180px;min-height:40px;border:1.5px solid var(--borda);border-radius:10px;padding:0 8px;">' + opcoesDesc(r.desconto) + '</select></div></div>'
           + (r.estado === 'confirmada' && r.data <= iso(new Date()) ? ('<label style="display:flex;align-items:center;gap:8px;font-weight:700;"><input type="checkbox" id="dFaltou"' + (r.faltou ? ' checked' : '') + ' style="width:20px;height:20px;"> O cliente faltou</label>') : '<div></div>') + '</div>') : '')
       + '<label for="dNota">Nota para o cliente (opcional)</label><textarea id="dNota" rows="2" maxlength="200">' + esc(r.nota || '') + '</textarea>'
       + (r.estado !== 'cancelada' ? (
@@ -1584,7 +1644,8 @@
     var dj = f.querySelector('#dJa'); if(dj) dj.onchange = function(){ var bt = f.querySelector('[data-d="mudar"]'); if(bt) bt.textContent = dj.checked ? 'Mudar já e avisar o cliente' : 'Enviar proposta ao cliente'; };
     var dd = f.querySelector('#dDesc'); if(dd) dd.onchange = async function(){ var d = +dd.value || 0, b = baseDe(r), antes = +r.desconto || 0;
       if(b == null){ toast('Este serviço não tem preço definido.'); dd.value = String(antes); return; }
-      var v = comDesc(b, d), u = await sb.from('reservas').update({ desconto:d, valor_base:b, valor:v }).eq('id', r.id);
+      var v = comDesc(b, d), upd = { desconto:d, valor_base:b, valor:v }; if(r.fidel) upd.fidel = null;   // mudou o desconto à mão: o prémio volta para o cliente
+      var u = await sb.from('reservas').update(upd).eq('id', r.id); if(!u.error && r.fidel) r.fidel = null;
       if(u.error){ toast(/desconto|valor_base|column/i.test(u.error.message) ? 'Falta correr no Supabase o salao-descontos.sql.' : ('Erro: ' + u.error.message)); dd.value = String(antes); return; }
       r.desconto = d; r.valor_base = b; r.valor = v; $('dPreco').innerHTML = (d ? ('<s style="color:var(--suave);font-weight:600;">' + euro(b) + '</s> ') : '') + euro(v);
       if(r.estado === 'cancelada' || r.data < iso(new Date())){ toast('Desconto guardado ✓'); carregarRes(); return; }
@@ -1592,6 +1653,7 @@
       var ok = await pushCliente(r, d ? ('🎁 Desconto de ' + d + '%') : 'ℹ️ Preço da marcação', corpo); carregarRes();
       if(ok){ toast('Desconto guardado ✓ · cliente avisado'); return; }
       var wl = waLink(r, comCasa(corpo)); if(wl && confirm('Desconto guardado ✓\n\nEste cliente não tem notificações ligadas. Quer avisá-lo por WhatsApp?')) window.open(wl, '_blank', 'noopener'); else toast('Desconto guardado ✓'); };
+    fidelDetalhe(r, f);
     var df = f.querySelector('#dFaltou'); if(df) df.onchange = async function(){ var u = await sb.from('reservas').update({ faltou:df.checked }).eq('id', r.id); if(u.error){ toast(/faltou|column/i.test(u.error.message) ? 'Falta correr no Supabase o salao-clientes.sql.' : ('Erro: ' + u.error.message)); df.checked = !df.checked; return; } r.faltou = df.checked; toast(df.checked ? 'Marcado como falta' : 'Falta retirada'); carregarRes(); };
     var dpx = f.querySelector('#dPropProfX'); if(dpx) dpx.onclick = async function(){ var u = await sb.from('reservas').update({ proposta_prof:null }).eq('id', r.id); if(u.error){ toast('Erro: ' + u.error.message); return; }
       r.proposta_prof = null; fecharModal(); carregarRes(); var ok = await pushCliente(r, '↩️ Proposta retirada', 'A sua marcação de ' + quando(r.data, r.hora) + ' mantém-se com ' + (nomeProf(r.profissional) || 'a mesma pessoa') + '.'); toast(ok ? 'Proposta retirada · cliente avisado' : 'Proposta retirada'); };

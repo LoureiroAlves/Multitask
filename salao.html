@@ -126,6 +126,17 @@
   .resumo .rq{ font-weight:800; font-size:15px; }
   .pol-tx{ background:var(--fundo); border-radius:10px; padding:10px 12px; font-size:13px; color:var(--suave); white-space:pre-line; }
   .lnk-in{ background:none; border:none; padding:0; color:var(--ac); text-decoration:underline; font:inherit; font-weight:700; cursor:pointer; }
+  .fid{ background:#fff; border:2px solid var(--ac); border-radius:16px; padding:14px 16px; display:flex; flex-direction:column; gap:8px; }
+  .fid-cab{ display:flex; align-items:center; gap:10px; }
+  .fid-cab b{ font-size:16px; } .fid-cab span{ margin-left:auto; font-weight:800; color:var(--ac); font-size:15px; white-space:nowrap; }
+  .fid-regra{ font-size:13px; color:var(--suave); }
+  .fid-sel{ display:flex; flex-wrap:wrap; gap:6px; }
+  .fid-sel i{ width:26px; height:26px; border-radius:50%; border:2px dashed var(--borda); display:inline-flex; align-items:center; justify-content:center; font-style:normal; font-size:13px; color:#fff; }
+  .fid-sel i.on{ background:var(--ac); border:2px solid var(--ac); }
+  .fid-sel i.pr{ border:2px solid var(--ac); color:var(--ac); font-size:14px; }
+  .fid-barra{ height:10px; border-radius:999px; background:var(--fundo); overflow:hidden; } .fid-barra div{ height:100%; background:var(--ac); border-radius:999px; }
+  .fid-est{ font-size:14px; font-weight:700; }
+  .fid-est.pr{ background:color-mix(in srgb, var(--ac) 12%, #fff); color:var(--ac); border-radius:10px; padding:8px 10px; }
   .consent input{ width:20px; height:20px; flex:0 0 auto; margin:0; accent-color:var(--ac); }
   .campo input, .campo textarea{ border:1.5px solid var(--borda); border-radius:10px; padding:12px; font-size:16px; background:#fff; color:var(--ink); }
   .nota{ font-size:12px; color:var(--suave); }
@@ -269,6 +280,7 @@
       <div class="grupo"><h2>As minhas marcações</h2></div>
       <div class="minhas" id="minhas"></div>
     </section>
+    <section class="grupo hide" id="secFidel"><h2>Cartão de cliente</h2><div class="fid" id="fidCartao"></div></section>
     <section class="grupo hide" id="secPromo"><h2>Promoção</h2><button type="button" class="promo-ban" id="promoBan"></button></section>
     <div id="servicos"><div class="vazio">A carregar…</div></div>
     <section class="grupo hide" id="secGaleria"><h2>Trabalhos</h2><div class="galeria" id="galeria"></div></section>
@@ -697,15 +709,17 @@
   function pintarResumo(){
     var r = $('resumo'); if(!sel.serv || !sel.dia || !sel.hora || sel.reag){ r.classList.add('hide'); pintarPolitica(); return; }
     var t0 = minDe(sel.hora), SG = segs(), tot = 0, comPreco = 0, poup = 0;
-    var linhas = SG.map(function(g){ var n = precoNum(g.s.preco), d = descNoDia(g.s), v = n == null ? null : n * (100 - d) / 100;
-      if(v != null){ tot += v; comPreco++; poup += n - v; }
-      return '<div class="rl"><span>' + (SG.length > 1 ? (hDe(t0 + g.off).replace(':', 'h') + ' · ') : '') + esc(g.s.nome) + (d ? (' <span class="tag-desc">−' + d + '%</span>') : '') + '</span><span>' + (v == null ? esc(precoTxt(g.s.preco) || '—') : esc(euroTxt(v))) + '</span></div>'; }).join('');
+    var fc = fidCfg(), fUsa = premioFidel() && !descNoDia(SG[0].s), fPoup = 0;
+    var linhas = SG.map(function(g, i){ var n = precoNum(g.s.preco), d = descNoDia(g.s), fd = (i === 0 && fUsa) ? fc.desc : 0; if(fd) d = fd; var v = n == null ? null : n * (100 - d) / 100;
+      if(v != null){ tot += v; comPreco++; if(fd) fPoup += n - v; else poup += n - v; }
+      return '<div class="rl"><span>' + (SG.length > 1 ? (hDe(t0 + g.off).replace(':', 'h') + ' · ') : '') + esc(g.s.nome) + (d ? (' <span class="tag-desc">' + (fd ? '⭐ ' : '') + '−' + d + '%</span>') : '') + '</span><span>' + (v == null ? esc(precoTxt(g.s.preco) || '—') : esc(euroTxt(v))) + '</span></div>'; }).join('');
     var nP = sel.prof ? nomeProf(sel.prof) : '';
     r.innerHTML = '<h4>Resumo</h4><div class="rq">' + esc(quando(sel.dia)) + ' · ' + sel.hora.replace(':', 'h') + '–' + hDe(t0 + durTotal()).replace(':', 'h') + '</div>'
       + (nP ? ('<div>Com <b>' + esc(nP) + '</b></div>') : (EQ().length > 1 ? '<div style="color:var(--suave);">Com quem estiver disponível</div>' : ''))
       + linhas
       + (comPreco ? ('<div class="rl rt"><span>Total' + (comPreco < SG.length ? ' (sem os serviços sem preço)' : '') + ' · ' + esc(durTxt(durTotal())) + '</span><span>' + esc(euroTxt(tot)) + '</span></div>') : ('<div class="rl rt"><span>Duração</span><span>' + esc(durTxt(durTotal())) + '</span></div>'))
-      + (poup > 0.004 ? ('<div style="font-size:13px;color:var(--ac);font-weight:700;">🎁 Poupa ' + esc(euroTxt(poup)) + ' com a promoção</div>') : '');
+      + (poup > 0.004 ? ('<div style="font-size:13px;color:var(--ac);font-weight:700;">🎁 Poupa ' + esc(euroTxt(poup)) + ' com a promoção</div>') : '')
+      + (fUsa ? ('<div style="font-size:13px;color:var(--ac);font-weight:700;">⭐ Prémio do cartão de cliente: −' + fc.desc + '% em ' + esc(SG[0].s.nome) + (fPoup > 0.004 ? (' (poupa ' + esc(euroTxt(fPoup)) + ')') : '') + '</div>') : '');
     r.classList.remove('hide'); pintarPolitica();
   }
   function polChave(){ var t = String(SAL.politica || ''), h = 0; for(var i = 0; i < t.length; i++){ h = (h * 31 + t.charCodeAt(i)) | 0; } return 'salao_politica_' + SLUG + '_' + h; }
@@ -763,9 +777,38 @@
   try{ pintarPerguntaPush(); }catch(e){}   // já aceitou: não volta a perguntar
 
   // ---------- as minhas marcações ----------
+  // ---------- fidelização (a clínica liga/desliga na Gestão) ----------
+  var FID = null;
+  function fidCfg(){ var f = SAL.fidel; if(GRUPO_LISTA || !f || !f.ativo) return null;
+    var pt = f.modo === 'pontos'; return { pontos:pt, alvo:pt ? Math.max(1, +f.pontos || 100) : Math.max(2, Math.min(50, +f.visitas || 10)), desc:Math.max(1, Math.min(100, +f.desconto || 10)), porEuro:Math.max(0.01, +f.porEuro || 1) }; }
+  function carregarFidel(ids){
+    if(!fidCfg()){ FID = null; pintarFidel(); return; }
+    if(!ids.length){ FID = null; pintarFidel(); return; }
+    rpc('fidel_estado', { p_ids:ids }).then(function(e){ FID = (e && e.ativo) ? e : null; pintarFidel(); }).catch(function(){ FID = null; pintarFidel(); });
+  }
+  function premioFidel(){ return !!(FID && FID.premio && !FID.pendente && fidCfg()); }
+  function pintarFidel(){
+    var c = fidCfg(), s = $('secFidel'); if(!c){ s.classList.add('hide'); return; }
+    var e = FID || {}, alvo = c.alvo, atual = Math.max(0, +e.atual || 0), falta = Math.max(0, alvo - atual);
+    var umPt = c.porEuro === 1 ? '1 ponto' : (String(c.porEuro).replace('.', ',') + (c.porEuro === 1 ? ' ponto' : ' pontos'));
+    var regra = c.pontos ? ('Ganha ' + umPt + ' por cada € gasto. Ao juntar ' + alvo + ' pontos, a marcação seguinte tem ' + c.desc + '% de desconto.')
+                         : ('A cada ' + alvo + ' visitas, a seguinte tem ' + c.desc + '% de desconto.');
+    var vis = '';
+    if(c.pontos || alvo > 12) vis = '<div class="fid-barra"><div style="width:' + Math.min(100, Math.round(atual / alvo * 100)) + '%;"></div></div>';
+    else { for(var i = 0; i < alvo; i++) vis += '<i class="' + (i < atual ? 'on' : '') + '">' + (i < atual ? '✓' : '') + '</i>'; vis = '<div class="fid-sel" aria-label="' + Math.min(atual, alvo) + ' de ' + alvo + ' visitas">' + vis + '<i class="pr" title="Prémio">🎁</i></div>'; }
+    var est = !FID ? 'As suas visitas começam a contar a partir da primeira marcação.'
+      : e.pendente ? '🎁 O seu prémio já está guardado numa das suas marcações.'
+      : e.premio ? ('🎁 Já tem direito a ' + c.desc + '% de desconto! Entra sozinho na próxima marcação.')
+      : c.pontos ? ('Faltam ' + falta + ' pontos para o seu prémio.')
+      : (falta === 1 ? 'Falta 1 visita para o seu prémio.' : ('Faltam ' + falta + ' visitas para o seu prémio.'));
+    $('fidCartao').innerHTML = '<div class="fid-cab"><b>⭐ ' + (c.pontos ? 'Pontos' : 'Visitas') + '</b><span>' + (FID ? (Math.min(atual, c.pontos ? atual : alvo) + ' / ' + alvo + (c.pontos ? ' pts' : '')) : ('−' + c.desc + '%')) + '</span></div>'
+      + (FID ? vis : '') + '<div class="fid-est' + (FID && (e.premio || e.pendente) ? ' pr' : '') + '">' + est + '</div><div class="fid-regra">' + regra + '</div>';
+    s.classList.remove('hide');
+  }
   function pintarMinhas(nova){
     var l = guardados(); var m = params.get('m');
     if(m && !l.some(function(x){ return x.id === m; })){ l.push({ id:m, servico:'', data:'', hora:'' }); guardar(l); }
+    carregarFidel(l.map(function(x){ return x.id; }));
     if(!l.length){ $('secMinhas').classList.add('hide'); return; }
     var ids = l.map(function(x){ return x.id; });
     rpc('marcacoes_estado', { p_ids:ids }).catch(function(){ return rpc('reservas_estado', { p_ids:ids }); }).then(function(rows){
