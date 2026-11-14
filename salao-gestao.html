@@ -808,17 +808,28 @@
     var ban = await publicarBanner();
     await registarCamp('email', l.length, l.length);
     var tit = $('cpTit').value.trim() || ('Novidades · ' + (SAL.nome || NEG.nome));
-    var corpo = textoPara({ nome:'' }, $('cpTxt').value) + (ban ? ('\n\nVeja a promoção: ' + ban) : '') + ($('cpLink').checked ? ('\n\n' + linkPublico()) : '') + '\n\n' + (SAL.nome || NEG.nome) + '\n\n—\nRecebe este email porque aceitou receber novidades de ' + (SAL.nome || NEG.nome) + '. Se não quiser receber mais, responda a este email a dizer.';
+    var corpo = textoPara({ nome:'' }, $('cpTxt').value) + (ban ? ('\n\nVer a promoção: ' + ban) : '') + ($('cpLink').checked ? ('\n\n' + linkPublico()) : '') + '\n\n' + (SAL.nome || NEG.nome) + '\n\n—\nRecebe este email porque aceitou receber novidades de ' + (SAL.nome || NEG.nome) + '. Se não quiser receber mais, responda a este email a dizer.';
     var grupos = []; for(var i = 0; i < l.length; i += 40) grupos.push(l.slice(i, i + 40));
     function mailto(g){ return 'mailto:?bcc=' + g.map(function(d){ return encodeURIComponent(d.email); }).join(',') + '&subject=' + encodeURIComponent(tit) + '&body=' + encodeURIComponent(corpo); }
     var f = modal('<h3>✉️ Enviar por email</h3><div style="font-size:14px;color:var(--suave);">Abre o seu programa de email com a mensagem já escrita e os ' + l.length + ' cliente(s) em <b>Bcc</b> (escondidos — ninguém vê o email dos outros). Só tem de carregar em enviar.</div>'
       + grupos.map(function(g, i){ return '<a class="btn-ac" style="display:flex;align-items:center;justify-content:center;text-decoration:none;" href="' + esc(mailto(g)) + '">Abrir email' + (grupos.length > 1 ? (' · grupo ' + (i + 1) + ' (' + g.length + ')') : '') + '</a>'; }).join('')
+      + (ban ? ('<div class="camp-ban" style="gap:8px;"><b style="font-size:14px;">🖼️ Banner da promoção</b><img src="' + esc(ban) + '" alt="" style="width:100%;border-radius:10px;display:block;">'
+          + '<div style="font-size:13px;color:var(--suave);">Carregue em <b>Copiar banner</b> e, no email que abriu, cole-o com <b>Cmd+V</b> (no Windows, Ctrl+V) por cima do texto.</div>'
+          + '<div style="display:flex;gap:8px;flex-wrap:wrap;"><button type="button" class="btn-ac" id="mCopB" style="flex:1;">📋 Copiar banner</button><button type="button" class="btn" id="mDesB" style="flex:1;">⬇️ Descarregar banner</button></div></div>') : '')
       + '<div style="font-size:13px;color:var(--suave);">Usa o Gmail no browser, ou o email não abriu? Copie e cole:</div>'
       + '<div style="display:flex;gap:8px;flex-wrap:wrap;"><button type="button" class="btn" id="mCopE">Copiar os emails</button><button type="button" class="btn" id="mCopT">Copiar a mensagem</button></div><div class="msg" id="mMsg"></div>'
       + '<div style="font-size:12px;color:var(--suave);">No email não dá para pôr o nome de cada cliente ({nome} fica vazio). Para isso use a notificação ou o WhatsApp.</div>');
     function copia(t, ok){ (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(function(){ $('mMsg').textContent = ok; $('mMsg').className = 'msg'; }).catch(function(){ prompt('Copie:', t); }); }
     f.querySelector('#mCopE').onclick = function(){ copia(l.map(function(d){ return d.email; }).join(', '), '✓ Emails copiados — cole no campo Bcc.'); };
     f.querySelector('#mCopT').onclick = function(){ copia(tit + '\n\n' + corpo, '✓ Mensagem copiada.'); };
+    // banner: copiar como imagem (para colar no email) ou descarregar
+    function pngBanner(){ return new Promise(function(ok, no){ var cv = $('cpBanPrev'); if(!cv) return no(); cv.toBlob(function(b){ b ? ok(b) : no(); }, 'image/png'); }); }
+    var bc = f.querySelector('#mCopB'); if(bc) bc.onclick = async function(){
+      try{ if(!navigator.clipboard || !window.ClipboardItem) throw new Error('sem');
+        await navigator.clipboard.write([new ClipboardItem({ 'image/png':pngBanner() })]);   // Safari precisa da promessa aqui dentro
+        $('mMsg').textContent = '✓ Banner copiado — cole-o no email com Cmd+V.'; $('mMsg').className = 'msg';
+      }catch(e){ $('mMsg').textContent = 'Este browser não deixa copiar imagens. Use "Descarregar banner" e junte-o ao email.'; $('mMsg').className = 'msg erro'; } };
+    var bd = f.querySelector('#mDesB'); if(bd) bd.onclick = async function(){ try{ var b = await pngBanner(), a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'banner-' + SLUG + '.png'; a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); }, 2000); }catch(e){ window.open(ban, '_blank', 'noopener'); } };
     carregarCampanhas();
   };
   // ---------- banner da promoção (feito sozinho a partir da campanha) ----------
