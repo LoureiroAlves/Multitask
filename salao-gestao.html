@@ -814,7 +814,7 @@
     var f = modal('<h3>✉️ Enviar por email</h3><div style="font-size:14px;color:var(--suave);">Abre o seu programa de email com a mensagem já escrita e os ' + l.length + ' cliente(s) em <b>Bcc</b> (escondidos — ninguém vê o email dos outros). Só tem de carregar em enviar.</div>'
       + grupos.map(function(g, i){ return '<a class="btn-ac" style="display:flex;align-items:center;justify-content:center;text-decoration:none;" href="' + esc(mailto(g)) + '">Abrir email' + (grupos.length > 1 ? (' · grupo ' + (i + 1) + ' (' + g.length + ')') : '') + '</a>'; }).join('')
       + (ban ? ('<div class="camp-ban" style="gap:8px;"><b style="font-size:14px;">🖼️ Banner da promoção</b><img src="' + esc(ban) + '" alt="" style="width:100%;border-radius:10px;display:block;">'
-          + '<div style="font-size:13px;color:var(--suave);">Carregue em <b>Copiar banner</b> e, no email que abriu, cole-o com <b>Cmd+V</b> (no Windows, Ctrl+V) por cima do texto.</div>'
+          + '<div style="font-size:13px;color:var(--suave);">Carregue em <b>Copiar banner</b> e, no email que abriu, cole-o com <b>Cmd+V</b> (no Windows, Ctrl+V). O banner vai com o link da página do salão: quem tocar nele abre logo a promoção para marcar.</div>'
           + '<div style="display:flex;gap:8px;flex-wrap:wrap;"><button type="button" class="btn-ac" id="mCopB" style="flex:1;">📋 Copiar banner</button><button type="button" class="btn" id="mDesB" style="flex:1;">⬇️ Descarregar banner</button></div></div>') : '')
       + '<div style="font-size:13px;color:var(--suave);">Usa o Gmail no browser, ou o email não abriu? Copie e cole:</div>'
       + '<div style="display:flex;gap:8px;flex-wrap:wrap;"><button type="button" class="btn" id="mCopE">Copiar os emails</button><button type="button" class="btn" id="mCopT">Copiar a mensagem</button></div><div class="msg" id="mMsg"></div>'
@@ -826,7 +826,12 @@
     function pngBanner(){ return new Promise(function(ok, no){ var cv = $('cpBanPrev'); if(!cv) return no(); cv.toBlob(function(b){ b ? ok(b) : no(); }, 'image/png'); }); }
     var bc = f.querySelector('#mCopB'); if(bc) bc.onclick = async function(){
       try{ if(!navigator.clipboard || !window.ClipboardItem) throw new Error('sem');
-        await navigator.clipboard.write([new ClipboardItem({ 'image/png':pngBanner() })]);   // Safari precisa da promessa aqui dentro
+        // a imagem vai com o link escondido: ao tocar no banner no email, abre a página do salão com a promoção
+        var lk = linkPublico(); lk += (lk.indexOf('?') >= 0 ? '&' : '?') + 'promo=1';
+        var html = '<a href="' + esc(lk) + '" target="_blank"><img src="' + esc(ban) + '" alt="' + esc(($('cpTit').value.trim() || 'Promoção') + ' — toque para marcar') + '" width="600" style="max-width:100%;height:auto;border:0;border-radius:12px;display:block;"></a>';
+        var itens = { 'text/html':new Blob([html], { type:'text/html' }), 'text/plain':new Blob([lk], { type:'text/plain' }) };
+        try{ await navigator.clipboard.write([new ClipboardItem(itens)]); }
+        catch(e1){ await navigator.clipboard.write([new ClipboardItem({ 'image/png':pngBanner() })]); }   // browsers que só aceitam imagem: vai sem link
         $('mMsg').textContent = '✓ Banner copiado — cole-o no email com Cmd+V.'; $('mMsg').className = 'msg';
       }catch(e){ $('mMsg').textContent = 'Este browser não deixa copiar imagens. Use "Descarregar banner" e junte-o ao email.'; $('mMsg').className = 'msg erro'; } };
     var bd = f.querySelector('#mDesB'); if(bd) bd.onclick = async function(){ try{ var b = await pngBanner(), a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'banner-' + SLUG + '.png'; a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); }, 2000); }catch(e){ window.open(ban, '_blank', 'noopener'); } };
