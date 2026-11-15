@@ -150,6 +150,10 @@
   .sinal-bts button{ border:1.5px solid #0A7C6E; background:#fff; color:#0A5C52; border-radius:999px; padding:6px 12px; font-weight:800; font-size:13px; min-height:36px; cursor:pointer; font-family:inherit; }
   .sinal-bts button.f{ background:#0A7C6E; color:#fff; }
   .sinal small{ color:#4A6B66; font-size:12px; line-height:1.35; }
+  .fid-bt{ position:relative; }
+  .fid-num{ position:absolute; top:-7px; right:-9px; min-width:22px; height:22px; padding:0 6px; border-radius:999px; background:#C05A3A; color:#fff; font:800 11px/22px system-ui, sans-serif; text-align:center; box-shadow:0 2px 6px rgba(0,0,0,.25); pointer-events:none; }
+  .fid-num.pr{ background:#2E9B57; }
+  .sub .fid{ margin:16px 18px 20px; }
   .consent input{ width:20px; height:20px; flex:0 0 auto; margin:0; accent-color:var(--ac); }
   .campo input, .campo textarea{ border:1.5px solid var(--borda); border-radius:10px; padding:12px; font-size:16px; background:#fff; color:var(--ink); }
   .nota{ font-size:12px; color:var(--suave); }
@@ -479,9 +483,12 @@
     if(SAL.facebook){ var fb = String(SAL.facebook).trim(); if(!/^https?:\/\//i.test(fb)) fb = 'https://facebook.com/' + fb.replace(/^@/, '').replace(/^(www\.)?facebook\.com\//i, ''); rd += '<a class="rede" href="' + esc(fb) + '" target="_blank" rel="noopener" aria-label="Facebook">' + ICO_FB + '</a>'; }
     if(SAL.instagram){ var ig = String(SAL.instagram).replace(/^@/, '').replace(/^https?:\/\/(www\.)?instagram\.com\//, '').replace(/\/.*$/, ''); rd += '<a class="rede" href="https://instagram.com/' + esc(ig) + '" target="_blank" rel="noopener" aria-label="Instagram">' + ICO_IG + '</a>'; }
     if(SAL.whatsapp){ var w = String(SAL.whatsapp).replace(/\D/g,'').replace(/^00/, ''); if(w.length === 9) w = '351' + w; rd += '<a class="rede" href="https://wa.me/' + esc(w) + '" target="_blank" rel="noopener" aria-label="WhatsApp">' + ICO_WA + '</a>'; }
+    if(fidCfg()) rd = '<a class="rede fid-bt" href="#" id="btnFid" aria-label="Cartão de cliente" title="Cartão de cliente"><svg viewBox="0 0 24 24" style="fill:#FFC93C;"><path d="M12 2l2.9 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l7.1-1.01L12 2z"/></svg><span class="fid-num hide" id="fidNum"></span></a>' + rd;
     if(rd) ac += '<span class="redes">' + rd + '</span>';
     if(GRUPO && SLUG) ac = '<a href="/salao.html?g=' + encodeURIComponent(GRUPO) + '">← Outros locais</a>' + ac;
     $('acoesSalao').innerHTML = ac;
+    if($('btnFid')) $('btnFid').onclick = function(e){ e.preventDefault(); abrirFidel(); };
+    try{ pintarFidel(); }catch(e){}
     $('politica').textContent = SAL.politica || '';
     pintarFotos();
   }
@@ -840,7 +847,7 @@
   }
   function premioFidel(){ return !!(FID && FID.premio && !FID.pendente && fidCfg()); }
   function pintarFidel(){
-    var c = fidCfg(), s = $('secFidel'); if(!c){ s.classList.add('hide'); return; }
+    var c = fidCfg(), s = $('secFidel'); if(!c){ s.classList.add('hide'); if($('btnFid')) $('btnFid').remove(); return; }
     var e = FID || {}, alvo = c.alvo, atual = Math.max(0, +e.atual || 0), falta = Math.max(0, alvo - atual);
     var umPt = c.porEuro === 1 ? '1 ponto' : (String(c.porEuro).replace('.', ',') + (c.porEuro === 1 ? ' ponto' : ' pontos'));
     var regra = c.pontos ? ('Ganha ' + umPt + ' por cada € gasto. Ao juntar ' + alvo + ' pontos, a marcação seguinte tem ' + c.desc + '% de desconto.')
@@ -853,10 +860,18 @@
       : e.premio ? ('🎁 Já tem direito a ' + c.desc + '% de desconto! Entra sozinho na próxima marcação.')
       : c.pontos ? ('Faltam ' + falta + ' pontos para o seu prémio.')
       : (falta === 1 ? 'Falta 1 visita para o seu prémio.' : ('Faltam ' + falta + ' visitas para o seu prémio.'));
-    $('fidCartao').innerHTML = '<div class="fid-cab"><b>⭐ ' + (c.pontos ? 'Pontos' : 'Visitas') + '</b><span>' + (FID ? (Math.min(atual, c.pontos ? atual : alvo) + ' / ' + alvo + (c.pontos ? ' pts' : '')) : ('−' + c.desc + '%')) + '</span></div>'
+    var _fh = '<div class="fid-cab"><b>⭐ ' + (c.pontos ? 'Pontos' : 'Visitas') + '</b><span>' + (FID ? (Math.min(atual, c.pontos ? atual : alvo) + ' / ' + alvo + (c.pontos ? ' pts' : '')) : ('−' + c.desc + '%')) + '</span></div>'
       + (FID ? vis : '') + '<div class="fid-est' + (FID && (e.premio || e.pendente) ? ' pr' : '') + '">' + est + '</div><div class="fid-regra">' + regra + '</div>';
-    s.classList.remove('hide');
+    _fidHtml = _fh; s.classList.add('hide');   // o cartão abre ao tocar na ⭐ do cabeçalho (como nos restaurantes)
+    var aberto = document.getElementById('fidJanela'); if(aberto) aberto.innerHTML = _fh;
+    var nb = $('fidNum'); if(nb){ var tem = !!FID; nb.classList.toggle('hide', !tem); nb.classList.toggle('pr', !!(e.premio || e.pendente));
+      nb.textContent = !tem ? '' : (e.premio || e.pendente) ? '🎁' : (c.pontos ? String(atual) : (Math.min(atual, alvo) + '/' + alvo)); }
   }
+  var _fidHtml = '';
+  function abrirFidel(){ fecharCategoria();
+    var f = document.createElement('div'); f.className = 'sub-fundo'; f.id = 'subMenu';
+    f.innerHTML = '<div class="sub" role="dialog" aria-modal="true" aria-label="Cartão de cliente"><div class="sub-cab"><h3>⭐ Cartão de cliente</h3><button type="button" aria-label="Fechar">✕</button></div><div class="fid" id="fidJanela">' + (_fidHtml || '') + '</div></div>';
+    document.body.appendChild(f); f.querySelector('.sub-cab button').onclick = fecharCategoria; f.addEventListener('click', function(ev){ if(ev.target === f) fecharCategoria(); }); }
   function pintarMinhas(nova){
     var l = guardados(); var m = params.get('m');
     if(m && !l.some(function(x){ return x.id === m; })){ l.push({ id:m, servico:'', data:'', hora:'' }); guardar(l); }
