@@ -290,6 +290,7 @@
       <select id="aProf" class="hide" aria-label="Profissional" style="min-height:40px;border:1.5px solid var(--borda);border-radius:10px;padding:0 10px;font-weight:700;"></select>
       <div class="vista" role="group" aria-label="Vista"><button type="button" data-v="dia" class="on">Dia</button><button type="button" data-v="semana">Semana</button><button type="button" data-v="mes">Mês</button></div>
       <button type="button" class="btn" id="aAus" title="Férias, folgas e pausas da equipa">Ausências equipa</button>
+      <button type="button" class="btn" id="aVagas" title="Criar uma story com as horas livres deste dia">📣 Vagas</button>
       <button type="button" class="btn" id="aAvisos">🔔 Receber avisos</button>
       <button type="button" class="btn-ac" id="aNova">+ Nova marcação</button>
     </div>
@@ -387,10 +388,11 @@
         <div id="cpBanPrevBx" class="hide"><div class="camp-prev-tit" style="margin-top:14px;">Banner · telemóvel, notificação e WhatsApp</div><canvas id="cpBanPrev" width="1200" height="630" style="width:100%;height:auto;border-radius:12px;display:block;box-shadow:0 4px 16px rgba(0,0,0,.1);"></canvas><div class="camp-prev-tit" style="margin-top:12px;">Banner · computador</div><canvas id="cpBanPrevL" width="2000" height="560" style="width:100%;height:auto;border-radius:12px;display:block;box-shadow:0 4px 16px rgba(0,0,0,.1);"></canvas>
           <div class="camp-prev-tit" style="margin-top:12px;">Instagram · ao alto</div>
           <div class="ig-mods" id="cpIgMods"><button type="button" class="ig-mod" data-m="classico">Clássico</button><button type="button" class="ig-mod" data-m="inteira">Foto inteira</button><button type="button" class="ig-mod" data-m="cartao">Cartão</button></div>
+          <label class="chk-l" style="font-size:13px;margin-bottom:8px;"><input type="checkbox" id="cpVarias" checked> 🎞️ No vídeo, passar por até 3 fotos (a escolhida e outras da mesma categoria)</label>
           <div style="display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap;">
             <div style="flex:1 1 180px;max-width:260px;display:flex;flex-direction:column;gap:6px;"><canvas id="cpBanIg" width="1080" height="1350" style="width:100%;height:auto;border-radius:12px;display:block;box-shadow:0 4px 16px rgba(0,0,0,.1);"></canvas><button type="button" class="btn" id="cpIgDes">⬇️ Imagem 4:5</button><button type="button" class="btn-ac" id="cpIgVid">🎬 Vídeo 4:5 (MP4)</button></div>
             <div style="flex:1 1 150px;max-width:210px;display:flex;flex-direction:column;gap:6px;"><canvas id="cpBanSt" width="1080" height="1920" style="width:100%;height:auto;border-radius:12px;display:block;box-shadow:0 4px 16px rgba(0,0,0,.1);"></canvas><button type="button" class="btn" id="cpStDes">⬇️ Imagem 9:16</button><button type="button" class="btn-ac" id="cpStVid">🎬 Vídeo 9:16 (MP4)</button></div>
-            <div style="flex:1 1 180px;display:flex;flex-direction:column;gap:8px;font-size:13px;color:var(--suave);"><button type="button" class="btn" id="cpAnimVer">▶️ Ver a animação</button><button type="button" class="btn-ac" id="cpLegenda">📝 Legenda e link</button><span><b>4:5</b> → publicação no feed.<br><b>9:16</b> → Reels e stories.</span><span>O vídeo tem 8 segundos e não leva som: no Instagram pode juntar uma música.</span></div>
+            <div style="flex:1 1 180px;display:flex;flex-direction:column;gap:8px;font-size:13px;color:var(--suave);"><button type="button" class="btn" id="cpAnimVer">▶️ Ver a animação</button><button type="button" class="btn-ac" id="cpLegenda">📝 Legenda e link</button><button type="button" class="btn" id="cpCarrossel">🖼️ Carrossel (3 imagens)</button><span><b>4:5</b> → publicação no feed.<br><b>9:16</b> → Reels e stories.</span><span>O vídeo tem 8 segundos e não leva som: no Instagram pode juntar uma música.</span></div>
           </div>
           <div style="font-size:12px;color:var(--suave);margin-top:6px;">No Instagram as imagens e os vídeos não abrem links: o banner já leva o endereço do salão. Nas stories, pode juntar o autocolante "Link" com o mesmo endereço. Para mudar o banner, mude o título, o texto, a foto ou o desconto acima — a imagem e o vídeo acompanham.</div></div>
         <div id="cpPromoAtual" class="hide"></div>
@@ -997,6 +999,7 @@
   document.querySelectorAll('#cpIgMods [data-m]').forEach(function(b){ b.onclick = function(){ BAN.modelo = b.getAttribute('data-m'); try{ localStorage.setItem('salao_igmod_' + SLUG, BAN.modelo); }catch(e){} pintarModelosIg(); desenharBanner(); }; });
   pintarModelosIg();
   function pintarBannerAlto(c, W, H, foto, txtO, t, modelo){
+    var FOTOS = Array.isArray(foto) ? foto.filter(Boolean) : (foto ? [foto] : []); foto = FOTOS[0] || null;
     var g = c.getContext('2d'), cor = corOk(SAL.cor) ? SAL.cor : '#8E3653', k = W / 1080, story = H / W > 1.6, an = typeof t === 'number';
     modelo = modelo || modeloIg(); if(!foto && modelo === 'inteira') modelo = 'classico';
     function px(v){ return Math.round(v * k); }
@@ -1005,8 +1008,14 @@
     function eo(p){ return 1 - Math.pow(1 - p, 3); }
     function back(p){ var c1 = 1.70158, c3 = c1 + 1; return p >= 1 ? 1 : 1 + c3 * Math.pow(p - 1, 3) + c1 * Math.pow(p - 1, 2); }
     // foto a preencher [x,y,w,h] sem esticar, com aproximação lenta no vídeo
-    function pintarFoto(x, y, w, h){ var z = an ? (1.14 - 0.14 * eo(Math.min(1, t / ANIM_DUR))) : 1, kk = Math.max(w / foto.width, h / foto.height) * z, sw = w / kk, sh = h / kk;
-      g.globalAlpha = eo(P(0, 0.7)); g.drawImage(foto, (foto.width - sw) / 2, (foto.height - sh) / 2, sw, sh, x, y, w, h); g.globalAlpha = 1; }
+    function umaFoto(im, x, y, w, h, prog, alfa){ var z = an ? (1.14 - 0.14 * eo(Math.min(1, prog))) : 1, kk = Math.max(w / im.width, h / im.height) * z, sw = w / kk, sh = h / kk;
+      g.globalAlpha = alfa; g.drawImage(im, (im.width - sw) / 2, (im.height - sh) / 2, sw, sh, x, y, w, h); g.globalAlpha = 1; }
+    // várias fotos no vídeo: cada uma tem a sua parte do tempo, com passagem suave entre elas
+    function pintarFoto(x, y, w, h){ var n = an ? FOTOS.length : 1;
+      if(n <= 1){ umaFoto(foto, x, y, w, h, an ? t / ANIM_DUR : 1, eo(P(0, 0.7))); return; }
+      var seg = ANIM_DUR / n, i = Math.min(n - 1, Math.floor(t / seg)), loc = t - i * seg, CF = 0.6;
+      if(i > 0 && loc < CF){ umaFoto(FOTOS[i - 1], x, y, w, h, 1 + loc / seg, 1); umaFoto(FOTOS[i], x, y, w, h, loc / seg, eo(loc / CF)); }
+      else umaFoto(FOTOS[i], x, y, w, h, loc / seg, i === 0 ? eo(P(0, 0.7)) : 1); }
     function bolhas(){ var dr = an ? Math.sin(t * 0.8) * px(18) : 0;
       g.fillStyle = 'rgba(255,255,255,.08)'; g.beginPath(); g.arc(W - px(80) + dr, topo + px(160) - dr, px(330) * (0.85 + 0.15 * eo(P(0, 1))), 0, 7); g.fill(); g.beginPath(); g.arc(px(60) - dr, H - baixo - px(40) + dr, px(240) * (0.85 + 0.15 * eo(P(0.2, 1))), 0, 7); g.fill(); }
     var topo = story ? px(210) : 0, baixo = story ? px(250) : 0;   // stories: o Instagram tapa o topo e o fundo
@@ -1077,7 +1086,7 @@
     var l = ['avc1.640028', 'avc1.4d0028', 'avc1.42e028', 'avc1.640032', 'avc1.42003e'];
     for(var i = 0; i < l.length; i++){ try{ var r = await VideoEncoder.isConfigSupported({ codec:l[i], width:W, height:H, bitrate:6000000, framerate:ANIM_FPS }); if(r && r.supported) return l[i]; }catch(e){} }
     return null; }
-  async function videoBanner(W, H, foto, prog){
+  async function videoBanner(W, H, desenha, prog){
     var cv = document.createElement('canvas'); cv.width = W; cv.height = H; var N = ANIM_DUR * ANIM_FPS;
     var codec = await codecH264(W, H);
     if(codec){
@@ -1087,7 +1096,7 @@
       enc.configure({ codec:codec, width:W, height:H, bitrate:6000000, framerate:ANIM_FPS, avc:{ format:'avc' } });
       for(var i = 0; i < N; i++){
         if(erro) throw erro;
-        pintarBannerAlto(cv, W, H, foto, null, i / ANIM_FPS);
+        desenha(cv, i / ANIM_FPS);
         var vf = new VideoFrame(cv, { timestamp:Math.round(i * 1e6 / ANIM_FPS), duration:Math.round(1e6 / ANIM_FPS) });
         enc.encode(vf, { keyFrame:i % (ANIM_FPS * 2) === 0 }); vf.close();
         if(enc.encodeQueueSize > 8) await new Promise(function(r){ setTimeout(r, 5); });
@@ -1102,18 +1111,23 @@
     var st = cv.captureStream(ANIM_FPS), rec = new MediaRecorder(st, tipo ? { mimeType:tipo, videoBitsPerSecond:6000000 } : undefined), partes = [];
     rec.ondataavailable = function(e){ if(e.data && e.data.size) partes.push(e.data); };
     var fim = new Promise(function(r){ rec.onstop = r; });
-    pintarBannerAlto(cv, W, H, foto, null, 0); rec.start();
+    desenha(cv, 0); rec.start();
     var t0 = performance.now();
-    await new Promise(function(ok){ (function passo(){ var t = (performance.now() - t0) / 1000; pintarBannerAlto(cv, W, H, foto, null, Math.min(t, ANIM_DUR)); prog(Math.min(1, t / ANIM_DUR)); if(t < ANIM_DUR + 0.2) requestAnimationFrame(passo); else ok(); })(); });
+    await new Promise(function(ok){ (function passo(){ var t = (performance.now() - t0) / 1000; desenha(cv, Math.min(t, ANIM_DUR)); prog(Math.min(1, t / ANIM_DUR)); if(t < ANIM_DUR + 0.2) requestAnimationFrame(passo); else ok(); })(); });
     rec.stop(); await fim; var mp4 = /mp4/.test(rec.mimeType || tipo);
     return { blob:new Blob(partes, { type:mp4 ? 'video/mp4' : 'video/webm' }), ext:mp4 ? 'mp4' : 'webm' };
   }
-  async function descarregarVideo(btn, W, H, nome){
+  // fotos para o vídeo: a escolhida e (se pedido) até mais 2 da mesma categoria ou da página
+  async function fotosVideo(){ if(!BAN.foto) return []; var l = [BAN.foto];
+    if($('cpVarias').checked){ var c = $('cpBanCat').value, mesma = c ? SERV.filter(function(x){ return (x.cat || 'Serviços').trim() === c; }).map(function(x){ return x.foto; }).concat([fotoCat(c)]) : [];
+      mesma.concat(fotosBanner()).forEach(function(u){ if(l.length < 3 && /^https:\/\//.test(String(u || '')) && l.indexOf(u) < 0) l.push(u); }); }
+    var im = await Promise.all(l.map(carregarImg)); return im.filter(Boolean); }
+  async function descarregarVideo(btn, W, H, nome, prep){
     if(btn.disabled) return; var txt0 = btn.textContent; btn.disabled = true; btn.textContent = '🎬 A criar o vídeo…';
     try{
       try{ if(document.fonts && document.fonts.ready) await document.fonts.ready; }catch(e){}
-      var foto = await carregarImg(BAN.foto);
-      var r = await videoBanner(W, H, foto, function(p){ btn.textContent = '🎬 A criar o vídeo… ' + Math.round(p * 100) + '%'; });
+      var desenha = prep ? await prep() : await (async function(){ var fotos = await fotosVideo(); return function(cv, t){ pintarBannerAlto(cv, W, H, fotos, null, t); }; })();
+      var r = await videoBanner(W, H, desenha, function(p){ btn.textContent = '🎬 A criar o vídeo… ' + Math.round(p * 100) + '%'; });
       descarregarBlob(r.blob, nome + '.' + r.ext);
       toast(r.ext === 'mp4' ? 'Vídeo descarregado ✓' : 'Vídeo descarregado em WebM: o Instagram pode não o aceitar. Use o Chrome ou o Safari atualizados.');
     }catch(e){ toast('Não foi possível criar o vídeo: ' + (e.message || e)); }
@@ -1155,10 +1169,154 @@
   // pré-visualizar a animação nos dois quadros
   var _animA = 0;
   $('cpAnimVer').onclick = async function(){
-    var b = this, id = ++_animA, foto = await carregarImg(BAN.foto), t0 = performance.now(); b.disabled = true;
+    var b = this, id = ++_animA, foto = await fotosVideo(), t0 = performance.now(); b.disabled = true;
     (function passo(){ if(id !== _animA) return; var t = (performance.now() - t0) / 1000;
       pintarBannerAlto($('cpBanIg'), 1080, 1350, foto, null, Math.min(t, ANIM_DUR)); pintarBannerAlto($('cpBanSt'), 1080, 1920, foto, null, Math.min(t, ANIM_DUR));
       if(t < ANIM_DUR) requestAnimationFrame(passo); else { b.disabled = false; desenharBanner(); } })();
+  };
+  // ---------- peças comuns ----------
+  function ctxPx(W){ var k = W / 1080; return function(v){ return Math.round(v * k); }; }
+  function rRedondo(g, x, y, w, h, r){ g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
+  function corSalao(){ return corOk(SAL.cor) ? SAL.cor : '#8E3653'; }
+  function botaoMarque(g, px, x, y, maxW, fundo, tx, alfa, dx){ var end = linkSalao().replace(/^https?:\/\//, ''), fb = px(38), bh = px(92);
+    do{ g.font = '800 ' + fb + 'px Manrope, system-ui, sans-serif'; fb -= px(2); }while(g.measureText('Marque em ' + end).width + px(80) > maxW && fb > px(22));
+    var bt = 'Marque em ' + end, bw = g.measureText(bt).width + px(80); g.save(); g.globalAlpha = alfa == null ? 1 : alfa;
+    g.fillStyle = fundo; rRedondo(g, x + (dx || 0), y, bw, bh, bh / 2); g.fill(); g.fillStyle = tx; g.textBaseline = 'middle'; g.fillText(bt, x + (dx || 0) + px(40), y + bh / 2 + 1); g.restore(); g.textBaseline = 'top'; }
+  function qrCanvas(texto, tam, cor){ if(typeof QRCode !== 'function') return null; var d = document.createElement('div'); new QRCode(d, { text:texto, width:tam, height:tam, colorDark:cor, colorLight:'#ffffff', correctLevel:QRCode.CorrectLevel.M }); return d.querySelector('canvas'); }
+
+  // ---------- carrossel (3 imagens 4:5) ----------
+  function precoNum(v){ var m = /(\d+(?:[.,]\d{1,2})?)/.exec(String(v || '')); return m ? parseFloat(m[1].replace(',', '.')) : null; }
+  function servCarrossel(){ var c = $('cpBanCat').value, l = SERV.filter(function(x){ return x && x.nome && !x.oculto && (!c || (x.cat || 'Serviços').trim() === c); }); return l; }
+  function pintarCarServicos(cv, foto){ var W = 1080, H = 1350, g = cv.getContext('2d'), px = ctxPx(W), cor = corSalao(), d = descEscolhido(), c = $('cpBanCat').value, l = servCarrossel();
+    g.clearRect(0, 0, W, H); g.fillStyle = '#FBF8F6'; g.fillRect(0, 0, W, H); g.fillStyle = cor; g.fillRect(0, 0, W, px(300));
+    g.fillStyle = 'rgba(255,255,255,.1)'; g.beginPath(); g.arc(W - px(90), px(40), px(220), 0, 7); g.fill();
+    g.textBaseline = 'top'; g.fillStyle = 'rgba(255,255,255,.9)'; g.font = '700 ' + px(36) + 'px Manrope, system-ui, sans-serif'; g.fillText(SAL.nome || NEG.nome || '', px(84), px(84));
+    g.fillStyle = '#fff'; g.font = '800 ' + px(76) + 'px Manrope, system-ui, sans-serif'; g.fillText(linhasTexto(g, d ? (c ? (c + ' −' + d + '%') : ('Tudo −' + d + '%')) : (c || 'Os nossos serviços'), W - px(168), 1)[0] || '', px(84), px(150));
+    var y = px(350), max = 7, mostra = l.slice(0, max), lh = px(118);
+    // poucos serviços: a foto ocupa o espaço que sobra (fica mais bonito do que um vazio)
+    var livre = (H - px(260)) - px(350) - mostra.length * lh - (l.length > max ? px(60) : 0);
+    if(foto && livre > px(300)){ var fh = livre - px(40), kk = Math.max((W - px(120)) / foto.width, fh / foto.height), sw = (W - px(120)) / kk, sh = fh / kk;
+      g.save(); rRedondo(g, px(60), y, W - px(120), fh, px(28)); g.clip(); g.drawImage(foto, (foto.width - sw) / 2, (foto.height - sh) / 2, sw, sh, px(60), y, W - px(120), fh); g.restore(); y += fh + px(30); }
+    else if(livre > px(120)) y += Math.min(px(80), livre / 3);
+    mostra.forEach(function(sv, i){ var n = precoNum(sv.preco), novo = (n != null && d) ? Math.round(n * (100 - d)) / 100 : null;
+      g.fillStyle = '#fff'; rRedondo(g, px(60), y, W - px(120), lh - px(16), px(22)); g.fill();
+      g.fillStyle = '#1F1C1A'; g.font = '800 ' + px(38) + 'px Manrope, system-ui, sans-serif'; g.fillText(linhasTexto(g, sv.nome, W - px(520), 1)[0] || '', px(96), y + px(18));
+      g.fillStyle = '#6B625C'; g.font = '500 ' + px(28) + 'px Manrope, system-ui, sans-serif'; g.fillText((sv.dur ? (sv.dur >= 60 ? (Math.floor(sv.dur / 60) + ' h' + (sv.dur % 60 ? (' ' + sv.dur % 60) : '')) : (sv.dur + ' min')) : ''), px(96), y + px(64));
+      g.textAlign = 'right'; var xr = W - px(96);
+      if(novo != null){ g.fillStyle = cor; g.font = '800 ' + px(42) + 'px Manrope, system-ui, sans-serif'; g.fillText(euro(novo), xr, y + px(16)); var wN = g.measureText(euro(novo)).width;
+        g.fillStyle = '#9A918A'; g.font = '600 ' + px(28) + 'px Manrope, system-ui, sans-serif'; var tA = euro(n); g.fillText(tA, xr, y + px(64)); var wA = g.measureText(tA).width; g.strokeStyle = '#9A918A'; g.lineWidth = px(3); g.beginPath(); g.moveTo(xr - wA, y + px(80)); g.lineTo(xr, y + px(80)); g.stroke(); }
+      else if(n != null){ g.fillStyle = '#1F1C1A'; g.font = '800 ' + px(40) + 'px Manrope, system-ui, sans-serif'; g.fillText(euro(n), xr, y + px(26)); }
+      g.textAlign = 'left'; y += lh; });
+    if(l.length > max){ g.fillStyle = '#6B625C'; g.font = '700 ' + px(30) + 'px Manrope, system-ui, sans-serif'; g.fillText('+ ' + (l.length - max) + ' serviços na página', px(96), y + px(4)); }
+    var ate = $('cpBanAte').value; if(d && ate){ g.fillStyle = cor; g.font = '700 ' + px(30) + 'px Manrope, system-ui, sans-serif'; g.fillText('Válido em marcações até ' + dataPt(ate), px(84), H - px(220)); }
+    botaoMarque(g, px, px(84), H - px(160), W - px(168), cor, '#fff');
+  }
+  function pintarCarComo(cv){ var W = 1080, H = 1350, g = cv.getContext('2d'), px = ctxPx(W), cor = corSalao();
+    g.clearRect(0, 0, W, H); g.fillStyle = cor; g.fillRect(0, 0, W, H);
+    g.fillStyle = 'rgba(255,255,255,.08)'; g.beginPath(); g.arc(W - px(60), px(120), px(300), 0, 7); g.fill(); g.beginPath(); g.arc(px(40), H - px(60), px(220), 0, 7); g.fill();
+    g.textBaseline = 'top'; g.fillStyle = 'rgba(255,255,255,.9)'; g.font = '700 ' + px(36) + 'px Manrope, system-ui, sans-serif'; g.fillText(SAL.nome || NEG.nome || '', px(84), px(90));
+    g.fillStyle = '#fff'; g.font = '800 ' + px(88) + 'px Manrope, system-ui, sans-serif'; g.fillText('Como marcar', px(84), px(150));
+    var passos = ['Abra o link na bio ou ' + linkSalao().replace(/^https?:\/\//, ''), 'Escolha o serviço, o dia e a hora', 'Receba a confirmação no telemóvel'], y = px(310);
+    passos.forEach(function(t, i){ var R = px(42); g.fillStyle = '#fff'; g.beginPath(); g.arc(px(84) + R, y + R, R, 0, 7); g.fill();
+      g.fillStyle = cor; g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = '800 ' + px(44) + 'px Manrope, system-ui, sans-serif'; g.fillText(String(i + 1), px(84) + R, y + R + 2); g.textAlign = 'left'; g.textBaseline = 'top';
+      g.fillStyle = '#fff'; g.font = '700 ' + px(40) + 'px Manrope, system-ui, sans-serif'; var ls = linhasTexto(g, t, W - px(300), 2); ls.forEach(function(l, j){ g.fillText(l, px(200), y + px(10) + j * px(50)); }); y += px(150); });
+    var q = qrCanvas(linkSalao() + '/ig', 600, '#1F1C1A'), Q = px(400), qx = (W - Q) / 2, qy = px(800);
+    g.fillStyle = '#fff'; rRedondo(g, qx - px(30), qy - px(30), Q + px(60), Q + px(110), px(30)); g.fill();
+    if(q) g.drawImage(q, qx, qy, Q, Q);
+    g.fillStyle = '#1F1C1A'; g.textAlign = 'center'; g.font = '700 ' + px(28) + 'px Manrope, system-ui, sans-serif'; g.fillText('Aponte a câmara aqui', W / 2, qy + Q + px(18)); g.textAlign = 'left';
+  }
+  async function pintarCarrossel(cvs){ var foto = await carregarImg(BAN.foto); pintarBannerAlto(cvs[0], 1080, 1350, foto); pintarCarServicos(cvs[1], foto); pintarCarComo(cvs[2]); }
+  var _zipP = null;
+  function carregarZip(){ if(window.JSZip) return Promise.resolve(); if(_zipP) return _zipP; _zipP = new Promise(function(ok, ko){ var sc = document.createElement('script'); sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js'; sc.onload = function(){ window.JSZip ? ok() : ko(new Error('zip')); }; sc.onerror = function(){ _zipP = null; ko(new Error('sem ligação')); }; document.head.appendChild(sc); }); return _zipP; }
+  function blobDe(cv){ return new Promise(function(ok){ cv.toBlob(ok, 'image/png'); }); }
+  $('cpCarrossel').onclick = async function(){
+    var f = modal('<h3>🖼️ Carrossel para o Instagram</h3><div style="font-size:14px;color:var(--suave);">3 imagens 4:5 para publicar juntas (a pessoa desliza para o lado). Usa o título, a mensagem, a foto, a categoria e o desconto da campanha.</div>'
+      + '<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;">' + [1, 2, 3].map(function(i){ return '<canvas id="car' + i + '" width="1080" height="1350" style="width:100%;height:auto;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,.12);"></canvas>'; }).join('') + '</div>'
+      + '<div style="display:flex;gap:8px;flex-wrap:wrap;"><button type="button" class="btn-ac" id="carZip" style="flex:1;">⬇️ Descarregar as 3 imagens</button><button type="button" class="btn" id="carLeg" style="flex:1;">📝 Legenda e link</button></div>'
+      + '<div style="font-size:12px;color:var(--suave);">No Instagram: ＋ › Publicação › escolha as 3 imagens por esta ordem.</div>');
+    var cvs = [f.querySelector('#car1'), f.querySelector('#car2'), f.querySelector('#car3')];
+    try{ if(document.fonts && document.fonts.ready) await document.fonts.ready; }catch(e){} await pintarCarrossel(cvs);
+    f.querySelector('#carLeg').onclick = function(){ fecharModal(); $('cpLegenda').click(); };
+    f.querySelector('#carZip').onclick = async function(){ var b = this; b.disabled = true; b.textContent = 'A preparar…';
+      var blobs = await Promise.all(cvs.map(blobDe)), nome = 'carrossel-' + SLUG;
+      try{ await carregarZip(); var z = new JSZip(); blobs.forEach(function(bl, i){ z.file(nome + '-' + (i + 1) + '.png', bl); }); descarregarBlob(await z.generateAsync({ type:'blob' }), nome + '.zip'); toast('Carrossel descarregado ✓ (abra o ficheiro .zip)'); }
+      catch(e){ for(var i = 0; i < blobs.length; i++){ descarregarBlob(blobs[i], nome + '-' + (i + 1) + '.png'); await new Promise(function(r){ setTimeout(r, 700); }); } toast('Carrossel descarregado ✓'); }
+      b.disabled = false; b.textContent = '⬇️ Descarregar as 3 imagens'; };
+  };
+
+  // ---------- vagas de última hora: story com as horas livres do dia ----------
+  function vagasDia(k, dur){ var wd = dDe(k).getDay(), hh = horarioDe(wd); if(!hh) return [];
+    if((SAL.fechos || []).some(function(x){ return x && x.de && k >= x.de && k <= (x.ate || x.de); })) return [];
+    var ini = minDe(hh[0]), fim = minDe(hh[1]), pas = passo(), agora = new Date(), min0 = k === iso(agora) ? agora.getHours() * 60 + agora.getMinutes() + 30 : -1;
+    var oc = []; RES.forEach(function(r){ if(r.estado === 'cancelada') return;
+      if(r.data === k && minDe(r.hora) != null) oc.push([minDe(r.hora), minDe(r.hora) + (+r.duracao || 30), r.profissional || '']);
+      if(r.proposta_hora && (r.proposta_data || r.data) === k && minDe(r.proposta_hora) != null) oc.push([minDe(r.proposta_hora), minDe(r.proposta_hora) + (+r.duracao || 30), r.profissional || '']); });
+    var aus = ausDia(k), eq = EQ().filter(function(p){ return !Array.isArray(p.dias) || !p.dias.length || p.dias.indexOf(wd) >= 0; });
+    function livre(pid, a, b){ return !oc.some(function(o){ return (!pid || !o[2] || o[2] === pid) && o[0] < b && a < o[1]; }) && !aus.some(function(x){ return (!pid ? !x.prof : ausPara(x, pid)) && x.ini < b && a < x.fim; }); }
+    var l = []; for(var t = ini; t + dur <= fim; t += pas){ if(t < min0) continue; if(EQ().length ? eq.some(function(p){ return livre(p.id, t, t + dur); }) : livre('', t, t + dur)) l.push(hDe(t)); }
+    return l; }
+  function nomeDia(k){ var h = iso(new Date()), am = iso(new Date(Date.now() + 86400000)); return k === h ? 'Hoje' : k === am ? 'Amanhã' : DIAS_L[dDe(k).getDay()].replace('-feira', ''); }
+  function pintarStoryVagas(cv, W, H, v, t){ var g = cv.getContext('2d'), px = ctxPx(W), cor = corSalao(), an = typeof t === 'number', story = H / W > 1.6;
+    function P(a, d){ return !an ? 1 : Math.max(0, Math.min(1, (t - a) / d)); } function eo(p){ return 1 - Math.pow(1 - p, 3); }
+    function back(p){ var c1 = 1.70158, c3 = c1 + 1; return p >= 1 ? 1 : 1 + c3 * Math.pow(p - 1, 3) + c1 * Math.pow(p - 1, 2); }
+    var topo = story ? px(220) : px(70), baixo = story ? px(250) : px(40);
+    g.save(); g.clearRect(0, 0, W, H); g.fillStyle = cor; g.fillRect(0, 0, W, H);
+    var dr = an ? Math.sin(t * 0.8) * px(18) : 0; g.fillStyle = 'rgba(255,255,255,.08)'; g.beginPath(); g.arc(W - px(60) + dr, topo + px(80), px(300), 0, 7); g.fill(); g.beginPath(); g.arc(px(50) - dr, H - baixo, px(240), 0, 7); g.fill();
+    var x = px(84), y = topo + px(20); g.textBaseline = 'top';
+    // etiqueta
+    var p0 = eo(P(0.1, 0.5)); g.globalAlpha = p0; g.font = '800 ' + px(30) + 'px Manrope, system-ui, sans-serif'; var et = '⏰  VAGAS DE ÚLTIMA HORA', ew = g.measureText(et).width + px(48);
+    g.fillStyle = '#fff'; rRedondo(g, x, y, ew, px(64), px(32)); g.fill(); g.fillStyle = cor; g.textBaseline = 'middle'; g.fillText(et, x + px(24), y + px(33)); g.textBaseline = 'top'; y += px(110);
+    var p1 = eo(P(0.4, 0.6)); g.globalAlpha = p1; g.fillStyle = '#fff'; g.font = '800 ' + px(150) + 'px Manrope, system-ui, sans-serif'; g.fillText(nomeDia(v.k), x, y + (1 - p1) * px(60)); y += px(170);
+    g.fillStyle = 'rgba(255,255,255,.9)'; g.font = '600 ' + px(40) + 'px Manrope, system-ui, sans-serif'; var d = dDe(v.k); g.fillText(d.getDate() + ' de ' + MESES[d.getMonth()] + ' · ' + (SAL.nome || NEG.nome || ''), x, y + (1 - p1) * px(40)); y += px(100);
+    g.globalAlpha = 1;
+    // horas livres
+    var hs = v.horas.slice(0, story ? 12 : 9), col = 3, gap = px(22), bw = (W - 2 * x - gap * (col - 1)) / col, bh = px(108);
+    hs.forEach(function(h, i){ var cx = x + (i % col) * (bw + gap), cy = y + Math.floor(i / col) * (bh + gap), sc = back(P(1.0 + i * 0.12, 0.5)); if(sc <= 0.01) return;
+      g.save(); g.translate(cx + bw / 2, cy + bh / 2); g.scale(sc, sc); g.fillStyle = '#fff'; rRedondo(g, -bw / 2, -bh / 2, bw, bh, px(26)); g.fill();
+      g.fillStyle = cor; g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = '800 ' + px(50) + 'px Manrope, system-ui, sans-serif'; g.fillText(h.replace(':', 'h'), 0, px(3)); g.restore(); });
+    y += Math.ceil(hs.length / col) * (bh + gap) + px(20);
+    if(v.horas.length > hs.length){ g.fillStyle = '#fff'; g.font = '700 ' + px(32) + 'px Manrope, system-ui, sans-serif'; g.fillText('e mais ' + (v.horas.length - hs.length) + ' horas', x, y); y += px(60); }
+    var by = H - baixo - px(story ? 90 : 60) - px(92);
+    if(v.frase){ var pf = eo(P(1.0 + hs.length * 0.12 + 0.2, 0.6)); g.globalAlpha = pf; g.fillStyle = 'rgba(255,255,255,.95)'; g.font = '600 ' + px(44) + 'px Manrope, system-ui, sans-serif';
+      var ls = linhasTexto(g, v.frase, W - 2 * x, Math.max(1, Math.min(3, Math.floor((by - px(30) - y) / px(58))))); ls.forEach(function(l){ g.fillText(l, x, y); y += px(58); }); g.globalAlpha = 1; }
+    var pb = eo(P(1.6 + hs.length * 0.12, 0.7)); if(pb > 0) botaoMarque(g, px, x, by, W - 2 * x, '#fff', cor, pb, -(1 - pb) * px(220));
+    g.restore(); }
+  $('aVagas').onclick = function(){
+    var k = iso(dataSel), durs = SERV.filter(function(x){ return x.online !== false && +x.dur > 0; }).map(function(x){ return +x.dur; }), dur0 = Math.max(30, Math.min.apply(null, durs.length ? durs : [30]));
+    var opD = [15, 30, 45, 60, 90, 120].filter(function(m){ return m >= Math.min(30, dur0); }); if(opD.indexOf(dur0) < 0) opD.push(dur0); opD.sort(function(a, b){ return a - b; });
+    var f = modal('<h3>📣 Vagas de ' + esc(nomeDia(k).toLowerCase() === 'hoje' ? 'hoje' : quando(k)) + '</h3><div style="font-size:14px;color:var(--suave);">Uma story com as horas livres, para publicar no Instagram ou no estado do WhatsApp. Para outro dia, mude o dia na agenda.</div>'
+      + '<div class="campo"><label for="vgDur">Tempo livre mínimo</label><select id="vgDur">' + opD.map(function(m){ return '<option value="' + m + '"' + (m === dur0 ? ' selected' : '') + '>' + (m < 60 ? (m + ' min') : (Math.floor(m / 60) + ' h' + (m % 60 ? (' ' + m % 60) : ''))) + '</option>'; }).join('') + '</select></div>'
+      + '<div><b style="font-size:14px;">Horas a mostrar</b> <span style="font-size:12px;color:var(--suave);">(toque para tirar ou pôr)</span><div class="mod-chips" id="vgHoras" style="margin-top:6px;"></div></div>'
+      + '<div class="campo"><label for="vgFrase">Frase (opcional)</label><input id="vgFrase" maxlength="80" placeholder="Ex.: Unhas de gel, massagens e depilação"></div>'
+      + '<div style="display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap;"><canvas id="vgCv" width="1080" height="1920" style="width:170px;height:auto;border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,.12);"></canvas>'
+      + '<div style="flex:1;min-width:200px;display:flex;flex-direction:column;gap:8px;"><button type="button" class="btn" id="vgVer">▶️ Ver a animação</button><button type="button" class="btn-ac" id="vgVid">🎬 Vídeo story (MP4)</button><button type="button" class="btn" id="vgImg">⬇️ Imagem story</button><button type="button" class="btn" id="vgImg45">⬇️ Imagem 4:5 (publicação)</button><button type="button" class="btn" id="vgLeg">📋 Copiar legenda</button>'
+      + '<label class="chk-l" style="font-size:13px;"><input type="checkbox" id="vgPag" checked> Mostrar também na página do salão ("Vaga de última hora")</label><button type="button" class="btn" id="vgPub">Publicar na página</button></div></div>'
+      + '<div class="msg" id="vgMsg"></div>');
+    var tiradas = {}, todas = [];
+    function horas(){ return todas.filter(function(h){ return !tiradas[h]; }); }
+    function info(){ return { k:k, horas:horas(), frase:f.querySelector('#vgFrase').value.trim() }; }
+    function calcula(){ todas = vagasDia(k, +f.querySelector('#vgDur').value); tiradas = {};
+      if(todas.length > 12){ var passoV = Math.ceil(todas.length / 12); todas.forEach(function(h, i){ if(i % passoV) tiradas[h] = 1; }); }   // muitas horas: mostra umas espalhadas
+      pinta(); }
+    function pinta(){ var hc = f.querySelector('#vgHoras');
+      hc.innerHTML = todas.length ? todas.map(function(h){ return '<button type="button" class="mod-chip' + (tiradas[h] ? '' : ' breve') + '" data-h="' + h + '">' + (tiradas[h] ? '' : '✓ ') + h.replace(':', 'h') + '</button>'; }).join('') : '<span style="color:var(--suave);font-size:14px;">Não há horas livres neste dia com esse tempo.</span>';
+      hc.querySelectorAll('[data-h]').forEach(function(b){ b.onclick = function(){ var h = b.getAttribute('data-h'); if(tiradas[h]) delete tiradas[h]; else tiradas[h] = 1; pinta(); }; });
+      var ok = horas().length > 0; ['vgVid','vgImg','vgImg45','vgLeg','vgVer','vgPub'].forEach(function(id){ f.querySelector('#' + id).disabled = !ok; });
+      pintarStoryVagas(f.querySelector('#vgCv'), 1080, 1920, info()); }
+    f.querySelector('#vgDur').onchange = calcula; f.querySelector('#vgFrase').oninput = pinta;
+    var nomeF = 'vagas-' + SLUG + '-' + k;
+    f.querySelector('#vgImg').onclick = function(){ var cv = document.createElement('canvas'); cv.width = 1080; cv.height = 1920; pintarStoryVagas(cv, 1080, 1920, info()); descarregarCanvas(cv, nomeF + '-story.png'); };
+    f.querySelector('#vgImg45').onclick = function(){ var cv = document.createElement('canvas'); cv.width = 1080; cv.height = 1350; pintarStoryVagas(cv, 1080, 1350, info()); descarregarCanvas(cv, nomeF + '-4x5.png'); };
+    f.querySelector('#vgVid').onclick = function(){ var v = info(); descarregarVideo(this, 1080, 1920, nomeF + '-story', async function(){ return function(cv, t){ pintarStoryVagas(cv, 1080, 1920, v, t); }; }); };
+    var anV = 0; f.querySelector('#vgVer').onclick = function(){ var id = ++anV, t0 = performance.now(), v = info(), cv = f.querySelector('#vgCv');
+      (function ciclo(){ if(id !== anV || !document.body.contains(cv)) return; var t = (performance.now() - t0) / 1000; pintarStoryVagas(cv, 1080, 1920, v, Math.min(t, ANIM_DUR)); if(t < ANIM_DUR) requestAnimationFrame(ciclo); })(); };
+    f.querySelector('#vgLeg').onclick = function(){ var v = info();
+      copiarTexto('⏰ Vagas ' + (v.k === iso(new Date()) ? 'hoje' : nomeDia(v.k) === 'Amanhã' ? 'amanhã' : ('para ' + quando(v.k))) + '!\n' + v.horas.map(function(h){ return h.replace(':', 'h'); }).join(' · ') + (v.frase ? ('\n' + v.frase) : '') + '\n\n📅 Marque pelo link na bio (' + linkRede('ig').replace(/^https?:\/\//, '') + ')' + (SAL.morada ? ('\n📍 ' + SAL.morada) : '') + '\n\n' + hashtags(), 'Legenda copiada ✓'); };
+    f.querySelector('#vgPub').onclick = async function(){ if(!f.querySelector('#vgPag').checked){ toast('Marque a caixa para pôr na página.'); return; } var v = info();
+      var texto = 'Livre às ' + v.horas.map(function(h){ return h.replace(':', 'h'); }).join(', ') + (v.frase ? (' · ' + v.frase) : '');
+      var e = await guardarCfg(function(c){ c.salao = Object.assign({}, c.salao || {}); var l = (c.salao.vagas || []).filter(function(x){ return x && x.data !== v.k && x.data >= iso(new Date()); }); l.push({ data:v.k, hora:'', texto:texto.slice(0, 120) }); c.salao.vagas = l; });
+      f.querySelector('#vgMsg').textContent = e ? ('Erro: ' + e.message) : '✓ Na página do salão até ao fim do dia (pode tirar em Horário e regras › Vagas).'; f.querySelector('#vgMsg').className = 'msg ' + (e ? 'erro' : 'ok'); };
+    calcula();
   };
   // guarda o banner (uma vez por conteúdo) e põe-no na página do salão até à data escolhida
   async function publicarBanner(){
