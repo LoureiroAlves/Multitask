@@ -648,7 +648,8 @@
     if($('btnJuntar')) $('btnJuntar').onclick = abrirJuntar;
   }
   function outrosServ(){ var ja = servs().map(function(s){ return s.id; }); return SERV.filter(function(s){ return s.online !== false && ja.indexOf(s.id) < 0; }); }
-  function mudouServ(){ sel.hora = null; $('passoDados').classList.add('hide'); pintarEsc(); pintarProfs(); pintarDias(); pintarHoras(); pintarServicos(); }
+  // ao juntar/tirar um serviço, o dia e a hora já escolhidos mantêm-se (se ainda couberem todos os serviços)
+  function mudouServ(){ msg(''); if(sel.hora){ sel.horaQuer = sel.hora; var hm = minDe(sel.hora); if(hm != null) sPer = hm < 720 ? 'm' : (hm < 1140 ? 't' : 'n'); } sel.hora = null; $('passoDados').classList.add('hide'); pintarEsc(); pintarProfs(); pintarDias(); pintarHoras(); pintarServicos(); }
   function tirarServ(i){ var l = servs(); if(l.length < 2) return; l.splice(i, 1); sel.serv = l[0]; sel.extras = l.slice(1); mudouServ(); }
   function juntarServ(s){ if(!s || servs().length >= MAX_SERV) return; sel.extras = (sel.extras || []).concat([s]); mudouServ(); }
   function abrirJuntar(){
@@ -747,7 +748,10 @@
         $('horas').innerHTML = html + (todos && outrosLivres > livres ? ('<div class="nota" style="grid-column:1/-1;">Só aparecem as horas livres de <b>' + esc(nP) + '</b>. <button type="button" class="lnk-off" data-outra>Ver as horas de toda a equipa</button></div>') : '');
       }
       $('horas').querySelectorAll('[data-outra]').forEach(function(b){ b.onclick = function(){ escolherProf(''); }; });
-      $('horas').querySelectorAll('[data-h]').forEach(function(b){ b.onclick = function(){ sel.hora = b.getAttribute('data-h'); pintarHoras(); $('passoDados').classList.remove('hide'); pintarResumo(); $('btnEnviar').textContent = (sel.reag ? 'Confirmar nova hora · ' : 'Enviar pedido · ') + quando(sel.dia, sel.hora + '–' + hDe(minDe(sel.hora) + durTotal())); }; });
+      $('horas').querySelectorAll('[data-h]').forEach(function(b){ b.onclick = function(){ msg(''); sel.hora = b.getAttribute('data-h'); pintarHoras(); $('passoDados').classList.remove('hide'); pintarResumo(); $('btnEnviar').textContent = (sel.reag ? 'Confirmar nova hora · ' : 'Enviar pedido · ') + quando(sel.dia, sel.hora + '–' + hDe(minDe(sel.hora) + durTotal())); }; });
+      if(sel.horaQuer){ var hq = sel.horaQuer; sel.horaQuer = null; var bq = $('horas').querySelector('[data-h="' + hq + '"]');
+        if(bq && !bq.disabled) bq.click();
+        else msg('Às ' + hq.replace(':', 'h') + ' já não há tempo para ' + (servs().length > 1 ? 'todos os serviços' : 'este serviço') + '. Escolha outra hora.', 'erro'); }
     }).catch(function(){ $('horas').style.opacity = ''; $('horas').style.pointerEvents = ''; $('horas').innerHTML = '<div class="nota" style="grid-column:1/-1;">Não foi possível ver as horas. Tente outra vez.</div>'; });
   }
   // resumo antes de enviar: serviços, horas, pessoa, preço total
