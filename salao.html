@@ -745,8 +745,8 @@
       + linhas
       + (comPreco ? ('<div class="rl rt"><span>Total' + (comPreco < SG.length ? ' (sem os serviços sem preço)' : '') + ' · ' + esc(durTxt(durTotal())) + '</span><span>' + esc(euroTxt(tot)) + '</span></div>') : ('<div class="rl rt"><span>Duração</span><span>' + esc(durTxt(durTotal())) + '</span></div>'))
       + (poup > 0.004 ? ('<div style="font-size:13px;color:var(--ac);font-weight:700;">🎁 Poupa ' + esc(euroTxt(poup)) + ' com a promoção</div>') : '')
-      + (function(){ var sc = sinalCfg(); if(!sc || !(tot > 0)) return ''; var v = Math.floor(tot * sc.pct / 100);
-          return '<div style="font-size:13px;background:#EAF6F3;color:#0A5C52;border-radius:10px;padding:8px 10px;"><b>💶 Sinal de ' + sc.pct + '% por MB WAY</b> (cerca de ' + esc(euroTxt(v >= 2 ? v - 0.5 : tot * sc.pct / 100)) + '), pago diretamente à clínica depois de enviar o pedido. ' + REGRA_SINAL + '</div>'; })()
+      + (function(){ var sc = sinalCfg(); if(!sc || !(tot > 0)) return ''; var v = Math.round(tot * sc.pct) / 100;
+          return '<div style="font-size:13px;background:#EAF6F3;color:#0A5C52;border-radius:10px;padding:8px 10px;"><b>💶 Sinal de ' + sc.pct + '% por MB WAY: ' + esc(euroTxt(v)) + '</b> pago diretamente à clínica depois de enviar o pedido. ' + REGRA_SINAL + '</div>'; })()
       + (fUsa ? ('<div style="font-size:13px;color:var(--ac);font-weight:700;">⭐ Prémio do cartão de cliente: −' + fc.desc + '% em ' + esc(SG[0].s.nome) + (fPoup > 0.004 ? (' (poupa ' + esc(euroTxt(fPoup)) + ')') : '') + '</div>') : '');
     r.classList.remove('hide'); pintarPolitica();
   }
@@ -891,8 +891,9 @@
           if(r.sinal_estado === 'pago') h += '<div class="sinal ok"><b style="color:var(--verde);">✅ Sinal de ' + sv + ' recebido pela clínica</b><small>' + REGRA_SINAL + '</small></div>';
           else { var ate = r.sinal_ate ? new Date(r.sinal_ate) : null, ateTx = ate ? (ate.toDateString() === new Date().toDateString() ? ('hoje às ' + String(ate.getHours()).padStart(2, '0') + 'h' + String(ate.getMinutes()).padStart(2, '0')) : (DIAS_C[ate.getDay()] + ' ' + ate.getDate() + ' ' + MESES[ate.getMonth()] + ' às ' + String(ate.getHours()).padStart(2, '0') + 'h' + String(ate.getMinutes()).padStart(2, '0'))) : '';
             h += '<div class="sinal"><div>💶 <b>Sinal por MB WAY</b>' + (ateTx ? (' · até ' + esc(ateTx)) : '') + '</div><div><b class="v">' + sv + '</b> para o número <b>' + esc(sc ? numTxt(sc.numero) : '') + '</b></div>'
-              + (r.sinal_estado === 'avisou' ? '<div style="font-weight:700;">⏳ Disse que já pagou. A clínica vai confirmar.</div>' : ('<div class="sinal-bts">' + (sc ? ('<button type="button" data-ac="copnum" data-id="' + esc(x.id) + '">📋 Copiar número</button>') : '') + '<button type="button" data-ac="copval" data-id="' + esc(x.id) + '">📋 Copiar valor</button><button type="button" class="f" data-ac="sinalpago" data-id="' + esc(x.id) + '">Já paguei</button></div>'))
-              + '<small>Na app MB WAY: Enviar dinheiro › número acima › valor exato (os cêntimos servem para a clínica saber que é seu). ' + REGRA_SINAL + '</small></div>'; } }
+              + (r.sinal_codigo ? ('<div>Na mensagem do MB WAY escreva: <b style="font-size:17px;letter-spacing:.5px;">' + esc(r.sinal_codigo) + '</b></div>') : '')
+              + (r.sinal_estado === 'avisou' ? '<div style="font-weight:700;">⏳ Disse que já pagou. A clínica vai confirmar.</div>' : ('<div class="sinal-bts">' + (sc ? ('<button type="button" data-ac="copnum" data-id="' + esc(x.id) + '">📋 Copiar número</button>') : '') + '<button type="button" data-ac="copval" data-id="' + esc(x.id) + '">📋 Copiar valor</button>' + (r.sinal_codigo ? ('<button type="button" data-ac="copcod" data-id="' + esc(x.id) + '">📋 Copiar código</button>') : '') + '<button type="button" class="f" data-ac="sinalpago" data-id="' + esc(x.id) + '">Já paguei</button></div>'))
+              + '<small>Na app MB WAY: Enviar dinheiro › número acima › valor' + (r.sinal_codigo ? ' › na mensagem, o código' : '') + ' (assim a clínica sabe que o pagamento é seu, mesmo que pague de outra conta). ' + REGRA_SINAL + '</small></div>'; } }
         h += '<div class="minha-corpo">';
         if(r.profissional && nomeProf(r.profissional)) h += '<div>👤 Com <b>' + esc(nomeProf(r.profissional)) + '</b></div>';
         if(+r.desconto) h += '<div>🎁 Desconto de <b>' + (+r.desconto) + '%</b> oferecido pelo salão</div>';
@@ -984,6 +985,7 @@
   }
   function acaoMinha(ac, id, b){
     if(ac === 'copnum'){ var sc = sinalCfg(); if(sc) copiarTx(sc.numero, b); return; }
+    if(ac === 'copcod'){ var rk = _minhasRows[id]; if(rk && rk.sinal_codigo) copiarTx(rk.sinal_codigo, b); return; }
     if(ac === 'copval'){ var rv = _minhasRows[id]; if(rv) copiarTx((+rv.sinal).toFixed(2).replace('.', ','), b); return; }
     if(ac === 'sinalpago'){ b.disabled = true; rpc('marcacao_sinal_avisar', { p_id:id }).then(function(){ _minhasHtml = ''; pintarMinhas(); }).catch(function(){ b.disabled = false; alert('Não foi possível avisar a clínica. Tente outra vez.'); }); return; }
     if(ac === 'reag'){ var x = guardados().filter(function(v){ return v.id === id; })[0], r = _minhasRows[id]; if(x && r) iniciarReag(x, r); return; }
