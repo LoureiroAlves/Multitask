@@ -752,6 +752,10 @@
       var ini = minDe(hh[0]), fim = minDe(hh[1]), dur = durTotal(), pas = passo(), SG = segs(), wd = d.getDay();
       var agora = new Date(), minAgora = (dia === iso(agora)) ? (agora.getHours() * 60 + agora.getMinutes() + antecedencia()) : -1;
       if(sel.reag && dia === sel.reag.data){ var tirou = false; ocup = (ocup || []).filter(function(o){ if(!tirou && o.hora === sel.reag.hora){ tirou = true; return false; } return true; }); }   // a própria marcação não conta
+      // o próprio cliente não pode estar em dois sítios: as suas outras marcações neste dia (com qualquer pessoa) também bloqueiam
+      var meus = Object.keys(_minhasRows || {}).map(function(k){ return _minhasRows[k]; }).filter(function(r){ return r && r.data === dia && r.estado !== 'cancelada' && !(sel.reag && r.id === sel.reag.id) && minDe(r.hora) != null; })
+        .map(function(r){ return [minDe(r.hora), minDe(r.hora) + (+r.duracao || 30)]; });
+      function meuChoca(t){ return meus.some(function(o){ return o[0] < t + durTotal() && t < o[1]; }); }
       var ocupados = (ocup || []).map(function(o){ var a = minDe(o.hora); return a == null ? null : [a, a + (+o.duracao || 30), o.profissional || '']; }).filter(Boolean);
       // cada serviço tem o seu bocado [t+off, t+off+dur) e precisa de alguém livre que o faça (a pessoa escolhida, se houver)
       function candSeg(g, so){ return EQ().filter(function(p){ return fazServ(p, g.s.id) && trabalha(p, wd) && (!so || p.id === so); }).map(function(p){ return p.id; }); }
@@ -765,7 +769,7 @@
       function livreEm(t){ return livreCadeia(t, comEq ? sel.prof : ''); }
       function perDe(t){ return t < 720 ? 'm' : (t < 1140 ? 't' : 'n'); }
       var PER = { m:{ n:'Manhã', tot:0, liv:0 }, t:{ n:'Tarde', tot:0, liv:0 }, n:{ n:'Noite', tot:0, liv:0 } };
-      for(var t0 = ini; t0 + dur <= fim; t0 += pas){ var k0 = perDe(t0); PER[k0].tot++; if(t0 >= minAgora && livreEm(t0)) PER[k0].liv++; }
+      for(var t0 = ini; t0 + dur <= fim; t0 += pas){ var k0 = perDe(t0); PER[k0].tot++; if(t0 >= minAgora && livreEm(t0) && !meuChoca(t0)) PER[k0].liv++; }
       var perUsa = ['m','t','n'].filter(function(k){ return PER[k].tot > 0; }), usaPer = perUsa.length > 1;
       if(sel.hora && minDe(sel.hora) != null) sPer = perDe(minDe(sel.hora));
       if(!usaPer || perUsa.indexOf(sPer) < 0 || !PER[sPer].liv){ sPer = perUsa.filter(function(k){ return PER[k].liv; })[0] || perUsa[0] || 'm'; }
@@ -776,7 +780,7 @@
       } else { $('periodos').classList.add('hide'); $('periodos').innerHTML = ''; }
       var html = '', livres = 0, s0 = sel.hora ? minDe(sel.hora) : null;
       for(var t = ini; t + dur <= fim; t += pas){
-        var ocupado = !livreEm(t) || t < minAgora;
+        var ocupado = !livreEm(t) || t < minAgora || meuChoca(t);
         if(!ocupado) livres++;
         if(todos && t >= minAgora && livreCom(todos, t)) outrosLivres++;
         if(usaPer && perDe(t) !== sPer) continue;
@@ -871,7 +875,7 @@
       try{ window.scrollTo({ top:0, behavior:'smooth' }); }catch(e){}
     }).catch(function(e){
       b.disabled = false; var t = String(e.message || e);
-      msg(/bloqueado/.test(t) ? 'Não é possível marcar online. Por favor contacte o salão.' : /ocupado/.test(t) ? 'Essa hora acabou de ficar ocupada. Escolha outra.' : /faltam_dados/.test(t) ? 'Escreva o nome e um telemóvel válido.' : /servico_invalido/.test(t) ? 'Este serviço já não está disponível.' : /multi_inativo/.test(t) ? 'De momento só é possível marcar um serviço de cada vez. Tire os outros e marque-os à parte.' : /function|does not exist|PGRST/i.test(t) ? 'As marcações ainda não estão ativas neste salão.' : 'Não foi possível enviar. Tente outra vez.', 'erro');
+      msg(/bloqueado/.test(t) ? 'Não é possível marcar online. Por favor contacte o salão.' : /cliente_ocupado/.test(t) ? 'Já tem outra marcação a essa hora. Escolha outra hora — ou junte o serviço à mesma marcação com "＋ Juntar outro serviço".' : /ocupado/.test(t) ? 'Essa hora acabou de ficar ocupada. Escolha outra.' : /faltam_dados/.test(t) ? 'Escreva o nome e um telemóvel válido.' : /servico_invalido/.test(t) ? 'Este serviço já não está disponível.' : /multi_inativo/.test(t) ? 'De momento só é possível marcar um serviço de cada vez. Tire os outros e marque-os à parte.' : /function|does not exist|PGRST/i.test(t) ? 'As marcações ainda não estão ativas neste salão.' : 'Não foi possível enviar. Tente outra vez.', 'erro');
       if(/ocupado/.test(t)){ sel.hora = null; pintarHoras(); }
     });
   };
@@ -1031,7 +1035,7 @@
       try{ window.scrollTo({ top:0, behavior:'smooth' }); }catch(e){}
     }).catch(function(e){
       b.disabled = false; var t = String(e.message || e);
-      msg(/ocupado/.test(t) ? 'Essa hora acabou de ficar ocupada. Escolha outra.' : /ja_passou|nao_encontrada/.test(t) ? 'Esta marcação já não pode ser mudada. Contacte o salão.' : /function|does not exist|PGRST/i.test(t) ? 'O reagendamento ainda não está ativo neste salão. Contacte o salão.' : 'Não foi possível mudar. Tente outra vez.', 'erro');
+      msg(/cliente_ocupado/.test(t) ? 'Já tem outra marcação a essa hora. Escolha outra.' : /ocupado/.test(t) ? 'Essa hora acabou de ficar ocupada. Escolha outra.' : /ja_passou|nao_encontrada/.test(t) ? 'Esta marcação já não pode ser mudada. Contacte o salão.' : /function|does not exist|PGRST/i.test(t) ? 'O reagendamento ainda não está ativo neste salão. Contacte o salão.' : 'Não foi possível mudar. Tente outra vez.', 'erro');
       if(/ocupado/.test(t)){ sel.hora = null; pintarHoras(); }
     });
   }
@@ -1076,7 +1080,7 @@
     if(ac === 'psim' || ac === 'pnao'){
       if(ac === 'pnao' && !confirm('Manter a pessoa que tinha? O salão é avisado.')) return;
       rpc('marcacao_responder_prof', { p_id:id, p_aceita:(ac === 'psim') }).then(function(){ _minhasHtml = ''; pintarMinhas(); })
-        .catch(function(e){ alert(/ocupado/.test(String(e.message || e)) ? 'Essa pessoa já não está livre a essa hora. Fale com o salão.' : 'Não foi possível responder. Tente outra vez.'); });
+        .catch(function(e){ alert(/cliente_ocupado/.test(String(e.message || e)) ? 'Já tem outra marcação a essa hora. Fale com o salão.' : /ocupado/.test(String(e.message || e)) ? 'Essa pessoa já não está livre a essa hora. Fale com o salão.' : 'Não foi possível responder. Tente outra vez.'); });
       return;
     }
     if(ac === 'sim' || ac === 'nao'){
@@ -1085,7 +1089,7 @@
       rpc('marcacao_responder', { p_id:id, p_aceita:(ac === 'sim') })
         .catch(function(e){ if(/PGRST202|Could not find|does not exist/i.test(String(e.message || e))) return rpc('reserva_responder', { p_id:id, p_aceita:(ac === 'sim') }); throw e; })
         .then(function(){ if(ac === 'sim'){ var l = guardados(); l.forEach(function(x){ if(x.id === id){ x.data = rr.proposta_data || rr.data; x.hora = rr.proposta_hora; } }); guardar(l); } pintarMinhas(); })
-        .catch(function(e){ alert(/ocupado/.test(String(e.message || e)) ? 'Essa hora já não está livre. Fale com o salão.' : 'Não foi possível responder. Tente outra vez.'); });
+        .catch(function(e){ alert(/cliente_ocupado/.test(String(e.message || e)) ? 'Já tem outra marcação a essa hora, por isso não pode aceitar esta proposta. Fale com o salão.' : /ocupado/.test(String(e.message || e)) ? 'Essa hora já não está livre. Fale com o salão.' : 'Não foi possível responder. Tente outra vez.'); });
     }
   }
 

@@ -1981,6 +1981,7 @@
         + (r.reagendada_de ? ('<div style="font-size:12px;color:var(--ac);font-weight:700;">🔁 Reagendada · antes: ' + esc(quando(String(r.reagendada_de).slice(0, 10), String(r.reagendada_de).slice(11))) + '</div>') : '')
         + (r.alt_hora ? ('<div style="font-size:13px;color:var(--ac);font-weight:700;">Pede para mudar para as ' + esc(r.alt_hora) + '</div>') : '')
         + (r.obs ? ('<div style="font-size:12px;color:var(--suave);">“' + esc(r.obs) + '”</div>') : '')
+        + (function(o){ return o ? ('<div style="font-size:13px;font-weight:700;color:#8A2A2A;">⚠️ Sobrepõe-se a outra marcação deste cliente: ' + esc(o.servico || '') + ' às ' + esc(o.hora) + '</div>') : ''; })(sobrepostaCli(r))
         + (+r.sinal > 0 ? ('<div style="font-size:13px;font-weight:700;color:' + (r.sinal_estado === 'pago' ? 'var(--verde)' : '#8A5A10') + ';">💶 Sinal ' + euro(r.sinal) + (r.sinal_codigo ? (' (' + esc(r.sinal_codigo) + ')') : '') + (r.sinal_estado === 'pago' ? ' · recebido ✓' : r.sinal_estado === 'avisou' ? ' · o cliente diz que pagou — confirme' : ' · por pagar') + '</div>') : '')
         + (r.proposta_hora ? ('<div style="font-size:13px;color:var(--ac);font-weight:700;">🕘 Proposta: ' + esc(propTxt(r)) + ' · à espera do cliente</div>') : '')
         + (r.proposta_prof ? ('<div style="font-size:13px;color:var(--ac);font-weight:700;">👤 Proposta: com ' + esc(nomeProf(r.proposta_prof) || '?') + ' · à espera do cliente</div>') : '')
@@ -1992,7 +1993,7 @@
                      : ('<button type="button" class="btn-ok" data-a="confirmar" data-id="' + esc(r.id) + '">' + (r.resposta_cliente === 'aceitou' ? 'OK, confirmar' : 'Confirmar') + '</button><button type="button" class="btn" data-a="propor" data-id="' + esc(r.id) + '">Propor outra hora</button><button type="button" class="btn-lnk" data-a="recusar" data-id="' + esc(r.id) + '">Recusar</button>'))
         + '</div></div>';
     }).join('');
-    $('pedidos').querySelectorAll('[data-a]').forEach(function(b){ b.onclick = function(){ var r = RES.filter(function(x){ return x.id === b.getAttribute('data-id'); })[0]; if(!r) return; var a = b.getAttribute('data-a'); if(a === 'propor' || a === 'ver') abrirDetalhe(r, true); else if(a === 'confirmar' && +r.sinal > 0 && r.sinal_estado !== 'pago' && !confirm('Ainda não marcou o sinal de ' + euro(r.sinal) + ' como recebido. Confirmar a marcação mesmo assim?\n\n(Para marcar o sinal, abra a marcação na agenda e carregue em "Recebi o sinal".)')) return; else if(a === 'desmarcar' && !confirm('Cancelar esta marcação? O cliente é avisado.')) return; else responder(r, a); }; });
+    $('pedidos').querySelectorAll('[data-a]').forEach(function(b){ b.onclick = function(){ var r = RES.filter(function(x){ return x.id === b.getAttribute('data-id'); })[0]; if(!r) return; var a = b.getAttribute('data-a'); if(a === 'propor' || a === 'ver') abrirDetalhe(r, true); else if(a === 'confirmar' && sobrepostaCli(r) && !confirm('Atenção: ' + (r.nome || 'este cliente') + ' já tem ' + (sobrepostaCli(r).servico || 'outra marcação') + ' às ' + sobrepostaCli(r).hora + ', que se sobrepõe a esta.\n\nConfirmar mesmo assim?')) return; else if(a === 'confirmar' && +r.sinal > 0 && r.sinal_estado !== 'pago' && !confirm('Ainda não marcou o sinal de ' + euro(r.sinal) + ' como recebido. Confirmar a marcação mesmo assim?\n\n(Para marcar o sinal, abra a marcação na agenda e carregue em "Recebi o sinal".)')) return; else if(a === 'desmarcar' && !confirm('Cancelar esta marcação? O cliente é avisado.')) return; else responder(r, a); }; });
   }
   function mudar(sinal){ if(vista === 'mes'){ dataSel = new Date(dataSel.getFullYear(), dataSel.getMonth() + sinal, 1); } else dataSel.setDate(dataSel.getDate() + sinal * (vista === 'dia' ? 1 : 7)); carregarRes(); }
   $('aAnt').onclick = function(){ mudar(-1); };
@@ -2116,12 +2117,16 @@
         fecharModal(); toast('Prémio aplicado ✓ (−' + d + '%)'); carregarRes(); };
     }).catch(function(){});
   }
+  // o mesmo cliente (telemóvel) com outra marcação que se sobrepõe a esta (com qualquer pessoa da equipa)
+  function sobrepostaCli(r, dia, hora){ var t = telNorm(r.telefone); if(t.length < 9) return null; dia = dia || r.data; var a = minDe(hora || r.hora); if(a == null) return null; var b = a + (+r.duracao || 30);
+    return RES.filter(function(x){ return x.id !== r.id && x.estado !== 'cancelada' && x.data === dia && telNorm(x.telefone) === t && minDe(x.hora) != null && minDe(x.hora) < b && a < minDe(x.hora) + (+x.duracao || 30); })[0] || null; }
   function abrirDetalhe(r, propor){
     var est = r.estado === 'confirmada' ? 'Confirmada' : r.estado === 'cancelada' ? 'Cancelada' : 'Por confirmar';
     var tel = String(r.telefone || '');
     var f = modal('<h3>' + esc(r.nome || 'Marcação') + '</h3>'
       + '<div><b>' + esc(r.servico || '') + '</b>' + (r.duracao ? (' · ' + r.duracao + ' min') : '') + '</div>'
       + '<div>' + esc(quando(r.data, r.hora)) + ' · <span style="font-weight:800;">' + esc(est) + '</span></div>'
+      + (function(o){ return o && r.estado !== 'cancelada' ? ('<div style="background:#FBEDED;color:#8A2A2A;border-radius:10px;padding:8px 12px;font-size:14px;font-weight:700;">⚠️ Este cliente tem outra marcação que se sobrepõe: ' + esc(o.servico || '') + ' · ' + esc(o.hora) + '–' + hDe(minDe(o.hora) + (+o.duracao || 30)) + '. Mude uma das duas.</div>') : ''; })(sobrepostaCli(r))
       + (r.proposta_hora && r.estado !== 'cancelada' ? ('<div style="background:#F3E6EA;border-radius:10px;padding:10px 12px;font-size:14px;"><b>🕘 Proposta enviada: ' + esc(propTxt(r)) + '</b><br>À espera da resposta do cliente. A hora fica guardada para ele.<br><button type="button" class="btn-lnk" data-d="semprop" style="padding:0;min-height:30px;">Retirar proposta</button></div>') : '')
       + (r.reagendada_de ? ('<div style="font-size:13px;color:var(--ac);font-weight:700;">🔁 Reagendada · antes: ' + esc(quando(String(r.reagendada_de).slice(0, 10), String(r.reagendada_de).slice(11))) + '</div>') : '')
       + (EQ().length ? ('<div class="campo"><label for="dProf">Profissional</label><select id="dProf"><option value="">— Sem profissional —</option>' + EQ().map(function(p){ return '<option value="' + esc(p.id) + '"' + (r.profissional === p.id ? ' selected' : '') + '>' + esc(p.nome) + '</option>'; }).join('') + '</select>'
@@ -2228,6 +2233,8 @@
       var a = minDe(h), du = +s.dur || 30;
       var pr = $('nProf') ? $('nProf').value : '';
       var choca = RES.some(function(r){ return r.data === d && r.estado !== 'cancelada' && minDe(r.hora) != null && (!pr || !r.profissional || r.profissional === pr) && minDe(r.hora) < a + du && a < minDe(r.hora) + (+r.duracao || 30); });
+      var oc = sobrepostaCli({ id:'_novo', telefone:$('nTel').value, duracao:du }, d, h);
+      if(oc && !confirm(nome + ' já tem ' + (oc.servico || 'outra marcação') + ' às ' + oc.hora + ' neste dia, que se sobrepõe a esta. Guardar mesmo assim?')) return;
       if(choca && !confirm((pr ? (nomeProf(pr) + ' já tem') : 'Já há') + ' uma marcação a essa hora. Guardar mesmo assim?')) return;
       var ausC = ausDia(d).filter(function(b){ return ausPara(b, pr) && b.ini < a + du && a < b.fim; })[0];
       if(ausC && !confirm('' + (ausC.prof ? (nomeProf(ausC.prof) || 'Esta pessoa') + ' está ausente' : 'O salão está fechado') + ' a essa hora (' + (ausC.a.motivo || 'ausência') + '). Guardar mesmo assim?')) return;
