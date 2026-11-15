@@ -296,6 +296,7 @@
       <div class="vista" role="group" aria-label="Vista"><button type="button" data-v="dia" class="on">Dia</button><button type="button" data-v="semana">Semana</button><button type="button" data-v="mes">Mês</button></div>
       <button type="button" class="btn" id="aAus" title="Férias, folgas e pausas da equipa">Ausências equipa</button>
       <button type="button" class="btn" id="aVagas" title="Criar uma story com as horas livres deste dia">📣 Vagas</button>
+      <button type="button" class="btn hide" id="aMbw" title="Escreva o valor que recebeu e veja de quem é">💶 Recebi MB WAY</button>
       <button type="button" class="btn" id="aAvisos">🔔 Receber avisos</button>
       <button type="button" class="btn-ac" id="aNova">+ Nova marcação</button>
     </div>
@@ -456,6 +457,7 @@
       <div class="campo"><label for="hrAnt">Antecedência mínima para marcar</label><select id="hrAnt"><option value="0">Sem mínimo</option><option value="60">1 hora</option><option value="120">2 horas</option><option value="240">4 horas</option><option value="1440">1 dia</option></select></div>
       <div class="campo"><label for="hrMax">Até quantos dias à frente se pode marcar</label><select id="hrMax"><option value="7">7 dias</option><option value="14">14 dias</option><option value="30">30 dias</option><option value="60">60 dias</option><option value="90">90 dias</option></select></div>
     </div>
+    <div class="fid-cfg" id="sinalCfg" style="margin-top:22px;"></div>
     <h3 style="margin:22px 0 6px;">Férias e dias fechados</h3>
     <div id="fechosLista"></div>
     <button type="button" class="btn" id="fechoNovo">+ Acrescentar período fechado</button>
@@ -512,7 +514,7 @@
     document.title = (SAL.nome || NEG.nome) + ' · Gestão · 4 Trevo';
     if(/^https:\/\//.test(String(SAL.logo || ''))){ try{ var ati = document.querySelector('link[rel="apple-touch-icon"]'); if(ati) ati.href = (SAL.logoQ && SAL.logoQde === SAL.logo) ? SAL.logoQ : SAL.logo; }catch(e){} setTimeout(garantirLogoQ, 1500); }
     if(params.get('d')) dataSel = dDe(params.get('d'));
-    setTimeout(limparPromosVelhas, 2500);
+    setTimeout(limparPromosVelhas, 2500); $('aMbw').classList.toggle('hide', !(SAL.sinal && SAL.sinal.ativo));
     var t = (location.hash || '').replace('#', ''); if(['servicos','pagina','horario','equipa','clientes','relatorios','campanhas'].indexOf(t) >= 0) irPara(t);
     await carregarRes();
     if(params.get('rid')){ var x = RES.filter(function(z){ return z.id === params.get('rid'); })[0]; if(x) abrirDetalhe(x); }
@@ -627,9 +629,10 @@
   function statsCli(){
     var hoje = iso(new Date()), m = {};
     var ali = {};
-    CLI.forEach(function(c){ m[c.tel_norm] = { c:c, vis:0, gasto:0, prev:0, ult:'', prox:'', faltas:0, canc:0, serv:{}, hist:[], fv:0, fs:0, fu:{}, fpend:{} }; ali[c.tel_norm] = c.tel_norm; });
+    CLI.forEach(function(c){ m[c.tel_norm] = { c:c, vis:0, gasto:0, prev:0, ult:'', prox:'', faltas:0, canc:0, serv:{}, hist:[], fv:0, fs:0, fu:{}, fpend:{}, sinPor:0 }; ali[c.tel_norm] = c.tel_norm; });
     CLI.forEach(function(c){ var t = telNorm(c.telefone); if(t.length >= 9 && !ali[t]) ali[t] = c.tel_norm; var nn = 'n:' + nomeNorm(c.nome); if(nomeNorm(c.nome) && !ali[nn]) ali[nn] = c.tel_norm; });
     CLIRES.forEach(function(r){ var k = ali[chaveCli(r.telefone, r.nome)]; if(!k || !m[k]) return; var x = m[k]; x.hist.push(r);
+      if(+r.sinal > 0 && r.sinal_estado !== 'pago' && r.estado !== 'cancelada' && r.data >= hoje) x.sinPor++;
       if(r.fidel && r.estado !== 'cancelada' && !r.faltou){ x.fu[r.fidel] = (x.fu[r.fidel] || 0) + 1; if(r.data >= hoje) x.fpend[r.fidel] = 1; }
       if(r.estado === 'cancelada'){ x.canc++; return; }
       if(r.faltou){ x.faltas++; return; }
@@ -690,7 +693,7 @@
     l.sort(function(a, b){ return o === 'vis' ? b.vis - a.vis : o === 'gasto' ? b.gasto - a.gasto : o === 'nome' ? String(a.c.nome || '').localeCompare(String(b.c.nome || ''), 'pt') : o === 'novo' ? String(b.c.criado_em).localeCompare(String(a.c.criado_em)) : String(b.ult || b.prox).localeCompare(String(a.ult || a.prox)); });
     if(!l.length){ $('cliLista').innerHTML = '<div style="background:#fff;border-radius:12px;padding:16px;color:var(--suave);">' + (CLI.length ? (fl ? 'Nenhum cliente neste filtro.' : 'Nenhum cliente encontrado.') : 'Ainda não há clientes. As fichas aparecem aqui a partir da primeira marcação.') + '</div>'; return; }
     $('cliLista').innerHTML = '<table class="cli-tab"><thead><tr><th>Cliente</th><th>Telemóvel</th><th class="n">Visitas</th><th class="n">Total gasto</th>' + (prevOn ? '<th class="n opc">Previsto</th>' : '') + '<th>Última visita</th><th class="opc">Próxima</th><th class="n opc">Faltas</th></tr></thead><tbody>'
-      + l.slice(0, 500).map(function(x){ return '<tr class="l" data-t="' + esc(x.c.tel_norm) + '"><td><b>' + esc(x.c.nome || '—') + '</b>' + (x.c.bloqueado ? '<span class="etq blq">Bloqueado</span>' : x.vis >= 3 ? '<span class="etq reg">Regular</span>' : x.vis <= 1 ? '<span class="etq novo">Novo</span>' : '') + (!x.c.bloqueado && !x.prox && x.vis > 0 && mesesSem(x.ult) >= 3 ? '<span class="etq inat">' + mesesSem(x.ult) + ' meses sem vir</span>' : '') + (x.c.aceita_campanhas ? '<span class="etq camp" title="Aceita receber campanhas">📣</span>' : '') + (function(fd){ return !fd ? '' : fd.pendente ? '<span class="etq fid" title="Prémio já guardado numa marcação">⭐ prémio marcado</span>' : fd.premio ? '<span class="etq fidp" title="Tem direito ao prémio do cartão">🎁 Prémio −' + fd.c.desc + '%</span>' : (fd.atual > 0 ? ('<span class="etq fid" title="Cartão de cliente">⭐ ' + fd.atual + '/' + fd.c.alvo + (fd.c.pontos ? ' pts' : '') + '</span>') : ''); })(fidelDe(x)) + '</td><td>' + (x.c.telefone ? esc(x.c.telefone) : '<span style="color:var(--suave);">sem contacto</span>') + '</td><td class="n">' + x.vis + '</td><td class="n">' + euro(x.gasto) + '</td>' + (prevOn ? ('<td class="n opc" style="color:var(--suave);">' + (x.prev ? euro(x.prev) : '—') + '</td>') : '') + '<td>' + dataPt(x.ult) + '</td><td class="opc">' + (x.prox ? dataPt(x.prox) : '—') + '</td><td class="n opc">' + (x.faltas || '') + '</td></tr>'; }).join('')
+      + l.slice(0, 500).map(function(x){ return '<tr class="l" data-t="' + esc(x.c.tel_norm) + '"><td><b>' + esc(x.c.nome || '—') + '</b>' + (x.c.bloqueado ? '<span class="etq blq">Bloqueado</span>' : x.vis >= 3 ? '<span class="etq reg">Regular</span>' : x.vis <= 1 ? '<span class="etq novo">Novo</span>' : '') + (!x.c.bloqueado && !x.prox && x.vis > 0 && mesesSem(x.ult) >= 3 ? '<span class="etq inat">' + mesesSem(x.ult) + ' meses sem vir</span>' : '') + (x.c.aceita_campanhas ? '<span class="etq camp" title="Aceita receber campanhas">📣</span>' : '') + (x.sinPor ? '<span class="etq inat" title="Sinal por MB WAY ainda não recebido">💶 sinal por pagar</span>' : '') + (function(fd){ return !fd ? '' : fd.pendente ? '<span class="etq fid" title="Prémio já guardado numa marcação">⭐ prémio marcado</span>' : fd.premio ? '<span class="etq fidp" title="Tem direito ao prémio do cartão">🎁 Prémio −' + fd.c.desc + '%</span>' : (fd.atual > 0 ? ('<span class="etq fid" title="Cartão de cliente">⭐ ' + fd.atual + '/' + fd.c.alvo + (fd.c.pontos ? ' pts' : '') + '</span>') : ''); })(fidelDe(x)) + '</td><td>' + (x.c.telefone ? esc(x.c.telefone) : '<span style="color:var(--suave);">sem contacto</span>') + '</td><td class="n">' + x.vis + '</td><td class="n">' + euro(x.gasto) + '</td>' + (prevOn ? ('<td class="n opc" style="color:var(--suave);">' + (x.prev ? euro(x.prev) : '—') + '</td>') : '') + '<td>' + dataPt(x.ult) + '</td><td class="opc">' + (x.prox ? dataPt(x.prox) : '—') + '</td><td class="n opc">' + (x.faltas || '') + '</td></tr>'; }).join('')
       + '</tbody></table>';
     $('cliLista').querySelectorAll('tr.l').forEach(function(tr){ tr.onclick = function(){ abrirFicha(m[tr.getAttribute('data-t')]); }; });
   }
@@ -729,7 +732,7 @@
     var passadas = x.hist.filter(function(r){ return prox.indexOf(r) < 0; }).sort(function(a, b){ return (b.data + b.hora).localeCompare(a.data + a.hora); });
     var temExtra = ('bloqueado' in c);
     function linhaHist(r){ var e = r.estado === 'cancelada' ? 'Cancelada' : r.faltou ? 'Faltou' : r.estado === 'confirmada' ? (prox.indexOf(r) < 0 ? 'Feita' : 'Marcada') : 'Por confirmar';
-      return '<div><span style="min-width:92px;">' + dataPt(r.data) + '</span><span style="min-width:44px;">' + esc(r.hora || '') + '</span><span style="flex:1;">' + esc(r.servico || '') + (nomeProf(r.profissional) ? (' · ' + esc(nomeProf(r.profissional))) : '') + '</span><span style="min-width:70px;text-align:right;">' + (r.valor != null ? (euro(r.valor) + ((+r.desconto) ? (' <span style="color:var(--ac);font-size:11px;">−' + r.desconto + '%</span>') : '')) : '') + '</span><span style="min-width:84px;text-align:right;font-weight:700;color:' + (e === 'Feita' ? 'var(--verde)' : e === 'Faltou' || e === 'Cancelada' ? 'var(--ac)' : 'var(--suave)') + ';">' + e + '</span></div>'; }
+      return '<div><span style="min-width:92px;">' + dataPt(r.data) + '</span><span style="min-width:44px;">' + esc(r.hora || '') + '</span><span style="flex:1;">' + esc(r.servico || '') + (nomeProf(r.profissional) ? (' · ' + esc(nomeProf(r.profissional))) : '') + '</span><span style="min-width:70px;text-align:right;">' + (r.valor != null ? (euro(r.valor) + ((+r.desconto) ? (' <span style="color:var(--ac);font-size:11px;">−' + r.desconto + '%</span>') : '')) : '') + (+r.sinal > 0 && r.estado !== 'cancelada' ? ('<br><span style="font-size:11px;font-weight:700;color:' + (r.sinal_estado === 'pago' ? (r.faltou ? '#8A2A2A' : 'var(--verde)') : '#8A5A10') + ';">💶 sinal ' + euro(r.sinal) + (r.sinal_estado === 'pago' ? (r.faltou ? ' · ficou (faltou)' : ' · pago') : ' · por pagar') + '</span>') : '') + '</span><span style="min-width:84px;text-align:right;font-weight:700;color:' + (e === 'Feita' ? 'var(--verde)' : e === 'Faltou' || e === 'Cancelada' ? 'var(--ac)' : 'var(--suave)') + ';">' + e + '</span></div>'; }
     var f = modal('<h3>' + esc(c.nome || 'Cliente') + (c.bloqueado ? ' <span class="etq blq" style="vertical-align:middle;">Bloqueado</span>' : '') + '</h3>'
       + '<div>' + (tel ? ('📱 <a href="tel:' + esc(tel.replace(/\s/g, '')) + '">' + esc(tel) + '</a>' + (waLink({ telefone:tel }, '') ? (' · <a href="' + esc(waLink({ telefone:tel }, 'Olá ' + (c.nome || '') + '!')) + '" target="_blank" rel="noopener">WhatsApp</a>') : '')) : '<span style="color:var(--suave);">Sem contacto</span>') + ' · cliente desde ' + dataPt(c.criado_em) + '</div>'
       + '<div class="nums" style="grid-template-columns:repeat(4,minmax(0,1fr));"><div><b>' + x.vis + '</b><span>visitas</span></div><div><b style="font-size:18px;">' + euro(x.gasto) + '</b><span>total gasto</span></div><div><b style="font-size:18px;">' + euro(media) + '</b><span>por visita</span></div><div><b>' + x.faltas + '</b><span>faltas</span></div></div>'
@@ -1688,6 +1691,8 @@
     var ORG = { ig:'📷 Instagram', fb:'📘 Facebook', tt:'🎵 TikTok', wa:'💬 WhatsApp (campanhas)', push:'🔔 Notificações (campanhas)', email:'✉️ Email (campanhas)', qr:'🔳 QR code', salao:'🏠 Marcadas pelo salão', '':'🌐 Página do salão (direto)' };
     var orgL = {}; ativas.forEach(function(r){ var k = ORG[r.origem || ''] ? (r.origem || '') : ''; var x = orgL[k] = orgL[k] || { k:k, n:0, feitas:0, fat:0, cli:{} }; x.n++; var c = chaveCli(r.telefone, r.nome); if(c) x.cli[c] = 1; if(!r.faltou && r.estado === 'confirmada' && r.data <= hoje){ x.feitas++; x.fat += valorDe(r); } });
     var orgs = Object.keys(orgL).map(function(k){ return orgL[k]; }).sort(function(a, b){ return b.n - a.n; }), orgTot = orgs.reduce(function(s, x){ return s + x.n; }, 0);
+    var sinRec = ativas.filter(function(r){ return +r.sinal > 0 && r.sinal_estado === 'pago'; }), sinFal = sinRec.filter(function(r){ return r.faltou; }), sinPor = ativas.filter(function(r){ return +r.sinal > 0 && r.sinal_estado !== 'pago' && r.data >= hoje; });
+    if(sinRec.length || sinPor.length || (SAL.sinal && SAL.sinal.ativo)) h += '<div class="rel-card"><h3>💶 Sinais por MB WAY</h3><div class="rel-mini rel-mini4"><div><b>' + sinRec.length + '</b><span>sinais recebidos</span></div><div><b>' + euro(sinRec.reduce(function(a, r){ return a + (+r.sinal); }, 0)) + '</b><span>recebido em sinais</span></div><div><b>' + euro(sinFal.reduce(function(a, r){ return a + (+r.sinal); }, 0)) + '</b><span>ficou para a clínica (faltas sem aviso, ' + sinFal.length + ')</span></div><div><b>' + sinPor.length + '</b><span>por receber (marcações futuras)</span></div></div></div>';
     h += '<div class="rel-card"><h3>📍 De onde vêm as marcações</h3>' + (orgTot ? ('<div class="rel-tab-w"><table class="cli-tab"><thead><tr><th>Origem</th><th class="n">Marcações</th><th class="n">%</th><th class="n">Clientes</th><th class="n">Feitas</th><th class="n">Faturado</th></tr></thead><tbody>'
       + orgs.map(function(x){ return '<tr><td><b>' + ORG[x.k] + '</b></td><td class="n">' + x.n + '</td><td class="n">' + Math.round(x.n / orgTot * 100) + '%</td><td class="n">' + Object.keys(x.cli).length + '</td><td class="n">' + x.feitas + '</td><td class="n">' + euro(x.fat) + '</td></tr>'; }).join('')
       + '</tbody></table></div><div style="font-size:12px;color:var(--suave);margin-top:6px;">Conta a partir do momento em que esta função ficou ativa (as marcações antigas aparecem como "Página do salão"). Para o Instagram, use o link da bio que está em Campanhas › Legenda e link; o QR code novo (imprima-o outra vez) conta como QR code.</div>')
@@ -1904,11 +1909,11 @@
         var dica = r.hora + '–' + hDe(a + du) + ' · ' + (r.nome || '') + ' · ' + (r.servico || '') + (nomeProf(r.profissional) ? (' · ' + nomeProf(r.profissional)) : '') + (r.estado === 'pendente' ? (r.proposta_hora ? (' · Proposta: ' + r.proposta_hora) : ' · Por confirmar') : '');
         if(hg < 46){   // curta: uma linha só
           h += '<button type="button" class="bloco curto ' + cls(r) + '" data-id="' + esc(r.id) + '" title="' + esc(dica) + '" style="' + pos + 'top:' + (top + 1) + 'px;height:' + hg + 'px;">'
-            + '<b>' + (ln.n > 1 && vista !== 'dia' ? '' : (esc(r.hora) + ' ')) + esc(r.nome || '') + '</b><span>' + esc(r.servico || '') + (!c.prof && nomeProf(r.profissional) ? (' · ' + esc(nomeProf(r.profissional))) : '') + '</span></button>';
+            + '<b>' + (+r.sinal > 0 && r.sinal_estado !== 'pago' ? '💶 ' : '') + (ln.n > 1 && vista !== 'dia' ? '' : (esc(r.hora) + ' ')) + esc(r.nome || '') + '</b><span>' + esc(r.servico || '') + (!c.prof && nomeProf(r.profissional) ? (' · ' + esc(nomeProf(r.profissional))) : '') + '</span></button>';
           return;
         }
         h += '<button type="button" class="bloco ' + cls(r) + '" data-id="' + esc(r.id) + '" title="' + esc(dica) + '" style="' + pos + 'top:' + (top + 1) + 'px;height:' + hg + 'px;">'
-          + '<b>' + (hg < 78 && !c.prof && nomeProf(r.profissional) ? ('<i style="font-style:normal;color:' + corProf(r.profissional) + ';">●</i> ') : '') + esc(r.nome || '') + '</b>'
+          + '<b>' + (hg < 78 && !c.prof && nomeProf(r.profissional) ? ('<i style="font-style:normal;color:' + corProf(r.profissional) + ';">●</i> ') : '') + (+r.sinal > 0 && r.sinal_estado !== 'pago' ? '<span title="Sinal por pagar">💶 </span>' : '') + esc(r.nome || '') + '</b>'
           + '<span>' + esc(r.hora) + '–' + hDe(a + du) + ' · ' + esc(r.servico || ((r.pessoas || 1) + ' pessoa(s)')) + '</span>'
           + (hg >= 78 && !c.prof && r.profissional && nomeProf(r.profissional) ? ('<span class="prof" style="color:' + corProf(r.profissional) + ';">● ' + esc(nomeProf(r.profissional)) + '</span>') : '')
           + (r.estado === 'pendente' && hg >= (!c.prof && nomeProf(r.profissional) ? 94 : 78) ? ('<span style="font-weight:800;color:var(--ac);">' + (r.proposta_hora ? ('Proposta: ' + esc(propTxt(r))) : 'Por confirmar') + '</span>') : '')
@@ -1946,6 +1951,7 @@
         + (r.reagendada_de ? ('<div style="font-size:12px;color:var(--ac);font-weight:700;">🔁 Reagendada · antes: ' + esc(quando(String(r.reagendada_de).slice(0, 10), String(r.reagendada_de).slice(11))) + '</div>') : '')
         + (r.alt_hora ? ('<div style="font-size:13px;color:var(--ac);font-weight:700;">Pede para mudar para as ' + esc(r.alt_hora) + '</div>') : '')
         + (r.obs ? ('<div style="font-size:12px;color:var(--suave);">“' + esc(r.obs) + '”</div>') : '')
+        + (+r.sinal > 0 ? ('<div style="font-size:13px;font-weight:700;color:' + (r.sinal_estado === 'pago' ? 'var(--verde)' : '#8A5A10') + ';">💶 Sinal ' + euro(r.sinal) + (r.sinal_estado === 'pago' ? ' · recebido ✓' : r.sinal_estado === 'avisou' ? ' · o cliente diz que pagou — confirme' : ' · por pagar') + '</div>') : '')
         + (r.proposta_hora ? ('<div style="font-size:13px;color:var(--ac);font-weight:700;">🕘 Proposta: ' + esc(propTxt(r)) + ' · à espera do cliente</div>') : '')
         + (r.proposta_prof ? ('<div style="font-size:13px;color:var(--ac);font-weight:700;">👤 Proposta: com ' + esc(nomeProf(r.proposta_prof) || '?') + ' · à espera do cliente</div>') : '')
         + (!r.proposta_hora && r.resposta_cliente === 'aceitou' ? '<div class="resp-cli ok">✅ O cliente aceitou esta nova hora — dê o OK para ficar na agenda</div>' : '')
@@ -1956,7 +1962,7 @@
                      : ('<button type="button" class="btn-ok" data-a="confirmar" data-id="' + esc(r.id) + '">' + (r.resposta_cliente === 'aceitou' ? 'OK, confirmar' : 'Confirmar') + '</button><button type="button" class="btn" data-a="propor" data-id="' + esc(r.id) + '">Propor outra hora</button><button type="button" class="btn-lnk" data-a="recusar" data-id="' + esc(r.id) + '">Recusar</button>'))
         + '</div></div>';
     }).join('');
-    $('pedidos').querySelectorAll('[data-a]').forEach(function(b){ b.onclick = function(){ var r = RES.filter(function(x){ return x.id === b.getAttribute('data-id'); })[0]; if(!r) return; var a = b.getAttribute('data-a'); if(a === 'propor' || a === 'ver') abrirDetalhe(r, true); else if(a === 'desmarcar' && !confirm('Cancelar esta marcação? O cliente é avisado.')) return; else responder(r, a); }; });
+    $('pedidos').querySelectorAll('[data-a]').forEach(function(b){ b.onclick = function(){ var r = RES.filter(function(x){ return x.id === b.getAttribute('data-id'); })[0]; if(!r) return; var a = b.getAttribute('data-a'); if(a === 'propor' || a === 'ver') abrirDetalhe(r, true); else if(a === 'confirmar' && +r.sinal > 0 && r.sinal_estado !== 'pago' && !confirm('Ainda não marcou o sinal de ' + euro(r.sinal) + ' como recebido. Confirmar a marcação mesmo assim?\n\n(Para marcar o sinal, abra a marcação na agenda e carregue em "Recebi o sinal".)')) return; else if(a === 'desmarcar' && !confirm('Cancelar esta marcação? O cliente é avisado.')) return; else responder(r, a); }; });
   }
   function mudar(sinal){ if(vista === 'mes'){ dataSel = new Date(dataSel.getFullYear(), dataSel.getMonth() + sinal, 1); } else dataSel.setDate(dataSel.getDate() + sinal * (vista === 'dia' ? 1 : 7)); carregarRes(); }
   $('aAnt').onclick = function(){ mudar(-1); };
@@ -2099,6 +2105,11 @@
       + '<div style="font-size:12px;color:var(--suave);">' + (r.push_marcacao ? '🔔 O cliente recebe as respostas por notificação.' : 'O cliente não tem notificações ligadas (pode avisar por WhatsApp).') + '</div>'
       + (r.servico ? ('<div style="display:flex;flex-direction:column;gap:10px;"><div class="campo"><label for="dDesc">Preço · desconto</label>' + (r.promo ? ('<div style="font-size:13px;font-weight:700;color:#2B5C8A;">🎁 ' + esc(nomePromo(r.promo)) + '</div>') : '') + (r.fidel ? ('<div style="font-size:13px;font-weight:700;color:#8A5A10;">⭐ Prémio do cartão de cliente</div>') : '') + '<div id="dFid"></div>' + '<div style="display:flex;gap:8px;align-items:center;"><span style="font-weight:800;white-space:nowrap;" id="dPreco">' + (baseDe(r) != null ? (((+r.desconto) ? ('<s style="color:var(--suave);font-weight:600;">' + euro(baseDe(r)) + '</s> ') : '') + euro(comDesc(baseDe(r), r.desconto))) : '—') + '</span><select id="dDesc" style="flex:0 1 180px;min-height:40px;border:1.5px solid var(--borda);border-radius:10px;padding:0 8px;">' + opcoesDesc(r.desconto) + '</select></div></div>'
           + (r.estado === 'confirmada' && r.data <= iso(new Date()) ? ('<label style="display:flex;align-items:center;gap:8px;font-weight:700;"><input type="checkbox" id="dFaltou"' + (r.faltou ? ' checked' : '') + ' style="width:20px;height:20px;"> O cliente faltou</label>') : '<div></div>') + '</div>') : '')
+      + (+r.sinal > 0 ? ('<div style="border:1.5px solid ' + (r.sinal_estado === 'pago' ? 'var(--verde)' : '#0A7C6E') + ';border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;"><div><b>💶 Sinal por MB WAY: ' + euro(r.sinal) + '</b> · '
+          + (r.sinal_estado === 'pago' ? '<b style="color:var(--verde);">recebido ✓</b>' : r.sinal_estado === 'avisou' ? '<b style="color:#8A5A10;">o cliente diz que já pagou — confirme na app do banco</b>' : ('<b style="color:#8A5A10;">por pagar</b>' + (r.sinal_ate && new Date(r.sinal_ate) < new Date() ? ' <span style="color:#8A2A2A;font-weight:700;">· prazo passou</span>' : (r.sinal_ate ? (' <span style="color:var(--suave);">· até ' + esc(new Date(r.sinal_ate).toLocaleString('pt-PT', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' })) + '</span>') : ''))))
+          + '</div>' + (r.faltou && r.sinal_estado === 'pago' ? '<div style="font-size:13px;font-weight:700;color:#8A2A2A;">O cliente faltou sem avisar: o sinal fica para a clínica.</div>' : '')
+          + '<div style="display:flex;gap:8px;flex-wrap:wrap;">' + (r.sinal_estado === 'pago' ? '<button type="button" class="btn-lnk" id="dSinalX">Desfazer (afinal não recebi)</button>' : '<button type="button" class="btn-ok" id="dSinalOk">💶 Recebi o sinal</button><button type="button" class="btn-lnk" id="dSinalSem">Dispensar o sinal</button>') + '</div>'
+          + '<div style="font-size:12px;color:var(--suave);">' + REGRA_SINAL_G + '</div></div>') : '')
       + '<label for="dNota">Nota para o cliente (opcional)</label><textarea id="dNota" rows="2" maxlength="200">' + esc(r.nota || '') + '</textarea>'
       + (r.estado !== 'cancelada' ? (
           (r.estado !== 'confirmada' ? '<button type="button" class="btn-ok" data-d="confirmar">✅ Confirmar</button>' : '')
@@ -2127,6 +2138,11 @@
       if(ok){ toast('Desconto guardado ✓ · cliente avisado'); return; }
       var wl = waLink(r, comCasa(corpo)); if(wl && confirm('Desconto guardado ✓\n\nEste cliente não tem notificações ligadas. Quer avisá-lo por WhatsApp?')) window.open(wl, '_blank', 'noopener'); else toast('Desconto guardado ✓'); };
     fidelDetalhe(r, f);
+    async function sinalMuda(up, ok, aviso){ var u = await sb.from('reservas').update(up).eq('id', r.id); if(u.error){ toast(/sinal|column/i.test(u.error.message) ? 'Falta correr no Supabase o 21-salao-sinal-mbway.sql.' : ('Erro: ' + u.error.message)); return; }
+      Object.assign(r, up); fecharModal(); carregarRes(); if(aviso){ var env = await pushCliente(r, aviso[0], aviso[1]); toast(ok + (env ? ' · cliente avisado' : '')); } else toast(ok); }
+    var sOk = f.querySelector('#dSinalOk'); if(sOk) sOk.onclick = function(){ sinalMuda({ sinal_estado:'pago' }, 'Sinal recebido ✓', ['✅ Sinal recebido', (SAL.nome || NEG.nome) + ': recebemos o sinal de ' + euro(r.sinal) + ' da sua marcação de ' + (r.servico || '') + ' (' + quando(r.data, r.hora) + '). Obrigado!']); };
+    var sX = f.querySelector('#dSinalX'); if(sX) sX.onclick = function(){ sinalMuda({ sinal_estado:'pendente' }, 'Sinal marcado como por pagar'); };
+    var sSem = f.querySelector('#dSinalSem'); if(sSem) sSem.onclick = function(){ if(!confirm('Dispensar o sinal desta marcação? O cliente deixa de o ver.')) return; sinalMuda({ sinal:null, sinal_estado:null, sinal_ate:null }, 'Sinal dispensado'); };
     var df = f.querySelector('#dFaltou'); if(df) df.onchange = async function(){ var u = await sb.from('reservas').update({ faltou:df.checked }).eq('id', r.id); if(u.error){ toast(/faltou|column/i.test(u.error.message) ? 'Falta correr no Supabase o salao-clientes.sql.' : ('Erro: ' + u.error.message)); df.checked = !df.checked; return; } r.faltou = df.checked; toast(df.checked ? 'Marcado como falta' : 'Falta retirada'); carregarRes(); };
     var dpx = f.querySelector('#dPropProfX'); if(dpx) dpx.onclick = async function(){ var u = await sb.from('reservas').update({ proposta_prof:null }).eq('id', r.id); if(u.error){ toast('Erro: ' + u.error.message); return; }
       r.proposta_prof = null; fecharModal(); carregarRes(); var ok = await pushCliente(r, '↩️ Proposta retirada', 'A sua marcação de ' + quando(r.data, r.hora) + ' mantém-se com ' + (nomeProf(r.profissional) || 'a mesma pessoa') + '.'); toast(ok ? 'Proposta retirada · cliente avisado' : 'Proposta retirada'); };
@@ -2452,7 +2468,53 @@
 
   // ---------- horário e regras ----------
   var FECHOS = [], VAGAS = [];
-  function pintarHorario(){
+  // ---------- sinal por MB WAY (a clínica liga/desliga) ----------
+  var REGRA_SINAL_G = 'Se o cliente faltar sem avisar, o sinal fica para a clínica. Se avisar e mudar de dia ou hora, o sinal passa para a nova marcação.';
+  // ---------- "Recebi um MB WAY": escreve o valor e encontra a marcação ----------
+  function numEuro(t){ var m = /(\d+)(?:[.,](\d{1,2}))?/.exec(String(t || '')); return m ? parseFloat(m[1] + '.' + ((m[2] || '0') + '0').slice(0, 2)) : null; }
+  $('aMbw').onclick = function(){
+    var f = modal('<h3>💶 Recebi um MB WAY</h3><div style="font-size:14px;color:var(--suave);">Escreva o valor que recebeu (com os cêntimos). Cada sinal tem cêntimos diferentes, por isso o valor diz de quem é.</div>'
+      + '<div style="display:flex;gap:8px;align-items:center;"><input id="mbVal" inputmode="decimal" placeholder="Ex.: 3,37" style="flex:1;min-height:48px;font-size:22px;font-weight:800;border:1.5px solid var(--borda);border-radius:12px;padding:0 14px;"><span style="font-size:22px;font-weight:800;">€</span></div>'
+      + '<div id="mbRes" style="display:flex;flex-direction:column;gap:8px;"></div>');
+    var lista = null, inp = f.querySelector('#mbVal'); inp.focus();
+    function linha(r, exato){ return '<div style="border:1.5px solid ' + (exato ? '#0A7C6E' : 'var(--borda)') + ';border-radius:12px;padding:10px 12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;"><div style="flex:1;min-width:180px;"><b>' + esc(r.nome || '') + '</b> · <b style="color:#0A5C52;">' + euro(r.sinal) + '</b><div style="font-size:13px;">' + esc(r.servico || '') + ' · ' + esc(quando(r.data, r.hora)) + (r.telefone && r.telefone !== '-' ? (' · ' + esc(r.telefone)) : '') + '</div>'
+        + (r.sinal_estado === 'avisou' ? '<div style="font-size:12px;color:#8A5A10;font-weight:700;">O cliente disse que já pagou</div>' : '') + '</div><button type="button" class="btn-ok" data-ok="' + esc(r.id) + '">Confirmar</button></div>'; }
+    async function procura(){ var v = numEuro(inp.value), bx = f.querySelector('#mbRes');
+      if(lista == null){ bx.innerHTML = '<div style="color:var(--suave);">A procurar…</div>'; var q = await sb.from('reservas').select('*').eq('negocio_id', NEG.id).not('sinal', 'is', null).neq('estado', 'cancelada').order('data');
+        if(q.error){ bx.innerHTML = '<div class="msg erro">' + (/sinal|column/i.test(q.error.message) ? 'Falta correr no Supabase o 21-salao-sinal-mbway.sql.' : esc(q.error.message)) + '</div>'; return; }
+        lista = (q.data || []).filter(function(r){ return +r.sinal > 0 && r.sinal_estado !== 'pago' && r.estado !== 'cancelada'; }); }
+      if(!lista.length){ bx.innerHTML = '<div style="color:var(--suave);">Não há sinais por receber. 👌</div>'; return; }
+      if(v == null){ bx.innerHTML = '<div style="font-size:13px;color:var(--suave);">Sinais por receber (' + lista.length + '):</div>' + lista.slice(0, 8).map(function(r){ return linha(r, false); }).join(''); ligar(); return; }
+      var ex = lista.filter(function(r){ return Math.abs(+r.sinal - v) < 0.005; });
+      if(ex.length){ bx.innerHTML = '<div style="font-size:13px;font-weight:700;color:#0A5C52;">' + (ex.length === 1 ? 'É desta marcação:' : 'Há ' + ex.length + ' marcações com este valor — veja o nome no banco:') + '</div>' + ex.map(function(r){ return linha(r, true); }).join(''); }
+      else { var pr = lista.slice().sort(function(a, b){ return Math.abs(+a.sinal - v) - Math.abs(+b.sinal - v); }).filter(function(r){ return Math.abs(+r.sinal - v) <= 1.5; }).slice(0, 3);
+        bx.innerHTML = '<div style="font-size:13px;font-weight:700;color:#8A2A2A;">Não encontrei nenhum sinal de ' + euro(v) + '.</div>' + (pr.length ? ('<div style="font-size:13px;color:var(--suave);">Os mais parecidos:</div>' + pr.map(function(r){ return linha(r, false); }).join('')) : ''); }
+      ligar(); }
+    function ligar(){ f.querySelectorAll('[data-ok]').forEach(function(b){ b.onclick = async function(){ var r = lista.filter(function(x){ return x.id === b.getAttribute('data-ok'); })[0]; if(!r) return; b.disabled = true;
+      var u = await sb.from('reservas').update({ sinal_estado:'pago' }).eq('id', r.id); if(u.error){ toast('Erro: ' + u.error.message); b.disabled = false; return; }
+      r.sinal_estado = 'pago'; lista = lista.filter(function(x){ return x.id !== r.id; });
+      var env = await pushCliente(r, '✅ Sinal recebido', (SAL.nome || NEG.nome) + ': recebemos o sinal de ' + euro(r.sinal) + ' da sua marcação de ' + (r.servico || '') + ' (' + quando(r.data, r.hora) + '). Obrigado!');
+      toast('Sinal de ' + (r.nome || '') + ' recebido ✓' + (env ? ' · cliente avisado' : '')); inp.value = ''; procura(); carregarRes(); }; }); }
+    var tm = 0; inp.oninput = function(){ clearTimeout(tm); tm = setTimeout(procura, 250); }; procura();
+  };
+  function pintarSinalCfg(){
+    var x = SAL.sinal || {}, on = !!x.ativo;
+    $('sinalCfg').className = 'fid-cfg' + (on ? ' on' : '');
+    $('sinalCfg').innerHTML = '<label class="chk-l" style="font-size:15px;"><input type="checkbox" id="snOn"' + (on ? ' checked' : '') + '> <span><b>💶 Sinal por MB WAY</b> <span style="font-weight:400;color:var(--suave);">' + (on ? '· ligado: as marcações feitas pelos clientes pedem um sinal adiantado' : '· desligado') + '</span></span></label>'
+      + '<div id="snCorpo" class="' + (on ? '' : 'hide') + '" style="display:flex;flex-direction:column;gap:12px;"><div class="fid-campos">'
+      + '<div class="campo" style="flex:0 1 220px;"><label for="snNum">Número MB WAY da clínica</label><input id="snNum" inputmode="tel" maxlength="20" placeholder="912 345 678" value="' + esc(x.numero || '') + '"></div>'
+      + '<div class="campo"><label for="snPct">Sinal (% do valor da marcação)</label><input id="snPct" type="number" min="1" max="100" value="' + (+x.pct || 20) + '"></div>'
+      + '<div class="campo"><label for="snHoras">Prazo para pagar</label><select id="snHoras">' + [[1,'1 hora'],[2,'2 horas'],[6,'6 horas'],[12,'12 horas'],[24,'24 horas'],[48,'48 horas']].map(function(o){ return '<option value="' + o[0] + '"' + ((+x.horas || 24) === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select></div>'
+      + '<button type="button" class="btn-ac" id="snGuardar">Guardar</button><span class="msg" id="snMsg"></span></div>'
+      + '<div style="font-size:13px;color:var(--suave);line-height:1.45;">O cliente vê o valor e o número ao marcar, e paga na app MB WAY <b>diretamente à clínica</b> (sem comissões; o 4Trevo não toca no dinheiro). Cada sinal tem cêntimos diferentes (ex.: 4,37 €) para saber logo quem pagou. Quando o dinheiro entrar, carregue em <b>"Recebi o sinal"</b> na marcação. Com vários serviços seguidos, o sinal é um só, sobre o total. As marcações feitas aqui na Gestão não pedem sinal.<br><b>Regras:</b> ' + REGRA_SINAL_G + '</div></div>';
+    async function gravar(v, ok){ var e = await guardarCfg(function(c){ c.salao = Object.assign({}, c.salao || {}, { sinal:v }); }); if(e){ toast('Erro: ' + e.message); return; } toast(ok); pintarSinalCfg(); $('aMbw').classList.toggle('hide', !(SAL.sinal && SAL.sinal.ativo)); }
+    $('snOn').onchange = function(){ var on = this.checked; if(on && String((SAL.sinal || {}).numero || '').replace(/\D/g, '').length < 9){ $('snCorpo').classList.remove('hide'); $('snNum').focus(); toast('Escreva o número MB WAY e carregue em Guardar'); return; }
+      gravar(Object.assign({ pct:20, horas:24 }, SAL.sinal || {}, { ativo:on }), on ? 'Sinal ligado ✓' : 'Sinal desligado'); };
+    $('snGuardar').onclick = function(){ var n = $('snNum').value.replace(/\D/g, ''); if(/^351\d{9}$/.test(n)) n = n.slice(3);
+      if(n.length !== 9 || n.charAt(0) !== '9'){ $('snMsg').textContent = 'O número MB WAY tem de ser um telemóvel (9 números, começa por 9).'; $('snMsg').className = 'msg erro'; return; }
+      gravar({ ativo:$('snOn').checked || true, numero:n, pct:Math.max(1, Math.min(100, parseInt($('snPct').value, 10) || 20)), horas:+$('snHoras').value || 24 }, 'Sinal guardado ✓'); };
+  }
+  function pintarHorario(){ try{ pintarSinalCfg(); }catch(e){}
     var ordem = [1,2,3,4,5,6,0];
     $('horLista').innerHTML = ordem.map(function(w){ var h = horarioDe(w);
       return '<div class="hor-linha" data-w="' + w + '"><b>' + DIAS_L[w] + '</b>'

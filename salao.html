@@ -143,6 +143,13 @@
   .fid-barra{ height:10px; border-radius:999px; background:var(--fundo); overflow:hidden; } .fid-barra div{ height:100%; background:var(--ac); border-radius:999px; }
   .fid-est{ font-size:14px; font-weight:700; }
   .fid-est.pr{ background:color-mix(in srgb, var(--ac) 12%, #fff); color:var(--ac); border-radius:10px; padding:8px 10px; }
+  .sinal{ border:2px solid #0A7C6E; background:#EAF6F3; border-radius:12px; padding:10px 12px; margin:0 14px 10px; display:flex; flex-direction:column; gap:6px; font-size:14px; }
+  .sinal.ok{ border-color:var(--verde); background:var(--verde-f); }
+  .sinal b.v{ font-size:20px; color:#0A5C52; }
+  .sinal-bts{ display:flex; gap:6px; flex-wrap:wrap; }
+  .sinal-bts button{ border:1.5px solid #0A7C6E; background:#fff; color:#0A5C52; border-radius:999px; padding:6px 12px; font-weight:800; font-size:13px; min-height:36px; cursor:pointer; font-family:inherit; }
+  .sinal-bts button.f{ background:#0A7C6E; color:#fff; }
+  .sinal small{ color:#4A6B66; font-size:12px; line-height:1.35; }
   .consent input{ width:20px; height:20px; flex:0 0 auto; margin:0; accent-color:var(--ac); }
   .campo input, .campo textarea{ border:1.5px solid var(--borda); border-radius:10px; padding:12px; font-size:16px; background:#fff; color:var(--ink); }
   .nota{ font-size:12px; color:var(--suave); }
@@ -738,6 +745,8 @@
       + linhas
       + (comPreco ? ('<div class="rl rt"><span>Total' + (comPreco < SG.length ? ' (sem os serviços sem preço)' : '') + ' · ' + esc(durTxt(durTotal())) + '</span><span>' + esc(euroTxt(tot)) + '</span></div>') : ('<div class="rl rt"><span>Duração</span><span>' + esc(durTxt(durTotal())) + '</span></div>'))
       + (poup > 0.004 ? ('<div style="font-size:13px;color:var(--ac);font-weight:700;">🎁 Poupa ' + esc(euroTxt(poup)) + ' com a promoção</div>') : '')
+      + (function(){ var sc = sinalCfg(); if(!sc || !(tot > 0)) return ''; var v = Math.floor(tot * sc.pct / 100);
+          return '<div style="font-size:13px;background:#EAF6F3;color:#0A5C52;border-radius:10px;padding:8px 10px;"><b>💶 Sinal de ' + sc.pct + '% por MB WAY</b> (cerca de ' + esc(euroTxt(v >= 2 ? v - 0.5 : tot * sc.pct / 100)) + '), pago diretamente à clínica depois de enviar o pedido. ' + REGRA_SINAL + '</div>'; })()
       + (fUsa ? ('<div style="font-size:13px;color:var(--ac);font-weight:700;">⭐ Prémio do cartão de cliente: −' + fc.desc + '% em ' + esc(SG[0].s.nome) + (fPoup > 0.004 ? (' (poupa ' + esc(euroTxt(fPoup)) + ')') : '') + '</div>') : '');
     r.classList.remove('hide'); pintarPolitica();
   }
@@ -800,6 +809,13 @@
   try{ pintarPerguntaPush(); }catch(e){}   // já aceitou: não volta a perguntar
 
   // ---------- as minhas marcações ----------
+  // ---------- sinal por MB WAY (a clínica liga/desliga na Gestão) ----------
+  function sinalCfg(){ var x = SAL.sinal; if(GRUPO_LISTA || !x || !x.ativo) return null; var n = String(x.numero || '').replace(/\D/g, ''); if(n.length < 9) return null;
+    return { pct:Math.max(1, Math.min(100, +x.pct || 20)), numero:n.slice(-9), horas:Math.max(1, +x.horas || 24) }; }
+  function numTxt(n){ return n.replace(/(\d{3})(\d{3})(\d{3})/, '$1 $2 $3'); }
+  var REGRA_SINAL = 'Se faltar sem avisar, o sinal fica para a clínica. Se avisar e mudar de dia ou hora, o sinal passa para a nova marcação.';
+  function copiarTx(t, b){ var ok = function(){ var o = b.textContent; b.textContent = '✓ Copiado'; setTimeout(function(){ b.textContent = o; }, 1500); };
+    (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(ok).catch(function(){ prompt('Copie:', t); }); }
   // ---------- fidelização (a clínica liga/desliga na Gestão) ----------
   var FID = null;
   function fidCfg(){ var f = SAL.fidel; if(GRUPO_LISTA || !f || !f.ativo) return null;
@@ -871,6 +887,12 @@
         if(prop) h += '<div class="minha-prop"><b style="color:var(--ac);">🕘 O salão propõe mudar para ' + esc(quando(r.proposta_data || r.data, r.proposta_hora)) + '.</b><span style="font-size:13px;">' + (r.estado === 'confirmada' ? 'Se não aceitar, a marcação mantém-se como está e o salão é avisado.' : 'Se não aceitar, o salão é avisado e responde-lhe.') + '</span><div style="display:flex;gap:8px;flex-wrap:wrap;"><button type="button" class="btn-ac" data-ac="sim" data-id="' + esc(x.id) + '">Aceito a nova hora</button><button type="button" class="btn-sec" data-ac="nao" data-id="' + esc(x.id) + '">Não dá</button></div></div>';
         if(propP) h += '<div class="minha-prop"><b style="color:var(--ac);">👤 O salão propõe que seja com ' + esc(nomeProf(r.proposta_prof) || 'outra pessoa') + (nomeProf(r.profissional) ? (' em vez de ' + esc(nomeProf(r.profissional))) : '') + '.</b><span style="font-size:13px;">O dia e a hora não mudam. Se não aceitar, o salão é avisado.</span><div style="display:flex;gap:8px;flex-wrap:wrap;"><button type="button" class="btn-ac" data-ac="psim" data-id="' + esc(x.id) + '">Aceito</button><button type="button" class="btn-sec" data-ac="pnao" data-id="' + esc(x.id) + '">Prefiro manter</button></div></div>';
         if(respTxt) h += '<div class="minha-prop" style="font-size:13px;font-weight:700;">' + respTxt + '</div>';
+        if(+r.sinal > 0 && r.estado !== 'cancelada'){ var sc = sinalCfg(), sv = eu(+r.sinal);
+          if(r.sinal_estado === 'pago') h += '<div class="sinal ok"><b style="color:var(--verde);">✅ Sinal de ' + sv + ' recebido pela clínica</b><small>' + REGRA_SINAL + '</small></div>';
+          else { var ate = r.sinal_ate ? new Date(r.sinal_ate) : null, ateTx = ate ? (ate.toDateString() === new Date().toDateString() ? ('hoje às ' + String(ate.getHours()).padStart(2, '0') + 'h' + String(ate.getMinutes()).padStart(2, '0')) : (DIAS_C[ate.getDay()] + ' ' + ate.getDate() + ' ' + MESES[ate.getMonth()] + ' às ' + String(ate.getHours()).padStart(2, '0') + 'h' + String(ate.getMinutes()).padStart(2, '0'))) : '';
+            h += '<div class="sinal"><div>💶 <b>Sinal por MB WAY</b>' + (ateTx ? (' · até ' + esc(ateTx)) : '') + '</div><div><b class="v">' + sv + '</b> para o número <b>' + esc(sc ? numTxt(sc.numero) : '') + '</b></div>'
+              + (r.sinal_estado === 'avisou' ? '<div style="font-weight:700;">⏳ Disse que já pagou. A clínica vai confirmar.</div>' : ('<div class="sinal-bts">' + (sc ? ('<button type="button" data-ac="copnum" data-id="' + esc(x.id) + '">📋 Copiar número</button>') : '') + '<button type="button" data-ac="copval" data-id="' + esc(x.id) + '">📋 Copiar valor</button><button type="button" class="f" data-ac="sinalpago" data-id="' + esc(x.id) + '">Já paguei</button></div>'))
+              + '<small>Na app MB WAY: Enviar dinheiro › número acima › valor exato (os cêntimos servem para a clínica saber que é seu). ' + REGRA_SINAL + '</small></div>'; } }
         h += '<div class="minha-corpo">';
         if(r.profissional && nomeProf(r.profissional)) h += '<div>👤 Com <b>' + esc(nomeProf(r.profissional)) + '</b></div>';
         if(+r.desconto) h += '<div>🎁 Desconto de <b>' + (+r.desconto) + '%</b> oferecido pelo salão</div>';
@@ -961,10 +983,13 @@
     obterPush().then(function(ep){ if(!ep) return; falta.forEach(function(id){ _pushFeitos[id] = 1; rpc('marcacao_set_push', { p_id:id, p_endpoint:ep }).catch(function(){ delete _pushFeitos[id]; }); }); });
   }
   function acaoMinha(ac, id, b){
+    if(ac === 'copnum'){ var sc = sinalCfg(); if(sc) copiarTx(sc.numero, b); return; }
+    if(ac === 'copval'){ var rv = _minhasRows[id]; if(rv) copiarTx((+rv.sinal).toFixed(2).replace('.', ','), b); return; }
+    if(ac === 'sinalpago'){ b.disabled = true; rpc('marcacao_sinal_avisar', { p_id:id }).then(function(){ _minhasHtml = ''; pintarMinhas(); }).catch(function(){ b.disabled = false; alert('Não foi possível avisar a clínica. Tente outra vez.'); }); return; }
     if(ac === 'reag'){ var x = guardados().filter(function(v){ return v.id === id; })[0], r = _minhasRows[id]; if(x && r) iniciarReag(x, r); return; }
     if(ac === 'pushoff'){ if(confirm('Deixar de receber notificações deste salão neste telemóvel? Pode voltar a ligar quando quiser.')) desligarPush(); return; }
     if(ac === 'push'){ b.disabled = true; b.textContent = 'A ligar…'; try{ localStorage.removeItem('salao_push_off'); }catch(e){} obterPush().then(function(ep){ if(!ep) throw new Error('sem_push'); try{ localStorage.setItem('salao_push_on', '1'); }catch(e){} _pushFeitos = {}; return rpc('marcacao_set_push', { p_id:id, p_endpoint:ep }); }).then(function(){ pintarMinhas(); }).catch(function(){ b.disabled = false; b.textContent = '🔔 Avisar-me por notificação'; alert('Não foi possível ligar as notificações. No iPhone, adicione primeiro esta página ao ecrã principal (Partilhar → "Adicionar ao Ecrã Principal").'); }); return; }
-    if(ac === 'cancelar'){ if(!confirm('Cancelar esta marcação? O salão é avisado.')) return;
+    if(ac === 'cancelar'){ var rc = _minhasRows[id] || {}; if(!confirm('Cancelar esta marcação? O salão é avisado.' + (+rc.sinal > 0 && rc.sinal_estado !== 'pendente' ? '\n\nJá pagou um sinal de ' + (+rc.sinal).toFixed(2).replace('.', ',') + ' €. Se preferir, use "Mudar dia/hora": o sinal passa para a nova marcação. Se cancelar, fale com a clínica sobre o sinal.' : ''))) return;
       rpc('marcacao_cancelar', { p_id:id }).catch(function(e){ if(/PGRST202|Could not find|does not exist/i.test(String(e.message || e))) return rpc('reserva_cancelar_cliente', { p_id:id }); throw e; })
         .then(function(){ _minhaAberta = ''; pintarMinhas('canc'); }).catch(function(){ alert('Não foi possível cancelar. Tente outra vez ou contacte o salão.'); }); return; }
     if(ac === 'psim' || ac === 'pnao'){
