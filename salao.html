@@ -75,8 +75,14 @@
   .btn-ac{ border:none; border-radius:10px; min-height:44px; padding:0 16px; background:var(--ac); color:#fff; font-weight:800; font-size:14px; }
   .btn-ac:disabled{ opacity:.5; cursor:default; }
   .btn-sec{ border:1.5px solid var(--borda); border-radius:10px; min-height:44px; padding:0 14px; background:#fff; color:var(--ink); font-weight:700; font-size:14px; }
-  .vaga{ background:var(--verde-f); border-radius:14px; padding:14px; display:flex; flex-direction:column; gap:4px; color:var(--verde); }
-  .vaga b{ color:var(--ink); }
+  .vaga{ background:var(--ac); border-radius:16px; padding:16px 18px; display:flex; flex-direction:column; gap:8px; color:#fff; box-shadow:0 6px 18px rgba(31,28,26,.12); position:relative; overflow:hidden; }
+  .vaga::after{ content:''; position:absolute; right:-40px; top:-40px; width:150px; height:150px; border-radius:50%; background:rgba(255,255,255,.1); }
+  .vaga-et{ align-self:flex-start; background:#fff; color:var(--ac); border-radius:999px; padding:4px 12px; font-size:12px; font-weight:800; letter-spacing:.8px; text-transform:uppercase; }
+  .vaga-dia{ font-size:24px; font-weight:800; line-height:1.1; } .vaga-dia small{ font-size:14px; font-weight:600; opacity:.9; margin-left:6px; }
+  .vaga-horas{ display:flex; flex-wrap:wrap; gap:6px; }
+  .vaga-horas span{ background:#fff; color:var(--ac); border-radius:10px; padding:6px 12px; font-weight:800; font-size:15px; }
+  .vaga-tx{ font-size:14px; opacity:.95; }
+  .vaga-bt{ align-self:flex-start; border:none; background:#fff; color:var(--ac); border-radius:999px; padding:10px 18px; font-weight:800; font-size:14px; min-height:42px; cursor:pointer; font-family:inherit; position:relative; z-index:1; }
   /* painel do pedido: ao lado no computador, folha por baixo no telemóvel */
   .painel{ flex:1 1 340px; max-width:430px; background:#fff; border-radius:18px; padding:22px; display:flex; flex-direction:column; gap:16px; box-shadow:0 2px 10px rgba(31,28,26,.06); position:sticky; top:16px; }
   .painel h3{ margin:0; font-size:20px; font-weight:800; }
@@ -571,7 +577,13 @@
     if(!SERV.length){ $('servicos').innerHTML = '<div class="vazio">Este salão ainda não publicou os serviços.</div>'; return; }
     var html = '';
     var vg = Array.isArray(SAL.vagas) ? SAL.vagas.filter(function(v){ return v && v.data >= iso(new Date()) && v.texto; }) : [];
-    vg.slice(0, 2).forEach(function(v){ html += '<div class="vaga"><div style="font-size:12px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;">Vaga de última hora</div><b>' + esc(quando(v.data, v.hora)) + '</b><div>' + esc(v.texto) + '</div></div>'; });
+    vg.slice(0, 2).forEach(function(v){ var hj = iso(new Date()), am = iso(new Date(Date.now() + 86400000)), dd = new Date(v.data + 'T00:00:00');
+      var nm = v.data === hj ? 'Hoje' : v.data === am ? 'Amanhã' : DIAS_L[dd.getDay()].charAt(0).toUpperCase() + DIAS_L[dd.getDay()].slice(1);
+      var hs = Array.isArray(v.horas) ? v.horas.filter(function(h){ return v.data !== hj || (minDe(h) != null && minDe(h) > new Date().getHours() * 60 + new Date().getMinutes()); }) : null;
+      if(hs && !hs.length) return;   // as horas de hoje já passaram
+      html += '<div class="vaga"><span class="vaga-et">⏰ Vagas de última hora</span><div class="vaga-dia">' + esc(nm) + '<small>' + dd.getDate() + ' ' + MESES[dd.getMonth()] + (v.hora ? (' · ' + esc(v.hora)) : '') + '</small></div>'
+        + (hs ? ('<div class="vaga-horas">' + hs.map(function(h){ return '<span>' + esc(h.replace(':', 'h')) + '</span>'; }).join('') + '</div>' + (v.frase ? ('<div class="vaga-tx">' + esc(v.frase) + '</div>') : '')) : ('<div class="vaga-tx">' + esc(v.texto) + '</div>'))
+        + '<button type="button" class="vaga-bt" data-vaga>Marcar →</button></div>'; });
     var catFotos = SAL.catFotos || {};
     html += '<section class="grupo" style="flex:1 1 100%;"><h2>Serviços</h2><div class="cat-grelha' + (_catsJaVistas ? '' : ' primeira') + '">' + cs.map(function(c){
       var l = servDe(c), foto = urlOk(catFotos[c]) ? catFotos[c] : ((l.filter(function(s){ return urlOk(s.foto); })[0] || {}).foto || '');
@@ -580,6 +592,7 @@
         + '<div class="ct"><b>' + esc(c) + '</b><span>' + l.length + (l.length === 1 ? ' serviço' : ' serviços') + '</span><i>' + (on ? ('✓ ' + esc(escC.map(function(x){ return x.nome; }).join(' + '))) : 'Ver serviços e preços →') + '</i></div></button>';
     }).join('') + '</div></section>';
     $('servicos').innerHTML = html;
+    $('servicos').querySelectorAll('[data-vaga]').forEach(function(b){ b.onclick = function(){ var g = document.querySelector('.cat-grelha'); if(g) g.scrollIntoView({ behavior:'smooth', block:'start' }); }; });
     $('servicos').querySelectorAll('[data-cat]').forEach(function(b){ b.onclick = function(){ abrirCategoria(b.getAttribute('data-cat')); }; });
   }
 
