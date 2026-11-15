@@ -373,7 +373,13 @@
       <div>
         <div class="camp-prev-tit">Pré-visualização</div>
         <div class="camp-prev" id="cpPrev"></div>
-        <div id="cpBanPrevBx" class="hide"><div class="camp-prev-tit" style="margin-top:14px;">Banner · telemóvel, notificação e WhatsApp</div><canvas id="cpBanPrev" width="1200" height="630" style="width:100%;height:auto;border-radius:12px;display:block;box-shadow:0 4px 16px rgba(0,0,0,.1);"></canvas><div class="camp-prev-tit" style="margin-top:12px;">Banner · computador</div><canvas id="cpBanPrevL" width="2000" height="560" style="width:100%;height:auto;border-radius:12px;display:block;box-shadow:0 4px 16px rgba(0,0,0,.1);"></canvas></div>
+        <div id="cpBanPrevBx" class="hide"><div class="camp-prev-tit" style="margin-top:14px;">Banner · telemóvel, notificação e WhatsApp</div><canvas id="cpBanPrev" width="1200" height="630" style="width:100%;height:auto;border-radius:12px;display:block;box-shadow:0 4px 16px rgba(0,0,0,.1);"></canvas><div class="camp-prev-tit" style="margin-top:12px;">Banner · computador</div><canvas id="cpBanPrevL" width="2000" height="560" style="width:100%;height:auto;border-radius:12px;display:block;box-shadow:0 4px 16px rgba(0,0,0,.1);"></canvas>
+          <div class="camp-prev-tit" style="margin-top:12px;">Instagram · ao alto</div>
+          <div style="display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap;">
+            <div style="flex:1 1 180px;max-width:260px;display:flex;flex-direction:column;gap:6px;"><canvas id="cpBanIg" width="1080" height="1350" style="width:100%;height:auto;border-radius:12px;display:block;box-shadow:0 4px 16px rgba(0,0,0,.1);"></canvas><button type="button" class="btn" id="cpIgDes">⬇️ Publicação (4:5)</button></div>
+            <div style="flex:1 1 150px;max-width:210px;display:flex;flex-direction:column;gap:6px;"><canvas id="cpBanSt" width="1080" height="1920" style="width:100%;height:auto;border-radius:12px;display:block;box-shadow:0 4px 16px rgba(0,0,0,.1);"></canvas><button type="button" class="btn" id="cpStDes">⬇️ Stories (9:16)</button></div>
+          </div>
+          <div style="font-size:12px;color:var(--suave);margin-top:6px;">No Instagram as imagens não abrem links: o banner já leva o endereço do salão. Nas stories, pode juntar o autocolante "Link" com o mesmo endereço.</div></div>
         <div id="cpPromoAtual" class="hide"></div>
       </div>
     </div>
@@ -966,7 +972,49 @@
     var foto = await carregarImg(BAN.foto), logo = await carregarImg(logoPush() || ''); if(n !== _banN) return;
     pintarBannerEm($('cpBanPrev'), 1200, 630, foto, logo);
     pintarBannerEm($('cpBanPrevL'), 2000, 560, foto, logo);
+    pintarBannerAlto($('cpBanIg'), 1080, 1350, foto); pintarBannerAlto($('cpBanSt'), 1080, 1920, foto);
   }
+  // banners ao alto para o Instagram: publicação 1080×1350 (4:5) e stories 1080×1920 (9:16)
+  function pintarBannerAlto(c, W, H, foto, txtO){
+    var g = c.getContext('2d'), cor = corOk(SAL.cor) ? SAL.cor : '#8E3653', k = W / 1080, story = H / W > 1.6;
+    function px(v){ return Math.round(v * k); }
+    function redondo(x, y, w, h, r){ g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
+    var topo = story ? px(210) : 0, baixo = story ? px(250) : 0;   // stories: o Instagram tapa o topo e o fundo
+    g.clearRect(0, 0, W, H); g.fillStyle = cor; g.fillRect(0, 0, W, H);
+    var fH = foto ? Math.round(H * (story ? 0.52 : 0.5)) : 0;
+    if(foto){
+      var kk = Math.max(W / foto.width, fH / foto.height), sw = W / kk, sh = fH / kk;
+      g.drawImage(foto, (foto.width - sw) / 2, (foto.height - sh) / 2, sw, sh, 0, 0, W, fH);
+      var gr = g.createLinearGradient(0, fH - px(260), 0, fH + 2); gr.addColorStop(0, cor + '00'); gr.addColorStop(1, cor);
+      g.fillStyle = gr; g.fillRect(0, fH - px(260), W, px(262));
+    } else {
+      g.fillStyle = 'rgba(255,255,255,.08)'; g.beginPath(); g.arc(W - px(80), topo + px(160), px(330), 0, 7); g.fill(); g.beginPath(); g.arc(px(60), H - baixo - px(40), px(240), 0, 7); g.fill();
+    }
+    var x = px(84), tw = W - x * 2, bh = px(92), by = H - baixo - px(story ? 90 : 80) - bh;
+    // selo do desconto (em cima, à direita)
+    var dS = txtO ? (+txtO.desc || 0) : descEscolhido(), R = px(130), cx = W - R - px(56), cy = topo + R + px(56);
+    if(dS){ g.fillStyle = '#fff'; g.beginPath(); g.arc(cx, cy, R, 0, 7); g.fill();
+      g.fillStyle = cor; g.textAlign = 'center'; g.textBaseline = 'middle'; var fz = px(84); do{ g.font = '800 ' + fz + 'px Manrope, system-ui, sans-serif'; fz -= px(2); }while(g.measureText('−' + dS + '%').width > R * 1.55 && fz > px(30)); g.fillText('−' + dS + '%', cx, cy + px(3)); g.textAlign = 'left'; }
+    // bloco de texto: mede primeiro e depois arruma no espaço livre (sem chocar com o selo nem com o botão)
+    var yA = foto ? fH - px(40) : (dS ? cy + R + px(50) : topo + px(110)), yB = by - px(50);
+    var tit = txtO ? (txtO.tit || 'Novidade') : ($('cpTit').value.trim() || 'Novidade'), txt = txtO ? (txtO.txt || '') : textoPara({ nome:'' }, $('cpTxt').value);
+    var fs = px(foto ? 96 : 120); for(; fs > px(56); fs -= px(4)){ g.font = '800 ' + fs + 'px Manrope, system-ui, sans-serif'; if(linhasTexto(g, tit, tw, 4).length <= 3) break; }
+    var lT = linhasTexto(g, tit, tw, 3), fT = px(foto ? 40 : 46), lhT = Math.round(fT * 1.35);
+    g.font = '500 ' + fT + 'px Manrope, system-ui, sans-serif';
+    var hFixo = px(70) + lT.length * fs * 1.1 + px(22), maxL = Math.max(0, Math.floor((yB - yA - hFixo) / lhT)), lX = linhasTexto(g, txt, tw, Math.min(story ? 6 : 5, maxL));
+    var hB = hFixo + lX.length * lhT, livre = Math.max(0, yB - yA - hB), y = yA + livre * (foto ? 0.3 : 0.5);
+    g.textBaseline = 'top'; g.fillStyle = 'rgba(255,255,255,.92)'; g.font = '700 ' + px(foto ? 36 : 40) + 'px Manrope, system-ui, sans-serif';
+    g.fillText(linhasTexto(g, SAL.nome || NEG.nome || '', tw, 1)[0] || '', x, y); y += px(70);
+    g.fillStyle = '#fff'; g.font = '800 ' + fs + 'px Manrope, system-ui, sans-serif'; lT.forEach(function(l){ g.fillText(l, x, y); y += fs * 1.1; }); y += px(22);
+    g.font = '500 ' + fT + 'px Manrope, system-ui, sans-serif'; g.fillStyle = 'rgba(255,255,255,.92)'; lX.forEach(function(l){ g.fillText(l, x, y); y += lhT; });
+    // endereço curto do salão (no Instagram a imagem não abre links)
+    var end = linkSalao().replace(/^https?:\/\//, ''), fb = px(38); do{ g.font = '800 ' + fb + 'px Manrope, system-ui, sans-serif'; fb -= px(2); }while(g.measureText('Marque em ' + end).width + px(80) > tw && fb > px(22));
+    var bt = 'Marque em ' + end, bw = g.measureText(bt).width + px(80);
+    g.fillStyle = '#fff'; redondo(x, by, bw, bh, bh / 2); g.fill(); g.fillStyle = cor; g.textBaseline = 'middle'; g.fillText(bt, x + px(40), by + bh / 2 + 1); g.textBaseline = 'top';
+  }
+  function descarregarCanvas(cv, nome){ cv.toBlob(function(b){ if(!b) return; var a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = nome; a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); }, 2000); }, 'image/png'); }
+  $('cpIgDes').onclick = async function(){ await desenharBanner(); descarregarCanvas($('cpBanIg'), 'instagram-publicacao-' + SLUG + '.png'); };
+  $('cpStDes').onclick = async function(){ await desenharBanner(); descarregarCanvas($('cpBanSt'), 'instagram-stories-' + SLUG + '.png'); };
   // guarda o banner (uma vez por conteúdo) e põe-no na página do salão até à data escolhida
   async function publicarBanner(){
     if(!$('cpBan').checked) return null;
