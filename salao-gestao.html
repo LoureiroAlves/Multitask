@@ -83,6 +83,16 @@
   .camp-conta{ display:flex; gap:8px; flex-wrap:wrap; font-size:13px; }
   .camp-conta span{ background:#F4F1EE; border-radius:999px; padding:5px 10px; font-weight:700; }
   .camp-conta span b{ color:var(--ac); }
+  .mod-datas{ border:1.5px dashed var(--borda); border-radius:12px; padding:10px 12px; display:flex; flex-direction:column; gap:8px; }
+  .mod-datas b.t{ font-size:14px; }
+  .mod-chips{ display:flex; flex-wrap:wrap; gap:6px; }
+  .mod-chip{ border:1.5px solid var(--borda); background:#fff; border-radius:999px; padding:6px 12px; font-size:13px; font-weight:700; cursor:pointer; font-family:inherit; color:var(--ink); min-height:34px; }
+  .mod-chip small{ font-weight:600; color:var(--suave); margin-left:4px; }
+  .mod-chip.breve{ border-color:var(--ac); background:color-mix(in srgb, var(--ac) 8%, #fff); }
+  .mod-chip.breve small{ color:var(--ac); }
+  .ig-mods{ display:flex; gap:6px; flex-wrap:wrap; margin:4px 0 8px; }
+  .ig-mod{ border:1.5px solid var(--borda); background:#fff; border-radius:10px; padding:6px 12px; font-size:13px; font-weight:700; cursor:pointer; font-family:inherit; min-height:36px; }
+  .ig-mod.on{ background:var(--ac); border-color:var(--ac); color:#fff; }
   .camp-ban{ border:1.5px solid var(--linha); border-radius:12px; padding:10px 12px; display:flex; flex-direction:column; gap:10px; }
   #cpBanCat{ border:1.5px solid var(--borda); border-radius:10px; padding:10px 12px; font-size:15px; font-family:inherit; background:#fff; }
   .promo-desc{ background:#F6F1F8; border-radius:10px; padding:10px; display:flex; flex-direction:column; gap:4px; }
@@ -348,6 +358,7 @@
     <p class="sub">Envie uma novidade, promoção ou lembrete aos seus clientes, por notificação, WhatsApp ou email. Só recebem os clientes que aceitaram receber campanhas (e que não estão bloqueados).</p>
     <div class="camp-grelha">
       <div class="camp-form">
+        <div class="mod-datas"><b class="t">✨ Começar de um modelo</b><div class="mod-chips" id="cpModelos"></div><div style="font-size:12px;color:var(--suave);">Preenche o título, a mensagem, o desconto e a data de fim. Depois ajuste à sua maneira.</div></div>
         <div class="campo"><label for="cpPub">Para quem</label><select id="cpPub"></select></div>
         <div class="campo hide" id="cpServBx"><label for="cpServ">Serviço</label><select id="cpServ"></select></div>
         <div class="camp-conta" id="cpConta"></div>
@@ -375,6 +386,7 @@
         <div class="camp-prev" id="cpPrev"></div>
         <div id="cpBanPrevBx" class="hide"><div class="camp-prev-tit" style="margin-top:14px;">Banner · telemóvel, notificação e WhatsApp</div><canvas id="cpBanPrev" width="1200" height="630" style="width:100%;height:auto;border-radius:12px;display:block;box-shadow:0 4px 16px rgba(0,0,0,.1);"></canvas><div class="camp-prev-tit" style="margin-top:12px;">Banner · computador</div><canvas id="cpBanPrevL" width="2000" height="560" style="width:100%;height:auto;border-radius:12px;display:block;box-shadow:0 4px 16px rgba(0,0,0,.1);"></canvas>
           <div class="camp-prev-tit" style="margin-top:12px;">Instagram · ao alto</div>
+          <div class="ig-mods" id="cpIgMods"><button type="button" class="ig-mod" data-m="classico">Clássico</button><button type="button" class="ig-mod" data-m="inteira">Foto inteira</button><button type="button" class="ig-mod" data-m="cartao">Cartão</button></div>
           <div style="display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap;">
             <div style="flex:1 1 180px;max-width:260px;display:flex;flex-direction:column;gap:6px;"><canvas id="cpBanIg" width="1080" height="1350" style="width:100%;height:auto;border-radius:12px;display:block;box-shadow:0 4px 16px rgba(0,0,0,.1);"></canvas><button type="button" class="btn" id="cpIgDes">⬇️ Imagem 4:5</button><button type="button" class="btn-ac" id="cpIgVid">🎬 Vídeo 4:5 (MP4)</button></div>
             <div style="flex:1 1 150px;max-width:210px;display:flex;flex-direction:column;gap:6px;"><canvas id="cpBanSt" width="1080" height="1920" style="width:100%;height:auto;border-radius:12px;display:block;box-shadow:0 4px 16px rgba(0,0,0,.1);"></canvas><button type="button" class="btn" id="cpStDes">⬇️ Imagem 9:16</button><button type="button" class="btn-ac" id="cpStVid">🎬 Vídeo 9:16 (MP4)</button></div>
@@ -978,53 +990,77 @@
   // banners ao alto para o Instagram: publicação 1080×1350 (4:5) e stories 1080×1920 (9:16)
   // t = segundos da animação (vídeo); sem t = imagem final
   var ANIM_DUR = 8, ANIM_FPS = 30;
-  function pintarBannerAlto(c, W, H, foto, txtO, t){
+  // modelos de visual para o Instagram: clássico (foto em cima), foto inteira, cartão
+  function modeloIg(){ var m = BAN.modelo; if(!m){ try{ m = localStorage.getItem('salao_igmod_' + SLUG); }catch(e){} } return ['classico','inteira','cartao'].indexOf(m) >= 0 ? m : 'classico'; }
+  function pintarModelosIg(){ var m = modeloIg(); document.querySelectorAll('#cpIgMods [data-m]').forEach(function(b){ b.classList.toggle('on', b.getAttribute('data-m') === m); }); }
+  document.querySelectorAll('#cpIgMods [data-m]').forEach(function(b){ b.onclick = function(){ BAN.modelo = b.getAttribute('data-m'); try{ localStorage.setItem('salao_igmod_' + SLUG, BAN.modelo); }catch(e){} pintarModelosIg(); desenharBanner(); }; });
+  pintarModelosIg();
+  function pintarBannerAlto(c, W, H, foto, txtO, t, modelo){
     var g = c.getContext('2d'), cor = corOk(SAL.cor) ? SAL.cor : '#8E3653', k = W / 1080, story = H / W > 1.6, an = typeof t === 'number';
+    modelo = modelo || modeloIg(); if(!foto && modelo === 'inteira') modelo = 'classico';
     function px(v){ return Math.round(v * k); }
     function redondo(x, y, w, h, r){ g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
     function P(a, d){ return !an ? 1 : Math.max(0, Math.min(1, (t - a) / d)); }
     function eo(p){ return 1 - Math.pow(1 - p, 3); }
     function back(p){ var c1 = 1.70158, c3 = c1 + 1; return p >= 1 ? 1 : 1 + c3 * Math.pow(p - 1, 3) + c1 * Math.pow(p - 1, 2); }
+    // foto a preencher [x,y,w,h] sem esticar, com aproximação lenta no vídeo
+    function pintarFoto(x, y, w, h){ var z = an ? (1.14 - 0.14 * eo(Math.min(1, t / ANIM_DUR))) : 1, kk = Math.max(w / foto.width, h / foto.height) * z, sw = w / kk, sh = h / kk;
+      g.globalAlpha = eo(P(0, 0.7)); g.drawImage(foto, (foto.width - sw) / 2, (foto.height - sh) / 2, sw, sh, x, y, w, h); g.globalAlpha = 1; }
+    function bolhas(){ var dr = an ? Math.sin(t * 0.8) * px(18) : 0;
+      g.fillStyle = 'rgba(255,255,255,.08)'; g.beginPath(); g.arc(W - px(80) + dr, topo + px(160) - dr, px(330) * (0.85 + 0.15 * eo(P(0, 1))), 0, 7); g.fill(); g.beginPath(); g.arc(px(60) - dr, H - baixo - px(40) + dr, px(240) * (0.85 + 0.15 * eo(P(0.2, 1))), 0, 7); g.fill(); }
     var topo = story ? px(210) : 0, baixo = story ? px(250) : 0;   // stories: o Instagram tapa o topo e o fundo
     g.save(); g.clearRect(0, 0, W, H); g.fillStyle = cor; g.fillRect(0, 0, W, H);
-    var fH = foto ? Math.round(H * (story ? 0.52 : 0.5)) : 0;
-    if(foto){
-      // foto com aproximação lenta (efeito "Ken Burns")
-      var z = an ? (1.14 - 0.14 * eo(Math.min(1, t / ANIM_DUR))) : 1, kk = Math.max(W / foto.width, fH / foto.height) * z, sw = W / kk, sh = fH / kk;
-      g.globalAlpha = eo(P(0, 0.7)); g.drawImage(foto, (foto.width - sw) / 2, (foto.height - sh) / 2, sw, sh, 0, 0, W, fH); g.globalAlpha = 1;
-      var gr = g.createLinearGradient(0, fH - px(260), 0, fH + 2); gr.addColorStop(0, cor + '00'); gr.addColorStop(1, cor);
-      g.fillStyle = gr; g.fillRect(0, fH - px(260), W, px(262));
+    var dS = txtO ? (+txtO.desc || 0) : descEscolhido(), R = px(130), bh = px(92);
+    var x = px(84), tw = W - x * 2, by = H - baixo - px(story ? 90 : 80) - bh, yA, yB, bias, cx = W - R - px(56), cy = topo + R + px(56);
+    var corNome = 'rgba(255,255,255,.92)', corTit = '#fff', corTxt = 'rgba(255,255,255,.92)', btFundo = '#fff', btTx = cor, seloFundo = '#fff', seloTx = cor, fH = 0;
+    if(modelo === 'inteira'){
+      pintarFoto(0, 0, W, H);
+      var gi = g.createLinearGradient(0, H * 0.3, 0, H); gi.addColorStop(0, cor + '00'); gi.addColorStop(0.45, cor + 'D9'); gi.addColorStop(1, cor);
+      g.fillStyle = gi; g.fillRect(0, H * 0.3, W, H * 0.7 + 1);
+      yA = Math.max(H * 0.42, dS ? cy + R + px(40) : 0); yB = by - px(50); bias = 1;
+    } else if(modelo === 'cartao'){
+      bolhas();
+      var m0 = px(70), cTop, cBot = H - baixo - px(story ? 80 : 70);
+      if(foto){ var fy = topo + px(70), fh = Math.round(H * (story ? 0.30 : 0.32)), pf = eo(P(0, 0.8));
+        g.save(); redondo(m0, fy, W - 2 * m0, fh, px(36)); g.clip(); pintarFoto(m0, fy, W - 2 * m0, fh); g.restore();
+        cTop = fy + fh + px(34); cx = W - m0 - R * 0.55; cy = fy + fh - R * 0.35; }
+      else { cTop = dS ? (topo + px(56) + 2 * R + px(30)) : (topo + px(120)); }
+      var pc = eo(P(0.3, 0.7)), dc = (1 - pc) * px(80);
+      g.globalAlpha = pc; g.fillStyle = '#fff'; redondo(m0, cTop + dc, W - 2 * m0, cBot - cTop, px(40)); g.fill(); g.globalAlpha = 1;
+      var pad = px(56); x = m0 + pad; tw = W - 2 * m0 - 2 * pad; by = cBot - pad - bh + dc; yA = cTop + pad + dc; yB = by - px(40); bias = 0.25;
+      corNome = cor; corTit = '#1F1C1A'; corTxt = '#5E5650'; btFundo = cor; btTx = '#fff'; seloFundo = cor; seloTx = '#fff';
     } else {
-      var dr = an ? Math.sin(t * 0.8) * px(18) : 0;
-      g.fillStyle = 'rgba(255,255,255,.08)'; g.beginPath(); g.arc(W - px(80) + dr, topo + px(160) - dr, px(330) * (0.85 + 0.15 * eo(P(0, 1))), 0, 7); g.fill(); g.beginPath(); g.arc(px(60) - dr, H - baixo - px(40) + dr, px(240) * (0.85 + 0.15 * eo(P(0.2, 1))), 0, 7); g.fill();
+      fH = foto ? Math.round(H * (story ? 0.52 : 0.5)) : 0;
+      if(foto){ pintarFoto(0, 0, W, fH);
+        var gr = g.createLinearGradient(0, fH - px(260), 0, fH + 2); gr.addColorStop(0, cor + '00'); gr.addColorStop(1, cor);
+        g.fillStyle = gr; g.fillRect(0, fH - px(260), W, px(262)); }
+      else bolhas();
+      yA = foto ? fH - px(40) : (dS ? cy + R + px(50) : topo + px(110)); yB = by - px(50); bias = foto ? 0.3 : 0.5;
     }
-    var x = px(84), tw = W - x * 2, bh = px(92), by = H - baixo - px(story ? 90 : 80) - bh;
-    // selo do desconto (em cima, à direita): aparece com um "salto" e depois pulsa devagar
-    var dS = txtO ? (+txtO.desc || 0) : descEscolhido(), R = px(130), cx = W - R - px(56), cy = topo + R + px(56);
-    if(dS){ var sc = back(P(2.2, 0.6)) * (an && t > 3 ? (1 + 0.045 * Math.sin((t - 3) * 3.2)) : 1);
-      if(sc > 0.01){ g.save(); g.translate(cx, cy); g.scale(sc, sc); g.rotate(an ? (1 - P(2.2, 0.6)) * -0.5 : 0);
-        g.fillStyle = '#fff'; g.beginPath(); g.arc(0, 0, R, 0, 7); g.fill();
-        g.fillStyle = cor; g.textAlign = 'center'; g.textBaseline = 'middle'; var fz = px(84); do{ g.font = '800 ' + fz + 'px Manrope, system-ui, sans-serif'; fz -= px(2); }while(g.measureText('−' + dS + '%').width > R * 1.55 && fz > px(30)); g.fillText('−' + dS + '%', 0, px(3)); g.restore(); } }
     // bloco de texto: mede primeiro e depois arruma no espaço livre (sem chocar com o selo nem com o botão)
-    var yA = foto ? fH - px(40) : (dS ? cy + R + px(50) : topo + px(110)), yB = by - px(50);
     var tit = txtO ? (txtO.tit || 'Novidade') : ($('cpTit').value.trim() || 'Novidade'), txt = txtO ? (txtO.txt || '') : textoPara({ nome:'' }, $('cpTxt').value);
-    var fs = px(foto ? 96 : 120); for(; fs > px(56); fs -= px(4)){ g.font = '800 ' + fs + 'px Manrope, system-ui, sans-serif'; if(linhasTexto(g, tit, tw, 4).length <= 3) break; }
-    var lT = linhasTexto(g, tit, tw, 3), fT = px(foto ? 40 : 46), lhT = Math.round(fT * 1.35);
+    var grande = !foto || modelo === 'inteira', fs = px(modelo === 'cartao' ? 84 : (grande ? 112 : 96)); for(; fs > px(52); fs -= px(4)){ g.font = '800 ' + fs + 'px Manrope, system-ui, sans-serif'; if(linhasTexto(g, tit, tw, 4).length <= 3) break; }
+    var lT = linhasTexto(g, tit, tw, 3), fT = px(modelo === 'cartao' ? 38 : (grande ? 44 : 40)), lhT = Math.round(fT * 1.35);
     g.font = '500 ' + fT + 'px Manrope, system-ui, sans-serif';
     var hFixo = px(70) + lT.length * fs * 1.1 + px(22), maxL = Math.max(0, Math.floor((yB - yA - hFixo) / lhT)), lX = linhasTexto(g, txt, tw, Math.min(story ? 6 : 5, maxL));
-    var hB = hFixo + lX.length * lhT, livre = Math.max(0, yB - yA - hB), y = yA + livre * (foto ? 0.3 : 0.5);
+    var hB = hFixo + lX.length * lhT, livre = Math.max(0, yB - yA - hB), y = yA + livre * bias;
     function entra(a, d, dist){ var p = eo(P(a, d)); g.globalAlpha = p; return (1 - p) * px(dist); }
-    g.textBaseline = 'top'; g.fillStyle = 'rgba(255,255,255,.92)'; g.font = '700 ' + px(foto ? 36 : 40) + 'px Manrope, system-ui, sans-serif';
+    g.textBaseline = 'top'; g.fillStyle = corNome; g.font = '700 ' + px(foto && !grande ? 36 : 40) + 'px Manrope, system-ui, sans-serif';
     var d0 = entra(0.5, 0.6, 30); g.fillText(linhasTexto(g, SAL.nome || NEG.nome || '', tw, 1)[0] || '', x, y + d0); y += px(70);
-    g.fillStyle = '#fff'; g.font = '800 ' + fs + 'px Manrope, system-ui, sans-serif'; lT.forEach(function(l, i){ var d = entra(0.8 + i * 0.2, 0.7, 70); g.fillText(l, x, y + d); y += fs * 1.1; }); y += px(22);
-    g.font = '500 ' + fT + 'px Manrope, system-ui, sans-serif'; g.fillStyle = 'rgba(255,255,255,.92)'; lX.forEach(function(l, i){ var d = entra(1.6 + i * 0.12, 0.6, 30); g.fillText(l, x, y + d); y += lhT; });
+    g.fillStyle = corTit; g.font = '800 ' + fs + 'px Manrope, system-ui, sans-serif'; lT.forEach(function(l, i){ var d = entra(0.8 + i * 0.2, 0.7, 70); g.fillText(l, x, y + d); y += fs * 1.1; }); y += px(22);
+    g.font = '500 ' + fT + 'px Manrope, system-ui, sans-serif'; g.fillStyle = corTxt; lX.forEach(function(l, i){ var d = entra(1.6 + i * 0.12, 0.6, 30); g.fillText(l, x, y + d); y += lhT; });
     g.globalAlpha = 1;
+    // selo do desconto: aparece com um "salto" e depois pulsa devagar
+    if(dS){ var sc = back(P(2.2, 0.6)) * (an && t > 3 ? (1 + 0.045 * Math.sin((t - 3) * 3.2)) : 1);
+      if(sc > 0.01){ g.save(); g.translate(cx, cy); g.scale(sc, sc); g.rotate(an ? (1 - P(2.2, 0.6)) * -0.5 : 0);
+        g.shadowColor = 'rgba(0,0,0,.18)'; g.shadowBlur = px(24); g.fillStyle = seloFundo; g.beginPath(); g.arc(0, 0, R, 0, 7); g.fill(); g.shadowColor = 'transparent';
+        g.fillStyle = seloTx; g.textAlign = 'center'; g.textBaseline = 'middle'; var fz = px(84); do{ g.font = '800 ' + fz + 'px Manrope, system-ui, sans-serif'; fz -= px(2); }while(g.measureText('−' + dS + '%').width > R * 1.55 && fz > px(30)); g.fillText('−' + dS + '%', 0, px(3)); g.restore(); } }
     // endereço curto do salão (no Instagram a imagem não abre links): entra da esquerda e depois "respira"
     var end = linkSalao().replace(/^https?:\/\//, ''), fb = px(38); do{ g.font = '800 ' + fb + 'px Manrope, system-ui, sans-serif'; fb -= px(2); }while(g.measureText('Marque em ' + end).width + px(80) > tw && fb > px(22));
     var bt = 'Marque em ' + end, bw = g.measureText(bt).width + px(80), pb = eo(P(2.9, 0.7));
     if(pb > 0){ var bs = an && t > 4.2 ? (1 + 0.035 * Math.max(0, Math.sin((t - 4.2) * 3.4))) : 1;
       g.save(); g.globalAlpha = pb; g.translate(x - (1 - pb) * px(220) + bw / 2, by + bh / 2); g.scale(bs, bs);
-      g.fillStyle = '#fff'; redondo(-bw / 2, -bh / 2, bw, bh, bh / 2); g.fill(); g.fillStyle = cor; g.textBaseline = 'middle'; g.fillText(bt, -bw / 2 + px(40), 1); g.restore(); }
+      g.fillStyle = btFundo; redondo(-bw / 2, -bh / 2, bw, bh, bh / 2); g.fill(); g.fillStyle = btTx; g.textBaseline = 'middle'; g.fillText(bt, -bw / 2 + px(40), 1); g.restore(); }
     g.restore(); g.textBaseline = 'top'; g.textAlign = 'left'; g.globalAlpha = 1;
   }
   function descarregarBlob(b, nome){ var a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = nome; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){ URL.revokeObjectURL(a.href); }, 4000); }
@@ -1125,6 +1161,67 @@
     $('cpPromoTirar').onclick = async function(){ if(!confirm('Tirar este banner da página do salão?')) return; var antigo = p.img;
       var antigoL = p.imgLargo; var e = await guardarCfg(function(c){ c.salao = Object.assign({}, c.salao || {}); delete c.salao.promo; }); if(e){ toast('Erro: ' + e.message); return; } apagarFicheiro(antigo); if(antigoL) apagarFicheiro(antigoL); BAN.ultimo = null; pintarPromoAtual(); toast('Banner retirado da página'); };
   }
+  // ---------- modelos de campanhas para datas especiais ----------
+  function pascoa(a){ var b = a % 19, c = Math.floor(a / 100), d = a % 100, e = Math.floor(c / 4), f = c % 4, g = Math.floor((c + 8) / 25), h = Math.floor((c - g + 1) / 3), i = (19 * b + c - e - h + 15) % 30, k = Math.floor(d / 4), l = d % 4, m = (32 + 2 * f + 2 * k - i - l) % 7, n = Math.floor((b + 11 * i + 22 * m) / 451), mes = Math.floor((i + m - 7 * n + 114) / 31), dia = ((i + m - 7 * n + 114) % 31) + 1; return new Date(a, mes - 1, dia); }
+  function nDomingo(a, mes, n){ var d = new Date(a, mes, 1); while(d.getDay() !== 0) d.setDate(d.getDate() + 1); d.setDate(d.getDate() + 7 * (n - 1)); return d; }
+  function blackFriday(a){ var d = new Date(a, 10, 30); while(d.getDay() !== 5) d.setDate(d.getDate() - 1); return d; }
+  function maisDias(d, n){ var x = new Date(d); x.setDate(x.getDate() + n); return x; }
+  // cada modelo: quando é (dia da data em si) e até quando dura a campanha
+  var MODELOS = [
+    { id:'anonovo', nome:'Ano Novo', ico:'✨', quando:function(a){ return new Date(a, 0, 1); }, ate:function(d){ return maisDias(d, 14); }, antes:10,
+      tit:'Ano novo, nova energia ✨', txt:'Olá {nome}! Comece o ano a cuidar de si: 15% de desconto nas marcações até {ate}. Marque já!' },
+    { id:'namorados', nome:'Dia dos Namorados', ico:'💕', quando:function(a){ return new Date(a, 1, 14); }, antes:14,
+      tit:'Dia dos Namorados 💕', txt:'Olá {nome}! Prepare-se para o Dia dos Namorados com 15% de desconto. As vagas até dia 14 são poucas — marque já!' },
+    { id:'mulher', nome:'Dia da Mulher', ico:'🌷', quando:function(a){ return new Date(a, 2, 8); }, ate:function(d){ return maisDias(d, 7); }, antes:7,
+      tit:'Dia da Mulher 🌷', txt:'Olá {nome}! Esta semana é para si: 20% de desconto até {ate}. Porque merece!' },
+    { id:'pai', nome:'Dia do Pai', ico:'👔', quando:function(a){ return new Date(a, 2, 19); }, antes:10,
+      tit:'Dia do Pai 👔', txt:'Olá {nome}! Ofereça ao seu pai um momento só para ele: 15% de desconto até dia 19. Marque já!' },
+    { id:'pascoa', nome:'Páscoa', ico:'🐣', quando:pascoa, antes:12,
+      tit:'Especial Páscoa 🐣', txt:'Olá {nome}! Chegue à Páscoa a sentir-se bem: 15% de desconto nas marcações até {ate}.' },
+    { id:'mae', nome:'Dia da Mãe', ico:'💐', quando:function(a){ return nDomingo(a, 4, 1); }, antes:14,
+      tit:'Dia da Mãe 💐', txt:'Olá {nome}! A melhor prenda é um momento só para ela: 20% de desconto até {ate}. Marque para si e para a sua mãe!' },
+    { id:'verao', nome:'Verão', ico:'☀️', quando:function(a){ return new Date(a, 5, 15); }, ate:function(d){ return maisDias(d, 30); }, antes:20,
+      tit:'Pronta para o verão ☀️', txt:'Olá {nome}! O verão está a chegar: 15% de desconto até {ate}. Garanta já a sua hora!' },
+    { id:'setembro', nome:'Regresso de férias', ico:'🍂', quando:function(a){ return new Date(a, 8, 1); }, ate:function(d){ return maisDias(d, 29); }, antes:7,
+      tit:'De volta à rotina 🍂', txt:'Olá {nome}! Depois das férias, é hora de cuidar de si: 15% de desconto em setembro.' },
+    { id:'black', nome:'Black Friday', ico:'🖤', quando:blackFriday, ate:function(d){ return maisDias(d, 3); }, antes:10,
+      tit:'Black Friday 🖤 −25%', txt:'Olá {nome}! Só até {ate}: 25% de desconto em todas as marcações. As vagas voam — marque já!' },
+    { id:'natal', nome:'Natal', ico:'🎄', quando:function(a){ return new Date(a, 11, 24); }, antes:30,
+      tit:'Brilhe neste Natal 🎄', txt:'Olá {nome}! Para estar radiante nas festas: 15% de desconto até {ate}. A agenda de dezembro enche depressa!' },
+    { id:'aniv', nome:'Aniversário dos clientes', ico:'🎂', sempre:true, dur:30, pub:'aniv',
+      tit:'Feliz aniversário 🎂', txt:'Olá {nome}! Este mês é o seu aniversário e temos uma prenda: 20% de desconto numa marcação até {ate}.' },
+    { id:'saudades', nome:'Clientes que não vêm', ico:'💌', sempre:true, dur:21, pub:'i3',
+      tit:'Temos saudades suas 💌', txt:'Olá {nome}! Há algum tempo que não nos visita. Volte até {ate} com 15% de desconto. Esperamos por si!' },
+    { id:'salao', nome:'Aniversário do salão', ico:'🥂', sempre:true, dur:14,
+      tit:'Estamos de parabéns 🥂', txt:'Olá {nome}! O salão faz anos e quem ganha é você: 20% de desconto até {ate}. Obrigado por estar connosco!' },
+    { id:'vagas', nome:'Vagas esta semana', ico:'📅', sempre:true, dur:6,
+      tit:'Vagas esta semana 📅', txt:'Olá {nome}! Ainda temos horas livres esta semana. Marque já a sua!' }
+  ];
+  function proximaVez(m){ var h = new Date(); h.setHours(0,0,0,0); if(m.sempre) return { d:h, ate:maisDias(h, m.dur) };
+    for(var a = h.getFullYear(); a <= h.getFullYear() + 1; a++){ var d = m.quando(a), ate = m.ate ? m.ate(d) : d; if(ate >= h) return { d:d, ate:ate }; } return null; }
+  function diaMes(d){ return d.getDate() + ' de ' + ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'][d.getMonth()]; }
+  function pintarModelos(){
+    var h = new Date(); h.setHours(0,0,0,0);
+    var l = MODELOS.map(function(m){ var q = proximaVez(m); var dias = m.sempre ? 9999 : Math.round((q.d - h) / 86400000); return { m:m, q:q, dias:dias }; })
+      .sort(function(a, b){ var ka = a.m.sempre ? 400 : Math.max(-30, a.dias), kb = b.m.sempre ? 400 : Math.max(-30, b.dias); return ka - kb; });
+    $('cpModelos').innerHTML = l.map(function(x){ var breve = !x.m.sempre && x.dias <= (x.m.antes || 14) + 10;
+      var quando = x.m.sempre ? '' : (x.dias <= 0 ? 'agora' : x.dias === 1 ? 'amanhã' : x.dias <= 45 ? ('daqui a ' + x.dias + ' dias') : diaMes(x.q.d));
+      return '<button type="button" class="mod-chip' + (breve ? ' breve' : '') + '" data-mod="' + x.m.id + '">' + x.m.ico + ' ' + esc(x.m.nome) + (quando ? ('<small>' + esc(quando) + '</small>') : '') + '</button>'; }).join('');
+    $('cpModelos').querySelectorAll('[data-mod]').forEach(function(b){ b.onclick = function(){ usarModelo(b.getAttribute('data-mod')); }; });
+  }
+  function usarModelo(id){
+    var m = MODELOS.filter(function(x){ return x.id === id; })[0]; if(!m) return;
+    if(($('cpTit').value.trim() || $('cpTxt').value.trim()) && !confirm('Substituir o título e a mensagem que já escreveu pelo modelo "' + m.nome + '"?')) return;
+    var q = proximaVez(m), h = new Date(); h.setHours(0,0,0,0); var ate = q.ate < h ? h : q.ate;
+    $('cpTit').value = m.tit; $('cpTxt').value = m.txt.replace(/\{ate\}/g, diaMes(ate));
+    if(m.pub && $('cpPub').querySelector('option[value="' + m.pub + '"]')) $('cpPub').value = m.pub;
+    else if(!m.pub && /^(aniv|i\d+)$/.test($('cpPub').value)) $('cpPub').value = '';
+    $('cpBanAte').value = iso(ate); _descMexido = false; $('cpBan').checked = true;
+    ['cpTit','cpTxt'].forEach(function(k){ $(k).dispatchEvent(new Event('input')); }); $('cpPub').dispatchEvent(new Event('change'));
+    desenharBanner(); toast('Modelo "' + m.nome + '" aplicado — ajuste o texto e o desconto à vontade');
+    try{ $('cpTit').focus(); $('cpTit').scrollIntoView({ behavior:'smooth', block:'center' }); }catch(e){}
+  }
+  pintarModelos();
   $('cpBan').addEventListener('change', desenharBanner);
   $('cpTit').addEventListener('input', pintarDesc); $('cpTxt').addEventListener('input', pintarDesc);
   $('cpDesc').addEventListener('input', function(){ _descMexido = true; if(+this.value > 0) $('cpDescOn').checked = true; desenharBanner(); });
