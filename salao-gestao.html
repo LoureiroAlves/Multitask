@@ -376,10 +376,11 @@
         <div id="cpBanPrevBx" class="hide"><div class="camp-prev-tit" style="margin-top:14px;">Banner · telemóvel, notificação e WhatsApp</div><canvas id="cpBanPrev" width="1200" height="630" style="width:100%;height:auto;border-radius:12px;display:block;box-shadow:0 4px 16px rgba(0,0,0,.1);"></canvas><div class="camp-prev-tit" style="margin-top:12px;">Banner · computador</div><canvas id="cpBanPrevL" width="2000" height="560" style="width:100%;height:auto;border-radius:12px;display:block;box-shadow:0 4px 16px rgba(0,0,0,.1);"></canvas>
           <div class="camp-prev-tit" style="margin-top:12px;">Instagram · ao alto</div>
           <div style="display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap;">
-            <div style="flex:1 1 180px;max-width:260px;display:flex;flex-direction:column;gap:6px;"><canvas id="cpBanIg" width="1080" height="1350" style="width:100%;height:auto;border-radius:12px;display:block;box-shadow:0 4px 16px rgba(0,0,0,.1);"></canvas><button type="button" class="btn" id="cpIgDes">⬇️ Publicação (4:5)</button></div>
-            <div style="flex:1 1 150px;max-width:210px;display:flex;flex-direction:column;gap:6px;"><canvas id="cpBanSt" width="1080" height="1920" style="width:100%;height:auto;border-radius:12px;display:block;box-shadow:0 4px 16px rgba(0,0,0,.1);"></canvas><button type="button" class="btn" id="cpStDes">⬇️ Stories (9:16)</button></div>
+            <div style="flex:1 1 180px;max-width:260px;display:flex;flex-direction:column;gap:6px;"><canvas id="cpBanIg" width="1080" height="1350" style="width:100%;height:auto;border-radius:12px;display:block;box-shadow:0 4px 16px rgba(0,0,0,.1);"></canvas><button type="button" class="btn" id="cpIgDes">⬇️ Imagem 4:5</button><button type="button" class="btn-ac" id="cpIgVid">🎬 Vídeo 4:5 (MP4)</button></div>
+            <div style="flex:1 1 150px;max-width:210px;display:flex;flex-direction:column;gap:6px;"><canvas id="cpBanSt" width="1080" height="1920" style="width:100%;height:auto;border-radius:12px;display:block;box-shadow:0 4px 16px rgba(0,0,0,.1);"></canvas><button type="button" class="btn" id="cpStDes">⬇️ Imagem 9:16</button><button type="button" class="btn-ac" id="cpStVid">🎬 Vídeo 9:16 (MP4)</button></div>
+            <div style="flex:1 1 180px;display:flex;flex-direction:column;gap:8px;font-size:13px;color:var(--suave);"><button type="button" class="btn" id="cpAnimVer">▶️ Ver a animação</button><span><b>4:5</b> → publicação no feed.<br><b>9:16</b> → Reels e stories.</span><span>O vídeo tem 8 segundos e não leva som: no Instagram pode juntar uma música.</span></div>
           </div>
-          <div style="font-size:12px;color:var(--suave);margin-top:6px;">No Instagram as imagens não abrem links: o banner já leva o endereço do salão. Nas stories, pode juntar o autocolante "Link" com o mesmo endereço.</div></div>
+          <div style="font-size:12px;color:var(--suave);margin-top:6px;">No Instagram as imagens e os vídeos não abrem links: o banner já leva o endereço do salão. Nas stories, pode juntar o autocolante "Link" com o mesmo endereço. Para mudar o banner, mude o título, o texto, a foto ou o desconto acima — a imagem e o vídeo acompanham.</div></div>
         <div id="cpPromoAtual" class="hide"></div>
       </div>
     </div>
@@ -975,26 +976,35 @@
     pintarBannerAlto($('cpBanIg'), 1080, 1350, foto); pintarBannerAlto($('cpBanSt'), 1080, 1920, foto);
   }
   // banners ao alto para o Instagram: publicação 1080×1350 (4:5) e stories 1080×1920 (9:16)
-  function pintarBannerAlto(c, W, H, foto, txtO){
-    var g = c.getContext('2d'), cor = corOk(SAL.cor) ? SAL.cor : '#8E3653', k = W / 1080, story = H / W > 1.6;
+  // t = segundos da animação (vídeo); sem t = imagem final
+  var ANIM_DUR = 8, ANIM_FPS = 30;
+  function pintarBannerAlto(c, W, H, foto, txtO, t){
+    var g = c.getContext('2d'), cor = corOk(SAL.cor) ? SAL.cor : '#8E3653', k = W / 1080, story = H / W > 1.6, an = typeof t === 'number';
     function px(v){ return Math.round(v * k); }
     function redondo(x, y, w, h, r){ g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
+    function P(a, d){ return !an ? 1 : Math.max(0, Math.min(1, (t - a) / d)); }
+    function eo(p){ return 1 - Math.pow(1 - p, 3); }
+    function back(p){ var c1 = 1.70158, c3 = c1 + 1; return p >= 1 ? 1 : 1 + c3 * Math.pow(p - 1, 3) + c1 * Math.pow(p - 1, 2); }
     var topo = story ? px(210) : 0, baixo = story ? px(250) : 0;   // stories: o Instagram tapa o topo e o fundo
-    g.clearRect(0, 0, W, H); g.fillStyle = cor; g.fillRect(0, 0, W, H);
+    g.save(); g.clearRect(0, 0, W, H); g.fillStyle = cor; g.fillRect(0, 0, W, H);
     var fH = foto ? Math.round(H * (story ? 0.52 : 0.5)) : 0;
     if(foto){
-      var kk = Math.max(W / foto.width, fH / foto.height), sw = W / kk, sh = fH / kk;
-      g.drawImage(foto, (foto.width - sw) / 2, (foto.height - sh) / 2, sw, sh, 0, 0, W, fH);
+      // foto com aproximação lenta (efeito "Ken Burns")
+      var z = an ? (1.14 - 0.14 * eo(Math.min(1, t / ANIM_DUR))) : 1, kk = Math.max(W / foto.width, fH / foto.height) * z, sw = W / kk, sh = fH / kk;
+      g.globalAlpha = eo(P(0, 0.7)); g.drawImage(foto, (foto.width - sw) / 2, (foto.height - sh) / 2, sw, sh, 0, 0, W, fH); g.globalAlpha = 1;
       var gr = g.createLinearGradient(0, fH - px(260), 0, fH + 2); gr.addColorStop(0, cor + '00'); gr.addColorStop(1, cor);
       g.fillStyle = gr; g.fillRect(0, fH - px(260), W, px(262));
     } else {
-      g.fillStyle = 'rgba(255,255,255,.08)'; g.beginPath(); g.arc(W - px(80), topo + px(160), px(330), 0, 7); g.fill(); g.beginPath(); g.arc(px(60), H - baixo - px(40), px(240), 0, 7); g.fill();
+      var dr = an ? Math.sin(t * 0.8) * px(18) : 0;
+      g.fillStyle = 'rgba(255,255,255,.08)'; g.beginPath(); g.arc(W - px(80) + dr, topo + px(160) - dr, px(330) * (0.85 + 0.15 * eo(P(0, 1))), 0, 7); g.fill(); g.beginPath(); g.arc(px(60) - dr, H - baixo - px(40) + dr, px(240) * (0.85 + 0.15 * eo(P(0.2, 1))), 0, 7); g.fill();
     }
     var x = px(84), tw = W - x * 2, bh = px(92), by = H - baixo - px(story ? 90 : 80) - bh;
-    // selo do desconto (em cima, à direita)
+    // selo do desconto (em cima, à direita): aparece com um "salto" e depois pulsa devagar
     var dS = txtO ? (+txtO.desc || 0) : descEscolhido(), R = px(130), cx = W - R - px(56), cy = topo + R + px(56);
-    if(dS){ g.fillStyle = '#fff'; g.beginPath(); g.arc(cx, cy, R, 0, 7); g.fill();
-      g.fillStyle = cor; g.textAlign = 'center'; g.textBaseline = 'middle'; var fz = px(84); do{ g.font = '800 ' + fz + 'px Manrope, system-ui, sans-serif'; fz -= px(2); }while(g.measureText('−' + dS + '%').width > R * 1.55 && fz > px(30)); g.fillText('−' + dS + '%', cx, cy + px(3)); g.textAlign = 'left'; }
+    if(dS){ var sc = back(P(2.2, 0.6)) * (an && t > 3 ? (1 + 0.045 * Math.sin((t - 3) * 3.2)) : 1);
+      if(sc > 0.01){ g.save(); g.translate(cx, cy); g.scale(sc, sc); g.rotate(an ? (1 - P(2.2, 0.6)) * -0.5 : 0);
+        g.fillStyle = '#fff'; g.beginPath(); g.arc(0, 0, R, 0, 7); g.fill();
+        g.fillStyle = cor; g.textAlign = 'center'; g.textBaseline = 'middle'; var fz = px(84); do{ g.font = '800 ' + fz + 'px Manrope, system-ui, sans-serif'; fz -= px(2); }while(g.measureText('−' + dS + '%').width > R * 1.55 && fz > px(30)); g.fillText('−' + dS + '%', 0, px(3)); g.restore(); } }
     // bloco de texto: mede primeiro e depois arruma no espaço livre (sem chocar com o selo nem com o botão)
     var yA = foto ? fH - px(40) : (dS ? cy + R + px(50) : topo + px(110)), yB = by - px(50);
     var tit = txtO ? (txtO.tit || 'Novidade') : ($('cpTit').value.trim() || 'Novidade'), txt = txtO ? (txtO.txt || '') : textoPara({ nome:'' }, $('cpTxt').value);
@@ -1003,18 +1013,85 @@
     g.font = '500 ' + fT + 'px Manrope, system-ui, sans-serif';
     var hFixo = px(70) + lT.length * fs * 1.1 + px(22), maxL = Math.max(0, Math.floor((yB - yA - hFixo) / lhT)), lX = linhasTexto(g, txt, tw, Math.min(story ? 6 : 5, maxL));
     var hB = hFixo + lX.length * lhT, livre = Math.max(0, yB - yA - hB), y = yA + livre * (foto ? 0.3 : 0.5);
+    function entra(a, d, dist){ var p = eo(P(a, d)); g.globalAlpha = p; return (1 - p) * px(dist); }
     g.textBaseline = 'top'; g.fillStyle = 'rgba(255,255,255,.92)'; g.font = '700 ' + px(foto ? 36 : 40) + 'px Manrope, system-ui, sans-serif';
-    g.fillText(linhasTexto(g, SAL.nome || NEG.nome || '', tw, 1)[0] || '', x, y); y += px(70);
-    g.fillStyle = '#fff'; g.font = '800 ' + fs + 'px Manrope, system-ui, sans-serif'; lT.forEach(function(l){ g.fillText(l, x, y); y += fs * 1.1; }); y += px(22);
-    g.font = '500 ' + fT + 'px Manrope, system-ui, sans-serif'; g.fillStyle = 'rgba(255,255,255,.92)'; lX.forEach(function(l){ g.fillText(l, x, y); y += lhT; });
-    // endereço curto do salão (no Instagram a imagem não abre links)
+    var d0 = entra(0.5, 0.6, 30); g.fillText(linhasTexto(g, SAL.nome || NEG.nome || '', tw, 1)[0] || '', x, y + d0); y += px(70);
+    g.fillStyle = '#fff'; g.font = '800 ' + fs + 'px Manrope, system-ui, sans-serif'; lT.forEach(function(l, i){ var d = entra(0.8 + i * 0.2, 0.7, 70); g.fillText(l, x, y + d); y += fs * 1.1; }); y += px(22);
+    g.font = '500 ' + fT + 'px Manrope, system-ui, sans-serif'; g.fillStyle = 'rgba(255,255,255,.92)'; lX.forEach(function(l, i){ var d = entra(1.6 + i * 0.12, 0.6, 30); g.fillText(l, x, y + d); y += lhT; });
+    g.globalAlpha = 1;
+    // endereço curto do salão (no Instagram a imagem não abre links): entra da esquerda e depois "respira"
     var end = linkSalao().replace(/^https?:\/\//, ''), fb = px(38); do{ g.font = '800 ' + fb + 'px Manrope, system-ui, sans-serif'; fb -= px(2); }while(g.measureText('Marque em ' + end).width + px(80) > tw && fb > px(22));
-    var bt = 'Marque em ' + end, bw = g.measureText(bt).width + px(80);
-    g.fillStyle = '#fff'; redondo(x, by, bw, bh, bh / 2); g.fill(); g.fillStyle = cor; g.textBaseline = 'middle'; g.fillText(bt, x + px(40), by + bh / 2 + 1); g.textBaseline = 'top';
+    var bt = 'Marque em ' + end, bw = g.measureText(bt).width + px(80), pb = eo(P(2.9, 0.7));
+    if(pb > 0){ var bs = an && t > 4.2 ? (1 + 0.035 * Math.max(0, Math.sin((t - 4.2) * 3.4))) : 1;
+      g.save(); g.globalAlpha = pb; g.translate(x - (1 - pb) * px(220) + bw / 2, by + bh / 2); g.scale(bs, bs);
+      g.fillStyle = '#fff'; redondo(-bw / 2, -bh / 2, bw, bh, bh / 2); g.fill(); g.fillStyle = cor; g.textBaseline = 'middle'; g.fillText(bt, -bw / 2 + px(40), 1); g.restore(); }
+    g.restore(); g.textBaseline = 'top'; g.textAlign = 'left'; g.globalAlpha = 1;
   }
-  function descarregarCanvas(cv, nome){ cv.toBlob(function(b){ if(!b) return; var a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = nome; a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); }, 2000); }, 'image/png'); }
+  function descarregarBlob(b, nome){ var a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = nome; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){ URL.revokeObjectURL(a.href); }, 4000); }
+  function descarregarCanvas(cv, nome){ cv.toBlob(function(b){ if(b) descarregarBlob(b, nome); }, 'image/png'); }
   $('cpIgDes').onclick = async function(){ await desenharBanner(); descarregarCanvas($('cpBanIg'), 'instagram-publicacao-' + SLUG + '.png'); };
   $('cpStDes').onclick = async function(){ await desenharBanner(); descarregarCanvas($('cpBanSt'), 'instagram-stories-' + SLUG + '.png'); };
+  // ---------- vídeo animado (MP4) para Reels, stories e publicações ----------
+  var _muxP = null;
+  function carregarMux(){ if(window.Mp4Muxer) return Promise.resolve(); if(_muxP) return _muxP;
+    _muxP = new Promise(function(ok, ko){ var sc = document.createElement('script'); sc.src = 'https://cdn.jsdelivr.net/npm/mp4-muxer@5.2.2/build/mp4-muxer.js'; sc.onload = function(){ window.Mp4Muxer ? ok() : ko(new Error('mp4')); }; sc.onerror = function(){ _muxP = null; ko(new Error('Sem ligação para criar o vídeo.')); }; document.head.appendChild(sc); });
+    return _muxP; }
+  async function codecH264(W, H){ if(!window.VideoEncoder) return null;
+    var l = ['avc1.640028', 'avc1.4d0028', 'avc1.42e028', 'avc1.640032', 'avc1.42003e'];
+    for(var i = 0; i < l.length; i++){ try{ var r = await VideoEncoder.isConfigSupported({ codec:l[i], width:W, height:H, bitrate:6000000, framerate:ANIM_FPS }); if(r && r.supported) return l[i]; }catch(e){} }
+    return null; }
+  async function videoBanner(W, H, foto, prog){
+    var cv = document.createElement('canvas'); cv.width = W; cv.height = H; var N = ANIM_DUR * ANIM_FPS;
+    var codec = await codecH264(W, H);
+    if(codec){
+      await carregarMux();
+      var mx = new Mp4Muxer.Muxer({ target:new Mp4Muxer.ArrayBufferTarget(), video:{ codec:'avc', width:W, height:H, frameRate:ANIM_FPS }, fastStart:'in-memory' }), erro = null;
+      var enc = new VideoEncoder({ output:function(ch, meta){ mx.addVideoChunk(ch, meta); }, error:function(e){ erro = e; } });
+      enc.configure({ codec:codec, width:W, height:H, bitrate:6000000, framerate:ANIM_FPS, avc:{ format:'avc' } });
+      for(var i = 0; i < N; i++){
+        if(erro) throw erro;
+        pintarBannerAlto(cv, W, H, foto, null, i / ANIM_FPS);
+        var vf = new VideoFrame(cv, { timestamp:Math.round(i * 1e6 / ANIM_FPS), duration:Math.round(1e6 / ANIM_FPS) });
+        enc.encode(vf, { keyFrame:i % (ANIM_FPS * 2) === 0 }); vf.close();
+        if(enc.encodeQueueSize > 8) await new Promise(function(r){ setTimeout(r, 5); });
+        if(i % 15 === 0){ prog(i / N); await new Promise(function(r){ setTimeout(r, 0); }); }
+      }
+      await enc.flush(); enc.close(); if(erro) throw erro; mx.finalize();
+      return { blob:new Blob([mx.target.buffer], { type:'video/mp4' }), ext:'mp4' };
+    }
+    // browser sem codificador de vídeo: grava em tempo real (8 s)
+    if(!cv.captureStream || !window.MediaRecorder) throw new Error('Este browser não consegue criar vídeos. Use o Chrome, o Edge ou o Safari atualizados.');
+    var tipos = ['video/mp4;codecs=avc1.42E01E', 'video/mp4;codecs=avc1', 'video/mp4', 'video/webm;codecs=vp9', 'video/webm'], tipo = tipos.filter(function(x){ try{ return MediaRecorder.isTypeSupported(x); }catch(e){ return false; } })[0] || '';
+    var st = cv.captureStream(ANIM_FPS), rec = new MediaRecorder(st, tipo ? { mimeType:tipo, videoBitsPerSecond:6000000 } : undefined), partes = [];
+    rec.ondataavailable = function(e){ if(e.data && e.data.size) partes.push(e.data); };
+    var fim = new Promise(function(r){ rec.onstop = r; });
+    pintarBannerAlto(cv, W, H, foto, null, 0); rec.start();
+    var t0 = performance.now();
+    await new Promise(function(ok){ (function passo(){ var t = (performance.now() - t0) / 1000; pintarBannerAlto(cv, W, H, foto, null, Math.min(t, ANIM_DUR)); prog(Math.min(1, t / ANIM_DUR)); if(t < ANIM_DUR + 0.2) requestAnimationFrame(passo); else ok(); })(); });
+    rec.stop(); await fim; var mp4 = /mp4/.test(rec.mimeType || tipo);
+    return { blob:new Blob(partes, { type:mp4 ? 'video/mp4' : 'video/webm' }), ext:mp4 ? 'mp4' : 'webm' };
+  }
+  async function descarregarVideo(btn, W, H, nome){
+    if(btn.disabled) return; var txt0 = btn.textContent; btn.disabled = true; btn.textContent = '🎬 A criar o vídeo…';
+    try{
+      try{ if(document.fonts && document.fonts.ready) await document.fonts.ready; }catch(e){}
+      var foto = await carregarImg(BAN.foto);
+      var r = await videoBanner(W, H, foto, function(p){ btn.textContent = '🎬 A criar o vídeo… ' + Math.round(p * 100) + '%'; });
+      descarregarBlob(r.blob, nome + '.' + r.ext);
+      toast(r.ext === 'mp4' ? 'Vídeo descarregado ✓' : 'Vídeo descarregado em WebM: o Instagram pode não o aceitar. Use o Chrome ou o Safari atualizados.');
+    }catch(e){ toast('Não foi possível criar o vídeo: ' + (e.message || e)); }
+    btn.disabled = false; btn.textContent = txt0;
+  }
+  $('cpIgVid').onclick = function(){ descarregarVideo(this, 1080, 1350, 'instagram-publicacao-' + SLUG); };
+  $('cpStVid').onclick = function(){ descarregarVideo(this, 1080, 1920, 'instagram-reels-stories-' + SLUG); };
+  // pré-visualizar a animação nos dois quadros
+  var _animA = 0;
+  $('cpAnimVer').onclick = async function(){
+    var b = this, id = ++_animA, foto = await carregarImg(BAN.foto), t0 = performance.now(); b.disabled = true;
+    (function passo(){ if(id !== _animA) return; var t = (performance.now() - t0) / 1000;
+      pintarBannerAlto($('cpBanIg'), 1080, 1350, foto, null, Math.min(t, ANIM_DUR)); pintarBannerAlto($('cpBanSt'), 1080, 1920, foto, null, Math.min(t, ANIM_DUR));
+      if(t < ANIM_DUR) requestAnimationFrame(passo); else { b.disabled = false; desenharBanner(); } })();
+  };
   // guarda o banner (uma vez por conteúdo) e põe-no na página do salão até à data escolhida
   async function publicarBanner(){
     if(!$('cpBan').checked) return null;
