@@ -390,7 +390,7 @@
           <div style="display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap;">
             <div style="flex:1 1 180px;max-width:260px;display:flex;flex-direction:column;gap:6px;"><canvas id="cpBanIg" width="1080" height="1350" style="width:100%;height:auto;border-radius:12px;display:block;box-shadow:0 4px 16px rgba(0,0,0,.1);"></canvas><button type="button" class="btn" id="cpIgDes">⬇️ Imagem 4:5</button><button type="button" class="btn-ac" id="cpIgVid">🎬 Vídeo 4:5 (MP4)</button></div>
             <div style="flex:1 1 150px;max-width:210px;display:flex;flex-direction:column;gap:6px;"><canvas id="cpBanSt" width="1080" height="1920" style="width:100%;height:auto;border-radius:12px;display:block;box-shadow:0 4px 16px rgba(0,0,0,.1);"></canvas><button type="button" class="btn" id="cpStDes">⬇️ Imagem 9:16</button><button type="button" class="btn-ac" id="cpStVid">🎬 Vídeo 9:16 (MP4)</button></div>
-            <div style="flex:1 1 180px;display:flex;flex-direction:column;gap:8px;font-size:13px;color:var(--suave);"><button type="button" class="btn" id="cpAnimVer">▶️ Ver a animação</button><span><b>4:5</b> → publicação no feed.<br><b>9:16</b> → Reels e stories.</span><span>O vídeo tem 8 segundos e não leva som: no Instagram pode juntar uma música.</span></div>
+            <div style="flex:1 1 180px;display:flex;flex-direction:column;gap:8px;font-size:13px;color:var(--suave);"><button type="button" class="btn" id="cpAnimVer">▶️ Ver a animação</button><button type="button" class="btn-ac" id="cpLegenda">📝 Legenda e link</button><span><b>4:5</b> → publicação no feed.<br><b>9:16</b> → Reels e stories.</span><span>O vídeo tem 8 segundos e não leva som: no Instagram pode juntar uma música.</span></div>
           </div>
           <div style="font-size:12px;color:var(--suave);margin-top:6px;">No Instagram as imagens e os vídeos não abrem links: o banner já leva o endereço do salão. Nas stories, pode juntar o autocolante "Link" com o mesmo endereço. Para mudar o banner, mude o título, o texto, a foto ou o desconto acima — a imagem e o vídeo acompanham.</div></div>
         <div id="cpPromoAtual" class="hide"></div>
@@ -818,6 +818,7 @@
   // ---------- campanhas: só para quem aceitou (aceita_campanhas) e não está bloqueado ----------
   var CAMPH = [], CAMP_OK = true;
   function linkCampanha(){ var l = linkPublico(); return l + (l.indexOf('?') >= 0 ? '&' : '?') + 'c=' + Date.now().toString(36).slice(-5) + (SAL.promo && SAL.promo.img && String(SAL.promo.ate || '') >= iso(new Date()) ? '&promo=1' : ''); }
+  function comOrigem(l, o){ return l + (l.indexOf('?') >= 0 ? '&' : '?') + 'o=' + o; }
   function linkPublico(){ return (/(^|\.)4trevo\.com$/i.test(location.hostname) ? (location.origin + '/') : (location.origin + '/salao.html?n=')) + encodeURIComponent(SLUG); }
   function primeiroNome(n){ return String(n || '').trim().split(/\s+/)[0] || ''; }
   function textoPara(c, txt){ var nm = primeiroNome(c && c.nome); return String(txt || '').replace(/\{nome\}/gi, nm).replace(/(Olá|Ola|Oi)\s*!/i, '$1!').replace(/\s+([,!?.])/g, '$1').trim(); }
@@ -863,7 +864,7 @@
     $('cpWa').textContent = '💬 Enviar por WhatsApp' + (nw ? (' (' + nw + ')') : ''); $('cpWa').disabled = !nw;
     $('cpMail').textContent = '✉️ Enviar por email' + (nm ? (' (' + nm + ')') : ''); $('cpMail').disabled = !nm;
     var ex = l[0] ? l[0].c : { nome:'Maria' }, tit = $('cpTit').value.trim() || '📣 Novidade', txt = (textoPara(ex, $('cpTxt').value) || 'A sua mensagem aparece aqui.');
-    var wtxt = textoPara(ex, $('cpTxt').value) + ($('cpLink').checked ? ('\n\n' + linkPublico()) : '');
+    var wtxt = textoPara(ex, $('cpTxt').value) + ($('cpLink').checked ? ('\n\n' + comOrigem(linkPublico(), 'wa')) : '');
     $('cpCars').textContent = $('cpTxt').value.length + '/500';
     $('cpPrev').innerHTML = '<div class="camp-not">' + (logoPush() ? ('<img class="ic" src="' + esc(SAL.logo) + '" alt="" style="object-fit:cover;background:#fff;">') : '<span class="ic"></span>') + '<div><small style="display:block;font-size:11px;color:var(--suave);font-weight:700;text-transform:uppercase;letter-spacing:.03em;">' + esc(SAL.nome || NEG.nome) + '</small><b>' + esc(tit) + '</b><p>' + esc(txt) + '</p></div></div>'
       + '<div class="camp-wa"><div>' + (($('cpTxt').value.trim()) ? ('*' + esc(SAL.nome || NEG.nome) + '*\n' + ($('cpTit').value.trim() ? ('*' + esc($('cpTit').value.trim()) + '*\n') : '') + esc(wtxt)) : 'A sua mensagem aparece aqui.') + '</div></div>'
@@ -874,7 +875,7 @@
     var ban = await publicarBanner();
     await registarCamp('email', l.length, l.length);
     var tit = $('cpTit').value.trim() || ('Novidades · ' + (SAL.nome || NEG.nome));
-    var corpo = textoPara({ nome:'' }, $('cpTxt').value) + (ban ? ('\n\nVer a promoção: ' + ban) : '') + ($('cpLink').checked ? ('\n\n' + linkPublico()) : '') + '\n\n' + (SAL.nome || NEG.nome) + '\n\n—\nRecebe este email porque aceitou receber novidades de ' + (SAL.nome || NEG.nome) + '. Se não quiser receber mais, responda a este email a dizer.';
+    var corpo = textoPara({ nome:'' }, $('cpTxt').value) + (ban ? ('\n\nVer a promoção: ' + ban) : '') + ($('cpLink').checked ? ('\n\n' + comOrigem(linkPublico(), 'email')) : '') + '\n\n' + (SAL.nome || NEG.nome) + '\n\n—\nRecebe este email porque aceitou receber novidades de ' + (SAL.nome || NEG.nome) + '. Se não quiser receber mais, responda a este email a dizer.';
     var grupos = []; for(var i = 0; i < l.length; i += 40) grupos.push(l.slice(i, i + 40));
     function mailto(g){ return 'mailto:?bcc=' + g.map(function(d){ return encodeURIComponent(d.email); }).join(',') + '&subject=' + encodeURIComponent(tit) + '&body=' + encodeURIComponent(corpo); }
     var f = modal('<h3>✉️ Enviar por email</h3><div style="font-size:14px;color:var(--suave);">Abre o seu programa de email com a mensagem já escrita e os ' + l.length + ' cliente(s) em <b>Bcc</b> (escondidos — ninguém vê o email dos outros). Só tem de carregar em enviar.</div>'
@@ -893,7 +894,7 @@
     var bc = f.querySelector('#mCopB'); if(bc) bc.onclick = async function(){
       try{ if(!navigator.clipboard || !window.ClipboardItem) throw new Error('sem');
         // a imagem vai com o link escondido: ao tocar no banner no email, abre a página do salão com a promoção
-        var lk = linkPublico(); lk += (lk.indexOf('?') >= 0 ? '&' : '?') + 'promo=1';
+        var lk = comOrigem(linkPublico(), 'email'); lk += '&promo=1';
         var html = '<a href="' + esc(lk) + '" target="_blank"><img src="' + esc(ban) + '" alt="' + esc(($('cpTit').value.trim() || 'Promoção') + ' — toque para marcar') + '" width="600" style="max-width:100%;height:auto;border:0;border-radius:12px;display:block;"></a>';
         var itens = { 'text/html':new Blob([html], { type:'text/html' }), 'text/plain':new Blob([lk], { type:'text/plain' }) };
         try{ await navigator.clipboard.write([new ClipboardItem(itens)]); }
@@ -1120,6 +1121,37 @@
   }
   $('cpIgVid').onclick = function(){ descarregarVideo(this, 1080, 1350, 'instagram-publicacao-' + SLUG); };
   $('cpStVid').onclick = function(){ descarregarVideo(this, 1080, 1920, 'instagram-reels-stories-' + SLUG); };
+  // ---------- legenda pronta e link com origem (Instagram, Facebook, TikTok) ----------
+  function semAcento(t){ return String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, ''); }
+  function tagDe(t){ return semAcento(t).toLowerCase().replace(/[^a-z0-9]/g, ''); }
+  function cidadeSalao(){ var m = String(SAL.morada || ''), r = /\d{4}-\d{3}\s+([^,\d]+)/.exec(m); if(r) return r[1].trim(); var p = m.split(',').map(function(x){ return x.trim(); }).filter(Boolean); return p.length > 1 ? p[p.length - 1].replace(/^\d{4}-\d{3}\s*/, '') : ''; }
+  function hashtags(){ var cid = tagDe(cidadeSalao()), cat = tagDe($('cpBanCat').value), l = [];
+    function j(t){ if(t && t.length >= 3 && t.length <= 30 && l.indexOf(t) < 0) l.push(t); }
+    j(tagDe(SAL.nome || NEG.nome)); if(cat){ j(cat); if(cid) j(cat + cid); } if(cid){ j(cid); j('beleza' + cid); }
+    (SERV.filter(function(x){ return !cat || tagDe(x.cat || '') === cat; }).slice(0, 3)).forEach(function(x){ var t = tagDe(x.nome); if(t.length <= 18) j(t); });
+    j('beleza'); j('autocuidado'); j('bemestar'); if(descEscolhido()) j('promocao');
+    return l.slice(0, 12).map(function(t){ return '#' + t; }).join(' '); }
+  function linkRede(o){ return linkSalao() + '/' + o; }
+  function legendaPara(o){ var tit = $('cpTit').value.trim(), txt = textoPara({ nome:'' }, $('cpTxt').value), lk = linkRede(o).replace(/^https?:\/\//, '');
+    var marca = o === 'fb' ? ('📅 Marque aqui: ' + linkRede(o)) : o === 'tt' ? '📅 Marque pelo link no perfil' : '📅 Marque pelo link na bio';
+    return (tit ? (tit + '\n\n') : '') + (txt ? (txt + '\n\n') : '') + marca + (o === 'fb' ? '' : (' (' + lk + ')')) + (SAL.morada ? ('\n📍 ' + SAL.morada) : '') + '\n\n' + hashtags(); }
+  function copiarTexto(t, ok){ (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(function(){ toast(ok); }).catch(function(){ prompt('Copie:', t); }); }
+  $('cpLegenda').onclick = function(){
+    var o = 'ig';
+    var f = modal('<h3>📝 Legenda e link</h3><div class="ig-mods" id="lgRede"><button type="button" class="ig-mod on" data-o="ig">📷 Instagram</button><button type="button" class="ig-mod" data-o="fb">Facebook</button><button type="button" class="ig-mod" data-o="tt">TikTok</button></div>'
+      + '<div class="campo"><label for="lgTx">Legenda <span style="font-weight:400;color:var(--suave);">(pode mudar à vontade antes de copiar)</span></label><textarea id="lgTx" rows="10" maxlength="2200"></textarea></div>'
+      + '<button type="button" class="btn-ac" id="lgCop">📋 Copiar legenda</button>'
+      + '<div style="border:1.5px solid var(--linha);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px;"><b style="font-size:14px;" id="lgLkTit"></b><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;"><code id="lgLk" style="background:var(--fundo);border-radius:8px;padding:8px 10px;font-size:14px;flex:1;min-width:200px;word-break:break-all;"></code><button type="button" class="btn" id="lgLkCop">📋 Copiar link</button></div>'
+      + '<div style="font-size:12px;color:var(--suave);" id="lgLkNota"></div></div>');
+    function pinta(){ f.querySelector('#lgTx').value = legendaPara(o); f.querySelector('#lgLk').textContent = linkRede(o);
+      f.querySelector('#lgLkTit').textContent = o === 'ig' ? '🔗 Link para a bio e para o autocolante "Link" das stories' : o === 'tt' ? '🔗 Link para o perfil do TikTok' : '🔗 Link para a publicação';
+      f.querySelector('#lgLkNota').textContent = 'As marcações feitas por este link aparecem nos Relatórios, em "De onde vêm as marcações", como ' + (o === 'ig' ? 'Instagram' : o === 'fb' ? 'Facebook' : 'TikTok') + '.';
+      f.querySelectorAll('#lgRede [data-o]').forEach(function(b){ b.classList.toggle('on', b.getAttribute('data-o') === o); }); }
+    f.querySelectorAll('#lgRede [data-o]').forEach(function(b){ b.onclick = function(){ o = b.getAttribute('data-o'); pinta(); }; });
+    f.querySelector('#lgCop').onclick = function(){ copiarTexto(f.querySelector('#lgTx').value, 'Legenda copiada ✓ — cole-a ao publicar'); };
+    f.querySelector('#lgLkCop').onclick = function(){ copiarTexto(linkRede(o), 'Link copiado ✓'); };
+    pinta();
+  };
   // pré-visualizar a animação nos dois quadros
   var _animA = 0;
   $('cpAnimVer').onclick = async function(){
@@ -1245,7 +1277,7 @@
     bt.textContent = 'A preparar…'; var ban = await publicarBanner();
     var falhas = [];
     async function um(d){ var lst = d.eps.filter(function(e){ return !feitos[e]; }); if(!lst.length) return; lst.forEach(function(e){ feitos[e] = 1; });
-      try{ var res = await sb.functions.invoke('enviar-push', { body:{ negocio:NEG.id, titulo:tit, corpo:textoPara(d.c, $('cpTxt').value), url:location.origin + '/salao.html?n=' + encodeURIComponent(SLUG) + (ban ? '&promo=1' : ''), endpoints:lst, tag:'camp-' + Date.now(), icon:logoPush(), image:ban || undefined } });
+      try{ var res = await sb.functions.invoke('enviar-push', { body:{ negocio:NEG.id, titulo:tit, corpo:textoPara(d.c, $('cpTxt').value), url:location.origin + '/salao.html?n=' + encodeURIComponent(SLUG) + '&o=push' + (ban ? '&promo=1' : ''), endpoints:lst, tag:'camp-' + Date.now(), icon:logoPush(), image:ban || undefined } });
         if(res && !res.error && res.data && res.data.enviados > 0) ok++; else falhas.push((d.c.nome || '?') + (res && res.error ? (' (' + (res.error.message || 'erro') + ')') : '')); }catch(e){ falhas.push((d.c.nome || '?') + ' (' + (e.message || e) + ')'); } }
     while(i < l.length){ var lote = l.slice(i, i + 5); i += 5; bt.textContent = 'A enviar… ' + Math.min(i, l.length) + '/' + l.length; await Promise.all(lote.map(um)); }
     await registarCamp('push', l.length, ok);
@@ -1266,7 +1298,7 @@
     var juntaLink = link === true ? $('cpLink').checked : (def ? def.link !== false : h._link !== false);
     if(link === true){ try{ localStorage.setItem('camp_wa_def_' + h.id, JSON.stringify({ link:juntaLink, lista:l.map(function(d){ return d.c.tel_norm; }) })); }catch(e){} }
     else if(def && Array.isArray(def.lista)){ var lt = l.filter(function(d){ return def.lista.indexOf(d.c.tel_norm) >= 0; }); if(lt.length) l = lt; }
-    var lk = linkCampanha();   // link novo em cada envio: o WhatsApp vai buscar a pré-visualização do salão (não a guardada)
+    var lk = comOrigem(linkCampanha(), 'wa');   // link novo em cada envio: o WhatsApp vai buscar a pré-visualização do salão (não a guardada)
     function txt(c){ return '*' + (SAL.nome || NEG.nome) + '*\n' + (h.titulo ? ('*' + h.titulo + '*\n') : '') + textoPara(c, h.texto) + (juntaLink ? ('\n\n' + lk) : ''); }
     function conta(){ return Object.keys(feito).length; }
     var f = modal('<h3>💬 Enviar por WhatsApp</h3><div style="font-size:14px;color:var(--suave);">O WhatsApp não deixa enviar a várias pessoas de uma vez. Toque em <b>Abrir</b> em cada cliente: a mensagem já vai escrita, só tem de carregar em enviar.</div>'
@@ -1441,6 +1473,13 @@
       + (promos.length > 1 ? ('<tr><td><b>Total</b></td><td class="n"><b>' + promos.reduce(function(s, x){ return s + x.n; }, 0) + '</b></td><td></td><td class="n"><b>' + promos.reduce(function(s, x){ return s + x.feitas; }, 0) + '</b></td><td class="n"><b>' + euro(promos.reduce(function(s, x){ return s + x.fat; }, 0)) + '</b></td><td></td><td class="n"><b>' + euro(promos.reduce(function(s, x){ return s + x.desc; }, 0)) + '</b></td></tr>') : '')
       + '</tbody></table></div><div style="font-size:12px;color:var(--suave);margin-top:6px;">Marcações feitas pelos clientes com o desconto de uma promoção, no período escolhido. Faturado = já com o desconto. Desconto dado = o que se deixou de cobrar.</div>')
       : '<div style="color:var(--suave);font-size:14px;">Nenhuma marcação com promoção neste período. As promoções com desconto criam-se nas Campanhas.</div>') + '</div>';
+    var ORG = { ig:'📷 Instagram', fb:'📘 Facebook', tt:'🎵 TikTok', wa:'💬 WhatsApp (campanhas)', push:'🔔 Notificações (campanhas)', email:'✉️ Email (campanhas)', qr:'🔳 QR code', salao:'🏠 Marcadas pelo salão', '':'🌐 Página do salão (direto)' };
+    var orgL = {}; ativas.forEach(function(r){ var k = ORG[r.origem || ''] ? (r.origem || '') : ''; var x = orgL[k] = orgL[k] || { k:k, n:0, feitas:0, fat:0, cli:{} }; x.n++; var c = chaveCli(r.telefone, r.nome); if(c) x.cli[c] = 1; if(!r.faltou && r.estado === 'confirmada' && r.data <= hoje){ x.feitas++; x.fat += valorDe(r); } });
+    var orgs = Object.keys(orgL).map(function(k){ return orgL[k]; }).sort(function(a, b){ return b.n - a.n; }), orgTot = orgs.reduce(function(s, x){ return s + x.n; }, 0);
+    h += '<div class="rel-card"><h3>📍 De onde vêm as marcações</h3>' + (orgTot ? ('<div class="rel-tab-w"><table class="cli-tab"><thead><tr><th>Origem</th><th class="n">Marcações</th><th class="n">%</th><th class="n">Clientes</th><th class="n">Feitas</th><th class="n">Faturado</th></tr></thead><tbody>'
+      + orgs.map(function(x){ return '<tr><td><b>' + ORG[x.k] + '</b></td><td class="n">' + x.n + '</td><td class="n">' + Math.round(x.n / orgTot * 100) + '%</td><td class="n">' + Object.keys(x.cli).length + '</td><td class="n">' + x.feitas + '</td><td class="n">' + euro(x.fat) + '</td></tr>'; }).join('')
+      + '</tbody></table></div><div style="font-size:12px;color:var(--suave);margin-top:6px;">Conta a partir do momento em que esta função ficou ativa (as marcações antigas aparecem como "Página do salão"). Para o Instagram, use o link da bio que está em Campanhas › Legenda e link; o QR code novo (imprima-o outra vez) conta como QR code.</div>')
+      : '<div style="color:var(--suave);font-size:14px;">Sem marcações neste período.</div>') + '</div>';
     h += '<div class="rel-card"><h3>🎂 Aniversários no período</h3>' + (RELCLI == null ? '<div style="color:var(--suave);font-size:14px;">Precisa das fichas de cliente (salao-clientes.sql).</div>' : anivs.length ? ('<div class="rel-aniv">' + anivs.map(function(c){ var md = String(c.nascimento).slice(5, 10); return '<div><b>' + esc(c.nome || '—') + '</b><span>' + (+md.slice(3, 5)) + ' ' + MESES[+md.slice(0, 2) - 1].slice(0, 3) + (c.telefone ? (' · ' + esc(c.telefone)) : '') + '</span></div>'; }).join('') + '</div>') : '<div style="color:var(--suave);font-size:14px;">Nenhum cliente faz anos neste período (ou ainda não tem a data de nascimento na ficha).</div>') + '</div>';
     $('relCorpo').innerHTML = h;
     $('relCorpo').querySelectorAll('[data-m]').forEach(function(b){ b.onclick = function(){ relMetrica = b.getAttribute('data-m'); pintarRelatorios(); }; });
@@ -1935,7 +1974,8 @@
       var ausC = ausDia(d).filter(function(b){ return ausPara(b, pr) && b.ini < a + du && a < b.fim; })[0];
       if(ausC && !confirm('' + (ausC.prof ? (nomeProf(ausC.prof) || 'Esta pessoa') + ' está ausente' : 'O salão está fechado') + ' a essa hora (' + (ausC.a.motivo || 'ausência') + '). Guardar mesmo assim?')) return;
       var ins = { negocio_id:NEG.id, data:d, hora:h, nome:nome, telefone:$('nTel').value.trim() || '-', pessoas:1, obs:$('nObs').value.trim() || null, estado:'confirmada', servico:s.nome, duracao:du }; if(pr) ins.profissional = pr; var nd0 = +($('nDesc') ? $('nDesc').value : 0) || 0; if(nd0){ var bb = precoServ(s.nome); ins.desconto = nd0; if(bb != null){ ins.valor_base = bb; ins.valor = comDesc(bb, nd0); } }
-      var r = await sb.from('reservas').insert(ins);
+      ins.origem = 'salao'; var r = await sb.from('reservas').insert(ins);
+      if(r.error && /origem/i.test(r.error.message)){ delete ins.origem; r = await sb.from('reservas').insert(ins); }   // ainda sem o 20-salao-origem.sql
       if(r.error){ $('nMsg').textContent = /servico|duracao|column/i.test(r.error.message) ? 'Falta correr no Supabase o ficheiro salao-marcacoes.sql.' : ('Erro: ' + r.error.message); $('nMsg').className = 'msg erro'; return; }
       fecharModal(); dataSel = dDe(d); await carregarRes(); toast('Marcação guardada ✓');
     };
@@ -2118,7 +2158,7 @@
     $('qrCorIn').value = corBaseQR().toLowerCase(); $('qrCorMold').value = corBaseMold().toLowerCase(); $('qrCorNome').value = corBaseNome().toLowerCase();
     $('qrCorSalao').classList.toggle('hide', !(SAL.corQR || SAL.corQRmold || SAL.corQRnome));
     $('qrCorNota').textContent = (cor.toLowerCase() !== corBaseQR().toLowerCase() || corN.toLowerCase() !== corBaseNome().toLowerCase()) ? 'Uma das cores é clara: no QR (ou no texto) usa-se um tom mais escuro dela, para se ler bem.' : '';
-    new QRCode(tmp, { text:linkSalao(), width:T, height:T, colorDark:cor, colorLight:'#ffffff', correctLevel:QRCode.CorrectLevel.H });
+    new QRCode(tmp, { text:linkSalao() + '/qr', width:T, height:T, colorDark:cor, colorLight:'#ffffff', correctLevel:QRCode.CorrectLevel.H });
     var q = tmp.querySelector('canvas'); if(!q){ box.textContent = 'Não foi possível gerar o QR.'; return; }
     // folha final: margem branca, moldura na cor do salão e o nome no meio (o nível H aguenta o centro tapado)
     var M = 52, W = T + M * 2, c = document.createElement('canvas'); c.width = W; c.height = W; var g = c.getContext('2d');

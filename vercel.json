@@ -39,6 +39,31 @@
       "destination": "/salao.html"
     },
     {
+      "source": "/:slug([a-z0-9]+)/:origem(ig|fb|tt|wa|push|email|qr)",
+      "has": [
+        {
+          "type": "host",
+          "value": "(?:.+\\.)?4trevo\\.com"
+        },
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "(?i).*(facebookexternalhit|facebot|whatsapp|telegrambot|twitterbot|slackbot|linkedinbot|discordbot|pinterest|skypeuripreview).*"
+        }
+      ],
+      "destination": "/api/og-salao?slug=:slug"
+    },
+    {
+      "source": "/:slug([a-z0-9]+)/:origem(ig|fb|tt|wa|push|email|qr)",
+      "has": [
+        {
+          "type": "host",
+          "value": "(?:.+\\.)?4trevo\\.com"
+        }
+      ],
+      "destination": "/salao.html"
+    },
+    {
       "source": "/((?!(?:editar|painel|reservas|estatisticas|cardapio|index|api)$)(?!.*\\.)[^/]+)",
       "has": [
         {
