@@ -483,7 +483,7 @@
     if(SAL.facebook){ var fb = String(SAL.facebook).trim(); if(!/^https?:\/\//i.test(fb)) fb = 'https://facebook.com/' + fb.replace(/^@/, '').replace(/^(www\.)?facebook\.com\//i, ''); rd += '<a class="rede" href="' + esc(fb) + '" target="_blank" rel="noopener" aria-label="Facebook">' + ICO_FB + '</a>'; }
     if(SAL.instagram){ var ig = String(SAL.instagram).replace(/^@/, '').replace(/^https?:\/\/(www\.)?instagram\.com\//, '').replace(/\/.*$/, ''); rd += '<a class="rede" href="https://instagram.com/' + esc(ig) + '" target="_blank" rel="noopener" aria-label="Instagram">' + ICO_IG + '</a>'; }
     if(SAL.whatsapp){ var w = String(SAL.whatsapp).replace(/\D/g,'').replace(/^00/, ''); if(w.length === 9) w = '351' + w; rd += '<a class="rede" href="https://wa.me/' + esc(w) + '" target="_blank" rel="noopener" aria-label="WhatsApp">' + ICO_WA + '</a>'; }
-    if(fidCfg()) rd = '<a class="rede fid-bt" href="#" id="btnFid" aria-label="Cartão de cliente" title="Cartão de cliente"><svg viewBox="0 0 24 24" style="fill:#FFC93C;"><path d="M12 2l2.9 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l7.1-1.01L12 2z"/></svg><span class="fid-num hide" id="fidNum"></span></a>' + rd;
+    if(fidCfg()) rd = '<a class="rede fid-bt" href="#" id="btnFid" aria-label="Cartão de cliente" title="Cartão de cliente"><svg viewBox="0 0 24 24" style="fill:#FFC93C;"><path d="M12 2l2.9 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l7.1-1.01L12 2z"/></svg></a>' + rd;
     if(rd) ac += '<span class="redes">' + rd + '</span>';
     if(GRUPO && SLUG) ac = '<a href="/salao.html?g=' + encodeURIComponent(GRUPO) + '">← Outros locais</a>' + ac;
     $('acoesSalao').innerHTML = ac;
