@@ -1256,29 +1256,51 @@
     var l = []; for(var t = ini; t + dur <= fim; t += pas){ if(t < min0) continue; if(EQ().length ? eq.some(function(p){ return livre(p.id, t, t + dur); }) : livre('', t, t + dur)) l.push(hDe(t)); }
     return l; }
   function nomeDia(k){ var h = iso(new Date()), am = iso(new Date(Date.now() + 86400000)); return k === h ? 'Hoje' : k === am ? 'Amanhã' : DIAS_L[dDe(k).getDay()].replace('-feira', ''); }
+  // foto do cabeçalho da página (imagem de fundo do topo ou a primeira capa)
+  function fotoCabecalho(){ var f = SAL.fundo; if(f && f.tipo !== 'video' && /^https:\/\//.test(String(f.url || '')) && !/\.(mp4|webm|mov)(\?|$)/i.test(f.url)) return f.url; var c = (SAL.capas || []).filter(function(u){ return /^https:\/\//.test(String(u || '')); })[0]; return c || ''; }
   function pintarStoryVagas(cv, W, H, v, t){ var g = cv.getContext('2d'), px = ctxPx(W), cor = corSalao(), an = typeof t === 'number', story = H / W > 1.6;
     function P(a, d){ return !an ? 1 : Math.max(0, Math.min(1, (t - a) / d)); } function eo(p){ return 1 - Math.pow(1 - p, 3); }
     function back(p){ var c1 = 1.70158, c3 = c1 + 1; return p >= 1 ? 1 : 1 + c3 * Math.pow(p - 1, 3) + c1 * Math.pow(p - 1, 2); }
-    var topo = story ? px(220) : px(70), baixo = story ? px(250) : px(40);
+    var topo = story ? px(220) : px(70), baixo = story ? px(250) : px(40), foto = v.foto || null, logo = v.logo || null;
     g.save(); g.clearRect(0, 0, W, H); g.fillStyle = cor; g.fillRect(0, 0, W, H);
-    var dr = an ? Math.sin(t * 0.8) * px(18) : 0; g.fillStyle = 'rgba(255,255,255,.08)'; g.beginPath(); g.arc(W - px(60) + dr, topo + px(80), px(300), 0, 7); g.fill(); g.beginPath(); g.arc(px(50) - dr, H - baixo, px(240), 0, 7); g.fill();
-    var x = px(84), y = topo + px(20); g.textBaseline = 'top';
-    // etiqueta
+    var dr = an ? Math.sin(t * 0.8) * px(18) : 0; g.fillStyle = 'rgba(255,255,255,.08)'; g.beginPath(); g.arc(px(50) - dr, H - baixo, px(240), 0, 7); g.fill();
+    var x = px(84), y, fB = 0;
+    // foto do cabeçalho em cima, a desvanecer para a cor do salão
+    if(foto){ fB = topo + px(story ? 290 : 300);
+      var z = an ? (1.12 - 0.12 * eo(Math.min(1, t / ANIM_DUR))) : 1, kk = Math.max(W / foto.width, fB / foto.height) * z, sw = W / kk, sh = fB / kk;
+      g.globalAlpha = eo(P(0, 0.7)); g.drawImage(foto, (foto.width - sw) / 2, (foto.height - sh) / 2, sw, sh, 0, 0, W, fB); g.globalAlpha = 1;
+      var gr = g.createLinearGradient(0, fB - px(240), 0, fB + 2); gr.addColorStop(0, cor + '00'); gr.addColorStop(1, cor); g.fillStyle = gr; g.fillRect(0, fB - px(240), W, px(242));
+      var gt = g.createLinearGradient(0, 0, 0, topo + px(140)); gt.addColorStop(0, 'rgba(0,0,0,.35)'); gt.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gt; g.fillRect(0, 0, W, topo + px(140));
+    } else { g.fillStyle = 'rgba(255,255,255,.08)'; g.beginPath(); g.arc(W - px(60) + dr, topo + px(80), px(300), 0, 7); g.fill(); }
+    // etiqueta (em cima)
+    y = topo + px(10); g.textBaseline = 'top';
     var p0 = eo(P(0.1, 0.5)); g.globalAlpha = p0; g.font = '800 ' + px(30) + 'px Manrope, system-ui, sans-serif'; var et = '⏰  VAGAS DE ÚLTIMA HORA', ew = g.measureText(et).width + px(48);
-    g.fillStyle = '#fff'; rRedondo(g, x, y, ew, px(64), px(32)); g.fill(); g.fillStyle = cor; g.textBaseline = 'middle'; g.fillText(et, x + px(24), y + px(33)); g.textBaseline = 'top'; y += px(110);
-    var p1 = eo(P(0.4, 0.6)); g.globalAlpha = p1; g.fillStyle = '#fff'; g.font = '800 ' + px(150) + 'px Manrope, system-ui, sans-serif'; g.fillText(nomeDia(v.k), x, y + (1 - p1) * px(60)); y += px(170);
-    g.fillStyle = 'rgba(255,255,255,.9)'; g.font = '600 ' + px(40) + 'px Manrope, system-ui, sans-serif'; var d = dDe(v.k); g.fillText(d.getDate() + ' de ' + MESES[d.getMonth()] + ' · ' + (SAL.nome || NEG.nome || ''), x, y + (1 - p1) * px(40)); y += px(100);
+    g.fillStyle = '#fff'; rRedondo(g, x, y, ew, px(64), px(32)); g.fill(); g.fillStyle = cor; g.textBaseline = 'middle'; g.fillText(et, x + px(24), y + px(33)); g.textBaseline = 'top'; g.globalAlpha = 1;
+    // logótipo num círculo branco (sobre o fim da foto, ou por baixo da etiqueta)
+    var LR = px(story ? 96 : 84), lcy = foto ? fB - px(10) : (y + px(64) + px(30) + LR);
+    if(logo){ var sl = back(P(0.5, 0.6)); if(sl > 0.01){ g.save(); g.translate(x + LR, lcy); g.scale(sl, sl);
+        g.shadowColor = 'rgba(0,0,0,.2)'; g.shadowBlur = px(20); g.fillStyle = '#fff'; g.beginPath(); g.arc(0, 0, LR, 0, 7); g.fill(); g.shadowColor = 'transparent';
+        g.beginPath(); g.arc(0, 0, LR - px(8), 0, 7); g.clip(); var kl = Math.min((LR - px(14)) * 2 / logo.width, (LR - px(14)) * 2 / logo.height) * 1.0; g.drawImage(logo, -logo.width * kl / 2, -logo.height * kl / 2, logo.width * kl, logo.height * kl); g.restore(); }
+      // nome do salão ao lado do logótipo
+      g.globalAlpha = eo(P(0.7, 0.5)); g.fillStyle = '#fff'; g.font = '800 ' + px(40) + 'px Manrope, system-ui, sans-serif'; g.textBaseline = 'middle';
+      g.fillText(linhasTexto(g, SAL.nome || NEG.nome || '', W - x * 2 - LR * 2 - px(30), 1)[0] || '', x + LR * 2 + px(28), lcy + (foto ? px(34) : 0)); g.textBaseline = 'top'; g.globalAlpha = 1;
+      y = lcy + LR + px(30);
+    } else y = foto ? fB - px(30) : y + px(110);
+    var p1 = eo(P(0.4, 0.6)), fsD = px(foto || logo ? 128 : 150); g.globalAlpha = p1; g.fillStyle = '#fff'; g.font = '800 ' + fsD + 'px Manrope, system-ui, sans-serif'; g.fillText(nomeDia(v.k), x, y + (1 - p1) * px(60)); y += fsD * 1.12;
+    g.fillStyle = 'rgba(255,255,255,.9)'; g.font = '600 ' + px(40) + 'px Manrope, system-ui, sans-serif'; var d = dDe(v.k); g.fillText(d.getDate() + ' de ' + MESES[d.getMonth()] + (logo ? '' : (' · ' + (SAL.nome || NEG.nome || ''))), x, y + (1 - p1) * px(40)); y += px(80);
     g.globalAlpha = 1;
-    // horas livres
-    var hs = v.horas.slice(0, story ? 12 : 9), col = 3, gap = px(22), bw = (W - 2 * x - gap * (col - 1)) / col, bh = px(108);
+    // horas livres (só as que cabem)
+    var by = H - baixo - px(story ? 90 : 60) - px(92), col = 3, gap = px(22), bw = (W - 2 * x - gap * (col - 1)) / col, bh = px(story ? 108 : 96);
+    var linhasMax = Math.max(1, Math.floor((by - px(40) - y + gap) / (bh + gap))), hs = v.horas.slice(0, Math.min(12, linhasMax * col));
+    if(v.horas.length > hs.length && hs.length >= col) hs = hs.slice(0, hs.length - 1);   // espaço para o "e mais…"
     hs.forEach(function(h, i){ var cx = x + (i % col) * (bw + gap), cy = y + Math.floor(i / col) * (bh + gap), sc = back(P(1.0 + i * 0.12, 0.5)); if(sc <= 0.01) return;
       g.save(); g.translate(cx + bw / 2, cy + bh / 2); g.scale(sc, sc); g.fillStyle = '#fff'; rRedondo(g, -bw / 2, -bh / 2, bw, bh, px(26)); g.fill();
-      g.fillStyle = cor; g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = '800 ' + px(50) + 'px Manrope, system-ui, sans-serif'; g.fillText(h.replace(':', 'h'), 0, px(3)); g.restore(); });
-    y += Math.ceil(hs.length / col) * (bh + gap) + px(20);
-    if(v.horas.length > hs.length){ g.fillStyle = '#fff'; g.font = '700 ' + px(32) + 'px Manrope, system-ui, sans-serif'; g.fillText('e mais ' + (v.horas.length - hs.length) + ' horas', x, y); y += px(60); }
-    var by = H - baixo - px(story ? 90 : 60) - px(92);
-    if(v.frase){ var pf = eo(P(1.0 + hs.length * 0.12 + 0.2, 0.6)); g.globalAlpha = pf; g.fillStyle = 'rgba(255,255,255,.95)'; g.font = '600 ' + px(44) + 'px Manrope, system-ui, sans-serif';
-      var ls = linhasTexto(g, v.frase, W - 2 * x, Math.max(1, Math.min(3, Math.floor((by - px(30) - y) / px(58))))); ls.forEach(function(l){ g.fillText(l, x, y); y += px(58); }); g.globalAlpha = 1; }
+      g.fillStyle = cor; g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = '800 ' + px(story ? 50 : 46) + 'px Manrope, system-ui, sans-serif'; g.fillText(h.replace(':', 'h'), 0, px(3)); g.restore(); });
+    if(v.horas.length > hs.length){ var i2 = hs.length, cx2 = x + (i2 % col) * (bw + gap), cy2 = y + Math.floor(i2 / col) * (bh + gap); g.globalAlpha = eo(P(1.0 + i2 * 0.12, 0.5));
+      g.fillStyle = '#fff'; g.font = '700 ' + px(32) + 'px Manrope, system-ui, sans-serif'; g.textBaseline = 'middle'; g.fillText('+ ' + (v.horas.length - hs.length) + ' horas', cx2 + px(14), cy2 + bh / 2); g.textBaseline = 'top'; g.globalAlpha = 1; i2++; }
+    y += Math.ceil(Math.max(hs.length, i2 || 0) / col) * (bh + gap) + px(10);
+    if(v.frase){ var nl = Math.min(2, Math.floor((by - px(24) - y) / px(56))); if(nl > 0){ var pf = eo(P(1.0 + hs.length * 0.12 + 0.2, 0.6)); g.globalAlpha = pf; g.fillStyle = 'rgba(255,255,255,.95)'; g.font = '600 ' + px(42) + 'px Manrope, system-ui, sans-serif';
+      linhasTexto(g, v.frase, W - 2 * x, nl).forEach(function(l){ g.fillText(l, x, y); y += px(56); }); g.globalAlpha = 1; } }
     var pb = eo(P(1.6 + hs.length * 0.12, 0.7)); if(pb > 0) botaoMarque(g, px, x, by, W - 2 * x, '#fff', cor, pb, -(1 - pb) * px(220));
     g.restore(); }
   $('aVagas').onclick = function(){
@@ -1288,13 +1310,15 @@
       + '<div class="campo"><label for="vgDur">Tempo livre mínimo</label><select id="vgDur">' + opD.map(function(m){ return '<option value="' + m + '"' + (m === dur0 ? ' selected' : '') + '>' + (m < 60 ? (m + ' min') : (Math.floor(m / 60) + ' h' + (m % 60 ? (' ' + m % 60) : ''))) + '</option>'; }).join('') + '</select></div>'
       + '<div><b style="font-size:14px;">Horas a mostrar</b> <span style="font-size:12px;color:var(--suave);">(toque para tirar ou pôr)</span><div class="mod-chips" id="vgHoras" style="margin-top:6px;"></div></div>'
       + '<div class="campo"><label for="vgFrase">Frase (opcional)</label><input id="vgFrase" maxlength="80" placeholder="Ex.: Unhas de gel, massagens e depilação"></div>'
+      + '<div style="display:flex;gap:16px;flex-wrap:wrap;"><label class="chk-l" style="font-size:14px;"><input type="checkbox" id="vgFoto"' + (fotoCabecalho() ? ' checked' : ' disabled') + '> Foto do cabeçalho' + (fotoCabecalho() ? '' : ' <span style="font-weight:400;color:var(--suave);">(ponha uma em Página)</span>') + '</label><label class="chk-l" style="font-size:14px;"><input type="checkbox" id="vgLogo"' + (logoPush() ? ' checked' : ' disabled') + '> Logótipo' + (logoPush() ? '' : ' <span style="font-weight:400;color:var(--suave);">(ponha um em Página)</span>') + '</label></div>'
       + '<div style="display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap;"><canvas id="vgCv" width="1080" height="1920" style="width:170px;height:auto;border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,.12);"></canvas>'
       + '<div style="flex:1;min-width:200px;display:flex;flex-direction:column;gap:8px;"><button type="button" class="btn" id="vgVer">▶️ Ver a animação</button><button type="button" class="btn-ac" id="vgVid">🎬 Vídeo story (MP4)</button><button type="button" class="btn" id="vgImg">⬇️ Imagem story</button><button type="button" class="btn" id="vgImg45">⬇️ Imagem 4:5 (publicação)</button><button type="button" class="btn" id="vgLeg">📋 Copiar legenda</button>'
       + '<label class="chk-l" style="font-size:13px;"><input type="checkbox" id="vgPag" checked> Mostrar também na página do salão ("Vaga de última hora")</label><button type="button" class="btn" id="vgPub">Publicar na página</button></div></div>'
       + '<div class="msg" id="vgMsg"></div>');
-    var tiradas = {}, todas = [];
+    var tiradas = {}, todas = [], imgF = null, imgL = null;
+    Promise.all([carregarImg(fotoCabecalho()), carregarImg(logoPush() || '')]).then(function(r){ imgF = r[0]; imgL = r[1]; if(document.body.contains(f)) pinta(); });
     function horas(){ return todas.filter(function(h){ return !tiradas[h]; }); }
-    function info(){ return { k:k, horas:horas(), frase:f.querySelector('#vgFrase').value.trim() }; }
+    function info(){ return { k:k, horas:horas(), frase:f.querySelector('#vgFrase').value.trim(), foto:f.querySelector('#vgFoto').checked ? imgF : null, logo:f.querySelector('#vgLogo').checked ? imgL : null }; }
     function calcula(){ todas = vagasDia(k, +f.querySelector('#vgDur').value); tiradas = {};
       if(todas.length > 12){ var passoV = Math.ceil(todas.length / 12); todas.forEach(function(h, i){ if(i % passoV) tiradas[h] = 1; }); }   // muitas horas: mostra umas espalhadas
       pinta(); }
@@ -1303,7 +1327,7 @@
       hc.querySelectorAll('[data-h]').forEach(function(b){ b.onclick = function(){ var h = b.getAttribute('data-h'); if(tiradas[h]) delete tiradas[h]; else tiradas[h] = 1; pinta(); }; });
       var ok = horas().length > 0; ['vgVid','vgImg','vgImg45','vgLeg','vgVer','vgPub'].forEach(function(id){ f.querySelector('#' + id).disabled = !ok; });
       pintarStoryVagas(f.querySelector('#vgCv'), 1080, 1920, info()); }
-    f.querySelector('#vgDur').onchange = calcula; f.querySelector('#vgFrase').oninput = pinta;
+    f.querySelector('#vgDur').onchange = calcula; f.querySelector('#vgFrase').oninput = pinta; f.querySelector('#vgFoto').onchange = pinta; f.querySelector('#vgLogo').onchange = pinta;
     var nomeF = 'vagas-' + SLUG + '-' + k;
     f.querySelector('#vgImg').onclick = function(){ var cv = document.createElement('canvas'); cv.width = 1080; cv.height = 1920; pintarStoryVagas(cv, 1080, 1920, info()); descarregarCanvas(cv, nomeF + '-story.png'); };
     f.querySelector('#vgImg45').onclick = function(){ var cv = document.createElement('canvas'); cv.width = 1080; cv.height = 1350; pintarStoryVagas(cv, 1080, 1350, info()); descarregarCanvas(cv, nomeF + '-4x5.png'); };
