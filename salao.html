@@ -696,7 +696,7 @@
       if(!usaPer || perUsa.indexOf(sPer) < 0 || !PER[sPer].liv){ sPer = perUsa.filter(function(k){ return PER[k].liv; })[0] || perUsa[0] || 'm'; }
       if(usaPer && perUsa.some(function(k){ return PER[k].liv; })){
         $('periodos').classList.remove('hide');
-        $('periodos').innerHTML = perUsa.map(function(k){ return '<button type="button" class="per' + (k === sPer ? ' on' : '') + '" data-per="' + k + '"' + (PER[k].liv ? '' : ' disabled') + '>' + PER[k].n + '<small>' + (PER[k].liv ? (PER[k].liv + (PER[k].liv === 1 ? ' hora livre' : ' horas livres')) : 'sem horas') + '</small></button>'; }).join('');
+        $('periodos').innerHTML = perUsa.map(function(k){ return '<button type="button" class="per' + (k === sPer ? ' on' : '') + '" data-per="' + k + '"' + (PER[k].liv ? '' : ' disabled') + '>' + PER[k].n + '</button>'; }).join('');
         $('periodos').querySelectorAll('[data-per]').forEach(function(b){ b.onclick = function(){ sPer = b.getAttribute('data-per'); pintarHoras(); }; });
       } else { $('periodos').classList.add('hide'); $('periodos').innerHTML = ''; }
       var html = '', livres = 0, s0 = sel.hora ? minDe(sel.hora) : null;
