@@ -238,6 +238,9 @@
   .eq-chips label:has(input:checked){ border-color:var(--ac); background:#F7EEF1; }
   .eq-rot{ font-size:12px; font-weight:800; color:var(--suave); text-transform:uppercase; letter-spacing:1px; }
   .bloco .prof{ font-weight:800; }
+  .serv-x{ position:absolute; top:8px; right:8px; width:32px; height:32px; border-radius:50%; border:1.5px solid var(--borda); background:#fff; color:#8A2A2A; font-size:15px; font-weight:800; cursor:pointer; line-height:1; z-index:1; }
+  .serv-x:hover{ background:#F4E7E7; border-color:#8A2A2A; }
+  .serv-linha{ position:relative; padding-right:48px !important; }
   .serv-linha{ background:#fff; border-radius:12px; padding:12px; display:grid; grid-template-columns:minmax(0,2fr) minmax(0,1.2fr) 90px 100px auto; gap:8px; align-items:end; margin-bottom:8px; }
   .serv-linha .desc{ grid-column:1 / -1; }
   .serv-linha .op{ display:flex; gap:6px; align-items:center; flex-wrap:wrap; grid-column:1 / -1; }
@@ -2229,7 +2232,7 @@
   function pintarServ(){ setTimeout(pintarCatFotos, 0); if(!EQSV) EQSV = JSON.parse(JSON.stringify(EQ()));
     if(!SERV.length) $('servLista').innerHTML = '<div style="background:#fff;border-radius:12px;padding:16px;color:var(--suave);margin-bottom:10px;">Ainda não há serviços. Carregue em "+ Novo serviço".</div>';
     else $('servLista').innerHTML = SERV.map(function(s, i){
-      return '<div class="serv-linha" data-i="' + i + '">'
+      return '<div class="serv-linha" data-i="' + i + '"><button type="button" class="serv-x" data-op="apagar" title="Retirar este serviço" aria-label="Retirar ' + esc(s.nome || 'serviço') + '">✕</button>'
         + '<div class="campo"><label>Nome</label><input data-k="nome" value="' + esc(s.nome || '') + '" maxlength="80"></div>'
         + '<div class="campo"><label>Categoria</label><input data-k="cat" value="' + esc(s.cat || '') + '" maxlength="40" placeholder="Ex.: Unhas" list="catsSug"></div>'
         + '<div class="campo"><label>Duração (min)</label><input data-k="dur" type="number" min="5" max="600" step="5" value="' + esc(s.dur || 30) + '"></div>'
@@ -2256,7 +2259,11 @@
       l.querySelectorAll('[data-op]').forEach(function(b){ b.onclick = function(){ var op = b.getAttribute('data-op');
         if(op === 'foto'){ escolherFoto({ max:1200 }, function(url){ SERV[i].foto = url; guardarServ('Foto guardada ✓'); }); return; }
         if(op === 'semfoto'){ apagarFicheiro(SERV[i].foto); delete SERV[i].foto; guardarServ('Foto retirada ✓'); return; }
-        if(op === 'apagar'){ if(!confirm('Apagar o serviço "' + (SERV[i].nome || '') + '"? (As marcações já feitas não mudam.)')) return; SERV.splice(i, 1); }
+        if(op === 'apagar'){ var sv = SERV[i], sid = sv.id;
+          var so = (EQSV || []).filter(function(p){ return Array.isArray(p.servicos) && p.servicos.length === 1 && p.servicos[0] === sid; });
+          if(so.length){ alert(so.map(function(p){ return p.nome; }).join(', ') + ' só faz este serviço. Marque-lhe primeiro outro serviço (em "Quem faz") e depois retire este.'); return; }
+          if(!confirm('Retirar o serviço "' + (sv.nome || '') + '"?\n\nDeixa de aparecer na página do salão. As marcações já feitas não mudam.')) return;
+          if(sv.foto) apagarFicheiro(sv.foto); SERV.splice(i, 1); guardarServ('Serviço retirado ✓'); return; }
         if(op === 'sobe' && i > 0){ var t = SERV[i - 1]; SERV[i - 1] = SERV[i]; SERV[i] = t; }
         if(op === 'desce' && i < SERV.length - 1){ var t2 = SERV[i + 1]; SERV[i + 1] = SERV[i]; SERV[i] = t2; }
         pintarServ(); }; });
