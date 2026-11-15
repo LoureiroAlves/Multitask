@@ -93,6 +93,11 @@
   .ig-mods{ display:flex; gap:6px; flex-wrap:wrap; margin:4px 0 8px; }
   .ig-mod{ border:1.5px solid var(--borda); background:#fff; border-radius:10px; padding:6px 12px; font-size:13px; font-weight:700; cursor:pointer; font-family:inherit; min-height:36px; }
   .ig-mod.on{ background:var(--ac); border-color:var(--ac); color:#fff; }
+  .ban-cores{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+  .ban-cor{ width:36px; height:36px; border-radius:50%; border:3px solid #fff; box-shadow:0 0 0 1.5px var(--borda); cursor:pointer; padding:0; }
+  .ban-cor.on{ box-shadow:0 0 0 3px var(--ink); }
+  .ban-cor-mais{ display:flex; align-items:center; gap:6px; font-size:13px; font-weight:700; color:var(--suave); border:1.5px solid var(--borda); border-radius:999px; padding:3px 10px 3px 4px; cursor:pointer; background:#fff; }
+  .ban-cor-mais input{ width:28px; height:28px; border:none; padding:0; background:none; cursor:pointer; }
   .camp-ban{ border:1.5px solid var(--linha); border-radius:12px; padding:10px 12px; display:flex; flex-direction:column; gap:10px; }
   #cpBanCat{ border:1.5px solid var(--borda); border-radius:10px; padding:10px 12px; font-size:15px; font-family:inherit; background:#fff; }
   .promo-desc{ background:#F6F1F8; border-radius:10px; padding:10px; display:flex; flex-direction:column; gap:4px; }
@@ -370,6 +375,7 @@
           <label class="chk-l"><input type="checkbox" id="cpBan" checked> <span><b>Criar banner da promoção</b> — aparece na página do salão, na notificação (Android/computador) e na pré-visualização do WhatsApp</span></label>
           <div id="cpBanOp">
             <div class="campo"><label for="cpBanCat">Categoria da promoção <span style="font-weight:400;color:var(--suave);">(põe a foto da categoria e o "Marcar" abre-a)</span></label><select id="cpBanCat"></select></div>
+            <div class="campo"><label>Cor do banner</label><div class="ban-cores" id="cpBanCores"></div><div id="cpCorNota" style="font-size:12px;color:#8A5A10;"></div></div>
             <div class="campo"><label>Foto do banner <span style="font-weight:400;color:var(--suave);">(opcional)</span></label><div class="ban-fotos" id="cpBanFotos"></div></div>
             <div class="campo"><label for="cpBanAte">Mostrar na página até</label><input type="date" id="cpBanAte"></div>
             <div class="promo-desc">
@@ -824,7 +830,7 @@
   function linkPublico(){ return (/(^|\.)4trevo\.com$/i.test(location.hostname) ? (location.origin + '/') : (location.origin + '/salao.html?n=')) + encodeURIComponent(SLUG); }
   function primeiroNome(n){ return String(n || '').trim().split(/\s+/)[0] || ''; }
   function textoPara(c, txt){ var nm = primeiroNome(c && c.nome); return String(txt || '').replace(/\{nome\}/gi, nm).replace(/(Olá|Ola|Oi)\s*!/i, '$1!').replace(/\s+([,!?.])/g, '$1').trim(); }
-  async function carregarCampanhas(){
+  async function carregarCampanhas(){ try{ pintarCoresBanner(); }catch(e){}
     var a = await sb.from('clientes').select('*').eq('negocio_id', NEG.id);
     if(a.error){ $('cpConta').innerHTML = '<span>' + esc(/clientes|relation|does not exist|schema cache/i.test(a.error.message) ? 'Falta correr no Supabase o salao-clientes.sql.' : a.error.message) + '</span>'; return; }
     var b = await sb.from('reservas').select('*').eq('negocio_id', NEG.id).not('servico', 'is', null).order('data', { ascending:false }).limit(10000);
@@ -942,7 +948,7 @@
   var _banN = 0;
   // desenha o banner num canvas de W×H (telemóvel: 1200×630; computador: 2000×560, mais estendido)
   function pintarBannerEm(c, W, H, foto, logo, txtO){
-    var g = c.getContext('2d'), cor = corOk(SAL.cor) ? SAL.cor : '#8E3653', k = H / 630, largo = W / H > 2.5;
+    var g = c.getContext('2d'), cor = corBanner(), k = H / 630, largo = W / H > 2.5;
     function redondo(x, y, w, h, r){ g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
     function px(v){ return Math.round(v * k); }
     g.clearRect(0, 0, W, H);
@@ -968,6 +974,7 @@
       var nm = linhasTexto(g, SAL.nome || NEG.nome || '', txtW - L - px(24), 1)[0] || ''; g.fillText(nm, txtX + L + px(22), y + L / 2); y += L + px(36); }
     else { g.fillStyle = 'rgba(255,255,255,.92)'; g.font = '700 ' + px(28) + 'px Manrope, system-ui, sans-serif'; g.textBaseline = 'top'; g.fillText(SAL.nome || NEG.nome || '', txtX, y); y += px(64); }
     var tit = txtO ? (txtO.tit || 'Novidade') : ($('cpTit').value.trim() || 'Novidade'), txt = txtO ? (txtO.txt || '') : textoPara({ nome:'' }, $('cpTxt').value);
+    if(!foto && (txtO ? (+txtO.desc || 0) : descEscolhido())) txtW = Math.min(txtW, W - txtX - 2 * px(largo ? 92 : 96) - px(90));   // o texto não passa por baixo do selo do desconto
     g.fillStyle = '#fff'; g.textBaseline = 'top';
     var fs = px(largo ? 72 : 66); for(; fs >= px(40); fs -= px(4)){ g.font = '800 ' + fs + 'px Manrope, system-ui, sans-serif'; if(linhasTexto(g, tit, txtW, 3).length <= (largo ? 1 : 2)) break; }
     linhasTexto(g, tit, txtW, 2).forEach(function(l){ g.fillText(l, txtX, y); y += fs * 1.12; }); y += px(12);
@@ -1000,7 +1007,7 @@
   pintarModelosIg();
   function pintarBannerAlto(c, W, H, foto, txtO, t, modelo){
     var FOTOS = Array.isArray(foto) ? foto.filter(Boolean) : (foto ? [foto] : []); foto = FOTOS[0] || null;
-    var g = c.getContext('2d'), cor = corOk(SAL.cor) ? SAL.cor : '#8E3653', k = W / 1080, story = H / W > 1.6, an = typeof t === 'number';
+    var g = c.getContext('2d'), cor = corBanner(), k = W / 1080, story = H / W > 1.6, an = typeof t === 'number';
     modelo = modelo || modeloIg(); if(!foto && modelo === 'inteira') modelo = 'classico';
     function px(v){ return Math.round(v * k); }
     function redondo(x, y, w, h, r){ g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
@@ -1178,6 +1185,7 @@
   function ctxPx(W){ var k = W / 1080; return function(v){ return Math.round(v * k); }; }
   function rRedondo(g, x, y, w, h, r){ g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
   function corSalao(){ return corOk(SAL.cor) ? SAL.cor : '#8E3653'; }
+  function corBanner(){ return corOk(BAN.cor) ? BAN.cor : corSalao(); }
   function botaoMarque(g, px, x, y, maxW, fundo, tx, alfa, dx){ var end = linkSalao().replace(/^https?:\/\//, ''), fb = px(38), bh = px(92);
     do{ g.font = '800 ' + fb + 'px Manrope, system-ui, sans-serif'; fb -= px(2); }while(g.measureText('Marque em ' + end).width + px(80) > maxW && fb > px(22));
     var bt = 'Marque em ' + end, bw = g.measureText(bt).width + px(80); g.save(); g.globalAlpha = alfa == null ? 1 : alfa;
@@ -1187,7 +1195,7 @@
   // ---------- carrossel (3 imagens 4:5) ----------
   function precoNum(v){ var m = /(\d+(?:[.,]\d{1,2})?)/.exec(String(v || '')); return m ? parseFloat(m[1].replace(',', '.')) : null; }
   function servCarrossel(){ var c = $('cpBanCat').value, l = SERV.filter(function(x){ return x && x.nome && !x.oculto && (!c || (x.cat || 'Serviços').trim() === c); }); return l; }
-  function pintarCarServicos(cv, foto){ var W = 1080, H = 1350, g = cv.getContext('2d'), px = ctxPx(W), cor = corSalao(), d = descEscolhido(), c = $('cpBanCat').value, l = servCarrossel();
+  function pintarCarServicos(cv, foto){ var W = 1080, H = 1350, g = cv.getContext('2d'), px = ctxPx(W), cor = corBanner(), d = descEscolhido(), c = $('cpBanCat').value, l = servCarrossel();
     g.clearRect(0, 0, W, H); g.fillStyle = '#FBF8F6'; g.fillRect(0, 0, W, H); g.fillStyle = cor; g.fillRect(0, 0, W, px(300));
     g.fillStyle = 'rgba(255,255,255,.1)'; g.beginPath(); g.arc(W - px(90), px(40), px(220), 0, 7); g.fill();
     g.textBaseline = 'top'; g.fillStyle = 'rgba(255,255,255,.9)'; g.font = '700 ' + px(36) + 'px Manrope, system-ui, sans-serif'; g.fillText(SAL.nome || NEG.nome || '', px(84), px(84));
@@ -1211,7 +1219,7 @@
     var ate = $('cpBanAte').value; if(d && ate){ g.fillStyle = cor; g.font = '700 ' + px(30) + 'px Manrope, system-ui, sans-serif'; g.fillText('Válido em marcações até ' + dataPt(ate), px(84), H - px(220)); }
     botaoMarque(g, px, px(84), H - px(160), W - px(168), cor, '#fff');
   }
-  function pintarCarComo(cv){ var W = 1080, H = 1350, g = cv.getContext('2d'), px = ctxPx(W), cor = corSalao();
+  function pintarCarComo(cv){ var W = 1080, H = 1350, g = cv.getContext('2d'), px = ctxPx(W), cor = corBanner();
     g.clearRect(0, 0, W, H); g.fillStyle = cor; g.fillRect(0, 0, W, H);
     g.fillStyle = 'rgba(255,255,255,.08)'; g.beginPath(); g.arc(W - px(60), px(120), px(300), 0, 7); g.fill(); g.beginPath(); g.arc(px(40), H - px(60), px(220), 0, 7); g.fill();
     g.textBaseline = 'top'; g.fillStyle = 'rgba(255,255,255,.9)'; g.font = '700 ' + px(36) + 'px Manrope, system-ui, sans-serif'; g.fillText(SAL.nome || NEG.nome || '', px(84), px(90));
@@ -1355,7 +1363,7 @@
   async function publicarBanner(){
     if(!$('cpBan').checked) return null;
     await desenharBanner();
-    var chave = [$('cpTit').value.trim(), $('cpTxt').value.trim(), BAN.foto, $('cpBanAte').value, SAL.cor, logoPush(), $('cpBanCat').value, descEscolhido()].join('|');
+    var chave = [$('cpTit').value.trim(), $('cpTxt').value.trim(), BAN.foto, $('cpBanAte').value, corBanner(), logoPush(), $('cpBanCat').value, descEscolhido()].join('|');
     if(BAN.ultimo && BAN.ultimo.chave === chave) return BAN.ultimo.url;
     async function sobe(cv, nome){ var blob = await new Promise(function(ok){ cv.toBlob(ok, 'image/jpeg', 0.88); }); var caminho = SLUG + '/promo/' + nome + '-' + Date.now().toString(36) + '.jpg';
       var up = await sb.storage.from('imagens').upload(caminho, blob, { contentType:'image/jpeg', cacheControl:'31536000', upsert:false }); if(up.error) throw up.error; return sb.storage.from('imagens').getPublicUrl(caminho).data.publicUrl; }
@@ -1384,6 +1392,17 @@
     $('cpPromoTirar').onclick = async function(){ if(!confirm('Tirar este banner da página do salão?')) return; var antigo = p.img;
       var antigoL = p.imgLargo; var e = await guardarCfg(function(c){ c.salao = Object.assign({}, c.salao || {}); delete c.salao.promo; }); if(e){ toast('Erro: ' + e.message); return; } apagarFicheiro(antigo); if(antigoL) apagarFicheiro(antigoL); BAN.ultimo = null; pintarPromoAtual(); toast('Banner retirado da página'); };
   }
+  // ---------- cor do banner (por campanha; por defeito a cor do salão) ----------
+  var CORES_BAN = [['', 'Cor do salão'], ['#1F1C1A', 'Preto'], ['#A51C30', 'Vermelho'], ['#C2185B', 'Rosa'], ['#6A1B9A', 'Roxo'], ['#1E3A5F', 'Azul'], ['#2F5D50', 'Verde'], ['#B5651D', 'Cobre'], ['#8C6D1F', 'Dourado']];
+  function claro(c){ var r = parseInt(c.slice(1, 3), 16) / 255, g = parseInt(c.slice(3, 5), 16) / 255, b = parseInt(c.slice(5, 7), 16) / 255; function l(x){ return x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4); } return 0.2126 * l(r) + 0.7152 * l(g) + 0.0722 * l(b) > 0.4; }
+  function pintarCoresBanner(){ var at = corOk(BAN.cor) ? BAN.cor.toLowerCase() : '', nosPre = CORES_BAN.some(function(x){ return x[0].toLowerCase() === at; });
+    $('cpBanCores').innerHTML = CORES_BAN.map(function(x){ var c = x[0] || corSalao(); return '<button type="button" class="ban-cor' + (x[0].toLowerCase() === at ? ' on' : '') + '" data-cor="' + x[0] + '" title="' + x[1] + '" aria-label="' + x[1] + '" style="background:' + c + ';"></button>'; }).join('')
+      + '<label class="ban-cor-mais' + (at && !nosPre ? ' on' : '') + '" title="Escolher outra cor"><input type="color" id="cpCorLivre" value="' + (at || corSalao()).toLowerCase() + '"> Outra</label>';
+    $('cpBanCores').querySelectorAll('[data-cor]').forEach(function(b){ b.onclick = function(){ BAN.cor = b.getAttribute('data-cor'); pintarCoresBanner(); desenharBanner(); }; });
+    $('cpCorLivre').oninput = function(){ BAN.cor = this.value; $('cpCorNota').textContent = claro(this.value) ? 'Cor muito clara: o texto branco do banner pode não se ler bem.' : ''; desenharBanner(); };
+    $('cpCorLivre').onchange = function(){ pintarCoresBanner(); };
+    $('cpCorNota').textContent = at && claro(at) ? 'Cor muito clara: o texto branco do banner pode não se ler bem.' : ''; }
+  pintarCoresBanner();
   // ---------- modelos de campanhas para datas especiais ----------
   function pascoa(a){ var b = a % 19, c = Math.floor(a / 100), d = a % 100, e = Math.floor(c / 4), f = c % 4, g = Math.floor((c + 8) / 25), h = Math.floor((c - g + 1) / 3), i = (19 * b + c - e - h + 15) % 30, k = Math.floor(d / 4), l = d % 4, m = (32 + 2 * f + 2 * k - i - l) % 7, n = Math.floor((b + 11 * i + 22 * m) / 451), mes = Math.floor((i + m - 7 * n + 114) / 31), dia = ((i + m - 7 * n + 114) % 31) + 1; return new Date(a, mes - 1, dia); }
   function nDomingo(a, mes, n){ var d = new Date(a, mes, 1); while(d.getDay() !== 0) d.setDate(d.getDate() + 1); d.setDate(d.getDate() + 7 * (n - 1)); return d; }
@@ -1393,7 +1412,7 @@
   var MODELOS = [
     { id:'anonovo', nome:'Ano Novo', ico:'✨', quando:function(a){ return new Date(a, 0, 1); }, ate:function(d){ return maisDias(d, 14); }, antes:10,
       tit:'Ano novo, nova energia ✨', txt:'Olá {nome}! Comece o ano a cuidar de si: 15% de desconto nas marcações até {ate}. Marque já!' },
-    { id:'namorados', nome:'Dia dos Namorados', ico:'💕', quando:function(a){ return new Date(a, 1, 14); }, antes:14,
+    { id:'namorados', cor:'#C2185B', nome:'Dia dos Namorados', ico:'💕', quando:function(a){ return new Date(a, 1, 14); }, antes:14,
       tit:'Dia dos Namorados 💕', txt:'Olá {nome}! Prepare-se para o Dia dos Namorados com 15% de desconto. As vagas até dia 14 são poucas — marque já!' },
     { id:'mulher', nome:'Dia da Mulher', ico:'🌷', quando:function(a){ return new Date(a, 2, 8); }, ate:function(d){ return maisDias(d, 7); }, antes:7,
       tit:'Dia da Mulher 🌷', txt:'Olá {nome}! Esta semana é para si: 20% de desconto até {ate}. Porque merece!' },
@@ -1407,9 +1426,9 @@
       tit:'Pronta para o verão ☀️', txt:'Olá {nome}! O verão está a chegar: 15% de desconto até {ate}. Garanta já a sua hora!' },
     { id:'setembro', nome:'Regresso de férias', ico:'🍂', quando:function(a){ return new Date(a, 8, 1); }, ate:function(d){ return maisDias(d, 29); }, antes:7,
       tit:'De volta à rotina 🍂', txt:'Olá {nome}! Depois das férias, é hora de cuidar de si: 15% de desconto em setembro.' },
-    { id:'black', nome:'Black Friday', ico:'🖤', quando:blackFriday, ate:function(d){ return maisDias(d, 3); }, antes:10,
+    { id:'black', cor:'#1F1C1A', nome:'Black Friday', ico:'🖤', quando:blackFriday, ate:function(d){ return maisDias(d, 3); }, antes:10,
       tit:'Black Friday 🖤 −25%', txt:'Olá {nome}! Só até {ate}: 25% de desconto em todas as marcações. As vagas voam — marque já!' },
-    { id:'natal', nome:'Natal', ico:'🎄', quando:function(a){ return new Date(a, 11, 24); }, antes:30,
+    { id:'natal', cor:'#A51C30', nome:'Natal', ico:'🎄', quando:function(a){ return new Date(a, 11, 24); }, antes:30,
       tit:'Brilhe neste Natal 🎄', txt:'Olá {nome}! Para estar radiante nas festas: 15% de desconto até {ate}. A agenda de dezembro enche depressa!' },
     { id:'aniv', nome:'Aniversário dos clientes', ico:'🎂', sempre:true, dur:30, pub:'aniv',
       tit:'Feliz aniversário 🎂', txt:'Olá {nome}! Este mês é o seu aniversário e temos uma prenda: 20% de desconto numa marcação até {ate}.' },
@@ -1439,7 +1458,7 @@
     $('cpTit').value = m.tit; $('cpTxt').value = m.txt.replace(/\{ate\}/g, diaMes(ate));
     if(m.pub && $('cpPub').querySelector('option[value="' + m.pub + '"]')) $('cpPub').value = m.pub;
     else if(!m.pub && /^(aniv|i\d+)$/.test($('cpPub').value)) $('cpPub').value = '';
-    $('cpBanAte').value = iso(ate); _descMexido = false; $('cpBan').checked = true;
+    $('cpBanAte').value = iso(ate); _descMexido = false; $('cpBan').checked = true; BAN.cor = m.cor || ''; pintarCoresBanner();
     ['cpTit','cpTxt'].forEach(function(k){ $(k).dispatchEvent(new Event('input')); }); $('cpPub').dispatchEvent(new Event('change'));
     desenharBanner(); toast('Modelo "' + m.nome + '" aplicado — ajuste o texto e o desconto à vontade');
     try{ $('cpTit').focus(); $('cpTit').scrollIntoView({ behavior:'smooth', block:'center' }); }catch(e){}
