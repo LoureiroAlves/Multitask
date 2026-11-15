@@ -213,6 +213,10 @@
   .sub-it .tx{ flex:1; min-width:0; display:flex; flex-direction:column; gap:2px; }
   .sub-it .tx b{ font-size:16px; } .sub-it .tx span{ font-size:13px; color:var(--suave); }
   .sub-it .tx em{ font-style:normal; font-weight:800; font-size:14px; }
+  .tempos{ display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
+  .tempo{ border:1.5px solid var(--ac); background:#fff; color:var(--ac); border-radius:12px; padding:6px 12px; display:flex; flex-direction:column; align-items:center; line-height:1.2; cursor:pointer; font-family:inherit; min-height:44px; justify-content:center; }
+  .tempo b{ font-size:14px; } .tempo span{ font-size:12px; font-weight:700; color:var(--ink); }
+  .tempo:hover{ background:var(--ac); color:#fff; } .tempo:hover span{ color:#fff; }
   .pill{ border:none; border-radius:999px; background:var(--ac); color:#fff; font-weight:800; font-size:14px; padding:10px 18px; min-height:42px; flex:0 0 auto; }
   @media (max-width: 560px){ .cat-grelha{ grid-template-columns:1fr 1fr; gap:10px; } .cat-card .ci{ height:110px; } .cat-card .ct{ padding:11px; } .cat-card .ct b{ font-size:15px; } .cat-card .ct i{ font-size:13px; } }
   @media (max-width: 860px){ .sub-fundo{ align-items:flex-end; padding:0; } .sub{ border-radius:20px 20px 0 0; max-height:85vh; } }
@@ -558,11 +562,20 @@
   function precoHtml(sv){ var t = precoTxt(sv.preco), d = descServ(sv), n = precoNum(sv.preco); if(!t) return ''; if(!d || n == null) return esc(t);
     return '<s style="opacity:.6;">' + esc(t) + '</s> <b style="color:var(--ac);">' + esc(euroTxt(n * (100 - d) / 100)) + '</b> <span class="tag-desc">−' + d + '%</span>'; }
   function servDe(c){ return SERV.filter(function(s){ return (s.cat || 'Serviços').trim() === c; }); }
+  // serviços com vários tempos (mesmo "grupo"): aparecem como um só, e o cliente escolhe o tempo
+  function gruposDe(l){ var g = [], idx = {}; l.forEach(function(s){ var k = String(s.grupo || s.nome || '').trim().toLowerCase(); if(idx[k] == null){ idx[k] = g.length; g.push([]); } g[idx[k]].push(s); });
+    g.forEach(function(x){ x.sort(function(a, b){ return (+a.dur || 0) - (+b.dur || 0); }); }); return g; }
+  function precoFinal(sv){ var n = precoNum(sv.preco), d = descServ(sv); return n == null ? null : (d ? n * (100 - d) / 100 : n); }
   function abrirCategoria(c){
     var l = servDe(c); fecharCategoria();
     var f = document.createElement('div'); f.className = 'sub-fundo'; f.id = 'subMenu';
     f.innerHTML = '<div class="sub" role="dialog" aria-modal="true" aria-label="' + esc(c) + '"><div class="sub-cab"><h3>' + esc(c) + '</h3><button type="button" aria-label="Fechar">✕</button></div>'
-      + l.map(function(s){ var p = precoTxt(s.preco);
+      + gruposDe(l).map(function(gr){ var s = gr[0], p = precoTxt(s.preco);
+          if(gr.length > 1){ var ps = gr.map(precoFinal).filter(function(v){ return v != null; }), on = gr.filter(function(x){ return x.online !== false; });
+            return '<div class="sub-it">' + (urlOk(s.foto) ? ('<img src="' + esc(s.foto) + '" alt="" loading="lazy" data-lb>') : '')
+              + '<div class="tx"><b>' + esc(s.grupo || s.nome) + '</b>' + (s.desc ? ('<span>' + esc(s.desc) + '</span>') : '') + (ps.length ? ('<em>desde ' + esc(euroTxt(Math.min.apply(null, ps))) + (gr.some(descServ) ? (' <span class="tag-desc">−' + Math.max.apply(null, gr.map(descServ)) + '%</span>') : '') + '</em>') : '')
+              + (on.length ? ('<div class="tempos">' + on.map(function(x){ var v = precoFinal(x); return '<button type="button" class="tempo" data-s="' + esc(x.id) + '"><b>' + esc(durTxt(x.dur)) + '</b>' + (v != null ? ('<span>' + esc(euroTxt(v)) + '</span>') : (precoTxt(x.preco) ? ('<span>' + esc(precoTxt(x.preco)) + '</span>') : '')) + '</button>'; }).join('') + '</div>') : '<span class="nota">Marcação por telefone</span>')
+              + '</div></div>'; }
           return '<div class="sub-it">' + (urlOk(s.foto) ? ('<img src="' + esc(s.foto) + '" alt="" loading="lazy" data-lb>') : '')
             + '<div class="tx"><b>' + esc(s.nome) + '</b>' + (s.desc ? ('<span>' + esc(s.desc) + '</span>') : '') + '<em>' + esc(durTxt(s.dur)) + (p ? (' · ' + precoHtml(s)) : '') + '</em></div>'
             + (s.online === false ? '<span class="nota" style="max-width:110px;text-align:right;">Marcação por telefone</span>' : ('<button type="button" class="pill" data-s="' + esc(s.id) + '">Marcar</button>')) + '</div>'; }).join('')
@@ -596,7 +609,7 @@
       var l = servDe(c), foto = urlOk(catFotos[c]) ? catFotos[c] : ((l.filter(function(s){ return urlOk(s.foto); })[0] || {}).foto || '');
       var escC = servs().filter(function(x){ return (x.cat || 'Serviços').trim() === c; }), on = escC.length > 0;
       return '<button type="button" class="cat-card' + (on ? ' sel' : '') + '" data-cat="' + esc(c) + '"><div class="ci"' + (foto ? '' : ' style="background:var(--ac);"') + '>' + (foto ? ('<img src="' + esc(foto) + '" alt="" loading="lazy">') : esc(c.trim().charAt(0).toUpperCase())) + (l.some(function(x){ return descServ(x); }) ? ('<span class="cat-promo">−' + Math.max.apply(null, l.map(descServ)) + '%</span>') : '') + '</div>'
-        + '<div class="ct"><b>' + esc(c) + '</b><span>' + l.length + (l.length === 1 ? ' serviço' : ' serviços') + '</span><i>' + (on ? ('✓ ' + esc(escC.map(function(x){ return x.nome; }).join(' + '))) : 'Ver serviços e preços →') + '</i></div></button>';
+        + '<div class="ct"><b>' + esc(c) + '</b><span>' + gruposDe(l).length + (gruposDe(l).length === 1 ? ' serviço' : ' serviços') + '</span><i>' + (on ? ('✓ ' + esc(escC.map(function(x){ return x.nome; }).join(' + '))) : 'Ver serviços e preços →') + '</i></div></button>';
     }).join('') + '</div></section>';
     $('servicos').innerHTML = html;
     $('servicos').querySelectorAll('[data-vaga]').forEach(function(b){ b.onclick = function(){ var g = document.querySelector('.cat-grelha'); if(g) g.scrollIntoView({ behavior:'smooth', block:'start' }); }; });
@@ -619,7 +632,7 @@
   function pintarEsc(){
     var l = servs(); if(!l.length){ $('escServRot').textContent = 'Serviço'; $('escServNome').textContent = 'Escolha um serviço na lista'; return; }
     $('escServRot').textContent = l.length > 1 ? ('Serviços (' + l.length + ', seguidos)') : 'Serviço';
-    var html = l.map(function(s, i){ return '<div class="esc-it"><span><b>' + esc(s.nome) + '</b> · ' + esc(durTxt(s.dur)) + (precoTxt(s.preco) ? (' · ' + precoHtml(s)) : '') + '</span>'
+    var html = l.map(function(s, i){ return '<div class="esc-it"><span><b>' + esc(s.grupo || s.nome) + '</b> · ' + esc(durTxt(s.dur)) + (precoTxt(s.preco) ? (' · ' + precoHtml(s)) : '') + '</span>'
       + (l.length > 1 && !sel.reag ? ('<button type="button" class="esc-x" data-tira="' + i + '" aria-label="Tirar ' + esc(s.nome) + '">✕</button>') : '') + '</div>'; }).join('');
     if(l.some(descServ)) html += '<span style="font-size:13px;color:var(--ac);font-weight:700;">🎁 Promoção: −' + Math.max.apply(null, l.map(descServ)) + '% em marcações até ' + esc(quando(promoAtiva().ate)) + '</span>';
     if(!sel.reag && l.length < MAX_SERV && outrosServ().length) html += '<button type="button" class="esc-mais" id="btnJuntar">＋ Juntar outro serviço</button>';
@@ -640,7 +653,7 @@
       + ordem.map(function(c){ return '<div style="padding:14px 18px 2px;font-size:12px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--suave);">' + esc(c) + '</div>'
           + porCat[c].map(function(s){ var p = precoTxt(s.preco);
             return '<div class="sub-it">' + (urlOk(s.foto) ? ('<img src="' + esc(s.foto) + '" alt="" loading="lazy">') : '')
-              + '<div class="tx"><b>' + esc(s.nome) + '</b><em>' + esc(durTxt(s.dur)) + (p ? (' · ' + precoHtml(s)) : '') + '</em></div>'
+              + '<div class="tx"><b>' + esc(s.grupo || s.nome) + '</b><em>' + esc(durTxt(s.dur)) + (p ? (' · ' + precoHtml(s)) : '') + '</em></div>'
               + '<button type="button" class="pill" data-j="' + esc(s.id) + '">Juntar</button></div>'; }).join(''); }).join('')
       + '</div>';
     document.body.appendChild(f);

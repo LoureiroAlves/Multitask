@@ -238,6 +238,10 @@
   .eq-chips label:has(input:checked){ border-color:var(--ac); background:#F7EEF1; }
   .eq-rot{ font-size:12px; font-weight:800; color:var(--suave); text-transform:uppercase; letter-spacing:1px; }
   .bloco .prof{ font-weight:800; }
+  .serv-opcoes{ display:flex; flex-direction:column; gap:6px; align-items:flex-start; } .serv-op{ align-self:stretch; }
+  .serv-op-tit{ font-size:13px; font-weight:800; } .serv-op-tit span{ font-weight:500; color:var(--suave); }
+  .serv-op{ display:flex; gap:8px; align-items:end; flex-wrap:wrap; background:var(--fundo, #F6F4F2); border-radius:10px; padding:8px 10px; }
+  .serv-op .campo{ flex:0 1 150px; }
   .serv-x{ position:absolute; top:8px; right:8px; width:32px; height:32px; border-radius:50%; border:1.5px solid var(--borda); background:#fff; color:#8A2A2A; font-size:15px; font-weight:800; cursor:pointer; line-height:1; z-index:1; }
   .serv-x:hover{ background:#F4E7E7; border-color:#8A2A2A; }
   .serv-linha{ position:relative; padding-right:48px !important; }
@@ -2229,43 +2233,78 @@
 
   // ---------- serviços ----------
   var EQSV = null;   // equipa a ser editada a partir dos serviços ("Quem faz")
+  // um serviço pode ter vários tempos/preços (ex.: Massagem Relaxante 30 min · 25 € e 50 min · 50 €):
+  // cada opção é um serviço normal com o mesmo "grupo"; o cliente escolhe o tempo dentro do serviço.
+  function durTx(m){ m = +m || 0; if(m < 60) return m + ' min'; var h = Math.floor(m / 60), r = m % 60; return h + ' h' + (r ? (' ' + r) : ''); }
+  function blocosServ(){ var b = [], idx = {}; SERV.forEach(function(sv, i){ if(!sv.grupo){ b.push([i]); return; } var k = (sv.cat || '') + '|' + sv.grupo; if(idx[k] == null){ idx[k] = b.length; b.push([]); } b[idx[k]].push(i); }); return b; }
+  // serviços com o mesmo nome na mesma categoria (feitos à parte antes desta opção): junta-os como tempos de um só serviço
+  function juntarRepetidos(){ var mudou = false, vistos = {};
+    SERV.forEach(function(sv){ if(sv.grupo) return; var k = (sv.cat || '').trim().toLowerCase() + '|' + String(sv.nome || '').trim().toLowerCase(); if(!String(sv.nome || '').trim()) return; (vistos[k] = vistos[k] || []).push(sv); });
+    Object.keys(vistos).forEach(function(k){ var l = vistos[k]; if(l.length < 2) return; mudou = true; var g = String(l[0].nome).trim();
+      l.sort(function(a, b){ return (+a.dur || 0) - (+b.dur || 0); }); l.forEach(function(sv){ sv.grupo = g; sv.desc = sv.desc || l.filter(function(x){ return x.desc; }).map(function(x){ return x.desc; })[0] || ''; if(!sv.foto){ var f = l.filter(function(x){ return x.foto; })[0]; if(f) sv.foto = f.foto; } });
+      var pos = SERV.indexOf(l[0]); SERV = SERV.filter(function(x){ return l.indexOf(x) < 0; }); SERV.splice.apply(SERV, [Math.min(pos, SERV.length), 0].concat(l)); });
+    return mudou; }
   function pintarServ(){ setTimeout(pintarCatFotos, 0); if(!EQSV) EQSV = JSON.parse(JSON.stringify(EQ()));
-    if(!SERV.length) $('servLista').innerHTML = '<div style="background:#fff;border-radius:12px;padding:16px;color:var(--suave);margin-bottom:10px;">Ainda não há serviços. Carregue em "+ Novo serviço".</div>';
-    else $('servLista').innerHTML = SERV.map(function(s, i){
-      return '<div class="serv-linha" data-i="' + i + '"><button type="button" class="serv-x" data-op="apagar" title="Retirar este serviço" aria-label="Retirar ' + esc(s.nome || 'serviço') + '">✕</button>'
-        + '<div class="campo"><label>Nome</label><input data-k="nome" value="' + esc(s.nome || '') + '" maxlength="80"></div>'
+    if(!pintarServ._juntou && juntarRepetidos()){ pintarServ._juntou = true; setTimeout(function(){ $('servMsg').textContent = 'Juntei os serviços com o mesmo nome como tempos de um só serviço — confira e carregue em Guardar serviços.'; $('servMsg').className = 'msg erro'; }, 0); }
+    if(!SERV.length){ $('servLista').innerHTML = '<div style="background:#fff;border-radius:12px;padding:16px;color:var(--suave);margin-bottom:10px;">Ainda não há serviços. Carregue em "+ Novo serviço".</div>'; return; }
+    var BL = blocosServ();
+    $('servLista').innerHTML = BL.map(function(bl, bi){ var i = bl[0], s = SERV[i], varios = bl.length > 1;
+      var faz = function(p){ return bl.some(function(k){ return fazServ(p, SERV[k].id); }); };
+      return '<div class="serv-linha" data-b="' + bi + '"><button type="button" class="serv-x" data-op="apagar" title="Retirar este serviço" aria-label="Retirar ' + esc(s.grupo || s.nome || 'serviço') + '">✕</button>'
+        + '<div class="campo"><label>Nome</label><input data-k="nome" value="' + esc(s.grupo || s.nome || '') + '" maxlength="70"></div>'
         + '<div class="campo"><label>Categoria</label><input data-k="cat" value="' + esc(s.cat || '') + '" maxlength="40" placeholder="Ex.: Unhas" list="catsSug"></div>'
-        + '<div class="campo"><label>Duração (min)</label><input data-k="dur" type="number" min="5" max="600" step="5" value="' + esc(s.dur || 30) + '"></div>'
-        + '<div class="campo"><label>Preço</label><input data-k="preco" value="' + esc(s.preco || '') + '" maxlength="24" placeholder="Ex.: 25"></div>'
-        + '<div></div>'
+        + (varios ? '<div style="grid-column:span 3;"></div>' : ('<div class="campo"><label>Duração (min)</label><input data-k="dur" data-i="' + i + '" type="number" min="5" max="600" step="5" value="' + esc(s.dur || 30) + '"></div>'
+          + '<div class="campo"><label>Preço</label><input data-k="preco" data-i="' + i + '" value="' + esc(s.preco || '') + '" maxlength="24" placeholder="Ex.: 25"></div><div></div>'))
         + '<div class="campo desc"><label>Descrição curta</label><input data-k="desc" value="' + esc(s.desc || '') + '" maxlength="160"></div>'
+        + '<div class="serv-opcoes" style="grid-column:1/-1;">' + (varios ? ('<div class="serv-op-tit">⏱️ Tempos e preços <span>— o cliente escolhe um ao marcar</span></div>' + bl.map(function(k){ var o = SERV[k];
+            return '<div class="serv-op"><div class="campo"><label>Duração (min)</label><input data-k="dur" data-i="' + k + '" type="number" min="5" max="600" step="5" value="' + esc(o.dur || 30) + '"></div><div class="campo"><label>Preço</label><input data-k="preco" data-i="' + k + '" value="' + esc(o.preco || '') + '" maxlength="24" placeholder="Ex.: 25"></div><button type="button" class="btn-lnk" data-opx="' + k + '" title="Tirar este tempo">✕ Tirar</button></div>'; }).join('')) : '')
+          + '<button type="button" class="btn-lnk" data-op="maisop" style="padding:0;min-height:30px;">＋ ' + (varios ? 'Outro tempo e preço' : 'Ter vários tempos e preços (ex.: 30 min e 50 min)') + '</button></div>'
         + '<div class="serv-foto" style="grid-column:1/-1;">' + (s.foto ? ('<img src="' + esc(s.foto) + '" alt=""><button type="button" class="btn-lnk" data-op="semfoto">Tirar foto</button>') : '') + '<button type="button" class="btn" data-op="foto">📷 ' + (s.foto ? 'Mudar foto' : 'Foto do serviço (opcional)') + '</button></div>'
-        + (EQSV.length ? ('<div style="grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px;align-items:center;"><span class="eq-rot" style="margin-right:4px;">Quem faz</span><span class="eq-chips">' + EQSV.map(function(p){ return '<label><input type="checkbox" data-faz="' + esc(p.id) + '"' + (fazServ(p, s.id) ? ' checked' : '') + '> ' + esc(p.nome) + '</label>'; }).join('') + '</span>'
-            + (EQSV.some(function(p){ return fazServ(p, s.id); }) ? '' : '<span style="color:#A33;font-weight:700;font-size:13px;">⚠️ Ninguém faz este serviço — os clientes não o conseguem marcar</span>') + '</div>') : '')
+        + (EQSV.length ? ('<div style="grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px;align-items:center;"><span class="eq-rot" style="margin-right:4px;">Quem faz</span><span class="eq-chips">' + EQSV.map(function(p){ return '<label><input type="checkbox" data-faz="' + esc(p.id) + '"' + (faz(p) ? ' checked' : '') + '> ' + esc(p.nome) + '</label>'; }).join('') + '</span>'
+            + (EQSV.some(faz) ? '' : '<span style="color:#A33;font-weight:700;font-size:13px;">⚠️ Ninguém faz este serviço — os clientes não o conseguem marcar</span>') + '</div>') : '')
         + '<div class="op"><label style="font-weight:600;"><input type="checkbox" data-k="online"' + (s.online === false ? '' : ' checked') + '> Aceita pedidos online</label>'
         + '<label style="font-weight:600;"><input type="checkbox" data-k="oculto"' + (s.oculto ? ' checked' : '') + '> Escondido</label>'
         + '<span style="flex:1;"></span><button type="button" class="btn" data-op="sobe" aria-label="Subir">↑</button><button type="button" class="btn" data-op="desce" aria-label="Descer">↓</button><button type="button" class="btn-lnk" data-op="apagar">Apagar</button></div>'
         + '</div>';
     }).join('') + '<datalist id="catsSug">' + Array.from(new Set(SERV.map(function(s){ return s.cat; }).filter(Boolean).concat(['Unhas','Massagens','Depilação','Rosto','Cabelo']))).map(function(c){ return '<option value="' + esc(c) + '">'; }).join('') + '</datalist>';
+    function porGuardar(){ $('servMsg').textContent = 'Por guardar…'; $('servMsg').className = 'msg'; }
     $('servLista').querySelectorAll('.serv-linha').forEach(function(l){
-      var i = +l.getAttribute('data-i');
-      l.querySelectorAll('[data-k]').forEach(function(inp){ inp.addEventListener('input', function(){ var k = inp.getAttribute('data-k'); SERV[i][k] = inp.type === 'checkbox' ? inp.checked : (k === 'dur' ? (parseInt(inp.value, 10) || 30) : inp.value); }); inp.addEventListener('change', function(){ if(inp.type === 'checkbox'){ SERV[i][inp.getAttribute('data-k')] = inp.checked; } }); });
-      l.querySelectorAll('[data-faz]').forEach(function(c){ c.onchange = function(){ var p = EQSV.filter(function(x){ return x.id === c.getAttribute('data-faz'); })[0], sid = SERV[i].id; if(!p || !sid) return;
-        var todos = SERV.filter(function(x){ return x && x.nome && x.id; }).map(function(x){ return x.id; });
+      var bl = BL[+l.getAttribute('data-b')], i = bl[0], membros = function(){ return bl.map(function(k){ return SERV[k]; }); };
+      l.querySelectorAll('[data-k]').forEach(function(inp){ var k = inp.getAttribute('data-k'), so = inp.getAttribute('data-i');
+        function aplica(){ var v = inp.type === 'checkbox' ? inp.checked : (k === 'dur' ? (parseInt(inp.value, 10) || 30) : inp.value);
+          if(so != null){ SERV[+so][k] = v; return; }   // duração/preço: só dessa opção
+          membros().forEach(function(m){ if(k === 'nome'){ if(bl.length > 1) m.grupo = v; else m.nome = v; } else m[k] = v; }); }
+        inp.addEventListener('input', aplica); inp.addEventListener('change', aplica); });
+      l.querySelectorAll('[data-faz]').forEach(function(c){ c.onchange = function(){ var p = EQSV.filter(function(x){ return x.id === c.getAttribute('data-faz'); })[0]; if(!p) return; var sids = membros().map(function(m){ return m.id; });
+        var todos = SERV.filter(function(x){ return x && (x.nome || x.grupo) && x.id; }).map(function(x){ return x.id; });
         if(!Array.isArray(p.servicos) || !p.servicos.length) p.servicos = todos.slice();   // "todos" antigo → lista com vistos
-        if(c.checked){ if(p.servicos.indexOf(sid) < 0) p.servicos.push(sid); }
-        else { if(p.servicos.length <= 1){ c.checked = true; alert(p.nome + ' tem de fazer pelo menos um serviço.'); return; } p.servicos = p.servicos.filter(function(t){ return t !== sid; }); }
-        pintarServ(); $('servMsg').textContent = 'Por guardar…'; $('servMsg').className = 'msg'; }; });
-      l.querySelectorAll('[data-op]').forEach(function(b){ b.onclick = function(){ var op = b.getAttribute('data-op');
-        if(op === 'foto'){ escolherFoto({ max:1200 }, function(url){ SERV[i].foto = url; guardarServ('Foto guardada ✓'); }); return; }
-        if(op === 'semfoto'){ apagarFicheiro(SERV[i].foto); delete SERV[i].foto; guardarServ('Foto retirada ✓'); return; }
-        if(op === 'apagar'){ var sv = SERV[i], sid = sv.id;
-          var so = (EQSV || []).filter(function(p){ return Array.isArray(p.servicos) && p.servicos.length === 1 && p.servicos[0] === sid; });
+        if(c.checked){ sids.forEach(function(sid){ if(p.servicos.indexOf(sid) < 0) p.servicos.push(sid); }); }
+        else { var fica = p.servicos.filter(function(t){ return sids.indexOf(t) < 0; }); if(!fica.length){ c.checked = true; alert(p.nome + ' tem de fazer pelo menos um serviço.'); return; } p.servicos = fica; }
+        pintarServ(); porGuardar(); }; });
+      l.querySelectorAll('[data-opx]').forEach(function(b){ b.onclick = function(){ var k = +b.getAttribute('data-opx'), sv = SERV[k];
+        if(!confirm('Tirar o tempo de ' + durTx(sv.dur) + (sv.preco ? (' (' + sv.preco + ')') : '') + '? As marcações já feitas não mudam.')) return;
+        SERV.splice(k, 1); var resto = SERV.filter(function(x){ return x.grupo && x.grupo === sv.grupo && (x.cat || '') === (sv.cat || ''); });
+        if(resto.length === 1){ resto[0].nome = resto[0].grupo; delete resto[0].grupo; }
+        guardarServ('Tempo retirado ✓'); }; });
+      l.querySelectorAll('[data-op]').forEach(function(b){ b.onclick = function(){ var op = b.getAttribute('data-op'), s0 = SERV[i];
+        if(op === 'foto'){ escolherFoto({ max:1200 }, function(url){ membros().forEach(function(m){ m.foto = url; }); guardarServ('Foto guardada ✓'); }); return; }
+        if(op === 'semfoto'){ apagarFicheiro(s0.foto); membros().forEach(function(m){ delete m.foto; }); guardarServ('Foto retirada ✓'); return; }
+        if(op === 'maisop'){ var ms = membros(), ult = ms[ms.length - 1], g = s0.grupo || String(s0.nome || '').trim();
+          if(!g){ alert('Escreva primeiro o nome do serviço.'); return; }
+          ms.forEach(function(m){ m.grupo = g; });
+          var nv = { id:novoId(), grupo:g, nome:g, cat:s0.cat || '', dur:Math.min(600, (+ult.dur || 30) + 30), preco:'', desc:s0.desc || '', online:s0.online !== false };
+          if(s0.foto) nv.foto = s0.foto; if(s0.oculto) nv.oculto = true;
+          (EQSV || []).forEach(function(p){ if(Array.isArray(p.servicos) && p.servicos.length && p.servicos.indexOf(s0.id) >= 0) p.servicos.push(nv.id); });   // quem faz o serviço faz o novo tempo
+          SERV.splice(bl[bl.length - 1] + 1, 0, nv); pintarServ(); porGuardar();
+          var ins = $('servLista').querySelectorAll('.serv-linha[data-b="' + l.getAttribute('data-b') + '"] .serv-op input[data-k="preco"]'); if(ins.length) ins[ins.length - 1].focus(); return; }
+        if(op === 'apagar'){ var sids = membros().map(function(m){ return m.id; });
+          var so = (EQSV || []).filter(function(p){ return Array.isArray(p.servicos) && p.servicos.length && p.servicos.every(function(t){ return sids.indexOf(t) >= 0; }); });
           if(so.length){ alert(so.map(function(p){ return p.nome; }).join(', ') + ' só faz este serviço. Marque-lhe primeiro outro serviço (em "Quem faz") e depois retire este.'); return; }
-          if(!confirm('Retirar o serviço "' + (sv.nome || '') + '"?\n\nDeixa de aparecer na página do salão. As marcações já feitas não mudam.')) return;
-          if(sv.foto) apagarFicheiro(sv.foto); SERV.splice(i, 1); guardarServ('Serviço retirado ✓'); return; }
-        if(op === 'sobe' && i > 0){ var t = SERV[i - 1]; SERV[i - 1] = SERV[i]; SERV[i] = t; }
-        if(op === 'desce' && i < SERV.length - 1){ var t2 = SERV[i + 1]; SERV[i + 1] = SERV[i]; SERV[i] = t2; }
+          if(!confirm('Retirar o serviço "' + (s0.grupo || s0.nome || '') + '"' + (bl.length > 1 ? (' (com os ' + bl.length + ' tempos)') : '') + '?\n\nDeixa de aparecer na página do salão. As marcações já feitas não mudam.')) return;
+          if(s0.foto) apagarFicheiro(s0.foto); SERV = SERV.filter(function(x){ return sids.indexOf(x.id) < 0; }); guardarServ('Serviço retirado ✓'); return; }
+        var bi = BL.indexOf(bl);
+        if((op === 'sobe' && bi > 0) || (op === 'desce' && bi < BL.length - 1)){ var nb = BL.slice(); var t = nb[bi]; nb[bi] = nb[bi + (op === 'sobe' ? -1 : 1)]; nb[bi + (op === 'sobe' ? -1 : 1)] = t;
+          SERV = [].concat.apply([], nb.map(function(x){ return x.map(function(k){ return SERV[k]; }); })); porGuardar(); }
         pintarServ(); }; });
     });
   }
@@ -2278,14 +2317,17 @@
   $('servNovo').onclick = function(){ var ult = SERV[SERV.length - 1]; SERV.push({ id:novoId(), nome:'', cat:(ult && ult.cat) || '', dur:30, preco:'', desc:'', online:true }); pintarServ(); var ins = $('servLista').querySelectorAll('input[data-k="nome"]'); if(ins.length) ins[ins.length - 1].focus(); };
   $('servGuardar').onclick = function(){ guardarServ('Guardado ✓'); };
   async function guardarServ(okTxt){
-    var limpo = SERV.filter(function(s){ return s && String(s.nome || '').trim(); }).map(function(s){ var o = { id:s.id || novoId(), nome:String(s.nome).trim().slice(0, 80), cat:String(s.cat || '').trim().slice(0, 40), dur:Math.max(5, Math.min(600, parseInt(s.dur, 10) || 30)), preco:String(s.preco || '').trim().slice(0, 24), desc:String(s.desc || '').trim().slice(0, 160) }; if(s.foto) o.foto = String(s.foto); if(s.online === false) o.online = false; if(s.oculto) o.oculto = true; return o; });
+    SERV = [].concat.apply([], blocosServ().map(function(x){ return x.map(function(k){ return SERV[k]; }).sort(function(a, b){ return x.length > 1 ? (+a.dur || 0) - (+b.dur || 0) : 0; }); }));   // os tempos de cada serviço ficam juntos (do mais curto ao mais longo)
+    var gc = {}; SERV.forEach(function(s){ if(s && s.grupo){ var k = (s.cat || '') + '|' + s.grupo; gc[k] = (gc[k] || 0) + 1; } });
+    SERV.forEach(function(s){ if(!s || !s.grupo) return; var g = String(s.grupo).trim(); if(gc[(s.cat || '') + '|' + s.grupo] > 1 && g){ s.nome = g + ' · ' + durTx(s.dur); } else { s.nome = g || s.nome; delete s.grupo; } });
+    var limpo = SERV.filter(function(s){ return s && String(s.nome || '').trim(); }).map(function(s){ var o = { id:s.id || novoId(), nome:String(s.nome).trim().slice(0, 80), cat:String(s.cat || '').trim().slice(0, 40), dur:Math.max(5, Math.min(600, parseInt(s.dur, 10) || 30)), preco:String(s.preco || '').trim().slice(0, 24), desc:String(s.desc || '').trim().slice(0, 160) }; if(s.foto) o.foto = String(s.foto); if(s.online === false) o.online = false; if(s.oculto) o.oculto = true; if(s.grupo) o.grupo = String(s.grupo).trim().slice(0, 70); return o; });
     $('servMsg').textContent = 'A guardar…'; $('servMsg').className = 'msg';
     var ids = limpo.map(function(x){ return x.id; });
     var eqNova = EQSV && EQSV.length ? EQSV.map(function(p){ return { id:p.id, nome:p.nome, dias:Array.isArray(p.dias) ? p.dias : [], servicos:(Array.isArray(p.servicos) ? p.servicos : []).filter(function(t){ return ids.indexOf(t) >= 0; }) }; }) : null;
     var e = await guardarCfg(function(c){ c.servicos = limpo; if(eqNova) c.equipa = eqNova; });
     var semNinguem = eqNova ? limpo.filter(function(x){ return !x.oculto && x.online !== false && !eqNova.some(function(p){ return fazServ(p, x.id); }); }) : [];
     $('servMsg').textContent = e ? ('Erro: ' + e.message) : ((okTxt || 'Guardado ✓') + (semNinguem.length ? (' · ⚠️ ' + semNinguem.length + ' serviço(s) sem ninguém da equipa') : '')); $('servMsg').className = 'msg ' + (e ? 'erro' : (semNinguem.length ? 'erro' : 'ok'));
-    if(!e){ EQSV = null; pintarServ(); }
+    if(!e){ EQSV = null; pintarServ._juntou = true; pintarServ(); }
   }
 
   // ---------- página ----------
