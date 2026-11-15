@@ -168,8 +168,14 @@
   .minha-cab{ display:grid; grid-template-columns:1fr auto; gap:4px 10px; align-items:center; padding:12px 14px; background:none; border:none; text-align:left; width:100%; color:var(--ink); }
   .minha-cab b{ font-size:15px; } .minha-cab .q{ font-size:14px; color:var(--ink); } .minha-cab .p{ font-size:14px; font-weight:800; text-align:right; }
   .minha-cab .seta{ grid-column:1/-1; font-size:12px; color:var(--suave); }
-  .minha-corpo{ display:none; flex-direction:column; gap:8px; padding:0 14px 14px; border-top:1px solid var(--linha); padding-top:12px; }
-  .minha.aberta .minha-corpo{ display:flex; }
+  /* abrir/fechar a marcação: desliza (altura animada), em vez de aparecer/desaparecer de repente */
+  .minha{ transition:border-color .25s ease, box-shadow .25s ease; }
+  .minha-corpo{ display:grid; grid-template-rows:0fr; transition:grid-template-rows .32s cubic-bezier(.2,.8,.2,1); }
+  .minha.aberta .minha-corpo{ grid-template-rows:1fr; }
+  .minha-in{ min-height:0; overflow:hidden; display:flex; flex-direction:column; gap:8px; padding:0 14px; border-top:0 solid transparent; opacity:0; transition:padding .32s cubic-bezier(.2,.8,.2,1), opacity .25s ease, border-color .25s ease; }
+  .minha.aberta .minha-in{ padding:12px 14px 14px; border-top:1px solid var(--linha); opacity:1; }
+  .minha-cab .seta{ transition:color .2s ease; } .minha-cab:hover .seta{ color:var(--ac); }
+  .minha.aberta{ box-shadow:0 6px 18px rgba(31,28,26,.08); }
   .minha-prop{ margin:0 14px 12px; background:#F3E6EA; border-radius:10px; padding:10px 12px; display:flex; flex-direction:column; gap:8px; }
   .estado{ display:inline-block; border-radius:999px; padding:3px 10px; font-size:12px; font-weight:800; }
   .e-pendente{ background:#FFF3DF; color:#8A5A10; } .e-confirmada{ background:var(--verde-f); color:var(--verde); } .e-cancelada{ background:#F4E7E7; color:#8A2A2A; } .e-proposta{ background:#F3E6EA; color:var(--ac); }
@@ -268,7 +274,7 @@
   .lb.sai{ animation:aFadeOut .2s ease both; } .lb.sai img{ animation:aZoomOut .2s ease both; }
   .fundo-folha{ animation:aFade .25s ease both; }
   @media (min-width: 861px){ .painel.entra{ animation:aZoom .3s cubic-bezier(.2,.8,.2,1); } }   /* só no computador: no telemóvel a folha já desliza (e a animação não pode prender a posição) */
-  .minha.aberta .minha-corpo{ animation:aAbre .25s ease both; }
+
   .minha-prop, #minhas .msg{ animation:aAbre .3s ease both; }
   .cat-grelha.primeira .cat-card, #minhas.primeira .minha{ animation:aZoom .35s cubic-bezier(.2,.8,.2,1) both; }
   .cat-grelha.primeira .cat-card:nth-child(2){ animation-delay:.05s; } .cat-grelha.primeira .cat-card:nth-child(3){ animation-delay:.1s; } .cat-grelha.primeira .cat-card:nth-child(n+4){ animation-delay:.15s; }
@@ -279,6 +285,20 @@
   .hora.on, .dia.on{ animation:aPop .28s ease both; }
   #passoDia:not(.hide), #passoHora:not(.hide), #passoDados:not(.hide), .hora-int{ animation:aAbre .28s ease both; }
   @media (prefers-reduced-motion: reduce){ *, *::before, *::after{ animation:none !important; transition:none !important; } }
+
+  /* ---------- reação ao toque/clique em todos os botões ---------- */
+  button, a.rede, .topo-acoes a{ -webkit-tap-highlight-color:transparent; }
+  button:not(:disabled){ cursor:pointer; transition:transform .12s ease, background-color .18s ease, border-color .18s ease, color .18s ease, box-shadow .18s ease, filter .18s ease; }
+  button:not(:disabled):active, a.rede:active, .topo-acoes a:active{ transform:scale(.96); }
+  .btn-ac:not(:disabled):hover, .pill:not(:disabled):hover, .vaga-bt:hover{ filter:brightness(1.08); box-shadow:0 4px 12px rgba(0,0,0,.14); }
+  .btn-ac:not(:disabled):active, .pill:not(:disabled):active{ filter:brightness(.92); box-shadow:none; }
+  .btn-sec:not(:disabled):hover, .prof-b:not(.on):hover, .dia:not(:disabled):not(.on):hover, .hora:not(:disabled):not(.on):hover, .per:not(:disabled):not(.on):hover{ border-color:var(--ac); color:var(--ac); }
+  .esc-mais:hover{ background:color-mix(in srgb, var(--ac) 8%, #fff); } .esc-x:hover{ background:#F4E7E7; color:#8A2A2A; }
+  .sinal-bts button:hover{ background:#DDF0EC; } .sinal-bts button.f:hover{ filter:brightness(1.1); }
+  .sub-cab button:hover, .fechar-folha:hover{ background:var(--fundo); }
+  .lnk-off:hover, .lnk-in:hover{ color:var(--ac); }
+  button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible{ outline:2.5px solid var(--ac); outline-offset:2px; }
+  @media (prefers-reduced-motion: reduce){ button:active, a.rede:active{ transform:none !important; } }
 </style>
 </head>
 <body>
@@ -923,10 +943,10 @@
           if(r.sinal_estado === 'pago') h += '<div class="sinal ok"><b style="color:var(--verde);">✅ Sinal de ' + sv + ' recebido pela clínica</b><small>' + REGRA_SINAL + '</small></div>';
           else { var ate = r.sinal_ate ? new Date(r.sinal_ate) : null, ateTx = ate ? (ate.toDateString() === new Date().toDateString() ? ('hoje às ' + String(ate.getHours()).padStart(2, '0') + 'h' + String(ate.getMinutes()).padStart(2, '0')) : (DIAS_C[ate.getDay()] + ' ' + ate.getDate() + ' ' + MESES[ate.getMonth()] + ' às ' + String(ate.getHours()).padStart(2, '0') + 'h' + String(ate.getMinutes()).padStart(2, '0'))) : '';
             h += '<div class="sinal"><div>💶 <b>Sinal por MB WAY</b>' + (ateTx ? (' · até ' + esc(ateTx)) : '') + '</div><div><b class="v">' + sv + '</b> para o número <b>' + esc(sc ? numTxt(sc.numero) : '') + '</b></div>'
-              + (r.sinal_codigo ? ('<div>Na mensagem do MB WAY escreva: <b style="font-size:17px;letter-spacing:.5px;">' + esc(r.sinal_codigo) + '</b></div>') : '')
+              + (r.sinal_codigo ? ('<div>Na mensagem do MB WAY escreva: <b style="font-size:17px;letter-spacing:.5px;white-space:nowrap;">' + esc(r.sinal_codigo) + '</b></div>') : '')
               + (r.sinal_estado === 'avisou' ? '<div style="font-weight:700;">⏳ Disse que já pagou. A clínica vai confirmar.</div>' : ('<div class="sinal-bts">' + (sc ? ('<button type="button" data-ac="copnum" data-id="' + esc(x.id) + '">📋 Copiar número</button>') : '') + '<button type="button" data-ac="copval" data-id="' + esc(x.id) + '">📋 Copiar valor</button>' + (r.sinal_codigo ? ('<button type="button" data-ac="copcod" data-id="' + esc(x.id) + '">📋 Copiar código</button>') : '') + '<button type="button" class="f" data-ac="sinalpago" data-id="' + esc(x.id) + '">Já paguei</button></div>'))
               + '<small>Na app MB WAY: Enviar dinheiro › número acima › valor' + (r.sinal_codigo ? ' › na mensagem, o código' : '') + ' (assim a clínica sabe que o pagamento é seu, mesmo que pague de outra conta). ' + REGRA_SINAL + '</small></div>'; } }
-        h += '<div class="minha-corpo">';
+        h += '<div class="minha-corpo"><div class="minha-in">';
         if(r.profissional && nomeProf(r.profissional)) h += '<div>👤 Com <b>' + esc(nomeProf(r.profissional)) + '</b></div>';
         if(+r.desconto) h += '<div>🎁 Desconto de <b>' + (+r.desconto) + '%</b> oferecido pelo salão</div>';
         if(r.estado === 'cancelada') h += '<div style="font-weight:700;color:#8A2A2A;">🚫 Esta marcação foi cancelada. Se quiser, faça uma nova marcação na lista de serviços.</div>';
@@ -935,7 +955,7 @@
           h += pushOn ? '<div style="font-size:13px;color:var(--verde);font-weight:700;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">🔔 Notificações ligadas <button type="button" class="lnk-off" data-ac="pushoff" data-id="' + esc(x.id) + '">Desligar</button></div>' : '<button type="button" class="btn-sec" data-ac="push" data-id="' + esc(x.id) + '">🔔 Avisar-me por notificação</button>';
           h += '<div style="display:flex;gap:8px;flex-wrap:wrap;"><button type="button" class="btn-sec" data-ac="reag" data-id="' + esc(x.id) + '" style="flex:1;">📅 Mudar dia/hora</button><button type="button" class="btn-sec" data-ac="cancelar" data-id="' + esc(x.id) + '" style="flex:1;color:#8A2A2A;">Já não vou</button></div>';
         }
-        return h + '</div></div>';
+        return h + '</div></div></div>';
       }).join('') + (nova ? ('<div class="msg ok">' + (nova === 'canc' ? 'Marcação cancelada ✓ O salão já foi avisado e a hora ficou livre.' : nova === 'reag' ? 'Nova hora enviada ✓ O salão vai confirmar a mudança.' : (pushLigado() ? 'Pedido enviado ✓ O salão vai confirmar — recebe a resposta por notificação.' : 'Pedido enviado ✓ O salão vai confirmar. Abra a marcação e ligue as notificações para saber a resposta.')) + '</div>') : '');
       if(_novoHtml === _minhasHtml) return;   // nada mudou: não volta a desenhar
       _minhasHtml = _novoHtml; $('minhas').classList.toggle('primeira', _primeiraVez); $('minhas').innerHTML = _novoHtml;

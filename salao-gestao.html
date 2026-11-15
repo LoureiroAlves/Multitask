@@ -261,6 +261,29 @@
   .login{ max-width:380px; margin:60px auto; background:#fff; border-radius:16px; padding:24px; display:flex; flex-direction:column; gap:10px; }
   .toast{ position:fixed; left:50%; bottom:22px; transform:translateX(-50%); background:var(--ink); color:#fff; padding:11px 18px; border-radius:10px; font-weight:700; z-index:60; }
   @media (max-width: 760px){ .serv-linha{ grid-template-columns:1fr 1fr; } .grelha2{ grid-template-columns:1fr; } .hor-linha{ grid-template-columns:1fr 1fr; } .barra, .corpo, .pag{ padding-left:14px; padding-right:14px; } }
+
+  /* ---------- reação ao toque/clique em todos os botões (nenhum fica "morto") ---------- */
+  button, a.btn, a.btn-ac, label.chk-l, .mod-chip, .ig-mod, .ban-cor{ -webkit-tap-highlight-color:transparent; }
+  button:not(:disabled){ cursor:pointer; transition:transform .12s ease, background-color .18s ease, border-color .18s ease, color .18s ease, box-shadow .18s ease, filter .18s ease, opacity .18s ease; }
+  button:not(:disabled):active, a.btn:active, a.btn-ac:active{ transform:scale(.96); }
+  button:disabled{ opacity:.45; cursor:not-allowed; }
+  .btn:not(:disabled):hover, .ico:not(:disabled):hover{ border-color:var(--ac); color:var(--ac); background:#FCF8FA; }
+  .btn-ac:not(:disabled):hover, .btn-ok:not(:disabled):hover{ filter:brightness(1.1); box-shadow:0 4px 12px rgba(0,0,0,.14); }
+  .btn-ac:not(:disabled):active, .btn-ok:not(:disabled):active{ filter:brightness(.92); box-shadow:none; }
+  .btn-lnk:not(:disabled):hover{ background:#F7EEF1; border-radius:8px; }
+  .btn-perigo:not(:disabled):hover{ background:#FBF0F0; border-color:#A33; }
+  .tab:not(.on):hover{ background:rgba(255,255,255,.16); }
+  .tab:active{ transform:scale(.95); }
+  .vista button:not(.on):hover{ background:#F7EEF1; }
+  .mod-chip:not(:disabled):hover, .ig-mod:not(.on):hover{ border-color:var(--ac); }
+  .ban-cor:hover{ transform:scale(1.08); }
+  .bloco:not(:disabled):hover{ filter:brightness(.97); box-shadow:0 3px 10px rgba(0,0,0,.12); z-index:3; }
+  .bloco:not(:disabled):active{ transform:scale(.98); }
+  .pedido{ transition:box-shadow .18s ease; } .pedido:hover{ box-shadow:0 3px 12px rgba(0,0,0,.08); }
+  .foto-add:hover{ border-color:var(--ac); color:var(--ac); }
+  label.chk-l{ cursor:pointer; }
+  button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible{ outline:2.5px solid var(--ac); outline-offset:2px; }
+  @media (prefers-reduced-motion: reduce){ button, .bloco{ transition:none !important; } button:active{ transform:none !important; } }
 </style>
 </head>
 <body>
