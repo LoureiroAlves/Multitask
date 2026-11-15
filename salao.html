@@ -154,6 +154,15 @@
   .fid-num{ position:absolute; top:-7px; right:-9px; min-width:22px; height:22px; padding:0 6px; border-radius:999px; background:#C05A3A; color:#fff; font:800 11px/22px system-ui, sans-serif; text-align:center; box-shadow:0 2px 6px rgba(0,0,0,.25); pointer-events:none; }
   .fid-num.pr{ background:#2E9B57; }
   .sub .fid{ margin:16px 18px 20px; }
+  .pol{ max-width:520px; margin:22px auto 6px; background:#fff; border:1px solid var(--borda); border-top:3px solid var(--ac); border-radius:14px; padding:12px 16px 8px; }
+  .pol-cab{ display:flex; align-items:center; gap:8px; justify-content:center; margin-bottom:4px; }
+  .pol-cab h2{ margin:0; font-size:13px; font-weight:800; color:var(--suave); letter-spacing:.8px; text-transform:uppercase; }
+  .pol-ico{ font-size:14px; }
+  .pol ul{ list-style:none; margin:0; padding:0; }
+  .pol li{ display:flex; gap:8px; align-items:flex-start; padding:4px 0; }
+  .pol li span{ flex:0 0 18px; font-size:13px; line-height:1.4; text-align:center; }
+  .pol li p{ margin:0; font-size:13px; line-height:1.4; color:#5E5650; }
+  @media (max-width: 860px){ .pol{ margin:18px 0 6px; padding:12px 14px 8px; } }
   .consent input{ width:20px; height:20px; flex:0 0 auto; margin:0; accent-color:var(--ac); }
   .campo input, .campo textarea{ border:1.5px solid var(--borda); border-radius:10px; padding:12px; font-size:16px; background:#fff; color:var(--ink); }
   .nota{ font-size:12px; color:var(--suave); }
@@ -329,7 +338,7 @@
     <div id="servicos"><div class="vazio">A carregar…</div></div>
     <section class="grupo hide" id="secGaleria"><h2>Trabalhos</h2><div class="galeria" id="galeria"></div></section>
     <section class="grupo hide" id="secMapa"><h2>Onde estamos</h2><div id="mapaBloco"></div></section>
-    <div class="nota" id="politica"></div>
+    <section class="pol hide" id="politica" aria-label="Política de marcação e cancelamento"></section>
   </div>
   <aside class="painel sem-serv" id="painel" aria-label="Pedir marcação">
     <button type="button" class="fechar-folha" id="fecharFolha" aria-label="Fechar">✕</button>
@@ -512,10 +521,18 @@
     $('acoesSalao').innerHTML = ac;
     if($('btnFid')) $('btnFid').onclick = function(e){ e.preventDefault(); abrirFidel(); };
     try{ pintarFidel(); }catch(e){}
-    $('politica').textContent = SAL.politica || '';
+    pintarPolitica2();
     pintarFotos();
   }
   // ---------- fotos do salão (cada salão tem as suas, em config.salao) ----------
+  // política de marcação e cancelamento: cartão ao centro, com cada regra numa linha
+  function pintarPolitica2(){ var t = String(SAL.politica || '').trim(), el = $('politica');
+    if(!t || GRUPO_LISTA){ el.classList.add('hide'); el.innerHTML = ''; return; }
+    var frases = t.replace(/([.!?])\s+(?=[A-ZÁÉÍÓÚÂÊÔÃÕÇ0-9])/g, '$1\n').split(/\n+/).map(function(x){ return x.trim(); }).filter(Boolean);
+    function ico(f){ var x = f.toLowerCase(); return /atras|minut|cheg|antes /.test(x) ? '⏰' : /falt|sem avis/.test(x) ? '⚠️' : /cancel|desmarc|alter|mud|remarc/.test(x) ? '📅' : /sinal|pag|mb ?way|€/.test(x) ? '💶' : /obrigad|compreens/.test(x) ? '💛' : '✔️'; }
+    el.innerHTML = '<div class="pol-cab"><span class="pol-ico">📋</span><h2>Política de cancelamento</h2></div>'
+      + '<ul>' + frases.map(function(f){ return '<li><span>' + ico(f) + '</span><p>' + esc(f) + '</p></li>'; }).join('') + '</ul>';
+    el.classList.remove('hide'); }
   function urlOk(u){ return typeof u === 'string' && /^https:\/\//.test(u); }
   function pintarFotos(){
     var fu = SAL.fundo && urlOk(SAL.fundo.url) ? SAL.fundo : null, tp = document.querySelector('.topo'), velho = tp.querySelector('.topo-fundo'); if(velho) velho.remove();
