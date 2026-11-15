@@ -404,7 +404,7 @@
         <div id="cpPromoAtual" class="hide"></div>
       </div>
     </div>
-    <div class="bloco-sec"><h3>Campanhas enviadas</h3><div id="cpHist"><div style="color:var(--suave);">A carregar…</div></div></div>
+    <div class="bloco-sec"><h3>Campanhas enviadas</h3><div style="font-size:12px;color:var(--suave);margin:-4px 0 8px;">Ficam aqui 30 dias e depois são apagadas. Quando uma promoção acaba, o banner sai da página e as imagens são apagadas.</div><div id="cpHist"><div style="color:var(--suave);">A carregar…</div></div></div>
   </section>
 
   <!-- EQUIPA -->
@@ -512,6 +512,7 @@
     document.title = (SAL.nome || NEG.nome) + ' · Gestão · 4 Trevo';
     if(/^https:\/\//.test(String(SAL.logo || ''))){ try{ var ati = document.querySelector('link[rel="apple-touch-icon"]'); if(ati) ati.href = (SAL.logoQ && SAL.logoQde === SAL.logo) ? SAL.logoQ : SAL.logo; }catch(e){} setTimeout(garantirLogoQ, 1500); }
     if(params.get('d')) dataSel = dDe(params.get('d'));
+    setTimeout(limparPromosVelhas, 2500);
     var t = (location.hash || '').replace('#', ''); if(['servicos','pagina','horario','equipa','clientes','relatorios','campanhas'].indexOf(t) >= 0) irPara(t);
     await carregarRes();
     if(params.get('rid')){ var x = RES.filter(function(z){ return z.id === params.get('rid'); })[0]; if(x) abrirDetalhe(x); }
@@ -883,7 +884,7 @@
     var ban = await publicarBanner();
     await registarCamp('email', l.length, l.length);
     var tit = $('cpTit').value.trim() || ('Novidades · ' + (SAL.nome || NEG.nome));
-    var corpo = textoPara({ nome:'' }, $('cpTxt').value) + (ban ? ('\n\nVer a promoção: ' + ban) : '') + ($('cpLink').checked ? ('\n\n' + comOrigem(linkPublico(), 'email')) : '') + '\n\n' + (SAL.nome || NEG.nome) + '\n\n—\nRecebe este email porque aceitou receber novidades de ' + (SAL.nome || NEG.nome) + '. Se não quiser receber mais, responda a este email a dizer.';
+    var corpo = textoPara({ nome:'' }, $('cpTxt').value) + (ban ? ('\n\nVer a promoção e marcar: ' + comOrigem(linkPublico(), 'email') + '&promo=1') : ($('cpLink').checked ? ('\n\nMarcar: ' + comOrigem(linkPublico(), 'email')) : '')) + '\n\n' + (SAL.nome || NEG.nome) + '\n\n—\nRecebe este email porque aceitou receber novidades de ' + (SAL.nome || NEG.nome) + '. Se não quiser receber mais, responda a este email a dizer.';
     var grupos = []; for(var i = 0; i < l.length; i += 40) grupos.push(l.slice(i, i + 40));
     function mailto(g){ return 'mailto:?bcc=' + g.map(function(d){ return encodeURIComponent(d.email); }).join(',') + '&subject=' + encodeURIComponent(tit) + '&body=' + encodeURIComponent(corpo); }
     var f = modal('<h3>✉️ Enviar por email</h3><div style="font-size:14px;color:var(--suave);">Abre o seu programa de email com a mensagem já escrita e os ' + l.length + ' cliente(s) em <b>Bcc</b> (escondidos — ninguém vê o email dos outros). Só tem de carregar em enviar.</div>'
@@ -1370,7 +1371,8 @@
     var url, urlL; try{ url = await sobe($('cpBanPrev'), 'banner'); urlL = await sobe($('cpBanPrevL'), 'banner-largo'); }catch(er){ toast('Não foi possível guardar o banner: ' + (er.message || er)); return null; }
     var antigo = SAL.promo && SAL.promo.img, antigoL = SAL.promo && SAL.promo.imgLargo;
     var promo = { id:Date.now().toString(36), img:url, imgLargo:urlL, titulo:$('cpTit').value.trim() || 'Novidade', texto:textoPara({ nome:'' }, $('cpTxt').value), ate:$('cpBanAte').value || iso(new Date(Date.now() + 14 * 86400000)), cat:$('cpBanCat').value || null, foto:BAN.foto || null, desconto:descEscolhido() || null, criado:new Date().toISOString() };
-    var e = await guardarCfg(function(c){ c.salao = Object.assign({}, c.salao || {}, { promo:promo }); });
+    var e = await guardarCfg(function(c){ var nm = Object.assign({}, (c.salao || {}).promosNomes || {}); nm[promo.id] = { titulo:promo.titulo, desconto:promo.desconto || null }; var ks = Object.keys(nm); ks.slice(0, Math.max(0, ks.length - 60)).forEach(function(k){ delete nm[k]; });
+      c.salao = Object.assign({}, c.salao || {}, { promo:promo, promosNomes:nm }); });
     if(e){ toast('Erro ao pôr o banner na página: ' + e.message); return url; }
     if(antigo && antigo !== url) apagarFicheiro(antigo); if(antigoL && antigoL !== urlL) apagarFicheiro(antigoL);
     BAN.ultimo = { chave:chave, url:url }; pintarPromoAtual(); return url;
@@ -1534,7 +1536,7 @@
   var RELRES = null, RELCLI = null, relMetrica = 'n';
   var PROMOS = {};   // id da promoção → { titulo, desconto } (das campanhas e da promoção atual)
   function nomePromo(id){ var p = PROMOS[id] || ((SAL.promo && SAL.promo.id === id) ? SAL.promo : null); return p ? ((p.titulo || 'Promoção') + (p.desconto ? (' −' + p.desconto + '%') : '')) : 'Promoção'; }
-  async function carregarPromos(){ var h = await sb.from('salao_campanhas').select('titulo,promo_id,desconto,criado_em').eq('negocio_id', NEG.id).not('promo_id', 'is', null).order('criado_em');
+  async function carregarPromos(){ var pn = SAL.promosNomes || {}; Object.keys(pn).forEach(function(k){ PROMOS[k] = Object.assign({}, PROMOS[k] || {}, pn[k]); }); var h = await sb.from('salao_campanhas').select('titulo,promo_id,desconto,criado_em').eq('negocio_id', NEG.id).not('promo_id', 'is', null).order('criado_em');
     if(!h.error) (h.data || []).forEach(function(c){ PROMOS[c.promo_id] = { titulo:c.titulo, desconto:c.desconto, criado:c.criado_em }; });
     if(SAL.promo && SAL.promo.id) PROMOS[SAL.promo.id] = Object.assign({}, PROMOS[SAL.promo.id] || {}, { titulo:SAL.promo.titulo, desconto:SAL.promo.desconto }); }
   function valorDe(r){ if(+r.valor > 0) return +r.valor; var b = +r.valor_base > 0 ? +r.valor_base : precoServ(r.servico); return b == null ? 0 : comDesc(b, r.desconto); }
@@ -2316,6 +2318,28 @@
     if(!/^https:\/\//.test(String(SAL.logo || '')) || (SAL.logoQ && SAL.logoQde === SAL.logo)) return;
     try{ var q = await gerarLogoQ(SAL.logo), antigo = SAL.logoQ, de = SAL.logo;
       var e = await guardarCfg(function(c){ c.salao = Object.assign({}, c.salao || {}, { logoQ:q, logoQde:de }); }); if(!e && antigo && antigo !== q) apagarFicheiro(antigo); }catch(e){}
+  }
+  // ---------- limpeza: promoções acabadas e campanhas antigas não ficam guardadas ----------
+  // • banner de uma promoção que já acabou: apaga as imagens e tira-o da página (fica só o nome, para os Relatórios)
+  // • imagens de banners que já não estão em uso (sobras de promoções antigas): apagadas
+  // • registos de campanhas enviadas: apagados 30 dias depois do envio
+  async function limparPromosVelhas(){
+    try{
+      var p = SAL.promo, hoje = iso(new Date());
+      if(p && p.ate && String(p.ate) < hoje){
+        var e = await guardarCfg(function(c){ c.salao = Object.assign({}, c.salao || {}); var nm = Object.assign({}, c.salao.promosNomes || {}); if(p.id) nm[p.id] = { titulo:p.titulo, desconto:p.desconto || null }; c.salao.promosNomes = nm; delete c.salao.promo; });
+        if(!e){ if(p.img) apagarFicheiro(p.img); if(p.imgLargo) apagarFicheiro(p.imgLargo); BAN.ultimo = null; try{ pintarPromoAtual(); }catch(x){} }
+      }
+    }catch(e){}
+    try{
+      var em = [SAL.promo && SAL.promo.img, SAL.promo && SAL.promo.imgLargo].filter(Boolean).map(function(u){ return decodeURIComponent((String(u).split('/storage/v1/object/public/imagens/')[1] || '').split('?')[0]); });
+      var ls = await sb.storage.from('imagens').list(SLUG + '/promo', { limit:1000 });
+      if(!ls.error && ls.data){ var sobra = ls.data.filter(function(f){ return f && f.name && /\.(jpe?g|png|webp)$/i.test(f.name) && em.indexOf(SLUG + '/promo/' + f.name) < 0; }).map(function(f){ return SLUG + '/promo/' + f.name; });
+        if(sobra.length) await sb.storage.from('imagens').remove(sobra); }
+    }catch(e){}
+    try{
+      if(CAMP_OK !== false) await sb.from('salao_campanhas').delete().eq('negocio_id', NEG.id).lt('criado_em', new Date(Date.now() - 30 * 86400000).toISOString());
+    }catch(e){}
   }
   function apagarFicheiro(url){ try{ var m = String(url || '').split('/storage/v1/object/public/imagens/')[1]; if(m && m.indexOf(SLUG + '/') === 0) sb.storage.from('imagens').remove([decodeURIComponent(m.split('?')[0])]); }catch(e){} }
   function pintarFotos(){
