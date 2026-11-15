@@ -154,15 +154,19 @@
   .fid-num{ position:absolute; top:-7px; right:-9px; min-width:22px; height:22px; padding:0 6px; border-radius:999px; background:#C05A3A; color:#fff; font:800 11px/22px system-ui, sans-serif; text-align:center; box-shadow:0 2px 6px rgba(0,0,0,.25); pointer-events:none; }
   .fid-num.pr{ background:#2E9B57; }
   .sub .fid{ margin:16px 18px 20px; }
-  .pol{ max-width:520px; margin:22px auto 6px; background:#fff; border:1px solid var(--borda); border-top:3px solid var(--ac); border-radius:14px; padding:12px 16px 8px; }
-  .pol-cab{ display:flex; align-items:center; gap:8px; justify-content:center; margin-bottom:4px; }
-  .pol-cab h2{ margin:0; font-size:13px; font-weight:800; color:var(--suave); letter-spacing:.8px; text-transform:uppercase; }
-  .pol-ico{ font-size:14px; }
-  .pol ul{ list-style:none; margin:0; padding:0; }
-  .pol li{ display:flex; gap:8px; align-items:flex-start; padding:4px 0; }
+  /* política: fechada (só um botão pequeno); abre ao tocar */
+  .pol{ max-width:520px; margin:22px auto 6px; display:flex; flex-direction:column; align-items:center; }
+  .pol-bt{ display:inline-flex; align-items:center; gap:6px; border:1px solid var(--borda); background:#fff; color:var(--suave); border-radius:999px; padding:7px 14px; font-size:13px; font-weight:700; font-family:inherit; cursor:pointer; }
+  .pol-bt i{ font-style:normal; transition:transform .25s ease; display:inline-block; }
+  .pol.aberta .pol-bt{ color:var(--ac); border-color:var(--ac); } .pol.aberta .pol-bt i{ transform:rotate(180deg); }
+  .pol-corpo{ display:grid; grid-template-rows:0fr; transition:grid-template-rows .3s cubic-bezier(.2,.8,.2,1); width:100%; }
+  .pol.aberta .pol-corpo{ grid-template-rows:1fr; }
+  .pol-in{ min-height:0; overflow:hidden; }
+  .pol ul{ list-style:none; margin:8px 0 0; padding:10px 14px; background:#fff; border:1px solid var(--borda); border-radius:12px; }
+  .pol li{ display:flex; gap:8px; align-items:flex-start; padding:3px 0; }
   .pol li span{ flex:0 0 18px; font-size:13px; line-height:1.4; text-align:center; }
   .pol li p{ margin:0; font-size:13px; line-height:1.4; color:#5E5650; }
-  @media (max-width: 860px){ .pol{ margin:18px 0 6px; padding:12px 14px 8px; } }
+  @media (max-width: 860px){ .pol{ margin:18px 0 6px; } }
   .consent input{ width:20px; height:20px; flex:0 0 auto; margin:0; accent-color:var(--ac); }
   .campo input, .campo textarea{ border:1.5px solid var(--borda); border-radius:10px; padding:12px; font-size:16px; background:#fff; color:var(--ink); }
   .nota{ font-size:12px; color:var(--suave); }
@@ -530,8 +534,11 @@
     if(!t || GRUPO_LISTA){ el.classList.add('hide'); el.innerHTML = ''; return; }
     var frases = t.replace(/([.!?])\s+(?=[A-ZÁÉÍÓÚÂÊÔÃÕÇ0-9])/g, '$1\n').split(/\n+/).map(function(x){ return x.trim(); }).filter(Boolean);
     function ico(f){ var x = f.toLowerCase(); return /atras|minut|cheg|antes /.test(x) ? '⏰' : /falt|sem avis/.test(x) ? '⚠️' : /cancel|desmarc|alter|mud|remarc/.test(x) ? '📅' : /sinal|pag|mb ?way|€/.test(x) ? '💶' : /obrigad|compreens/.test(x) ? '💛' : '✔️'; }
-    el.innerHTML = '<div class="pol-cab"><span class="pol-ico">📋</span><h2>Política de cancelamento</h2></div>'
-      + '<ul>' + frases.map(function(f){ return '<li><span>' + ico(f) + '</span><p>' + esc(f) + '</p></li>'; }).join('') + '</ul>';
+    el.classList.remove('aberta');
+    el.innerHTML = '<button type="button" class="pol-bt" aria-expanded="false">📋 Política de cancelamento <i>▾</i></button>'
+      + '<div class="pol-corpo"><div class="pol-in"><ul>' + frases.map(function(f){ return '<li><span>' + ico(f) + '</span><p>' + esc(f) + '</p></li>'; }).join('') + '</ul></div></div>';
+    el.querySelector('.pol-bt').onclick = function(){ var on = !el.classList.contains('aberta'); el.classList.toggle('aberta', on); this.setAttribute('aria-expanded', on);
+      if(on) setTimeout(function(){ try{ el.scrollIntoView({ behavior:'smooth', block:'nearest' }); }catch(e){} }, 320); };
     el.classList.remove('hide'); }
   function urlOk(u){ return typeof u === 'string' && /^https:\/\//.test(u); }
   function pintarFotos(){
