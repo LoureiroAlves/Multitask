@@ -280,7 +280,10 @@
   .cat-grelha.primeira .cat-card:nth-child(2){ animation-delay:.05s; } .cat-grelha.primeira .cat-card:nth-child(3){ animation-delay:.1s; } .cat-grelha.primeira .cat-card:nth-child(n+4){ animation-delay:.15s; }
   .cat-card{ transition:transform .15s ease, border-color .2s ease, box-shadow .2s ease; }
   .cat-card:hover{ box-shadow:0 6px 18px rgba(31,28,26,.10); }
-  .cat-card:active, .pill:active, .btn-ac:active, .btn-sec:active, .dia:active, .hora:active, .minha-cab:active{ transform:scale(.97); }
+  .cat-card:active, .pill:active, .btn-ac:active, .btn-sec:active, .dia:active, .hora:active{ transform:scale(.97); }
+  /* o cabeçalho da marcação é largo (sobretudo no computador): não encolhe ao carregar — escurece de leve, para o texto não fugir */
+  button.minha-cab:active, button.minha-cab:not(:disabled):active{ transform:none; background:rgba(31,28,26,.05); }
+  .minha-cab{ transition:background-color .15s ease; } .minha-cab:hover{ background:rgba(31,28,26,.025); }
   .pill, .btn-ac, .btn-sec, .dia, .hora{ transition:transform .12s ease, background-color .2s ease, border-color .2s ease, color .2s ease; }
   .hora.on, .dia.on{ animation:aPop .28s ease both; }
   #passoDia:not(.hide), #passoHora:not(.hide), #passoDados:not(.hide), .hora-int{ animation:aAbre .28s ease both; }
