@@ -21,7 +21,7 @@
   /* Multitask — página do cliente de um salão (Beleza e bem-estar). Não é usada pelos restaurantes. */
   :root{ --ac:#8E3653; --ink:#1F1C1A; --suave:#6B625C; --linha:#E6E0DA; --borda:#DDD6D0; --fundo:#F6F4F2; --verde:#3F5A47; --verde-f:#EEF2EE; }
   *{ box-sizing:border-box; }
-  body{ margin:0; background:var(--fundo); color:var(--ink); font-family:Manrope, system-ui, -apple-system, sans-serif; -webkit-text-size-adjust:100%; }
+  body{ margin:0; background:var(--fundo); color:var(--ink); font-family:var(--f-txt, Manrope), system-ui, -apple-system, sans-serif; -webkit-text-size-adjust:100%; }
   button, input, textarea, select{ font-family:inherit; }
   button{ cursor:pointer; }
   a{ color:var(--ac); }
@@ -315,6 +315,57 @@
   .lnk-off:hover, .lnk-in:hover{ color:var(--ac); }
   button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible{ outline:2.5px solid var(--ac); outline-offset:2px; }
   @media (prefers-reduced-motion: reduce){ button:active, a.rede:active{ transform:none !important; } }
+
+  /* =====================================================================
+     TEMAS (a clínica escolhe na Gestão › Página): só mudam o aspeto — letra, fundos, cantos, sombras.
+     A cor principal continua a ser a da clínica. "Clássico" = o aspeto de sempre (sem mudanças).
+     ===================================================================== */
+  .topo h1, .painel h3, .sub-cab h3, .cat-card .ct b, .sub-it .tx > b, .vaga-dia, .resumo .rq, .minha-cab b, .pol-cab h2{ font-family:var(--f-tit, inherit); }
+  html[data-tema]:not([data-tema="classico"]) :is(.cat-card, .minha, .painel, .sub, .promo-ban, .vaga, .fid, .resumo, .local, .vazio, .capas img, .galeria img, .promo-pop .cx, .sinal, .serv, .esc, .pol ul){ border-radius:var(--r-card); }
+  html[data-tema]:not([data-tema="classico"]) :is(.btn-ac, .btn-sec, .hora, .dia, .per, .tempo, .campo input, .campo textarea, .hora-int, .prof-aviso, .minha-prop, .sub-cab button, .vaga-horas span, .fid-est.pr, .sub-it img){ border-radius:var(--r-ctl); }
+  html[data-tema]:not([data-tema="classico"]) :is(.pill, .prof-b, .esc-mais, .vaga-bt, .pol-bt, .sinal-bts button, .topo-acoes a:not(.rede), .vaga-et, .estado, .tag-desc, .cat-promo){ border-radius:var(--r-pill); }
+
+  /* --- Elegante: letra clássica (com serifa) nos títulos, fundo creme, cantos discretos, botões sóbrios --- */
+  html[data-tema="elegante"]{ --fundo:#FAF7F2; --linha:#EDE6DC; --borda:#E2D8CB; --suave:#7A6E62; --ink:#2A2420; --r-card:8px; --r-ctl:6px; --r-pill:6px; }
+  html[data-tema="elegante"] .topo h1{ font-weight:600; font-size:36px; letter-spacing:.3px; }
+  html[data-tema="elegante"] :is(.painel h3, .sub-cab h3){ font-weight:600; font-size:24px; }
+  html[data-tema="elegante"] :is(.cat-card .ct b, .sub-it .tx > b){ font-weight:700; font-size:19px; }
+  html[data-tema="elegante"] .minha-cab b{ font-weight:700; font-size:17px; }
+  html[data-tema="elegante"] .grupo h2{ letter-spacing:2.4px; font-weight:700; font-size:12px; }
+  html[data-tema="elegante"] :is(.btn-ac, .pill, .vaga-bt){ text-transform:uppercase; letter-spacing:1.1px; font-size:12.5px; }
+  html[data-tema="elegante"] :is(.cat-card, .minha, .painel, .promo-ban){ box-shadow:0 1px 3px rgba(42,36,32,.06); border-color:var(--borda); }
+  html[data-tema="elegante"] .cat-card:hover{ box-shadow:0 8px 22px rgba(42,36,32,.08); }
+
+  /* --- Moderno: limpo, fundo branco, contornos finos sem sombras, títulos firmes --- */
+  html[data-tema="moderno"]{ --fundo:#FFFFFF; --linha:#EEEEEE; --borda:#E4E4E4; --suave:#6E6E73; --ink:#111113; --r-card:12px; --r-ctl:9px; --r-pill:9px; }
+  html[data-tema="moderno"] .topo h1{ font-weight:800; letter-spacing:-.6px; font-size:32px; }
+  html[data-tema="moderno"] .grupo h2{ color:var(--ink); letter-spacing:.2px; text-transform:none; font-size:20px; font-weight:800; }
+  html[data-tema="moderno"] :is(.cat-card, .minha, .painel, .promo-ban, .local, .vazio){ box-shadow:none !important; border:1px solid var(--borda); }
+  html[data-tema="moderno"] .cat-card:hover{ border-color:var(--ink); }
+  html[data-tema="moderno"] :is(.cat-card .ct b, .sub-it .tx > b){ letter-spacing:-.2px; }
+
+  /* --- Suave: letra redonda, fundo areia, cantos bem redondos, sombras macias --- */
+  html[data-tema="suave"]{ --fundo:#F4EFE8; --linha:#E9E1D6; --borda:#E2D8CA; --suave:#7B7166; --ink:#2E2925; --r-card:24px; --r-ctl:16px; --r-pill:999px; }
+  html[data-tema="suave"] .topo h1{ font-weight:800; font-size:30px; }
+  html[data-tema="suave"] :is(.cat-card, .minha, .painel, .promo-ban, .local){ box-shadow:0 10px 28px rgba(60,45,30,.07); border-color:transparent; }
+  html[data-tema="suave"] .grupo h2{ letter-spacing:1px; }
+  html[data-tema="suave"] .topo{ border-radius:0 0 28px 28px; }
+
+  /* --- Noite: fundo escuro e elegante (os cartões brancos ficam em cinzento-escuro) --- */
+  html[data-tema="noite"]{ --fundo:#151316; --linha:#2E2A30; --borda:#3A353C; --suave:#B3AAB0; --ink:#F3EFF1; --verde-f:#1F2A22; --verde:#9CC9A6; --r-card:14px; --r-ctl:10px; --r-pill:999px; color-scheme:dark; }
+  html[data-tema="noite"] :is(.cat-card .ct, .minha, .painel, .sub, .sub-cab, .serv, .resumo, .local, .vazio, .pol ul, .pol-bt, .fid, .dia, .hora, .per, .btn-sec, .prof-b, .esc-mais, .tempo, .esc-x, .campo input, .campo textarea, .sub-cab button, .fechar-folha, .promo-pop .cx, .barra){ background:#211E23 !important; color:var(--ink); border-color:var(--borda) !important; }
+  html[data-tema="noite"] :is(.esc, .hora-int, .pol-tx, .fid-barra){ background:#2A262C !important; color:var(--ink); }
+  html[data-tema="noite"] :is(.dia:disabled, .hora:disabled, .per:disabled){ opacity:.35; }
+  html[data-tema="noite"] :is(.dia.on, .hora.on, .per.on, .prof-b.on){ background:var(--ac) !important; color:#fff !important; border-color:var(--ac) !important; }
+  html[data-tema="noite"] .tempo{ color:#fff; } html[data-tema="noite"] .tempo span{ color:var(--suave); }
+  html[data-tema="noite"] :is(.pol li p, .sub-it .tx span, .minha-cab .q){ color:var(--suave); }
+  html[data-tema="noite"] .barra{ background:rgba(21,19,22,.96) !important; }
+  html[data-tema="noite"] .cat-card{ border-color:var(--borda); background:#211E23; }
+  html[data-tema="noite"] .sinal{ background:#14302B; border-color:#2FA08F; color:#D7F1EC; } html[data-tema="noite"] .sinal b.v{ color:#7FE0D0; }
+  html[data-tema="noite"] .sinal-bts button{ background:transparent; color:#7FE0D0; border-color:#2FA08F; } html[data-tema="noite"] .sinal small{ color:#A9CFC8; }
+  html[data-tema="noite"] .e-pendente{ background:#3A2E14; color:#F2CF84; } html[data-tema="noite"] .e-confirmada{ background:#1F2A22; color:#9CC9A6; }
+  html[data-tema="noite"] .fid-sel i:not(.on){ border-color:var(--borda); }
+  @media (prefers-reduced-motion: reduce){ html[data-tema] *{ transition:none !important; } }
 </style>
 </head>
 <body>
@@ -502,10 +553,31 @@
       }).catch(function(){ $('servicos').innerHTML = '<div class="vazio">Sem ligação. Tente outra vez daqui a pouco.</div>'; });
   }
 
+  // ---------- tema e tipo de letra (a clínica escolhe na Gestão › Página; ?tema=…&letra=… só para pré-visualizar) ----------
+  var LETRAS = {
+    manrope:{ txt:'Manrope', tit:'Manrope', serif:false, url:'Manrope:wght@400;500;600;700;800' },
+    lato_cormorant:{ txt:'Lato', tit:'Cormorant Garamond', serif:true, url:'Lato:wght@400;700;900&family=Cormorant+Garamond:wght@500;600;700' },
+    lato_playfair:{ txt:'Lato', tit:'Playfair Display', serif:true, url:'Lato:wght@400;700;900&family=Playfair+Display:wght@500;600;700' },
+    dmsans:{ txt:'DM Sans', tit:'DM Sans', url:'DM+Sans:wght@400;500;700;800' },
+    nunito:{ txt:'Nunito', tit:'Nunito', url:'Nunito:wght@400;600;700;800;900' },
+    poppins:{ txt:'Poppins', tit:'Poppins', url:'Poppins:wght@400;500;600;700;800' },
+    jost:{ txt:'Jost', tit:'Jost', url:'Jost:wght@400;500;600;700' }
+  };
+  var LETRA_DO_TEMA = { classico:'manrope', elegante:'lato_cormorant', moderno:'dmsans', suave:'nunito', noite:'lato_playfair' };
+  function aplicarTema(){
+    var tema = String(params.get('tema') || SAL.tema || 'classico'); if(!LETRA_DO_TEMA[tema]) tema = 'classico';
+    var lk = String(params.get('letra') || SAL.letra || ''); if(!LETRAS[lk]) lk = LETRA_DO_TEMA[tema];
+    var L = LETRAS[lk], root = document.documentElement;
+    root.setAttribute('data-tema', tema);
+    root.style.setProperty('--f-txt', "'" + L.txt + "', system-ui, -apple-system, sans-serif"); root.style.setProperty('--f-tit', "'" + L.tit + "', " + (L.serif ? 'Georgia, "Times New Roman", serif' : "system-ui, -apple-system, sans-serif"));
+    if(lk !== 'manrope' && !document.getElementById('fonteTema_' + lk)){ var l = document.createElement('link'); l.rel = 'stylesheet'; l.id = 'fonteTema_' + lk; l.href = 'https://fonts.googleapis.com/css2?family=' + L.url + '&display=swap'; document.head.appendChild(l); }
+    if(tema === 'noite'){ var mt = document.querySelector('meta[name="theme-color"]'); if(mt) mt.content = '#151316'; }
+  }
   function pintarTopo(){
+    try{ aplicarTema(); }catch(e){}
     var cor = /^#[0-9a-fA-F]{6}$/.test(SAL.cor || '') ? SAL.cor : '#8E3653';
     document.documentElement.style.setProperty('--ac', cor);
-    var mt = document.querySelector('meta[name="theme-color"]'); if(mt) mt.content = cor;
+    var mt = document.querySelector('meta[name="theme-color"]'); if(mt && document.documentElement.getAttribute('data-tema') !== 'noite') mt.content = cor;
     var nome = SAL.nome || NEG.nome || 'Salão'; document.title = nome + ' · Marcações';
     var _at = document.querySelector('meta[name="apple-mobile-web-app-title"]') || document.head.appendChild(Object.assign(document.createElement('meta'), { name:'apple-mobile-web-app-title' })); _at.content = nome.slice(0, 24);
     $('nomeSalao').textContent = nome;

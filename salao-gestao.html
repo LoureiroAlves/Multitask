@@ -238,6 +238,15 @@
   .eq-chips label:has(input:checked){ border-color:var(--ac); background:#F7EEF1; }
   .eq-rot{ font-size:12px; font-weight:800; color:var(--suave); text-transform:uppercase; letter-spacing:1px; }
   .bloco .prof{ font-weight:800; }
+  .temas{ display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:10px; }
+  .tema{ border:2px solid var(--borda); background:#fff; border-radius:14px; padding:8px; display:flex; flex-direction:column; gap:6px; text-align:left; font-family:inherit; }
+  .tema.on{ border-color:var(--ac); box-shadow:0 0 0 3px color-mix(in srgb, var(--ac) 20%, transparent); }
+  .tema .mini{ height:118px; border-radius:9px; overflow:hidden; display:flex; flex-direction:column; border:1px solid rgba(0,0,0,.06); }
+  .tema .mini .t{ color:#fff; padding:9px 10px 8px; font-size:15px; line-height:1.1; }
+  .tema .mini .c{ flex:1; padding:8px; display:flex; gap:6px; }
+  .tema .mini .k{ flex:1; display:flex; flex-direction:column; overflow:hidden; }
+  .tema .mini .k i{ flex:1; } .tema .mini .k b{ font-size:10px; padding:4px 5px; }
+  .tema .nm{ font-weight:800; font-size:14px; } .tema .ds{ font-size:12px; color:var(--suave); line-height:1.3; }
   .serv-opcoes{ display:flex; flex-direction:column; gap:6px; align-items:flex-start; } .serv-op{ align-self:stretch; }
   .serv-op-tit{ font-size:13px; font-weight:800; } .serv-op-tit span{ font-weight:500; color:var(--suave); }
   .serv-op{ display:flex; gap:8px; align-items:end; flex-wrap:wrap; background:var(--fundo, #F6F4F2); border-radius:10px; padding:8px 10px; }
@@ -451,6 +460,13 @@
   <section id="tPagina" class="pag hide">
     <h2>Página do salão</h2>
     <p class="sub">O que os clientes veem no topo da página e a cor do salão.</p>
+    <div class="bloco-sec" style="margin-bottom:16px;"><h3>🎨 Tema da página</h3><p class="sub" style="margin:0 0 10px;">Muda o aspeto da página dos clientes num instante: letra, fundos, cantos e sombras. A cor do salão mantém-se. Pode mudar quando quiser.</p>
+      <div class="temas" id="pgTemas"></div>
+      <div class="fid-campos" style="margin-top:12px;align-items:center;">
+        <div class="campo" style="flex:0 1 280px;"><label for="pgLetra">Tipo de letra</label><select id="pgLetra"></select></div>
+        <div id="pgLetraEx" style="flex:1;min-width:200px;font-size:15px;"></div>
+        <a class="btn" id="pgTemaVer" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;text-decoration:none;">👁️ Ver como fica ↗</a>
+      </div></div>
     <div class="grelha2">
       <div class="campo"><label for="pgNome">Nome do salão</label><input id="pgNome" maxlength="60"></div>
       <div class="campo"><label for="pgFrase">Frase curta</label><input id="pgFrase" maxlength="90" placeholder="Ex.: Unhas, massagens e depilação"></div>
@@ -2535,7 +2551,41 @@
       + '<div class="m" aria-label="4Trevo"><svg width="26" height="22" viewBox="22 70 220 182" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><g transform="translate(150,160) rotate(60)" fill="none" stroke="#2F4A33" stroke-linejoin="round"><path d="M0,-4 C-4,-12 -18,-14 -30,-28 C-44,-44 -42,-68 -22,-76 C-4,-82 14,-72 18,-54 C22,-38 12,-18 0,-4Z" stroke-width="6"/><path d="M4,0 C12,-4 14,-18 28,-30 C44,-44 68,-42 76,-22 C82,-4 72,14 54,18 C38,22 18,12 4,0Z" stroke-width="6"/><path d="M0,4 C4,12 18,14 30,28 C44,44 42,68 22,76 C4,82 -14,72 -18,54 C-22,38 -12,18 0,4Z" stroke-width="6"/><path d="M-4,0 C-12,4 -14,18 -28,30 C-44,44 -68,42 -76,22 C-82,4 -72,-14 -54,-18 C-38,-22 -18,-12 -4,0Z" stroke-width="6"/><g stroke-width="1" opacity="0.6"><line x1="2" y1="-2" x2="44" y2="-44"/><line x1="2" y1="2" x2="44" y2="44"/><line x1="-2" y1="2" x2="-44" y2="44"/><line x1="-2" y1="-2" x2="-44" y2="-44"/></g><circle cx="0" cy="0" r="4" stroke-width="2"/><path d="M8,82 C10,100 6,120 0,142" stroke-width="6" stroke-linecap="round"/></g></svg><span>4Trevo</span></div></div><script>window.onload=function(){setTimeout(function(){window.print();},300);}<\/script></body></html>');
     w.document.close();
   };
-  function pintarPagina(){ pintarFotos(); pintarQR(); $('pgNome').value = SAL.nome || NEG.nome || ''; $('pgFrase').value = SAL.frase || ''; $('pgMorada').value = SAL.morada || ''; $('pgMapa').value = SAL.mapaLink || ''; $('pgMapaOn').checked = SAL.mostrarMapa !== false; $('pgTel').value = SAL.telefone || ''; $('pgWa').value = SAL.whatsapp || ''; $('pgIg').value = SAL.instagram || ''; $('pgFb').value = SAL.facebook || ''; $('pgCor').value = /^#[0-9a-fA-F]{6}$/.test(SAL.cor || '') ? SAL.cor : '#8E3653'; $('pgPol').value = SAL.politica || ''; $('pgHoje').checked = SAL.mostrarHoje !== false; }
+  // ---------- tema da página do cliente (só aspeto: letra, fundos, cantos, sombras) ----------
+  var TEMAS = [
+    { id:'classico', nome:'Clássico', ds:'O aspeto de sempre: limpo e equilibrado.', fundo:'#F6F4F2', card:'#fff', tx:'#1F1C1A', r:12, letra:'manrope' },
+    { id:'elegante', nome:'Elegante', ds:'Letra com serifa, fundo creme, cantos discretos. Estilo spa.', fundo:'#FAF7F2', card:'#fff', tx:'#2A2420', r:6, letra:'lato_cormorant' },
+    { id:'moderno', nome:'Moderno', ds:'Fundo branco, linhas finas, sem sombras.', fundo:'#FFFFFF', card:'#fff', tx:'#111113', r:9, letra:'dmsans', borda:true },
+    { id:'suave', nome:'Suave', ds:'Letra redonda, tons de areia, cantos bem redondos.', fundo:'#F4EFE8', card:'#fff', tx:'#2E2925', r:18, letra:'nunito' },
+    { id:'noite', nome:'Noite', ds:'Fundo escuro e elegante. Destaca bem as fotos.', fundo:'#151316', card:'#211E23', tx:'#F3EFF1', r:12, letra:'lato_playfair' }
+  ];
+  var LETRAS_G = [
+    ['', 'Do tema (recomendado)'], ['manrope', 'Manrope — atual', 'Manrope', 'Manrope:wght@400;700;800'], ['lato_cormorant', 'Cormorant + Lato — clássica', 'Cormorant Garamond', 'Cormorant+Garamond:wght@600;700&family=Lato:wght@400;700'],
+    ['lato_playfair', 'Playfair + Lato — sofisticada', 'Playfair Display', 'Playfair+Display:wght@600;700&family=Lato:wght@400;700'], ['dmsans', 'DM Sans — moderna', 'DM Sans', 'DM+Sans:wght@400;700;800'],
+    ['nunito', 'Nunito — redonda', 'Nunito', 'Nunito:wght@400;700;800'], ['poppins', 'Poppins — geométrica', 'Poppins', 'Poppins:wght@400;600;700'], ['jost', 'Jost — leve e fina', 'Jost', 'Jost:wght@400;500;700']
+  ];
+  function letraInfo(id){ return LETRAS_G.filter(function(l){ return l[0] === id; })[0] || LETRAS_G[1]; }
+  var _fontesG = {};
+  function carregarFonteG(id){ var l = letraInfo(id); if(!l[3] || _fontesG[id]) return; _fontesG[id] = 1; var k = document.createElement('link'); k.rel = 'stylesheet'; k.href = 'https://fonts.googleapis.com/css2?family=' + l[3] + '&display=swap'; document.head.appendChild(k); }
+  function pintarTemas(){
+    var at = SAL.tema || 'classico', cor = corOk(SAL.cor) ? SAL.cor : '#8E3653', lt = SAL.letra || '';
+    TEMAS.forEach(function(t){ carregarFonteG(t.letra); });
+    $('pgTemas').innerHTML = TEMAS.map(function(t){ var fam = letraInfo(lt || t.letra)[2], serif = /Cormorant|Playfair/.test(fam);
+      return '<button type="button" class="tema' + (t.id === at ? ' on' : '') + '" data-tema="' + t.id + '"><div class="mini" style="background:' + t.fundo + ';"><div class="t" style="background:' + cor + ';font-family:\'' + fam + '\',' + (serif ? 'Georgia,serif' : 'system-ui,sans-serif') + ';font-weight:' + (serif ? 600 : 800) + ';' + (t.id === 'suave' ? 'border-radius:0 0 12px 12px;' : '') + '">' + esc(SAL.nome || NEG.nome || 'Salão') + '</div>'
+        + '<div class="c">' + [0, 1].map(function(){ return '<div class="k" style="background:' + t.card + ';border-radius:' + t.r + 'px;' + (t.borda ? 'border:1px solid #E4E4E4;' : 'box-shadow:0 2px 6px rgba(0,0,0,.08);') + '"><i style="background:' + cor + ';opacity:.85;"></i><b style="color:' + t.tx + ';font-family:\'' + fam + '\',' + (serif ? 'Georgia,serif' : 'system-ui,sans-serif') + ';">Serviço</b></div>'; }).join('') + '</div></div>'
+        + '<span class="nm">' + (t.id === at ? '✓ ' : '') + t.nome + '</span><span class="ds">' + t.ds + '</span></button>'; }).join('');
+    $('pgTemas').querySelectorAll('[data-tema]').forEach(function(b){ b.onclick = async function(){ var id = b.getAttribute('data-tema'); if(id === (SAL.tema || 'classico')) return;
+      var e = await guardarCfg(function(c){ c.salao = Object.assign({}, c.salao || {}, { tema:id }); }); if(e){ toast('Erro: ' + e.message); return; }
+      pintarTemas(); toast('Tema "' + TEMAS.filter(function(t){ return t.id === id; })[0].nome + '" aplicado ✓ — já está na página dos clientes'); }; });
+    var temaAt = TEMAS.filter(function(t){ return t.id === at; })[0] || TEMAS[0];
+    $('pgLetra').innerHTML = LETRAS_G.map(function(l){ return '<option value="' + l[0] + '"' + (l[0] === lt ? ' selected' : '') + '>' + (l[0] ? l[1] : ('Do tema — ' + letraInfo(temaAt.letra)[1].split(' — ')[0])) + '</option>'; }).join('');
+    var fx = letraInfo(lt || temaAt.letra); carregarFonteG(fx[0]);
+    $('pgLetraEx').innerHTML = '<span style="font-family:\'' + fx[2] + '\',' + (/Cormorant|Playfair/.test(fx[2]) ? 'Georgia,serif' : 'system-ui,sans-serif') + ';font-size:22px;font-weight:700;">' + esc(SAL.nome || NEG.nome || 'Salão') + '</span><br><span style="color:var(--suave);font-size:13px;">Massagem Relaxante · 50 min · 50,00 €</span>';
+    var lk = linkPublico(); $('pgTemaVer').href = lk + (lk.indexOf('?') >= 0 ? '&' : '?') + 'tema=' + encodeURIComponent(at) + (lt ? ('&letra=' + encodeURIComponent(lt)) : '');
+  }
+  $('pgLetra').onchange = async function(){ var v = this.value; var e = await guardarCfg(function(c){ c.salao = Object.assign({}, c.salao || {}); if(v) c.salao.letra = v; else delete c.salao.letra; });
+    if(e){ toast('Erro: ' + e.message); return; } pintarTemas(); toast('Tipo de letra guardado ✓'); };
+  function pintarPagina(){ try{ pintarTemas(); }catch(e){} pintarFotos(); pintarQR(); $('pgNome').value = SAL.nome || NEG.nome || ''; $('pgFrase').value = SAL.frase || ''; $('pgMorada').value = SAL.morada || ''; $('pgMapa').value = SAL.mapaLink || ''; $('pgMapaOn').checked = SAL.mostrarMapa !== false; $('pgTel').value = SAL.telefone || ''; $('pgWa').value = SAL.whatsapp || ''; $('pgIg').value = SAL.instagram || ''; $('pgFb').value = SAL.facebook || ''; $('pgCor').value = /^#[0-9a-fA-F]{6}$/.test(SAL.cor || '') ? SAL.cor : '#8E3653'; $('pgPol').value = SAL.politica || ''; $('pgHoje').checked = SAL.mostrarHoje !== false; }
   $('pgGuardar').onclick = async function(){
     var v = { nome:$('pgNome').value.trim(), frase:$('pgFrase').value.trim(), morada:$('pgMorada').value.trim(), mapaLink:$('pgMapa').value.trim(), mostrarMapa:$('pgMapaOn').checked, telefone:$('pgTel').value.trim(), whatsapp:$('pgWa').value.trim(), instagram:$('pgIg').value.trim(), facebook:$('pgFb').value.trim(), cor:$('pgCor').value, politica:$('pgPol').value.trim(), mostrarHoje:$('pgHoje').checked };
     if(v.mapaLink && !/^https?:\/\//i.test(v.mapaLink)){ $('pgMsg').textContent = 'O link do Google Maps tem de começar por https://'; $('pgMsg').className = 'msg erro'; return; }
